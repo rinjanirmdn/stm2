@@ -6,6 +6,30 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private function getRoleNameColumn(): string
+    {
+        if (Schema::hasColumn('roles', 'roles_name')) return 'roles_name';
+        return 'name';
+    }
+
+    private function getRoleGuardColumn(): string
+    {
+        if (Schema::hasColumn('roles', 'roles_guard_name')) return 'roles_guard_name';
+        return 'guard_name';
+    }
+
+    private function getPermNameColumn(): string
+    {
+        if (Schema::hasColumn('permissions', 'perm_name')) return 'perm_name';
+        return 'name';
+    }
+
+    private function getPermGuardColumn(): string
+    {
+        if (Schema::hasColumn('permissions', 'perm_guard_name')) return 'perm_guard_name';
+        return 'guard_name';
+    }
+
     public function up(): void
     {
         try {
@@ -15,15 +39,20 @@ return new class extends Migration
 
             $guardName = 'web';
 
+            $roleNameCol = $this->getRoleNameColumn();
+            $roleGuardCol = $this->getRoleGuardColumn();
+            $permNameCol = $this->getPermNameColumn();
+            $permGuardCol = $this->getPermGuardColumn();
+
             $roleId = DB::table('roles')
-                ->where('name', 'Section Head')
-                ->where('guard_name', $guardName)
+                ->where($roleNameCol, 'Section Head')
+                ->when(Schema::hasColumn('roles', $roleGuardCol), fn($q) => $q->where($roleGuardCol, $guardName))
                 ->value('id');
 
             if (! $roleId) {
                 $roleId = DB::table('roles')
-                    ->where('name', 'section_head')
-                    ->where('guard_name', $guardName)
+                    ->where($roleNameCol, 'section_head')
+                    ->when(Schema::hasColumn('roles', $roleGuardCol), fn($q) => $q->where($roleGuardCol, $guardName))
                     ->value('id');
             }
 
@@ -32,17 +61,20 @@ return new class extends Migration
             }
 
             $permissionId = DB::table('permissions')
-                ->where('name', 'gates.toggle')
-                ->where('guard_name', $guardName)
+                ->where($permNameCol, 'gates.toggle')
+                ->when(Schema::hasColumn('permissions', $permGuardCol), fn($q) => $q->where($permGuardCol, $guardName))
                 ->value('id');
 
             if (! $permissionId) {
-                $permissionId = DB::table('permissions')->insertGetId([
-                    'name' => 'gates.toggle',
-                    'guard_name' => $guardName,
+                $insertData = [
+                    $permNameCol => 'gates.toggle',
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ];
+                if (Schema::hasColumn('permissions', $permGuardCol)) {
+                    $insertData[$permGuardCol] = $guardName;
+                }
+                $permissionId = DB::table('permissions')->insertGetId($insertData);
             }
 
             $exists = DB::table('role_has_permissions')
@@ -69,3 +101,4 @@ return new class extends Migration
     {
     }
 };
+

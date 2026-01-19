@@ -12,10 +12,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Dynamically detect column name
+        $roleNameCol = Schema::hasColumn('roles', 'roles_name') ? 'roles_name' : 'name';
+
         // Get current role IDs
-        $adminRoleId = DB::table('roles')->where('name', 'Admin')->value('id');
-        $operatorRoleId = DB::table('roles')->where('name', 'Operator')->value('id');
-        $sectionHeadRoleId = DB::table('roles')->where('name', 'Section Head')->value('id');
+        $adminRoleId = DB::table('roles')->where($roleNameCol, 'Admin')->value('id');
+        $operatorRoleId = DB::table('roles')->where($roleNameCol, 'Operator')->value('id');
+        $sectionHeadRoleId = DB::table('roles')->where($roleNameCol, 'Section Head')->value('id');
 
         echo "Admin Role ID: $adminRoleId\n";
         echo "Operator Role ID: $operatorRoleId\n";

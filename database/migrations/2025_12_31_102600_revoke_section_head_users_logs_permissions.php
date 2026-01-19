@@ -6,6 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private function getRoleNameColumn(): string
+    {
+        if (Schema::hasColumn('roles', 'roles_name')) return 'roles_name';
+        return 'name';
+    }
+
+    private function getPermNameColumn(): string
+    {
+        if (Schema::hasColumn('permissions', 'perm_name')) return 'perm_name';
+        return 'name';
+    }
+
     public function up(): void
     {
         try {
@@ -16,9 +28,12 @@ return new class extends Migration
             $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
             $modelHasPermissionsTable = (string) (config('permission.table_names.model_has_permissions') ?? 'model_has_permissions');
 
-            $roleId = DB::table('roles')->where('name', 'Section Head')->value('id');
+            $roleNameCol = $this->getRoleNameColumn();
+            $permNameCol = $this->getPermNameColumn();
+
+            $roleId = DB::table('roles')->where($roleNameCol, 'Section Head')->value('id');
             if (! $roleId) {
-                $roleId = DB::table('roles')->where('name', 'section_head')->value('id');
+                $roleId = DB::table('roles')->where($roleNameCol, 'section_head')->value('id');
             }
 
             if (! $roleId) {
@@ -26,11 +41,11 @@ return new class extends Migration
             }
 
             $permissionIds = DB::table('permissions')
-                ->where(function ($query) {
+                ->where(function ($query) use ($permNameCol) {
                     $query
-                        ->where('name', 'like', 'users.%')
-                        ->orWhere('name', 'like', 'logs.%')
-                        ->orWhereIn('name', [
+                        ->where($permNameCol, 'like', 'users.%')
+                        ->orWhere($permNameCol, 'like', 'logs.%')
+                        ->orWhereIn($permNameCol, [
                             'view users',
                             'create users',
                             'edit users',
@@ -81,3 +96,4 @@ return new class extends Migration
     {
     }
 };
+
