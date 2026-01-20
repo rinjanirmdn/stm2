@@ -482,7 +482,20 @@
                                 <td>{{ $row->mat_doc ?? '-' }}</td>
                                 <td>{{ $row->vendor_name ?? '-' }}</td>
                                 <td>{{ $whGateLabel }}</td>
-                                <td>{{ strtoupper(strval($row->direction ?? '')) }}</td>
+                                <td>
+                                    @php $dir = strtolower($row->direction ?? ''); @endphp
+                                    @if($dir === 'inbound')
+                                        <span class="st-badge-modern st-badge-modern--inbound">
+                                            Inbound
+                                        </span>
+                                    @elseif($dir === 'outbound')
+                                        <span class="st-badge-modern st-badge-modern--outbound">
+                                            Outbound
+                                        </span>
+                                    @else
+                                        {{ strtoupper($row->direction ?? '') }}
+                                    @endif
+                                </td>
                                 <td>{{ $fmt($row->planned_start ?? null) }}</td>
                                 <td>{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</td>
                                 <td>{{ !empty($row->arrival_time) ? $fmt($row->arrival_time) : '-' }}</td>
@@ -531,7 +544,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge {{ $badgeClass }}">{{ ucfirst(str_replace('_',' ', $status)) }}</span>
+                                    <span class="badge {{ $badgeClass }}">{{ ucwords(str_replace('_',' ', $status)) }}</span>
                                 </td>
                                 <td>
                                     <span class="st-table__status-badge {{ $blockingClass }}">{{ $blockingLabel }}</span>

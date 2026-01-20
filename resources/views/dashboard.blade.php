@@ -104,14 +104,15 @@
                                 </div>
                                 <div class="st-chart-axis-legend st-text--small st-text--muted">
                                     <span class="st-chart-axis-legend__pill">
-                                        <span style="width:10px;height:10px;border-radius:999px;background:rgba(14,165,233,0.75);display:inline-block;"></span>
+                                        <span class="st-legend-dot st-bg-teal-500"></span>
                                         <strong>INBOUND</strong>
                                     </span>
                                     <span class="st-chart-axis-legend__pill">
-                                        <span style="width:10px;height:10px;border-radius:999px;background:rgba(168,85,247,0.75);display:inline-block;"></span>
+                                        <span class="st-legend-dot st-bg-indigo-500"></span>
                                         <strong>OUTBOUND</strong>
                                     </span>
                                 </div>
+
                             </div>
                         </div>
                         <div class="st-chart-col-4">
@@ -151,10 +152,10 @@
                                                 <option value="outbound">Outbound</option>
                                             </select>
                                         </div>
-                                        <div class="st-text--small st-text--muted">Top 20, threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} minutes</div>
                                     </div>
+                                    <div class="st-text--small st-text--muted">Top 20, threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} minutes</div>
                                 </div>
-                                <div class="st-chart-wrap" style="margin-top:8px;">
+                                <div class="st-chart-wrap st-mt-2">
                                     <canvas id="chart_bottleneck"></canvas>
                                 </div>
                             </div>
@@ -162,10 +163,10 @@
                         <div class="st-chart-col-4">
                             <div class="st-chart-card">
                                 <div class="st-chart-card__title">Top Bottleneck</div>
-                                <div class="st-metric-row" style="grid-template-columns:1fr;">
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Location</div><div id="bottleneck_top_label" style="font-size:16px;font-weight:800;">-</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Avg wait (min)</div><div id="bottleneck_top_avg" style="font-size:16px;font-weight:800;">0</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Slot count</div><div id="bottleneck_top_slots" style="font-size:16px;font-weight:800;">0</div></div>
+                                <div class="st-metric-row st-grid-1">
+                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Location</div><div id="bottleneck_top_label" class="st-metric-value-lg">-</div></div>
+                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Avg wait (min)</div><div id="bottleneck_top_avg" class="st-metric-value-lg">0</div></div>
+                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Slot count</div><div id="bottleneck_top_slots" class="st-metric-value-lg">0</div></div>
                                 </div>
                             </div>
                         </div>
@@ -208,9 +209,9 @@
                     <div class="st-chart-grid">
                         <div class="st-chart-col-4">
                             <div class="st-chart-card">
-                                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-                                    <div class="st-chart-card__title" style="margin:0;">On Time vs Late</div>
-                                    <select id="on_time_dir" class="st-select" style="max-width:160px;">
+                                <div class="st-flex-between-center st-flex-wrap st-gap-2">
+                                    <div class="st-chart-card__title st-mb-0">On Time vs Late</div>
+                                    <select id="on_time_dir" class="st-select st-w-160">
                                         <option value="all">All Direction</option>
                                         <option value="inbound">Inbound</option>
                                         <option value="outbound">Outbound</option>
@@ -245,7 +246,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="st-chart-wrap st-chart-wrap--sm" style="margin-top:8px;">
+                                <div class="st-chart-wrap st-chart-wrap--sm st-mt-2">
                                     <canvas id="chart_target_achievement"></canvas>
                                 </div>
                                 <div class="st-metric-row" style="margin-top:10px;">
@@ -497,7 +498,7 @@
                             <div class="st-text--small st-text--muted">Gunakan filter untuk mengatur date/time/gate.</div>
                             @can('slots.create')
                             <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
-                                <i class="fa-solid fa-plus" style="margin-right:4px;"></i> Create Slot
+                                <i class="fa-solid fa-plus st-mr-1"></i> Create Slot
                             </a>
                             @endcan
                         </div>
@@ -523,12 +524,21 @@
                         @forelse (($schedule ?? []) as $row)
                             @php
                                 $st = (string)($row['status'] ?? 'scheduled');
-                                $stClass = strtolower(str_replace(' ', '_', $st));
-                                $stLabel = strtoupper(str_replace('_',' ', $st));
+                                $stLabel = ucwords(str_replace('_',' ', $st));
+                                
+                                $badgeMap = [
+                                    'scheduled' => 'bg-scheduled',
+                                    'arrived' => 'bg-waiting',
+                                    'waiting' => 'bg-waiting',
+                                    'in_progress' => 'bg-in_progress',
+                                    'completed' => 'bg-completed',
+                                    'cancelled' => 'bg-danger',
+                                ];
+                                $badgeClass = $badgeMap[$st] ?? 'bg-secondary';
                                 if ($st === 'arrived') {
-                                    $stClass = 'waiting';
-                                    $stLabel = 'WAITING';
+                                    $stLabel = 'Waiting'; // Map arrive to Waiting label as per other views
                                 }
+
                                 $performance = (string)($row['performance'] ?? '');
                                 $priority = (string)($row['priority'] ?? 'low');
                             @endphp
@@ -539,7 +549,7 @@
                                 <td>{{ $row['gate_label'] ?? '-' }}</td>
                                 <td>{{ $row['eta'] ?? '-' }}</td>
                                 <td>
-                                    <span class="st-status-badge st-status-{{ $stClass }}">{{ $stLabel }}</span>
+                                    <span class="badge {{ $badgeClass }}">{{ $stLabel }}</span>
                                     @if ($performance === 'ontime')
                                         <span class="st-kpi-badge st-kpi-ontime">(Ontime)</span>
                                     @elseif ($performance === 'late')
@@ -1570,8 +1580,141 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    var chartAreaBorderPlugin = {
+        id: 'chartAreaBorder',
+        afterDraw: function(chart, args, options) {
+            var ctx = chart.ctx;
+            var area = chart.chartArea;
+            ctx.save();
+            ctx.beginPath();
+            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = '#d1d5db'; // Subtle grey
+            ctx.rect(area.left, area.top, area.width, area.height);
+            ctx.stroke();
+            ctx.restore();
+        }
+    };
+
+    var bar3DShinePlugin = {
+        id: 'bar3DShine',
+        afterDatasetsDraw: function(chart) {
+            var ctx = chart.ctx;
+            chart.data.datasets.forEach(function(ds, i) {
+                if (ds.type !== 'bar') return;
+                var meta = chart.getDatasetMeta(i);
+                if (!meta.hidden) {
+                    meta.data.forEach(function(element) {
+                        var x = element.x;
+                        var y = element.y;
+                        var width = element.width;
+                        var base = element.base;
+                        var height = Math.abs(base - y);
+                        var top = Math.min(base, y);
+                        
+                        ctx.save();
+                        ctx.beginPath();
+                        // Capsule shape path for clipping
+                        // Assuming radius is width/2 for full capsule
+                        var r = width / 2;
+                        ctx.moveTo(x - width/2 + r, top);
+                        ctx.lineTo(x + width/2 - r, top);
+                        ctx.quadraticCurveTo(x + width/2, top, x + width/2, top + r);
+                        ctx.lineTo(x + width/2, top + height - r);
+                        ctx.quadraticCurveTo(x + width/2, top + height, x + width/2 - r, top + height);
+                        ctx.lineTo(x - width/2 + r, top + height);
+                        ctx.quadraticCurveTo(x - width/2, top + height, x - width/2, top + height - r);
+                        ctx.lineTo(x - width/2, top + r);
+                        ctx.quadraticCurveTo(x - width/2, top, x - width/2 + r, top);
+                        ctx.closePath();
+                        ctx.clip();
+
+                        // Simulated Left-Reflection Gradient
+                        var gradient = ctx.createLinearGradient(x - width/2, top, x + width/2, top);
+                        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)'); // Bright edge
+                        gradient.addColorStop(0.25, 'rgba(255, 255, 255, 0.05)'); // Fade
+                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                        
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                        ctx.restore();
+                    });
+                }
+            });
+        }
+    };
+
+    var completedLineEffectsPlugin = {
+        id: 'completedLineEffects',
+        beforeDatasetDraw: function(chart, args) {
+            var ctx = chart.ctx;
+            var ds = chart.data.datasets[args.index];
+            if (ds.type === 'line' && ds.label === 'Completed') {
+                ctx.save();
+                // 1. Antigravity Line Shadow
+                ctx.shadowColor = 'rgba(21, 128, 61, 0.5)'; // Dark Green Glow
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetY = 12; // Floating effect
+                ctx.shadowOffsetX = 0;
+            }
+        },
+        afterDatasetDraw: function(chart, args) {
+            var ctx = chart.ctx;
+            var ds = chart.data.datasets[args.index];
+            // 2. Draw 3D Sphere Points
+            if (ds.type === 'line' && ds.label === 'Completed') {
+                // Restore first to clear line shadow settings for points (we want distinct shadow for beads)
+                ctx.restore(); 
+                
+                var meta = chart.getDatasetMeta(args.index);
+                if (!meta.hidden) {
+                    ctx.save();
+                    meta.data.forEach(function(pt, index) {
+                        // Skip if value is 0 or invalid if desired, though requested for all points
+                        var value = ds.data[index];
+                        if (value === null || value === undefined) return;
+
+                        var x = pt.x;
+                        var y = pt.y;
+                        var r = 6; // Bead radius
+
+                        // Bead Shadow (closer to object)
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+                        ctx.shadowBlur = 4;
+                        ctx.shadowOffsetY = 3; 
+
+                        ctx.beginPath();
+                        ctx.arc(x, y, r, 0, Math.PI * 2);
+                        
+                        // 3D Sphere Radial Gradient
+                        // Light source from top-left
+                        var grad = ctx.createRadialGradient(x - r/3, y - r/3, r/6, x, y, r);
+                        grad.addColorStop(0, '#ffffff'); // Highlight
+                        grad.addColorStop(1, '#e2e8f0'); // Shading (Slate-200)
+                        
+                        ctx.fillStyle = grad;
+                        ctx.fill();
+                        
+                        // Optional: Very thin rim for definition
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    });
+                    ctx.restore();
+                }
+            } else {
+                // Restore if not completed line (though we only saved for completed line in beforeDatasetDraw)
+                 // This block handles the case where beforeDatasetDraw didn't run or logic differs, 
+                 // but strictly for this plugin structure, 'restore' is handled in the if block above 
+                 // effectively closing the 'save' from beforeDatasetDraw. 
+                 // Note: Chart.js plugins 'beforeDatasetDraw' and 'afterDatasetDraw' balance is manual.
+                 // If we didn't enter the 'if' in before, we shouldn't restore.
+                 // Logic check: The save is inside the if. The restore is inside the if. Correct.
+            }
+        }
+    };
+
     var trendChart = makeChart(trendCanvas, withDataLabels({
-        plugins: [stTrendValueLabelsPlugin],
+        plugins: [stTrendValueLabelsPlugin, chartAreaBorderPlugin, bar3DShinePlugin, completedLineEffectsPlugin],
         type: 'bar',
         data: {
             labels: trendDays,
@@ -1581,11 +1724,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     label: 'Inbound',
                     data: trendInbound,
                     stack: 'dir',
-                    backgroundColor: isDark ? 'rgba(14,165,233,0.55)' : 'rgba(14,165,233,0.45)',
-                    borderColor: 'rgba(14,165,233,0.75)',
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    maxBarThickness: 18,
+                    backgroundColor: 'rgba(20, 184, 166, 0.85)', // Solid Teal
+                    borderColor: 'rgba(20, 184, 166, 0.8)', // Stronger Outline
+                    borderWidth: 1, // Full outline
+                    borderRadius: 100, // Fully rounded capsule
+                    maxBarThickness: 20,
                     order: 2,
                     datalabels: { display: false }
                 },
@@ -1594,11 +1737,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     label: 'Outbound',
                     data: trendOutbound,
                     stack: 'dir',
-                    backgroundColor: isDark ? 'rgba(168,85,247,0.55)' : 'rgba(168,85,247,0.45)',
-                    borderColor: 'rgba(168,85,247,0.75)',
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    maxBarThickness: 18,
+                    backgroundColor: 'rgba(2, 132, 199, 0.85)', // Solid Primary Blue 
+                    borderColor: 'rgba(2, 132, 199, 0.8)', // Stronger Outline
+                    borderWidth: 1, // Full outline
+                    borderRadius: 100, // Fully rounded capsule
+                    maxBarThickness: 20,
                     order: 2,
                     datalabels: { display: false }
                 },
@@ -1606,17 +1749,25 @@ document.addEventListener('DOMContentLoaded', function () {
                     type: 'line',
                     label: 'Completed',
                     data: trendCounts,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'transparent',
-                    fill: false,
-                    tension: 0.35,
-                    pointRadius: 3,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#2563eb',
-                    pointBorderColor: isDark ? '#0f172a' : '#ffffff',
+                    borderColor: '#15803d', // Dark Green
+                    backgroundColor: function(context) {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return null;
+                        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)'); // Fades to white-ish transparent
+                        gradient.addColorStop(1, 'rgba(21, 128, 61, 0.1)'); // Very light Green (10%)
+                        return gradient;
+                    },
+                    fill: true,
+                    tension: 0.4, // Smooth Bezier (Requested 0.4)
+                    pointRadius: 0, // Hide default points, using custom 3D spheres
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#15803d',
                     pointBorderWidth: 2,
-                    borderWidth: 2,
-                    pointHitRadius: 16,
+                    borderWidth: 4, // Bold Neon Tube
+                    pointHitRadius: 20,
                     order: 1,
                     datalabels: {
                         anchor: 'end',
@@ -1669,8 +1820,27 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             scales: {
                 x: {
-                    grid: { color: stTheme.grid, drawBorder: false },
-                    ticks: { color: stTheme.muted, maxRotation: 0, autoSkip: true },
+                    grid: { 
+                        borderColor: '#d1d5db', 
+                        borderWidth: 0.5, 
+                        color: stTheme.grid, 
+                        drawBorder: true, 
+                        drawOnChartArea: false 
+                    },
+                    ticks: { 
+                        color: stTheme.muted, 
+                        maxRotation: 0, 
+                        autoSkip: true,
+                        callback: function(val, index) {
+                            var label = this.getLabelForValue(val);
+                            // Assuming label is YYYY-MM-DD, take the last part (Day)
+                            if (typeof label === 'string' && label.includes('-')) {
+                                var parts = label.split('-');
+                                return parts[parts.length - 1];
+                            }
+                            return label;
+                        }
+                    },
                     stacked: true,
                     title: {
                         display: true,
@@ -1684,7 +1854,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 y: {
                     beginAtZero: true,
                     suggestedMax: Math.max(10, (trendCounts || []).reduce(function (m, v) { return Math.max(m, parseInt(v || 0, 10) || 0); }, 0) + 1),
-                    grid: { color: stTheme.grid, drawBorder: false },
+                    grid: { 
+                        borderColor: '#d1d5db', 
+                        borderWidth: 0.5, 
+                        color: stTheme.grid, 
+                        drawBorder: true, 
+                        drawOnChartArea: false 
+                    },
                     ticks: { color: stTheme.muted, precision: 0 },
                     stacked: true,
                     title: {
@@ -1719,7 +1895,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: [inbound, outbound],
                 backgroundColor: function (ctx) {
                     var idx = ctx && typeof ctx.dataIndex === 'number' ? ctx.dataIndex : 0;
-                    var base = idx === 0 ? '#0ea5e9' : '#a855f7';
+                    var base = idx === 0 ? '#14b8a6' : '#0284c7';
                     var chart = ctx && ctx.chart ? ctx.chart : null;
                     if (!chart || !chart.chartArea) return base;
                     var area = chart.chartArea;

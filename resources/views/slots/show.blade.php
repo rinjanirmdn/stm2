@@ -60,8 +60,8 @@
         $blockingLevel = $blockingRisk >= 2 ? 'High' : ($blockingRisk === 1 ? 'Medium' : 'Low');
     @endphp
 
-    <div class="st-card" style="margin-bottom:12px;">
-        <div style="padding:12px;">
+    <div class="st-card st-mb-3">
+        <div class="st-p-3">
             <div style="margin-bottom:10px;">
                 <span class="st-table__status-badge {{ $isUnplanned ? 'st-status-on-time' : 'st-status-processing' }}">
                     {{ $isUnplanned ? 'Unplanned Slot' : 'Planned Slot' }}
@@ -70,34 +70,47 @@
 
             <div class="st-row" style="row-gap:14px;">
                 <div class="st-col-6">
-                    <h2 class="st-card__title" style="margin:0 0 10px;">General Info</h2>
+                    <h2 class="st-card__title st-mb-2">General Info</h2>
 
-                    <div style="display:grid;grid-template-columns:minmax(140px, 34%) 1fr;column-gap:12px;row-gap:8px;align-items:start;">
-                        <div style="font-weight:600;">PO/DO Number</div>
+                    <div class="st-detail-grid">
+                        <div class="st-detail-label">PO/DO Number</div>
                         <div>{{ $slot->po_number ?? '-' }}</div>
 
-                        <div style="font-weight:600;">MAT DOC</div>
+                        <div class="st-detail-label">MAT DOC</div>
                         <div>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</div>
 
-                        <div style="font-weight:600;">SJ Start Number</div>
+                        <div class="st-detail-label">SJ Start Number</div>
                         <div>{{ !empty($slot->sj_start_number) ? $slot->sj_start_number : '-' }}</div>
 
-                        <div style="font-weight:600;">SJ Complete Number</div>
+                        <div class="st-detail-label">SJ Complete Number</div>
                         <div>{{ !empty($slot->sj_complete_number) ? $slot->sj_complete_number : '-' }}</div>
 
-                        <div style="font-weight:600;">Ticket Number</div>
+                        <div class="st-detail-label">Ticket Number</div>
                         <div>{{ !empty($slot->ticket_number) ? $slot->ticket_number : '-' }}</div>
 
-                        <div style="font-weight:600;">Vendor</div>
+                        <div class="st-detail-label">Vendor</div>
                         <div>{{ $slot->vendor_name ?? '-' }}</div>
 
-                        <div style="font-weight:600;">Warehouse</div>
+                        <div class="st-detail-label">Warehouse</div>
                         <div>{{ $slot->warehouse_name ?? '-' }}</div>
 
-                        <div style="font-weight:600;">Direction</div>
-                        <div>{{ strtoupper((string) ($slot->direction ?? '')) }}</div>
+                        <div class="st-detail-label">Direction</div>
+                        <div>
+                            @php $dir = strtolower($slot->direction ?? ''); @endphp
+                            @if($dir === 'inbound')
+                                <span class="st-badge-modern st-badge-modern--inbound">
+                                    Inbound
+                                </span>
+                            @elseif($dir === 'outbound')
+                                <span class="st-badge-modern st-badge-modern--outbound">
+                                    Outbound
+                                </span>
+                            @else
+                                {{ strtoupper((string) ($slot->direction ?? '')) }}
+                            @endif
+                        </div>
 
-                        <div style="font-weight:600;">Truck Details</div>
+                        <div class="st-detail-label">Truck Details</div>
                         <div>
                             @php
                                 $truckParts = [];

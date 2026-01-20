@@ -490,7 +490,20 @@
                                         <td>{{ $r->mat_doc ?? '' }}</td>
                                         <td>{{ $r->vendor_name ?? '-' }}</td>
                                         <td>{{ $r->warehouse_name ?? '-' }}</td>
-                                        <td>{{ strtoupper((string) ($r->direction ?? '')) }}</td>
+                                        <td>
+                                            @php $dir = strtolower($r->direction ?? ''); @endphp
+                                            @if($dir === 'inbound')
+                                                <span class="st-badge-modern st-badge-modern--inbound">
+                                                    Inbound
+                                                </span>
+                                            @elseif($dir === 'outbound')
+                                                <span class="st-badge-modern st-badge-modern--outbound">
+                                                    Outbound
+                                                </span>
+                                            @else
+                                                {{ strtoupper((string) ($r->direction ?? '')) }}
+                                            @endif
+                                        </td>
                                         <td>{{ !empty($r->arrival_time) ? $fmt($r->arrival_time) : '-' }}</td>
                                         <td>
                                             @if ($leadTimeMinutes !== null)

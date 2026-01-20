@@ -232,10 +232,10 @@
 
                             $st = (string) ($slot->status ?? '');
                             $stClass = strtolower(str_replace(' ', '_', $st));
-                            $stLabel = strtoupper(str_replace('_', ' ', $st));
+                            $stLabel = ucwords(str_replace('_', ' ', $st));
                             if ($st === 'arrived') {
                                 $stClass = 'waiting';
-                                $stLabel = 'WAITING';
+                                $stLabel = 'Waiting';
                             }
                         @endphp
                         <tr>
@@ -244,9 +244,29 @@
                             <td>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</td>
                             <td>{{ $slot->vendor_name ?? '-' }}</td>
                             <td>{{ $label !== '' ? $label : '-' }}</td>
-                            <td>{{ strtoupper($slot->direction ?? '') }}</td>
                             <td>
-                                <span class="st-table__status-badge st-status-{{ $stClass }}">{{ $stLabel }}</span>
+                                @php $dir = strtolower($slot->direction ?? ''); @endphp
+                                @if($dir === 'inbound')
+                                    <span class="st-badge-modern st-badge-modern--inbound">Inbound</span>
+                                @elseif($dir === 'outbound')
+                                    <span class="st-badge-modern st-badge-modern--outbound">Outbound</span>
+                                @else
+                                    {{ strtoupper($slot->direction ?? '') }}
+                                @endif
+                            </td>
+                            @php
+                                $badgeMap = [
+                                    'scheduled' => 'bg-scheduled',
+                                    'arrived' => 'bg-waiting',
+                                    'waiting' => 'bg-waiting',
+                                    'in_progress' => 'bg-in_progress',
+                                    'completed' => 'bg-completed',
+                                    'cancelled' => 'bg-danger',
+                                ];
+                                $badgeClass = $badgeMap[$st] ?? 'bg-secondary';
+                            @endphp
+                            <td>
+                                <span class="badge {{ $badgeClass }}">{{ $stLabel }}</span>
                             </td>
                             <td>
                                 @if (!empty($slot->arrival_time))
