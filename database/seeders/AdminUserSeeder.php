@@ -38,10 +38,20 @@ class AdminUserSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            User::firstOrCreate(
+            $user = User::firstOrCreate(
                 ['nik' => $userData['nik']],
                 $userData
             );
+
+            if ($user && !empty($userData['role']) && method_exists($user, 'assignRole')) {
+                try {
+                    if (! $user->hasRole($userData['role'])) {
+                        $user->assignRole($userData['role']);
+                    }
+                } catch (\Throwable $e) {
+                    // ignore if role not seeded yet
+                }
+            }
         }
 
         $this->command->info('✓ 3 users created successfully');

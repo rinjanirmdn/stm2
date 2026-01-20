@@ -74,7 +74,7 @@ class SapController extends Controller
         
         $result = $this->sapPoService->search(
             $request->get('q'),
-            $request->get('limit', 10)
+            2 // Search back 2 months
         );
         
         return response()->json([
@@ -189,6 +189,11 @@ class SapController extends Controller
      */
     public function testPoConnection(Request $request)
     {
+        if ($request->has('list')) {
+            $period = $request->get('period', '2025.11');
+            return response()->json($this->sapPoService->debugList($period));
+        }
+
         $request->validate([
             'po_number' => 'nullable|string|max:50'
         ]);
@@ -210,5 +215,14 @@ class SapController extends Controller
                 'odata_endpoint' => config('services.sap_po.odata_detail_endpoint'),
             ]
         ]);
+    }
+    public function metadata()
+    {
+        $url = config('services.sap_po.base_url') . config('services.sap_po.service_path') . '/$metadata';
+        $response = \Illuminate\Support\Facades\Http::withBasicAuth(config('services.sap_po.username'), config('services.sap_po.password'))
+            ->withHeaders(['sap-client' => config('services.sap_po.sap_client')])
+            ->withoutVerifying()
+            ->get($url);
+        return response($response->body(), $response->status())->header('Content-Type', 'application/xml');
     }
 }

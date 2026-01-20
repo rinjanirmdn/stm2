@@ -25,6 +25,24 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request)
     {
+        // FORCE CHECK: Direct DB query to bypass Permission Cache
+        if (auth()->check()) {
+            $isVendor = DB::table('model_has_roles')
+                ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+                ->where('model_has_roles.model_id', auth()->id())
+                ->where(DB::raw('LOWER(roles.roles_name)'), 'vendor') // Fixed column name & Case insensitive
+                ->exists();
+
+            if ($isVendor) {
+                return redirect()->route('vendor.dashboard');
+            }
+            
+            // Fallback (jaga-jaga Spatie load role dengan nama lain)
+            if (auth()->user()->hasRole(['Vendor', 'vendor'])) {
+                return redirect()->route('vendor.dashboard');
+            }
+        }
+
         $today = date('Y-m-d');
 
         // Validate and prepare date ranges
@@ -68,7 +86,15 @@ class DashboardController extends Controller
             $trendData['completed_total']
         );
 
+        // Get Pending Approvals
+        $pendingApprovals = \App\Models\Slot::where('status', 'pending_approval')
+            ->with(['requester', 'vendor', 'warehouse'])
+            ->orderBy('created_at', 'asc')
+            ->limit(10)
+            ->get();
+
         return view('dashboard', [
+            'pendingApprovals' => $pendingApprovals,
             'today' => $today,
             'range_start' => $rangeStart,
             'range_end' => $rangeEnd,

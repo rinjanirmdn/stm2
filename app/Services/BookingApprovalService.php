@@ -1,0 +1,569 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\BookingHistory;
+use App\Models\Slot;
+use App\Models\User;
+use App\Notifications\BookingApproved;
+use App\Notifications\BookingRejected;
+use App\Notifications\BookingRescheduled;
+use App\Notifications\BookingSubmitted;
+use App\Notifications\BookingRequested;
+use App\Notifications\VendorConfirmationRequired;
+use DateTime;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class BookingApprovalService
+{
+    public function __construct(
+        private readonly SlotService $slotService
+    ) {}
+
+    /**
+     * Operating hours for booking
+     */
+    public const OPERATING_START_HOUR = 7;  // 07:00
+    public const OPERATING_END_HOUR = 23;   // 23:00
+
+    /**
+     * Create a new booking request from vendor
+     */
+    public function createBookingRequest(array $data, User $vendor): Slot
+    {
+        // Removed DB::transaction to debug persistence issue
+        // Generate ticket number
+        $ticketNumber = $this->slotService->generateTicketNumber(
+            (int) $data['warehouse_id'],
+            $data['planned_gate_id'] ?? null
+        );
+
+        // Calculate planned finish
+        $plannedFinish = $this->slotService->computePlannedFinish(
+            $data['planned_start'],
+            (int) $data['planned_duration']
+        );
+
+        // Create slot with pending_approval status
+        $slot = Slot::create([
+            'ticket_number' => $ticketNumber,
+            'direction' => $data['direction'],
+            'warehouse_id' => $data['warehouse_id'],
+            'bp_id' => $vendor->vendor_id,
+            'planned_gate_id' => $data['planned_gate_id'] ?? null,
+            'planned_start' => $data['planned_start'],
+            'planned_duration' => $data['planned_duration'],
+            'truck_type' => $data['truck_type'] ?? null,
+            'vehicle_number_snap' => $data['vehicle_number'] ?? null,
+            'po_id' => $data['po_id'] ?? null,
+            'status' => Slot::STATUS_PENDING_APPROVAL,
+            'slot_type' => 'planned',
+            'created_by' => $vendor->id,
+            'requested_by' => $vendor->id,
+            'requested_at' => now(),
+        ]);
+
+        // Log booking history
+        BookingHistory::logAction(
+            $slot->id,
+            BookingHistory::ACTION_REQUESTED,
+            $vendor->id,
+            Slot::STATUS_PENDING_APPROVAL,
+            null,
+            $data['notes'] ?? null,
+            [
+                'new_planned_start' => $data['planned_start'],
+                'new_planned_duration' => $data['planned_duration'],
+                'new_gate_id' => $data['planned_gate_id'] ?? null,
+            ]
+        );
+
+        // Notify admins about new booking request
+        $this->notifyAdminsNewBooking($slot);
+
+        // Notify vendor that request was submitted
+        try {
+            $vendor->notify(new BookingSubmitted($slot));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send booking submitted notification: ' . $e->getMessage());
+        }
+
+        return $slot;
+    }
+
+    /**
+     * Approve a booking request
+     */
+    public function approveBooking(Slot $slot, User $admin, ?string $notes = null): Slot
+    {
+        return DB::transaction(function () use ($slot, $admin, $notes) {
+            $oldStatus = $slot->status;
+
+            $slot->update([
+                'status' => Slot::STATUS_SCHEDULED,
+                'approved_by' => $admin->id,
+                'approval_action' => Slot::APPROVAL_APPROVED,
+                'approval_notes' => $notes,
+                'approved_at' => now(),
+            ]);
+
+            // Log booking history
+            BookingHistory::logAction(
+                $slot->id,
+                BookingHistory::ACTION_APPROVED,
+                $admin->id,
+                Slot::STATUS_SCHEDULED,
+                $oldStatus,
+                $notes
+            );
+
+            // Notify vendor
+            $this->notifyVendorApproved($slot);
+
+            return $slot->fresh();
+        });
+    }
+
+    /**
+     * Reject a booking request
+     */
+    public function rejectBooking(Slot $slot, User $admin, string $reason): Slot
+    {
+        return DB::transaction(function () use ($slot, $admin, $reason) {
+            $oldStatus = $slot->status;
+
+            $slot->update([
+                'status' => Slot::STATUS_REJECTED,
+                'approved_by' => $admin->id,
+                'approval_action' => Slot::APPROVAL_REJECTED,
+                'approval_notes' => $reason,
+                'approved_at' => now(),
+            ]);
+
+            // Log booking history
+            BookingHistory::logAction(
+                $slot->id,
+                BookingHistory::ACTION_REJECTED,
+                $admin->id,
+                Slot::STATUS_REJECTED,
+                $oldStatus,
+                $reason
+            );
+
+            // Notify vendor
+            $this->notifyVendorRejected($slot);
+
+            return $slot->fresh();
+        });
+    }
+
+    /**
+     * Reschedule a booking (admin proposes new time)
+     */
+    public function rescheduleBooking(Slot $slot, User $admin, array $newSchedule, ?string $notes = null): Slot
+    {
+        return DB::transaction(function () use ($slot, $admin, $newSchedule, $notes) {
+            $oldStatus = $slot->status;
+            $oldPlannedStart = $slot->planned_start;
+            $oldPlannedDuration = $slot->planned_duration;
+            $oldGateId = $slot->planned_gate_id;
+
+            // Store original schedule if not already stored
+            $originalStart = $slot->original_planned_start ?? $slot->planned_start;
+            $originalGateId = $slot->original_planned_gate_id ?? $slot->planned_gate_id;
+
+            $slot->update([
+                'status' => Slot::STATUS_PENDING_VENDOR_CONFIRMATION,
+                'approved_by' => $admin->id,
+                'approval_action' => Slot::APPROVAL_RESCHEDULED,
+                'approval_notes' => $notes,
+                'approved_at' => now(),
+                'planned_start' => $newSchedule['planned_start'],
+                'planned_duration' => $newSchedule['planned_duration'],
+                'planned_gate_id' => $newSchedule['planned_gate_id'] ?? $oldGateId,
+                'original_planned_start' => $originalStart,
+                'original_planned_gate_id' => $originalGateId,
+            ]);
+
+            // Log booking history
+            BookingHistory::logAction(
+                $slot->id,
+                BookingHistory::ACTION_RESCHEDULED,
+                $admin->id,
+                Slot::STATUS_PENDING_VENDOR_CONFIRMATION,
+                $oldStatus,
+                $notes,
+                [
+                    'old_planned_start' => $oldPlannedStart,
+                    'new_planned_start' => $newSchedule['planned_start'],
+                    'old_planned_duration' => $oldPlannedDuration,
+                    'new_planned_duration' => $newSchedule['planned_duration'],
+                    'old_gate_id' => $oldGateId,
+                    'new_gate_id' => $newSchedule['planned_gate_id'] ?? $oldGateId,
+                ]
+            );
+
+            // Notify vendor about reschedule
+            $this->notifyVendorRescheduled($slot);
+
+            return $slot->fresh();
+        });
+    }
+
+    /**
+     * Vendor confirms the rescheduled booking
+     */
+    public function vendorConfirmReschedule(Slot $slot, User $vendor): Slot
+    {
+        return DB::transaction(function () use ($slot, $vendor) {
+            $oldStatus = $slot->status;
+
+            $slot->update([
+                'status' => Slot::STATUS_SCHEDULED,
+                'vendor_confirmed_at' => now(),
+            ]);
+
+            // Log booking history
+            BookingHistory::logAction(
+                $slot->id,
+                BookingHistory::ACTION_VENDOR_CONFIRMED,
+                $vendor->id,
+                Slot::STATUS_SCHEDULED,
+                $oldStatus,
+                'Vendor confirmed the rescheduled booking'
+            );
+
+            // Notify admin that vendor confirmed
+            $this->notifyAdminVendorConfirmed($slot);
+
+            return $slot->fresh();
+        });
+    }
+
+    /**
+     * Vendor rejects the rescheduled booking (cancels it)
+     */
+    public function vendorRejectReschedule(Slot $slot, User $vendor, ?string $reason = null): Slot
+    {
+        return DB::transaction(function () use ($slot, $vendor, $reason) {
+            $oldStatus = $slot->status;
+
+            $slot->update([
+                'status' => Slot::STATUS_CANCELLED,
+                'cancelled_reason' => $reason ?? 'Vendor rejected rescheduled time',
+                'cancelled_at' => now(),
+            ]);
+
+            // Log booking history
+            BookingHistory::logAction(
+                $slot->id,
+                BookingHistory::ACTION_VENDOR_REJECTED,
+                $vendor->id,
+                Slot::STATUS_CANCELLED,
+                $oldStatus,
+                $reason ?? 'Vendor rejected rescheduled time'
+            );
+
+            return $slot->fresh();
+        });
+    }
+
+    /**
+     * Vendor proposes a new schedule (after rejection or as counter-proposal)
+     */
+    public function vendorProposeNewSchedule(Slot $slot, User $vendor, array $newSchedule, ?string $notes = null): Slot
+    {
+        return DB::transaction(function () use ($slot, $vendor, $newSchedule, $notes) {
+            $oldStatus = $slot->status;
+            $oldPlannedStart = $slot->planned_start;
+            $oldPlannedDuration = $slot->planned_duration;
+            $oldGateId = $slot->planned_gate_id;
+
+            $slot->update([
+                'status' => Slot::STATUS_PENDING_APPROVAL,
+                'planned_start' => $newSchedule['planned_start'],
+                'planned_duration' => $newSchedule['planned_duration'],
+                'planned_gate_id' => $newSchedule['planned_gate_id'] ?? $oldGateId,
+                'requested_at' => now(),
+                'approved_by' => null,
+                'approval_action' => null,
+                'approval_notes' => null,
+                'approved_at' => null,
+                'vendor_confirmed_at' => null,
+            ]);
+
+            // Log booking history
+            BookingHistory::logAction(
+                $slot->id,
+                BookingHistory::ACTION_VENDOR_PROPOSED,
+                $vendor->id,
+                Slot::STATUS_PENDING_APPROVAL,
+                $oldStatus,
+                $notes,
+                [
+                    'old_planned_start' => $oldPlannedStart,
+                    'new_planned_start' => $newSchedule['planned_start'],
+                    'old_planned_duration' => $oldPlannedDuration,
+                    'new_planned_duration' => $newSchedule['planned_duration'],
+                    'old_gate_id' => $oldGateId,
+                    'new_gate_id' => $newSchedule['planned_gate_id'] ?? $oldGateId,
+                ]
+            );
+
+            // Notify admins
+            $this->notifyAdminsNewBooking($slot);
+
+            return $slot->fresh();
+        });
+    }
+
+    /**
+     * Cancel a booking (by vendor)
+     */
+    public function cancelBooking(Slot $slot, User $user, string $reason): Slot
+    {
+        return DB::transaction(function () use ($slot, $user, $reason) {
+            $oldStatus = $slot->status;
+
+            $slot->update([
+                'status' => Slot::STATUS_CANCELLED,
+                'cancelled_reason' => $reason,
+                'cancelled_at' => now(),
+            ]);
+
+            // Log booking history
+            BookingHistory::logAction(
+                $slot->id,
+                BookingHistory::ACTION_CANCELLED,
+                $user->id,
+                Slot::STATUS_CANCELLED,
+                $oldStatus,
+                $reason
+            );
+
+            return $slot->fresh();
+        });
+    }
+
+    /**
+     * Check if a time slot is available
+     */
+    public function checkAvailability(
+        int $warehouseId,
+        ?int $gateId,
+        string $plannedStart,
+        int $durationMinutes,
+        ?int $excludeSlotId = null
+    ): array {
+        // Validate operating hours
+        $startDt = new DateTime($plannedStart);
+        $hour = (int) $startDt->format('H');
+        
+        if ($hour < self::OPERATING_START_HOUR || $hour >= self::OPERATING_END_HOUR) {
+            return [
+                'available' => false,
+                'reason' => 'Booking harus dalam jam operasional (07:00 - 23:00)',
+            ];
+        }
+
+        // Calculate end time
+        $endDt = clone $startDt;
+        $endDt->modify("+{$durationMinutes} minutes");
+        $endHour = (int) $endDt->format('H');
+        
+        if ($endHour >= self::OPERATING_END_HOUR && $endDt->format('i') > '00') {
+            return [
+                'available' => false,
+                'reason' => 'Booking harus selesai sebelum jam 23:00',
+            ];
+        }
+
+        // Check for conflicts if gate is specified
+        if ($gateId) {
+            $laneGroup = $this->slotService->getGateLaneGroup($gateId);
+            $laneGateIds = $laneGroup ? $this->slotService->getGateIdsByLaneGroup($laneGroup) : [$gateId];
+            
+            $overlapCount = $this->slotService->checkLaneOverlap(
+                $laneGateIds,
+                $startDt->format('Y-m-d H:i:s'),
+                $endDt->format('Y-m-d H:i:s'),
+                $excludeSlotId
+            );
+
+            if ($overlapCount > 0) {
+                return [
+                    'available' => false,
+                    'reason' => 'Waktu ini sudah terisi oleh booking lain',
+                ];
+            }
+        }
+
+        // Calculate blocking risk
+        $blockingRisk = $this->slotService->calculateBlockingRisk(
+            $warehouseId,
+            $gateId,
+            $plannedStart,
+            $durationMinutes,
+            $excludeSlotId
+        );
+
+        return [
+            'available' => true,
+            'blocking_risk' => $blockingRisk,
+        ];
+    }
+
+    /**
+     * Get available time slots for a specific date and gate
+     */
+    public function getAvailableSlots(int $warehouseId, ?int $gateId, string $date): array
+    {
+        $slots = [];
+        $startHour = self::OPERATING_START_HOUR;
+        $endHour = self::OPERATING_END_HOUR;
+
+        // Get existing slots for the date
+        $existingSlots = DB::table('slots')
+            ->where('warehouse_id', $warehouseId)
+            ->when($gateId, function ($q) use ($gateId) {
+                $q->where('planned_gate_id', $gateId);
+            })
+            ->whereDate('planned_start', $date)
+            ->whereIn('status', [
+                Slot::STATUS_SCHEDULED,
+                Slot::STATUS_ARRIVED,
+                Slot::STATUS_WAITING,
+                Slot::STATUS_IN_PROGRESS,
+                Slot::STATUS_PENDING_APPROVAL,
+                Slot::STATUS_PENDING_VENDOR_CONFIRMATION,
+            ])
+            ->select(['planned_start', 'planned_duration', 'status'])
+            ->get();
+
+        // Generate time slots (30-minute intervals)
+        for ($hour = $startHour; $hour < $endHour; $hour++) {
+            foreach ([0, 30] as $minute) {
+                $timeStr = sprintf('%02d:%02d', $hour, $minute);
+                $dateTimeStr = $date . ' ' . $timeStr . ':00';
+                
+                $isOccupied = false;
+                $occupyingSlot = null;
+
+                foreach ($existingSlots as $existing) {
+                    $existingStart = new DateTime($existing->planned_start);
+                    $existingEnd = clone $existingStart;
+                    $existingEnd->modify("+{$existing->planned_duration} minutes");
+
+                    $checkTime = new DateTime($dateTimeStr);
+
+                    if ($checkTime >= $existingStart && $checkTime < $existingEnd) {
+                        $isOccupied = true;
+                        $occupyingSlot = $existing;
+                        break;
+                    }
+                }
+
+                $slots[] = [
+                    'time' => $timeStr,
+                    'datetime' => $dateTimeStr,
+                    'is_available' => !$isOccupied,
+                    'status' => $occupyingSlot ? $occupyingSlot->status : null,
+                ];
+            }
+        }
+
+        return $slots;
+    }
+
+    /**
+     * Notify admins about new booking request
+     */
+    protected function notifyAdminsNewBooking(Slot $slot): void
+    {
+        try {
+            $admins = User::whereHas('roles', function ($q) {
+                $q->whereIn(DB::raw('LOWER(roles_name)'), [
+                    'admin',
+                    'section head',
+                    'super admin',
+                    'super administrator',
+                ]);
+            })->get();
+
+            if ($admins->isEmpty()) {
+                Log::warning('No admin recipients found for booking notification', [
+                    'slot_id' => $slot->id,
+                    'ticket_number' => $slot->ticket_number,
+                ]);
+            }
+
+            foreach ($admins as $admin) {
+                $admin->notify(new BookingRequested($slot));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send booking notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify vendor about approved booking
+     */
+    protected function notifyVendorApproved(Slot $slot): void
+    {
+        try {
+            $vendor = $slot->requester;
+            if ($vendor) {
+                $vendor->notify(new BookingApproved($slot));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send approval notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify vendor about rejected booking
+     */
+    protected function notifyVendorRejected(Slot $slot): void
+    {
+        try {
+            $vendor = $slot->requester;
+            if ($vendor) {
+                $vendor->notify(new BookingRejected($slot));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send rejection notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify vendor about rescheduled booking
+     */
+    protected function notifyVendorRescheduled(Slot $slot): void
+    {
+        try {
+            $vendor = $slot->requester;
+            if ($vendor) {
+                $vendor->notify(new BookingRescheduled($slot));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send reschedule notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify admin that vendor confirmed
+     */
+    protected function notifyAdminVendorConfirmed(Slot $slot): void
+    {
+        try {
+            $admin = $slot->approver;
+            if ($admin) {
+                $admin->notify(new VendorConfirmationRequired($slot, 'confirmed'));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send vendor confirmation notification: ' . $e->getMessage());
+        }
+    }
+}

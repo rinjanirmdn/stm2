@@ -178,6 +178,7 @@ class UserController extends Controller
         $nik = trim($validated['nik']);
         $fullName = trim($validated['full_name']);
         $role = $validated['role'];
+        $vendorCode = isset($validated['vendor_code']) ? trim((string) $validated['vendor_code']) : '';
         $password = $validated['password'];
         $isActive = $validated['is_active'] ?? false;
 
@@ -201,6 +202,7 @@ class UserController extends Controller
             'username' => $nik,
             'full_name' => $fullName,
             'role_id' => $roleId,
+            'vendor_code' => $role === 'vendor' ? $vendorCode : null,
             'is_active' => $isActive ? 1 : 0,
             'password' => Hash::make($password),
         ]);
@@ -264,7 +266,8 @@ class UserController extends Controller
         $v = Validator::make($request->all(), [
             'nik' => ['required', 'string', 'max:50', 'unique:users,nik,' . $userId],
             'full_name' => ['required', 'string', 'max:100'],
-            'role' => ['required', 'in:admin,section_head,operator'],
+            'role' => ['required', 'in:admin,section_head,operator,vendor'],
+            'vendor_code' => ['nullable', 'string', 'max:20', Rule::requiredIf(fn () => (string) $request->input('role') === 'vendor')],
             'is_active' => ['nullable'],
             'password' => ['nullable', 'string', 'min:6'],
             'password_confirm' => ['nullable', 'same:password'],
@@ -291,12 +294,16 @@ class UserController extends Controller
             'nik' => trim($request->input('nik')),
             'full_name' => trim($request->input('full_name')),
             'role' => $request->input('role'),
+            'vendor_code' => $request->input('role') === 'vendor' ? trim((string) $request->input('vendor_code', '')) : null,
             'is_active' => $isActive ? 1 : 0,
         ];
 
         $newRole = $request->input('role');
+        $roleDisplayName = ucwords(str_replace('_', ' ', (string) $newRole));
         $allRoles = $this->roleService->getAllRoles();
-        $roleRecord = $allRoles->firstWhere('roles_name', $newRole);
+        $roleRecord = $allRoles->first(function ($r) use ($roleDisplayName) {
+            return strtolower((string) ($r->roles_name ?? '')) === strtolower($roleDisplayName);
+        });
         $newRoleId = $roleRecord ? $roleRecord->id : null;
         $update['role_id'] = $newRoleId;
 
@@ -310,7 +317,7 @@ class UserController extends Controller
         // Update role using service
         if ($newRoleId) {
             $this->roleService->removeRole($userId);
-            $this->roleService->assignRole($userId, $newRole);
+            $this->roleService->assignRole($userId, (string) $roleRecord->roles_name);
         }
 
         return redirect()->route('users.index')->with('success', 'User updated successfully');

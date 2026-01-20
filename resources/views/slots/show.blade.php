@@ -72,9 +72,11 @@
                 <div class="st-col-6">
                     <h2 class="st-card__title st-mb-2">General Info</h2>
 
-                    <div class="st-detail-grid">
-                        <div class="st-detail-label">PO/DO Number</div>
-                        <div>{{ $slot->po_number ?? '-' }}</div>
+                    <div style="display:grid;grid-template-columns:minmax(140px, 34%) 1fr;column-gap:12px;row-gap:8px;align-items:start;">
+                        <div style="font-weight:600;">PO/DO Number</div>
+                        <div style="font-size:16px; font-weight:700; color:#2563eb;">
+                            {{ $slot->po_number ?? ($slot->po->po_number ?? '-') }}
+                        </div>
 
                         <div class="st-detail-label">MAT DOC</div>
                         <div>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</div>
@@ -278,7 +280,25 @@
         </div>
     @endif
 
-    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        @if($status === 'pending_approval')
+            @if(auth()->user()->hasRole(['Admin', 'admin', 'Super Administrator', 'Section Head']))
+                <form action="{{ route('slots.approve', $slot->id) }}" method="POST" style="display:inline-block;">
+                    @csrf
+                    @method('POST')
+                    <button type="submit" class="st-btn st-btn--primary" onclick="return confirm('Are you sure you want to Approve this booking?')">
+                        <i class="fa-solid fa-check" style="margin-right:6px;"></i> Approve
+                    </button>
+                </form>
+
+                <button type="button" class="st-btn st-btn--danger" onclick="document.getElementById('reject-dialog').style.display='flex'">
+                    <i class="fa-solid fa-xmark" style="margin-right:6px;"></i> Reject
+                </button>
+            @else
+                <button type="button" class="st-btn st-btn--secondary" disabled>Waiting for Approval</button>
+            @endif
+        @endif
+
         @if (! $isUnplanned)
             @if (in_array($status, ['scheduled'], true))
                 <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary">Arrival</a>
@@ -296,5 +316,23 @@
         @endif
 
         <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('slots.index') }}" class="st-btn st-btn--secondary">Back</a>
+    </div>
+
+    <!-- Reject Dialog -->
+    <div id="reject-dialog" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+        <div class="st-card" style="width:100%; max-width:400px; padding:20px;">
+            <h3 class="st-card__title">Reject Booking</h3>
+            <form action="{{ route('slots.reject', $slot->id) }}" method="POST">
+                @csrf
+                <div class="st-form-field">
+                    <label class="st-label">Reason</label>
+                    <textarea name="reason" class="st-input" rows="3" required placeholder="Why is this booking rejected?"></textarea>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                    <button type="button" class="st-btn st-btn--secondary" onclick="document.getElementById('reject-dialog').style.display='none'">Cancel</button>
+                    <button type="submit" class="st-btn st-btn--danger">Confirm Reject</button>
+                </div>
+            </form>
+        </div>
     </div>
 @endsection

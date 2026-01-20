@@ -426,14 +426,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 if (data.data && directionSelect) {
                     var vtype = (data.data.vendor_type || '').toLowerCase();
-                    if (vtype === 'supplier') {
+                    // Use direction from backend if available
+                    if (data.data.direction) {
+                        directionSelect.value = data.data.direction;
+                    } else if (vtype === 'supplier') {
                         directionSelect.value = 'inbound';
                     } else if (vtype === 'customer') {
                         directionSelect.value = 'outbound';
-                    }
-                    // Trigger vendor filter update after direction change
-                    if (typeof filterVendors === 'function') {
-                        filterVendors();
                     }
                 }
             })

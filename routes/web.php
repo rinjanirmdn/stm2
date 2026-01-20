@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\BookingApprovalController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GateStatusController;
 use App\Http\Controllers\LogController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\SapController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\TruckTypeDurationController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VendorBookingController;
 use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +23,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 });
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
@@ -74,6 +77,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/{slotId}/cancel', [SlotController::class, 'cancelStore'])->whereNumber('slotId')->name('cancel.store')
             ->middleware('permission:slots.cancel.store');
 
+        // Approval Actions (Mapped to BookingApprovalController)
+        Route::post('/{id}/approve', [BookingApprovalController::class, 'approve'])->whereNumber('id')->name('approve')
+            ->middleware('permission:bookings.approve');
+        Route::post('/{id}/reject', [BookingApprovalController::class, 'reject'])->whereNumber('id')->name('reject')
+            ->middleware('permission:bookings.reject');
+
         // Report routes
         Route::get('/report', [ReportController::class, 'index'])->name('report.index');
         Route::get('/export', [SlotController::class, 'export'])->name('export');
@@ -113,6 +122,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/gate-status', [GateStatusController::class, 'apiIndex'])->name('api.gate-status');
     Route::get('/api/gate-status/stream', [GateStatusController::class, 'stream'])->name('api.gate-status.stream');
 
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::get('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
+
     // SAP API Integration
     Route::prefix('api/sap')->name('api.sap.')->group(function () {
         // Legacy PO endpoints
@@ -129,6 +143,7 @@ Route::middleware('auth')->group(function () {
         
         // Health check & testing
         Route::get('/health', [SapController::class, 'health'])->name('health');
+        Route::get('/metadata', [SapController::class, 'metadata']);
         Route::get('/test-po', [SapController::class, 'testPoConnection'])->name('test.po');
     });
 
@@ -186,4 +201,65 @@ Route::middleware('auth')->group(function () {
         Route::post('/{userId}/toggle', [UserController::class, 'toggle'])->whereNumber('userId')->name('toggle')
             ->middleware('permission:users.toggle');
     });
+
+    // ========================================
+    // VENDOR BOOKING ROUTES
+    // ========================================
+    Route::middleware(['role:vendor'])->prefix('vendor')->name('vendor.')->group(function () {
+        // Vendor Dashboard
+        Route::get('/dashboard', [VendorBookingController::class, 'dashboard'])->name('dashboard');
+        
+        // Bookings
+        Route::prefix('bookings')->name('bookings.')->group(function () {
+            Route::get('/', [VendorBookingController::class, 'index'])->name('index');
+            Route::get('/create', [VendorBookingController::class, 'create'])->name('create');
+            Route::post('/', [VendorBookingController::class, 'store'])->name('store');
+            Route::get('/{id}', [VendorBookingController::class, 'show'])->whereNumber('id')->name('show');
+            Route::get('/{id}/ticket', [VendorBookingController::class, 'ticket'])->whereNumber('id')->name('ticket');
+            Route::post('/{id}/cancel', [VendorBookingController::class, 'cancel'])->whereNumber('id')->name('cancel');
+            
+            // Confirm/Reject Admin Reschedule
+            Route::get('/{id}/confirm', [VendorBookingController::class, 'confirmForm'])->whereNumber('id')->name('confirm');
+            Route::post('/{id}/confirm', [VendorBookingController::class, 'confirmStore'])->whereNumber('id')->name('confirm.store');
+        });
+        
+        // Availability
+        Route::get('/availability', [VendorBookingController::class, 'availability'])->name('availability');
+        
+        // AJAX endpoints
+        Route::prefix('ajax')->name('ajax.')->group(function () {
+            Route::get('/available-slots', [VendorBookingController::class, 'getAvailableSlots'])->name('available_slots');
+            Route::get('/check-availability', [VendorBookingController::class, 'checkAvailability'])->name('check_availability');
+            Route::get('/truck-type-duration', [VendorBookingController::class, 'getTruckTypeDuration'])->name('truck_type_duration');
+            Route::get('/calendar-slots', [VendorBookingController::class, 'calendarSlots'])->name('calendar_slots');
+            Route::get('/po-search', [VendorBookingController::class, 'ajaxPoSearch'])->name('po_search');
+            Route::get('/po/{poNumber}', [VendorBookingController::class, 'ajaxPoDetail'])->where('poNumber', '[A-Za-z0-9\-]+')->name('po_detail');
+        });
+    });
+
+    // ========================================
+    // ADMIN BOOKING APPROVAL ROUTES
+    // ========================================
+    Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('bookings.')->group(function () {
+        Route::get('/', [BookingApprovalController::class, 'index'])->name('index');
+        Route::get('/{id}', [BookingApprovalController::class, 'show'])->whereNumber('id')->name('show');
+        
+        // Approval actions
+        Route::post('/{id}/approve', [BookingApprovalController::class, 'approve'])->whereNumber('id')->name('approve')
+            ->middleware('permission:bookings.approve');
+        Route::post('/{id}/reject', [BookingApprovalController::class, 'reject'])->whereNumber('id')->name('reject')
+            ->middleware('permission:bookings.reject');
+        
+        // Reschedule
+        Route::get('/{id}/reschedule', [BookingApprovalController::class, 'rescheduleForm'])->whereNumber('id')->name('reschedule')
+            ->middleware('permission:bookings.reschedule');
+        Route::post('/{id}/reschedule', [BookingApprovalController::class, 'reschedule'])->whereNumber('id')->name('reschedule.store')
+            ->middleware('permission:bookings.reschedule');
+        
+        // AJAX
+        Route::get('/ajax/calendar', [BookingApprovalController::class, 'calendarData'])->name('ajax.calendar');
+        Route::get('/ajax/pending-count', [BookingApprovalController::class, 'pendingCount'])->name('ajax.pending_count');
+    });
 });
+
+

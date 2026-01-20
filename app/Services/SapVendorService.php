@@ -54,7 +54,7 @@ class SapVendorService
     /**
      * Build HTTP request with SAP headers and authentication
      */
-    private function buildRequest()
+    private function buildRequest(bool $forceJson = true)
     {
         $req = Http::timeout($this->timeout);
 
@@ -72,7 +72,11 @@ class SapVendorService
             $req = $req->withoutVerifying();
         }
 
-        return $req->acceptJson();
+        if ($forceJson) {
+            $req = $req->acceptJson();
+        }
+
+        return $req;
     }
 
     /**
@@ -300,12 +304,13 @@ class SapVendorService
         }
 
         try {
-            $response = $this->buildRequest()->get($this->buildUrl('/$metadata'));
+            $response = $this->buildRequest(false)->get($this->buildUrl('/$metadata'));
 
             return [
                 'status' => $response->successful() ? 'connected' : 'error',
                 'http_status' => $response->status(),
                 'response_time_ms' => $response->handlerStats()['total_time'] ?? null,
+                'metadata_body' => substr($response->body(), 0, 2000), // First 2000 chars to see EntitySets
             ];
         } catch (\Throwable $e) {
             return [
