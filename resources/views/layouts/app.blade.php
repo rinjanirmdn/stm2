@@ -110,7 +110,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
-    @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/css/notifications.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body class="st-app">
@@ -151,6 +151,13 @@
             <a href="{{ route('reports.transactions') }}" title="Reports" class="st-sidebar__link{{ request()->routeIs('reports.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-chart-line"></i>
                 <span>Reports</span>
+            </a>
+            @endcan
+
+            @can('bookings.manage')
+            <a href="{{ route('bookings.index') }}" title="Booking Requests" class="st-sidebar__link{{ request()->routeIs('bookings.*') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Bookings</span>
             </a>
             @endcan
 
@@ -214,6 +221,46 @@
                         <button type="button" class="st-icon-button" id="st-theme-toggle" title="Toggle theme" style="border:0;cursor:pointer;">
                             <i class="fa-solid fa-moon"></i>
                         </button>
+
+                        <!-- Notification Component -->
+                        <div class="st-notification">
+                            <button type="button" class="st-notification-btn" id="st-notification-btn">
+                                <i class="fas fa-bell"></i>
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <span class="st-notification-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
+                                @endif
+                            </button>
+                            
+                            <div class="st-notification-dropdown" id="st-notification-dropdown">
+                                <div class="st-notification-header">
+                                    <span>Notifications</span>
+                                    <a href="{{ route('notifications.index') }}" class="st-notification-link" style="margin-left:auto;">View all</a>
+                                    @if(auth()->user()->unreadNotifications->count() > 0)
+                                        <a href="{{ route('notifications.markAllRead') }}" class="st-notification-link">Mark all read</a>
+                                    @endif
+                                </div>
+                                <div class="st-notification-list">
+                                    @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
+                                        <a href="{{ $notification->data['action_url'] ?? '#' }}" class="st-notification-item {{ $notification->read_at ? '' : 'st-notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                            <div class="st-notification-icon" style="background: {{ $notification->data['color'] === 'red' ? '#fee2e2' : ($notification->data['color'] === 'green' ? '#dcfce7' : '#dbeafe') }}; color: {{ $notification->data['color'] === 'red' ? '#991b1b' : ($notification->data['color'] === 'green' ? '#166534' : '#1e40af') }}">
+                                                <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
+                                            </div>
+                                            <div class="st-notification-content">
+                                                <span class="st-notification-title">{{ $notification->data['title'] ?? 'Notification' }}</span>
+                                                <span class="st-notification-message">{{ $notification->data['message'] ?? '' }}</span>
+                                                <span class="st-notification-time">{{ $notification->created_at->diffForHumans() }}</span>
+                                            </div>
+                                        </a>
+                                    @empty
+                                        <div class="st-notification-empty">
+                                            <i class="fas fa-bell-slash" style="font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                                            <p style="margin:0;font-size:0.875rem;">No notifications yet</p>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+
                         <a href="{{ route('profile') }}" class="st-icon-button" title="Profile">
                             <span class="st-icon-glyph">👤</span>
                         </a>
@@ -534,6 +581,64 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Notification Toggle
+const stNotifBtn = document.getElementById('st-notification-btn');
+const stNotifDropdown = document.getElementById('st-notification-dropdown');
+
+if (stNotifBtn && stNotifDropdown) {
+    stNotifBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        stNotifDropdown.classList.toggle('show');
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (!stNotifDropdown.contains(e.target) && !stNotifBtn.contains(e.target)) {
+            stNotifDropdown.classList.remove('show');
+        }
+    });
+}
+
+function markAsRead(id) {
+    fetch('/notifications/' + id + '/read', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json'
+        }
+    });
+}
+
+function markAsReadAndGo(e, id, url) {
+    try {
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+        }
+        function normalizeUrl(u) {
+            try {
+                var s = String(u || '');
+                if (!s) return '#';
+                // If absolute URL, navigate using current origin + its path (avoid wrong APP_URL host)
+                if (s.indexOf('://') !== -1) {
+                    var parsed = new URL(s);
+                    return parsed.pathname + parsed.search + parsed.hash;
+                }
+                return s;
+            } catch (ex) {
+                return '#';
+            }
+        }
+
+        var target = normalizeUrl(url);
+        markAsRead(id);
+        setTimeout(function () {
+            window.location.href = target;
+        }, 80);
+        return false;
+    } catch (err) {
+        return true;
+    }
+}
 
 // Handle app installed event
 window.addEventListener('appinstalled', (evt) => {

@@ -41,7 +41,13 @@ class UserStoreRequest extends FormRequest
             'role' => [
                 'required',
                 'string',
-                'in:admin,section_head,operator'
+                'in:admin,section_head,operator,vendor'
+            ],
+            'vendor_code' => [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::requiredIf(fn () => (string) $this->input('role') === 'vendor'),
             ],
             'is_active' => [
                 'boolean'
@@ -64,7 +70,9 @@ class UserStoreRequest extends FormRequest
             'password.min' => 'Password minimal 8 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
             'role.required' => 'Role wajib dipilih.',
-            'role.in' => 'Role harus admin, section_head, atau operator.',
+            'role.in' => 'Role harus admin, section_head, operator, atau vendor.',
+            'vendor_code.required' => 'Vendor Code (SAP) wajib diisi untuk role vendor.',
+            'vendor_code.max' => 'Vendor Code (SAP) maksimal 20 karakter.',
             'is_active.boolean' => 'Status aktif harus berupa boolean.'
         ];
     }

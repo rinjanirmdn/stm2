@@ -40,7 +40,12 @@ class SapPoService
         ],
     ];
 
-    public function search(string $query, int $limit = 10): array
+
+    /**
+     * Search POs by partial number using OData $filter
+     * Endpoint: ZPOA_DTL_LIST/Set?$filter=contains(PoNo,'query')&$top=50
+     */
+    public function search(string $query, int $limit = 20): array
     {
         $query = trim($query);
         if ($query === '') {
@@ -48,96 +53,133 @@ class SapPoService
         }
 
         $baseUrl = trim((string) config('services.sap_po.base_url', ''));
-        if ($baseUrl !== '') {
-            $url = rtrim($baseUrl, '/') . (string) config('services.sap_po.search_endpoint', '/po/search');
-            $token = trim((string) config('services.sap_po.token', ''));
-            $username = trim((string) config('services.sap_po.username', ''));
-            $password = (string) config('services.sap_po.password', '');
-            $timeout = (int) config('services.sap_po.timeout', 10);
-            $sapClient = trim((string) config('services.sap_po.sap_client', ''));
-            $verifySsl = (bool) config('services.sap_po.verify_ssl', true);
+        $servicePath = trim((string) config('services.sap_po.service_path', ''));
+        $token = trim((string) config('services.sap_po.token', ''));
+        $username = trim((string) config('services.sap_po.username', ''));
+        $password = (string) config('services.sap_po.password', '');
+        $timeout = (int) config('services.sap_po.timeout', 15);
+        $sapClient = trim((string) config('services.sap_po.sap_client', '210'));
+        $verifySsl = (bool) config('services.sap_po.verify_ssl', false);
 
-            try {
-                $req = $this->buildSapRequest($timeout, $token, $username, $password, $sapClient, $verifySsl);
+        // Build OData filter URL (don't URL encode, let HTTP client handle it)
+        $url = rtrim($baseUrl, '/') . $servicePath . '/ZPOA_DTL_LIST/Set';
 
-                $res = $req->get($url, [
-                    'q' => $query,
-                    'limit' => $limit,
-                ]);
+        try {
+            $req = $this->buildSapRequest($timeout, $token, $username, $password, $sapClient, $verifySsl)->acceptJson();
+            
+            // Use query params array for proper encoding
+            $response = $req->get($url, [
+                '$filter' => "contains(PoNo,'{$query}')",
+                '$top' => $limit
+            ]);
 
-                if (! $res->successful()) {
-                    return [];
-                }
-
-                $json = $res->json();
-                $items = [];
-                if (is_array($json) && array_key_exists('items', $json) && is_array($json['items'])) {
-                    $items = $json['items'];
-                } elseif (is_array($json)) {
-                    $items = $json;
-                }
-
-                $out = [];
-                foreach ($items as $it) {
-                    if (! is_array($it)) {
-                        continue;
-                    }
-                    $poNumber = trim((string) ($it['po_number'] ?? $it['poNumber'] ?? $it['po'] ?? ''));
-                    if ($poNumber === '') {
-                        continue;
-                    }
-                    $vendorCode = (string) ($it['vendor_code'] ?? $it['vendorCode'] ?? $it['vendor_id'] ?? $it['vendorId'] ?? '');
-                    $vendorName = (string) ($it['vendor_name'] ?? $it['vendorName'] ?? $it['vendor'] ?? '');
-                    $plant = (string) ($it['plant'] ?? $it['wh'] ?? '');
-
-                    $label = $poNumber;
-                    if (trim($vendorName) !== '') {
-                        $label .= ' - ' . trim($vendorName);
-                    }
-
-                    $out[] = [
-                        'po_number' => $poNumber,
-                        'label' => $label,
-                        'vendor_code' => $vendorCode,
-                        'vendor_name' => $vendorName,
-                        'plant' => $plant,
-                    ];
-
-                    if (count($out) >= $limit) {
-                        break;
-                    }
-                }
-
-                return $out;
-            } catch (\Throwable $e) {
+            \Log::info('SAP PO Search', [
+                'url' => $url,
+                'filter' => "contains(PoNo,'{$query}')",
+                'status' => $response->status(),
+                'body' => substr($response->body(), 0, 500)
+            ]);
+            
+            if (!$response->successful()) {
                 return [];
             }
-        }
 
-        $out = [];
-        foreach ($this->dummyPurchaseOrders as $po) {
-            $poNumber = (string) ($po['po_number'] ?? '');
-            $vendorName = (string) ($po['vendor_name'] ?? '');
-            $plant = (string) ($po['plant'] ?? '');
+            $json = $response->json();
+            $rows = $json['value'] ?? [];
+            
+            // Group by PoNo to get unique POs
+            $seen = [];
+            $results = [];
+            
+            foreach ($rows as $item) {
+                $poNo = (string)($item['PoNo'] ?? '');
+                if ($poNo === '' || isset($seen[$poNo])) continue;
+                
+                $seen[$poNo] = true;
+                
+                $supplierCode = (string) ($item['SupplierCode'] ?? '');
+                $supplierName = (string) ($item['SupplierName'] ?? '');
+                $customerCode = (string) ($item['CustomerCode'] ?? '');
+                $customerName = (string) ($item['CustomerName'] ?? '');
 
-            $hay = strtolower($poNumber . ' ' . $vendorName . ' ' . $plant);
-            if (strpos($hay, strtolower($query)) === false) {
-                continue;
+                $partnerRole = '';
+                $direction = '';
+                $partnerCode = '';
+                $partnerName = '';
+
+                if ($customerCode !== '') {
+                    $partnerRole = 'customer';
+                    $direction = 'outbound';
+                    $partnerCode = $customerCode;
+                    $partnerName = $customerName;
+                } else {
+                    $partnerRole = 'supplier';
+                    $direction = 'inbound';
+                    $partnerCode = $supplierCode;
+                    $partnerName = $supplierName;
+                }
+
+                $results[] = [
+                    'po_number' => $poNo,
+                    // Backward-compatible fields used across the app
+                    'vendor_code' => $partnerCode,
+                    'vendor_name' => $partnerName,
+                    // Explicit fields (new)
+                    'supplier_code' => $supplierCode,
+                    'supplier_name' => $supplierName,
+                    'customer_code' => $customerCode,
+                    'customer_name' => $customerName,
+                    'partner_role' => $partnerRole,
+                    'direction' => $direction,
+                    'doc_date' => (string)($item['DocDate'] ?? ''),
+                    'plant' => '',
+                    'warehouse_name' => '',
+                    'items' => [],
+                ];
             }
-
-            $out[] = [
-                'po_number' => $poNumber,
-                'label' => $poNumber . ' - ' . $vendorName,
-                'vendor_name' => $vendorName,
-                'plant' => $plant,
-            ];
-
-            if (count($out) >= $limit) {
-                break;
-            }
+            
+            return $results;
+        } catch (\Throwable $e) {
+            \Log::warning('SAP PO Search Error', ['error' => $e->getMessage()]);
+            return [];
         }
+    }
 
-        return $out;
+    /**
+     * Search POs by period using ZPO_HDR_LIST endpoint
+     * @param string $period Format YYYY.MM (e.g. 2026.01)
+     */
+    public function searchByPeriod(string $period): array
+    {
+        $baseUrl = trim((string) config('services.sap_po.base_url', ''));
+        $servicePath = trim((string) config('services.sap_po.service_path', ''));
+        $token = trim((string) config('services.sap_po.token', ''));
+        $username = trim((string) config('services.sap_po.username', ''));
+        $password = (string) config('services.sap_po.password', '');
+        $timeout = (int) config('services.sap_po.timeout', 15);
+        $sapClient = trim((string) config('services.sap_po.sap_client', '210'));
+        $verifySsl = (bool) config('services.sap_po.verify_ssl', false);
+
+        $endpoint = "/ZPO_HDR_LIST(period='{$period}')/Set";
+        $url = rtrim($baseUrl, '/') . $servicePath . $endpoint;
+
+        try {
+            $req = $this->buildSapRequest($timeout, $token, $username, $password, $sapClient, $verifySsl)->acceptJson();
+            $response = $req->get($url);
+            
+            if ($response->successful()) {
+                $json = $response->json();
+                return $json['value'] ?? [];
+            }
+        } catch (\Throwable $e) {
+            // Log::warning...
+        }
+        return [];
+    }
+
+    public function debugList($period = '2025.11')
+    {
+        return $this->searchByPeriod($period);
     }
 
     public function getByPoNumber(string $poNumber): ?array
@@ -246,14 +288,53 @@ class SapPoService
             }
 
             $first = $rows[0];
-            $vendorCode = (string) ($first['SupplierCode'] ?? '');
-            $vendorName = (string) ($first['SupplierName'] ?? '');
+            $supplierCode = (string) ($first['SupplierCode'] ?? '');
+            $supplierName = (string) ($first['SupplierName'] ?? '');
+            $customerCode = (string) ($first['CustomerCode'] ?? '');
+            $customerName = (string) ($first['CustomerName'] ?? '');
             $docDate = (string) ($first['DocDate'] ?? '');
+
+            $partnerRole = '';
+            $direction = '';
+            $partnerCode = '';
+            $partnerName = '';
+            if ($customerCode !== '') {
+                $partnerRole = 'customer';
+                $direction = 'outbound';
+                $partnerCode = $customerCode;
+                $partnerName = $customerName;
+            } else {
+                $partnerRole = 'supplier';
+                $direction = 'inbound';
+                $partnerCode = $supplierCode;
+                $partnerName = $supplierName;
+            }
 
             $items = [];
             foreach ($rows as $it) {
                 if (! is_array($it)) {
                     continue;
+                }
+
+                if (empty($items)) {
+                    $qtyFields = [];
+                    foreach ($it as $k => $v) {
+                        if (stripos((string) $k, 'qty') !== false) {
+                            $qtyFields[$k] = $v;
+                        }
+                    }
+
+                    \Log::info('SAP PO Detail Row Sample', [
+                        'po' => (string) ($first['PoNo'] ?? $poNumber),
+                        'keys' => array_slice(array_keys($it), 0, 60),
+                        'qty_fields' => $qtyFields,
+                        'ItemNo' => $it['ItemNo'] ?? null,
+                        'MaterialCode' => $it['MaterialCode'] ?? null,
+                        'MaterialName' => $it['MaterialName'] ?? null,
+                        'QtyPO' => $it['QtyPO'] ?? null,
+                        'UnitPO' => $it['UnitPO'] ?? null,
+                        'QtyGRTotal' => $it['QtyGRTotal'] ?? null,
+                    ]);
                 }
 
                 $items[] = [
@@ -268,8 +349,16 @@ class SapPoService
 
             return [
                 'po_number' => (string) ($first['PoNo'] ?? $poNumber),
-                'vendor_code' => $vendorCode,
-                'vendor_name' => $vendorName,
+                // Backward-compatible
+                'vendor_code' => $partnerCode,
+                'vendor_name' => $partnerName,
+                // Explicit fields
+                'supplier_code' => $supplierCode,
+                'supplier_name' => $supplierName,
+                'customer_code' => $customerCode,
+                'customer_name' => $customerName,
+                'partner_role' => $partnerRole,
+                'direction' => $direction,
                 'doc_date' => $docDate,
                 'plant' => '',
                 'warehouse_name' => '',

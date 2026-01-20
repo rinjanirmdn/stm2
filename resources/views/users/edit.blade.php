@@ -28,11 +28,18 @@
 
                     <div class="st-form-field" style="margin-bottom:10px;">
                         <label class="st-label">Role</label>
-                        <select name="role" class="st-select" required>
+                        <select name="role" class="st-select" required id="role">
                             <option value="operator" {{ old('role', $editUser->role) === 'operator' ? 'selected' : '' }}>Operator</option>
                             <option value="section_head" {{ old('role', $editUser->role) === 'section_head' ? 'selected' : '' }}>Section Head</option>
                             <option value="admin" {{ old('role', $editUser->role) === 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="vendor" {{ old('role', $editUser->role) === 'vendor' ? 'selected' : '' }}>Vendor</option>
                         </select>
+                    </div>
+
+                    <div class="st-form-field" style="margin-bottom:10px; display:none;" id="vendor_code_field">
+                        <label class="st-label">Vendor Code (SAP)</label>
+                        <input type="text" name="vendor_code" class="st-input" maxlength="20" value="{{ old('vendor_code', $editUser->vendor_code ?? '') }}" placeholder="e.g. 1100000263">
+                        <div style="font-size:12px;color:#6b7280;margin-top:4px;">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
                     </div>
 
                     <label style="display:flex;gap:8px;align-items:center;margin:12px 0 14px 0;">
@@ -61,3 +68,23 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var roleSelect = document.getElementById('role');
+    var vendorField = document.getElementById('vendor_code_field');
+
+    function syncVendorField() {
+        if (!roleSelect || !vendorField) return;
+        var role = String(roleSelect.value || '');
+        vendorField.style.display = role === 'vendor' ? 'block' : 'none';
+    }
+
+    if (roleSelect) {
+        roleSelect.addEventListener('change', syncVendorField);
+        syncVendorField();
+    }
+});
+</script>
+@endpush

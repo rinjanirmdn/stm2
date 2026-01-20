@@ -21,7 +21,9 @@ class User extends Authenticatable
     protected $fillable = [
         'nik',
         'full_name',
+        'email',
         'role',
+        'vendor_id',
         'is_active',
         'password',
     ];
@@ -46,5 +48,29 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Check if user is a vendor
+     */
+    public function isVendor(): bool
+    {
+        return $this->hasRole('vendor');
+    }
+
+    /**
+     * Get the vendor associated with this user
+     */
+    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
+    /**
+     * Get bookings requested by this vendor user
+     */
+    public function requestedBookings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Slot::class, 'requested_by');
     }
 }

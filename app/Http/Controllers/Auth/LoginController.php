@@ -86,6 +86,10 @@ class LoginController extends Controller
             }
         }
 
+        if ($user->hasRole('vendor')) {
+            return redirect()->intended(route('vendor.dashboard'));
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 

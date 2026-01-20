@@ -18,7 +18,7 @@ class VendorController extends Controller
 
     /**
      * AJAX Search for vendors (used in Create Slot form)
-     * Prioritizes SAP search then syncs to local DB
+     * Searches from local database (synced from SAP via PO access)
      */
     public function ajaxSearch(Request $request)
     {
@@ -29,64 +29,36 @@ class VendorController extends Controller
             return response()->json(['success' => true, 'data' => []]);
         }
 
-        // 1. Search in SAP
-        // Note: For now we assume SAP returns mixed types or we filter client-side.
-        // If SAP API supports type filter, pass it here.
-        $sapResults = [];
-        try {
-            $sapResults = $this->sapVendorService->search($q);
-        } catch (\Exception $e) {
-            // Ignore SAP errors, proceed to local
+        // Search from local database (synced from SAP)
+        $query = DB::table('business_partner')
+            ->select('id', 'bp_code as code', 'bp_name as name', 'bp_type as type')
+            ->where(function($sub) use ($q) {
+                $sub->where('bp_code', 'like', '%' . $q . '%')
+                    ->orWhere('bp_name', 'like', '%' . $q . '%');
+            });
+
+        // Filter by type if specified
+        if ($type === 'supplier') {
+            $query->whereIn('bp_type', ['supplier', 'VENDOR', 'Supplier']);
+        } elseif ($type === 'customer') {
+            $query->whereIn('bp_type', ['customer', 'CUSTOMER', 'Customer']);
         }
 
-        // 2. Process SAP Results & Sync
-        // We strictly use SAP results as requested.
-        $merged = [];
-        $seenCodes = [];
+        $results = $query->orderBy('bp_name')->limit(20)->get();
 
-        foreach ($sapResults as $sap) {
-            $code = strtoupper($sap['vendor_code']);
-            if (isset($seenCodes[$code])) continue;
-
-            $isRealSap = ($sap['source'] ?? '') === 'sap_api';
-            // Even though we disabled fallback in service, double check.
-            if (!$isRealSap) continue;
-
-            // Sync to DB (Update or Create)
-            $localId = null;
-            $existing = DB::table('business_partner')->where('bp_code', $code)->first();
-            
-            if ($existing) {
-                $localId = $existing->id;
-                // Optional: Update name if needed
-            } else {
-                // Insert new
-                $predictedType = $type ?: 'supplier'; 
-                
-                $localId = DB::table('business_partner')->insertGetId([
-                    'bp_code' => $code,
-                    'bp_name' => $sap['vendor_name'],
-                    'bp_type' => $predictedType, 
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $merged[] = [
-                'id' => $localId,
-                'code' => $code,
-                'name' => $sap['vendor_name'],
-                'type' => $existing ? $existing->bp_type : ($type ?: 'supplier'),
-                'source' => 'sap'
+        $data = $results->map(function($row) {
+            return [
+                'id' => $row->id,
+                'code' => $row->code,
+                'name' => $row->name,
+                'type' => strtolower($row->type ?? 'supplier'),
+                'source' => 'sap_synced' // Data originally from SAP, cached locally
             ];
-            $seenCodes[$code] = true;
-        }
-
-        // Removed Local DB Search Step entirely.
+        })->toArray();
 
         return response()->json([
             'success' => true,
-            'data' => array_slice($merged, 0, 20)
+            'data' => $data
         ]);
     }
 

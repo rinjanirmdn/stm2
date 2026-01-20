@@ -18,6 +18,12 @@ class RolePermissionSeeder extends Seeder
             'dashboard.view',
             'dashboard.range_filter',
 
+            'bookings.index',
+            'bookings.show',
+            'bookings.approve',
+            'bookings.reject',
+            'bookings.reschedule',
+
             'slots.index',
             'slots.create',
             'slots.store',
@@ -105,6 +111,14 @@ class RolePermissionSeeder extends Seeder
         // Buat role admin dengan semua permission
         $adminRole = Role::findOrCreate('Admin');
         $adminRole->givePermissionTo(Permission::all());
+
+        // Buat role vendor (akses portal vendor). Route vendor saat ini dilindungi oleh role:vendor.
+        // Beri permission minimum agar menu umum tetap bisa diakses jika dibutuhkan.
+        $vendorRole = Role::findOrCreate('vendor');
+        $vendorRole->givePermissionTo([
+            'dashboard.view',
+            'profile.index',
+        ]);
 
         // Buat role section_head dengan permission sesuai kebutuhan
         $sectionHeadRole = Role::findOrCreate('Section Head');

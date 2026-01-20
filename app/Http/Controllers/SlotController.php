@@ -38,6 +38,35 @@ class SlotController extends Controller
     {
         $results = $this->poSearchService->searchPo($request->get('q', ''));
 
+        /* 
+        // SECURITY FILTER DISABLED FOR TESTING
+        // Filter by Vendor if user is a vendor
+        if (auth()->check() && (auth()->user()->hasRole('vendor') || auth()->user()->hasRole('Vendor'))) {
+             $userVendorId = auth()->user()->vendor_id;
+             
+             if ($userVendorId) {
+                 $vendorCode = \Illuminate\Support\Facades\DB::table('business_partner')
+                    ->where('id', $userVendorId)
+                    ->value('bp_code');
+                 
+                 if ($vendorCode) {
+                     $results = array_filter($results, function($po) use ($vendorCode) {
+                          $poVendor = isset($po['vendor_code']) ? trim($po['vendor_code']) : '';
+                          $myVendor = trim($vendorCode);
+                          
+                          return strcasecmp($poVendor, $myVendor) === 0 || 
+                                 (is_numeric($poVendor) && is_numeric($myVendor) && intval($poVendor) == intval($myVendor));
+                     });
+                     
+                     $results = array_values($results);
+                 } else {
+                     // Allow empty for testing if vendor code not set?
+                     // $results = [];
+                 }
+             }
+        }
+        */
+
         return response()->json([
             'success' => true,
             'data' => $results,
