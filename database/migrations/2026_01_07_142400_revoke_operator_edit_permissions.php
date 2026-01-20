@@ -2,17 +2,33 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private function getRoleNameColumn(string $table): string
+    {
+        if (Schema::hasColumn($table, 'roles_name')) return 'roles_name';
+        return 'name';
+    }
+
+    private function getPermNameColumn(string $table): string
+    {
+        if (Schema::hasColumn($table, 'perm_name')) return 'perm_name';
+        return 'name';
+    }
+
     public function up(): void
     {
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $permissionsTable = (string) (config('permission.table_names.permissions') ?? 'permissions');
         $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
 
+        $roleNameCol = $this->getRoleNameColumn($rolesTable);
+        $permNameCol = $this->getPermNameColumn($permissionsTable);
+
         $roleId = DB::table($rolesTable)
-            ->whereRaw('LOWER(name) = ?', ['operator'])
+            ->whereRaw("LOWER({$roleNameCol}) = ?", ['operator'])
             ->value('id');
 
         if (! $roleId) {
@@ -27,7 +43,7 @@ return new class extends Migration
         ];
 
         $permissionIds = DB::table($permissionsTable)
-            ->whereIn('name', $permissionNames)
+            ->whereIn($permNameCol, $permissionNames)
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->toArray();
@@ -53,8 +69,11 @@ return new class extends Migration
         $permissionsTable = (string) (config('permission.table_names.permissions') ?? 'permissions');
         $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
 
+        $roleNameCol = $this->getRoleNameColumn($rolesTable);
+        $permNameCol = $this->getPermNameColumn($permissionsTable);
+
         $roleId = DB::table($rolesTable)
-            ->whereRaw('LOWER(name) = ?', ['operator'])
+            ->whereRaw("LOWER({$roleNameCol}) = ?", ['operator'])
             ->value('id');
 
         if (! $roleId) {
@@ -69,7 +88,7 @@ return new class extends Migration
         ];
 
         $permissionIds = DB::table($permissionsTable)
-            ->whereIn('name', $permissionNames)
+            ->whereIn($permNameCol, $permissionNames)
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->toArray();
@@ -96,3 +115,4 @@ return new class extends Migration
         }
     }
 };
+

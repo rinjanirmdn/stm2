@@ -12,8 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Dynamically detect column name
+        $roleNameCol = Schema::hasColumn('roles', 'roles_name') ? 'roles_name' : 'name';
+
         // Get Admin role ID
-        $adminRoleId = DB::table('roles')->where('name', 'Admin')->value('id');
+        $adminRoleId = DB::table('roles')->where($roleNameCol, 'Admin')->value('id');
 
         if (!$adminRoleId) {
             echo "Admin role not found!\n";
@@ -55,8 +58,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Dynamically detect column name
+        $roleNameCol = Schema::hasColumn('roles', 'roles_name') ? 'roles_name' : 'name';
+
         // Remove all Admin permissions
-        $adminRoleId = DB::table('roles')->where('name', 'Admin')->value('id');
+        $adminRoleId = DB::table('roles')->where($roleNameCol, 'Admin')->value('id');
 
         if ($adminRoleId) {
             DB::table('role_has_permissions')

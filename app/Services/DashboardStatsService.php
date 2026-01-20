@@ -12,109 +12,81 @@ class DashboardStatsService
 
     /**
      * Get range statistics for dashboard
+     * Optimized: Single query instead of 10 separate queries
      */
     public function getRangeStats(string $start, string $end): array
     {
-        $rangeParams = [$start, $end];
         $rangeDate = DB::raw('DATE(planned_start)');
 
+        // Single query with conditional aggregation instead of 10 separate queries
+        $stats = DB::table('slots')
+            ->whereBetween($rangeDate, [$start, $end])
+            ->selectRaw("
+                COUNT(*) AS total_all,
+                SUM(CASE WHEN status != 'cancelled' THEN 1 ELSE 0 END) AS total,
+                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
+                SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS active,
+                SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) AS scheduled,
+                SUM(CASE WHEN status IN ('arrived', 'waiting') THEN 1 ELSE 0 END) AS waiting,
+                SUM(CASE WHEN status IN ('scheduled', 'arrived', 'waiting') THEN 1 ELSE 0 END) AS pending,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN status = 'completed' AND is_late = true THEN 1 ELSE 0 END) AS late,
+                SUM(CASE WHEN direction = 'inbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS inbound,
+                SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound
+            ")
+            ->first();
+
         return [
-            'total_all' => (int) DB::table('slots')
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
-            'total' => (int) DB::table('slots')
-                ->whereBetween($rangeDate, $rangeParams)
-                ->where('status', '!=', 'cancelled')
-                ->count(),
-            'cancelled' => (int) DB::table('slots')
-                ->whereBetween($rangeDate, $rangeParams)
-                ->where('status', 'cancelled')
-                ->count(),
-            'active' => (int) DB::table('slots')
-                ->where('status', 'in_progress')
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
-            'scheduled' => (int) DB::table('slots')
-                ->where('status', 'scheduled')
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
-            'waiting' => (int) DB::table('slots')
-                ->whereIn('status', ['arrived', 'waiting'])
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
-            'pending' => (int) DB::table('slots')
-                ->whereIn('status', ['scheduled', 'arrived', 'waiting'])
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
-            'completed' => (int) DB::table('slots')
-                ->where('status', 'completed')
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
-            'late' => (int) DB::table('slots')
-                ->where('status', 'completed')
-                ->where('is_late', true)
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
-            'inbound' => (int) DB::table('slots')
-                ->where('direction', 'inbound')
-                ->where('status', '!=', 'cancelled')
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
-            'outbound' => (int) DB::table('slots')
-                ->where('direction', 'outbound')
-                ->where('status', '!=', 'cancelled')
-                ->whereBetween($rangeDate, $rangeParams)
-                ->count(),
+            'total_all' => (int) ($stats->total_all ?? 0),
+            'total' => (int) ($stats->total ?? 0),
+            'cancelled' => (int) ($stats->cancelled ?? 0),
+            'active' => (int) ($stats->active ?? 0),
+            'scheduled' => (int) ($stats->scheduled ?? 0),
+            'waiting' => (int) ($stats->waiting ?? 0),
+            'pending' => (int) ($stats->pending ?? 0),
+            'completed' => (int) ($stats->completed ?? 0),
+            'late' => (int) ($stats->late ?? 0),
+            'inbound' => (int) ($stats->inbound ?? 0),
+            'outbound' => (int) ($stats->outbound ?? 0),
         ];
     }
 
     /**
      * Get on-time statistics by direction
+     * Optimized: Single query with aggregation
      */
     public function getOnTimeStats(string $start, string $end): array
     {
         $rangeDate = DB::raw('DATE(planned_start)');
 
-        $onTimeRange = (int) DB::table('slots')
+        // Single query for all stats
+        $stats = DB::table('slots')
             ->where('status', 'completed')
-            ->where(function ($q) {
-                $q->where('is_late', false)->orWhereNull('is_late');
-            })
             ->whereBetween($rangeDate, [$start, $end])
-            ->count();
+            ->selectRaw("
+                SUM(CASE WHEN is_late = false OR is_late IS NULL THEN 1 ELSE 0 END) AS on_time_all,
+                SUM(CASE WHEN is_late = true THEN 1 ELSE 0 END) AS late_all,
+                SUM(CASE WHEN direction = 'inbound' AND (is_late = false OR is_late IS NULL) THEN 1 ELSE 0 END) AS on_time_in,
+                SUM(CASE WHEN direction = 'inbound' AND is_late = true THEN 1 ELSE 0 END) AS late_in,
+                SUM(CASE WHEN direction = 'outbound' AND (is_late = false OR is_late IS NULL) THEN 1 ELSE 0 END) AS on_time_out,
+                SUM(CASE WHEN direction = 'outbound' AND is_late = true THEN 1 ELSE 0 END) AS late_out
+            ")
+            ->first();
 
-        $lateRange = (int) DB::table('slots')
-            ->where('status', 'completed')
-            ->where('is_late', true)
-            ->whereBetween($rangeDate, [$start, $end])
-            ->count();
-
-        $onTimeDir = [
-            'all' => ['on_time' => $onTimeRange, 'late' => $lateRange],
-            'inbound' => ['on_time' => 0, 'late' => 0],
-            'outbound' => ['on_time' => 0, 'late' => 0],
+        return [
+            'all' => [
+                'on_time' => (int) ($stats->on_time_all ?? 0), 
+                'late' => (int) ($stats->late_all ?? 0)
+            ],
+            'inbound' => [
+                'on_time' => (int) ($stats->on_time_in ?? 0), 
+                'late' => (int) ($stats->late_in ?? 0)
+            ],
+            'outbound' => [
+                'on_time' => (int) ($stats->on_time_out ?? 0), 
+                'late' => (int) ($stats->late_out ?? 0)
+            ],
         ];
-
-        $onTimeDirRows = DB::table('slots')
-            ->whereBetween($rangeDate, [$start, $end])
-            ->groupBy('direction')
-            ->select([
-                'direction',
-                DB::raw("SUM(CASE WHEN status = 'completed' AND (is_late = false OR is_late IS NULL) THEN 1 ELSE 0 END) AS on_time"),
-                DB::raw("SUM(CASE WHEN status = 'completed' AND is_late = true THEN 1 ELSE 0 END) AS late"),
-            ])
-            ->get();
-
-        foreach ($onTimeDirRows as $r) {
-            $dir = (string) ($r->direction ?? '');
-            $key = $dir === 'inbound' ? 'inbound' : ($dir === 'outbound' ? 'outbound' : null);
-            if ($key) {
-                $onTimeDir[$key]['on_time'] = (int) ($r->on_time ?? 0);
-                $onTimeDir[$key]['late'] = (int) ($r->late ?? 0);
-            }
-        }
-
-        return $onTimeDir;
     }
 
     /**

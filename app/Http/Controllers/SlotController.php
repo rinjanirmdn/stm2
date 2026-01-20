@@ -283,7 +283,7 @@ class SlotController extends Controller
         // Backward-compatible single sort/dir values (used by some views/JS)
         $sort = $sorts[0] ?? '';
         $dir = $dirs[0] ?? 'desc';
-        $pageSize = $this->filterService->validatePageSize($request->query('page_size', 'all'));
+        $pageSize = $this->filterService->validatePageSize($request->query('page_size', '10'));
 
         // Build filtered query
         $query = $this->filterService->filterSlots($request);
@@ -296,28 +296,14 @@ class SlotController extends Controller
 
         $slots = $query->get();
 
-        // Recalculate blocking risk for each slot to ensure real-time accuracy (except cancelled slots)
+        // Note: Blocking risk is now recalculated in background by RecalculateBlockingRiskJob
+        // which runs every 5 minutes via Laravel scheduler.
+        // This removes the N+1 query problem that was causing 20+ second page loads.
+        // The blocking_risk value from database is used directly (set in buildBaseQuery select).
+        
+        // For display purposes, map blocking_risk to 'blocking' property
         foreach ($slots as $slot) {
-            if ((string) ($slot->status ?? '') !== 'cancelled') {
-                $currentRiskLevel = $this->slotService->calculateBlockingRisk(
-                    (int) $slot->warehouse_id,
-                    $slot->planned_gate_id ? (int) $slot->planned_gate_id : null,
-                    (string) ($slot->planned_start ?? ''),
-                    (int) ($slot->planned_duration ?? 0),
-                    (int) ($slot->id ?? 0) ?: null
-                );
-                $slot->blocking = $currentRiskLevel; // Override the database value
-            }
-
-            if ((string) ($slot->slot_type ?? 'planned') === 'planned' && (string) ($slot->status ?? '') !== 'cancelled' && empty($slot->ticket_number)) {
-                $warehouseId = (int) ($slot->warehouse_id ?? 0);
-                $gateId = !empty($slot->planned_gate_id) ? (int) $slot->planned_gate_id : null;
-                $ticket = $this->slotService->generateTicketNumber($warehouseId, $gateId);
-                DB::table('slots')->where('id', (int) ($slot->id ?? 0))->update([
-                    'ticket_number' => $ticket,
-                ]);
-                $slot->ticket_number = $ticket;
-            }
+            $slot->blocking = (int) ($slot->blocking_risk ?? 0);
         }
 
         // Get filter options
@@ -508,6 +494,19 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Failed to create slot');
         }
 
+        // Calculate blocking risk immediately after creation (real-time accuracy)
+        $blockingRisk = $this->slotService->calculateBlockingRisk(
+            $warehouseId,
+            $plannedGateId,
+            $plannedStart,
+            $plannedDurationMinutes,
+            $slotId
+        );
+        DB::table('slots')->where('id', $slotId)->update([
+            'blocking_risk' => $blockingRisk,
+            'blocking_risk_cached_at' => now(),
+        ]);
+
         return redirect()->route('slots.index')->with('success', 'Slot created successfully');
     }
 
@@ -520,6 +519,24 @@ class SlotController extends Controller
 
         $slotType = (string) ($slot->slot_type ?? 'planned');
         $isUnplanned = $slotType === 'unplanned';
+
+        // Calculate blocking risk in real-time for detail page (always accurate)
+        if ((string) ($slot->status ?? '') !== 'cancelled' && !$isUnplanned) {
+            $currentRiskLevel = $this->slotService->calculateBlockingRisk(
+                (int) $slot->warehouse_id,
+                $slot->planned_gate_id ? (int) $slot->planned_gate_id : null,
+                (string) ($slot->planned_start ?? ''),
+                (int) ($slot->planned_duration ?? 0),
+                (int) $slot->id
+            );
+            $slot->blocking = $currentRiskLevel;
+            
+            // Also update the database so list page shows accurate value
+            DB::table('slots')->where('id', $slotId)->update([
+                'blocking_risk' => $currentRiskLevel,
+                'blocking_risk_cached_at' => now(),
+            ]);
+        }
 
         if (! $isUnplanned && (string) ($slot->status ?? '') !== 'cancelled' && empty($slot->ticket_number)) {
             $warehouseId = (int) ($slot->warehouse_id ?? 0);
@@ -604,7 +621,7 @@ class SlotController extends Controller
 
         $sort = $sorts[0] ?? '';
         $dir = $dirs[0] ?? 'desc';
-        $pageSize = $request->get('page_size', '50');
+        $pageSize = $request->get('page_size', '10');
 
         // If sort is explicitly 'reset', use default but don't pass to view
         $isResetSort = (!is_array($rawSort) && (string) $rawSort === 'reset');
@@ -1058,6 +1075,19 @@ class SlotController extends Controller
 
             $this->slotService->logActivity($slotId, 'status_change', 'Slot updated');
         });
+
+        // Recalculate blocking risk immediately after update (real-time accuracy)
+        $blockingRisk = $this->slotService->calculateBlockingRisk(
+            $warehouseId,
+            $plannedGateId,
+            $plannedStart,
+            $plannedDurationMinutes,
+            $slotId
+        );
+        DB::table('slots')->where('id', $slotId)->update([
+            'blocking_risk' => $blockingRisk,
+            'blocking_risk_cached_at' => now(),
+        ]);
 
         return redirect()->route('slots.index')->with('success', 'Slot updated successfully');
     }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class SlotFilterService
@@ -345,15 +346,18 @@ class SlotFilterService
      */
     public function getFilterOptions(): array
     {
-        return [
-            'warehouses' => DB::table('warehouses')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
-            'gates' => DB::table('gates as g')
-                ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
-                ->select(['g.gate_number', 'g.warehouse_id', 'w.wh_code as warehouse_code'])
-                ->orderBy('w.wh_code')
-                ->orderBy('g.gate_number')
-                ->get(),
-        ];
+        // Cache filter options for 30 minutes to reduce database queries
+        return Cache::remember('slot_filter_options', now()->addMinutes(30), function () {
+            return [
+                'warehouses' => DB::table('warehouses')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
+                'gates' => DB::table('gates as g')
+                    ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+                    ->select(['g.gate_number', 'g.warehouse_id', 'w.wh_code as warehouse_code'])
+                    ->orderBy('w.wh_code')
+                    ->orderBy('g.gate_number')
+                    ->get(),
+            ];
+        });
     }
 
     /**
@@ -363,8 +367,9 @@ class SlotFilterService
     {
         $pageSizeAllowed = ['10', '25', '50', '100', 'all'];
 
+        // Default to '10' for better performance instead of loading all records
         if (!in_array($pageSize, $pageSizeAllowed, true)) {
-            return 'all';
+            return '10';
         }
 
         return $pageSize;
