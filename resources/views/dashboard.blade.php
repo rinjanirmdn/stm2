@@ -22,11 +22,20 @@
                         </div>
                         <div class="st-form-field" style="align-self:flex-end;min-width:120px;flex:0 0 auto;">
                             <button type="submit" class="st-btn st-btn--secondary">Apply</button>
-                            <a href="{{ route('dashboard', ['range_start' => $today]) }}" class="st-btn st-btn--secondary">Reset</a>
+                            <a href="{{ route('dashboard', ['range_start' => \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'), 'range_end' => $today]) }}" class="st-btn st-btn--secondary">Reset</a>
                         </div>
                     </form>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(6, minmax(120px, 1fr));gap:8px;">
+                <div style="display:grid;grid-template-columns:repeat(7, minmax(120px, 1fr));gap:8px;">
+                    <div class="st-mini-card st-mini-card--with-info">
+                        <div class="st-text--small st-text--muted">Pending</div>
+                        <div class="st-mini-card__value-row">
+                            <div style="font-size:26px;font-weight:700;">{{ $pendingRange ?? 0 }}</div>
+                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Pending" title="Permintaan booking yang menunggu persetujuan (approval) sebelum masuk ke jadwal resmi.">
+                                <i class="fa-solid fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="st-mini-card st-mini-card--with-info">
                         <div class="st-text--small st-text--muted">Scheduled</div>
                         <div class="st-mini-card__value-row">
@@ -85,6 +94,7 @@
 
                 <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
                     <div>
+                        <br>
                         <h2 class="st-card__title">Analytics</h2>
                         <div class="st-card__subtitle">Ringkasan performa & bottleneck</div>
                     </div>
@@ -98,7 +108,7 @@
                     <div class="st-chart-grid">
                         <div class="st-chart-col-8">
                             <div class="st-chart-card">
-                                <div class="st-chart-card__title">Completed Trend</div>
+                                <div class="st-chart-card__title" id="chart_trend_title">Completed Trend</div>
                                 <div class="st-chart-wrap">
                                     <canvas id="chart_trend"></canvas>
                                 </div>
@@ -142,16 +152,14 @@
 
                         <div class="st-chart-col-4">
                             <div class="st-chart-card">
-                                <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;">
-                                    <div>
-                                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;">
-                                            <div class="st-chart-card__title" style="margin:0;">Bottleneck (Avg waiting)</div>
-                                            <select id="bottleneck_dir" class="st-select" style="max-width:110px;min-width:90px;">
-                                                <option value="all">All</option>
-                                                <option value="inbound">Inbound</option>
-                                                <option value="outbound">Outbound</option>
-                                            </select>
-                                        </div>
+                                <div style="display:flex;flex-direction:column;gap:6px;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <div class="st-chart-card__title" style="margin:0;white-space:nowrap;">Bottleneck (Avg waiting)</div>
+                                        <select id="bottleneck_dir" class="st-select" style="max-width:110px;min-width:90px;">
+                                            <option value="all">All</option>
+                                            <option value="inbound">Inbound</option>
+                                            <option value="outbound">Outbound</option>
+                                        </select>
                                     </div>
                                     <div class="st-text--small st-text--muted">Top 20, threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} minutes</div>
                                 </div>
@@ -1342,7 +1350,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var isDarkLocal = false;
                 try { isDarkLocal = (document.documentElement && document.documentElement.getAttribute('data-theme') === 'dark'); } catch (e) {}
 
-                function drawPill(text, x, y) {
+                function drawPill(text, x, y, customColor) {
                     if (!text) return;
                     var fontSize = 10;
                     ctx.save();
@@ -1350,7 +1358,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    ctx.fillStyle = isDarkLocal ? 'rgba(226,232,240,0.98)' : 'rgba(15,23,42,0.95)';
+                    ctx.fillStyle = customColor || (isDarkLocal ? 'rgba(226,232,240,0.98)' : 'rgba(15,23,42,0.95)');
+                    // Add grey outline if customColor is used (assuming it's white for bars)
+                   if (customColor) {
+                       ctx.lineWidth = 2;
+                       ctx.strokeStyle = '#475569'; // Slate-600 grey
+                       ctx.strokeText(text, x, y);
+                   }
                     ctx.fillText(text, x, y);
                     ctx.restore();
                 }
@@ -1368,7 +1382,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (!el || typeof el.x !== 'number') return;
                             var x = el.x;
                             var y = (typeof el.y === 'number' && typeof el.base === 'number') ? ((el.y + el.base) / 2) : el.y;
-                            drawPill(String(v), x, y);
+                            // Make bar text white
+                            drawPill(String(v), x, y, '#ffffff');
                         });
                     }
 
@@ -1426,7 +1441,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function withDataLabels(cfg, type) {
+    function withDataLabels(cfg, type, isCompact) {
         if (!dataLabelsPlugin) return cfg;
         cfg.plugins = cfg.plugins || [];
         if (cfg.plugins.indexOf(dataLabelsPlugin) === -1) {
@@ -1462,19 +1477,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Tambahkan layout padding agar ada ruang untuk label
             cfg.options.layout = cfg.options.layout || {};
-            cfg.options.layout.padding = { top: 28, bottom: 28, left: 44, right: 44 };
-
-            // Posisikan legend di bawah dengan jarak yang cukup
-            cfg.options.plugins.legend = cfg.options.plugins.legend || {};
-            cfg.options.plugins.legend.position = 'bottom';
-            cfg.options.plugins.legend.labels = cfg.options.plugins.legend.labels || {};
-            cfg.options.plugins.legend.labels.padding = 15;
-            cfg.options.plugins.legend.labels.boxWidth = 12;
-            cfg.options.plugins.legend.labels.font = { size: 11 };
-
-            // Kurangi radius chart agar ada ruang untuk label di luar
-            cfg.options.cutout = cfg.options.cutout || '50%';
-            cfg.options.radius = '68%';
+            
+            if (isCompact) {
+                // Compact mode (Direction Chart) - Reduced padding, Larger Radius
+                cfg.options.layout.padding = { top: 15, bottom: 15, left: 20, right: 20 };
+                cfg.options.cutout = cfg.options.cutout || '55%';
+                cfg.options.radius = '90%';
+            } else {
+                // Normal mode (KPI, etc) - Standard padding, Smaller Radius
+                cfg.options.layout.padding = { top: 28, bottom: 28, left: 44, right: 44 };
+                cfg.options.cutout = cfg.options.cutout || '50%';
+                cfg.options.radius = '68%';
+            }
         } else {
             cfg.options.plugins.datalabels = Object.assign({
                 anchor: 'end',
@@ -1500,6 +1514,25 @@ document.addEventListener('DOMContentLoaded', function () {
     var numbers = readJsonFromEl('dashboard_numbers') || {};
     var inbound = parseInt(numbers.inbound || 0, 10);
     var outbound = parseInt(numbers.outbound || 0);
+
+    // Update chart title with month name
+    if (trendDays && trendDays.length > 0) {
+        try {
+            var firstDay = trendDays[0]; // YYYY-MM-DD
+            if (firstDay) {
+                var d = new Date(firstDay);
+                if (!isNaN(d.getTime())) {
+                    var monthName = d.toLocaleString('en-US', { month: 'long' });
+                    // Optional: Add Year if needed
+                    // var year = d.getFullYear();
+                    var titleEl = document.getElementById('chart_trend_title');
+                    if (titleEl) {
+                        titleEl.textContent = 'Completed Trend for ' + monthName; 
+                    }
+                }
+            }
+        } catch(e) { console.error('Error updating title date', e); }
+    }
 
     // Update direction mini cards
     var inboundEl = document.getElementById('direction_inbound_value');
@@ -1617,15 +1650,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         // Assuming radius is width/2 for full capsule
                         var r = width / 2;
                         ctx.moveTo(x - width/2 + r, top);
-                        ctx.lineTo(x + width/2 - r, top);
-                        ctx.quadraticCurveTo(x + width/2, top, x + width/2, top + r);
-                        ctx.lineTo(x + width/2, top + height - r);
-                        ctx.quadraticCurveTo(x + width/2, top + height, x + width/2 - r, top + height);
-                        ctx.lineTo(x - width/2 + r, top + height);
-                        ctx.quadraticCurveTo(x - width/2, top + height, x - width/2, top + height - r);
-                        ctx.lineTo(x - width/2, top + r);
-                        ctx.quadraticCurveTo(x - width/2, top, x - width/2 + r, top);
-                        ctx.closePath();
+                        // Simple Rect Clip for unified shape compatibility
+                        ctx.rect(x - width/2, top, width, height);
                         ctx.clip();
 
                         // Simulated Left-Reflection Gradient
@@ -1651,7 +1677,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (ds.type === 'line' && ds.label === 'Completed') {
                 ctx.save();
                 // 1. Antigravity Line Shadow
-                ctx.shadowColor = 'rgba(21, 128, 61, 0.5)'; // Dark Green Glow
+                ctx.shadowColor = 'rgba(54, 63, 57, 0.5)'; // Dark Green Glow
                 ctx.shadowBlur = 15;
                 ctx.shadowOffsetY = 12; // Floating effect
                 ctx.shadowOffsetX = 0;
@@ -1675,7 +1701,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         var x = pt.x;
                         var y = pt.y;
-                        var r = 6; // Bead radius
+                        var r = 4; // Bead radius
 
                         // Bead Shadow (closer to object)
                         ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
@@ -1694,9 +1720,25 @@ document.addEventListener('DOMContentLoaded', function () {
                         ctx.fillStyle = grad;
                         ctx.fill();
                         
-                        // Optional: Very thin rim for definition
-                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                        ctx.lineWidth = 0.5;
+                        // Check if Sunday (Holiday)
+                        var dateLabel = chart.data.labels[index];
+                        var isSunday = false;
+                        if (dateLabel) {
+                            var dObj = new Date(dateLabel);
+                            if (dObj && !isNaN(dObj.getTime()) && dObj.getDay() === 0) {
+                                isSunday = true;
+                            }
+                        }
+
+                        if (isSunday) {
+                            // Red outline for Sunday
+                            ctx.strokeStyle = '#dc2626'; 
+                        } else {
+                            // Green outline matching the line
+                            ctx.strokeStyle = '#238a1bff';
+                        }
+                        
+                        ctx.lineWidth = 2;
                         ctx.stroke();
                     });
                     ctx.restore();
@@ -1727,7 +1769,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     backgroundColor: 'rgba(20, 184, 166, 0.85)', // Solid Teal
                     borderColor: 'rgba(20, 184, 166, 0.8)', // Stronger Outline
                     borderWidth: 1, // Full outline
-                    borderRadius: 100, // Fully rounded capsule
+                    borderRadius: { bottomLeft: 0, bottomRight: 0, topLeft: 0, topRight: 0 }, // Flat bottom aligned with X-axis
+                    borderSkipped: false, // Ensure rounded corners draw
                     maxBarThickness: 20,
                     order: 2,
                     datalabels: { display: false }
@@ -1740,7 +1783,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     backgroundColor: 'rgba(2, 132, 199, 0.85)', // Solid Primary Blue 
                     borderColor: 'rgba(2, 132, 199, 0.8)', // Stronger Outline
                     borderWidth: 1, // Full outline
-                    borderRadius: 100, // Fully rounded capsule
+                    borderRadius: { topLeft: 100, topRight: 100, bottomLeft: 0, bottomRight: 0 }, // Top half capsule
+                    borderSkipped: false, // Ensure rounded corners draw
                     maxBarThickness: 20,
                     order: 2,
                     datalabels: { display: false }
@@ -1749,7 +1793,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     type: 'line',
                     label: 'Completed',
                     data: trendCounts,
-                    borderColor: '#15803d', // Dark Green
+                    borderColor: '#238a1bff', // Dark Green
                     backgroundColor: function(context) {
                         const chart = context.chart;
                         const {ctx, chartArea} = chart;
@@ -1811,6 +1855,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         var n = parseInt(v || 0, 10) || 0;
                         return (label ? (label + ': ') : '') + n.toLocaleString();
                     };
+                    // Custom sort order for tooltip: Completed, Outbound, Inbound
+                    var labelOrder = { 'Completed': 1, 'Outbound': 2, 'Inbound': 3 };
+                    t.itemSort = function(a, b) {
+                        var orderA = labelOrder[a.dataset.label] || 99;
+                        var orderB = labelOrder[b.dataset.label] || 99;
+                        return orderA - orderB;
+                    };
                     return t;
                 })(),
                 stShadow: { color: stTheme.shadow, blur: 18, offsetY: 8, offsetX: 0 }
@@ -1853,7 +1904,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 y: {
                     beginAtZero: true,
-                    suggestedMax: Math.max(10, (trendCounts || []).reduce(function (m, v) { return Math.max(m, parseInt(v || 0, 10) || 0); }, 0) + 1),
+                    suggestedMax: Math.max(10, (trendCounts || []).reduce(function (m, v) { return Math.max(m, parseInt(v || 0, 10) || 0); }, 0) * 1.25),
                     grid: { 
                         borderColor: '#d1d5db', 
                         borderWidth: 0.5, 
@@ -1922,7 +1973,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 stShadow: { color: stTheme.shadow, blur: 14, offsetY: 8, offsetX: 0 }
             }
         }
-    }, 'doughnut'));
+    }, 'doughnut', true)); // isCompact = true for Direction Chart
 
     var onTimeChart = makeChart(onTimeCanvas, withDataLabels({
         type: 'doughnut',
@@ -2009,7 +2060,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 ],
                 backgroundColor: function (ctx) {
                     var idx = ctx && typeof ctx.dataIndex === 'number' ? ctx.dataIndex : 0;
-                    var base = idx === 0 ? '#2563eb' : (isDark ? '#334155' : '#e5e7eb');
+                    var base = idx === 0 ? '#15803d' : (isDark ? '#334155' : '#e5e7eb');
                     var chart = ctx && ctx.chart ? ctx.chart : null;
                     if (!chart || !chart.chartArea) return base;
                     var area = chart.chartArea;

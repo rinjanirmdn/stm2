@@ -29,75 +29,6 @@
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
 
     <title>@yield('title', 'Slot Time Management')</title>
-    <script>
-        // Prevent FOUC by setting theme immediately before any CSS loads
-        (function() {
-            var stored = localStorage.getItem('st-theme') || '';
-            var theme = (stored === 'dark' || stored === 'light') ? stored :
-                       ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
-    </script>
-    <style>
-        /* FORCE LIGHT MODE - Override all dark theme CSS */
-        html[data-theme="dark"] .flatpickr-calendar,
-        html[data-theme="dark"] .flatpickr-calendar *,
-        html[data-theme="dark"] .flatpickr-months,
-        html[data-theme="dark"] .flatpickr-weekdays,
-        html[data-theme="dark"] .flatpickr-day,
-        html[data-theme="dark"] .flatpickr-time,
-        html[data-theme="dark"] .flatpickr-am-pm,
-        html[data-theme="dark"] .flatpickr-innerContainer,
-        html[data-theme="dark"] .flatpickr-rContainer {
-            background: #ffffff !important;
-            color: #374151 !important;
-            border-color: #e5e7eb !important;
-        }
-
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-month,
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-current-month,
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-weekday {
-            color: #374151 !important;
-        }
-
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-day.today {
-            border-color: #3b82f6 !important;
-        }
-
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-day.selected,
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-day.startRange,
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-day.endRange {
-            background: #3b82f6 !important;
-            color: #ffffff !important;
-            border-color: #3b82f6 !important;
-        }
-
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-day:hover {
-            background: #f3f4f6 !important;
-            border-color: #3b82f6 !important;
-            color: #3b82f6 !important;
-        }
-
-        html[data-theme="dark"] .flatpickr-calendar .flatpickr-time input {
-            background: #ffffff !important;
-            color: #374151 !important;
-            border-color: #e5e7eb !important;
-        }
-
-        /* Force light theme for dropdown */
-        html[data-theme="dark"] .st-select,
-        html[data-theme="dark"] .st-select *,
-        html[data-theme="dark"] .st-select option {
-            background: #ffffff !important;
-            color: #374151 !important;
-            border-color: #d1d5db !important;
-        }
-
-        html[data-theme="dark"] .st-select option:checked {
-            background: #3b82f6 !important;
-            color: #ffffff !important;
-        }
-    </style>
     <!-- Preconnect untuk performa lebih baik -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -218,10 +149,6 @@
                         <span class="st-topbar__user-role">{{ auth()->user()?->getRoleNames()?->first() ?? auth()->user()->role ?? 'operator' }}</span>
                     </div>
                     <div class="st-topbar__user-actions">
-                        <button type="button" class="st-icon-button" id="st-theme-toggle" title="Toggle theme" style="border:0;cursor:pointer;">
-                            <i class="fa-solid fa-moon"></i>
-                        </button>
-
                         <!-- Notification Component -->
                         <div class="st-notification">
                             <button type="button" class="st-notification-btn" id="st-notification-btn">
@@ -336,68 +263,6 @@
     }
 </script>
 <script>
-    (function () {
-        function getStoredTheme() {
-            try {
-                return localStorage.getItem('st-theme') || '';
-            } catch (e) {
-                return '';
-            }
-        }
-
-        function storeTheme(theme) {
-            try {
-                localStorage.setItem('st-theme', theme);
-            } catch (e) {
-                // ignore
-            }
-        }
-
-        function getSystemTheme() {
-            try {
-                return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-            } catch (e) {
-                return 'light';
-            }
-        }
-
-        function setTheme(theme) {
-            var html = document.documentElement;
-            html.setAttribute('data-theme', theme);
-            storeTheme(theme);
-
-            var btn = document.getElementById('st-theme-toggle');
-            if (!btn) return;
-            if (theme === 'dark') {
-                btn.innerHTML = '<i class="fa-solid fa-sun"></i>';
-                btn.setAttribute('title', 'Light mode');
-            } else {
-                btn.innerHTML = '<i class="fa-solid fa-moon"></i>';
-                btn.setAttribute('title', 'Dark mode');
-            }
-        }
-
-        function initTheme() {
-            var stored = getStoredTheme();
-            var theme = stored === 'dark' || stored === 'light' ? stored : getSystemTheme();
-            setTheme(theme);
-
-            var btn = document.getElementById('st-theme-toggle');
-            if (btn) {
-                btn.addEventListener('click', function () {
-                    var current = document.documentElement.getAttribute('data-theme') || 'light';
-                    setTheme(current === 'dark' ? 'light' : 'dark');
-                });
-            }
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initTheme);
-        } else {
-            initTheme();
-        }
-    })();
-
     window.stPrintTicket = function (url) {
         try {
             var finalUrl = url;
