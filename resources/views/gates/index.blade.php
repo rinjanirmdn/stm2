@@ -10,6 +10,9 @@
     $daySlots = \App\Models\Slot::with('vendor')
         ->whereDate('planned_start', $paramDate)
         ->whereNotIn('status', ['cancelled', 'rejected'])
+        ->where(function($q) {
+            $q->whereNull('slot_type')->orWhere('slot_type', 'planned');
+        })
         ->get();
     
     // Filter for Unassigned Slots (planned_gate_id is null)
@@ -138,6 +141,9 @@
                     // Fetch slots with the same filters as the sidebar to ensure consistency
                     $daySlots = \App\Models\Slot::whereDate('planned_start', $paramDate)
                         ->whereNotIn('status', ['cancelled', 'rejected'])
+                        ->where(function($q) {
+                            $q->whereNull('slot_type')->orWhere('slot_type', 'planned');
+                        })
                         ->get();
                 @endphp
 

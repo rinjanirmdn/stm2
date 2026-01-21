@@ -23,6 +23,9 @@ class GateStreamingService
             ->leftJoin('slots as s', function ($join) {
                 $join->on('g.id', '=', 's.planned_gate_id')
                      ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
+                     ->where(function($q) {
+                         $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+                     })
                      ->where('s.planned_start', '<=', now())
                      ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)') . ' >= ?', [now()]);
             })
@@ -141,6 +144,9 @@ class GateStreamingService
             ->leftJoin('slots as s', function ($join) {
                 $join->on('g.id', '=', 's.planned_gate_id')
                      ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
+                     ->where(function($q) {
+                         $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+                     })
                      ->where('s.planned_start', '<=', now())
                      ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)') . ' >= ?', [now()]);
             })

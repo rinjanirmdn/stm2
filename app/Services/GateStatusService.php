@@ -45,6 +45,9 @@ class GateStatusService
             ->where('s.status', 'in_progress')
             ->whereIn('s.actual_gate_id', $laneGateIds)
             ->whereDate('s.actual_start', $today)
+            ->where(function($q) {
+                $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+            })
             ->orderByDesc('s.actual_start')
             ->select(['s.id', 's.po_id', 's.actual_start'])
             ->first();
@@ -68,6 +71,9 @@ class GateStatusService
             ->whereIn('s.planned_gate_id', $laneGateIds)
             ->whereIn('s.status', ['scheduled', 'arrived', 'waiting'])
             ->whereDate('s.planned_start', $today)
+            ->where(function($q) {
+                $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+            })
             ->orderBy('s.planned_start', 'asc')
             ->select(['s.id', 's.po_id', 's.planned_start', 's.status'])
             ->first();
@@ -231,6 +237,9 @@ class GateStatusService
             ->whereIn('s.planned_gate_id', $laneGateIds)
             ->whereDate('s.planned_start', $date)
             ->where('s.status', '!=', 'cancelled')
+            ->where(function($q) {
+                $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+            })
             ->whereRaw("{$hourExpr} <= ?", [$hour])
             ->whereRaw("{$endHourExpr} > ?", [$hour])
             ->count();
@@ -290,6 +299,9 @@ class GateStatusService
                     })
                     ->whereIn('g.id', $laneGateIds)
                     ->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start)'), $date)
+                    ->where(function($q) {
+                        $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+                    })
                     ->select([
                         DB::raw('COUNT(*) as total_slots'),
                         DB::raw("SUM(CASE WHEN s.status = 'completed' THEN 1 ELSE 0 END) as completed_slots"),
