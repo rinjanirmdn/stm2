@@ -356,6 +356,7 @@ class ScheduleTimelineService
                 $q->whereNull('s.slot_type')
                   ->orWhere('s.slot_type', '!=', 'unplanned');
             })
+            ->whereNotIn('s.status', ['pending_approval', 'pending_vendor_confirmation', 'cancelled'])
             ->select([
                 's.id',
                 's.status',
@@ -392,6 +393,7 @@ class ScheduleTimelineService
                 $q->whereNull('s.slot_type')
                   ->orWhere('s.slot_type', '!=', 'unplanned');
             })
+            ->whereNotIn('s.status', ['pending_approval', 'pending_vendor_confirmation', 'cancelled'])
             ->select([
                 's.id',
                 's.direction',

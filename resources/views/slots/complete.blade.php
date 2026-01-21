@@ -37,9 +37,16 @@
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Driver <span style="color:#dc2626;">*</span></label>
+                    <label class="st-label">Driver Name <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <input type="text" name="driver_name" class="st-input" value="{{ old('driver_name') }}">
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Driver Number <span style="color:#dc2626;">*</span></label>
                     <input type="text" name="driver_number" class="st-input" required value="{{ old('driver_number') }}">
                 </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
                     <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
                     <textarea name="notes" class="st-textarea" rows="3">{{ old('notes') }}</textarea>

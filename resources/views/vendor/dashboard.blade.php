@@ -171,7 +171,6 @@
                                             $badges = [
                                                 'pending_approval' => 'warning',
                                                 'scheduled' => 'success',
-                                                'rejected' => 'danger',
                                                 'completed' => 'primary',
                                                 'pending_vendor_confirmation' => 'warning',
                                                 'cancelled' => 'secondary'

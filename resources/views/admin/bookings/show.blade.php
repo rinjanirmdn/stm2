@@ -38,10 +38,10 @@
         <i class="fas fa-check-circle"></i>
         <strong>Confirmed</strong> - This booking is approved and scheduled.
     </div>
-    @elseif($booking->status === 'rejected')
+    @elseif($booking->status === 'cancelled')
     <div class="st-alert st-alert--danger">
         <i class="fas fa-times-circle"></i>
-        <strong>Rejected</strong> - {{ $booking->approval_notes }}
+        <strong>Cancelled</strong> - {{ $booking->cancelled_reason ?? $booking->approval_notes }}
     </div>
     @endif
 
@@ -63,6 +63,34 @@
                         <span class="st-badge st-badge--{{ $booking->status_badge_color }}">
                             {{ $booking->status_label }}
                         </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Direction</td>
+                    <td>
+                        <span class="st-badge st-badge--{{ $booking->direction === 'inbound' ? 'info' : 'warning' }}">
+                            {{ ucfirst($booking->direction) }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>COA</td>
+                    <td>
+                        @if(!empty($booking->coa_path))
+                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                        @else
+                            -
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td>Surat Jalan</td>
+                    <td>
+                        @if(!empty($booking->surat_jalan_path))
+                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
+                        @else
+                            -
+                        @endif
                     </td>
                 </tr>
                 <tr>
@@ -140,11 +168,21 @@
             <table class="st-detail-table">
                 <tr>
                     <td>Warehouse</td>
-                    <td>{{ $booking->warehouse?->name ?? '-' }}</td>
+                    @php
+                        $whCode = $booking->warehouse?->wh_code ?? null;
+                        $whName = $booking->warehouse?->wh_name ?? ($booking->warehouse?->name ?? null);
+                    @endphp
+                    <td>
+                        @if(!empty($whCode) || !empty($whName))
+                            {{ trim(($whCode ? ($whCode . ' - ') : '') . ($whName ?? '')) }}
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
                 <tr>
                     <td>Gate</td>
-                    <td>{{ $booking->plannedGate?->name ?? 'To be assigned' }}</td>
+                    <td>{{ $booking->plannedGate?->gate_number ?? ($booking->plannedGate?->name ?? 'To be assigned') }}</td>
                 </tr>
                 <tr>
                     <td>Date</td>
@@ -213,6 +251,35 @@
             @can('bookings.approve')
             <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" style="display: inline;">
                 @csrf
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+                    <div>
+                        <label class="st-label" style="margin-bottom:6px; display:block;">Gate (optional)</label>
+                        @php
+                            $whId = (int) ($booking->warehouse_id ?? 0);
+                            $gateOptions = $whId > 0 ? ($gates[$whId] ?? collect()) : collect();
+                            if ($gateOptions instanceof \Illuminate\Support\Collection === false) {
+                                $gateOptions = collect($gateOptions);
+                            }
+                            if ($gateOptions->isEmpty()) {
+                                $gateOptions = $gates->flatten(1);
+                            }
+                        @endphp
+                        <select name="planned_gate_id" class="st-select" style="min-width:220px;">
+                            <option value="">Auto</option>
+                            @foreach($gateOptions as $g)
+                                @php
+                                    $gid = $g->id ?? null;
+                                    $label = $g->gate_number ?? ($g->name ?? ('Gate #' . ($gid ?? '')));
+                                @endphp
+                                @if($gid)
+                                    <option value="{{ $gid }}" {{ (string)old('planned_gate_id') === (string)$gid ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
                 <button type="submit" class="st-button st-button--success st-button--lg" onclick="return confirm('Approve this booking with the current schedule?')">
                     <i class="fas fa-check"></i>
                     Approve Booking

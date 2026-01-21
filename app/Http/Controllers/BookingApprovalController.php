@@ -180,6 +180,7 @@ class BookingApprovalController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string|max:500',
+            'planned_gate_id' => 'nullable|integer|exists:gates,id',
         ]);
 
         $slot = Slot::whereIn('status', [
@@ -188,6 +189,70 @@ class BookingApprovalController extends Controller
             ])->findOrFail($id);
 
         try {
+            $warehouseId = (int) ($slot->warehouse_id ?? 0);
+            $plannedStart = (string) ($slot->planned_start ?? '');
+            $durationMinutes = (int) ($slot->planned_duration ?? 0);
+
+            $requestedGateId = $request->filled('planned_gate_id') ? (int) $request->planned_gate_id : null;
+            $effectiveGateId = $requestedGateId ?: (!empty($slot->planned_gate_id) ? (int) $slot->planned_gate_id : null);
+
+            if ($warehouseId > 0 && $plannedStart !== '' && $durationMinutes > 0) {
+                if ($requestedGateId) {
+                    $check = $this->bookingService->checkAvailability(
+                        $warehouseId,
+                        $requestedGateId,
+                        $plannedStart,
+                        $durationMinutes,
+                        (int) $slot->id
+                    );
+                    if (empty($check['available'])) {
+                        $reason = (string) ($check['reason'] ?? 'Gate tidak tersedia');
+                        return back()->with('error', $reason);
+                    }
+                    $effectiveGateId = $requestedGateId;
+                }
+
+                if (!$effectiveGateId) {
+                    $gatesQ = Gate::where('warehouse_id', $warehouseId);
+                    if (Schema::hasColumn('gates', 'is_active')) {
+                        $gatesQ->where('is_active', true);
+                    }
+                    $candidateGates = $gatesQ->orderBy('gate_number')->get();
+
+                    $bestGateId = null;
+                    $bestRisk = null;
+                    foreach ($candidateGates as $g) {
+                        $gid = (int) ($g->id ?? 0);
+                        if ($gid <= 0) continue;
+                        $check = $this->bookingService->checkAvailability(
+                            $warehouseId,
+                            $gid,
+                            $plannedStart,
+                            $durationMinutes,
+                            (int) $slot->id
+                        );
+                        if (empty($check['available'])) {
+                            continue;
+                        }
+                        $risk = (int) ($check['blocking_risk'] ?? 0);
+                        if ($bestGateId === null || $risk < (int) $bestRisk) {
+                            $bestGateId = $gid;
+                            $bestRisk = $risk;
+                        }
+                    }
+
+                    if ($bestGateId === null) {
+                        return back()->with('error', 'Gate penuh / tidak tersedia untuk jadwal ini. Silakan reschedule atau pilih waktu lain.');
+                    }
+                    $effectiveGateId = $bestGateId;
+                }
+            }
+
+            if ($effectiveGateId) {
+                $slot->planned_gate_id = $effectiveGateId;
+                $slot->save();
+            }
+
             $this->bookingService->approveBooking($slot, Auth::user(), $request->notes);
 
             return redirect()
@@ -330,7 +395,7 @@ class BookingApprovalController extends Controller
         // Get slots for the date (including pending ones)
         $slots = Slot::where('warehouse_id', $warehouseId)
             ->whereDate('planned_start', $date)
-            ->whereNotIn('status', [Slot::STATUS_CANCELLED, Slot::STATUS_REJECTED])
+            ->whereNotIn('status', [Slot::STATUS_CANCELLED])
             ->with(['vendor', 'requester'])
             ->get()
             ->groupBy('planned_gate_id');

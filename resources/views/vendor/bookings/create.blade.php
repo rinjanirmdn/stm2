@@ -15,7 +15,7 @@
         </a>
     </div>
 
-    <form method="POST" action="{{ route('vendor.bookings.store') }}" id="booking-form">
+    <form method="POST" action="{{ route('vendor.bookings.store') }}" id="booking-form" enctype="multipart/form-data">
         @csrf
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
@@ -115,17 +115,52 @@
                            placeholder="e.g., B 1234 ABC" value="{{ old('vehicle_number') }}">
                     <small style="color: #64748b;">Can be provided later before arrival</small>
                 </div>
+
+                <div class="vendor-form-group">
+                    <label class="vendor-form-label">Driver Name (Optional)</label>
+                    <input type="text" name="driver_name" class="vendor-form-input" 
+                           placeholder="e.g., Budi" value="{{ old('driver_name') }}">
+                    <small style="color: #64748b;">Driver name for coordination</small>
+                </div>
+
+                <div class="vendor-form-group">
+                    <label class="vendor-form-label">Driver Number (Optional)</label>
+                    <input type="text" name="driver_number" class="vendor-form-input" 
+                           placeholder="e.g., 08xxxxxxxxxx" value="{{ old('driver_number') }}">
+                    <small style="color: #64748b;">Driver contact/ID for coordination</small>
+                </div>
             </div>
 
             <!-- Right Column -->
             <div>
                 <h3 style="margin-bottom: 1rem; color: #374151; font-size: 1rem; font-weight: 600;">
-                    <i class="fas fa-clock"></i>
-                    Schedule
+                    <i class="fas fa-file-pdf"></i>
+                    Documents
                 </h3>
 
                 <div class="vendor-form-group">
-                    <label class="vendor-form-label">Date <span style="color: #ef4444;">*</span></label>
+                    <label class="vendor-form-label">COA (PDF) <span style="color: #ef4444;">*</span></label>
+                    <input type="file" name="coa_pdf" class="vendor-form-input" accept="application/pdf" required>
+                    @error('coa_pdf')
+                        <small style="color: #ef4444;">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                <div class="vendor-form-group">
+                    <label class="vendor-form-label">Surat Jalan (PDF) (Optional)</label>
+                    <input type="file" name="surat_jalan_pdf" class="vendor-form-input" accept="application/pdf">
+                    @error('surat_jalan_pdf')
+                        <small style="color: #ef4444;">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                <h3 style="margin-bottom: 1rem; margin-top: 2rem; color: #374151; font-size: 1rem; font-weight: 600;">
+                    <i class="fas fa-calendar"></i>
+                    Schedule Preference
+                </h3>
+
+                <div class="vendor-form-group">
+                    <label class="vendor-form-label">Preferred Date <span style="color: #ef4444;">*</span></label>
                     <input type="date" name="planned_date" class="vendor-form-input" required
                            min="{{ date('Y-m-d') }}" value="{{ old('planned_date', date('Y-m-d')) }}" id="planned_date">
                     @error('planned_date')

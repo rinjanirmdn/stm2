@@ -9,7 +9,7 @@
         $urlPoDetailTemplate = route('slots.ajax.po_detail', ['poNumber' => '__PO__']);
     @endphp
     <div class="st-card">
-        <form method="POST" action="{{ route('unplanned.store') }}">
+        <form method="POST" action="{{ route('unplanned.store') }}" enctype="multipart/form-data">
             @csrf
 
             @if ($errors->any())
@@ -34,8 +34,13 @@
                     <div style="position:relative;">
                         <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po" style="display:none;"></div>
+                        <div id="po_preview" style="margin-top:8px;"></div>
+                        <div id="po_items_group" style="display:none;margin-top:10px;"></div>
                     </div>
                     @error('po_number')
+                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                    @error('po_items')
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
@@ -168,12 +173,33 @@
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
+                    <label class="st-label">Driver Name <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <input type="text" name="driver_name" class="st-input" value="{{ old('driver_name') }}">
+                </div>
+                <div class="st-form-field">
                     <label class="st-label">Driver Number <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
                     <input type="text" name="driver_number" class="st-input" value="{{ old('driver_number') }}">
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
                     <input type="text" name="notes" class="st-input" value="{{ old('notes') }}">
+                </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;">
+                <div class="st-form-field">
+                    <label class="st-label">COA (PDF) <span style="color:#dc2626;">*</span></label>
+                    <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
+                    @error('coa_pdf')
+                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Surat Jalan (PDF) <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <input type="file" name="surat_jalan_pdf" class="st-input{{ $errors->has('surat_jalan_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
+                    @error('surat_jalan_pdf')
+                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
@@ -184,6 +210,7 @@
         </form>
     </div>
 
+    <script type="application/json" id="old_po_items_json">{!! json_encode(old('po_items', [])) !!}</script>
     <script type="application/json" id="slot_routes_json">{!! json_encode([
         'po_search' => route('slots.ajax.po_search'),
         'po_detail_template' => route('slots.ajax.po_detail', ['poNumber' => '__PO__']),
@@ -205,9 +232,19 @@ document.addEventListener('DOMContentLoaded', function () {
     var urlPoSearch = slotRoutes.po_search || '';
     var urlPoDetailTemplate = slotRoutes.po_detail_template || '';
 
+    var oldPoItems = {};
+    try {
+        var oldPoItemsEl = document.getElementById('old_po_items_json');
+        oldPoItems = oldPoItemsEl ? JSON.parse(oldPoItemsEl.textContent || '{}') : {};
+    } catch (e) {
+        oldPoItems = {};
+    }
+
     // PO/DO autocomplete
     var poInput = document.getElementById('po_number');
     var poSuggestions = document.getElementById('po_suggestions');
+    var poPreview = document.getElementById('po_preview');
+    var poItemsGroup = document.getElementById('po_items_group');
     var vendorSelect = document.getElementById('vendor_id');
     var vendorSearch = document.getElementById('vendor_search');
     var directionSelect = document.getElementById('direction');
@@ -255,12 +292,90 @@ document.addEventListener('DOMContentLoaded', function () {
         poSuggestions.style.display = 'block';
     }
 
+    function setPoPreview(po) {
+        if (poPreview) {
+            if (!po) {
+                poPreview.textContent = '';
+            } else {
+                var items = Array.isArray(po.items) ? po.items : [];
+                poPreview.innerHTML = ''
+                    + '<div class="po-preview__box">'
+                    + '<div class="po-preview__title">' + (po.po_number || '') + '</div>'
+                    + '<div class="po-preview__info">Vendor: ' + (po.vendor_name || '-') + '</div>'
+                    + '<div class="po-preview__info">Plant: ' + (po.plant || '-') + '</div>'
+                    + '<div class="po-preview__info">Doc Date: ' + (po.doc_date || '-') + '</div>'
+                    + '<div class="po-preview__items">Items: ' + items.length + '</div>'
+                    + '</div>';
+            }
+        }
+
+        if (!poItemsGroup) return;
+        poItemsGroup.style.display = 'none';
+        poItemsGroup.innerHTML = '';
+        if (!po || !Array.isArray(po.items) || po.items.length === 0) {
+            return;
+        }
+
+        var items = po.items;
+        var html = '';
+        html += '<div style="font-weight:600;margin-bottom:6px;">PO Items & Quantity for This Unplanned (Optional)</div>';
+        html += '<div class="st-table-wrapper" style="margin-top:6px;">';
+        html += '<table class="st-table" style="font-size:12px;">';
+        html += '<thead><tr>'
+            + '<th style="width:70px;">Item</th>'
+            + '<th>Material</th>'
+            + '<th style="width:120px;text-align:right;">Qty PO</th>'
+            + '<th style="width:120px;text-align:right;">Booked</th>'
+            + '<th style="width:120px;text-align:right;">Remaining</th>'
+            + '<th style="width:160px;">Qty This Unplanned</th>'
+            + '</tr></thead><tbody>';
+
+        items.forEach(function (it) {
+            if (!it) return;
+            var itemNo = String(it.item_no || '').trim();
+            if (!itemNo) return;
+            var mat = String(it.material || '').trim();
+            var desc = String(it.description || '').trim();
+            var uom = String(it.uom || '').trim();
+            var qtyPo = (it.qty !== undefined && it.qty !== null) ? String(it.qty) : '-';
+            var qtyBooked = (it.qty_booked !== undefined && it.qty_booked !== null) ? String(it.qty_booked) : '0';
+            var remaining = (it.remaining_qty !== undefined && it.remaining_qty !== null) ? String(it.remaining_qty) : '-';
+
+            var oldQty = '';
+            try {
+                if (oldPoItems && oldPoItems[itemNo] && oldPoItems[itemNo].qty !== undefined && oldPoItems[itemNo].qty !== null) {
+                    oldQty = String(oldPoItems[itemNo].qty);
+                }
+            } catch (e) {}
+
+            html += '<tr>';
+            html += '<td><strong>' + itemNo + '</strong></td>';
+            html += '<td>' + mat + (desc ? (' - ' + desc) : '') + '</td>';
+            html += '<td style="text-align:right;">' + qtyPo + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td style="text-align:right;">' + qtyBooked + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td style="text-align:right;"><strong>' + remaining + '</strong>' + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td>';
+            html += '<input type="number" step="0.001" min="0" name="po_items[' + itemNo + '][qty]" class="st-input" style="max-width:140px;" value="' + (oldQty || '') + '" placeholder="0">';
+            html += '</td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        html += '<div class="st-text--small st-text--muted" style="margin-top:6px;">Opsional: isi qty jika ingin tercatat sebagai pengiriman untuk PO ini.</div>';
+
+        poItemsGroup.innerHTML = html;
+        poItemsGroup.style.display = 'block';
+    }
+
     function fetchPoDetail(poNumber, callback) {
-        fetch("{{ route('slots.ajax.po_search') }}?q=" + encodeURIComponent(poNumber))
-            .then(function (r) { return r.json(); })
+        if (!poNumber) {
+            callback({ success: false });
+            return;
+        }
+        getJson(String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber)))
             .then(function (data) {
-                if (data.success && data.data && data.data.length > 0) {
-                    callback({ success: true, data: data.data[0] });
+                if (data && data.success && data.data) {
+                    callback({ success: true, data: data.data });
                 } else {
                     callback({ success: false });
                 }
@@ -317,6 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
             clearPoSuggestions();
             fetchPoDetail(po, function (data) {
                 if (data.success && data.data) {
+                    setPoPreview(data.data);
                     if (data.data.vendor_id && vendorSelect) {
                         vendorSelect.value = String(data.data.vendor_id);
                     }

@@ -25,7 +25,7 @@
                             value="{{ old('ticket_number', $slot->ticket_number ?? '') }}"
                             readonly
                         >
-                        @if (!empty($slot->ticket_number) && $slot->status !== 'cancelled' && $slot->status !== 'completed')
+                        @if (!empty($slot->ticket_number) && in_array((string) ($slot->status ?? ''), ['scheduled', 'waiting', 'in_progress'], true))
                             @unless(optional(auth()->user())->hasRole('Operator'))
                             @can('slots.ticket')
                             <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary" style="white-space:nowrap;" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">Print Ticket</a>

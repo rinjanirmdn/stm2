@@ -5,7 +5,7 @@
 
 @section('content')
     <div class="st-card">
-        <form method="POST" action="{{ route('slots.store') }}">
+        <form method="POST" action="{{ route('slots.store') }}" enctype="multipart/form-data">
             @csrf
 
             @if ($errors->any())
@@ -31,8 +31,12 @@
                         <input type="text" id="po_number" autocomplete="off" name="po_number" maxlength="12" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po" style="display:none;"></div>
                         <div id="po_preview" style="margin-top:8px;"></div>
+                        <div id="po_items_group" style="display:none;margin-top:10px;"></div>
                     </div>
                     @error('po_number')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                    @error('po_items')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
@@ -175,6 +179,57 @@
                 </div>
             </div>
 
+            <div class="st-form-row" style="margin-bottom:12px;">
+                <div class="st-form-field">
+                    <label class="st-label">Vehicle Number <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="vehicle_number_snap" class="st-input{{ $errors->has('vehicle_number_snap') ? ' st-input--invalid' : '' }}" value="{{ old('vehicle_number_snap') }}" placeholder="e.g., B 1234 ABC">
+                    @error('vehicle_number_snap')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Driver Name <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="driver_name" class="st-input{{ $errors->has('driver_name') ? ' st-input--invalid' : '' }}" value="{{ old('driver_name') }}" placeholder="e.g., Budi">
+                    @error('driver_name')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Driver Number <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="driver_number" class="st-input{{ $errors->has('driver_number') ? ' st-input--invalid' : '' }}" value="{{ old('driver_number') }}" placeholder="e.g., 08xxxxxxxxxx">
+                    @error('driver_number')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;">
+                <div class="st-form-field">
+                    <label class="st-label">COA (PDF) <span class="st-text--danger-dark">*</span></label>
+                    <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
+                    @error('coa_pdf')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Surat Jalan (PDF) <span class="st-text--optional">(optional)</span></label>
+                    <input type="file" name="surat_jalan_pdf" class="st-input{{ $errors->has('surat_jalan_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
+                    @error('surat_jalan_pdf')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;">
+                <div class="st-form-field" style="width:100%;">
+                    <label class="st-label">Notes <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="notes" class="st-input{{ $errors->has('notes') ? ' st-input--invalid' : '' }}" value="{{ old('notes') }}" placeholder="Any special notes...">
+                    @error('notes')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
 
             <div style="margin-top:4px;display:flex;gap:8px;">
                 <button type="submit" class="st-btn" id="save_button">Save</button>
@@ -211,6 +266,7 @@
     </div>
 
     <script type="application/json" id="truck_type_durations_json">{!! json_encode($truckTypeDurations ?? []) !!}</script>
+    <script type="application/json" id="old_po_items_json">{!! json_encode(old('po_items', [])) !!}</script>
     <script type="application/json" id="slot_routes_json">{!! json_encode([
         'check_risk' => route('slots.ajax.check_risk'),
         'check_slot_time' => route('slots.ajax.check_slot_time'),
@@ -230,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var poInput = document.getElementById('po_number');
     var poSuggestions = document.getElementById('po_suggestions');
     var poPreview = document.getElementById('po_preview');
+    var poItemsGroup = document.getElementById('po_items_group');
     var vendorSelect = document.getElementById('vendor_id');
     var vendorSearch = document.getElementById('vendor_search');
     var vendorSuggestions = document.getElementById('vendor_suggestions');
@@ -291,6 +348,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var urlPoSearch = slotRoutes.po_search || '';
     var urlPoDetailTemplate = slotRoutes.po_detail_template || '';
     var urlVendorSearch = slotRoutes.vendor_search || '';
+
+    var oldPoItems = {};
+    try {
+        var oldPoItemsEl = document.getElementById('old_po_items_json');
+        oldPoItems = oldPoItemsEl ? JSON.parse(oldPoItemsEl.textContent || '{}') : {};
+    } catch (e) {
+        oldPoItems = {};
+    }
 
     var vendorDebounceTimer = null;
 
@@ -383,6 +448,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setPoPreview(po) {
         if (!poPreview) return;
+        if (poItemsGroup) {
+            poItemsGroup.style.display = 'none';
+            poItemsGroup.innerHTML = '';
+        }
         if (!po) {
             poPreview.textContent = 'Belum ada data PO/DO.';
             return;
@@ -397,6 +466,62 @@ document.addEventListener('DOMContentLoaded', function () {
             + '<div class="po-preview__info">Doc Date: ' + (po.doc_date || '-') + '</div>'
             + '<div class="po-preview__items">Items: ' + items.length + '</div>'
             + '</div>';
+
+        if (!poItemsGroup) return;
+        if (!items.length) {
+            poItemsGroup.style.display = 'none';
+            poItemsGroup.innerHTML = '';
+            return;
+        }
+
+        var html = '';
+        html += '<div style="font-weight:600;margin-bottom:6px;">PO Items & Quantity for This Slot <span class="st-text--danger-dark">*</span></div>';
+        html += '<div class="st-table-wrapper" style="margin-top:6px;">';
+        html += '<table class="st-table" style="font-size:12px;">';
+        html += '<thead><tr>'
+            + '<th style="width:70px;">Item</th>'
+            + '<th>Material</th>'
+            + '<th style="width:120px;text-align:right;">Qty PO</th>'
+            + '<th style="width:120px;text-align:right;">Booked</th>'
+            + '<th style="width:120px;text-align:right;">Remaining</th>'
+            + '<th style="width:160px;">Qty This Slot</th>'
+            + '</tr></thead><tbody>';
+
+        items.forEach(function (it) {
+            if (!it) return;
+            var itemNo = String(it.item_no || '').trim();
+            if (!itemNo) return;
+            var mat = String(it.material || '').trim();
+            var desc = String(it.description || '').trim();
+            var uom = String(it.uom || '').trim();
+            var qtyPo = (it.qty !== undefined && it.qty !== null) ? String(it.qty) : '-';
+            var qtyBooked = (it.qty_booked !== undefined && it.qty_booked !== null) ? String(it.qty_booked) : '0';
+            var remaining = (it.remaining_qty !== undefined && it.remaining_qty !== null) ? String(it.remaining_qty) : '-';
+
+            var oldQty = '';
+            try {
+                if (oldPoItems && oldPoItems[itemNo] && oldPoItems[itemNo].qty !== undefined && oldPoItems[itemNo].qty !== null) {
+                    oldQty = String(oldPoItems[itemNo].qty);
+                }
+            } catch (e) {}
+
+            html += '<tr>';
+            html += '<td><strong>' + itemNo + '</strong></td>';
+            html += '<td>' + mat + (desc ? (' - ' + desc) : '') + '</td>';
+            html += '<td style="text-align:right;">' + qtyPo + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td style="text-align:right;">' + qtyBooked + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td style="text-align:right;"><strong>' + remaining + '</strong>' + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td>';
+            html += '<input type="number" step="0.001" min="0" name="po_items[' + itemNo + '][qty]" class="st-input" style="max-width:140px;" value="' + (oldQty || '') + '" placeholder="0">';
+            html += '</td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        html += '<div class="st-text--small st-text--muted" style="margin-top:6px;">Input quantity untuk pengiriman slot ini. Sisa qty tetap tersedia untuk slot berikutnya.</div>';
+
+        poItemsGroup.innerHTML = html;
+        poItemsGroup.style.display = 'block';
     }
 
     function fetchPoDetail(poNumber) {

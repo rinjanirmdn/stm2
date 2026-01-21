@@ -77,6 +77,24 @@
                         <div style="font-weight:600;">Ticket Number</div>
                         <div>{{ !empty($slot->ticket_number) ? $slot->ticket_number : '-' }}</div>
 
+                        <div style="font-weight:600;">COA</div>
+                        <div>
+                            @if(!empty($slot->coa_path))
+                                <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                            @else
+                                -
+                            @endif
+                        </div>
+
+                        <div style="font-weight:600;">Surat Jalan</div>
+                        <div>
+                            @if(!empty($slot->surat_jalan_path))
+                                <a href="{{ asset('storage/' . $slot->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
+                            @else
+                                -
+                            @endif
+                        </div>
+
                         <div style="font-weight:600;">Vendor</div>
                         <div>{{ $slot->vendor_name ?? '-' }}</div>
 
@@ -192,7 +210,7 @@
         </div>
     </div>
 
-    @if (! $isUnplanned && !empty($slot->ticket_number) && $status !== 'cancelled' && $slot->status !== 'completed')
+    @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
         @unless(optional(auth()->user())->hasRole('Operator'))
         @can('slots.ticket')
         <div style="margin-bottom:12px;display:flex;justify-content:flex-end;">
@@ -241,23 +259,10 @@
     @endif
 
     <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
-        @if (! $isUnplanned)
-            @if (in_array($status, ['scheduled'], true))
-                <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary">Arrival</a>
-            @elseif ($status === 'arrived')
-                <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary">Update Arrival</a>
-                <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Slot</a>
-            @elseif ($status === 'waiting')
-                <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Slot</a>
-            @elseif ($status === 'in_progress')
-                <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Slot</a>
-            @endif
-        @else
-            @if ($status === 'waiting')
-                <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Slot</a>
-            @elseif ($status === 'in_progress')
-                <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Slot</a>
-            @endif
+        @if ($status === 'waiting')
+            <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Slot</a>
+        @elseif ($status === 'in_progress')
+            <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Slot</a>
         @endif
 
         <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('unplanned.index') }}" class="st-btn st-btn--secondary">Back</a>

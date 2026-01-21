@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BookingHistory;
+use App\Models\Gate;
 use App\Models\Slot;
 use App\Models\User;
 use App\Notifications\BookingApproved;
@@ -15,6 +16,7 @@ use DateTime;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class BookingApprovalService
 {
@@ -34,12 +36,6 @@ class BookingApprovalService
     public function createBookingRequest(array $data, User $vendor): Slot
     {
         // Removed DB::transaction to debug persistence issue
-        // Generate ticket number
-        $ticketNumber = $this->slotService->generateTicketNumber(
-            (int) $data['warehouse_id'],
-            $data['planned_gate_id'] ?? null
-        );
-
         // Calculate planned finish
         $plannedFinish = $this->slotService->computePlannedFinish(
             $data['planned_start'],
@@ -47,16 +43,35 @@ class BookingApprovalService
         );
 
         // Create slot with pending_approval status
+        $notes = isset($data['notes']) ? trim((string) $data['notes']) : '';
+
+        $bpId = $vendor->vendor_id;
+        if (empty($bpId)) {
+            $vendorCode = trim((string) ($vendor->vendor_code ?? ''));
+            if ($vendorCode !== '') {
+                $row = DB::table('business_partner')
+                    ->whereRaw('LOWER(bp_code) = LOWER(?)', [$vendorCode])
+                    ->select(['id'])
+                    ->first();
+                if ($row) {
+                    $bpId = (int) ($row->id ?? 0);
+                }
+            }
+        }
+
         $slot = Slot::create([
-            'ticket_number' => $ticketNumber,
+            'ticket_number' => null,
             'direction' => $data['direction'],
             'warehouse_id' => $data['warehouse_id'],
-            'bp_id' => $vendor->vendor_id,
+            'bp_id' => $bpId ?: null,
             'planned_gate_id' => $data['planned_gate_id'] ?? null,
             'planned_start' => $data['planned_start'],
             'planned_duration' => $data['planned_duration'],
             'truck_type' => $data['truck_type'] ?? null,
             'vehicle_number_snap' => $data['vehicle_number'] ?? null,
+            'driver_name' => $data['driver_name'] ?? null,
+            'driver_number' => $data['driver_number'] ?? null,
+            'late_reason' => $notes !== '' ? $notes : null,
             'po_id' => $data['po_id'] ?? null,
             'status' => Slot::STATUS_PENDING_APPROVAL,
             'slot_type' => 'planned',
@@ -72,7 +87,7 @@ class BookingApprovalService
             $vendor->id,
             Slot::STATUS_PENDING_APPROVAL,
             null,
-            $data['notes'] ?? null,
+            $notes !== '' ? $notes : null,
             [
                 'new_planned_start' => $data['planned_start'],
                 'new_planned_duration' => $data['planned_duration'],
@@ -101,7 +116,18 @@ class BookingApprovalService
         return DB::transaction(function () use ($slot, $admin, $notes) {
             $oldStatus = $slot->status;
 
+            $this->ensurePlannedGateAssigned($slot);
+
+            $ticketNumber = $slot->ticket_number;
+            if (empty($ticketNumber)) {
+                $ticketNumber = $this->slotService->generateTicketNumber(
+                    (int) $slot->warehouse_id,
+                    $slot->planned_gate_id ? (int) $slot->planned_gate_id : null
+                );
+            }
+
             $slot->update([
+                'ticket_number' => $ticketNumber,
                 'status' => Slot::STATUS_SCHEDULED,
                 'approved_by' => $admin->id,
                 'approval_action' => Slot::APPROVAL_APPROVED,
@@ -126,6 +152,55 @@ class BookingApprovalService
         });
     }
 
+    private function ensurePlannedGateAssigned(Slot $slot): void
+    {
+        if (!empty($slot->planned_gate_id)) {
+            return;
+        }
+
+        $warehouseId = (int) ($slot->warehouse_id ?? 0);
+        $plannedStart = (string) ($slot->planned_start ?? '');
+        $durationMinutes = (int) ($slot->planned_duration ?? 0);
+        if ($warehouseId <= 0 || $plannedStart === '' || $durationMinutes <= 0) {
+            return;
+        }
+
+        $gatesQ = Gate::where('warehouse_id', $warehouseId);
+        if (Schema::hasColumn('gates', 'is_active')) {
+            $gatesQ->where('is_active', true);
+        }
+        $candidateGates = $gatesQ->orderBy('gate_number')->get();
+
+        $bestGateId = null;
+        $bestRisk = null;
+        foreach ($candidateGates as $g) {
+            $gid = (int) ($g->id ?? 0);
+            if ($gid <= 0) {
+                continue;
+            }
+            $check = $this->checkAvailability(
+                $warehouseId,
+                $gid,
+                $plannedStart,
+                $durationMinutes,
+                (int) ($slot->id ?? 0)
+            );
+            if (empty($check['available'])) {
+                continue;
+            }
+            $risk = (int) ($check['blocking_risk'] ?? 0);
+            if ($bestGateId === null || $risk < (int) $bestRisk) {
+                $bestGateId = $gid;
+                $bestRisk = $risk;
+            }
+        }
+
+        if ($bestGateId !== null) {
+            $slot->planned_gate_id = $bestGateId;
+            $slot->save();
+        }
+    }
+
     /**
      * Reject a booking request
      */
@@ -135,11 +210,13 @@ class BookingApprovalService
             $oldStatus = $slot->status;
 
             $slot->update([
-                'status' => Slot::STATUS_REJECTED,
+                'status' => Slot::STATUS_CANCELLED,
                 'approved_by' => $admin->id,
                 'approval_action' => Slot::APPROVAL_REJECTED,
                 'approval_notes' => $reason,
                 'approved_at' => now(),
+                'cancelled_reason' => $reason,
+                'cancelled_at' => now(),
             ]);
 
             // Log booking history
@@ -147,7 +224,7 @@ class BookingApprovalService
                 $slot->id,
                 BookingHistory::ACTION_REJECTED,
                 $admin->id,
-                Slot::STATUS_REJECTED,
+                Slot::STATUS_CANCELLED,
                 $oldStatus,
                 $reason
             );
@@ -187,6 +264,8 @@ class BookingApprovalService
                 'original_planned_gate_id' => $originalGateId,
             ]);
 
+            $this->ensurePlannedGateAssigned($slot);
+
             // Log booking history
             BookingHistory::logAction(
                 $slot->id,
@@ -220,7 +299,18 @@ class BookingApprovalService
         return DB::transaction(function () use ($slot, $vendor) {
             $oldStatus = $slot->status;
 
+            $this->ensurePlannedGateAssigned($slot);
+
+            $ticketNumber = $slot->ticket_number;
+            if (empty($ticketNumber)) {
+                $ticketNumber = $this->slotService->generateTicketNumber(
+                    (int) $slot->warehouse_id,
+                    $slot->planned_gate_id ? (int) $slot->planned_gate_id : null
+                );
+            }
+
             $slot->update([
+                'ticket_number' => $ticketNumber,
                 'status' => Slot::STATUS_SCHEDULED,
                 'vendor_confirmed_at' => now(),
             ]);

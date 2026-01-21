@@ -29,10 +29,9 @@ class SlotStoreRequest extends FormRequest
     {
         return [
             'po_number' => [
-                'nullable',
+                'required',
                 'string',
-                'max:50',
-                'exists:po,po_number'
+                'max:12'
             ],
             'truck_number' => [
                 'nullable',

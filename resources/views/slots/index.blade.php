@@ -562,7 +562,7 @@
                                                 @endunless
                                             @endif
 
-                                            @if (!$hasArrival && $status !== 'cancelled')
+                                            @if (!$hasArrival && $status === 'scheduled')
                                                 <a href="{{ route('slots.arrival', ['slotId' => $row->id]) }}" class="tw-action" data-tooltip="Arrival" aria-label="Arrival">
                                                     <i class="fa-solid fa-truck"></i>
                                                 </a>
@@ -587,7 +587,7 @@
                                             @endcan
                                         @endif
 
-                                        @if (!empty($row->ticket_number) && $status !== 'cancelled' && $status !== 'completed')
+                                        @if (!empty($row->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
                                             @unless(optional(auth()->user())->hasRole('Operator'))
                                             @can('slots.ticket')
                                             <a href="{{ route('slots.ticket', ['slotId' => $row->id]) }}" class="tw-action" data-tooltip="Print Ticket" aria-label="Print Ticket" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
