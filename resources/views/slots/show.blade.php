@@ -11,6 +11,9 @@
 @section('content')
     @php
         $status = (string) ($slot->status ?? '');
+        if ($status === 'rejected') {
+            $status = 'cancelled';
+        }
         $slotTypeVal = (string) ($slot->slot_type ?? 'planned');
         $hasArrival = !empty($slot->arrival_time);
 
@@ -89,6 +92,24 @@
 
                         <div class="st-detail-label">Ticket Number</div>
                         <div>{{ !empty($slot->ticket_number) ? $slot->ticket_number : '-' }}</div>
+
+                        <div class="st-detail-label">COA</div>
+                        <div>
+                            @if(!empty($slot->coa_path))
+                                <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                            @else
+                                -
+                            @endif
+                        </div>
+
+                        <div class="st-detail-label">Surat Jalan</div>
+                        <div>
+                            @if(!empty($slot->surat_jalan_path))
+                                <a href="{{ asset('storage/' . $slot->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
+                            @else
+                                -
+                            @endif
+                        </div>
 
                         <div class="st-detail-label">Vendor</div>
                         <div>{{ $slot->vendor_name ?? '-' }}</div>
@@ -204,7 +225,7 @@
                         <div style="font-weight:600;">Actual Finish</div>
                         <div>{{ $fmt($slot->actual_finish ?? null) }}</div>
 
-                        <div style="font-weight:600;">Lead Time (Arrival → Start)</div>
+                        <div style="font-weight:600;">Waiting Time (Arrival → Start)</div>
                         <div>{{ $leadMinutes !== null ? $minutesLabel($leadMinutes) : '-' }}</div>
 
                         <div style="font-weight:600;">Process Time (Start → Finish)</div>
@@ -232,7 +253,7 @@
         </div>
     </div>
 
-    @if (! $isUnplanned && !empty($slot->ticket_number) && $status !== 'cancelled' && $status !== 'completed')
+    @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
         @unless(optional(auth()->user())->hasRole('Operator'))
         @can('slots.ticket')
         <div style="margin-bottom:12px;display:flex;justify-content:flex-end;">
@@ -283,6 +304,14 @@
     <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         @if($status === 'pending_approval')
             @if(auth()->user()->hasRole(['Admin', 'admin', 'Super Administrator', 'Section Head']))
+                @can('bookings.reschedule')
+                @if (!empty($slot->requested_by) && in_array($status, ['pending_approval', 'pending_vendor_confirmation', 'scheduled'], true))
+                    <a href="{{ route('bookings.reschedule', ['id' => $slot->id]) }}" class="st-btn st-btn--secondary">
+                        <i class="fa-solid fa-calendar" style="margin-right:6px;"></i> Reschedule
+                    </a>
+                @endif
+                @endcan
+
                 <form action="{{ route('slots.approve', $slot->id) }}" method="POST" style="display:inline-block;">
                     @csrf
                     @method('POST')
@@ -297,6 +326,16 @@
             @else
                 <button type="button" class="st-btn st-btn--secondary" disabled>Waiting for Approval</button>
             @endif
+        @endif
+
+        @if($status === 'pending_vendor_confirmation')
+            @can('bookings.reschedule')
+            @if (!empty($slot->requested_by))
+                <a href="{{ route('bookings.reschedule', ['id' => $slot->id]) }}" class="st-btn st-btn--secondary">
+                    <i class="fa-solid fa-calendar" style="margin-right:6px;"></i> Reschedule
+                </a>
+            @endif
+            @endcan
         @endif
 
         @if (! $isUnplanned)

@@ -38,10 +38,10 @@
         <i class="fas fa-check-circle"></i>
         <strong>Confirmed</strong> - This booking is approved and scheduled.
     </div>
-    @elseif($booking->status === 'rejected')
+    @elseif($booking->status === 'cancelled')
     <div class="st-alert st-alert--danger">
         <i class="fas fa-times-circle"></i>
-        <strong>Rejected</strong> - {{ $booking->approval_notes }}
+        <strong>Cancelled</strong> - {{ $booking->cancelled_reason ?? $booking->approval_notes }}
     </div>
     @endif
 
@@ -63,6 +63,34 @@
                         <span class="st-badge st-badge--{{ $booking->status_badge_color }}">
                             {{ $booking->status_label }}
                         </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Direction</td>
+                    <td>
+                        <span class="st-badge st-badge--{{ $booking->direction === 'inbound' ? 'info' : 'warning' }}">
+                            {{ ucfirst($booking->direction) }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>COA</td>
+                    <td>
+                        @if(!empty($booking->coa_path))
+                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                        @else
+                            -
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td>Surat Jalan</td>
+                    <td>
+                        @if(!empty($booking->surat_jalan_path))
+                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
+                        @else
+                            -
+                        @endif
                     </td>
                 </tr>
                 <tr>
@@ -140,11 +168,23 @@
             <table class="st-detail-table">
                 <tr>
                     <td>Warehouse</td>
-                    <td>{{ $booking->warehouse?->name ?? '-' }}</td>
+                    @php
+                        $effectiveGate = $booking->actualGate ?: $booking->plannedGate;
+                        $effectiveWarehouse = $booking->warehouse ?: ($effectiveGate?->warehouse);
+                        $whCode = $effectiveWarehouse?->wh_code ?? null;
+                        $whName = $effectiveWarehouse?->wh_name ?? ($effectiveWarehouse?->name ?? null);
+                    @endphp
+                    <td>
+                        @if(!empty($whCode) || !empty($whName))
+                            {{ trim(($whCode ? ($whCode . ' - ') : '') . ($whName ?? '')) }}
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
                 <tr>
                     <td>Gate</td>
-                    <td>{{ $booking->plannedGate?->name ?? 'To Be Assigned' }}</td>
+                    <td>{{ $effectiveGate?->gate_number ?? ($effectiveGate?->name ?? 'To be assigned') }}</td>
                 </tr>
                 <tr>
                     <td>Date</td>
@@ -202,7 +242,7 @@
     </div>
 
     <!-- Action Buttons -->
-    @if($booking->status === 'pending_approval')
+    @if(in_array((string) $booking->status, ['pending_approval', 'pending_vendor_confirmation'], true))
     <div class="st-action-section">
         <h3 class="st-detail-title">
             <i class="fas fa-gavel"></i>
@@ -211,10 +251,66 @@
         
         <div class="st-action-buttons-group">
             @can('bookings.approve')
-            <button type="button" class="st-button st-button--success st-button--lg" onclick="openApproveModal({{ $booking->id }}, '{{ $booking->ticket_number }}')">
-                <i class="fas fa-check"></i>
-                Approve Booking
-            </button>
+            <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" style="display: inline;">
+                @csrf
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+                    <div>
+                        <label class="st-label" style="margin-bottom:6px; display:block;">Warehouse</label>
+                        @php
+                            $currentWarehouseId = old('warehouse_id', (string)($booking->warehouse_id ?? ($effectiveWarehouse?->id ?? '')));
+                        @endphp
+                        <select name="warehouse_id" id="approval_warehouse_id" class="st-select" style="min-width:220px;">
+                            @foreach($warehouses as $wh)
+                                @php
+                                    $wid = (int) ($wh->id ?? 0);
+                                    $wcode = trim((string) ($wh->wh_code ?? ($wh->code ?? '')));
+                                    $wname = trim((string) ($wh->wh_name ?? ($wh->name ?? '')));
+                                    $wlabel = trim(($wcode !== '' ? ($wcode . ' - ') : '') . $wname);
+                                @endphp
+                                @if($wid > 0)
+                                    <option value="{{ $wid }}" {{ (string)$currentWarehouseId === (string)$wid ? 'selected' : '' }}>
+                                        {{ $wlabel !== '' ? $wlabel : ('Warehouse #' . $wid) }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="st-label" style="margin-bottom:6px; display:block;">Gate (optional)</label>
+                        @php
+                            $whId = (int) ($currentWarehouseId ?: 0);
+                            $gateOptions = $whId > 0 ? ($gates[$whId] ?? collect()) : collect();
+                            if ($gateOptions instanceof \Illuminate\Support\Collection === false) {
+                                $gateOptions = collect($gateOptions);
+                            }
+                            if ($gateOptions->isEmpty()) {
+                                $gateOptions = $gates->flatten(1);
+                            }
+                            $currentGateId = old('planned_gate_id', (string)($booking->planned_gate_id ?? ($effectiveGate?->id ?? '')));
+                        @endphp
+                        <select name="planned_gate_id" id="approval_planned_gate_id" class="st-select" style="min-width:220px;">
+                            <option value="">Auto</option>
+                            @foreach($gateOptions as $g)
+                                @php
+                                    $gid = $g->id ?? null;
+                                    $gwc = trim((string) ($g->warehouse?->wh_code ?? ''));
+                                    $base = $g->gate_number ?? ($g->name ?? ('Gate #' . ($gid ?? '')));
+                                    $label = $gwc !== '' ? ($gwc . '-' . $base) : $base;
+                                @endphp
+                                @if($gid)
+                                    <option value="{{ $gid }}" {{ (string)$currentGateId === (string)$gid ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="st-button st-button--success st-button--lg" onclick="return confirm('Approve this booking with the current schedule?')">
+                    <i class="fas fa-check"></i>
+                    Approve Booking
+                </button>
+            </form>
             @endcan
 
             @can('bookings.reschedule')
@@ -235,51 +331,70 @@
     @endif
 </div>
 
-<!-- Custom Confirmation Modal -->
-<div id="approveModal" class="st-custom-modal">
-    <div class="st-custom-modal-overlay" onclick="closeApproveModal()"></div>
-    <div class="st-custom-modal-container">
-        <div class="st-custom-modal-header">
-            <h3>Confirm Approval</h3>
-            <button type="button" class="st-custom-modal-close" onclick="closeApproveModal()">&times;</button>
-        </div>
-        <form id="approveForm" method="POST" action="">
-            @csrf
-            <div class="st-custom-modal-body text-center">
-                <p>Are you sure you want to approve booking <strong id="modalTicketNumber"></strong>?</p>
-            </div>
-            <div class="st-custom-modal-footer">
-                <button type="submit" class="st-button st-button--success">Yes, Approve</button>
-                <button type="button" class="st-button st-button--secondary" onclick="closeApproveModal()">Cancel</button>
-            </div>
-        </form>
-    </div>
-</div>
+<script type="application/json" id="approval_gates_json">{!! $gates->map(function ($coll, $wid) {
+    $arr = [];
+    foreach ($coll as $g) {
+        $arr[] = [
+            'id' => (int) ($g->id ?? 0),
+            'warehouse_id' => (int) ($g->warehouse_id ?? 0),
+            'gate_number' => (string) ($g->gate_number ?? ''),
+            'name' => (string) ($g->name ?? ''),
+            'warehouse_code' => (string) ($g->warehouse?->wh_code ?? ''),
+        ];
+    }
+    return $arr;
+})->toJson() !!}</script>
 
-<!-- Reject Modal -->
-<div id="reject-modal" class="st-custom-modal">
-    <div class="st-custom-modal-overlay" onclick="closeRejectModal()"></div>
-    <div class="st-custom-modal-container">
-        <div class="st-custom-modal-header">
-            <h3>Reject Booking</h3>
-            <button type="button" class="st-custom-modal-close" onclick="closeRejectModal()">&times;</button>
-        </div>
-        <form method="POST" id="reject-form" action="">
-            @csrf
-            <div class="st-custom-modal-body">
-                <p>Are you sure you want to reject booking <strong id="reject-ticket"></strong>?</p>
-                <div class="st-form-group" style="margin-top: 15px;">
-                    <label class="st-label" style="font-weight: 600; display: block; margin-bottom: 5px;">Reason for Rejection <span class="st-required">*</span></label>
-                    <textarea name="reason" class="st-textarea" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit;" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
-                </div>
-            </div>
-            <div class="st-custom-modal-footer">
-                <button type="submit" class="st-btn st-btn--primary" style="background-color: #dc2626; border-color: #dc2626; color: #fff;">Reject Booking</button>
-                <button type="button" class="st-btn st-btn--secondary" onclick="closeRejectModal()">Cancel</button>
-            </div>
-        </form>
-    </div>
-</div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var whSel = document.getElementById('approval_warehouse_id');
+    var gateSel = document.getElementById('approval_planned_gate_id');
+    var gatesEl = document.getElementById('approval_gates_json');
+    if (!whSel || !gateSel || !gatesEl) return;
+
+    var gatesData = {};
+    try {
+        gatesData = JSON.parse(gatesEl.textContent || '{}') || {};
+    } catch (e) {
+        gatesData = {};
+    }
+
+    function buildGateLabel(g) {
+        var base = (g.gate_number || g.name || ('Gate #' + (g.id || '')));
+        var wc = (g.warehouse_code || '').trim();
+        return wc ? (wc + '-' + base) : base;
+    }
+
+    function refreshGateOptions() {
+        var wid = String(whSel.value || '');
+        var current = String(gateSel.value || '');
+        var list = gatesData[wid] || [];
+
+        gateSel.innerHTML = '<option value="">Auto</option>';
+        list.forEach(function (g) {
+            if (!g || !g.id) return;
+            var opt = document.createElement('option');
+            opt.value = String(g.id);
+            opt.textContent = buildGateLabel(g);
+            gateSel.appendChild(opt);
+        });
+
+        if (current) {
+            gateSel.value = current;
+        }
+    }
+
+    whSel.addEventListener('change', function () {
+        // reset gate selection when warehouse changes
+        gateSel.value = '';
+        refreshGateOptions();
+    });
+
+    refreshGateOptions();
+});
+</script>
+@endpush
 
 <!-- Booking History -->
 @if($booking->bookingHistories && $booking->bookingHistories->count() > 0)

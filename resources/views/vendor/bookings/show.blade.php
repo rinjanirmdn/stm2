@@ -36,15 +36,15 @@
             </div>
         </div>
     </div>
-    @elseif($booking->status === 'rejected')
+    @elseif($booking->status === 'cancelled')
     <div class="vendor-alert vendor-alert--error">
         <i class="fas fa-times-circle"></i>
         <div>
-            <strong>Rejected</strong> - {{ $booking->approval_notes ?? 'Your booking was rejected.' }}
+            <strong>Cancelled</strong> - {{ $booking->cancelled_reason ?? $booking->approval_notes ?? 'Your booking was cancelled.' }}
             <div style="margin-top: 0.5rem;">
                 <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
                     <i class="fas fa-redo"></i>
-                    Submit New Booking
+                    Create New Booking
                 </a>
             </div>
         </div>
@@ -88,11 +88,41 @@
                 </tr>
                 <tr>
                     <td style="padding: 0.5rem 0; color: #64748b;">Warehouse</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->warehouse?->name ?? '-' }}</td>
+                    <td style="padding: 0.5rem 0;">
+                        @php
+                            $whCode = $booking->warehouse?->wh_code ?? null;
+                            $whName = $booking->warehouse?->wh_name ?? ($booking->warehouse?->name ?? null);
+                        @endphp
+                        @if(!empty($whCode) || !empty($whName))
+                            {{ trim(($whCode ? ($whCode . ' - ') : '') . ($whName ?? '')) }}
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
                 <tr>
                     <td style="padding: 0.5rem 0; color: #64748b;">Gate</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->plannedGate?->name ?? 'To be assigned' }}</td>
+                    <td style="padding: 0.5rem 0;">{{ $booking->plannedGate?->gate_number ?? ($booking->plannedGate?->name ?? 'To be assigned') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.5rem 0; color: #64748b;">COA</td>
+                    <td style="padding: 0.5rem 0;">
+                        @if(!empty($booking->coa_path))
+                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                        @else
+                            -
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.5rem 0; color: #64748b;">Surat Jalan</td>
+                    <td style="padding: 0.5rem 0;">
+                        @if(!empty($booking->surat_jalan_path))
+                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
             </table>
         </div>
@@ -209,7 +239,12 @@
             @if($booking->status === 'pending_vendor_confirmation')
             <a href="{{ route('vendor.bookings.confirm', $booking->id) }}" class="vendor-btn vendor-btn--primary">
                 <i class="fas fa-check"></i>
-                Review & Confirm
+                Confirm
+            </a>
+
+            <a href="{{ route('vendor.bookings.confirm', $booking->id) }}#propose" class="vendor-btn vendor-btn--secondary">
+                <i class="fas fa-calendar-alt"></i>
+                Propose Another Schedule
             </a>
             @endif
             

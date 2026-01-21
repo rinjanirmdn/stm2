@@ -96,7 +96,7 @@
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Duration (Min)</label>
                     <input type="number" name="planned_duration" id="planned_duration" class="vendor-form-input" 
-                           value="60" min="30" step="30" required>
+                           value="60" min="30" step="10" required>
                 </div>
             </div>
 

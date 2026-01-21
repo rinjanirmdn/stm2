@@ -38,7 +38,7 @@
                     <option value="">All Warehouses</option>
                     @foreach($warehouses as $wh)
                         <option value="{{ $wh->id }}" {{ request('warehouse_id') == $wh->id ? 'selected' : '' }}>
-                            {{ $wh->wh_code }} - {{ $wh->name }}
+                            {{ $wh->wh_code }} - {{ $wh->wh_name ?? ($wh->name ?? '') }}
                         </option>
                     @endforeach
                 </select>
@@ -83,6 +83,8 @@
                     <th>Ticket</th>
                     <th>Vendor</th>
                     <th>Requested By</th>
+                    <th>COA</th>
+                    <th>Surat Jalan</th>
                     <th>Scheduled</th>
                     <th>Gate</th>
                     <th>Direction</th>
@@ -101,6 +103,20 @@
                     </td>
                     <td>{{ $booking->vendor?->name ?? '-' }}</td>
                     <td>{{ $booking->requester?->full_name ?? '-' }}</td>
+                    <td>
+                        @if(!empty($booking->coa_path))
+                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View</a>
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td>
+                        @if(!empty($booking->surat_jalan_path))
+                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View</a>
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td>
                         {{ $booking->planned_start?->format('d M Y') ?? '-' }}
                         <br><small class="st-text-muted">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>

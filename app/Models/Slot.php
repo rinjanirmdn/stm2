@@ -19,7 +19,6 @@ class Slot extends Model
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_PENDING_APPROVAL = 'pending_approval';
-    public const STATUS_REJECTED = 'rejected';
     public const STATUS_PENDING_VENDOR_CONFIRMATION = 'pending_vendor_confirmation';
 
     /**
@@ -34,8 +33,11 @@ class Slot extends Model
         'mat_doc',
         'sj_start_number',
         'sj_complete_number',
+        'coa_path',
+        'surat_jalan_path',
         'truck_type',
         'vehicle_number_snap',
+        'driver_name',
         'driver_number',
         'direction',
         'po_id',
@@ -97,7 +99,6 @@ class Slot extends Model
             self::STATUS_COMPLETED,
             self::STATUS_CANCELLED,
             self::STATUS_PENDING_APPROVAL,
-            self::STATUS_REJECTED,
             self::STATUS_PENDING_VENDOR_CONFIRMATION,
         ];
     }
@@ -109,7 +110,6 @@ class Slot extends Model
     {
         return [
             self::STATUS_PENDING_VENDOR_CONFIRMATION,
-            self::STATUS_REJECTED,
         ];
     }
 
@@ -170,6 +170,9 @@ class Slot extends Model
      */
     public function getStatusLabelAttribute(): string
     {
+        if ($this->status === 'rejected') {
+            return 'Cancelled';
+        }
         return match ($this->status) {
             self::STATUS_SCHEDULED => 'Scheduled',
             self::STATUS_ARRIVED => 'Arrived',
@@ -178,7 +181,6 @@ class Slot extends Model
             self::STATUS_COMPLETED => 'Completed',
             self::STATUS_CANCELLED => 'Cancelled',
             self::STATUS_PENDING_APPROVAL => 'Pending Approval',
-            self::STATUS_REJECTED => 'Rejected',
             self::STATUS_PENDING_VENDOR_CONFIRMATION => 'Pending Confirmation',
             default => ucfirst(str_replace('_', ' ', $this->status)),
         };
@@ -189,6 +191,9 @@ class Slot extends Model
      */
     public function getStatusBadgeColorAttribute(): string
     {
+        if ($this->status === 'rejected') {
+            return 'dark';
+        }
         return match ($this->status) {
             self::STATUS_SCHEDULED => 'secondary',
             self::STATUS_ARRIVED => 'info',

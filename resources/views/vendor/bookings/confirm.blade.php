@@ -178,7 +178,7 @@
             <div class="vendor-form-group" style="margin-bottom: 0;">
                 <label class="vendor-form-label">Duration (Min) <span style="color: #ef4444;">*</span></label>
                 <input type="number" name="planned_duration" class="vendor-form-input" required
-                       min="30" max="480" step="30" value="{{ $booking->planned_duration }}">
+                       min="30" max="480" step="10" value="{{ $booking->planned_duration }}">
             </div>
             
             <div class="vendor-form-group" style="margin-bottom: 0;">
@@ -211,4 +211,16 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.location && window.location.hash === '#propose') {
+        var el = document.getElementById('propose-form');
+        if (el) {
+            el.style.display = 'block';
+            try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+        }
+    }
+});
+</script>
 @endsection

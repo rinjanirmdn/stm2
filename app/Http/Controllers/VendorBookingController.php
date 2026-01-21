@@ -6,16 +6,17 @@ use App\Models\Gate;
 use App\Models\Slot;
 use App\Models\SlotPoItem;
 use App\Models\TruckTypeDuration;
+use App\Models\Vendor;
 use App\Models\Warehouse;
 use App\Services\BookingApprovalService;
 use App\Services\PoSearchService;
 use App\Services\SlotService;
-use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 
 class VendorBookingController extends Controller
 {
@@ -63,16 +64,20 @@ class VendorBookingController extends Controller
             return [];
         }
 
-        $rows = DB::table('slot_po_items as spi')
-            ->join('slots as s', 's.id', '=', 'spi.slot_id')
-            ->where('spi.po_number', $poNumber)
-            ->whereNotIn('s.status', [Slot::STATUS_CANCELLED, Slot::STATUS_REJECTED])
-            ->groupBy('spi.item_no')
-            ->select([
-                'spi.item_no',
-                DB::raw('SUM(spi.qty_booked) as qty_booked'),
-            ])
-            ->get();
+        try {
+            $rows = DB::table('slot_po_items as spi')
+                ->join('slots as s', 's.id', '=', 'spi.slot_id')
+                ->where('spi.po_number', $poNumber)
+                ->whereNotIn('s.status', [Slot::STATUS_CANCELLED])
+                ->groupBy('spi.item_no')
+                ->select([
+                    'spi.item_no',
+                    DB::raw('SUM(spi.qty_booked) as qty_booked'),
+                ])
+                ->get();
+        } catch (\Throwable $e) {
+            return [];
+        }
 
         $out = [];
         foreach ($rows as $r) {
@@ -396,7 +401,11 @@ class VendorBookingController extends Controller
             'planned_gate_id' => 'nullable|exists:gates,id',
             'truck_type' => 'nullable|string|max:50',
             'vehicle_number' => 'nullable|string|max:50',
+            'driver_name' => 'nullable|string|max:50',
+            'driver_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:500',
+            'coa_pdf' => 'required|file|mimes:pdf|max:5120',
+            'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
@@ -488,6 +497,9 @@ class VendorBookingController extends Controller
         }
 
         try {
+            $notes = (string) $request->notes;
+            $driverName = trim((string) $request->driver_name);
+
             $slot = $this->bookingService->createBookingRequest([
                 'warehouse_id' => $request->warehouse_id,
                 'po_id' => $poId, 
@@ -497,8 +509,27 @@ class VendorBookingController extends Controller
                 'planned_gate_id' => $request->planned_gate_id,
                 'truck_type' => $request->truck_type,
                 'vehicle_number' => $request->vehicle_number,
-                'notes' => $request->notes,
+                'driver_name' => $driverName !== '' ? $driverName : null,
+                'driver_number' => $request->driver_number,
+                'notes' => $notes,
             ], Auth::user());
+
+            $updates = [];
+            if ($request->hasFile('coa_pdf')) {
+                $coaFile = $request->file('coa_pdf');
+                $coaName = 'coa_' . $slot->id . '_' . time() . '.pdf';
+                $coaPath = $coaFile->storeAs('booking-documents/' . $slot->id, $coaName, 'public');
+                $updates['coa_path'] = $coaPath;
+            }
+            if ($request->hasFile('surat_jalan_pdf')) {
+                $sjFile = $request->file('surat_jalan_pdf');
+                $sjName = 'surat_jalan_' . $slot->id . '_' . time() . '.pdf';
+                $sjPath = $sjFile->storeAs('booking-documents/' . $slot->id, $sjName, 'public');
+                $updates['surat_jalan_path'] = $sjPath;
+            }
+            if (!empty($updates)) {
+                $slot->update($updates);
+            }
 
             // Persist partial delivery per PO item
             $itemsDetailMap = [];

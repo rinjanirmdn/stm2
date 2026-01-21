@@ -28,7 +28,7 @@ class DashboardStatsService
                 SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS active,
                 SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) AS scheduled,
                 SUM(CASE WHEN status IN ('arrived', 'waiting') THEN 1 ELSE 0 END) AS waiting,
-                SUM(CASE WHEN status IN ('scheduled', 'arrived', 'waiting') THEN 1 ELSE 0 END) AS pending,
+                SUM(CASE WHEN status IN ('pending_approval', 'pending_vendor_confirmation') THEN 1 ELSE 0 END) AS pending,
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
                 SUM(CASE WHEN status = 'completed' AND is_late = true THEN 1 ELSE 0 END) AS late,
                 SUM(CASE WHEN direction = 'inbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS inbound,
