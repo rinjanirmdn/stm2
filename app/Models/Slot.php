@@ -20,6 +20,7 @@ class Slot extends Model
     public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_PENDING_APPROVAL = 'pending_approval';
     public const STATUS_PENDING_VENDOR_CONFIRMATION = 'pending_vendor_confirmation';
+    public const STATUS_REJECTED = 'rejected';
 
     /**
      * Approval action constants
@@ -100,6 +101,7 @@ class Slot extends Model
             self::STATUS_CANCELLED,
             self::STATUS_PENDING_APPROVAL,
             self::STATUS_PENDING_VENDOR_CONFIRMATION,
+            self::STATUS_REJECTED,
         ];
     }
 
