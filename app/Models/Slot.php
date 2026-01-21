@@ -190,15 +190,15 @@ class Slot extends Model
     public function getStatusBadgeColorAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_SCHEDULED => 'success',
+            self::STATUS_SCHEDULED => 'secondary',
             self::STATUS_ARRIVED => 'info',
             self::STATUS_WAITING => 'warning',
             self::STATUS_IN_PROGRESS => 'primary',
-            self::STATUS_COMPLETED => 'secondary',
+            self::STATUS_COMPLETED => 'success',
             self::STATUS_CANCELLED => 'dark',
-            self::STATUS_PENDING_APPROVAL => 'warning',
+            self::STATUS_PENDING_APPROVAL => 'pending_approval',
             self::STATUS_REJECTED => 'danger',
-            self::STATUS_PENDING_VENDOR_CONFIRMATION => 'info',
+            self::STATUS_PENDING_VENDOR_CONFIRMATION => 'warning',
             default => 'secondary',
         };
     }

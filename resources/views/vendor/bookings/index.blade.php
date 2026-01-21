@@ -45,7 +45,7 @@
             
             <div class="vendor-form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
                 <label class="vendor-form-label">Search</label>
-                <input type="text" name="search" class="vendor-form-input" placeholder="Ticket or vehicle..." value="{{ request('search') }}">
+                <input type="text" name="search" class="vendor-form-input" placeholder="Ticket or Vehicle..." value="{{ request('search') }}">
             </div>
             
             <button type="submit" class="vendor-btn vendor-btn--primary">
@@ -91,7 +91,7 @@
                         <br><small style="color: #64748b;">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>
                     </td>
                     <td>
-                        {{ $booking->planned_duration }} min
+                        {{ $booking->planned_duration }} Min
                     </td>
                     <td>
                         {{ $booking->plannedGate?->name ?? '-' }}
@@ -143,7 +143,7 @@
     @else
     <div style="text-align: center; padding: 3rem; color: #64748b;">
         <i class="fas fa-calendar-xmark" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-        <p>No bookings found.</p>
+        <p>No Bookings Found.</p>
         <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary" style="margin-top: 1rem;">
             <i class="fas fa-plus"></i>
             Create Booking

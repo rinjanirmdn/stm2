@@ -6,8 +6,11 @@
 @section('content')
 @php
     $paramDate = request('date_from', date('Y-m-d'));
-    // Fetch slots for the date using 'planned_start' with vendor
-    $daySlots = \App\Models\Slot::with('vendor')->whereDate('planned_start', $paramDate)->get();
+    // Fetch active slots for the date (exclude cancelled and rejected)
+    $daySlots = \App\Models\Slot::with('vendor')
+        ->whereDate('planned_start', $paramDate)
+        ->whereNotIn('status', ['cancelled', 'rejected'])
+        ->get();
     
     // Filter for Unassigned Slots (planned_gate_id is null)
     $unassignedSlots = $daySlots->filter(function($s) {
@@ -21,76 +24,50 @@
         <!-- Mini Calendar (Interactive) -->
         <div id="dock_inline_calendar" style="width:100%;"></div>
 
-        <!-- Unassigned Queue -->
-        @if($unassignedSlots->isNotEmpty())
-            <div style="padding: 12px; background: #fff1f2; border-radius: 8px; border: 1px dashed #f43f5e;">
-                <div style="font-weight:600;color:#be123c;margin-bottom:8px;font-size:13px;">
-                    Pending Assignment ({{ $unassignedSlots->count() }})
-                </div>
-                <div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;">
-                    @foreach($unassignedSlots as $us)
-                        <div class="bg-{{ $us->status_badge_color }}" style="padding:6px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(0,0,0,0.05);"
-                             ondblclick="window.location.href='{{ route('slots.show', $us->id) }}'"
-                             title="{{ $us->status }}">
-                            <div style="display:flex;justify-content:space-between;">
-                                <span style="font-weight:700;color:#374151;">{{ $us->ticket_number ?? '-' }}</span>
-                                <span style="color:#6b7280;">{{ \Carbon\Carbon::parse($us->planned_start)->format('H:i') }}</span>
-                            </div>
-                            <div style="font-size:10px;color:#4b5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $us->vendor->name ?? '-' }}</div>
-                            <div style="color:#ef4444;font-size:10px;margin-top:2px;">{{ $us->status_label ?? $us->status }}</div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
+
 
         <!-- Bookings Legend -->
         <div>
             <div class="st-flex-between" style="margin-bottom:10px;">
-                <div style="font-weight:600;font-size:14px;">Bookings for: <span id="selected_date_display">{{ \Carbon\Carbon::parse($paramDate)->format('d.m.Y') }}</span></div>
-                <div class="st-dock-count">{{ $daySlots->count() }}</div>
+                <div style="font-weight:600; font-size:12px; color: #4b5563;">Bookings for: <span id="selected_date_display">{{ \Carbon\Carbon::parse($paramDate)->format('d.m.Y') }}</span></div>
+                <div class="st-dock-count" style="font-size:12px;">{{ $daySlots->count() }}</div>
             </div>
             
+            @php
+                // Calculate counts for valuable statuses
+                $countPending = $daySlots->whereIn('status', ['pending_approval', 'pending'])->count();
+                $countVendor = $daySlots->where('status', 'pending_vendor_confirmation')->count();
+                // Count slots that have been rescheduled (have an original plan)
+                $countRescheduled = $daySlots->filter(function($slot) {
+                    return !empty($slot->original_planned_start);
+                })->count();
+            @endphp
             <div class="st-dock-legend">
-                <!-- Pre-Booking -->
-                <div class="st-dock-legend-item bg-dock-pre-booking" style="padding:8px 12px;border-radius:20px;">
+                <!-- Pending Approval -->
+                <div class="st-legend-item st-legend-item--pending_approval">
                     <div class="st-dock-legend-indicator">
-                        <div class="st-dock-dot dot-dock-pre-booking"></div>
-                        <span>Pre-Booking</span>
+                        <div class="st-dock-dot"></div>
+                        <span>Pending Approval</span>
                     </div>
-                    <span class="st-dock-count">3</span>
+                    <span class="st-dock-count">{{ $countPending }}</span>
                 </div>
-                <!-- Confirmed -->
-                <div class="st-dock-legend-item bg-dock-confirmed" style="padding:8px 12px;border-radius:20px;background-color:transparent;color:#374151;border:1px solid #e5e7eb;">
+                
+                <!-- Awaiting Vendor -->
+                <div class="st-legend-item st-legend-item--awaiting_vendor">
                     <div class="st-dock-legend-indicator">
-                        <div class="st-dock-dot dot-dock-confirmed"></div>
-                        <span>Confirmed</span>
+                        <div class="st-dock-dot"></div>
+                        <span>Awaiting Vendor</span>
                     </div>
-                    <span class="st-dock-count">2</span>
+                    <span class="st-dock-count">{{ $countVendor }}</span>
                 </div>
-                <!-- In Progress -->
-                <div class="st-dock-legend-item bg-dock-progress" style="padding:8px 12px;border-radius:20px;background-color:transparent;color:#374151;border:1px solid #e5e7eb;">
+                
+                <!-- Rescheduled -->
+                <div class="st-legend-item st-legend-item--rescheduled">
                     <div class="st-dock-legend-indicator">
-                        <div class="st-dock-dot dot-dock-progress"></div>
-                        <span>In progress</span>
+                        <div class="st-dock-dot"></div>
+                        <span>Rescheduled</span>
                     </div>
-                    <span class="st-dock-count">3</span>
-                </div>
-                <!-- Completed -->
-                <div class="st-dock-legend-item bg-dock-completed" style="padding:8px 12px;border-radius:20px;background-color:transparent;color:#374151;border:1px solid #e5e7eb;">
-                    <div class="st-dock-legend-indicator">
-                        <div class="st-dock-dot dot-dock-completed"></div>
-                        <span>Completed</span>
-                    </div>
-                    <span class="st-dock-count">3</span>
-                </div>
-                <!-- Cancelled/Problematic -->
-                <div class="st-dock-legend-item bg-dock-rejected" style="padding:8px 12px;border-radius:20px;background-color:transparent;color:#374151;border:1px solid #e5e7eb;">
-                    <div class="st-dock-legend-indicator">
-                        <div class="st-dock-dot dot-dock-rejected"></div>
-                        <span>Problematic</span>
-                    </div>
-                    <span class="st-dock-count">1</span>
+                    <span class="st-dock-count">{{ $countRescheduled }}</span>
                 </div>
             </div>
         </div>
@@ -102,16 +79,12 @@
         <header class="st-dock-topbar">
             <div class="st-dock-search">
                 <i class="fa-solid fa-magnifying-glass st-dock-search-icon"></i>
-                <input type="text" placeholder="Search for a booking">
+                <input type="text" id="gate_search_input" placeholder="Search for a Booking (Ticket or Vendor)">
             </div>
             
             <div style="display:flex;gap:12px;align-items:center;">
-                <div style="font-size:14px;color:#6b7280;font-weight:500;">Filters</div>
-                <button class="st-btn st-btn--secondary st-btn--sm">
-                    <i class="fa-solid fa-filter"></i> More
-                </button>
-                <button class="st-btn st-btn--primary st-btn--sm">
-                    New Booking
+                <button class="st-btn st-btn--primary st-btn--sm" onclick="window.location.href='{{ route('slots.create') }}'">
+                    Create Slots
                 </button>
             </div>
         </header>
@@ -162,8 +135,10 @@
                 <!-- Gate Columns -->
                 @php
                     $paramDate = request('date_from', date('Y-m-d'));
-                    // Fetch slots using 'planned_start' as requested by user
-                    $daySlots = \App\Models\Slot::whereDate('planned_start', $paramDate)->get();
+                    // Fetch slots with the same filters as the sidebar to ensure consistency
+                    $daySlots = \App\Models\Slot::whereDate('planned_start', $paramDate)
+                        ->whereNotIn('status', ['cancelled', 'rejected'])
+                        ->get();
                 @endphp
 
                 @foreach($gates as $index => $g)
@@ -232,34 +207,121 @@
                             // Ensure layout doesn't break
                             // $duration is already set above
 
-                            // Status Colors
-                            $bgClass = 'bg-dock-pre-booking';
-                            // Use model's native badge color (Solid Original Colors)
-                            $bgClass = 'bg-' . $slot->status_badge_color;
+                            // Time Label Logic
+                            // Default: Planned Start (ETA) - Calculated End
+                            $startTime = $st;
+                            $endTime = $et;
                             
-                            // Ensure waiting/pending map to warning if not set
-                            // (Already handled by helper, but explicit check if needed)
-                            // Slot model: pending_approval -> warning, waiting -> warning. 
-                            // scheduled -> success. in_progress -> primary. completed -> secondary (or success?)
-                            // This matches User's "Solid" expectation.
+                            if ($slot->status === 'completed') {
+                                // Use Actual Arrival and Actual Finish
+                                $actualStart = $slot->arrival_time ? \Carbon\Carbon::parse($slot->arrival_time) : $st;
+                                $actualEnd = $slot->actual_finish ? \Carbon\Carbon::parse($slot->actual_finish) : $et;
+                                $timeLabel = $actualStart->format('H:i') . '-' . $actualEnd->format('H:i');
+                            } else {
+                                $timeLabel = $startTime->format('H:i') . '-' . $endTime->format('H:i');
+                            }
+
+                            // Status Colors
+                            $bgClass = 'bg-' . $slot->status_badge_color;
+
+                            // Calculate dynamic font sizes based on duration
+                            // Flexible scaling: 
+                            // Very Small (<30m): minimal info (Ticket + Status Icon)
+                            // Small (30-50m): Compact (Ticket, Vendor, Status Line)
+                            // Normal (>50m): Full info
+                            
+                            $h = $duration;
+                            
+                            // Base styles
+                            $cardStyle = "top:{$minutesFrom7}px; height:{$duration}px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;";
+                            
+                            if ($h < 35) {
+                                // Micro View (Very short duration)
+                                $cardStyle .= "padding: 1px 4px;";
+                                $titleSize = "9px";
+                                $vendorSize = "8px";
+                                $statusSize = "8px";
+                            } elseif ($h < 60) {
+                                // Compact View
+                                $cardStyle .= "padding: 3px 6px;";
+                                $titleSize = "10px";
+                                $vendorSize = "9px";
+                                $statusSize = "9px";
+                            } else {
+                                // Normal View
+                                $cardStyle .= "padding: 6px 8px;";
+                                $titleSize = "12px";
+                                $vendorSize = "10px";
+                                $statusSize = "10px";
+                            }
+                        @endphp
+                        
+                        @php
+                            $targetRoute = in_array($slot->status, ['pending_approval', 'pending_vendor_confirmation', 'pending'])
+                                ? route('bookings.show', $slot->id)
+                                : route('slots.show', $slot->id);
                         @endphp
                         
                         <!-- Slot Card -->
                         <div class="st-dock-card {{ $bgClass }}" 
-                             style="top:{{ $minutesFrom7 }}px; height:{{ $duration }}px;"
-                             ondblclick="window.location.href='{{ route('slots.show', $slot->id) }}'"
-                             title="{{ $slot->ticket_number }} ({{ $slot->status }})">
+                             style="{{ $cardStyle }}"
+                             ondblclick="window.location.href='{{ $targetRoute }}'"
+                             title="{{ $slot->ticket_number }} ({{ $slot->status }}) - {{ $slot->vendor->name ?? '' }}">
                             
-                            <div class="st-dock-card-ticket">{{ $slot->ticket_number ?? '-' }}</div>
-                            <div class="st-dock-card-time">{{ $st->format('H:i') }}-{{ $et->format('H:i') }}</div>
-                            <div style="font-size:10px;color:#4b5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;">
-                                {{ $slot->vendor->name ?? '-' }}
+                            <!-- Header: Ticket & Time -->
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; line-height:1.1;">
+                                <div style="font-weight:700; font-size:{{ $titleSize }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    {{ $slot->ticket_number ?? '-' }}
+                                </div>
+                                    <div style="font-size:{{ $vendorSize }}; opacity:0.8; margin-left:4px; white-space:nowrap;">
+                                        {{ $timeLabel }}
+                                    </div>
                             </div>
-                            
-                            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;">
-                                <div class="st-dock-card-cat">{{ $slot->status_label ?? $slot->status }}</div>
-                                @if(in_array($slot->status, ['pending', 'pending_approval', 'pending_vendor_confirmation']))
-                                    <button class="st-dock-btn-confirm" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">Action</button>
+
+                            <!-- Body: Vendor (Hide if too small) -->
+                            @if($h >= 35)
+                            <div style="font-size:{{ $vendorSize }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0.9; margin-top: auto; margin-bottom: auto;">
+                                {{ $slot->vendor->name ?? '-' }}
+                                
+                                @php
+                                    $activeStatuses = ['scheduled', 'arrived', 'waiting', 'in_progress', 'completed'];
+                                @endphp
+                                @if($slot->original_planned_start && !empty($slot->approval_notes) && $h >= 60 && in_array($slot->status, $activeStatuses))
+                                <div style="font-size: 9px; font-style: italic; opacity: 0.8; margin-top: 1px; color: #fff; font-weight: 400; display: flex; align-items: center; gap: 4px;">
+                                    <i class="fas fa-sticky-note" style="font-size: 8px;"></i> 
+                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $slot->approval_notes }}</span>
+                                </div>
+                                @endif
+                            </div>
+                            @endif
+
+                            <!-- Footer: Status & Actions -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1px;">
+                                <div class="st-dock-card-cat" style="font-size:{{ $statusSize }}; font-style:normal; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; line-height:1; opacity: 0.7;">
+                                    {{ $slot->status_label ?? $slot->status }}
+                                    @if($slot->original_planned_start)
+                                        <span style="font-size: 0.8em; margin-left: 4px; opacity: 0.8;">(RESCHEDULED)</span>
+                                    @endif
+                                </div>
+
+                                @if($slot->status === 'pending_approval')
+                                    <div style="display:flex; gap:3px; transform: scale(0.85); transform-origin: right center;">
+                                        <button type="button" class="st-dock-action-btn" style="background:#fff; color:#166534; box-shadow:0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openApproveModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Confirm Booking">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <a href="{{ route('bookings.reschedule', $slot->id) }}" class="st-dock-action-btn" style="background:#fff; color:#ea580c; box-shadow:0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation();" title="Reschedule">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </a>
+                                        <button type="button" class="st-dock-action-btn" style="background:#fff; color:#dc2626; box-shadow:0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openRejectModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Reject Booking">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                @elseif(in_array($slot->status, ['pending', 'pending_vendor_confirmation']))
+                                    @if($h >= 40)
+                                    <button class="st-dock-btn-confirm" style="font-size:9px; padding:1px 6px; height:auto; min-height:16px;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">Act</button>
+                                    @else
+                                    <button class="st-dock-btn-confirm" style="font-size:8px; padding:0px 4px; height:14px; min-height:0;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">!</button>
+                                    @endif
                                 @endif
                             </div>
                         </div>
@@ -285,6 +347,53 @@
         </div>
     </main>
 </div>
+
+<!-- Custom Confirmation Modal -->
+<div id="approveModal" class="st-custom-modal">
+    <div class="st-custom-modal-overlay" onclick="closeApproveModal()"></div>
+    <div class="st-custom-modal-container">
+        <div class="st-custom-modal-header">
+            <h3>Confirm Approval</h3>
+            <button type="button" class="st-custom-modal-close" onclick="closeApproveModal()">&times;</button>
+        </div>
+        <form id="approveForm" method="POST" action="">
+            @csrf
+            <div class="st-custom-modal-body text-center">
+                <p>Are you sure you want to approve booking <strong id="modalTicketNumber"></strong>?</p>
+            </div>
+            <div class="st-custom-modal-footer">
+                <button type="submit" class="st-btn st-btn--primary" style="background-color: #166534; border-color: #166534;">Yes, Approve</button>
+                <button type="button" class="st-btn st-btn--secondary" onclick="closeApproveModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="reject-modal" class="st-custom-modal">
+    <div class="st-custom-modal-overlay" onclick="closeRejectModal()"></div>
+    <div class="st-custom-modal-container">
+        <div class="st-custom-modal-header">
+            <h3>Reject Booking</h3>
+            <button type="button" class="st-custom-modal-close" onclick="closeRejectModal()">&times;</button>
+        </div>
+        <form method="POST" id="reject-form">
+            @csrf
+            <div class="st-custom-modal-body">
+                <p>Are you sure you want to reject booking <strong id="reject-ticket"></strong>?</p>
+                <div class="st-form-group" style="margin-top: 15px;">
+                    <label class="st-label" style="font-weight: 600; display: block; margin-bottom: 5px;">Reason for Rejection <span class="st-required">*</span></label>
+                    <textarea name="reason" class="st-textarea" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit;" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
+                </div>
+            </div>
+            <div class="st-custom-modal-footer">
+                <button type="submit" class="st-btn st-btn--primary" style="background-color: #dc2626; border-color: #dc2626; color: #fff;">Reject Booking</button>
+                <button type="button" class="st-btn st-btn--secondary" onclick="closeRejectModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -295,10 +404,12 @@ document.addEventListener('DOMContentLoaded', function () {
         flatpickr("#dock_inline_calendar", {
             inline: true,
             dateFormat: "Y-m-d",
-            defaultDate: "today",
+            defaultDate: "{{ $paramDate }}",
             theme: "light", // ensure light theme
             onChange: function(selectedDates, dateStr, instance) {
                 document.getElementById('selected_date_display').innerText = instance.formatDate(selectedDates[0], "d.m.Y");
+                // Reload page with new date param
+                window.location.href = "{{ route('gates.index') }}?date_from=" + dateStr;
             }
         });
     }
@@ -314,12 +425,83 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+function openApproveModal(id, ticket) {
+    const modal = document.getElementById('approveModal');
+    const ticketSpan = document.getElementById('modalTicketNumber');
+    const form = document.getElementById('approveForm');
+    
+    ticketSpan.innerText = ticket;
+    form.action = "{{ url('/bookings') }}/" + id + "/approve";
+    modal.classList.add('active');
+}
+
+function closeApproveModal() {
+    const modal = document.getElementById('approveModal');
+    modal.classList.remove('active');
+}
+
+function openRejectModal(bookingId, ticketNumber) {
+    const modal = document.getElementById('reject-modal');
+    document.getElementById('reject-ticket').textContent = ticketNumber;
+    document.getElementById('reject-form').action = '/bookings/' + bookingId + '/reject';
+    modal.classList.add('active');
+}
+
+function closeRejectModal() {
+    document.getElementById('reject-modal').classList.remove('active');
+}
+
+// Search Logic: Trigger on Enter, Reset on Clear
+const searchInput = document.getElementById('gate_search_input');
+if (searchInput) {
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            performSearch(this.value);
+        }
+    });
+
+    searchInput.addEventListener('input', function() {
+        if (this.value === '') {
+            performSearch('');
+        }
+    });
+}
+
+function performSearch(query) {
+    query = query.toLowerCase().trim();
+    const cards = document.querySelectorAll('.st-dock-card');
+    
+    cards.forEach(card => {
+        // Find ticket number 
+        const ticketElement = card.querySelector('div[style*="font-weight:700"]');
+        const ticket = ticketElement ? ticketElement.innerText.toLowerCase() : '';
+        
+        // Find vendor name
+        const vendorElement = card.querySelector('div[style*="opacity:0.9"]');
+        const vendor = vendorElement ? vendorElement.innerText.toLowerCase() : '';
+        
+        if (query === '' || ticket.includes(query) || vendor.includes(query)) {
+            card.style.opacity = '1';
+            card.style.pointerEvents = 'auto';
+            card.style.filter = 'none';
+        } else {
+            card.style.opacity = '0.1';
+            card.style.pointerEvents = 'none';
+            card.style.filter = 'grayscale(100%)';
+        }
+    });
+}
 </script>
 <style>
 /* Local override for specific calendar styling to match design if needed */
 .flatpickr-calendar.inline {
+    margin: 0 auto;
     width: 100% !important;
+    max-width: 100% !important;
     box-shadow: none !important;
+    transform: scale(0.95);
+    transform-origin: top center;
 }
 </style>
 @endpush

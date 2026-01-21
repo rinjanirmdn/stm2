@@ -18,7 +18,7 @@
     <div class="vendor-alert vendor-alert--info">
         <i class="fas fa-info-circle"></i>
         <div>
-            <strong>Admin has rescheduled your booking.</strong>
+            <strong>Admin Has Rescheduled Your Booking.</strong>
             <p style="margin: 0.25rem 0 0;">Please review the new schedule below and confirm, reject, or propose a different time.</p>
         </div>
     </div>
@@ -80,7 +80,7 @@
                 <tr>
                     <td style="padding: 0.25rem 0; color: #14532d;">Duration</td>
                     <td style="padding: 0.25rem 0; font-weight: 600; text-align: right;">
-                        {{ $booking->planned_duration }} min
+                        {{ $booking->planned_duration }} Min
                     </td>
                 </tr>
                 <tr>
@@ -136,9 +136,9 @@
         </h3>
         
         <div class="vendor-form-group">
-            <label class="vendor-form-label">Reason for rejection <span style="color: #ef4444;">*</span></label>
+            <label class="vendor-form-label">Reason for Rejection <span style="color: #ef4444;">*</span></label>
             <textarea name="reason" class="vendor-form-textarea" rows="3" required 
-                      placeholder="Please explain why you're rejecting this schedule..."></textarea>
+                      placeholder="Please Explain Why You're Rejecting This Schedule..."></textarea>
         </div>
         
         <div style="display: flex; gap: 1rem;">
@@ -176,7 +176,7 @@
             </div>
             
             <div class="vendor-form-group" style="margin-bottom: 0;">
-                <label class="vendor-form-label">Duration (min) <span style="color: #ef4444;">*</span></label>
+                <label class="vendor-form-label">Duration (Min) <span style="color: #ef4444;">*</span></label>
                 <input type="number" name="planned_duration" class="vendor-form-input" required
                        min="30" max="480" step="30" value="{{ $booking->planned_duration }}">
             </div>
@@ -197,7 +197,7 @@
         <div class="vendor-form-group" style="margin-top: 1rem;">
             <label class="vendor-form-label">Notes (Optional)</label>
             <textarea name="notes" class="vendor-form-textarea" rows="2" 
-                      placeholder="Any additional notes..."></textarea>
+                      placeholder="Any Additional Notes..."></textarea>
         </div>
         
         <div style="display: flex; gap: 1rem; margin-top: 1rem;">

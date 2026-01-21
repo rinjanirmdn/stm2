@@ -36,14 +36,14 @@
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Surat Jalan Number <span style="color:#dc2626;">*</span></label>
-                    <input type="text" name="sj_number" class="st-input" required value="{{ old('sj_number') }}" placeholder="Masukkan nomor surat jalan...">
+                    <input type="text" name="sj_number" class="st-input" required value="{{ old('sj_number') }}" placeholder="Masukkan Nomor Surat Jalan...">
                 </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field" style="position:relative;">
                     <label class="st-label">Truck Type <span style="color:#dc2626;">*</span></label>
-                    <input type="text" id="truck_type_search" class="st-input" autocomplete="off" placeholder="Search truck type..." required value="{{ old('truck_type') }}">
+                    <input type="text" id="truck_type_search" class="st-input" autocomplete="off" placeholder="Search Truck Type..." required value="{{ old('truck_type') }}">
                     <input type="hidden" name="truck_type" id="truck_type" value="{{ old('truck_type') }}">
                     <div id="truck_type_suggestions" style="display:none;position:absolute;z-index:25;top:100%;left:0;margin-top:2px;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;max-height:200px;overflow:auto;min-width:220px;"></div>
                 </div>
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (matches.length === 0) {
-            suggestBox.innerHTML = '<div style="padding:6px 8px;color:#6b7280;">No truck types found</div>';
+            suggestBox.innerHTML = '<div style="padding:6px 8px;color:#6b7280;">No Truck Types Found</div>';
             suggestBox.style.display = 'block';
             return;
         }

@@ -22,7 +22,7 @@
         <div>
             <strong>Current Request:</strong> 
             {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }} 
-            ({{ $booking->planned_duration }} min) 
+            ({{ $booking->planned_duration }} Min) 
             - Requested by {{ $booking->requester?->full_name ?? 'Vendor' }}
         </div>
     </div>
@@ -61,7 +61,7 @@
                     </tr>
                     <tr>
                         <td>Duration</td>
-                        <td>{{ $booking->planned_duration }} min</td>
+                        <td>{{ $booking->planned_duration }} Min</td>
                     </tr>
                     <tr>
                         <td>Preferred Gate</td>
@@ -136,7 +136,7 @@
                 <div class="st-form-group" style="margin-top: 1.5rem;">
                     <label class="st-label">Notes for Vendor</label>
                     <textarea name="notes" class="st-textarea" rows="3" 
-                              placeholder="Explain why you're rescheduling this booking...">{{ old('notes') }}</textarea>
+                              placeholder="Explain Why You're Rescheduling This Booking...">{{ old('notes') }}</textarea>
                     <small class="st-hint">The vendor will see this message and must confirm the new schedule.</small>
                 </div>
             </div>
@@ -261,14 +261,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     availabilityResult.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-success, #10b981);">
                             <i class="fas fa-check-circle"></i>
-                            <span>Time slot is available</span>
+                            <span>Time Slot Is Available</span>
                         </div>
                     `;
                 } else {
                     availabilityResult.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-danger, #ef4444);">
                             <i class="fas fa-times-circle"></i>
-                            <span>${data.reason || 'Time slot is not available'}</span>
+                            <span>${data.reason || 'Time Slot Is Not Available'}</span>
                         </div>
                     `;
                 }

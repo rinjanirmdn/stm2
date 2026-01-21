@@ -69,7 +69,7 @@
     <div id="calendar-container" style="overflow-x: auto;">
         <div style="text-align: center; padding: 3rem; color: #64748b;">
             <i class="fas fa-spinner fa-spin fa-2x"></i>
-            <p style="margin-top: 1rem;">Loading availability...</p>
+            <p style="margin-top: 1rem;">Loading Availability...</p>
         </div>
     </div>
 </div>
@@ -100,7 +100,7 @@
                 Slot Duration
             </h4>
             <p style="margin: 0; color: #64748b;">
-                Minimum <strong>30 minutes</strong>, based on truck type
+                Minimum <strong>30 Minutes</strong>, Based on Truck Type
             </p>
         </div>
         
@@ -110,7 +110,7 @@
                 Approval Process
             </h4>
             <p style="margin: 0; color: #64748b;">
-                Admin will review and approve your booking
+                Admin Will Review and Approve Your Booking
             </p>
         </div>
     </div>
@@ -136,11 +136,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success && data.gates) {
                     renderCalendar(data.gates, date);
                 } else {
-                    container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Failed to load availability</p>';
+                    container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Failed to Load Availability</p>';
                 }
             })
             .catch(error => {
-                container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Error loading availability</p>';
+                container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Error Loading Availability</p>';
             });
     }
 

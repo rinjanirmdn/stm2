@@ -9,7 +9,7 @@
     <aside class="st-gate-sidebar">
         <div class="st-gate-sidebar__header">
             <h3>Gate Management</h3>
-            <p>Monage your gate schedule</p>
+            <p>Monage Your Gate Schedule</p>
         </div>
 
         <!-- Date Picker (Static Mockup) -->
@@ -51,7 +51,7 @@
         <div class="st-gate-toolbar">
             <div class="st-search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search for a booking..." class="st-input st-input--search">
+                <input type="text" placeholder="Search for a Booking..." class="st-input st-input--search">
             </div>
             <button class="st-btn st-btn--primary">
                 <i class="fas fa-plus"></i> New Booking

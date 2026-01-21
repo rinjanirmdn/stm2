@@ -8,7 +8,7 @@
         <div class="st-flex-between" style="gap:8px;flex-wrap:wrap;">
             <div>
                 <h2 class="st-page-title" style="margin:0;">Edit Slot #{{ $slot->id }}</h2>
-                <div style="font-size:12px;color:#6b7280;">Only scheduled planned slots can be edited</div>
+                <div style="font-size:12px;color:#6b7280;">Only Scheduled Planned Slots Can Be Edited</div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
                 <a href="{{ route('slots.show', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary st-btn--sm">Back</a>
@@ -24,7 +24,7 @@
                 <div class="st-alert st-alert--error">
                     <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <div class="st-alert__text">
-                        <div style="font-weight:600;margin-bottom:2px;">Validation error</div>
+                        <div style="font-weight:600;margin-bottom:2px;">Validation Error</div>
                         <div style="font-size:12px;">
                             <ul style="margin:0;padding-left:16px;">
                                 @foreach ($errors->all() as $msg)
@@ -50,7 +50,7 @@
                 <div class="st-form-field">
                     <label class="st-label">Direction <span class="st-text--danger-dark">*</span></label>
                     <select name="direction" id="direction" class="st-select{{ $errors->has('direction') ? ' st-input--invalid' : '' }}" required>
-                        <option value="">Choose direction...</option>
+                        <option value="">Choose Direction...</option>
                         <option value="inbound" {{ old('direction', $slot->direction ?? '') === 'inbound' ? 'selected' : '' }}>Inbound</option>
                         <option value="outbound" {{ old('direction', $slot->direction ?? '') === 'outbound' ? 'selected' : '' }}>Outbound</option>
                     </select>
@@ -71,12 +71,12 @@
                     @enderror
                 </div>
                 <div class="st-form-field" style="position:relative;">
-                    <label class="st-label">Vendor <span class="st-text--optional">(optional)</span></label>
+                    <label class="st-label">Vendor <span class="st-text--optional">(Optional)</span></label>
                     <input
                         type="text"
                         id="vendor_search"
                         class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
-                        placeholder="Pilih direction dulu..."
+                        placeholder="Pilih Direction Dulu..."
                         style="margin-bottom:4px;"
                         value="{{ old('vendor_search') }}"
                         {{ old('direction', $slot->direction ?? '') ? '' : 'disabled' }}
@@ -93,7 +93,7 @@
                 <div class="st-form-field">
                     <label class="st-label">Warehouse <span class="st-text--danger-dark">*</span></label>
                     <select name="warehouse_id" id="warehouse_id" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
-                        <option value="">Choose warehouse...</option>
+                        <option value="">Choose Warehouse...</option>
                         @foreach ($warehouses as $wh)
                             <option value="{{ $wh->id }}" {{ old('warehouse_id', $slot->warehouse_id ?? '') === (string) $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
                         @endforeach
@@ -103,7 +103,7 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Planned Gate <span class="st-text--optional">(optional)</span></label>
+                    <label class="st-label">Planned Gate <span class="st-text--optional">(Optional)</span></label>
                     <select name="planned_gate_id" id="planned_gate_id" class="st-select{{ $errors->has('planned_gate_id') ? ' st-input--invalid' : '' }}">
                         <option value="">- Optional -</option>
                         @foreach ($gates as $gate)
@@ -120,7 +120,7 @@
                 <div class="st-form-field">
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
                     <div style="display:flex;gap:6px;align-items:center;">
-                        <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" style="flex:1;" required {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }} value="{{ old('planned_start', $slot->planned_start ?? '') }}" placeholder="Select date and time">
+                        <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" style="flex:1;" required {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }} value="{{ old('planned_start', $slot->planned_start ?? '') }}" placeholder="Select Date and Time">
                         <button type="button" id="btn_schedule_preview" class="st-btn st-btn--secondary" style="white-space:nowrap;" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>Lihat Jadwal</button>
                     </div>
                     @error('planned_start')
@@ -128,7 +128,7 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Planned Duration <span class="st-text--optional">(optional)</span></label>
+                    <label class="st-label">Planned Duration <span class="st-text--optional">(Optional)</span></label>
                     <div style="display:flex;gap:4px;">
                         <input type="number" name="planned_duration" class="st-input" style="flex:1;" min="0" max="1440" value="{{ old('planned_duration', $slot->planned_duration ?? '') }}">
                         <select name="duration_unit" class="st-select" style="width:100px;">

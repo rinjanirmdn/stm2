@@ -136,7 +136,7 @@
     <div class="ticket-container">
         <div class="ticket-inner">
             <div class="header">
-                <div class="title">SLOT TICKET DOCKING</div>
+                <div class="title">Slot Ticket Docking</div>
                 <div class="subtitle">{{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}</div>
             </div>
 
@@ -191,7 +191,7 @@
                         <div style="text-align: center; color: #999; font-size: 10px;">No Ticket Number</div>
                     @endif
                 </div>
-                <div class="barcode-note">Scan this ticket number with a barcode scanner.</div>
+                <div class="barcode-note">Scan This Ticket Number with a Barcode Scanner.</div>
             </div>
 
             <div class="footer">

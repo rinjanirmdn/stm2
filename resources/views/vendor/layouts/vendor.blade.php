@@ -301,6 +301,11 @@
             background: #fef3c7;
             color: #92400e;
         }
+
+        .vendor-badge--pending_approval {
+            background: #fff7ed;
+            color: #ea580c;
+        }
         
         .vendor-badge--success {
             background: #dcfce7;

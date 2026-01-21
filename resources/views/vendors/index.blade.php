@@ -30,7 +30,7 @@
                         type="text"
                         id="vendor-search"
                         class="st-input"
-                        placeholder="Search code or name"
+                        placeholder="Search Code or Name"
                         autocomplete="off"
                     >
                     <div id="vendor-search-suggestions" class="st-suggestions st-suggestions--vendor" style="display:none;"></div>
@@ -70,7 +70,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="code" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Code Filter</div>
-                                                <input type="text" name="code" form="vendors-filter-form" class="st-input" placeholder="Search code..." value="{{ $v_code ?? '' }}">
+                                                <input type="text" name="code" form="vendors-filter-form" class="st-input" placeholder="Search Code..." value="{{ $v_code ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="code">Clear</button>
                                                 </div>
@@ -86,7 +86,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="name" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Name Filter</div>
-                                                <input type="text" name="name" form="vendors-filter-form" class="st-input" placeholder="Search name..." value="{{ $v_name ?? '' }}">
+                                                <input type="text" name="name" form="vendors-filter-form" class="st-input" placeholder="Search Name..." value="{{ $v_name ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="name">Clear</button>
                                                 </div>
@@ -138,7 +138,7 @@
 
                         @if (count($vendors) === 0)
                             <tr class="vendor-empty-row">
-                                <td colspan="6" style="text-align:center;color:#6b7280;padding:16px 8px;">No vendors found</td>
+                                <td colspan="6" style="text-align:center;color:#6b7280;padding:16px 8px;">No Vendors Found</td>
                             </tr>
                         @else
                             @foreach ($vendors as $row)
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (matches.length === 0) {
-            suggestionsBox.innerHTML = '<div class="st-suggestion-empty">No suggestions for "' + q.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '"</div>';
+            suggestionsBox.innerHTML = '<div class="st-suggestion-empty">No Suggestions for "' + q.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '"</div>';
             suggestionsBox.style.display = 'block';
             return;
         }

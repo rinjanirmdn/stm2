@@ -17,7 +17,7 @@
         <div style="font-size:12px;color:#6b7280;">Slot #{{ $slot->id }}</div>
         <div style="font-weight:600;">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-            Estimasi durasi proses: {{ (int) $plannedDurationMinutes }} menit
+            Estimasi Durasi Proses: {{ (int) $plannedDurationMinutes }} Menit
         </div>
     </div>
 
@@ -25,9 +25,9 @@
         <div class="st-alert st-alert--error" style="margin-bottom:12px;">
             <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
             <div class="st-alert__text">
-                <div style="font-weight:600;margin-bottom:2px;">Lane bentrok</div>
+                <div style="font-weight:600;margin-bottom:2px;">Lane Bentrok</div></div>
                 <div style="font-size:12px;color:#111827;">
-                    <div style="margin-bottom:6px;">Slot aktif yang bentrok:</div>
+                    <div style="margin-bottom:6px;">Slot Aktif yang Bentrok:</div>
                     <ul style="margin:0;padding-left:16px;">
                         @foreach ($conflictLines as $line)
                             <li>{{ $line }}</li>
@@ -46,7 +46,7 @@
                 <div class="st-form-field">
                     <label class="st-label">Actual Gate <span style="color:#dc2626;">*</span></label>
                     <select name="actual_gate_id" class="st-select" required>
-                        <option value="">Choose gate...</option>
+                        <option value="">Choose Gate...</option>
                         @php
                             $slotWhId = (int) ($slot->warehouse_id ?? 0);
                             $sameWh = [];
@@ -72,9 +72,9 @@
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
                                             $short = $row ? ('Slot #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Slot #' . $firstId) : 'Occupied');
-                                            $text .= ' (TERPAKAI: ' . $short . ')';
+                                            $text .= ' (Terpakai: ' . $short . ')';
                                         } else {
-                                            $text .= ' (TERSEDIA)';
+                                            $text .= ' (Tersedia)';
                                         }
                                     @endphp
                                     <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $text }}</option>
@@ -94,9 +94,9 @@
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
                                             $short = $row ? ('Slot #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Slot #' . $firstId) : 'Occupied');
-                                            $text .= ' (TERPAKAI: ' . $short . ')';
+                                            $text .= ' (Terpakai: ' . $short . ')';
                                         } else {
-                                            $text .= ' (TERSEDIA)';
+                                            $text .= ' (Tersedia)';
                                         }
                                     @endphp
                                     <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $text }}</option>

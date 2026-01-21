@@ -13,7 +13,7 @@
         <form method="POST" action="{{ route('slots.cancel.store', ['slotId' => $slot->id]) }}">
             @csrf
 
-            <div style="margin-bottom:10px;">Are you sure you want to cancel this slot?</div>
+            <div style="margin-bottom:10px;">Are You Sure You Want to Cancel This Slot?</div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">

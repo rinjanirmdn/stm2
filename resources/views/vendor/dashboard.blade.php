@@ -50,13 +50,13 @@
             <div class="vendor-form-group">
                 <label class="vendor-form-label">PO Number / Delivery Note</label>
                 <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" name="po_number" class="vendor-form-input" placeholder="Type to search PO..." id="po_number_input" list="po_suggestions" autocomplete="off">
+                    <input type="text" name="po_number" class="vendor-form-input" placeholder="Type to Search PO..." id="po_number_input" list="po_suggestions" autocomplete="off">
                     <datalist id="po_suggestions"></datalist>
                     <button type="button" class="vendor-btn vendor-btn--secondary" id="search_po_btn">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
-                <small style="color: #64748b;">Enter PO number to auto-select warehouse.</small>
+                <small style="color: #64748b;">Enter PO Number to Auto-select Warehouse.</small>
             </div>
 
             <div class="vendor-form-group">
@@ -75,7 +75,7 @@
                 <select name="planned_gate_id" class="vendor-form-select" id="gate_select">
                     <option value="">Auto-assign (Recommended)</option>
                 </select>
-                <small style="color: #64748b;">Leave empty for auto assignment.</small>
+                <small style="color: #64748b;">Leave Empty for Auto Assignment.</small>
             </div>
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
@@ -169,10 +169,10 @@
                                     <td>
                                         @php
                                             $badges = [
-                                                'pending_approval' => 'warning',
-                                                'scheduled' => 'success',
+                                                'pending_approval' => 'pending_approval',
+                                                'scheduled' => 'secondary',
                                                 'rejected' => 'danger',
-                                                'completed' => 'primary',
+                                                'completed' => 'success',
                                                 'pending_vendor_confirmation' => 'warning',
                                                 'cancelled' => 'secondary'
                                             ];
@@ -195,7 +195,7 @@
             @else
                 <div style="text-align: center; padding: 2rem; color: #94a3b8;">
                     <i class="fas fa-clipboard-list" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
-                    <p>No booking history found.</p>
+                    <p>No Booking History Found.</p>
                 </div>
             @endif
         </div>
@@ -209,7 +209,7 @@
                 </h2>
             </div>
             <div id="calendar-preview">
-                <p style="color: #64748b; text-align: center; padding: 1rem;">Select a warehouse in the booking form to see availability.</p>
+                <p style="color: #64748b; text-align: center; padding: 1rem;">Select a Warehouse in the Booking Form to See Availability.</p>
             </div>
         </div>
     </div>

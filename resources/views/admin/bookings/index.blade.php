@@ -56,7 +56,7 @@
             
             <div class="st-filter-group">
                 <label class="st-label">Search</label>
-                <input type="text" name="search" class="st-input" placeholder="Ticket, vendor, requester..." value="{{ request('search') }}">
+                <input type="text" name="search" class="st-input" placeholder="Ticket, Vendor, Requester..." value="{{ request('search') }}">
             </div>
             
             <div class="st-filter-actions">
@@ -107,7 +107,7 @@
                     </td>
                     <td>{{ $booking->plannedGate?->name ?? 'TBD' }}</td>
                     <td>
-                        <span class="st-badge st-badge--{{ $booking->direction === 'inbound' ? 'info' : 'warning' }}">
+                        <span class="st-badge st-badge--{{ $booking->direction }}">
                             {{ ucfirst($booking->direction) }}
                         </span>
                     </td>
@@ -127,12 +127,10 @@
                             
                             @if($booking->status === 'pending_approval')
                             @can('bookings.approve')
-                            <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" style="display: inline;">
-                                @csrf
-                                <button type="submit" class="st-button st-button--sm st-button--success" title="Approve" onclick="return confirm('Approve this booking?')">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            </form>
+                            <button type="button" class="st-button st-button--sm st-button--success" title="Approve" 
+                                    onclick="openApproveModal({{ $booking->id }}, '{{ $booking->ticket_number }}')">
+                                <i class="fas fa-check"></i>
+                            </button>
                             @endcan
                             
                             @can('bookings.reschedule')
@@ -163,31 +161,52 @@
     @else
     <div class="st-empty-state">
         <i class="fas fa-inbox"></i>
-        <p>No booking requests found.</p>
+        <p>No Booking Requests Found.</p>
     </div>
     @endif
 </div>
 
+<!-- Custom Confirmation Modal -->
+<div id="approveModal" class="st-custom-modal">
+    <div class="st-custom-modal-overlay" onclick="closeApproveModal()"></div>
+    <div class="st-custom-modal-container">
+        <div class="st-custom-modal-header">
+            <h3>Confirm Approval</h3>
+            <button type="button" class="st-custom-modal-close" onclick="closeApproveModal()">&times;</button>
+        </div>
+        <form id="approveForm" method="POST" action="">
+            @csrf
+            <div class="st-custom-modal-body text-center">
+                <p>Are you sure you want to approve booking <strong id="modalTicketNumber"></strong>?</p>
+            </div>
+            <div class="st-custom-modal-footer">
+                <button type="submit" class="st-button st-button--success">Yes, Approve</button>
+                <button type="button" class="st-button st-button--secondary" onclick="closeApproveModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Reject Modal -->
-<div id="reject-modal" class="st-modal" style="display: none;">
-    <div class="st-modal__backdrop" onclick="closeRejectModal()"></div>
-    <div class="st-modal__content">
-        <div class="st-modal__header">
+<div id="reject-modal" class="st-custom-modal">
+    <div class="st-custom-modal-overlay" onclick="closeRejectModal()"></div>
+    <div class="st-custom-modal-container">
+        <div class="st-custom-modal-header">
             <h3>Reject Booking</h3>
-            <button type="button" class="st-modal__close" onclick="closeRejectModal()">&times;</button>
+            <button type="button" class="st-custom-modal-close" onclick="closeRejectModal()">&times;</button>
         </div>
         <form method="POST" id="reject-form">
             @csrf
-            <div class="st-modal__body">
+            <div class="st-custom-modal-body">
                 <p>Are you sure you want to reject booking <strong id="reject-ticket"></strong>?</p>
-                <div class="st-form-group">
-                    <label class="st-label">Reason <span class="st-required">*</span></label>
-                    <textarea name="reason" class="st-textarea" rows="3" required placeholder="Please provide a reason for rejection..."></textarea>
+                <div class="st-form-group" style="margin-top: 15px;">
+                    <label class="st-label" style="font-weight: 600; display: block; margin-bottom: 5px;">Reason for Rejection <span class="st-required">*</span></label>
+                    <textarea name="reason" class="st-textarea" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit;" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
                 </div>
             </div>
-            <div class="st-modal__footer">
-                <button type="button" class="st-button st-button--secondary" onclick="closeRejectModal()">Cancel</button>
-                <button type="submit" class="st-button st-button--danger">Reject Booking</button>
+            <div class="st-custom-modal-footer">
+                <button type="submit" class="st-btn st-btn--primary" style="background-color: #dc2626; border-color: #dc2626; color: #fff;">Reject Booking</button>
+                <button type="button" class="st-btn st-btn--secondary" onclick="closeRejectModal()">Cancel</button>
             </div>
         </form>
     </div>
@@ -229,70 +248,6 @@
     letter-spacing: 0.05em;
 }
 
-.st-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.st-modal__backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-}
-
-.st-modal__content {
-    position: relative;
-    background: var(--st-surface, #fff);
-    border-radius: 16px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-    max-width: 500px;
-    width: 90%;
-    max-height: 90vh;
-    overflow: auto;
-}
-
-.st-modal__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--st-border, #e5e7eb);
-}
-
-.st-modal__header h3 {
-    margin: 0;
-    font-size: 1.125rem;
-}
-
-.st-modal__close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--st-text-muted, #64748b);
-}
-
-.st-modal__body {
-    padding: 1.5rem;
-}
-
-.st-modal__footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--st-border, #e5e7eb);
-}
 </style>
 
 @endsection
@@ -300,13 +255,28 @@
 @push('scripts')
 <script>
 function openRejectModal(bookingId, ticketNumber) {
-    document.getElementById('reject-modal').style.display = 'flex';
+    const modal = document.getElementById('reject-modal');
     document.getElementById('reject-ticket').textContent = ticketNumber;
     document.getElementById('reject-form').action = '/bookings/' + bookingId + '/reject';
+    modal.classList.add('active');
 }
 
 function closeRejectModal() {
-    document.getElementById('reject-modal').style.display = 'none';
+    document.getElementById('reject-modal').classList.remove('active');
+}
+
+function openApproveModal(id, ticket) {
+    const modal = document.getElementById('approveModal');
+    const ticketSpan = document.getElementById('modalTicketNumber');
+    const form = document.getElementById('approveForm');
+    
+    ticketSpan.innerText = ticket;
+    form.action = "{{ url('/bookings') }}/" + id + "/approve";
+    modal.classList.add('active');
+}
+
+function closeApproveModal() {
+    document.getElementById('approveModal').classList.remove('active');
 }
 </script>
 @endpush

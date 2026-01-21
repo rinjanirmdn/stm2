@@ -20,7 +20,7 @@
             <div class="st-alert st-alert--error" style="margin-top:8px;">
                 <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                 <div class="st-alert__text">
-                    <div style="font-weight:600;margin-bottom:2px;">Validation error</div>
+                    <div style="font-weight:600;margin-bottom:2px;">Validation Error</div>
                     <div style="font-size:12px;">
                         <ul style="margin:0;padding-left:16px;">
                             @foreach ($errors->all() as $msg)
@@ -60,7 +60,7 @@
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Vendor <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">Vendor <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <select name="vendor_id" class="st-select{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}">
                         <option value="">- Optional -</option>
                         @foreach ($vendors as $v)
@@ -87,7 +87,7 @@
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Gate (actual) <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">Gate (Actual) <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <select name="actual_gate_id" class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}">
                         <option value="">- Optional -</option>
                         @foreach ($gates as $gate)
@@ -119,7 +119,7 @@
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
-                <label class="st-label" style="font-weight:600;">Queue status</label>
+                <label class="st-label" style="font-weight:600;">Queue Status</label>
                 <div style="display:flex;gap:12px;align-items:center;">
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
                         <input type="checkbox" name="set_waiting" value="1" {{ old('set_waiting', (($slot->status ?? '') === 'waiting') ? '1' : '') === '1' ? 'checked' : '' }} style="margin:0;">
@@ -130,18 +130,18 @@
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">MAT DOC <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">MAT DOC <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc', $slot->mat_doc ?? '') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">SJ Number <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">SJ Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="sj_number" class="st-input" value="{{ old('sj_number', $slot->sj_complete_number ?? '') }}">
                 </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Truck Type <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">Truck Type <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <select name="truck_type" class="st-select">
                         <option value="">-</option>
                         @foreach ($truckTypes as $tt => $label)
@@ -150,24 +150,24 @@
                     </select>
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Vehicle Number <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">Vehicle Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="vehicle_number_snap" class="st-input" value="{{ old('vehicle_number_snap', $slot->vehicle_number_snap ?? '') }}">
                 </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Driver Number <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">Driver Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="driver_number" class="st-input" value="{{ old('driver_number', $slot->driver_number ?? '') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="notes" class="st-input" value="{{ old('notes', $slot->late_reason ?? '') }}">
                 </div>
             </div>
 
             <div style="margin-top:4px;display:flex;gap:8px;">
-                <button type="submit" class="st-btn">SAVE</button>
+                <button type="submit" class="st-btn">Save</button>
                 <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--secondary">Cancel</a>
             </div>
         </form>

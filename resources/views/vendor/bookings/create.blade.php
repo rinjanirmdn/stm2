@@ -60,13 +60,13 @@
                     @error('po_number')
                         <small style="color: #ef4444;">{{ $message }}</small>
                     @enderror
-                    <small style="color: #64748b;">Suggestions only show PO/DO assigned to your vendor.</small>
+                    <small style="color: #64748b;">Suggestions Only Show PO/DO Assigned to Your Vendor.</small>
                 </div>
 
                 <div class="vendor-form-group" id="po_items_group" style="display:none;">
                     <label class="vendor-form-label">PO Items & Quantity for This Booking <span style="color: #ef4444;">*</span></label>
                     <div id="po_items_box"></div>
-                    <small style="color: #64748b;">Input quantity to deliver now. Remaining quantity will stay available for future bookings.</small>
+                    <small style="color: #64748b;">Input Quantity to Deliver Now. Remaining Quantity Will Stay Available for Future Bookings.</small>
                 </div>
 
                 <div class="vendor-form-group">
@@ -87,7 +87,7 @@
                         <option value="">Auto-assign by Admin</option>
                         <!-- Gates will be loaded via JavaScript based on warehouse -->
                     </select>
-                    <small style="color: #64748b;">Leave empty for admin to assign the best available gate</small>
+                    <small style="color: #64748b;">Leave Empty for Admin to Assign the Best Available Gate</small>
                 </div>
 
                 <h3 style="margin-bottom: 1rem; margin-top: 2rem; color: #374151; font-size: 1rem; font-weight: 600;">
@@ -103,7 +103,7 @@
                             <option value="{{ $type->truck_type }}" 
                                     data-duration="{{ $type->target_duration_minutes }}"
                                     {{ old('truck_type') === $type->truck_type ? 'selected' : '' }}>
-                                {{ $type->truck_type }} ({{ $type->target_duration_minutes }} min)
+                                {{ $type->truck_type }} ({{ $type->target_duration_minutes }} Min)
                             </option>
                         @endforeach
                     </select>
@@ -113,7 +113,7 @@
                     <label class="vendor-form-label">Vehicle Number (Optional)</label>
                     <input type="text" name="vehicle_number" class="vendor-form-input" 
                            placeholder="e.g., B 1234 ABC" value="{{ old('vehicle_number') }}">
-                    <small style="color: #64748b;">Can be provided later before arrival</small>
+                    <small style="color: #64748b;">Can Be Provided Later Before Arrival</small>
                 </div>
             </div>
 
@@ -144,10 +144,10 @@
                 </div>
 
                 <div class="vendor-form-group">
-                    <label class="vendor-form-label">Duration (minutes) <span style="color: #ef4444;">*</span></label>
+                    <label class="vendor-form-label">Duration (Minutes) <span style="color: #ef4444;">*</span></label>
                     <input type="number" name="planned_duration" class="vendor-form-input" required
                            min="30" max="480" step="30" value="{{ old('planned_duration', 60) }}" id="planned_duration">
-                    <small style="color: #64748b;">Duration is auto-suggested based on truck type</small>
+                    <small style="color: #64748b;">Duration Is Auto-suggested Based on Truck Type</small>
                     @error('planned_duration')
                         <small style="color: #ef4444;">{{ $message }}</small>
                     @enderror
@@ -161,7 +161,7 @@
                 <div class="vendor-form-group" style="margin-top: 1.5rem;">
                     <label class="vendor-form-label">Notes (Optional)</label>
                     <textarea name="notes" class="vendor-form-textarea" rows="3" 
-                              placeholder="Any special requests or notes...">{{ old('notes') }}</textarea>
+                              placeholder="Any Special Requests or Notes...">{{ old('notes') }}</textarea>
                 </div>
             </div>
         </div>
@@ -189,7 +189,7 @@
     
     <div id="calendar-preview" style="min-height: 200px;">
         <p style="text-align: center; color: #64748b; padding: 2rem;">
-            Select a warehouse and date to see availability
+            Select a Warehouse and Date to See Availability
         </p>
     </div>
 </div>
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!poSuggestions) return;
         if (!items || items.length === 0) {
             showPoSuggestionsMessage(
-                '<div style="padding:12px; color:#64748b; font-size:13px;">No PO/DO found for your vendor</div>'
+                '<div style="padding:12px; color:#64748b; font-size:13px;">No PO/DO Found for Your Vendor</div>'
             );
             return;
         }
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!resp || !resp.success) {
                     setPoPreview(null);
                     if (poItemsGroup && poItemsBox) {
-                        const msg = (resp && resp.message) ? String(resp.message) : 'PO detail not found or not assigned to your vendor.';
+                        const msg = (resp && resp.message) ? String(resp.message) : 'PO Detail Not Found or Not Assigned to Your Vendor.';
                         poItemsBox.innerHTML = '<div style="padding:10px 12px; border:1px solid #fecaca; background:#fef2f2; color:#991b1b; border-radius:10px; font-size:13px;">' + escapeHtml(msg) + '</div>';
                         poItemsGroup.style.display = 'block';
                     }
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(function () {
                 setPoPreview(null);
                 if (poItemsGroup && poItemsBox) {
-                    poItemsBox.innerHTML = '<div style="padding:10px 12px; border:1px solid #fecaca; background:#fef2f2; color:#991b1b; border-radius:10px; font-size:13px;">Failed to load PO detail. Please try again.</div>';
+                    poItemsBox.innerHTML = '<div style="padding:10px 12px; border:1px solid #fecaca; background:#fef2f2; color:#991b1b; border-radius:10px; font-size:13px;">Failed to Load PO Detail. Please Try Again.</div>';
                     poItemsGroup.style.display = 'block';
                 }
             });
@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(function (resp) {
                         if (!resp || !resp.success) {
                             showPoSuggestionsMessage(
-                                '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to load suggestions</div>'
+                                '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to Load Suggestions</div>'
                             );
                             return;
                         }
@@ -404,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .catch(function () {
                         showPoSuggestionsMessage(
-                            '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to load suggestions</div>'
+                            '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to Load Suggestions</div>'
                         );
                     });
             }, 250);
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(function (resp) {
                     if (!resp || !resp.success) {
                         showPoSuggestionsMessage(
-                            '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to load suggestions</div>'
+                            '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to Load Suggestions</div>'
                         );
                         return;
                     }
@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(function () {
                     showPoSuggestionsMessage(
-                        '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to load suggestions</div>'
+                        '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to Load Suggestions</div>'
                     );
                 });
         });
@@ -539,19 +539,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     let riskColor = '#10b981';
                     
                     if (data.blocking_risk === 0) {
-                        riskText = 'Low risk - Good time slot!';
+                        riskText = 'Low Risk - Good Time Slot!';
                     } else if (data.blocking_risk === 1) {
-                        riskText = 'Medium risk - Some overlap with other bookings';
+                        riskText = 'Medium Risk - Some Overlap with Other Bookings';
                         riskColor = '#f59e0b';
                     } else {
-                        riskText = 'High risk - Consider another time';
+                        riskText = 'High Risk - Consider Another Time';
                         riskColor = '#ef4444';
                     }
                     
                     availabilityResult.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: #10b981;">
                             <i class="fas fa-check-circle"></i>
-                            <span>Time slot is available</span>
+                            <span>Time Slot Is Available</span>
                         </div>
                         <div style="margin-top: 0.5rem; color: ${riskColor}; font-size: 0.875rem;">
                             <i class="fas fa-info-circle"></i>
@@ -562,7 +562,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     availabilityResult.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: #ef4444;">
                             <i class="fas fa-times-circle"></i>
-                            <span>${data.reason || 'Time slot is not available'}</span>
+                            <span>${data.reason || 'Time Slot Is Not Available'}</span>
                         </div>
                     `;
                 }
@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const date = dateInput.value;
 
         if (!warehouseId || !date) {
-            calendarPreview.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">Select a warehouse and date to see availability</p>';
+            calendarPreview.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">Select a Warehouse and Date to See Availability</p>';
             return;
         }
 
@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                calendarPreview.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Failed to load availability</p>';
+                calendarPreview.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Failed to Load Availability</p>';
             });
     }
 

@@ -22,9 +22,9 @@
             if ($minutes === null) return '-';
             $m = (int) $minutes;
             $h = $m / 60;
-            $out = $m . ' min';
+            $out = $m . ' Min';
             if ($h >= 1) {
-                $out .= ' (' . rtrim(rtrim(number_format($h, 2), '0'), '.') . ' h)';
+                $out .= ' (' . rtrim(rtrim(number_format($h, 2), '0'), '.') . ' Hours)';
             }
             return $out;
         };
@@ -42,12 +42,12 @@
                     $p = new \DateTime((string) $slot->planned_start);
                     $p->modify('+15 minutes');
                     $a = new \DateTime((string) $slot->arrival_time);
-                    $lateDisplay = $a > $p ? 'late' : 'on_time';
+                    $lateDisplay = $a > $p ? 'Late' : 'On Time';
                 } catch (\Throwable $e) {
                     $lateDisplay = null;
                 }
             } elseif ($status === 'completed') {
-                $lateDisplay = !empty($slot->is_late) ? 'late' : 'on_time';
+                $lateDisplay = !empty($slot->is_late) ? 'Late' : 'On Time';
             }
         }
 
@@ -155,9 +155,9 @@
                         <div>
                             @if ($isUnplanned)
                                 -
-                            @elseif ($lateDisplay === 'late')
+                            @elseif ($lateDisplay === 'Late')
                                 Late
-                            @elseif ($lateDisplay === 'on_time')
+                            @elseif ($lateDisplay === 'On Time')
                                 On Time
                             @else
                                 -

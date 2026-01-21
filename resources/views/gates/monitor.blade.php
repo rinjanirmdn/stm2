@@ -50,9 +50,9 @@
             </div>
             <div class="st-card__body">
                 <div class="gate-status-text mb-2">
-                    {{ $gate->gate_status == 'available' ? 'Tersedia' :
-                       ($gate->gate_status == 'busy' ? 'Sibuk' :
-                       ($gate->gate_status == 'occupied' ? 'Terisi' : 'Direservasi')) }}
+                    {{ $gate->gate_status == 'available' ? 'Available' :
+                       ($gate->gate_status == 'busy' ? 'Busy' :
+                       ($gate->gate_status == 'occupied' ? 'Occupied' : 'Reserved')) }}
                 </div>
                 <div class="current-slot-info">
                     @if($gate->po_number)
@@ -62,7 +62,7 @@
                             {{ \Carbon\Carbon::parse($gate->planned_finish)->format('H:i') }}
                         </div>
                     @else
-                        <div class="no-slot">Tidak ada slot</div>
+                        <div class="no-slot">No Slot</div>
                     @endif
                 </div>
             </div>

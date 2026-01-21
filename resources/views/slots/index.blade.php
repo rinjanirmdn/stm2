@@ -15,7 +15,7 @@
                         name="q"
                         form="slot-filter-form"
                         class="st-input"
-                        placeholder="Truck, MAT DOC, Vendor, etc"
+                        placeholder="Truck, MAT DOC, Vendor, Etc"
                         value="{{ $search }}"
                     >
                     <div id="slot-search-suggestions" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:30;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;max-height:220px;overflow:auto;min-width:260px;"></div>
@@ -100,7 +100,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
-                                            <input type="text" name="vendor" form="slot-filter-form" class="st-input" placeholder="Cari vendor..." value="{{ $vendor ?? '' }}">
+                                            <input type="text" name="vendor" form="slot-filter-form" class="st-input" placeholder="Cari Vendor..." value="{{ $vendor ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="vendor">Clear</button>
                                             </div>
@@ -196,7 +196,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="planned_start" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">ETA Range</div>
-                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input" placeholder="Pilih rentang tanggal" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' to '.$date_to) : '' }}" readonly style="cursor:pointer;">
+                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input" placeholder="Pilih Rentang Tanggal" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' to '.$date_to) : '' }}" readonly style="cursor:pointer;">
                                             <input type="hidden" name="date_from" form="slot-filter-form" value="{{ $date_from ?? '' }}">
                                             <input type="hidden" name="date_to" form="slot-filter-form" value="{{ $date_to ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
@@ -222,7 +222,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="arrival_presence" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Arrival Date Filter</div>
-                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input" placeholder="Pilih rentang tanggal" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' to '.$arrival_to) : '' }}" readonly style="cursor:pointer;">
+                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input" placeholder="Pilih Rentang Tanggal" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' to '.$arrival_to) : '' }}" readonly style="cursor:pointer;">
                                             <input type="hidden" name="arrival_from" form="slot-filter-form" value="{{ $arrival_from ?? '' }}">
                                             <input type="hidden" name="arrival_to" form="slot-filter-form" value="{{ $arrival_to ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
@@ -239,7 +239,7 @@
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="lead_time" title="Filter">⏷</button>
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="lead_time" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Lead Time (min)</div>
+                                            <div style="font-weight:600;margin-bottom:6px;">Lead Time (Min)</div>
                                             <div style="display:flex;flex-direction:column;gap:8px;">
                                                 <div>
                                                     <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Min</div>
@@ -278,7 +278,7 @@
                                 </th>
                                 <th>
                                     <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
-                                        <span>ARRIVAL STATUS</span>
+                                        <span>Arrival Status</span>
                                         <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" title="Sort">⇅</button>
                                         <button
                                             type="button"
@@ -320,7 +320,7 @@
                                             <select name="status[]" form="slot-filter-form" class="st-select st-filter-status-select" style="width:100%;height:34px;">
                                                 <option value="">(All)</option>
                                                 @foreach (['scheduled','waiting','in_progress','completed','cancelled'] as $st)
-                                                    <option value="{{ $st }}" {{ in_array($st, $statusFilter, true) ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ', $st)) }}</option>
+                                                    <option value="{{ $st }}" {{ in_array($st, $statusFilter, true) ? 'selected' : '' }}>{{ ucwords(str_replace('_',' ', $st)) }}</option>
                                                 @endforeach
                                             </select>
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
@@ -473,6 +473,9 @@
                                     'in_progress' => 'bg-in_progress',
                                     'completed' => 'bg-completed',
                                     'cancelled' => 'bg-danger',
+                                    'pending_vendor_confirmation' => 'bg-warning',
+                                    'rejected' => 'bg-danger',
+                                    'pending_approval' => 'bg-pending_approval',
                                 ];
                                 $badgeClass = $badgeMap[$status] ?? 'bg-secondary';
                             @endphp
@@ -505,16 +508,16 @@
                                             $m = (int) $leadTimeMinutes;
                                             $h = $m / 60;
                                         @endphp
-                                        {{ $m }} min
+                                        {{ $m }} Min
                                         @if ($h >= 1)
-                                            ({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }} h)
+                                            ({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }} Hours)
                                         @endif
                                         <div style="font-size:11px;color:#6b7280;margin-top:2px;line-height:1.3;">
                                             @if ($waitingMinutes !== null)
-                                                <div>Waiting: {{ (int) $waitingMinutes }} min</div>
+                                                <div>Waiting: {{ (int) $waitingMinutes }} Min</div>
                                             @endif
                                             @if ($processMinutes !== null)
-                                                <div>Process: {{ (int) $processMinutes }} min</div>
+                                                <div>Process: {{ (int) $processMinutes }} Min</div>
                                             @endif
                                         </div>
                                     @else
@@ -605,7 +608,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="15" style="text-align:center;color:#6b7280;padding:16px 8px;">No slots found</td>
+                                <td colspan="15" style="text-align:center;color:#6b7280;padding:16px 8px;">No Slots Found</td>
                             </tr>
                         @endforelse
                         </tbody>
@@ -680,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (btn.getAttribute('data-confirm-bound') === '1') return;
             btn.setAttribute('data-confirm-bound', '1');
             btn.addEventListener('click', function (e) {
-                if (!confirm('Yakin ingin membatalkan slot ini?')) {
+                if (!confirm('Yakin Ingin Membatalkan Slot Ini?')) {
                     e.preventDefault();
                 }
             });

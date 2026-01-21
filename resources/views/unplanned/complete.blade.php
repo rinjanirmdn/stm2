@@ -46,7 +46,7 @@
                     <input type="text" name="driver_number" class="st-input" required value="{{ old('driver_number') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <textarea name="notes" class="st-textarea" rows="3">{{ old('notes') }}</textarea>
                 </div>
             </div>

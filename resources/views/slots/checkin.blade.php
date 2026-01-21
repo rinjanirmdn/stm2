@@ -17,7 +17,7 @@
             <div class="slot-info">
                 <div class="slot-number">{{ $slot->truck_number }}</div>
                 <span class="status-badge status-{{ $slot->status }}">
-                    {{ ucfirst($slot->status) }}
+                    {{ ucwords(str_replace('_', ' ', $slot->status)) }}
                 </span>
 
                 <div class="slot-details">
@@ -42,7 +42,7 @@
 
             <div class="qr-container">
                 <div id="qrcode"></div>
-                <p class="qr-hint">Scan QR code untuk check-in cepat</p>
+                <p class="qr-hint">Scan QR Code untuk Check-in Cepat</p>
             </div>
 
             @if($canCheckin)
@@ -122,7 +122,7 @@
                     showMessage(data.message, 'error');
                 }
             } catch (error) {
-                showMessage('Terjadi kesalahan. Silakan coba lagi.', 'error');
+                showMessage('Terjadi Kesalahan. Silakan Coba Lagi.', 'error');
             } finally {
                 loading.style.display = 'none';
             }

@@ -12,7 +12,7 @@
                 <div class="st-alert st-alert--error">
                     <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <div class="st-alert__text">
-                        <div style="font-weight:600;margin-bottom:2px;">Validation error</div>
+                        <div style="font-weight:600;margin-bottom:2px;">Validation Error</div>
                         <div style="font-size:12px;">
                             <ul style="margin:0;padding-left:16px;">
                                 @foreach ($errors->all() as $msg)
@@ -39,7 +39,7 @@
                 <div class="st-form-field">
                     <label class="st-label">Direction <span class="st-text--danger-dark">*</span></label>
                     <select name="direction" id="direction" class="st-select{{ $errors->has('direction') ? ' st-input--invalid' : '' }}" required>
-                        <option value="">Choose direction...</option>
+                        <option value="">Choose Direction...</option>
                         <option value="inbound" {{ old('direction') === 'inbound' ? 'selected' : '' }}>Inbound</option>
                         <option value="outbound" {{ old('direction') === 'outbound' ? 'selected' : '' }}>Outbound</option>
                     </select>
@@ -60,7 +60,7 @@
                     @enderror
                 </div>
                 <div class="st-form-field" style="position:relative;">
-                    <label class="st-label">Vendor <span class="st-text--optional">(optional)</span></label>
+                    <label class="st-label">Vendor <span class="st-text--optional">(Optional)</span></label>
                     @php
                         $oldVendorName = '';
                         $oldVendorId = old('vendor_id');
@@ -77,7 +77,7 @@
                         type="text"
                         id="vendor_search"
                         class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
-                        placeholder="Pilih direction dulu..."
+                        placeholder="Pilih Direction Dulu..."
                         style="margin-bottom:4px;"
                         autocomplete="off"
                         {{ old('direction') ? '' : 'disabled' }}
@@ -118,7 +118,7 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Planned Gate <span class="st-text--optional">(optional)</span></label>
+                    <label class="st-label">Planned Gate <span class="st-text--optional">(Optional)</span></label>
                     <select name="planned_gate_id" id="planned_gate_id" class="st-select{{ $errors->has('planned_gate_id') ? ' st-input--invalid' : '' }}" {{ old('warehouse_id') ? '' : 'disabled' }}>
                         <option value="">- Optional -</option>
                         @foreach ($gates as $gate)
@@ -142,7 +142,7 @@
                 <div class="st-form-field">
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
                     <div style="display:flex;gap:6px;align-items:center;">
-                        <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" style="flex:1;" required {{ old('warehouse_id') ? '' : 'disabled' }} value="{{ old('planned_start') }}" placeholder="Select date and time">
+                        <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" style="flex:1;" required {{ old('warehouse_id') ? '' : 'disabled' }} value="{{ old('planned_start') }}" placeholder="Select Date and Time">
                         <button type="button" id="btn_schedule_preview" class="st-btn st-btn--secondary" style="white-space:nowrap;" {{ old('warehouse_id') ? '' : 'disabled' }}>Lihat Jadwal</button>
                     </div>
                     @error('planned_start')
@@ -159,7 +159,7 @@
                         <select name="duration_unit" class="st-select{{ $errors->has('duration_unit') ? ' st-input--invalid' : '' }}" style="max-width:120px;display:none;">
                             <option value="minutes" selected>Minutes</option>
                         </select>
-                        <span class="st-text--small st-text--muted" style="align-self:center;">minutes</span>
+                        <span class="st-text--small st-text--muted" style="align-self:center;">Minutes</span>
                     </div>
                     @error('planned_duration')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
@@ -170,7 +170,7 @@
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Risk Preview</label>
-                    <div id="risk_preview" class="st-text--muted">Risk belum dihitung.</div>
+                    <div id="risk_preview" class="st-text--muted">Risk Belum Dihitung.</div>
                     <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
                 </div>
             </div>
@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function setPoPreview(po) {
         if (!poPreview) return;
         if (!po) {
-            poPreview.textContent = 'Belum ada data PO/DO.';
+            poPreview.textContent = 'Belum Ada Data PO/DO.';
             return;
         }
 
@@ -453,14 +453,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!dir) {
             vendorSearch.value = '';
             vendorSearch.disabled = true;
-            vendorSearch.placeholder = 'Pilih direction dulu...';
+            vendorSearch.placeholder = 'Pilih Direction Dulu...';
             vendorSelect.value = '';
             clearVendorSuggestions();
             return;
         }
 
         vendorSearch.disabled = false;
-        vendorSearch.placeholder = dir === 'outbound' ? 'Cari customer (SAP)...' : 'Cari supplier (SAP)...';
+        vendorSearch.placeholder = dir === 'outbound' ? 'Cari Customer (SAP)...' : 'Cari Supplier (SAP)...';
 
         var q = (vendorSearch.value || '').trim();
         // Don't search if query is empty, unless we want to show recent/all (maybe too heavy)
@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function () {
             getJson(finalUrl)
                 .then(function (data) {
                     if (!data || !data.success || !data.data || data.data.length === 0) {
-                        vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">No vendors found in SAP/Local</div>';
+                        vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">No Vendors Found in SAP/Local</div>';
                         return;
                     }
 
@@ -504,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     vendorSuggestions.style.display = 'block';
                 })
                 .catch(function () {
-                    vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">Error searching vendor</div>';
+                    vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">Error Searching Vendor</div>';
                 });
         }, 300);
     }
@@ -518,12 +518,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!vendorSearch) return;
         if (!dir) {
             vendorSearch.disabled = true;
-            vendorSearch.placeholder = 'Pilih direction dulu...';
+            vendorSearch.placeholder = 'Pilih Direction Dulu...';
             return;
         }
 
         vendorSearch.disabled = false;
-        vendorSearch.placeholder = 'Cari vendor...';
+        vendorSearch.placeholder = 'Cari Vendor...';
     }
 
     function filterGates() {
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var unit = durationUnitSelect.value;
 
         if (!whId || !start || !duration) {
-            riskPreview.textContent = 'Risk belum dihitung.';
+            riskPreview.textContent = 'Risk Belum Dihitung.';
             uiRiskHigh = false;
             uiRiskPending = false;
             applySaveState();
@@ -634,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function () {
         postJson(urlCheckRisk, formData)
             .then(function (data) {
                 if (!data || !data.success) {
-                    riskPreview.textContent = 'Risk tidak dapat dihitung.';
+                    riskPreview.textContent = 'Risk Tidak Dapat Dihitung.';
                     uiRiskHigh = false;
                     uiRiskPending = false;
                     applySaveState();
@@ -699,9 +699,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 if (data.overlap) {
-                    var msg = data.message ? String(data.message) : 'Waktu ini bentrok dengan slot lain pada gate ini.';
+                    var msg = data.message ? String(data.message) : 'Waktu Ini Bentrok dengan Slot Lain pada Gate Ini.';
                     if (data.suggested_start) {
-                        msg += ' Waktu otomatis disesuaikan ke setelah ' + data.suggested_start + '.';
+                        msg += ' Waktu Otomatis Disesuaikan ke Setelah ' + data.suggested_start + '.';
                         setPlannedStartValue(String(data.suggested_start));
                         if (timeWarning) timeWarning.textContent = msg;
                         updateRiskPreview();
@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var whId = warehouseSelect.value;
         if (!whId) {
-            alert('Pilih warehouse terlebih dahulu.');
+            alert('Pilih Warehouse Terlebih Dahulu.');
             return;
         }
 

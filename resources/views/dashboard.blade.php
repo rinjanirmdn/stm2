@@ -10,7 +10,7 @@
                 <div class="st-card__header">
                     <div>
                         <h2 class="st-card__title">Analytics Range</h2>
-                        <div class="st-card__subtitle">Rentang tanggal untuk Analytics (Overview / KPI / Bottleneck)</div>
+                        <div class="st-card__subtitle">Rentang Tanggal untuk Analytics (Overview / KPI / Bottleneck)</div>
                     </div>
                     <form method="GET" class="st-form-row" style="gap:8px;">
                         <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
@@ -18,7 +18,7 @@
                         <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
                         <div class="st-form-field" style="min-width:260px;">
                             <label class="st-label">Range</label>
-                            <input type="text" id="analytics_range" class="st-input" placeholder="Pilih rentang tanggal" value="{{ ($range_start ?? '') && ($range_end ?? '') ? ($range_start.' to '.$range_end) : ($range_start ?? $today) }}">
+                            <input type="text" id="analytics_range" class="st-input" placeholder="Pilih Rentang Tanggal" value="{{ ($range_start ?? '') && ($range_end ?? '') ? ($range_start.' to '.$range_end) : ($range_start ?? $today) }}">
                         </div>
                         <div class="st-form-field" style="align-self:flex-end;min-width:120px;flex:0 0 auto;">
                             <button type="submit" class="st-btn st-btn--secondary">Apply</button>
@@ -31,7 +31,7 @@
                         <div class="st-text--small st-text--muted">Pending</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $pendingRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Pending" title="Permintaan booking yang menunggu persetujuan (approval) sebelum masuk ke jadwal resmi.">
+                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Pending" title="Permintaan Booking yang Menunggu Persetujuan (Approval) Sebelum Masuk ke Jadwal Resmi.">
                                 <i class="fa-solid fa-info"></i>
                             </button>
                         </div>
@@ -40,7 +40,7 @@
                         <div class="st-text--small st-text--muted">Scheduled</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $scheduledRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Scheduled" title="Slot yang sudah dijadwalkan, tapi truk belum datang dan proses belum dimulai.">
+                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Scheduled" title="Slot yang Sudah Dijadwalkan, tapi Truk Belum Datang dan Proses Belum Dimulai.">
                                 <i class="fa-solid fa-info"></i>
                             </button>
                         </div>
@@ -49,16 +49,16 @@
                         <div class="st-text--small st-text--muted">Waiting</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $waitingRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Waiting" title="Slot yang truknya sudah datang (Arrived) dan/atau sedang menunggu antrian (Waiting).">
+                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Waiting" title="Slot yang Truknya Sudah Datang (Arrived) dan/atau Sedang Menunggu Antrian (Waiting).">
                                 <i class="fa-solid fa-info"></i>
                             </button>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
-                        <div class="st-text--small st-text--muted">In progress</div>
+                        <div class="st-text--small st-text--muted">In Progress</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $activeRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: In progress" title="Slot yang sedang diproses di gate (loading/unloading sedang berjalan).">
+                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: In progress" title="Slot yang Sedang Diproses di Gate (Loading/Unloading Sedang Berjalan).">
                                 <i class="fa-solid fa-info"></i>
                             </button>
                         </div>
@@ -67,7 +67,7 @@
                         <div class="st-text--small st-text--muted">Completed</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $completedStatusRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Completed" title="Slot yang prosesnya sudah selesai (Completed).">
+                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Completed" title="Slot yang Prosesnya Sudah Selesai (Completed).">
                                 <i class="fa-solid fa-info"></i>
                             </button>
                         </div>
@@ -76,7 +76,7 @@
                         <div class="st-text--small st-text--muted">Cancel</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $cancelledRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Cancel" title="Slot yang dibatalkan (Cancelled).">
+                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Cancel" title="Slot yang Dibatalkan (Cancelled).">
                                 <i class="fa-solid fa-info"></i>
                             </button>
                         </div>
@@ -85,7 +85,7 @@
                         <div class="st-text--small st-text--muted">Total</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $totalAllRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Total" title="Total semua slot dalam rentang tanggal (termasuk Cancelled).">
+                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Total" title="Total Semua Slot dalam Rentang Tanggal (Termasuk Cancelled).">
                                 <i class="fa-solid fa-info"></i>
                             </button>
                         </div>
@@ -96,7 +96,7 @@
                     <div>
                         <br>
                         <h2 class="st-card__title">Analytics</h2>
-                        <div class="st-card__subtitle">Ringkasan performa & bottleneck</div>
+                        <div class="st-card__subtitle">Ringkasan Performa & Bottleneck</div>
                     </div>
                     <div class="st-tabbar" role="tablist" aria-label="Analytics tabs">
                         <button type="button" class="st-btn st-btn--secondary st-btn--sm st-tab-btn" data-tab="overview" aria-selected="true">Overview</button>
@@ -154,14 +154,14 @@
                             <div class="st-chart-card">
                                 <div style="display:flex;flex-direction:column;gap:6px;">
                                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <div class="st-chart-card__title" style="margin:0;white-space:nowrap;">Bottleneck (Avg waiting)</div>
+                                        <div class="st-chart-card__title" style="margin:0;white-space:nowrap;">Bottleneck (Avg Waiting)</div>
                                         <select id="bottleneck_dir" class="st-select" style="max-width:110px;min-width:90px;">
                                             <option value="all">All</option>
                                             <option value="inbound">Inbound</option>
                                             <option value="outbound">Outbound</option>
                                         </select>
                                     </div>
-                                    <div class="st-text--small st-text--muted">Top 20, threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} minutes</div>
+                                    <div class="st-text--small st-text--muted">Top 20, Threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} Minutes</div>
                                 </div>
                                 <div class="st-chart-wrap st-mt-2">
                                     <canvas id="chart_bottleneck"></canvas>
@@ -173,8 +173,8 @@
                                 <div class="st-chart-card__title">Top Bottleneck</div>
                                 <div class="st-metric-row st-grid-1">
                                     <div class="st-mini-card"><div class="st-text--small st-text--muted">Location</div><div id="bottleneck_top_label" class="st-metric-value-lg">-</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Avg wait (min)</div><div id="bottleneck_top_avg" class="st-metric-value-lg">0</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Slot count</div><div id="bottleneck_top_slots" class="st-metric-value-lg">0</div></div>
+                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Avg Wait (Min)</div><div id="bottleneck_top_avg" class="st-metric-value-lg">0</div></div>
+                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Slot Count</div><div id="bottleneck_top_slots" class="st-metric-value-lg">0</div></div>
                                 </div>
                             </div>
                         </div>
@@ -189,7 +189,7 @@
                                         <option value="hour">Hours</option>
                                     </select>
                                 </div>
-                                <div id="lead_proc_empty" class="st-text--small st-text--muted">No lead/process data.</div>
+                                <div id="lead_proc_empty" class="st-text--small st-text--muted">No Lead/Process Data.</div>
                                 <div class="st-metric-row" style="margin-top:10px;">
                                     <div class="st-mini-card">
                                         <div class="st-text--small st-text--muted">Lead Avg</div>
@@ -320,7 +320,7 @@
                     <div>
                         <h2 class="st-card__title">24h Timeline</h2>
 
-                        <div class="st-text--small st-text--muted">Ketersediaan slot (real-time visual)</div>
+                        <div class="st-text--small st-text--muted">Ketersediaan Slot (Real-time Visual)</div>
                     </div>
                     <form method="GET" id="schedule-filter-form" class="st-form-row" style="margin-top:4px;gap:8px;">
                         <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
@@ -381,7 +381,10 @@
                             data-route-cancel="{{ route('slots.cancel', ['slotId' => 0], false) }}"
                         >
                             <div class="st-timeline__header">
-                                <div class="st-timeline__header-left">Gate</div>
+                                <div class="st-timeline__header-left" style="flex-direction:column;align-items:flex-start;justify-content:center;line-height:1.2;">
+                                    <div>Gate</div>
+                                    <div style="font-size:9px;color:#9ca3af;font-weight:400;">Plan (Top) / Act (Btm)</div>
+                                </div>
                                 <div class="st-timeline__header-grid">
                                     @foreach ($timelineHours as $h)
                                         @php
@@ -486,24 +489,37 @@
                             </div>
                         </div>
                     </div>
-                    <div class="st-timeline-meta">
+                    <div class="st-timeline-meta" style="margin-top:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                        <!-- Lane Guide -->
+                        <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#6b7280; background:#f9fafb; padding:4px 8px; border-radius:6px; border:1px solid #f3f4f6;">
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <div style="width:12px; height:12px; background:#e2e8f0; border-radius:2px; display:grid; place-items:center;"><div style="width:6px; height:2px; background:#64748b;"></div></div>
+                                <span><strong>Top Lane:</strong> Planned</span>
+                            </div>
+                            <div style="width:1px; height:12px; background:#d1d5db;"></div>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <div style="width:12px; height:12px; background:#cbd5e1; border-radius:2px; display:grid; place-items:center;"><div style="width:6px; height:6px; background:#475569; border-radius:50%;"></div></div>
+                                <span><strong>Bottom Lane:</strong> Actual</span>
+                            </div>
+                        </div>
 
-                    <div class="st-timeline-legend" aria-label="Timeline color legend">
-                        <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--scheduled"></span> Scheduled</span>
-                        <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--waiting"></span> Waiting</span>
-                        <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--in_progress"></span> In Progress</span>
-                        <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--completed"></span> Completed</span>
+                        <!-- Status Legend -->
+                        <div class="st-timeline-legend" aria-label="Timeline color legend" style="margin-top:0;">
+                            <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--scheduled"></span> Scheduled</span>
+                            <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--waiting"></span> Waiting</span>
+                            <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--in_progress"></span> In Progress</span>
+                            <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--completed"></span> Completed</span>
+                        </div>
                     </div>
-                </div>
 
                 <div style="margin-top:12px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
                         <div>
                             <h3 class="st-card__title" style="margin:0;">Schedule</h3>
-                            <div class="st-card__subtitle">Trucks, ETA, gates, status, and estimated finish</div>
+                            <div class="st-card__subtitle">Trucks, ETA, Gates, Status, and Estimated Finish</div>
                         </div>
                         <div style="display:flex;gap:8px;align-items:center;">
-                            <div class="st-text--small st-text--muted">Gunakan filter untuk mengatur date/time/gate.</div>
+                            <div class="st-text--small st-text--muted">Gunakan Filter untuk Mengatur Date/Time/Gate.</div>
                             @can('slots.create')
                             <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
                                 <i class="fa-solid fa-plus st-mr-1"></i> Create Slot
@@ -541,6 +557,8 @@
                                     'in_progress' => 'bg-in_progress',
                                     'completed' => 'bg-completed',
                                     'cancelled' => 'bg-danger',
+                                    'pending_vendor_confirmation' => 'bg-warning',
+                                    'pending_approval' => 'bg-pending_approval',
                                 ];
                                 $badgeClass = $badgeMap[$st] ?? 'bg-secondary';
                                 if ($st === 'arrived') {
@@ -575,7 +593,7 @@
                                                 <i class="fa-solid fa-truck"></i>
                                             </a>
                                             @can('slots.cancel')
-                                            <a href="{{ route('slots.cancel', ['slotId' => $row['id']]) }}" class="tw-action tw-action--danger" data-tooltip="Cancel" aria-label="Cancel" data-confirm="Yakin ingin membatalkan slot ini?">
+                                            <a href="{{ route('slots.cancel', ['slotId' => $row['id']]) }}" class="tw-action tw-action--danger" data-tooltip="Cancel" aria-label="Cancel" data-confirm="Yakin Ingin Membatalkan Slot Ini?">
                                                 <i class="fa-solid fa-xmark"></i>
                                             </a>
                                             @endcan
@@ -592,7 +610,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" style="padding:12px;">No schedule for selected filter</td></tr>
+                            <tr><td colspan="8" style="padding:12px;">No Schedule for Selected Filter</td></tr>
                         @endforelse
                         </tbody>
                     </table>
@@ -608,7 +626,7 @@
                 <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
                     <div>
                         <h2 class="st-card__title">Activity Logs</h2>
-                        <div class="st-card__subtitle">Status changes and events by date, warehouse, and user</div>
+                        <div class="st-card__subtitle">Status Changes and Events by Date, Warehouse, and User</div>
                     </div>
                     <div style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
                     <form method="GET" id="activity-filter-form" class="st-form-row" style="margin-top:4px;gap:8px;">
@@ -673,7 +691,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="4" style="padding:12px;">No activities for selected filter.</td></tr>
+                            <tr><td colspan="4" style="padding:12px;">No Activities for Selected Filter.</td></tr>
                         @endforelse
                         </tbody>
                     </table>
@@ -721,7 +739,7 @@
                 <a href="#" id="timeline-modal-arrival" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Arrival</a>
                 <a href="#" id="timeline-modal-start" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Start</a>
                 <a href="#" id="timeline-modal-complete" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Complete</a>
-                <a href="#" id="timeline-modal-cancel" class="st-btn st-btn--sm st-btn--danger" data-confirm="Yakin ingin membatalkan slot ini?" style="display:none;">Cancel</a>
+                <a href="#" id="timeline-modal-cancel" class="st-btn st-btn--sm st-btn--danger" data-confirm="Yakin Ingin Membatalkan Slot Ini?" style="display:none;">Cancel</a>
             </div>
         </div>
     </div>
@@ -1588,21 +1606,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var trendSum = (trendCounts || []).reduce(function (a, b) { return a + (parseInt(b || 0, 10) || 0); }, 0);
-    setChartMessage(trendCanvas, trendSum <= 0 ? 'Tidak ada data completed pada range ini.' : '');
+    setChartMessage(trendCanvas, trendSum <= 0 ? 'Tidak Ada Data Completed pada Range Ini.' : '');
 
-    setChartMessage(directionCanvas, (inbound + outbound) <= 0 ? 'Tidak ada data inbound/outbound pada range ini.' : '');
+    setChartMessage(directionCanvas, (inbound + outbound) <= 0 ? 'Tidak Ada Data Inbound/Outbound pada Range Ini.' : '');
 
     var onTimeTotal0 = parseInt(numbers.on_time || 0, 10) + parseInt(numbers.late || 0, 10);
-    setChartMessage(onTimeCanvas, onTimeTotal0 <= 0 ? 'Tidak ada data KPI on time/late pada range ini.' : '');
+    setChartMessage(onTimeCanvas, onTimeTotal0 <= 0 ? 'Tidak Ada Data KPI On Time/Late pada Range Ini.' : '');
 
     var targetTotal0 = parseInt(numbers.achieve || 0, 10) + parseInt(numbers.not_achieve || 0, 10);
-    setChartMessage(targetCanvas, targetTotal0 <= 0 ? 'Tidak ada data target achievement pada range ini.' : '');
+    setChartMessage(targetCanvas, targetTotal0 <= 0 ? 'Tidak Ada Data Target Achievement pada Range Ini.' : '');
 
     var compTotal0 = parseInt(numbers.completion_total || 0, 10);
-    setChartMessage(completionCanvas, compTotal0 <= 0 ? 'Tidak ada data completion pada range ini.' : '');
+    setChartMessage(completionCanvas, compTotal0 <= 0 ? 'Tidak Ada Data Completion pada Range Ini.' : '');
 
     var bottleCount0 = (bottleneckRows || []).length;
-    setChartMessage(bottleneckCanvas, bottleCount0 <= 0 ? 'Tidak ada bottleneck pada range ini.' : '');
+    setChartMessage(bottleneckCanvas, bottleCount0 <= 0 ? 'Tidak Ada Bottleneck pada Range Ini.' : '');
 
     function makeChart(canvasEl, cfg) {
         if (!canvasEl || !window.Chart) return null;

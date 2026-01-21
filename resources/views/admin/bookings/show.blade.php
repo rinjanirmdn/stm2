@@ -27,7 +27,7 @@
         </div>
     </div>
     @elseif($booking->status === 'pending_vendor_confirmation')
-    <div class="st-alert st-alert--info">
+    <div class="st-alert st-alert--warning">
         <i class="fas fa-hourglass-half"></i>
         <div>
             <strong>Awaiting Vendor</strong> - Waiting for vendor to confirm the rescheduled time.
@@ -76,7 +76,7 @@
                 <tr>
                     <td>Direction</td>
                     <td>
-                        <span class="st-badge st-badge--{{ $booking->direction === 'inbound' ? 'info' : 'warning' }}">
+                        <span class="st-badge st-badge--{{ $booking->direction }}">
                             {{ ucfirst($booking->direction) }}
                         </span>
                     </td>
@@ -128,7 +128,7 @@
                     </table>
                 </div>
             @else
-                <div style="margin-top:10px; color: var(--st-text-muted); font-size: 13px;">No PO item details available for this booking.</div>
+                <div style="margin-top:10px; color: var(--st-text-muted); font-size: 13px;">No PO Item Details Available for This Booking.</div>
             @endif
         </div>
 
@@ -144,7 +144,7 @@
                 </tr>
                 <tr>
                     <td>Gate</td>
-                    <td>{{ $booking->plannedGate?->name ?? 'To be assigned' }}</td>
+                    <td>{{ $booking->plannedGate?->name ?? 'To Be Assigned' }}</td>
                 </tr>
                 <tr>
                     <td>Date</td>
@@ -156,7 +156,7 @@
                 </tr>
                 <tr>
                     <td>Duration</td>
-                    <td>{{ $booking->planned_duration }} min</td>
+                    <td>{{ $booking->planned_duration }} Min</td>
                 </tr>
                 @if($booking->original_planned_start && $booking->original_planned_start->ne($booking->planned_start))
                 <tr>
@@ -211,13 +211,10 @@
         
         <div class="st-action-buttons-group">
             @can('bookings.approve')
-            <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" style="display: inline;">
-                @csrf
-                <button type="submit" class="st-button st-button--success st-button--lg" onclick="return confirm('Approve this booking with the current schedule?')">
-                    <i class="fas fa-check"></i>
-                    Approve Booking
-                </button>
-            </form>
+            <button type="button" class="st-button st-button--success st-button--lg" onclick="openApproveModal({{ $booking->id }}, '{{ $booking->ticket_number }}')">
+                <i class="fas fa-check"></i>
+                Approve Booking
+            </button>
             @endcan
 
             @can('bookings.reschedule')
@@ -228,39 +225,60 @@
             @endcan
 
             @can('bookings.reject')
-            <button type="button" class="st-button st-button--danger st-button--lg" onclick="document.getElementById('reject-section').style.display='block'; this.style.display='none';">
+            <button type="button" class="st-button st-button--danger st-button--lg" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->ticket_number }}')">
                 <i class="fas fa-times"></i>
                 Reject Booking
             </button>
             @endcan
         </div>
-
-        <!-- Inline Reject Form -->
-        <div id="reject-section" style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: var(--st-danger-bg, #fee2e2); border-radius: 12px;">
-            <form method="POST" action="{{ route('bookings.reject', $booking->id) }}">
-                @csrf
-                <h4 style="margin: 0 0 1rem; color: var(--st-danger, #dc2626);">
-                    <i class="fas fa-times-circle"></i>
-                    Reject Booking
-                </h4>
-                <div class="st-form-group">
-                    <label class="st-label">Reason for Rejection <span class="st-required">*</span></label>
-                    <textarea name="reason" class="st-textarea" rows="3" required 
-                              placeholder="Please provide a clear reason for rejection..."></textarea>
-                </div>
-                <div class="st-action-buttons">
-                    <button type="submit" class="st-button st-button--danger">
-                        <i class="fas fa-times"></i>
-                        Confirm Rejection
-                    </button>
-                    <button type="button" class="st-button st-button--secondary" onclick="document.getElementById('reject-section').style.display='none';">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
     </div>
     @endif
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div id="approveModal" class="st-custom-modal">
+    <div class="st-custom-modal-overlay" onclick="closeApproveModal()"></div>
+    <div class="st-custom-modal-container">
+        <div class="st-custom-modal-header">
+            <h3>Confirm Approval</h3>
+            <button type="button" class="st-custom-modal-close" onclick="closeApproveModal()">&times;</button>
+        </div>
+        <form id="approveForm" method="POST" action="">
+            @csrf
+            <div class="st-custom-modal-body text-center">
+                <p>Are you sure you want to approve booking <strong id="modalTicketNumber"></strong>?</p>
+            </div>
+            <div class="st-custom-modal-footer">
+                <button type="submit" class="st-button st-button--success">Yes, Approve</button>
+                <button type="button" class="st-button st-button--secondary" onclick="closeApproveModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="reject-modal" class="st-custom-modal">
+    <div class="st-custom-modal-overlay" onclick="closeRejectModal()"></div>
+    <div class="st-custom-modal-container">
+        <div class="st-custom-modal-header">
+            <h3>Reject Booking</h3>
+            <button type="button" class="st-custom-modal-close" onclick="closeRejectModal()">&times;</button>
+        </div>
+        <form method="POST" id="reject-form" action="">
+            @csrf
+            <div class="st-custom-modal-body">
+                <p>Are you sure you want to reject booking <strong id="reject-ticket"></strong>?</p>
+                <div class="st-form-group" style="margin-top: 15px;">
+                    <label class="st-label" style="font-weight: 600; display: block; margin-bottom: 5px;">Reason for Rejection <span class="st-required">*</span></label>
+                    <textarea name="reason" class="st-textarea" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit;" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
+                </div>
+            </div>
+            <div class="st-custom-modal-footer">
+                <button type="submit" class="st-btn st-btn--primary" style="background-color: #dc2626; border-color: #dc2626; color: #fff;">Reject Booking</button>
+                <button type="button" class="st-btn st-btn--secondary" onclick="closeRejectModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Booking History -->
@@ -424,4 +442,32 @@
     text-decoration: line-through;
 }
 </style>
+@push('scripts')
+<script>
+function openApproveModal(id, ticket) {
+    const modal = document.getElementById('approveModal');
+    const ticketSpan = document.getElementById('modalTicketNumber');
+    const form = document.getElementById('approveForm');
+    
+    ticketSpan.innerText = ticket;
+    form.action = "{{ url('/bookings') }}/" + id + "/approve";
+    modal.classList.add('active');
+}
+
+function closeApproveModal() {
+    document.getElementById('approveModal').classList.remove('active');
+}
+
+function openRejectModal(id, ticket) {
+    const modal = document.getElementById('reject-modal');
+    document.getElementById('reject-ticket').innerText = ticket;
+    document.getElementById('reject-form').action = "{{ url('/bookings') }}/" + id + "/reject";
+    modal.classList.add('active');
+}
+
+function closeRejectModal() {
+    document.getElementById('reject-modal').classList.remove('active');
+}
+</script>
+@endpush
 @endsection

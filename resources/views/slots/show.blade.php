@@ -27,9 +27,9 @@
             if ($minutes === null) return '-';
             $m = (int) $minutes;
             $h = $m / 60;
-            $out = $m . ' min';
+            $out = $m . ' Min';
             if ($h >= 1) {
-                $out .= ' (' . rtrim(rtrim(number_format($h, 2), '0'), '.') . ' h)';
+                $out .= ' (' . rtrim(rtrim(number_format($h, 2), '0'), '.') . ' Hours)';
             }
             return $out;
         };
@@ -286,7 +286,7 @@
                 <form action="{{ route('slots.approve', $slot->id) }}" method="POST" style="display:inline-block;">
                     @csrf
                     @method('POST')
-                    <button type="submit" class="st-btn st-btn--primary" onclick="return confirm('Are you sure you want to Approve this booking?')">
+                    <button type="submit" class="st-btn st-btn--primary" onclick="return confirm('Are You Sure You Want to Approve This Booking?')">
                         <i class="fa-solid fa-check" style="margin-right:6px;"></i> Approve
                     </button>
                 </form>
@@ -326,7 +326,7 @@
                 @csrf
                 <div class="st-form-field">
                     <label class="st-label">Reason</label>
-                    <textarea name="reason" class="st-input" rows="3" required placeholder="Why is this booking rejected?"></textarea>
+                    <textarea name="reason" class="st-input" rows="3" required placeholder="Why Is This Booking Rejected?"></textarea>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
                     <button type="button" class="st-btn st-btn--secondary" onclick="document.getElementById('reject-dialog').style.display='none'">Cancel</button>

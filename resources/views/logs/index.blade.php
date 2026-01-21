@@ -12,7 +12,7 @@
                     type="text"
                     id="date_range"
                     class="st-input"
-                    placeholder="Select date range"
+                    placeholder="Select Date Range"
                     readonly
                     style="cursor:pointer;"
                 >
@@ -30,7 +30,7 @@
             </div>
             <div class="st-form-field" style="max-width:220px;">
                 <label class="st-label">Search</label>
-                <input type="text" name="q" class="st-input" placeholder="MAT DOC / PO / text" value="{{ $q ?? '' }}">
+                <input type="text" name="q" class="st-input" placeholder="MAT DOC / PO / Text" value="{{ $q ?? '' }}">
             </div>
             <div class="st-form-field" style="flex:0 0 auto;">
                 <button type="submit" class="st-btn st-btn--primary">Apply</button>
@@ -111,6 +111,30 @@
                                 </tr>
                             </thead>
                         <tbody>
+                        @php
+                            $formatDescription = function ($text) {
+                                if (empty($text)) return '-';
+                                $conjunctions = [
+                                    'and', 'or', 'but', 'nor', 'for', 'yet', 'so', 'a', 'an', 'the',
+                                    'at', 'by', 'from', 'in', 'of', 'on', 'to', 'with',
+                                    'dan', 'atau', 'tetapi', 'karena', 'agar', 'supaya', 'untuk', 'guna', 'bagi',
+                                    'seperti', 'serta', 'saat', 'sejak', 'selama', 'sampai', 'hingga',
+                                    'ke', 'di', 'dari', 'pada', 'dalam', 'kepada', 'oleh', 'dengan', 'tentang', 'yang'
+                                ];
+                                $words = explode(' ', $text);
+                                foreach ($words as $i => $w) {
+                                    $lower = strtolower($w);
+                                    // Check if it's a conjunction and not the first word
+                                    if ($i > 0 && in_array($lower, $conjunctions)) {
+                                        $words[$i] = $lower;
+                                    } else {
+                                        // Capitalize first letter, keep existing case for the rest (preserves abbreviations like PO)
+                                        $words[$i] = ucfirst($w);
+                                    }
+                                }
+                                return implode(' ', $words);
+                            };
+                        @endphp
                         @forelse ($logs as $row)
                             <tr>
                                 <td>
@@ -135,17 +159,17 @@
                                         }
                                     @endphp
                                     <span class="st-table__status-badge {{ $typeClass }}">
-                                        {{ strtoupper(str_replace('_', ' ', $t)) }}
+                                        {{ ucwords(str_replace('_', ' ', $t)) }}
                                     </span>
                                 </td>
-                                <td>{{ $row->description ?? '' }}</td>
+                                <td>{{ $formatDescription($row->description ?? '') }}</td>
                                 <td>{{ $row->slot_mat_doc ?? '-' }}</td>
                                 <td>{{ $row->slot_po_number ?? '-' }}</td>
                                 <td>{{ $row->created_by_nik ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align:center;color:#6b7280;padding:16px 8px;">No logs found</td>
+                                <td colspan="6" style="text-align:center;color:#6b7280;padding:16px 8px;">No Logs Found</td>
                             </tr>
                         @endforelse
                         </tbody>

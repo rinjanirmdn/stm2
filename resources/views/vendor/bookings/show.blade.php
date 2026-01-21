@@ -24,7 +24,7 @@
         </div>
     </div>
     @elseif($booking->status === 'pending_vendor_confirmation')
-    <div class="vendor-alert vendor-alert--info">
+    <div class="vendor-alert vendor-alert--warning">
         <i class="fas fa-exclamation-circle"></i>
         <div>
             <strong>Action Required</strong> - Admin has rescheduled your booking. Please confirm or reject the new schedule.
@@ -114,7 +114,7 @@
                 </tr>
                 <tr>
                     <td style="padding: 0.5rem 0; color: #64748b;">Duration</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->planned_duration }} minutes</td>
+                    <td style="padding: 0.5rem 0;">{{ $booking->planned_duration }} Minutes</td>
                 </tr>
                 @if($booking->original_planned_start && $booking->original_planned_start != $booking->planned_start)
                 <tr>

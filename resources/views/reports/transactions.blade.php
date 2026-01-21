@@ -14,7 +14,7 @@
                         name="q"
                         form="transactions-filter-form"
                         class="st-input"
-                        placeholder="PO, Ticket, MAT DOC, Vendor, etc"
+                        placeholder="PO, Ticket, MAT DOC, Vendor, Etc"
                         value="{{ $q ?? '' }}"
                     >
                     <div id="transaction-search-suggestions" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:30;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;max-height:220px;overflow:auto;min-width:260px;"></div>
@@ -26,7 +26,7 @@
                             type="text"
                             id="date_range"
                             class="st-input"
-                            placeholder="Select date range"
+                            placeholder="Select Date Range"
                             readonly
                             style="cursor:pointer;flex:1;"
                         >
@@ -133,7 +133,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="ticket" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Ticket Filter</div>
-                                                <input type="text" name="ticket" class="st-input" placeholder="Cari ticket..." value="{{ $ticket ?? '' }}">
+                                                <input type="text" name="ticket" class="st-input" placeholder="Cari Ticket..." value="{{ $ticket ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="ticket">Clear</button>
                                                 </div>
@@ -183,7 +183,7 @@
                                             </button>
                                             <div class="st-filter-panel" data-filter-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
-                                                <input type="text" name="vendor" class="st-input" placeholder="Cari vendor..." value="{{ $vendor ?? '' }}">
+                                                <input type="text" name="vendor" class="st-input" placeholder="Cari Vendor..." value="{{ $vendor ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="vendor">Clear</button>
                                                 </div>
@@ -267,7 +267,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="arrival_presence" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:260px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Arrival Date</div>
-                                                <input type="text" name="arrival_date_range" id="arrival_date_range" class="st-input" placeholder="Select arrival date range" readonly style="cursor:pointer;width:100%;">
+                                                <input type="text" name="arrival_date_range" id="arrival_date_range" class="st-input" placeholder="Select Arrival Date Range" readonly style="cursor:pointer;width:100%;">
                                                 <input type="hidden" name="arrival_date_from" id="arrival_date_from" value="{{ $arrival_date_from ?? '' }}">
                                                 <input type="hidden" name="arrival_date_to" id="arrival_date_to" value="{{ $arrival_date_to ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
@@ -386,7 +386,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="user" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">User Filter</div>
-                                                <input type="text" name="user" class="st-input" placeholder="Cari user..." value="{{ $user ?? '' }}">
+                                                <input type="text" name="user" class="st-input" placeholder="Cari User..." value="{{ $user ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="user">Clear</button>
                                                 </div>
@@ -511,16 +511,16 @@
                                                     $ltMinutes = (int) $leadTimeMinutes;
                                                     $ltHours = $ltMinutes / 60;
                                                 @endphp
-                                                {{ $ltMinutes }} min
+                                                {{ $ltMinutes }} Min
                                                 @if ($ltHours >= 1)
-                                                    ({{ rtrim(rtrim(number_format($ltHours, 2), '0'), '.') }} h)
+                                                    ({{ rtrim(rtrim(number_format($ltHours, 2), '0'), '.') }} Hours)
                                                 @endif
                                                 <div style="font-size:10px;color:#6b7280;margin-top:2px;line-height:1.3;">
                                                     @if ($waitingMinutes !== null)
-                                                        <div>Waiting: {{ (int) $waitingMinutes }} min</div>
+                                                        <div>Waiting: {{ (int) $waitingMinutes }} Min</div>
                                                     @endif
                                                     @if ($processMinutes !== null)
-                                                        <div>Process: {{ (int) $processMinutes }} min</div>
+                                                        <div>Process: {{ (int) $processMinutes }} Min</div>
                                                     @endif
                                                 </div>
                                             @else
@@ -558,7 +558,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="13" style="text-align:center;color:#6b7280;padding:16px 8px;">No transactions found</td>
+                                        <td colspan="13" style="text-align:center;color:#6b7280;padding:16px 8px;">No Transactions Found</td>
                                     </tr>
                                 @endforelse
                             </tbody>
