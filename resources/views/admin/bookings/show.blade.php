@@ -169,8 +169,10 @@
                 <tr>
                     <td>Warehouse</td>
                     @php
-                        $whCode = $booking->warehouse?->wh_code ?? null;
-                        $whName = $booking->warehouse?->wh_name ?? ($booking->warehouse?->name ?? null);
+                        $effectiveGate = $booking->actualGate ?: $booking->plannedGate;
+                        $effectiveWarehouse = $booking->warehouse ?: ($effectiveGate?->warehouse);
+                        $whCode = $effectiveWarehouse?->wh_code ?? null;
+                        $whName = $effectiveWarehouse?->wh_name ?? ($effectiveWarehouse?->name ?? null);
                     @endphp
                     <td>
                         @if(!empty($whCode) || !empty($whName))
@@ -182,7 +184,7 @@
                 </tr>
                 <tr>
                     <td>Gate</td>
-                    <td>{{ $booking->plannedGate?->gate_number ?? ($booking->plannedGate?->name ?? 'To be assigned') }}</td>
+                    <td>{{ $effectiveGate?->gate_number ?? ($effectiveGate?->name ?? 'To be assigned') }}</td>
                 </tr>
                 <tr>
                     <td>Date</td>
@@ -240,7 +242,7 @@
     </div>
 
     <!-- Action Buttons -->
-    @if($booking->status === 'pending_approval')
+    @if(in_array((string) $booking->status, ['pending_approval', 'pending_vendor_confirmation'], true))
     <div class="st-action-section">
         <h3 class="st-detail-title">
             <i class="fas fa-gavel"></i>
@@ -253,9 +255,30 @@
                 @csrf
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
                     <div>
+                        <label class="st-label" style="margin-bottom:6px; display:block;">Warehouse</label>
+                        @php
+                            $currentWarehouseId = old('warehouse_id', (string)($booking->warehouse_id ?? ($effectiveWarehouse?->id ?? '')));
+                        @endphp
+                        <select name="warehouse_id" id="approval_warehouse_id" class="st-select" style="min-width:220px;">
+                            @foreach($warehouses as $wh)
+                                @php
+                                    $wid = (int) ($wh->id ?? 0);
+                                    $wcode = trim((string) ($wh->wh_code ?? ($wh->code ?? '')));
+                                    $wname = trim((string) ($wh->wh_name ?? ($wh->name ?? '')));
+                                    $wlabel = trim(($wcode !== '' ? ($wcode . ' - ') : '') . $wname);
+                                @endphp
+                                @if($wid > 0)
+                                    <option value="{{ $wid }}" {{ (string)$currentWarehouseId === (string)$wid ? 'selected' : '' }}>
+                                        {{ $wlabel !== '' ? $wlabel : ('Warehouse #' . $wid) }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
                         <label class="st-label" style="margin-bottom:6px; display:block;">Gate (optional)</label>
                         @php
-                            $whId = (int) ($booking->warehouse_id ?? 0);
+                            $whId = (int) ($currentWarehouseId ?: 0);
                             $gateOptions = $whId > 0 ? ($gates[$whId] ?? collect()) : collect();
                             if ($gateOptions instanceof \Illuminate\Support\Collection === false) {
                                 $gateOptions = collect($gateOptions);
@@ -263,16 +286,19 @@
                             if ($gateOptions->isEmpty()) {
                                 $gateOptions = $gates->flatten(1);
                             }
+                            $currentGateId = old('planned_gate_id', (string)($booking->planned_gate_id ?? ($effectiveGate?->id ?? '')));
                         @endphp
-                        <select name="planned_gate_id" class="st-select" style="min-width:220px;">
+                        <select name="planned_gate_id" id="approval_planned_gate_id" class="st-select" style="min-width:220px;">
                             <option value="">Auto</option>
                             @foreach($gateOptions as $g)
                                 @php
                                     $gid = $g->id ?? null;
-                                    $label = $g->gate_number ?? ($g->name ?? ('Gate #' . ($gid ?? '')));
+                                    $gwc = trim((string) ($g->warehouse?->wh_code ?? ''));
+                                    $base = $g->gate_number ?? ($g->name ?? ('Gate #' . ($gid ?? '')));
+                                    $label = $gwc !== '' ? ($gwc . '-' . $base) : $base;
                                 @endphp
                                 @if($gid)
-                                    <option value="{{ $gid }}" {{ (string)old('planned_gate_id') === (string)$gid ? 'selected' : '' }}>
+                                    <option value="{{ $gid }}" {{ (string)$currentGateId === (string)$gid ? 'selected' : '' }}>
                                         {{ $label }}
                                     </option>
                                 @endif
@@ -329,6 +355,71 @@
     </div>
     @endif
 </div>
+
+<script type="application/json" id="approval_gates_json">{!! $gates->map(function ($coll, $wid) {
+    $arr = [];
+    foreach ($coll as $g) {
+        $arr[] = [
+            'id' => (int) ($g->id ?? 0),
+            'warehouse_id' => (int) ($g->warehouse_id ?? 0),
+            'gate_number' => (string) ($g->gate_number ?? ''),
+            'name' => (string) ($g->name ?? ''),
+            'warehouse_code' => (string) ($g->warehouse?->wh_code ?? ''),
+        ];
+    }
+    return $arr;
+})->toJson() !!}</script>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var whSel = document.getElementById('approval_warehouse_id');
+    var gateSel = document.getElementById('approval_planned_gate_id');
+    var gatesEl = document.getElementById('approval_gates_json');
+    if (!whSel || !gateSel || !gatesEl) return;
+
+    var gatesData = {};
+    try {
+        gatesData = JSON.parse(gatesEl.textContent || '{}') || {};
+    } catch (e) {
+        gatesData = {};
+    }
+
+    function buildGateLabel(g) {
+        var base = (g.gate_number || g.name || ('Gate #' + (g.id || '')));
+        var wc = (g.warehouse_code || '').trim();
+        return wc ? (wc + '-' + base) : base;
+    }
+
+    function refreshGateOptions() {
+        var wid = String(whSel.value || '');
+        var current = String(gateSel.value || '');
+        var list = gatesData[wid] || [];
+
+        gateSel.innerHTML = '<option value="">Auto</option>';
+        list.forEach(function (g) {
+            if (!g || !g.id) return;
+            var opt = document.createElement('option');
+            opt.value = String(g.id);
+            opt.textContent = buildGateLabel(g);
+            gateSel.appendChild(opt);
+        });
+
+        if (current) {
+            gateSel.value = current;
+        }
+    }
+
+    whSel.addEventListener('change', function () {
+        // reset gate selection when warehouse changes
+        gateSel.value = '';
+        refreshGateOptions();
+    });
+
+    refreshGateOptions();
+});
+</script>
+@endpush
 
 <!-- Booking History -->
 @if($booking->bookingHistories && $booking->bookingHistories->count() > 0)

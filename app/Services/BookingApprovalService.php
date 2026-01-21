@@ -80,6 +80,8 @@ class BookingApprovalService
             'requested_at' => now(),
         ]);
 
+        $this->ensurePlannedGateAssigned($slot);
+
         // Log booking history
         BookingHistory::logAction(
             $slot->id,
@@ -91,7 +93,7 @@ class BookingApprovalService
             [
                 'new_planned_start' => $data['planned_start'],
                 'new_planned_duration' => $data['planned_duration'],
-                'new_gate_id' => $data['planned_gate_id'] ?? null,
+                'new_gate_id' => $slot->planned_gate_id,
             ]
         );
 

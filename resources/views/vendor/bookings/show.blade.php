@@ -239,7 +239,12 @@
             @if($booking->status === 'pending_vendor_confirmation')
             <a href="{{ route('vendor.bookings.confirm', $booking->id) }}" class="vendor-btn vendor-btn--primary">
                 <i class="fas fa-check"></i>
-                Review & Confirm
+                Confirm
+            </a>
+
+            <a href="{{ route('vendor.bookings.confirm', $booking->id) }}#propose" class="vendor-btn vendor-btn--secondary">
+                <i class="fas fa-calendar-alt"></i>
+                Propose Another Schedule
             </a>
             @endif
             

@@ -180,6 +180,7 @@ class BookingApprovalController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string|max:500',
+            'warehouse_id' => 'nullable|integer|exists:warehouses,id',
             'planned_gate_id' => 'nullable|integer|exists:gates,id',
         ]);
 
@@ -189,12 +190,20 @@ class BookingApprovalController extends Controller
             ])->findOrFail($id);
 
         try {
-            $warehouseId = (int) ($slot->warehouse_id ?? 0);
+            $requestedWarehouseId = $request->filled('warehouse_id') ? (int) $request->warehouse_id : null;
+            $warehouseId = $requestedWarehouseId ?: (int) ($slot->warehouse_id ?? 0);
             $plannedStart = (string) ($slot->planned_start ?? '');
             $durationMinutes = (int) ($slot->planned_duration ?? 0);
 
             $requestedGateId = $request->filled('planned_gate_id') ? (int) $request->planned_gate_id : null;
             $effectiveGateId = $requestedGateId ?: (!empty($slot->planned_gate_id) ? (int) $slot->planned_gate_id : null);
+
+            if ($requestedGateId) {
+                $gateOk = Gate::where('id', $requestedGateId)->where('warehouse_id', $warehouseId)->exists();
+                if (! $gateOk) {
+                    return back()->with('error', 'Gate tidak sesuai dengan warehouse yang dipilih.');
+                }
+            }
 
             if ($warehouseId > 0 && $plannedStart !== '' && $durationMinutes > 0) {
                 if ($requestedGateId) {
@@ -248,8 +257,16 @@ class BookingApprovalController extends Controller
                 }
             }
 
+            if ($requestedWarehouseId && $requestedWarehouseId !== (int) ($slot->warehouse_id ?? 0)) {
+                $slot->warehouse_id = $requestedWarehouseId;
+            }
             if ($effectiveGateId) {
                 $slot->planned_gate_id = $effectiveGateId;
+            } else {
+                $slot->planned_gate_id = null;
+            }
+
+            if ($slot->isDirty(['warehouse_id', 'planned_gate_id'])) {
                 $slot->save();
             }
 

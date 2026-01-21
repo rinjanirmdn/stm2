@@ -154,9 +154,15 @@ class PoSearchService
             return null;
         }
 
+        $lookupPo = $poNumber;
+        $digitsOnly = preg_replace('/\D+/', '', $poNumber);
+        if (is_string($digitsOnly) && strlen($digitsOnly) >= 5) {
+            $lookupPo = $digitsOnly;
+        }
+
         // 1. Try SAP API first (Real-time data)
         try {
-            $api = $this->sapPoService->getByPoNumber($poNumber);
+            $api = $this->sapPoService->getByPoNumber($lookupPo);
             
             if ($api) {
                 // Data found in SAP!
@@ -208,7 +214,7 @@ class PoSearchService
             }
         } catch (\Exception $e) {
             // Log warning
-            \Illuminate\Support\Facades\Log::warning("SAP PO lookup failed for $poNumber: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning("SAP PO lookup failed for $poNumber (lookup=$lookupPo): " . $e->getMessage());
         }
 
         // 2. No Fallback

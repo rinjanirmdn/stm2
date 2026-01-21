@@ -64,16 +64,20 @@ class VendorBookingController extends Controller
             return [];
         }
 
-        $rows = DB::table('slot_po_items as spi')
-            ->join('slots as s', 's.id', '=', 'spi.slot_id')
-            ->where('spi.po_number', $poNumber)
-            ->whereNotIn('s.status', [Slot::STATUS_CANCELLED])
-            ->groupBy('spi.item_no')
-            ->select([
-                'spi.item_no',
-                DB::raw('SUM(spi.qty_booked) as qty_booked'),
-            ])
-            ->get();
+        try {
+            $rows = DB::table('slot_po_items as spi')
+                ->join('slots as s', 's.id', '=', 'spi.slot_id')
+                ->where('spi.po_number', $poNumber)
+                ->whereNotIn('s.status', [Slot::STATUS_CANCELLED])
+                ->groupBy('spi.item_no')
+                ->select([
+                    'spi.item_no',
+                    DB::raw('SUM(spi.qty_booked) as qty_booked'),
+                ])
+                ->get();
+        } catch (\Throwable $e) {
+            return [];
+        }
 
         $out = [];
         foreach ($rows as $r) {

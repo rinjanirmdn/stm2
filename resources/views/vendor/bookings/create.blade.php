@@ -181,10 +181,10 @@
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Duration (minutes) <span style="color: #ef4444;">*</span></label>
                     <input type="number" name="planned_duration" class="vendor-form-input" required
-                           min="30" max="480" step="30" value="{{ old('planned_duration', 60) }}" id="planned_duration">
+                           min="30" max="480" step="10" value="{{ old('planned_duration', 60) }}" id="planned_duration">
                     <small style="color: #64748b;">Duration is auto-suggested based on truck type</small>
                     @error('planned_duration')
-                        <small style="color: #ef4444;">{{ $message }}</small>
+                        <div class="vendor-form-error">{{ $message }}</div>
                     @enderror
                 </div>
 

@@ -1031,6 +1031,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (plannedStartInput) {
+        plannedStartInput.addEventListener('focus', function () {
+            initFlatpickrForETA();
+            if (plannedStartInput._flatpickr) {
+                try { plannedStartInput._flatpickr.open(); } catch (e) {}
+            }
+        });
+
+        plannedStartInput.addEventListener('click', function () {
+            initFlatpickrForETA();
+            if (plannedStartInput._flatpickr) {
+                try { plannedStartInput._flatpickr.open(); } catch (e) {}
+            }
+        });
+
         plannedStartInput.addEventListener('input', function () {
             updateRiskPreview();
             updateGateRecommendation();

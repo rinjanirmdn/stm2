@@ -76,20 +76,28 @@ class SlotController extends Controller
 
     public function ajaxPoDetail(string $poNumber)
     {
-        $poNumber = trim($poNumber);
-        if ($poNumber === '') {
-            return response()->json(['success' => false, 'message' => 'PO/DO number is required']);
+        try {
+            $poNumber = trim($poNumber);
+            if ($poNumber === '') {
+                return response()->json(['success' => false, 'message' => 'PO/DO number is required']);
+            }
+
+            $po = $this->poSearchService->getPoDetail($poNumber);
+
+            if (!$po) {
+                return response()->json(['success' => false, 'message' => 'PO/DO not found']);
+            }
+
+            $po = $this->withRemainingQty($po);
+
+            return response()->json(['success' => true, 'data' => $po]);
+        } catch (\Throwable $e) {
+            Log::warning('ajaxPoDetail failed', [
+                'poNumber' => $poNumber,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['success' => false, 'message' => 'Failed to load PO/DO detail'], 200);
         }
-
-        $po = $this->poSearchService->getPoDetail($poNumber);
-
-        if (!$po) {
-            return response()->json(['success' => false, 'message' => 'PO/DO not found']);
-        }
-
-        $po = $this->withRemainingQty($po);
-
-        return response()->json(['success' => true, 'data' => $po]);
     }
 
     public function searchSuggestions(Request $request)
@@ -713,16 +721,20 @@ class SlotController extends Controller
             return [];
         }
 
-        $rows = DB::table('slot_po_items as spi')
-            ->join('slots as s', 's.id', '=', 'spi.slot_id')
-            ->where('spi.po_number', $poNumber)
-            ->whereNotIn('s.status', [Slot::STATUS_CANCELLED, Slot::STATUS_REJECTED])
-            ->groupBy('spi.item_no')
-            ->select([
-                'spi.item_no',
-                DB::raw('SUM(spi.qty_booked) as qty_booked'),
-            ])
-            ->get();
+        try {
+            $rows = DB::table('slot_po_items as spi')
+                ->join('slots as s', 's.id', '=', 'spi.slot_id')
+                ->where('spi.po_number', $poNumber)
+                ->whereNotIn('s.status', [Slot::STATUS_CANCELLED, Slot::STATUS_REJECTED])
+                ->groupBy('spi.item_no')
+                ->select([
+                    'spi.item_no',
+                    DB::raw('SUM(spi.qty_booked) as qty_booked'),
+                ])
+                ->get();
+        } catch (\Throwable $e) {
+            return [];
+        }
 
         $out = [];
         foreach ($rows as $r) {
