@@ -547,7 +547,7 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td>{{ $r->created_by_username ?? '-' }}</td>
+                                        <td>{{ $r->created_by_username ?? $r->created_by_nik ?? '-' }}</td>
                                         <td>
                                             <div class="tw-actionbar">
                                                 <a href="{{ route('slots.show', ['slotId' => $r->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
@@ -813,77 +813,128 @@ document.addEventListener('DOMContentLoaded', function () {
         ajaxReload(false);
     });
 
-    // Initialize Flatpickr Date Range Picker
-    flatpickr("#date_range", {
-        mode: "range",
-        dateFormat: "Y-m-d",
-        locale: {
-            rangeSeparator: " to "
-        },
-        onChange: function(selectedDates, dateStr, instance) {
-            if (selectedDates.length === 2) {
-                // Format date in local timezone
-                var dateFrom = selectedDates[0].getFullYear() + '-' +
-                              String(selectedDates[0].getMonth() + 1).padStart(2, '0') + '-' +
-                              String(selectedDates[0].getDate()).padStart(2, '0');
-                var dateTo = selectedDates[1].getFullYear() + '-' +
-                            String(selectedDates[1].getMonth() + 1).padStart(2, '0') + '-' +
-                            String(selectedDates[1].getDate()).padStart(2, '0');
-                document.getElementById('date_from').value = dateFrom;
-                document.getElementById('date_to').value = dateTo;
-                // Close calendar after selection
-                setTimeout(function() {
-                    instance.close();
-                }, 100);
-                // Auto-execute search when range is selected
-                ajaxReload(true);
-            } else if (selectedDates.length === 1) {
-                // Format date in local timezone
-                var dateFrom = selectedDates[0].getFullYear() + '-' +
-                              String(selectedDates[0].getMonth() + 1).padStart(2, '0') + '-' +
-                              String(selectedDates[0].getDate()).padStart(2, '0');
-                document.getElementById('date_from').value = dateFrom;
-            } else {
-                document.getElementById('date_from').value = '';
-                document.getElementById('date_to').value = '';
-            }
-        }
-    });
+    // Date range logic
+    var dateRangeInput = document.getElementById('date_range');
+    var arrivalDateRangeInput = document.getElementById('arrival_date_range');
+    var dateFromInput = document.getElementById('date_from');
+    var dateToInput = document.getElementById('date_to');
+    var arrivalDateFromInput = document.getElementById('arrival_date_from');
+    var arrivalDateToInput = document.getElementById('arrival_date_to');
+    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
-    // Initialize Flatpickr for Arrival Date Range
-    flatpickr("#arrival_date_range", {
-        mode: "range",
-        dateFormat: "Y-m-d",
-        locale: {
-            rangeSeparator: " to "
-        },
-        onChange: function(selectedDates, dateStr, instance) {
-            if (selectedDates.length === 2) {
-                var dateFrom = selectedDates[0].getFullYear() + '-' +
-                              String(selectedDates[0].getMonth() + 1).padStart(2, '0') + '-' +
-                              String(selectedDates[0].getDate()).padStart(2, '0');
-                var dateTo = selectedDates[1].getFullYear() + '-' +
-                            String(selectedDates[1].getMonth() + 1).padStart(2, '0') + '-' +
-                            String(selectedDates[1].getDate()).padStart(2, '0');
-                document.getElementById('arrival_date_from').value = dateFrom;
-                document.getElementById('arrival_date_to').value = dateTo;
-                // Close calendar after selection
-                setTimeout(function() {
-                    instance.close();
-                }, 100);
-                // Auto-apply after date selection
-                ajaxReload(true);
-            } else if (selectedDates.length === 1) {
-                var dateFrom = selectedDates[0].getFullYear() + '-' +
-                              String(selectedDates[0].getMonth() + 1).padStart(2, '0') + '-' +
-                              String(selectedDates[0].getDate()).padStart(2, '0');
-                document.getElementById('arrival_date_from').value = dateFrom;
-            } else {
-                document.getElementById('arrival_date_from').value = '';
-                document.getElementById('arrival_date_to').value = '';
-            }
+    function formatDate(dObj) {
+        if (!dObj) return '';
+        var Y = dObj.getFullYear();
+        var M = ('0' + (dObj.getMonth() + 1)).slice(-2);
+        var D = ('0' + dObj.getDate()).slice(-2);
+        return Y + '-' + M + '-' + D;
+    }
+
+    // Helper to format date for display (d M Y)
+    function formatDateDisplay(dateStr) {
+        if (!dateStr) return '';
+        try {
+            var date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            var day = date.getDate();
+            var month = months[date.getMonth()];
+            var year = date.getFullYear();
+            return day + " " + month + " " + year;
+        } catch (e) {
+            return dateStr;
         }
-    });
+    }
+
+    if (dateRangeInput && dateFromInput && dateToInput) {
+        // Initialize value if present
+        if (dateFromInput.value && dateToInput.value) {
+            dateRangeInput.value = formatDateDisplay(dateFromInput.value) + ' to ' + formatDateDisplay(dateToInput.value);
+        } else if (dateFromInput.value) {
+             dateRangeInput.value = formatDateDisplay(dateFromInput.value);
+        }
+
+        var drp = flatpickr(dateRangeInput, {
+            mode: 'range',
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            allowInput: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
+            onClose: function (selectedDates) {
+                if (selectedDates.length === 2) {
+                    var s = formatDate(selectedDates[0]);
+                    var e = formatDate(selectedDates[1]);
+                    // Update display
+                    dateRangeInput.value = formatDateDisplay(s) + ' to ' + formatDateDisplay(e);
+                    // Update hidden
+                    dateFromInput.value = s;
+                    dateToInput.value = e;
+                    ajaxReload(true);
+                } else if (selectedDates.length === 1) {
+                     var s = formatDate(selectedDates[0]);
+                     dateRangeInput.value = formatDateDisplay(s);
+                     dateFromInput.value = s;
+                     dateToInput.value = s;
+                     ajaxReload(true);
+                } else {
+                    dateRangeInput.value = '';
+                    dateFromInput.value = '';
+                    dateToInput.value = '';
+                    ajaxReload(true);
+                }
+            }
+        });
+    }
+
+    // Initialize Arrival Date Range
+    if (arrivalDateRangeInput && arrivalDateFromInput && arrivalDateToInput) {
+         if (arrivalDateFromInput.value && arrivalDateToInput.value) {
+            arrivalDateRangeInput.value = formatDateDisplay(arrivalDateFromInput.value) + ' to ' + formatDateDisplay(arrivalDateToInput.value);
+        } else if (arrivalDateFromInput.value) {
+             arrivalDateRangeInput.value = formatDateDisplay(arrivalDateFromInput.value);
+        }
+
+        var adrp = flatpickr(arrivalDateRangeInput, {
+            mode: 'range',
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            allowInput: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
+            onClose: function (selectedDates) {
+                if (selectedDates.length === 2) {
+                    var s = formatDate(selectedDates[0]);
+                    var e = formatDate(selectedDates[1]);
+                    arrivalDateRangeInput.value = formatDateDisplay(s) + ' to ' + formatDateDisplay(e);
+                    arrivalDateFromInput.value = s;
+                    arrivalDateToInput.value = e;
+                    ajaxReload(true);
+                } else if (selectedDates.length === 1) {
+                    var s = formatDate(selectedDates[0]);
+                    arrivalDateRangeInput.value = formatDateDisplay(s);
+                    arrivalDateFromInput.value = s;
+                    arrivalDateToInput.value = s;
+                    ajaxReload(true);
+                } else {
+                    arrivalDateRangeInput.value = '';
+                    arrivalDateFromInput.value = '';
+                    arrivalDateToInput.value = '';
+                    ajaxReload(true);
+                }
+            }
+        });
+    }
 
     // Reset all filters button
     document.getElementById('clear-date-range').addEventListener('click', function() {

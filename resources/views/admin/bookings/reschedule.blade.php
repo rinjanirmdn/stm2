@@ -94,10 +94,9 @@
 
                 <div class="st-form-group">
                     <label class="st-label">Date <span class="st-required">*</span></label>
-                    <input type="date" name="planned_date" class="st-input" required
-                           min="{{ date('Y-m-d') }}" 
+                    <input type="text" name="planned_date" class="st-input" required
                            value="{{ old('planned_date', $booking->planned_start?->format('Y-m-d')) }}"
-                           id="planned_date">
+                           id="planned_date" placeholder="Select Date">
                     @error('planned_date')
                         <span class="st-error">{{ $message }}</span>
                     @enderror
@@ -218,50 +217,153 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var whSel = document.getElementById('warehouse_id');
-    var gateSel = document.getElementById('gate_select');
-    var gatesEl = document.getElementById('reschedule_gates_json');
-    if (!whSel || !gateSel || !gatesEl) return;
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('planned_date');
+    const timeInput = document.getElementById('planned_time');
+    const durationInput = document.getElementById('planned_duration');
+    const gateSelect = document.getElementById('gate_select');
+    const availabilityCheck = document.getElementById('availability-check');
+    const availabilityResult = document.getElementById('availability-result');
+    const calendarPreview = document.getElementById('calendar-preview');
 
-    var gatesData = {};
-    try {
-        gatesData = JSON.parse(gatesEl.textContent || '{}') || {};
-    } catch (e) {
-        gatesData = {};
-    }
+    const warehouseId = '{{ $booking->warehouse_id }}';
 
-    function buildGateLabel(g) {
-        var base = (g.gate_number || g.name || ('Gate #' + (g.id || '')));
-        var wc = (g.warehouse_code || '').trim();
-        return wc ? (wc + '-' + base) : base;
-    }
-
-    function refreshGateOptions() {
-        var wid = String(whSel.value || '');
-        var current = String(gateSel.value || '');
-        var list = gatesData[wid] || [];
-
-        gateSel.innerHTML = '<option value="">Auto-assign</option>';
-        list.forEach(function (g) {
-            if (!g || !g.id) return;
-            var opt = document.createElement('option');
-            opt.value = String(g.id);
-            opt.textContent = buildGateLabel(g);
-            gateSel.appendChild(opt);
+    // Initialize Flatpickr for date input
+    if (dateInput) {
+        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+        window.flatpickr(dateInput, {
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            minDate: 'today',
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
+            onChange: function(selectedDates, dateStr, instance) {
+                checkAvailability();
+                loadCalendarPreview();
+            }
         });
-
-        if (current) {
-            gateSel.value = current;
-        }
     }
 
-    whSel.addEventListener('change', function () {
-        gateSel.value = '';
-        refreshGateOptions();
+    // Check availability when inputs change
+    // dateInput onChange is handled by Flatpickr above
+    [timeInput, durationInput, gateSelect].forEach(function(input) {
+        input.addEventListener('change', checkAvailability);
     });
 
-    refreshGateOptions();
+    function checkAvailability() {
+        const gateId = gateSelect.value;
+        const date = dateInput.value;
+        const time = timeInput.value;
+        const duration = durationInput.value;
+
+        if (!date || !time || !duration) {
+            availabilityCheck.style.display = 'none';
+            return;
+        }
+
+        const plannedStart = date + ' ' + time + ':00';
+
+        fetch(`/bookings/ajax/calendar?warehouse_id=${warehouseId}&gate_id=${gateId}&planned_start=${encodeURIComponent(plannedStart)}&planned_duration=${duration}&exclude_slot_id={{ $booking->id }}`)
+            .then(response => response.json())
+            .then(data => {
+                availabilityCheck.style.display = 'block';
+                
+                if (data.available !== false) {
+                    availabilityResult.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-success, #10b981);">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Time Slot Is Available</span>
+                        </div>
+                    `;
+                } else {
+                    availabilityResult.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-danger, #ef4444);">
+                            <i class="fas fa-times-circle"></i>
+                            <span>${data.reason || 'Time Slot Is Not Available'}</span>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    function loadCalendarPreview() {
+        const date = dateInput.value;
+
+        if (!date) {
+            return;
+        }
+
+        calendarPreview.innerHTML = '<p style="text-align: center; color: var(--st-text-muted); padding: 2rem;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
+
+        fetch(`/bookings/ajax/calendar?warehouse_id=${warehouseId}&date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.gates) {
+                    renderCalendar(data.gates);
+                }
+            })
+            .catch(error => {
+                calendarPreview.innerHTML = '<p style="text-align: center; color: var(--st-danger); padding: 2rem;">Failed to load</p>';
+            });
+    }
+
+    function renderCalendar(gates) {
+        const hours = [];
+        for (let h = 7; h < 23; h++) {
+            hours.push(h.toString().padStart(2, '0') + ':00');
+        }
+
+        let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
+        html += '<thead><tr><th style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: var(--st-surface-alt, #f8fafc);">Time</th>';
+        
+        gates.forEach(g => {
+            html += `<th style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: var(--st-surface-alt, #f8fafc); min-width: 120px;">${g.gate.name}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        hours.forEach(hour => {
+            html += `<tr><td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); font-weight: 500;">${hour}</td>`;
+            
+            gates.forEach(g => {
+                const slot = g.slots.find(s => s.start_time === hour);
+                const occupiedSlot = g.slots.find(s => s.start_time < hour && s.end_time > hour);
+                
+                if (slot) {
+                    const isPending = slot.status === 'pending_approval';
+                    const isCurrentBooking = slot.id === {{ $booking->id }};
+                    const bgColor = isCurrentBooking ? '#fef3c7' : (isPending ? '#fce7f3' : '#dcfce7');
+                    
+                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: ${bgColor}; vertical-align: top;">
+                        <div style="font-weight: 500;">${slot.start_time} - ${slot.end_time}</div>
+                        <div style="font-size: 0.75rem; opacity: 0.7;">${slot.vendor_name}</div>
+                        ${isCurrentBooking ? '<div style="font-size: 0.7rem; color: #92400e; font-weight: 600;">Current</div>' : ''}
+                    </td>`;
+                } else if (!occupiedSlot) {
+                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: #f0fdf4; text-align: center; color: #16a34a;">
+                        <i class="fas fa-check" style="opacity: 0.5;"></i>
+                    </td>`;
+                } else {
+                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb);"></td>`;
+                }
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        calendarPreview.innerHTML = html;
+    }
+
+    // Initial load
+    checkAvailability();
+    loadCalendarPreview();
 });
 </script>
 @endpush

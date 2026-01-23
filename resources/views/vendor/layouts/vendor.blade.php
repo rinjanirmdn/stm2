@@ -861,6 +861,16 @@
             }
         });
     </script>
+    <script type="application/json" id="indonesia_holidays_global">{!! json_encode($holidays ?? []) !!}</script>
+    <script>
+        window.getIndonesiaHolidays = function() {
+            try {
+                return JSON.parse(document.getElementById('indonesia_holidays_global').textContent || '{}');
+            } catch(e) {
+                return {};
+            }
+        };
+    </script>
     @stack('scripts')
 </body>
 </html>

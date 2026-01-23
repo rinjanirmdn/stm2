@@ -10,15 +10,17 @@
                 <div class="st-card__header">
                     <div>
                         <h2 class="st-card__title">Analytics Range</h2>
-                        <div class="st-card__subtitle">Rentang Tanggal untuk Analytics (Overview / KPI / Bottleneck)</div>
+                        <div class="st-card__subtitle">Date Range for Analytics (Overview / KPI / Bottleneck)</div>
                     </div>
                     <form method="GET" class="st-form-row" style="gap:8px;">
                         <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
                         <input type="hidden" name="activity_warehouse" value="{{ $activity_warehouse ?? 0 }}">
                         <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
+                        <input type="hidden" id="range_start" name="range_start" value="{{ $range_start }}">
+                        <input type="hidden" id="range_end" name="range_end" value="{{ $range_end }}">
                         <div class="st-form-field" style="min-width:260px;">
                             <label class="st-label">Range</label>
-                            <input type="text" id="analytics_range" class="st-input" placeholder="Pilih Rentang Tanggal" value="{{ ($range_start ?? '') && ($range_end ?? '') ? ($range_start.' to '.$range_end) : ($range_start ?? $today) }}">
+                            <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ ($range_start ?? '') && ($range_end ?? '') ? ($range_start.' to '.$range_end) : ($range_start ?? $today) }}">
                         </div>
                         <div class="st-form-field" style="align-self:flex-end;min-width:120px;flex:0 0 auto;">
                             <button type="submit" class="st-btn st-btn--secondary">Apply</button>
@@ -28,66 +30,66 @@
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(7, minmax(120px, 1fr));gap:8px;">
                     <div class="st-mini-card st-mini-card--with-info">
+                        <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Pending" title="Booking requests awaiting approval before entering the official schedule.">
+                            <i class="fa-solid fa-info"></i>
+                        </button>
                         <div class="st-text--small st-text--muted">Pending</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $pendingRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Pending" title="Permintaan Booking yang Menunggu Persetujuan (Approval) Sebelum Masuk ke Jadwal Resmi.">
-                                <i class="fa-solid fa-info"></i>
-                            </button>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
+                        <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Scheduled" title="Slots already scheduled, but the truck has not arrived yet.">
+                            <i class="fa-solid fa-info"></i>
+                        </button>
                         <div class="st-text--small st-text--muted">Scheduled</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $scheduledRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Scheduled" title="Slot yang Sudah Dijadwalkan, tapi Truk Belum Datang dan Proses Belum Dimulai.">
-                                <i class="fa-solid fa-info"></i>
-                            </button>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
+                        <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Waiting" title="Slots where the truck has arrived and is waiting in the queue.">
+                            <i class="fa-solid fa-info"></i>
+                        </button>
                         <div class="st-text--small st-text--muted">Waiting</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $waitingRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Waiting" title="Slot yang Truknya Sudah Datang (Arrived) dan/atau Sedang Menunggu Antrian (Waiting).">
-                                <i class="fa-solid fa-info"></i>
-                            </button>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
+                        <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: In progress" title="Slots currently being processed at the gate (Loading/Unloading in progress).">
+                            <i class="fa-solid fa-info"></i>
+                        </button>
                         <div class="st-text--small st-text--muted">In Progress</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $activeRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: In progress" title="Slot yang Sedang Diproses di Gate (Loading/Unloading Sedang Berjalan).">
-                                <i class="fa-solid fa-info"></i>
-                            </button>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
+                        <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Completed" title="Slots where the process is already finished.">
+                            <i class="fa-solid fa-info"></i>
+                        </button>
                         <div class="st-text--small st-text--muted">Completed</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $completedStatusRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Completed" title="Slot yang Prosesnya Sudah Selesai (Completed).">
-                                <i class="fa-solid fa-info"></i>
-                            </button>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
+                        <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Cancel" title="Cancelled slots.">
+                            <i class="fa-solid fa-info"></i>
+                        </button>
                         <div class="st-text--small st-text--muted">Cancel</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $cancelledRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Cancel" title="Slot yang Dibatalkan (Cancelled).">
-                                <i class="fa-solid fa-info"></i>
-                            </button>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
+                        <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Total" title="Total of all slots within the selected date range.">
+                            <i class="fa-solid fa-info"></i>
+                        </button>
                         <div class="st-text--small st-text--muted">Total</div>
                         <div class="st-mini-card__value-row">
                             <div style="font-size:26px;font-weight:700;">{{ $totalAllRange ?? 0 }}</div>
-                            <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Total" title="Total Semua Slot dalam Rentang Tanggal (Termasuk Cancelled).">
-                                <i class="fa-solid fa-info"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -96,7 +98,7 @@
                     <div>
                         <br>
                         <h2 class="st-card__title">Analytics</h2>
-                        <div class="st-card__subtitle">Ringkasan Performa & Bottleneck</div>
+                        <div class="st-card__subtitle">Performance & Bottleneck Summary</div>
                     </div>
                     <div class="st-tabbar" role="tablist" aria-label="Analytics tabs">
                         <button type="button" class="st-btn st-btn--secondary st-btn--sm st-tab-btn" data-tab="overview" aria-selected="true">Overview</button>
@@ -150,66 +152,94 @@
                             </div>
                         </div>
 
-                        <div class="st-chart-col-4">
-                            <div class="st-chart-card">
-                                <div style="display:flex;flex-direction:column;gap:6px;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <div class="st-chart-card__title" style="margin:0;white-space:nowrap;">Bottleneck (Avg Waiting)</div>
-                                        <select id="bottleneck_dir" class="st-select" style="max-width:110px;min-width:90px;">
-                                            <option value="all">All</option>
-                                            <option value="inbound">Inbound</option>
-                                            <option value="outbound">Outbound</option>
-                                        </select>
+                        <div class="st-chart-col-5">
+                            <div class="st-chart-card" style="height:100%;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <div class="st-chart-card__title" style="margin:0;white-space:nowrap;">Bottleneck (Avg Waiting)</div>
+                                    <select id="bottleneck_dir" class="st-select" style="max-width:100px;font-size:11px;height:28px;">
+                                        <option value="all">All</option>
+                                        <option value="inbound">Inbound</option>
+                                        <option value="outbound">Outbound</option>
+                                    </select>
+                                </div>
+                                <div style="display:grid; grid-template-columns: 1fr auto; gap:16px; align-items: center;">
+                                    <div class="st-chart-wrap" style="height:160px;">
+                                        <canvas id="chart_bottleneck"></canvas>
                                     </div>
-                                    <div class="st-text--small st-text--muted">Top 20, Threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} Minutes</div>
+                                    <div style="display:flex; flex-direction:column; gap:8px; border-left:1px solid #f1f5f9; padding-left:16px; min-width:100px;">
+                                        <div class="st-chart-card__title" style="font-size:10px; margin-bottom:4px; text-transform:uppercase; color:#94a3b8;">Top Wait</div>
+                                        <div class="st-mini-card" style="padding:6px;">
+                                            <div class="st-text--small st-text--muted" style="font-size:8px;">Location</div>
+                                            <div id="bottleneck_top_label" style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">-</div>
+                                        </div>
+                                        <div class="st-mini-card" style="padding:6px;">
+                                            <div class="st-text--small st-text--muted" style="font-size:8px;">Avg Wait</div>
+                                            <div id="bottleneck_top_avg" style="font-size:13px; font-weight:700;">0</div>
+                                        </div>
+                                        <div class="st-mini-card" style="padding:6px;">
+                                            <div class="st-text--small st-text--muted" style="font-size:8px;">Qty</div>
+                                            <div id="bottleneck_top_slots" style="font-size:13px; font-weight:700;">0</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="st-chart-wrap st-mt-2">
-                                    <canvas id="chart_bottleneck"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="st-chart-col-4">
-                            <div class="st-chart-card">
-                                <div class="st-chart-card__title">Top Bottleneck</div>
-                                <div class="st-metric-row st-grid-1">
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Location</div><div id="bottleneck_top_label" class="st-metric-value-lg">-</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Avg Wait (Min)</div><div id="bottleneck_top_avg" class="st-metric-value-lg">0</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Slot Count</div><div id="bottleneck_top_slots" class="st-metric-value-lg">0</div></div>
-                                </div>
+                                <div class="st-text--small st-text--muted" style="margin-top:8px; font-size:10px;">Top 20, Threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} Min</div>
                             </div>
                         </div>
 
-                        <div class="st-chart-col-4">
-                            <div class="st-chart-card">
-                                <div class="st-chart-card__title">Lead & Process Avg</div>
-                                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-                                    <div class="st-text--small st-text--muted">Unit</div>
-                                    <select id="lead_proc_unit" class="st-select" style="max-width:140px;">
+                        <div class="st-chart-col-7">
+                            <div class="st-chart-card" style="height:100%;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <div class="st-chart-card__title" style="margin:0;">Performance by Truck Type</div>
+                                    <select id="lead_proc_unit" class="st-select" style="max-width:90px;font-size:10px;height:24px;padding:2px 4px;">
                                         <option value="minute">Minutes</option>
                                         <option value="hour">Hours</option>
                                     </select>
                                 </div>
-                                <div id="lead_proc_empty" class="st-text--small st-text--muted">No Lead/Process Data.</div>
-                                <div class="st-metric-row" style="margin-top:10px;">
-                                    <div class="st-mini-card">
-                                        <div class="st-text--small st-text--muted">Lead Avg</div>
-                                        <div id="lead_avg_value" data-minutes="{{ $avgLeadMinutes !== null ? (float) $avgLeadMinutes : '' }}" style="font-size:18px;font-weight:800;">
-                                            {{ $avgLeadMinutes !== null ? number_format((float) $avgLeadMinutes, 1) . ' min' : '-' }}
+                                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
+                                    @foreach($avgTimesByTruckType ?? [] as $t)
+                                        @php
+                                            $truckType = (string) data_get($t, 'truck_type', '-');
+                                            $totalCount = (int) data_get($t, 'total_count', 0);
+                                            $avgLeadMinutesByTruck = (float) data_get($t, 'avg_lead_minutes', 0);
+                                            $avgProcessMinutesByTruck = (float) data_get($t, 'avg_process_minutes', 0);
+                                        @endphp
+                                        <div style="padding:6px; border:1px solid #f1f5f9; background:#fff; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between;">
+                                            <div style="font-weight:700; color:#1e293b; font-size:11px; margin-bottom:4px; border-bottom:1px solid #f8fafc; padding-bottom:3px; display:flex; justify-content:space-between; align-items:center;">
+                                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $truckType }}">{{ $truckType }}</span>
+                                                <span style="font-size:9px; color:#94a3b8; font-weight:400;">{{ $totalCount }}</span>
+                                            </div>
+                                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                                <div style="background:#f0f9ff; padding:3px 5px; border-radius:4px;">
+                                                    <div style="font-size:8px; color:#0369a1; text-transform:uppercase; font-weight:600; line-height:1;">Lead</div>
+                                                    <div class="lead-avg-truck" data-minutes="{{ $avgLeadMinutesByTruck }}" style="font-weight:800; color:#0369a1; font-size:12px;">
+                                                        @if($totalCount > 0)
+                                                            {{ number_format($avgLeadMinutesByTruck, 1) }}<span style="font-size:9px;">m</span>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                <div style="background:#f5f3ff; padding:3px 5px; border-radius:4px;">
+                                                    <div style="font-size:8px; color:#5b21b6; text-transform:uppercase; font-weight:600; line-height:1;">Proc</div>
+                                                    <div class="proc-avg-truck" data-minutes="{{ $avgProcessMinutesByTruck }}" style="font-weight:800; color:#5b21b6; font-size:12px;">
+                                                        @if($totalCount > 0)
+                                                            {{ number_format($avgProcessMinutesByTruck, 1) }}<span style="font-size:9px;">m</span>
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="st-mini-card">
-                                        <div class="st-text--small st-text--muted">Process Avg</div>
-                                        <div id="proc_avg_value" data-minutes="{{ $avgProcessMinutes !== null ? (float) $avgProcessMinutes : '' }}" style="font-size:18px;font-weight:800;">
-                                            {{ $avgProcessMinutes !== null ? number_format((float) $avgProcessMinutes, 1) . ' min' : '-' }}
-                                        </div>
-                                    </div>
-                                    <div class="st-mini-card">
-                                        <div class="st-text--small st-text--muted">Completed (Range)</div>
-                                        <div style="font-size:18px;font-weight:800;">{{ (int)($completedInRange ?? 0) }}</div>
-                                    </div>
+                                    @endforeach
                                 </div>
+                                <div id="lead_proc_empty" style="display:none;"></div>
+                                <div id="lead_avg_value" style="display:none;" data-minutes="{{ $avgLeadMinutes }}"></div>
+                                <div id="proc_avg_value" style="display:none;" data-minutes="{{ $avgProcessMinutes }}"></div>
                             </div>
                         </div>
+
+
                     </div>
                 </div>
 
@@ -221,8 +251,8 @@
                                     <div class="st-chart-card__title st-mb-0">On Time vs Late</div>
                                     <select id="on_time_dir" class="st-select st-w-160">
                                         <option value="all">All Direction</option>
-                                        <option value="inbound">Inbound</option>
-                                        <option value="outbound">Outbound</option>
+                                        <option value="inbound">Inbound (Blue)</option>
+                                        <option value="outbound">Outbound (Orange)</option>
                                     </select>
                                 </div>
                                 <div class="st-chart-wrap st-chart-wrap--sm" style="margin-top:38px;">
@@ -320,7 +350,7 @@
                     <div>
                         <h2 class="st-card__title">24h Timeline</h2>
 
-                        <div class="st-text--small st-text--muted">Ketersediaan Slot (Real-time Visual)</div>
+                        <div class="st-text--small st-text--muted">Slot Availability (Real-time Visual)</div>
                     </div>
                     <form method="GET" id="schedule-filter-form" class="st-form-row" style="margin-top:4px;gap:8px;">
                         <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
@@ -330,7 +360,7 @@
                         <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
                         <div class="st-form-field">
                             <label class="st-label">Date</label>
-                            <input type="date" name="schedule_date" class="st-input" value="{{ $schedule_date ?? $today }}">
+                            <input type="text" name="schedule_date" class="st-input flatpickr-date" value="{{ $schedule_date ?? $today }}" placeholder="YYYY-MM-DD">
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">From (HH:MM)</label>
@@ -385,6 +415,9 @@
                                     <div>Gate</div>
                                     <div style="font-size:9px;color:#9ca3af;font-weight:400;">Plan (Top) / Act (Btm)</div>
                                 </div>
+                                <div style="padding:10px 0;font-size:11px;font-weight:700;color:#374151;border-right:1px solid #e5e7eb;position:sticky;left:220px;background:#ffffff;z-index:20;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;">
+                                    Lane
+                                </div>
                                 <div class="st-timeline__header-grid">
                                     @foreach ($timelineHours as $h)
                                         @php
@@ -409,6 +442,10 @@
                                         <div class="st-timeline__row-left">
                                             <div style="font-size:12px;font-weight:600;">{{ $g['title'] ?? '-' }}</div>
                                             <div class="st-text--small st-text--muted">{{ $g['status_label'] ?? 'Idle' }}</div>
+                                        </div>
+                                        <div style="border-right:1px solid #e5e7eb;position:sticky;left:220px;background:#ffffff;z-index:20;display:flex;flex-direction:column;font-size:9px;color:#6b7280;font-weight:600;">
+                                            <div style="flex:1;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;border-bottom:1px dashed #f3f4f6;">Planned</div>
+                                            <div style="flex:1;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;">Actual</div>
                                         </div>
                                         <div class="st-timeline__row-lanes" data-timeline-gate-id="{{ $gateId }}">
                                             <div class="st-timeline__lane st-timeline__lane--planned">
@@ -490,18 +527,6 @@
                         </div>
                     </div>
                     <div class="st-timeline-meta" style="margin-top:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                        <!-- Lane Guide -->
-                        <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#6b7280; background:#f9fafb; padding:4px 8px; border-radius:6px; border:1px solid #f3f4f6;">
-                            <div style="display:flex; align-items:center; gap:5px;">
-                                <div style="width:12px; height:12px; background:#e2e8f0; border-radius:2px; display:grid; place-items:center;"><div style="width:6px; height:2px; background:#64748b;"></div></div>
-                                <span><strong>Top Lane:</strong> Planned</span>
-                            </div>
-                            <div style="width:1px; height:12px; background:#d1d5db;"></div>
-                            <div style="display:flex; align-items:center; gap:5px;">
-                                <div style="width:12px; height:12px; background:#cbd5e1; border-radius:2px; display:grid; place-items:center;"><div style="width:6px; height:6px; background:#475569; border-radius:50%;"></div></div>
-                                <span><strong>Bottom Lane:</strong> Actual</span>
-                            </div>
-                        </div>
 
                         <!-- Status Legend -->
                         <div class="st-timeline-legend" aria-label="Timeline color legend" style="margin-top:0;">
@@ -512,26 +537,84 @@
                         </div>
                     </div>
 
-                <div style="margin-top:12px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-                        <div>
-                            <h3 class="st-card__title" style="margin:0;">Schedule</h3>
-                            <div class="st-card__subtitle">Trucks, ETA, Gates, Status, and Estimated Finish</div>
-                        </div>
-                        <div style="display:flex;gap:8px;align-items:center;">
-                            <div class="st-text--small st-text--muted">Gunakan Filter untuk Mengatur Date/Time/Gate.</div>
-                            @can('slots.create')
-                            <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
-                                <i class="fa-solid fa-plus st-mr-1"></i> Create Slot
-                            </a>
-                            @endcan
+                @php
+                    $processStatusCounts = [
+                        'pending' => 0,
+                        'scheduled' => 0,
+                        'waiting' => 0,
+                        'in_progress' => 0,
+                        'completed' => 0,
+                        'cancelled' => 0,
+                    ];
+                    foreach (($schedule ?? []) as $r) {
+                        $st0 = trim(strtolower((string)($r['status'] ?? 'scheduled')));
+                        if ($st0 === 'arrived') {
+                            $st0 = 'waiting';
+                        }
+                        if (in_array($st0, ['pending_approval', 'pending_vendor_confirmation'], true)) {
+                            $processStatusCounts['pending']++;
+                        } elseif (isset($processStatusCounts[$st0])) {
+                            $processStatusCounts[$st0]++;
+                        }
+                    }
+                @endphp
+
+                <div class="st-dashboard-schedule-row">
+                    <div class="st-dashboard-schedule-chart-col">
+                        <div class="st-chart-card st-dashboard-schedule-chart-card">
+                            <div class="st-chart-card__title">Chart Status</div>
+                            <div class="st-chart-wrap st-chart-wrap--sm st-dashboard-schedule-chart-wrap">
+                                <canvas id="chart_process_status"></canvas>
+                            </div>
+                            <div class="st-dashboard-schedule-metrics-wrap">
+                                <div class="st-metric-row st-dashboard-schedule-metric-row">
+                                    <div class="st-mini-card">
+                                        <div class="st-text--small st-text--muted">Pending</div>
+                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['pending'] ?? 0) }}</div>
+                                    </div>
+                                    <div class="st-mini-card">
+                                        <div class="st-text--small st-text--muted">Scheduled</div>
+                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['scheduled'] ?? 0) }}</div>
+                                    </div>
+                                    <div class="st-mini-card">
+                                        <div class="st-text--small st-text--muted">Waiting</div>
+                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['waiting'] ?? 0) }}</div>
+                                    </div>
+                                    <div class="st-mini-card">
+                                        <div class="st-text--small st-text--muted">In Progress</div>
+                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['in_progress'] ?? 0) }}</div>
+                                    </div>
+                                    <div class="st-mini-card">
+                                        <div class="st-text--small st-text--muted">Completed</div>
+                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['completed'] ?? 0) }}</div>
+                                    </div>
+                                    <div class="st-mini-card">
+                                        <div class="st-text--small st-text--muted">Cancelled</div>
+                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['cancelled'] ?? 0) }}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
+                    <div class="st-dashboard-schedule-table-col">
+                        <div class="st-flex-between-center st-flex-wrap st-gap-2">
+                            <div>
+                                <h3 class="st-card__title">Schedule</h3>
+                                <div class="st-card__subtitle">Trucks, ETA, Gates, Status, and Estimated Finish</div>
+                            </div>
+                            <div class="st-flex-wrap st-gap-2 align-items-center">
+                                <div class="st-text--small st-text--muted">Use filters to adjust Date/Time/Gate.</div>
+                                @can('slots.create')
+                                <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
+                                    <i class="fa-solid fa-plus st-mr-1"></i> Create Slot
+                                </a>
+                                @endcan
+                            </div>
+                        </div>
 
-
-                <div class="st-table-wrapper" style="margin-top:12px;">
-                    <table class="st-table">
+                        <div class="st-table-wrapper st-dashboard-schedule-table-wrap">
+                            <table class="st-table">
                         <thead>
                             <tr>
                                 <th>PO</th>
@@ -549,7 +632,7 @@
                             @php
                                 $st = (string)($row['status'] ?? 'scheduled');
                                 $stLabel = ucwords(str_replace('_',' ', $st));
-                                
+
                                 $badgeMap = [
                                     'scheduled' => 'bg-secondary',
                                     'waiting' => 'bg-waiting',
@@ -592,7 +675,7 @@
                                                 <i class="fa-solid fa-truck"></i>
                                             </a>
                                             @can('slots.cancel')
-                                            <a href="{{ route('slots.cancel', ['slotId' => $row['id']]) }}" class="tw-action tw-action--danger" data-tooltip="Cancel" aria-label="Cancel" data-confirm="Yakin Ingin Membatalkan Slot Ini?">
+                                            <a href="{{ route('slots.cancel', ['slotId' => $row['id']]) }}" class="tw-action tw-action--danger" data-tooltip="Cancel" aria-label="Cancel" data-confirm="Are you sure you want to cancel this slot?">
                                                 <i class="fa-solid fa-xmark"></i>
                                             </a>
                                             @endcan
@@ -612,7 +695,9 @@
                             <tr><td colspan="8" style="padding:12px;">No Schedule for Selected Filter</td></tr>
                         @endforelse
                         </tbody>
-                    </table>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -633,7 +718,7 @@
                         <input type="hidden" name="range_end" value="{{ $range_end ?? $today }}">
                         <div class="st-form-field">
                             <label class="st-label">Date</label>
-                            <input type="date" name="activity_date" class="st-input" value="{{ $activity_date ?? $today }}">
+                            <input type="text" name="activity_date" class="st-input flatpickr-date" value="{{ $activity_date ?? $today }}" placeholder="YYYY-MM-DD">
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">Warehouse</label>
@@ -681,9 +766,23 @@
                                         $activityType = (string) data_get($act, 'activity_type', '');
                                         $activityLabel = ucwords(str_replace('_',' ', $activityType));
                                         $isLateArrival = ($activityType === 'late_arrival');
+
+                                        // Fix capitalization and gate letters in description
+                                        $description = data_get($act, 'description', '');
+                                        $description = preg_replace_callback('/\bGate\s+([a-z])/', function($matches) {
+                                            return 'Gate ' . strtoupper($matches[1]);
+                                        }, $description);
+                                        $description = preg_replace_callback('/\b([a-z])\w+/', function($matches) {
+                                            $word = $matches[0];
+                                            $conjunctions = ['and', 'or', 'but', 'for', 'nor', 'on', 'at', 'to', 'from', 'with', 'in'];
+                                            if (in_array(strtolower($word), $conjunctions)) {
+                                                return strtolower($word);
+                                            }
+                                            return ucfirst($word);
+                                        }, $description);
                                     @endphp
                                     <strong style="{{ $isLateArrival ? 'color: #dc2626;' : '' }}">{{ $activityLabel }}</strong>
-                                    - {{ data_get($act, 'description', '') }}
+                                    - {{ $description }}
                                     @if (!empty(data_get($act, 'truck_number')))
                                         (PO {{ data_get($act, 'truck_number') }})
                                     @endif
@@ -738,7 +837,7 @@
                 <a href="#" id="timeline-modal-arrival" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Arrival</a>
                 <a href="#" id="timeline-modal-start" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Start</a>
                 <a href="#" id="timeline-modal-complete" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Complete</a>
-                <a href="#" id="timeline-modal-cancel" class="st-btn st-btn--sm st-btn--danger" data-confirm="Yakin Ingin Membatalkan Slot Ini?" style="display:none;">Cancel</a>
+                <a href="#" id="timeline-modal-cancel" class="st-btn st-btn--sm st-btn--danger" data-confirm="Are you sure you want to cancel this slot?" style="display:none;">Cancel</a>
             </div>
         </div>
     </div>
@@ -793,79 +892,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (typeof window.flatpickr !== 'function') return;
     try {
-        if (typeof flatpickr === 'function') {
-            flatpickr("input[type='date']", {
-                dateFormat: "Y-m-d",
-                allowInput: true,
-                clickOpens: true
-            });
+        // Use global holiday helper
+        var globalHolidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
-            var rangePickerEl = document.getElementById('analytics_range');
-            var startEl = document.getElementById('range_start');
-            var endEl = document.getElementById('range_end');
+        var flatpickrConfig = {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+            clickOpens: true,
+            disableMobile: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (globalHolidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = globalHolidayData[dateStr];
+                }
+            }
+        };
 
-            if (rangePickerEl) {
-                var startDate = startEl ? startEl.value : '{{ $range_start ?? '' }}';
-                var endDate = endEl ? endEl.value : '{{ $range_end ?? '' }}';
-                flatpickr(rangePickerEl, {
+        // Initialize generic date inputs
+        flatpickr(".flatpickr-date, input[type='date']", flatpickrConfig);
+
+            // Initialize Analytics Range Picker
+            var rangeInput = document.getElementById('analytics_range');
+            if (rangeInput) {
+                var startVal = document.getElementById('range_start').value;
+                var endVal = document.getElementById('range_end').value;
+
+                // Use already defined globalHolidayData
+                var hData = globalHolidayData || {};
+
+                flatpickr(rangeInput, {
                     mode: 'range',
                     dateFormat: 'Y-m-d',
-                    allowInput: true,
-                    clickOpens: true,
-                    defaultDate: [startDate || null, endDate || null].filter(Boolean),
-                    onChange: function (selectedDates, dateStr, instance) {
-                        if (!selectedDates || !selectedDates.length) return;
-                        if (selectedDates.length === 1) {
-                            var d0 = instance.formatDate(selectedDates[0], 'Y-m-d');
-                            if (startEl) startEl.value = d0;
-                            if (endEl) endEl.value = d0;
-                        } else {
-                            var dStart = instance.formatDate(selectedDates[0], 'Y-m-d');
-                            var dEnd = instance.formatDate(selectedDates[1], 'Y-m-d');
-                            if (startEl) startEl.value = dStart;
-                            if (endEl) endEl.value = dEnd;
+                    disableMobile: true,
+                    defaultDate: [startVal, endVal],
+                    onDayCreate: function(dObj, dStr, fp, dayElem) {
+                        const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                        if (hData[dateStr]) {
+                            dayElem.classList.add('is-holiday');
+                            dayElem.title = hData[dateStr];
                         }
-                        // Update form to include range_start and range_end in query string
-                        var form = rangePickerEl.closest('form');
-                        if (form) {
-                            // Remove existing range inputs if any
-                            var existingStart = form.querySelector('input[name="range_start"]');
-                            var existingEnd = form.querySelector('input[name="range_end"]');
-                            if (existingStart) existingStart.remove();
-                            if (existingEnd) existingEnd.remove();
+                    },
+                    onClose: function(selectedDates, dateStr, instance) {
+                        if (selectedDates.length === 2) {
+                            var s = instance.formatDate(selectedDates[0], 'Y-m-d');
+                            var e = instance.formatDate(selectedDates[1], 'Y-m-d');
+                            document.getElementById('range_start').value = s;
+                            document.getElementById('range_end').value = e;
 
-                            // Add new hidden inputs for range
-                            if (selectedDates.length === 1) {
-                                var d0 = instance.formatDate(selectedDates[0], 'Y-m-d');
-                                var startInput = document.createElement('input');
-                                startInput.type = 'hidden';
-                                startInput.name = 'range_start';
-                                startInput.value = d0;
-                                form.appendChild(startInput);
-                                var endInput = document.createElement('input');
-                                endInput.type = 'hidden';
-                                endInput.name = 'range_end';
-                                endInput.value = d0;
-                                form.appendChild(endInput);
-                            } else if (selectedDates.length === 2) {
-                                var dStart = instance.formatDate(selectedDates[0], 'Y-m-d');
-                                var dEnd = instance.formatDate(selectedDates[1], 'Y-m-d');
-                                var startInput = document.createElement('input');
-                                startInput.type = 'hidden';
-                                startInput.name = 'range_start';
-                                startInput.value = dStart;
-                                form.appendChild(startInput);
-                                var endInput = document.createElement('input');
-                                endInput.type = 'hidden';
-                                endInput.name = 'range_end';
-                                endInput.value = dEnd;
-                                form.appendChild(endInput);
-                            }
+                            // Format for display: 2026-01-01 to 2026-01-31
+                            rangeInput.value = s + ' to ' + e;
                         }
                     }
                 });
             }
-        }
     } catch (e) {
         // ignore
     }
@@ -1160,6 +1240,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script type="application/json" id="dashboard_bottleneck_directions">{!! json_encode($bottleneckDirections ?? []) !!}</script>
 <script type="application/json" id="dashboard_bottleneck_rows">{!! json_encode($bottleneckRows ?? []) !!}</script>
 <script type="application/json" id="dashboard_completion_data">{!! json_encode($completionData ?? []) !!}</script>
+<script type="application/json" id="dashboard_process_status_counts">{!! json_encode($processStatusCounts ?? []) !!}</script>
 <script type="application/json" id="dashboard_numbers">{!! json_encode([
     'inbound' => (int) ($inboundRange ?? 0),
     'outbound' => (int) ($outboundRange ?? 0),
@@ -1170,6 +1251,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'completion_completed' => (int) ($completionCompletedSlots ?? 0),
     'completion_total' => (int) ($completionTotalSlots ?? 0),
 ]) !!}</script>
+<script type="application/json" id="indonesia_holidays">{!! json_encode($holidays ?? []) !!}</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-confirm]').forEach(function (el) {
@@ -1292,6 +1374,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var targetCanvas = document.getElementById('chart_target_achievement');
     var completionCanvas = document.getElementById('chart_completion_rate');
     var bottleneckCanvas = document.getElementById('chart_bottleneck');
+    var processStatusCanvas = document.getElementById('chart_process_status');
 
     if (!window.Chart) {
         setChartMessage(trendCanvas, 'Chart.js gagal dimuat.');
@@ -1300,6 +1383,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setChartMessage(targetCanvas, 'Chart.js gagal dimuat.');
         setChartMessage(completionCanvas, 'Chart.js gagal dimuat.');
         setChartMessage(bottleneckCanvas, 'Chart.js gagal dimuat.');
+        setChartMessage(processStatusCanvas, 'Chart.js gagal dimuat.');
         return;
     }
 
@@ -1494,7 +1578,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Tambahkan layout padding agar ada ruang untuk label
             cfg.options.layout = cfg.options.layout || {};
-            
+
             if (isCompact) {
                 // Compact mode (Direction Chart) - Reduced padding, Larger Radius
                 cfg.options.layout.padding = { top: 15, bottom: 15, left: 20, right: 20 };
@@ -1544,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // var year = d.getFullYear();
                     var titleEl = document.getElementById('chart_trend_title');
                     if (titleEl) {
-                        titleEl.textContent = 'Completed Trend for ' + monthName; 
+                        titleEl.textContent = 'Completed Trend for ' + monthName;
                     }
                 }
             }
@@ -1575,6 +1659,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var bottleneckRows = readJsonFromEl('dashboard_bottleneck_rows') || [];
 
     var completionData = readJsonFromEl('dashboard_completion_data') || [];
+    var processStatusCounts = readJsonFromEl('dashboard_process_status_counts') || {};
 
     function getTooltipOptions() {
         return {
@@ -1605,21 +1690,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     var trendSum = (trendCounts || []).reduce(function (a, b) { return a + (parseInt(b || 0, 10) || 0); }, 0);
-    setChartMessage(trendCanvas, trendSum <= 0 ? 'Tidak Ada Data Completed pada Range Ini.' : '');
+    setChartMessage(trendCanvas, trendSum <= 0 ? 'No Completed data in this range.' : '');
 
-    setChartMessage(directionCanvas, (inbound + outbound) <= 0 ? 'Tidak Ada Data Inbound/Outbound pada Range Ini.' : '');
+    setChartMessage(directionCanvas, (inbound + outbound) <= 0 ? 'No Inbound/Outbound data in this range.' : '');
 
     var onTimeTotal0 = parseInt(numbers.on_time || 0, 10) + parseInt(numbers.late || 0, 10);
-    setChartMessage(onTimeCanvas, onTimeTotal0 <= 0 ? 'Tidak Ada Data KPI On Time/Late pada Range Ini.' : '');
+    setChartMessage(onTimeCanvas, onTimeTotal0 <= 0 ? 'No On Time/Late KPI data in this range.' : '');
 
     var targetTotal0 = parseInt(numbers.achieve || 0, 10) + parseInt(numbers.not_achieve || 0, 10);
-    setChartMessage(targetCanvas, targetTotal0 <= 0 ? 'Tidak Ada Data Target Achievement pada Range Ini.' : '');
+    setChartMessage(targetCanvas, targetTotal0 <= 0 ? 'No Target Achievement data in this range.' : '');
 
     var compTotal0 = parseInt(numbers.completion_total || 0, 10);
-    setChartMessage(completionCanvas, compTotal0 <= 0 ? 'Tidak Ada Data Completion pada Range Ini.' : '');
+    setChartMessage(completionCanvas, compTotal0 <= 0 ? 'No Completion data in this range.' : '');
 
     var bottleCount0 = (bottleneckRows || []).length;
-    setChartMessage(bottleneckCanvas, bottleCount0 <= 0 ? 'Tidak Ada Bottleneck pada Range Ini.' : '');
+    setChartMessage(bottleneckCanvas, bottleCount0 <= 0 ? 'No Bottlenecks found in this range.' : '');
 
     function makeChart(canvasEl, cfg) {
         if (!canvasEl || !window.Chart) return null;
@@ -1660,7 +1745,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         var base = element.base;
                         var height = Math.abs(base - y);
                         var top = Math.min(base, y);
-                        
+
                         ctx.save();
                         ctx.beginPath();
                         // Capsule shape path for clipping
@@ -1676,7 +1761,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         gradient.addColorStop(0, 'rgba(255, 255, 255, 0.5)'); // Bright edge
                         gradient.addColorStop(0.25, 'rgba(255, 255, 255, 0.05)'); // Fade
                         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                        
+
                         ctx.fillStyle = gradient;
                         ctx.fill();
                         ctx.restore();
@@ -1706,8 +1791,8 @@ document.addEventListener('DOMContentLoaded', function () {
             // 2. Draw 3D Sphere Points
             if (ds.type === 'line' && ds.label === 'Completed') {
                 // Restore first to clear line shadow settings for points (we want distinct shadow for beads)
-                ctx.restore(); 
-                
+                ctx.restore();
+
                 var meta = chart.getDatasetMeta(args.index);
                 if (!meta.hidden) {
                     ctx.save();
@@ -1723,20 +1808,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         // Bead Shadow (closer to object)
                         ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
                         ctx.shadowBlur = 4;
-                        ctx.shadowOffsetY = 3; 
+                        ctx.shadowOffsetY = 3;
 
                         ctx.beginPath();
                         ctx.arc(x, y, r, 0, Math.PI * 2);
-                        
+
                         // 3D Sphere Radial Gradient
                         // Light source from top-left
                         var grad = ctx.createRadialGradient(x - r/3, y - r/3, r/6, x, y, r);
                         grad.addColorStop(0, '#ffffff'); // Highlight
                         grad.addColorStop(1, '#e2e8f0'); // Shading (Slate-200)
-                        
+
                         ctx.fillStyle = grad;
                         ctx.fill();
-                        
+
                         // Check if Sunday (Holiday)
                         var dateLabel = chart.data.labels[index];
                         var isSunday = false;
@@ -1749,12 +1834,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         if (isSunday) {
                             // Red outline for Sunday
-                            ctx.strokeStyle = '#dc2626'; 
+                            ctx.strokeStyle = '#dc2626';
                         } else {
                             // Green outline matching the line
                             ctx.strokeStyle = '#238a1bff';
                         }
-                        
+
                         ctx.lineWidth = 2;
                         ctx.stroke();
                     });
@@ -1762,9 +1847,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             } else {
                 // Restore if not completed line (though we only saved for completed line in beforeDatasetDraw)
-                 // This block handles the case where beforeDatasetDraw didn't run or logic differs, 
-                 // but strictly for this plugin structure, 'restore' is handled in the if block above 
-                 // effectively closing the 'save' from beforeDatasetDraw. 
+                 // This block handles the case where beforeDatasetDraw didn't run or logic differs,
+                 // but strictly for this plugin structure, 'restore' is handled in the if block above
+                 // effectively closing the 'save' from beforeDatasetDraw.
                  // Note: Chart.js plugins 'beforeDatasetDraw' and 'afterDatasetDraw' balance is manual.
                  // If we didn't enter the 'if' in before, we shouldn't restore.
                  // Logic check: The save is inside the if. The restore is inside the if. Correct.
@@ -1783,8 +1868,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     label: 'Inbound',
                     data: trendInbound,
                     stack: 'dir',
-                    backgroundColor: 'rgba(20, 184, 166, 0.85)', // Solid Teal
-                    borderColor: 'rgba(20, 184, 166, 0.8)', // Stronger Outline
+                    backgroundColor: 'rgba(2, 132, 199, 0.85)', // Solid Primary Blue (Inbound)
+                    borderColor: 'rgba(2, 132, 199, 0.8)', // Stronger Outline
                     borderWidth: 1, // Full outline
                     borderRadius: { bottomLeft: 0, bottomRight: 0, topLeft: 0, topRight: 0 }, // Flat bottom aligned with X-axis
                     borderSkipped: false, // Ensure rounded corners draw
@@ -1797,8 +1882,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     label: 'Outbound',
                     data: trendOutbound,
                     stack: 'dir',
-                    backgroundColor: 'rgba(2, 132, 199, 0.85)', // Solid Primary Blue 
-                    borderColor: 'rgba(2, 132, 199, 0.8)', // Stronger Outline
+                    backgroundColor: 'rgba(234, 88, 12, 0.85)', // Solid Orange (Outbound)
+                    borderColor: 'rgba(234, 88, 12, 0.8)', // Stronger Outline
                     borderWidth: 1, // Full outline
                     borderRadius: { topLeft: 100, topRight: 100, bottomLeft: 0, bottomRight: 0 }, // Top half capsule
                     borderSkipped: false, // Ensure rounded corners draw
@@ -1888,16 +1973,16 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             scales: {
                 x: {
-                    grid: { 
-                        borderColor: '#d1d5db', 
-                        borderWidth: 0.5, 
-                        color: stTheme.grid, 
-                        drawBorder: true, 
-                        drawOnChartArea: false 
+                    grid: {
+                        borderColor: '#d1d5db',
+                        borderWidth: 0.5,
+                        color: stTheme.grid,
+                        drawBorder: true,
+                        drawOnChartArea: false
                     },
-                    ticks: { 
-                        color: stTheme.muted, 
-                        maxRotation: 0, 
+                    ticks: {
+                        color: stTheme.muted,
+                        maxRotation: 0,
                         autoSkip: true,
                         callback: function(val, index) {
                             var label = this.getLabelForValue(val);
@@ -1912,7 +1997,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     stacked: true,
                     title: {
                         display: true,
-                        text: 'TANGGAL',
+                        text: 'DATE',
                         align: 'end',
                         color: stTheme.muted,
                         font: { size: 10, weight: '700' },
@@ -1922,18 +2007,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 y: {
                     beginAtZero: true,
                     suggestedMax: Math.max(10, (trendCounts || []).reduce(function (m, v) { return Math.max(m, parseInt(v || 0, 10) || 0); }, 0) * 1.25),
-                    grid: { 
-                        borderColor: '#d1d5db', 
-                        borderWidth: 0.5, 
-                        color: stTheme.grid, 
-                        drawBorder: true, 
-                        drawOnChartArea: false 
+                    grid: {
+                        borderColor: '#d1d5db',
+                        borderWidth: 0.5,
+                        color: stTheme.grid,
+                        drawBorder: true,
+                        drawOnChartArea: false
                     },
                     ticks: { color: stTheme.muted, precision: 0 },
                     stacked: true,
                     title: {
                         display: true,
-                        text: 'JUMLAH COMPLETED',
+                        text: 'COMPLETED COUNT',
                         align: 'end',
                         color: stTheme.muted,
                         font: { size: 10, weight: '700' },
@@ -1963,7 +2048,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: [inbound, outbound],
                 backgroundColor: function (ctx) {
                     var idx = ctx && typeof ctx.dataIndex === 'number' ? ctx.dataIndex : 0;
-                    var base = idx === 0 ? '#14b8a6' : '#0284c7';
+                    var base = idx === 0 ? '#0284c7' : '#ea580c';
                     var chart = ctx && ctx.chart ? ctx.chart : null;
                     if (!chart || !chart.chartArea) return base;
                     var area = chart.chartArea;
@@ -1991,6 +2076,111 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }, 'doughnut', true)); // isCompact = true for Direction Chart
+
+    var processStatusTotal0 = (
+        parseInt(processStatusCounts.pending || 0, 10) +
+        parseInt(processStatusCounts.scheduled || 0, 10) +
+        parseInt(processStatusCounts.waiting || 0, 10) +
+        parseInt(processStatusCounts.in_progress || 0, 10) +
+        parseInt(processStatusCounts.completed || 0, 10) +
+        parseInt(processStatusCounts.cancelled || 0, 10)
+    );
+    setChartMessage(processStatusCanvas, processStatusTotal0 <= 0 ? 'No Schedule data for selected filter.' : '');
+
+    function getStatusBgColor(bgClass) {
+        try {
+            var el = document.createElement('span');
+            el.className = bgClass;
+            el.style.display = 'none';
+            document.body.appendChild(el);
+            var c = window.getComputedStyle(el).backgroundColor;
+            document.body.removeChild(el);
+            return c || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    var processStatusColors = [
+        getStatusBgColor('bg-pending_approval'),
+        getStatusBgColor('bg-scheduled'),
+        getStatusBgColor('bg-waiting'),
+        getStatusBgColor('bg-in_progress'),
+        getStatusBgColor('bg-completed'),
+        getStatusBgColor('bg-danger')
+    ];
+
+    var processStatusChart = makeChart(processStatusCanvas, {
+        type: 'bar',
+        data: {
+            labels: ['Pending', 'Scheduled', 'Waiting', 'In Progress', 'Completed', 'Cancelled'],
+            datasets: [{
+                data: [
+                    parseInt(processStatusCounts.pending || 0, 10),
+                    parseInt(processStatusCounts.scheduled || 0, 10),
+                    parseInt(processStatusCounts.waiting || 0, 10),
+                    parseInt(processStatusCounts.in_progress || 0, 10),
+                    parseInt(processStatusCounts.completed || 0, 10),
+                    parseInt(processStatusCounts.cancelled || 0, 10)
+                ],
+                backgroundColor: processStatusColors,
+                borderRadius: 4,
+                barThickness: 32
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 700, easing: 'easeOutQuart' },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: getTooltipOptions(),
+                stShadow: { color: stTheme.shadow, blur: 18, offsetY: 10, offsetX: 0 }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: { size: 10, weight: '600' },
+                        color: '#374151'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true,
+                        drawBorder: false,
+                        color: function(context) {
+                            return context.tick.value === 0 ? '#e5e7eb' : '#f3f4f6';
+                        }
+                    },
+                    ticks: {
+                        font: { size: 10, weight: '500' },
+                        color: '#6b7280',
+                        precision: 0
+                    },
+                    suggestedMax: function() {
+                        var maxValue = Math.max(
+                            parseInt(processStatusCounts.pending || 0, 10),
+                            parseInt(processStatusCounts.scheduled || 0, 10),
+                            parseInt(processStatusCounts.waiting || 0, 10),
+                            parseInt(processStatusCounts.in_progress || 0, 10),
+                            parseInt(processStatusCounts.completed || 0, 10),
+                            parseInt(processStatusCounts.cancelled || 0, 10)
+                        );
+                        // Make the chart flexible: if max is 10 or less, use 10 as ceiling
+                        // If max is more than 10, add 20% padding
+                        return maxValue <= 10 ? 10 : Math.ceil(maxValue * 1.2);
+                    }
+                }
+            }
+        }
+    });
 
     var onTimeChart = makeChart(onTimeCanvas, withDataLabels({
         type: 'doughnut',
@@ -2434,6 +2624,14 @@ document.addEventListener('DOMContentLoaded', function () {
             var procEl = document.getElementById('proc_avg_value');
             if (leadEl) leadEl.textContent = toMinutesText(leadEl.getAttribute('data-minutes'), unit);
             if (procEl) procEl.textContent = toMinutesText(procEl.getAttribute('data-minutes'), unit);
+
+            // Update Truck Specific Cards
+            document.querySelectorAll('.lead-avg-truck').forEach(function(el) {
+                el.textContent = toMinutesText(el.getAttribute('data-minutes'), unit);
+            });
+            document.querySelectorAll('.proc-avg-truck').forEach(function(el) {
+                el.textContent = toMinutesText(el.getAttribute('data-minutes'), unit);
+            });
         });
     }
 

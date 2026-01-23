@@ -258,7 +258,7 @@ class ExportService
     {
         try {
             $end = !empty($row->actual_finish) ? new \DateTime((string) $row->actual_finish) : null;
-            $startStr = !empty($row->actual_start) ? (string) $row->actual_start : (!empty($row->arrival_time) ? (string) $row->arrival_time : '');
+            $startStr = !empty($row->arrival_time) ? (string) $row->arrival_time : '';
             $start = $startStr !== '' ? new \DateTime($startStr) : null;
 
             if ($start && $end) {

@@ -108,14 +108,6 @@
                     <td>Requested By</td>
                     <td>{{ $booking->requester?->full_name ?? '-' }}</td>
                 </tr>
-                <tr>
-                    <td>Direction</td>
-                    <td>
-                        <span class="st-badge st-badge--{{ $booking->direction }}">
-                            {{ ucfirst($booking->direction) }}
-                        </span>
-                    </td>
-                </tr>
             </table>
         </div>
 
@@ -240,7 +232,7 @@
             <i class="fas fa-gavel"></i>
             Actions
         </h3>
-        
+
         <div class="st-action-buttons-group">
             @can('bookings.approve')
             <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" style="display: inline;">
@@ -514,7 +506,7 @@ function openApproveModal(id, ticket) {
     const modal = document.getElementById('approveModal');
     const ticketSpan = document.getElementById('modalTicketNumber');
     const form = document.getElementById('approveForm');
-    
+
     ticketSpan.innerText = ticket;
     form.action = "{{ url('/bookings') }}/" + id + "/approve";
     modal.classList.add('active');

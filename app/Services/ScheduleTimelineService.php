@@ -38,6 +38,41 @@ class ScheduleTimelineService
     }
 
     /**
+     * Build schedule query
+     */
+    private function buildScheduleQuery(string $date)
+    {
+        return DB::table('slots as s')
+            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('gates as g', function ($join) {
+                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
+            })
+            ->where(function($q) use ($date) {
+                $q->whereDate('s.actual_start', $date)
+                  ->orWhereDate('s.planned_start', $date);
+            })
+            ->where(function($q) {
+                $q->whereNull('s.slot_type')
+                  ->orWhere('s.slot_type', '!=', 'unplanned');
+            })
+            ->whereNotIn('s.status', ['pending_approval', 'pending_vendor_confirmation', 'cancelled'])
+            ->select([
+                's.id',
+                's.status',
+                's.is_late',
+                's.planned_start',
+                's.planned_duration',
+                's.blocking_risk',
+                's.po_number',
+                'w.wh_name as warehouse_name',
+                'w.wh_code as warehouse_code',
+                'g.gate_number',
+                's.vendor_name as vendor_name',
+            ]);
+    }
+
+    /**
      * Get timeline blocks for visualization
      */
     public function getTimelineBlocks(string $date): array
@@ -284,7 +319,7 @@ class ScheduleTimelineService
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
-                's.vendor_name',
+                'v.bp_name as vendor_name',
             ])
             ->limit(20)
             ->get();
@@ -321,7 +356,7 @@ class ScheduleTimelineService
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
-                's.vendor_name',
+                'v.bp_name as vendor_name',
             ])
             ->limit(10)
             ->get();
@@ -335,11 +370,13 @@ class ScheduleTimelineService
     private function buildScheduleQuery(string $date)
     {
         return DB::table('slots as s')
+            ->join('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
             ->leftJoin('gates as g', function ($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
+            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->where(function($q) use ($date) {
                 $q->whereDate('s.actual_start', $date)
                   ->orWhereDate('s.planned_start', $date);
@@ -360,7 +397,7 @@ class ScheduleTimelineService
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
-                's.vendor_name',
+                'v.bp_name as vendor_name',
             ]);
     }
 
@@ -400,8 +437,8 @@ class ScheduleTimelineService
                 'w.wh_code as warehouse_code',
                 'g.id as gate_id',
                 'g.gate_number',
-                's.vendor_name',
-                's.vendor_type',
+                'v.bp_name as vendor_name',
+                'v.bp_type as vendor_type',
             ])
             ->get();
     }

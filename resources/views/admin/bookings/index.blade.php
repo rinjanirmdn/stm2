@@ -29,12 +29,12 @@
         <div class="st-filter-row">
             <div class="st-filter-group">
                 <label class="st-label">From Date</label>
-                <input type="date" name="date_from" class="st-input" value="{{ request('date_from') }}">
+                <input type="text" name="date_from" class="st-input" value="{{ request('date_from') }}" id="date_from_filter" placeholder="Select Date">
             </div>
             
             <div class="st-filter-group">
                 <label class="st-label">To Date</label>
-                <input type="date" name="date_to" class="st-input" value="{{ request('date_to') }}">
+                <input type="text" name="date_to" class="st-input" value="{{ request('date_to') }}" id="date_to_filter" placeholder="Select Date">
             </div>
             
             <div class="st-filter-group">
@@ -270,6 +270,31 @@
 
 @push('scripts')
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dateFrom = document.getElementById('date_from_filter');
+    var dateTo = document.getElementById('date_to_filter');
+    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+    function initFilterFlatpickr(el) {
+        if (!el) return;
+        window.flatpickr(el, {
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            allowInput: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            }
+        });
+    }
+
+    initFilterFlatpickr(dateFrom);
+    initFilterFlatpickr(dateTo);
+});
+
 function openRejectModal(bookingId, ticketNumber) {
     const modal = document.getElementById('reject-modal');
     document.getElementById('reject-ticket').textContent = ticketNumber;

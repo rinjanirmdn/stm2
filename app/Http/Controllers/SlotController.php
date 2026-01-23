@@ -86,7 +86,9 @@ class SlotController extends Controller
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
             ->where(function ($sub) use ($like) {
                 $sub->where('s.po_number', 'like', $like)
+                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
+                    ->orWhere('s.vendor_name', 'like', $like);
                     ->orWhere('s.vendor_name', 'like', $like);
             })
             ->where('s.status', '<>', 'completed')
@@ -98,10 +100,13 @@ class SlotController extends Controller
             ])
             ->orderByRaw("CASE
                 WHEN s.po_number LIKE ? THEN 1
+                WHEN s.po_number LIKE ? THEN 1
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 2
+                WHEN s.vendor_name LIKE ? THEN 3
                 WHEN s.vendor_name LIKE ? THEN 3
                 ELSE 4
             END", [$q . '%', $q . '%', $q . '%'])
+            ->orderBy('s.po_number')
             ->orderBy('s.po_number')
             ->limit(10)
             ->get();
@@ -281,7 +286,7 @@ class SlotController extends Controller
         // which runs every 5 minutes via Laravel scheduler.
         // This removes the N+1 query problem that was causing 20+ second page loads.
         // The blocking_risk value from database is used directly (set in buildBaseQuery select).
-        
+
         // For display purposes, map blocking_risk to 'blocking' property
         foreach ($slots as $slot) {
             $slot->blocking = (int) ($slot->blocking_risk ?? 0);
@@ -599,7 +604,7 @@ class SlotController extends Controller
             }
 
             if ($slotId > 0) {
-                $this->slotService->logActivity($slotId, 'status_change', 'Slot created');
+                $this->slotService->logActivity($slotId, 'status_change', 'Slot Created');
             }
         });
 
@@ -638,6 +643,179 @@ class SlotController extends Controller
         ]);
 
         return redirect()->route('slots.index')->with('success', 'Slot created successfully');
+    }
+
+    public function edit(int $slotId)
+    {
+        $slot = $this->loadSlotDetailRow($slotId);
+        if (! $slot) {
+            return redirect()->route('slots.index')->with('error', 'Slot not found');
+        }
+
+        if (((string) ($slot->slot_type ?? 'planned')) !== 'planned' || (string) ($slot->status ?? '') !== 'scheduled') {
+            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled planned slots can be edited');
+        }
+
+        $warehouses = DB::table('warehouses')
+            ->select(['id', 'wh_name as name', 'wh_code as code'])
+            ->orderBy('wh_name')
+            ->get();
+
+        $vendorsQ = DB::table('business_partner')
+            ->select([
+                'id',
+                'bp_name as name',
+                'bp_code as code',
+                'bp_type as type',
+            ])
+            ->orderBy('bp_name');
+        if (Schema::hasColumn('business_partner', 'is_active')) {
+            $vendorsQ->where('is_active', true);
+        }
+        $vendors = $vendorsQ->get();
+
+        $gates = DB::table('gates as g')
+            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+            ->where('g.is_active', true)
+            ->orderBy('w.wh_name')
+            ->orderBy('g.gate_number')
+            ->select(['g.*', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code', 'w.id as warehouse_id'])
+            ->get();
+
+        $truckTypes = $this->getTruckTypeOptions();
+        $truckTypeDurations = DB::table('truck_type_durations')
+            ->orderBy('truck_type')
+            ->pluck('target_duration_minutes', 'truck_type')
+            ->all();
+
+        return view('slots.edit', [
+            'slot' => $slot,
+            'warehouses' => $warehouses,
+            'vendors' => $vendors,
+            'gates' => $gates,
+            'truckTypes' => $truckTypes,
+            'truckTypeDurations' => $truckTypeDurations,
+        ]);
+    }
+
+    public function update(Request $request, int $slotId)
+    {
+        $slot = $this->loadSlotDetailRow($slotId);
+        if (! $slot) {
+            return redirect()->route('slots.index')->with('error', 'Slot not found');
+        }
+
+        if (((string) ($slot->slot_type ?? 'planned')) !== 'planned' || (string) ($slot->status ?? '') !== 'scheduled') {
+            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled planned slots can be edited');
+        }
+
+        $request->validate([
+            'po_number' => 'required|string|max:12',
+            'direction' => 'required|in:inbound,outbound',
+            'truck_type' => 'required|string|max:100',
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
+            'vendor_id' => 'nullable|integer|exists:business_partner,id',
+            'planned_gate_id' => 'nullable|integer|exists:gates,id',
+            'planned_start' => 'required|string',
+            'planned_duration' => 'required|integer|min:1|max:1440',
+        ]);
+
+        $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
+        $direction = (string) $request->input('direction', '');
+        $warehouseId = (int) $request->input('warehouse_id', 0);
+        $vendorId = $request->input('vendor_id') !== null && (string) $request->input('vendor_id') !== '' ? (int) $request->input('vendor_id') : null;
+        $plannedGateId = $request->input('planned_gate_id') !== null && (string) $request->input('planned_gate_id') !== '' ? (int) $request->input('planned_gate_id') : null;
+        $plannedStart = (string) $request->input('planned_start', '');
+        $plannedDurationMinutes = (int) $request->input('planned_duration', 60);
+        $truckType = trim((string) $request->input('truck_type', ''));
+
+        if ($truckNumber !== '' && strlen($truckNumber) > 12) {
+            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
+        }
+
+        if ($plannedGateId !== null) {
+            $gate = DB::table('gates')->where('id', $plannedGateId)->where('is_active', true)->select(['warehouse_id'])->first();
+            if (! $gate || (int) ($gate->warehouse_id ?? 0) !== $warehouseId) {
+                return back()->withInput()->with('error', 'Selected gate does not belong to chosen warehouse or is inactive');
+            }
+        }
+
+        try {
+            $plannedStartDt = new DateTime($plannedStart);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'Invalid planned start time');
+        }
+
+        $plannedEndDt = clone $plannedStartDt;
+        $plannedEndDt->modify('+' . (int) $plannedDurationMinutes . ' minutes');
+
+        if ($plannedGateId !== null) {
+            $laneGroup = $this->slotService->getGateLaneGroup($plannedGateId);
+            $laneGateIds = $laneGroup ? $this->slotService->getGateIdsByLaneGroup($laneGroup) : [$plannedGateId];
+            if (empty($laneGateIds)) {
+                $laneGateIds = [$plannedGateId];
+            }
+
+            $startStr = $plannedStartDt->format('Y-m-d H:i:s');
+            $endStr = $plannedEndDt->format('Y-m-d H:i:s');
+
+            $overlapCount = (int) DB::table('slots')
+                ->where('id', '<>', $slotId)
+                ->whereIn('planned_gate_id', $laneGateIds)
+                ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
+                ->whereRaw('? < ' . $this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
+                ->whereRaw('? > planned_start', [$endStr])
+                ->count();
+
+            if ($overlapCount > 0) {
+                return back()->withInput()->with('error', 'Planned time overlaps with another slot on the same lane');
+            }
+
+            $bcCheck = $this->slotService->validateWh2BcPlannedWindow($plannedGateId, $plannedStartDt, $plannedEndDt, $slotId);
+            if (empty($bcCheck['ok'])) {
+                return back()->withInput()->with('error', (string) ($bcCheck['message'] ?? 'Invalid planned window'));
+            }
+        }
+
+        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType) {
+            $truck = DB::table('po')->where('po_number', $truckNumber)->select(['id'])->first();
+            if ($truck) {
+                $truckId = (int) $truck->id;
+            } else {
+                $truckId = (int) DB::table('po')->insertGetId([
+                    'po_number' => $truckNumber,
+                ]);
+            }
+
+            DB::table('slots')->where('id', $slotId)->update([
+                'po_id' => $truckId,
+                'direction' => $direction,
+                'warehouse_id' => $warehouseId,
+                'bp_id' => $vendorId,
+                'planned_gate_id' => $plannedGateId,
+                'planned_start' => $plannedStart,
+                'planned_duration' => $plannedDurationMinutes,
+                'truck_type' => $truckType,
+                'updated_at' => now(),
+            ]);
+
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot Updated');
+        });
+
+        // Calculate blocking risk immediately after update
+        $blockingRisk = $this->slotService->calculateBlockingRisk(
+            $warehouseId,
+            $plannedGateId,
+            $plannedStart,
+            $plannedDurationMinutes,
+            $slotId
+        );
+        DB::table('slots')->where('id', $slotId)->update([
+            'blocking_risk' => $blockingRisk,
+            'blocking_risk_cached_at' => now(),
+        ]);
+
+        return redirect()->route('slots.index')->with('success', 'Slot updated successfully');
     }
 
     private function toFloatQty($v): float
@@ -755,7 +933,7 @@ class SlotController extends Controller
                 (int) $slot->id
             );
             $slot->blocking = $currentRiskLevel;
-            
+
             // Also update the database so list page shows accurate value
             DB::table('slots')->where('id', $slotId)->update([
                 'blocking_risk' => $currentRiskLevel,
@@ -873,6 +1051,7 @@ class SlotController extends Controller
             ->select([
                 's.*',
                 's.po_number as truck_number',
+                's.po_number as truck_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 's.vendor_name',
@@ -885,13 +1064,16 @@ class SlotController extends Controller
             $search = '%' . $request->get('q') . '%';
             $query->where(function ($q) use ($search) {
                 $q->where('s.po_number', 'like', $search)
+                $q->where('s.po_number', 'like', $search)
                   ->orWhere('s.mat_doc', 'like', $search)
+                  ->orWhere('s.vendor_name', 'like', $search)
                   ->orWhere('s.vendor_name', 'like', $search)
                   ->orWhere('s.sj_complete_number', 'like', $search);
             });
         }
 
         if ($request->filled('po_number')) {
+            $query->where('s.po_number', 'like', '%' . $request->get('po_number') . '%');
             $query->where('s.po_number', 'like', '%' . $request->get('po_number') . '%');
         }
 
@@ -900,6 +1082,7 @@ class SlotController extends Controller
         }
 
         if ($request->filled('vendor')) {
+            $query->where('s.vendor_name', 'like', '%' . $request->get('vendor') . '%');
             $query->where('s.vendor_name', 'like', '%' . $request->get('vendor') . '%');
         }
 
@@ -951,7 +1134,9 @@ class SlotController extends Controller
                 $d = $dirs[$i] ?? 'desc';
                 if ($s === 'po_number') {
                     $query->orderBy('s.po_number', $d);
+                    $query->orderBy('s.po_number', $d);
                 } elseif ($s === 'vendor_name') {
+                    $query->orderBy('s.vendor_name', $d);
                     $query->orderBy('s.vendor_name', $d);
                 } elseif ($s === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $d);
@@ -969,7 +1154,9 @@ class SlotController extends Controller
             if (in_array($actualSort, $allowedSorts, true)) {
                 if ($actualSort === 'po_number') {
                     $query->orderBy('s.po_number', $dir);
+                    $query->orderBy('s.po_number', $dir);
                 } elseif ($actualSort === 'vendor_name') {
+                    $query->orderBy('s.vendor_name', $dir);
                     $query->orderBy('s.vendor_name', $dir);
                 } elseif ($actualSort === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $dir);
@@ -1191,13 +1378,143 @@ class SlotController extends Controller
             }
 
             if ($slotId > 0) {
-                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned transaction recorded as ' . $status);
+                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Recorded as ' . $status);
             }
 
             return $slotId;
         });
 
         return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned transaction recorded successfully');
+    }
+
+    public function unplannedEdit(int $slotId)
+    {
+        $slot = $this->loadSlotDetailRow($slotId);
+        if (! $slot) {
+            return redirect()->route('slots.index')->with('error', 'Slot not found');
+        }
+
+        if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
+            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only unplanned transactions can be edited here');
+        }
+
+        $warehouses = DB::table('warehouses')
+            ->select(['id', 'wh_name as name', 'wh_code as code'])
+            ->orderBy('wh_name')
+            ->get();
+
+        $vendorsQ = DB::table('business_partner')
+            ->select([
+                'id',
+                'bp_name as name',
+                'bp_code as code',
+                'bp_type as type',
+            ])
+            ->orderBy('bp_name');
+        if (Schema::hasColumn('business_partner', 'is_active')) {
+            $vendorsQ->where('is_active', true);
+        }
+        $vendors = $vendorsQ->get();
+
+        $gates = DB::table('gates as g')
+            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+            ->where('g.is_active', true)
+            ->orderBy('w.wh_name')
+            ->orderBy('g.gate_number')
+            ->select(['g.*', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code'])
+            ->get();
+
+        $truckTypes = $this->getTruckTypeOptions();
+
+        return view('unplanned.edit', [
+            'slot' => $slot,
+            'warehouses' => $warehouses,
+            'vendors' => $vendors,
+            'gates' => $gates,
+            'truckTypes' => $truckTypes,
+        ]);
+    }
+
+    public function unplannedUpdate(Request $request, int $slotId)
+    {
+        $slot = $this->loadSlotDetailRow($slotId);
+        if (! $slot) {
+            return redirect()->route('slots.index')->with('error', 'Slot not found');
+        }
+
+        if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
+            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only unplanned transactions can be edited here');
+        }
+
+        $request->validate([
+            'po_number' => 'required|string|max:12',
+            'direction' => 'required|in:inbound,outbound',
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
+            'vendor_id' => 'nullable|integer|exists:business_partner,id',
+            'actual_gate_id' => 'nullable|integer|exists:gates,id',
+            'arrival_time' => 'required|string',
+        ]);
+
+        $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
+        $direction = (string) $request->input('direction', '');
+        $warehouseId = (int) $request->input('warehouse_id', 0);
+        $vendorId = $request->input('vendor_id') !== null && (string) $request->input('vendor_id') !== '' ? (int) $request->input('vendor_id') : null;
+        $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
+        $arrivalTime = (string) $request->input('arrival_time', '');
+
+        if ($truckNumber !== '' && strlen($truckNumber) > 12) {
+            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
+        }
+
+        $matDoc = trim((string) $request->input('mat_doc', ''));
+        $sjNumber = trim((string) $request->input('sj_number', ''));
+        $truckType = trim((string) $request->input('truck_type', ''));
+        $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
+        $driverName = trim((string) $request->input('driver_name', ''));
+        $driverNumber = trim((string) $request->input('driver_number', ''));
+        $notes = trim((string) $request->input('notes', ''));
+
+        $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
+        $status = $setWaiting ? 'waiting' : 'arrived';
+        if ($status === 'arrived' && (string)($slot->status ?? '') === 'waiting') {
+             // allow downgrade? for now follow request
+        }
+        if ($status === 'arrived') {
+            $status = 'waiting'; // Unplanned is usually waiting
+        }
+
+        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $actualGateId, $arrivalTime, $matDoc, $sjNumber, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status) {
+            $truck = DB::table('po')->where('po_number', $truckNumber)->select(['id'])->first();
+            if ($truck) {
+                $truckId = (int) $truck->id;
+            } else {
+                $truckId = (int) DB::table('po')->insertGetId([
+                    'po_number' => $truckNumber,
+                ]);
+            }
+
+            DB::table('slots')->where('id', $slotId)->update([
+                'po_id' => $truckId,
+                'direction' => $direction,
+                'warehouse_id' => $warehouseId,
+                'bp_id' => $vendorId,
+                'actual_gate_id' => $actualGateId,
+                'arrival_time' => $arrivalTime,
+                'mat_doc' => $matDoc !== '' ? $matDoc : null,
+                'sj_complete_number' => $sjNumber !== '' ? $sjNumber : null,
+                'truck_type' => $truckType !== '' ? $truckType : null,
+                'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
+                'driver_name' => $driverName !== '' ? $driverName : null,
+                'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'late_reason' => $notes !== '' ? $notes : null,
+                'status' => $status,
+                'updated_at' => now(),
+            ]);
+
+            $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Updated');
+        });
+
+        return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned transaction updated successfully');
     }
 
     public function arrival(int $slotId)
@@ -1256,8 +1573,8 @@ class SlotController extends Controller
                 'status' => Slot::STATUS_WAITING,
             ]);
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Status changed to waiting after arrival');
-            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival recorded with ticket ' . $ticketNumber . ' and SJ ' . $sjNumber);
+            $this->slotService->logActivity($slotId, 'status_change', 'Status Changed to Waiting After Arrival');
+            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket ' . $ticketNumber . ' and SJ ' . $sjNumber);
         });
 
         return redirect()->route('slots.show', ['slotId' => $slotId])->with('success', 'Arrival recorded');
@@ -1270,9 +1587,26 @@ class SlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Slot not found');
         }
 
-        return view('slots.ticket', [
+        // Generate barcode
+        $barcodeC = new \Milon\Barcode\DNS1D();
+        $barcodeC->setStorPath(storage_path('app/public/'));
+        $barcodePng = '';
+        if (!empty($slot->ticket_number)) {
+            $barcodePng = $barcodeC->getBarcodePNG($slot->ticket_number, 'C128', 2.5, 60);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
             'slot' => $slot,
+            'barcodePng' => $barcodePng,
+            'barcodeHtml' => null,
+            'barcodeSvg' => null,
         ]);
+
+        // Set paper size to custom small ticket size (approx 80mm x 100mm or similar)
+        // 227pt is approx 80mm, 350pt is approx 123mm
+        $pdf->setPaper([0, 0, 240, 350]);
+
+        return $pdf->stream('ticket-' . ($slot->ticket_number ?? $slot->id) . '.pdf');
     }
 
     public function start(int $slotId)
@@ -1450,12 +1784,12 @@ class SlotController extends Controller
 
             if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
                 if ($isLate) {
-                    $this->slotService->logActivity($slotId, 'late_arrival', 'Truck arrived late at ' . $gateName);
+                    $this->slotService->logActivity($slotId, 'late_arrival', 'Truck Arrived Late at ' . $gateName);
                 } else {
-                    $this->slotService->logActivity($slotId, 'early_arrival', 'Truck arrived on time/early at ' . $gateName);
+                    $this->slotService->logActivity($slotId, 'early_arrival', 'Truck Arrived on Time/Early at ' . $gateName);
                 }
             }
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot started at ' . $gateName);
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot Started at ' . $gateName);
         });
 
         if ($slotType === 'unplanned') {
@@ -1549,7 +1883,7 @@ class SlotController extends Controller
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $slotInfo->actual_finish, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed with MAT DOC ' . $matDoc . ', SJ ' . $sjNumber . ', truck ' . $truckType . ', vehicle ' . $vehicleNumber . ', driver ' . $driverNumber);
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot Completed with MAT DOC ' . $matDoc . ', SJ ' . $sjNumber . ', Truck ' . $truckType . ', Vehicle ' . $vehicleNumber . ', Driver ' . $driverNumber);
         });
 
         return redirect()->route('slots.index')->with('success', 'Slot completed');
@@ -1678,7 +2012,7 @@ class SlotController extends Controller
                 'cancelled_reason' => $reason,
                 'cancelled_at' => $now,
             ]);
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot cancelled', null, ['reason' => $reason, 'cancelled_at' => $now]);
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot Cancelled', null, ['reason' => $reason, 'cancelled_at' => $now]);
         });
 
         return redirect()->route('slots.index')->with('success', 'Slot cancelled');

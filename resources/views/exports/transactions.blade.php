@@ -19,7 +19,7 @@
         @foreach($transactions as $transaction)
             <tr>
                 <td>{{ ucfirst($transaction->slot_type ?? 'planned') }}</td>
-                <td>{{ $transaction->po_number ?? $transaction->truck_number ?? '-' }}</td>
+                <td>{{ $transaction->truck_number ?? '-' }}</td>
                 <td>{{ $transaction->ticket_number ?? '-' }}</td>
                 <td>{{ $transaction->mat_doc ?? '-' }}</td>
                 <td>{{ $transaction->vendor_name ?? '-' }}</td>
@@ -29,7 +29,7 @@
                 <td>{{ $transaction->lead_time ?? '-' }}</td>
                 <td>{{ ucfirst($transaction->target_status ?? '-') }}</td>
                 <td>{{ $transaction->is_late ? 'Late' : 'On Time' }}</td>
-                <td>{{ $transaction->created_by_username ?? '-' }}</td>
+                <td>{{ $transaction->created_by_username ?? $transaction->created_by_nik ?? '-' }}</td>
             </tr>
         @endforeach
     </tbody>

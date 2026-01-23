@@ -281,3 +281,31 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.flatpickr !== 'function') return;
+    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+    var inputs = document.querySelectorAll('input.flatpickr-date');
+    Array.prototype.slice.call(inputs).forEach(function (input) {
+        if (!input || input.getAttribute('data-st-flatpickr') === '1') return;
+        input.setAttribute('data-st-flatpickr', '1');
+
+        window.flatpickr(input, {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            disableMobile: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                var ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
+                if (holidayData[ds]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[ds];
+                }
+            }
+        });
+    });
+});
+</script>
+@endpush

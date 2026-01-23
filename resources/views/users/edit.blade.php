@@ -17,7 +17,7 @@
                     @csrf
 
                     <div class="st-form-field" style="margin-bottom:10px;">
-                        <label class="st-label">NIK</label>
+                        <label class="st-label">NIK/Username</label>
                         <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik', $editUser->nik) }}" required>
                     </div>
 

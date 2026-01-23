@@ -36,7 +36,7 @@
                 </div>
             @endif
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                 <div class="st-form-field">
                     <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
                     <div style="position:relative;">
@@ -72,7 +72,24 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="st-form-field" style="position:relative;">
+                    <label class="st-label">Vendor <span class="st-text--optional">(Optional)</span></label>
+                    <input
+                        type="text"
+                        id="vendor_search"
+                        class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
+                        placeholder="Pilih Direction Dulu..."
+                        style="margin-bottom:4px;"
+                        value="{{ old('vendor_search') }}"
+                        {{ old('direction', $slot->direction ?? '') ? '' : 'disabled' }}
+                    >
+                    <input type="hidden" name="vendor_id" id="vendor_id" value="{{ old('vendor_id', $slot->vendor_id ?? '') }}">
+                    <div id="vendor_suggestions" class="st-suggestions" style="display:none;"></div>
+                    @error('vendor_id')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
                 <div class="st-form-field">
                     <label class="st-label">Warehouse <span class="st-text--danger-dark">*</span></label>
                     <select name="warehouse_id" id="warehouse_id" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
@@ -90,7 +107,16 @@
                     <select name="planned_gate_id" id="planned_gate_id" class="st-select{{ $errors->has('planned_gate_id') ? ' st-input--invalid' : '' }}">
                         <option value="">- Optional -</option>
                         @foreach ($gates as $gate)
-                            <option value="{{ $gate->id }}" {{ old('planned_gate_id', $slot->planned_gate_id ?? '') === (string) $gate->id ? 'selected' : '' }}>{{ $gate->warehouse_name }} - {{ $gate->gate_number }}</option>
+                            @php
+                                $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
+                            @endphp
+                            <option
+                                value="{{ $gate->id }}"
+                                data-warehouse-id="{{ $gate->warehouse_id }}"
+                                {{ old('planned_gate_id', $slot->planned_gate_id ?? '') === (string) $gate->id ? 'selected' : '' }}
+                            >
+                                {{ $gate->warehouse_name }} - {{ $gateLabel }}
+                            </option>
                         @endforeach
                     </select>
                     @error('planned_gate_id')
@@ -99,13 +125,10 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
                 <div class="st-form-field">
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" style="flex:1;" required {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }} value="{{ old('planned_start', $slot->planned_start ?? '') }}" placeholder="Select Date and Time">
-                        <button type="button" id="btn_schedule_preview" class="st-btn st-btn--secondary" style="white-space:nowrap;" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>Lihat Jadwal</button>
-                    </div>
+                    <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" required {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }} value="{{ old('planned_start', $slot->planned_start ?? '') }}" placeholder="Select Date and Time">
                     @error('planned_start')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
@@ -113,15 +136,62 @@
                 <div class="st-form-field">
                     <label class="st-label">Planned Duration <span class="st-text--optional">(Optional)</span></label>
                     <div style="display:flex;gap:4px;">
-                        <input type="number" name="planned_duration" class="st-input" style="flex:1;" min="0" max="1440" value="{{ old('planned_duration', $slot->planned_duration ?? '') }}">
-                        <select name="duration_unit" class="st-select" style="width:100px;">
-                            <option value="minutes">Minutes</option>
-                            <option value="hours">Hours</option>
-                        </select>
+                        <input type="number" name="planned_duration" class="st-input{{ $errors->has('planned_duration') ? ' st-input--invalid' : '' }}" value="{{ old('planned_duration', $slot->planned_duration ?? '') }}" min="1" style="flex:1;">
+                        <span class="st-text--small st-text--muted" style="align-self:center;white-space:nowrap;">Min</span>
                     </div>
                     @error('planned_duration')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Risk & Schedule</label>
+                    <div style="display:flex;gap:4px;align-items:start;">
+                        <div style="flex:1;">
+                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Belum Dihitung.</div>
+                            <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
+                        </div>
+                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>Lihat Jadwal</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="st-form-field">
+                    <label class="st-label">Vehicle Number <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="vehicle_number_snap" class="st-input{{ $errors->has('vehicle_number_snap') ? ' st-input--invalid' : '' }}" value="{{ old('vehicle_number_snap', $slot->vehicle_number_snap ?? '') }}" placeholder="e.g., B 1234 ABC">
+                    @error('vehicle_number_snap')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Driver Name <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="driver_name" class="st-input{{ $errors->has('driver_name') ? ' st-input--invalid' : '' }}" value="{{ old('driver_name', $slot->driver_name ?? '') }}" placeholder="e.g., Budi">
+                    @error('driver_name')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Driver Number <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="driver_number" class="st-input{{ $errors->has('driver_number') ? ' st-input--invalid' : '' }}" value="{{ old('driver_number', $slot->driver_number ?? '') }}" placeholder="e.g., 08xxxxxxxxxx">
+                    @error('driver_number')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="st-form-field">
+                    <label class="st-label">Notes <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="notes" class="st-input{{ $errors->has('notes') ? ' st-input--invalid' : '' }}" value="{{ old('notes', $slot->notes ?? '') }}" placeholder="Any special notes...">
+                    @error('notes')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
+                    <!-- Empty field for balance -->
+                </div>
+                <div class="st-form-field">
+                    <!-- Empty field for balance -->
                 </div>
             </div>
 
@@ -134,4 +204,90 @@
 
     <script type="application/json" id="truck_types_json">{{ json_encode(array_values($truckTypes)) }}</script>
     <script type="application/json" id="truck_type_durations_json">{{ json_encode($truckTypeDurations) }}</script>
+    <script type="application/json" id="slot_routes_json">{!! json_encode([
+        'check_risk' => route('slots.ajax.check_risk'),
+        'check_slot_time' => route('slots.ajax.check_slot_time'),
+        'recommend_gate' => route('slots.ajax.recommend_gate'),
+        'schedule_preview' => route('slots.ajax.schedule_preview'),
+        'po_search' => route('slots.ajax.po_search'),
+        'po_detail_template' => route('slots.ajax.po_detail', ['poNumber' => '__PO__']),
+        'vendor_search' => route('vendors.ajax.search'),
+    ]) !!}</script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var warehouseSelect = document.getElementById('warehouse_id');
+        var plannedStartInput = document.getElementById('planned_start_input');
+        var plannedDurationInput = document.querySelector('input[name="planned_duration"]');
+        var durationUnitSelect = document.querySelector('select[name="duration_unit"]');
+        var truckTypeSelect = document.getElementById('truck_type');
+        var gateSelect = document.getElementById('planned_gate_id');
+
+        function initFlatpickrForETA() {
+            if (!plannedStartInput) return;
+            if (plannedStartInput._flatpickr) return;
+
+            if (typeof window.flatpickr !== 'function') {
+                setTimeout(initFlatpickrForETA, 100);
+                return;
+            }
+
+            var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+            window.flatpickr(plannedStartInput, {
+                enableTime: true,
+                minDate: "today",
+                time_24hr: true,
+                allowInput: true,
+                disableMobile: true,
+                minuteIncrement: 1,
+                dateFormat: 'Y-m-d H:i',
+                clickOpens: true,
+                closeOnSelect: false,
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                    if (holidayData[dateStr]) {
+                        dayElem.classList.add('is-holiday');
+                        dayElem.title = holidayData[dateStr];
+                    }
+                }
+            });
+        }
+
+        if (warehouseSelect && warehouseSelect.value) {
+            initFlatpickrForETA();
+        }
+
+        if (warehouseSelect) {
+            warehouseSelect.addEventListener('change', function() {
+                if (warehouseSelect.value) {
+                    plannedStartInput.disabled = false;
+                    initFlatpickrForETA();
+                } else {
+                    plannedStartInput.disabled = true;
+                    if (plannedStartInput._flatpickr) {
+                        plannedStartInput._flatpickr.clear();
+                    }
+                    plannedStartInput.value = '';
+                }
+            });
+        }
+
+        // Logic for Truck Type Durations
+        var typeDurations = {};
+        try {
+            typeDurations = JSON.parse(document.getElementById('truck_type_durations_json').textContent);
+        } catch(e) {}
+
+        if (truckTypeSelect && plannedDurationInput) {
+            truckTypeSelect.addEventListener('change', function() {
+                var val = truckTypeSelect.value;
+                if (val && typeDurations[val]) {
+                    plannedDurationInput.value = typeDurations[val];
+                    if (durationUnitSelect) durationUnitSelect.value = 'minutes';
+                }
+            });
+        }
+    });
+    </script>
 @endsection

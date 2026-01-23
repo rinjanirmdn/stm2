@@ -34,13 +34,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    
+
     <!-- Fonts dengan display=swap untuk performa -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+
     @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/css/notifications.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
@@ -76,13 +76,6 @@
                     <i class="fas fa-door-open"></i>
                     <span>Gates</span>
                 </a>
-            @endcan
-
-            @can('bookings.manage')
-            <a href="{{ route('bookings.index') }}" title="Booking Requests" class="st-sidebar__link{{ request()->routeIs('bookings.*') ? ' st-sidebar__link--active' : '' }}">
-                <i class="fas fa-clipboard-check"></i>
-                <span>Bookings</span>
-            </a>
             @endcan
 
             @can('unplanned.index')
@@ -150,7 +143,7 @@
                                     <span class="st-notification-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
                                 @endif
                             </button>
-                            
+
                             <div class="st-notification-dropdown" id="st-notification-dropdown">
                                 <div class="st-notification-header">
                                     <span>Notifications</span>
@@ -241,7 +234,7 @@
             window.initTooltips();
         }
     }
-    
+
     // Preload critical resources untuk performa lebih baik
     if ('requestIdleCallback' in window) {
         requestIdleCallback(function() {
@@ -449,7 +442,7 @@ if (stNotifBtn && stNotifDropdown) {
         e.stopPropagation();
         stNotifDropdown.classList.toggle('show');
     });
-    
+
     document.addEventListener('click', function(e) {
         if (!stNotifDropdown.contains(e.target) && !stNotifBtn.contains(e.target)) {
             stNotifDropdown.classList.remove('show');
@@ -508,6 +501,18 @@ window.addEventListener('appinstalled', (evt) => {
 });
 </script>
 
+<div id="st-modal-container"></div>
+
+<script type="application/json" id="indonesia_holidays_global">{!! json_encode($holidays ?? []) !!}</script>
+<script>
+    window.getIndonesiaHolidays = function() {
+        try {
+            return JSON.parse(document.getElementById('indonesia_holidays_global').textContent || '{}');
+        } catch(e) {
+            return {};
+        }
+    };
+</script>
 @stack('scripts')
 </body>
 </html>

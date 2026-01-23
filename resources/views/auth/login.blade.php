@@ -28,7 +28,7 @@
                 @csrf
 
                 <div class="st-form-field">
-                    <label class="st-label" for="nik">NIK</label>
+                    <label class="st-label" for="nik">NIK/Username</label>
                     <input type="text" class="st-input" id="nik" name="nik" value="{{ old('nik') }}" required autofocus>
                 </div>
 

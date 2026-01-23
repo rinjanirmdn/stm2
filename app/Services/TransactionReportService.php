@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Slot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -281,7 +282,7 @@ class TransactionReportService
         $leadTimeMin = trim($request->query('lead_time_min', ''));
         $leadTimeMax = trim($request->query('lead_time_max', ''));
 
-        $leadExpr = $this->getTimestampDiffMinutesExpression('COALESCE(s.actual_start, s.arrival_time)', 's.actual_finish');
+        $leadExpr = $this->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
         if ($leadTimeMin !== '' && is_numeric($leadTimeMin)) {
             $query->whereRaw($leadExpr . ' >= ?', [(int) $leadTimeMin]);
         }
@@ -298,7 +299,7 @@ class TransactionReportService
             $needNotAchieve = in_array('not_achieve', $targetValues, true);
 
             if ($needAchieve xor $needNotAchieve) {
-                $leadExpr = $this->getTimestampDiffMinutesExpression('COALESCE(s.actual_start, s.arrival_time)', 's.actual_finish');
+                $leadExpr = $this->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
 
                 if ($needAchieve) {
                     $query->whereRaw("td.target_duration_minutes IS NOT NULL AND s.actual_finish IS NOT NULL AND COALESCE(s.actual_start, s.arrival_time) IS NOT NULL AND {$leadExpr} <= td.target_duration_minutes + 15");
@@ -338,7 +339,7 @@ class TransactionReportService
      */
     public function getSortMap(): array
     {
-        $leadExpr = $this->getTimestampDiffMinutesExpression('COALESCE(s.actual_start, s.arrival_time)', 's.actual_finish');
+        $leadExpr = $this->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
         $lateAddExpr = $this->getDateAddExpression('s.planned_start', 15);
 
         return [

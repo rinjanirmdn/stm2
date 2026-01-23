@@ -565,7 +565,7 @@ class VendorBookingController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        
+
         // Find booking
         $booking = BookingRequest::where('id', $id)
             ->where('requested_by', $user->id)
@@ -677,7 +677,7 @@ class VendorBookingController extends Controller
     public function getTruckTypeDuration(Request $request)
     {
         $truckType = $request->truck_type;
-        
+
         $duration = TruckTypeDuration::where('truck_type', $truckType)->first();
 
         return response()->json([
@@ -766,6 +766,8 @@ class VendorBookingController extends Controller
             ->where('s.id', $slotId)
             ->select([
                 's.*',
+                's.po_number as po_number',
+                's.po_number as truck_number',
                 's.po_number as po_number',
                 's.po_number as truck_number',
                 'w.wh_name as warehouse_name',

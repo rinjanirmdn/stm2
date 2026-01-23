@@ -27,18 +27,18 @@ class PoSearchService
         // 1. SAP Search - Exact Match using ZPOA_DTL_LIST
         // User must type at least 5 digits for reliable PO lookup
         $digitsOnly = preg_replace('/\D+/', '', $q);
-        
+
         if (strlen($digitsOnly) >= 5) {
             try {
                 $poDetail = $this->sapPoService->getByPoNumber($digitsOnly);
-                
+
                 if ($poDetail) {
                     // Determine direction dynamically
                     $poNumber = $poDetail['po_number'];
                     $firstChar = substr($poNumber, 0, 1);
                     $firstTwo = substr($poNumber, 0, 2);
                     $direction = 'inbound';
-                    
+
                     if ($firstChar === '8' || strtoupper($firstTwo) === 'DO') {
                         $direction = 'outbound';
                     }
@@ -59,7 +59,7 @@ class PoSearchService
             }
         }
 
-        
+
 
 
         return $results;
@@ -122,7 +122,7 @@ class PoSearchService
         // 1. Try SAP API first (Real-time data)
         try {
             $api = $this->sapPoService->getByPoNumber($lookupPo);
-            
+
             if ($api) {
                 // Data found in SAP!
                 $vendorCode = (string) ($api['vendor_code'] ?? '');

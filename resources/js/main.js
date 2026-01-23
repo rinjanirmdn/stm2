@@ -14,7 +14,7 @@ function debounce(func, wait) {
 }
 
 // Global Tooltip System - High z-index untuk selalu di atas semua elemen
-(function() {
+(function () {
     var tooltipEl = null;
     var tooltipTarget = null;
     var tooltipTimer = null;
@@ -58,70 +58,70 @@ function debounce(func, wait) {
     function showTooltip(target) {
         var text = target.getAttribute('data-tooltip') || target.getAttribute('title') || '';
         if (!text) return;
-        
+
         var el = ensureTooltip();
         el.textContent = text;
         el.classList.add('show');
         tooltipTarget = target;
-        
+
         // Remove title attribute to prevent browser tooltip
         if (target.getAttribute('title')) {
             target.setAttribute('data-original-title', target.getAttribute('title'));
             target.removeAttribute('title');
         }
-        
+
         positionTooltip();
     }
 
     function hideTooltip() {
         if (!tooltipEl) return;
         tooltipEl.classList.remove('show');
-        
+
         // Restore title if it was removed
         if (tooltipTarget && tooltipTarget.getAttribute('data-original-title')) {
             tooltipTarget.setAttribute('title', tooltipTarget.getAttribute('data-original-title'));
             tooltipTarget.removeAttribute('data-original-title');
         }
-        
+
         tooltipTarget = null;
     }
 
     // Event delegation untuk semua elemen dengan data-tooltip
-    document.addEventListener('mouseover', function(e) {
+    document.addEventListener('mouseover', function (e) {
         var target = e.target && e.target.closest ? e.target.closest('[data-tooltip]') : null;
         if (!target || target === tooltipTarget) return;
-        
+
         if (tooltipTimer) {
             clearTimeout(tooltipTimer);
             tooltipTimer = null;
         }
-        
-        tooltipTimer = setTimeout(function() {
+
+        tooltipTimer = setTimeout(function () {
             showTooltip(target);
         }, 200); // Delay 200ms untuk menghindari tooltip muncul terlalu cepat
     }, true);
 
-    document.addEventListener('mouseout', function(e) {
+    document.addEventListener('mouseout', function (e) {
         var target = e.target && e.target.closest ? e.target.closest('[data-tooltip]') : null;
         if (!target) return;
-        
+
         var related = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('[data-tooltip]') : null;
         if (related === target) return;
-        
+
         if (tooltipTimer) {
             clearTimeout(tooltipTimer);
             tooltipTimer = null;
         }
-        
+
         hideTooltip();
     }, true);
 
     // Optimasi: Debounce scroll dan resize untuk performa lebih baik
-    window.addEventListener('scroll', debounce(function() {
+    window.addEventListener('scroll', debounce(function () {
         positionTooltip();
     }, 10), true);
 
-    window.addEventListener('resize', debounce(function() {
+    window.addEventListener('resize', debounce(function () {
         positionTooltip();
     }, 100));
 })();
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 try {
                     stApplySortSvgState(activeBtn, dir);
-                } catch (e) {}
+                } catch (e) { }
             });
         });
     }
@@ -187,13 +187,13 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             var f = el.closest ? el.closest('form') : null;
             if (f) return f;
-        } catch (e) {}
+        } catch (e) { }
         try {
             if (typeof stGetFormForFilterAction === 'function') {
                 var f2 = stGetFormForFilterAction(el);
                 if (f2) return f2;
             }
-        } catch (e) {}
+        } catch (e) { }
         return null;
     }
 
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (form && form.querySelectorAll) {
             try {
                 out = out.concat(Array.prototype.slice.call(form.querySelectorAll(selector + ', ' + selectorArr)));
-            } catch (e) {}
+            } catch (e) { }
         }
 
         // Also support controls outside <form> linked via form="id"
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (formId) {
                 out = out.concat(Array.prototype.slice.call(document.querySelectorAll('[form="' + CSS.escape(formId) + '"]' + selector + ', [form="' + CSS.escape(formId) + '"]' + selectorArr)));
             }
-        } catch (e) {}
+        } catch (e) { }
 
         return out;
     }
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return !!el.checked;
             }
             return String(el.value || '').trim() !== '';
-        } catch (e) {}
+        } catch (e) { }
         return false;
     }
 
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (tag === 'button') return;
                     if (type === 'button' || type === 'submit' || type === 'reset') return;
                     if (type === 'hidden') return;
-                } catch (e) {}
+                } catch (e) { }
                 if (stHasNonEmptyValue(el)) active = true;
             });
 
@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (form.getAttribute && String(form.getAttribute('data-multi-sort') || '') === '1') return true;
             if (form.querySelector && form.querySelector('input[name="sort[]"]')) return true;
             if (form.querySelector && form.querySelector('.st-sort-trigger')) return true;
-        } catch (e) {}
+        } catch (e) { }
         return false;
     }
 
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!form) return;
         try {
             form.querySelectorAll('input[name="sort[]"], input[name="dir[]"]').forEach(function (el) { el.remove(); });
-        } catch (e) {}
+        } catch (e) { }
 
         (state || []).forEach(function (p) {
             if (!p || !p.sort || !p.dir) return;
@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var d1 = form.querySelector('input[name="dir"]');
                 if (s1) s1.remove();
                 if (d1) d1.remove();
-            } catch (e) {}
+            } catch (e) { }
         }
     }
 
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 input.type = 'text';
-            } catch (e) {}
+            } catch (e) { }
 
             if (input && input.value && input.value.indexOf('T') !== -1) {
                 input.value = input.value.replace('T', ' ');
@@ -447,8 +447,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 instance._stCloseTimer = setTimeout(function () {
-                    try { instance.close(); } catch (e) {}
-                    try { input.blur(); } catch (e) {}
+                    try { instance.close(); } catch (e) { }
+                    try { input.blur(); } catch (e) { }
                 }, 1500);
             }
 
@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 onValueUpdate: function (selectedDates, dateStr, instance) {
                     try {
                         input.dispatchEvent(new Event('input', { bubbles: true }));
-                    } catch (e) {}
+                    } catch (e) { }
                     scheduleFpClose(instance);
                 },
                 onClose: function (selectedDates, dateStr, instance) {
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function () {
         el._stAutoCloseTimer = setTimeout(function () {
             try {
                 el.blur();
-            } catch (e) {}
+            } catch (e) { }
         }, delay);
     }
 
@@ -547,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (t.matches('input[type="date"], input[type="time"]')) {
             try {
                 t.blur();
-            } catch (e) {}
+            } catch (e) { }
         }
         if (t.matches('input[type="datetime-local"]')) {
             scheduleAutoClose(t, 0);
@@ -578,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 input.type = 'text';
-            } catch (e) {}
+            } catch (e) { }
 
             window.flatpickr(input, {
                 enableTime: true,
@@ -754,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         e.stopPropagation();
 
-        try { btn.blur(); } catch (err) {}
+        try { btn.blur(); } catch (err) { }
 
         var sortKey = String(btn.getAttribute('data-sort') || '').trim();
         if (!sortKey) return;
@@ -803,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 form.querySelectorAll('.st-sort-trigger').forEach(function (b) {
                     if (b) b.classList.remove('is-sorted', 'sort-asc', 'sort-desc');
                 });
-            } catch (err) {}
+            } catch (err) { }
 
             var currentSort = String(sortInput.value || '').trim();
             var currentDir = String(dirInput.value || 'desc').trim().toLowerCase();
@@ -841,7 +841,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.ajaxReload(true);
                 return;
             }
-        } catch (err) {}
+        } catch (err) { }
 
         try {
             form.submit();
@@ -866,7 +866,7 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         e.stopPropagation();
 
-        try { btn.blur(); } catch (err) {}
+        try { btn.blur(); } catch (err) { }
 
         var filterKey = String(btn.getAttribute('data-filter') || '').trim();
         if (!filterKey) return;
@@ -884,7 +884,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Only force fixed positioning for panels that are already fixed (or explicitly opted-in).
         // Many pages (e.g., Slots) use position:absolute within a relative header, which should be preserved.
         var pos = '';
-        try { pos = (window.getComputedStyle(panel).position || '').toLowerCase(); } catch (e) {}
+        try { pos = (window.getComputedStyle(panel).position || '').toLowerCase(); } catch (e) { }
         var forceFixed = pos === 'fixed' || String(panel.getAttribute('data-st-position') || '') === 'fixed';
         if (forceFixed) {
             stPositionPanelAtTrigger(panel, btn, 260);
@@ -902,7 +902,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (form) return form;
         // Fallback: many filter inputs use form="..." attribute
         var formId = '';
-        try { formId = String(el.getAttribute('form') || '').trim(); } catch (e) {}
+        try { formId = String(el.getAttribute('form') || '').trim(); } catch (e) { }
         if (formId) {
             var byId = document.getElementById(formId);
             if (byId && byId.tagName === 'FORM') return byId;
@@ -917,7 +917,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.ajaxReload(true);
                 return;
             }
-        } catch (err) {}
+        } catch (err) { }
         try {
             form.submit();
         } catch (err) {
@@ -946,14 +946,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     } else {
                         el.value = '';
                     }
-                } catch (e) {}
+                } catch (e) { }
                 return;
             }
             if (type === 'checkbox' || type === 'radio') {
-                try { el.checked = false; } catch (e) {}
+                try { el.checked = false; } catch (e) { }
                 return;
             }
-            try { el.value = ''; } catch (e) {}
+            try { el.value = ''; } catch (e) { }
         });
     }
 
@@ -988,14 +988,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             } else {
                                 inp.checked = false;
                             }
-                        } catch (e2) {}
+                        } catch (e2) { }
                         return;
                     }
                     if (type === 'checkbox') {
-                        try { inp.checked = false; } catch (e2) {}
+                        try { inp.checked = false; } catch (e2) { }
                         return;
                     }
-                    try { inp.value = ''; } catch (e2) {}
+                    try { inp.value = ''; } catch (e2) { }
                 });
 
                 // Clear selects
@@ -1007,9 +1007,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         } else {
                             sel.value = '';
                         }
-                    } catch (e2) {}
+                    } catch (e2) { }
                 });
-            } catch (err2) {}
+            } catch (err2) { }
         } else {
             // Fallback: clear by key if we can't find the panel
             stClearFilterField(form, key);
@@ -1021,9 +1021,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (trigger) {
                 trigger.classList.remove('is-filtered', 'st-filter-trigger--active');
             }
-        } catch (e) {}
+        } catch (e) { }
 
-        try { stSyncFilterIndicatorsFromForms(form || document); } catch (e) {}
+        try { stSyncFilterIndicatorsFromForms(form || document); } catch (e) { }
 
         stCloseFilterPanel();
         stSubmitOrAjax(form);
@@ -1038,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if ((t.tagName || '').toLowerCase() !== 'select') return;
 
         var form = stGetFormForFilterAction(t);
-        try { stSyncFilterIndicatorsFromForms(form || document); } catch (e) {}
+        try { stSyncFilterIndicatorsFromForms(form || document); } catch (e) { }
         stCloseFilterPanel();
         stSubmitOrAjax(form);
     }, true);
@@ -1055,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (type === 'button' || type === 'submit' || type === 'reset') return;
         e.preventDefault();
         var form = stGetFormForFilterAction(t);
-        try { stSyncFilterIndicatorsFromForms(form || document); } catch (e) {}
+        try { stSyncFilterIndicatorsFromForms(form || document); } catch (e) { }
         stCloseFilterPanel();
         stSubmitOrAjax(form);
     }, true);
@@ -1102,7 +1102,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 stCloseSortPanel();
                 return;
             }
-        } catch (err) {}
+        } catch (err) { }
 
         stCloseSortPanel();
         try {
@@ -1226,4 +1226,27 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }, true);
+
+    // Ticket Printing Helper - Globally available
+    // Ticket Printing Helper - Globally available
+    window.stPrintTicket = function (url) {
+        if (!url) return;
+
+        // Open PDF in new window
+        const win = window.open(url, '_blank');
+        if (win) {
+            win.focus();
+            // Attempt to print automatically after a short delay to ensure loading
+            setTimeout(function () {
+                try {
+                    win.print();
+                } catch (e) {
+                    console.error('Auto-print failed', e);
+                }
+            }, 1000);
+        } else {
+            alert('Please allow popups to print tickets');
+        }
+    };
 });
+

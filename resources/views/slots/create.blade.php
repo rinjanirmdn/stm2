@@ -24,7 +24,7 @@
                 </div>
             @endif
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                 <div class="st-form-field">
                     <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
                     <div style="position:relative;">
@@ -65,7 +65,50 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div class="st-form-field" style="position:relative;">
+                    <label class="st-label">Vendor <span class="st-text--optional">(Optional)</span></label>
+                    @php
+                        $oldVendorName = '';
+                        $oldVendorId = old('vendor_id');
+                        if ($oldVendorId !== null && (string) $oldVendorId !== '') {
+                            foreach ($vendors as $v) {
+                                if ((string) ($v->id ?? '') === (string) $oldVendorId) {
+                                    $oldVendorName = (string) ($v->name ?? '');
+                                    break;
+                                }
+                            }
+                        }
+                    @endphp
+                    <input
+                        type="text"
+                        id="vendor_search"
+                        class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
+                        placeholder="Pilih Direction Dulu..."
+                        style="margin-bottom:4px;"
+                        autocomplete="off"
+                        {{ old('direction') ? '' : 'disabled' }}
+                        value="{{ $oldVendorName }}"
+                    >
+                    <div id="vendor_suggestions" class="st-suggestions st-suggestions--vendor" style="display:none;"></div>
+
+                    <select name="vendor_id" id="vendor_id" style="display:none;">
+                        <option value="">- Optional -</option>
+                        @foreach ($vendors as $vendor)
+                            <option
+                                value="{{ $vendor->id }}"
+                                data-type="{{ $vendor->type ?? 'supplier' }}"
+                                data-name="{{ strtolower($vendor->name ?? '') }}"
+                                {{ (string)old('vendor_id') === (string)$vendor->id ? 'selected' : '' }}
+                            >
+                                {{ $vendor->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('vendor_id')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
                 <div class="st-form-field">
                     <label class="st-label">Warehouse <span class="st-text--danger-dark">*</span></label>
                     <select name="warehouse_id" id="warehouse_id" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
@@ -100,27 +143,21 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
                 <div class="st-form-field">
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" style="flex:1;" required {{ old('warehouse_id') ? '' : 'disabled' }} value="{{ old('planned_start') }}" placeholder="Select Date and Time">
-                        <button type="button" id="btn_schedule_preview" class="st-btn st-btn--secondary" style="white-space:nowrap;" {{ old('warehouse_id') ? '' : 'disabled' }}>Lihat Jadwal</button>
-                    </div>
+                    <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" required {{ old('warehouse_id') ? '' : 'disabled' }} value="{{ old('planned_start') }}" placeholder="Select Date and Time">
                     @error('planned_start')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
                     <label class="st-label">Planned Duration</label>
                     <div style="display:flex;gap:4px;">
-                        <input type="number" name="planned_duration" class="st-input{{ $errors->has('planned_duration') ? ' st-input--invalid' : '' }}" value="{{ old('planned_duration', '') }}" min="1" style="max-width:120px;" id="planned_duration_input">
-                        <select name="duration_unit" class="st-select{{ $errors->has('duration_unit') ? ' st-input--invalid' : '' }}" style="max-width:120px;display:none;">
-                            <option value="minutes" selected>Minutes</option>
-                        </select>
-                        <span class="st-text--small st-text--muted" style="align-self:center;">Minutes</span>
+                        <input type="number" name="planned_duration" class="st-input{{ $errors->has('planned_duration') ? ' st-input--invalid' : '' }}" value="{{ old('planned_duration', '') }}" min="1" style="flex:1;" id="planned_duration_input">
+                        <span class="st-text--small st-text--muted" style="align-self:center;white-space:nowrap;">Min</span>
                     </div>
                     @error('planned_duration')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
@@ -130,13 +167,18 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Risk Preview</label>
-                    <div id="risk_preview" class="st-text--muted">Risk Belum Dihitung.</div>
-                    <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
+                    <label class="st-label">Risk & Schedule</label>
+                    <div style="display:flex;gap:4px;align-items:start;">
+                        <div style="flex:1;">
+                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Belum Dihitung.</div>
+                            <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
+                        </div>
+                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;" {{ old('warehouse_id') ? '' : 'disabled' }}>Lihat Jadwal</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                 <div class="st-form-field">
                     <label class="st-label">Vehicle Number <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="vehicle_number_snap" class="st-input{{ $errors->has('vehicle_number_snap') ? ' st-input--invalid' : '' }}" value="{{ old('vehicle_number_snap') }}" placeholder="e.g., B 1234 ABC">
@@ -160,7 +202,7 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                 <div class="st-form-field">
                     <label class="st-label">COA (PDF) <span class="st-text--danger-dark">*</span></label>
                     <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
@@ -175,10 +217,7 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;">
-                <div class="st-form-field" style="width:100%;">
+                <div class="st-form-field">
                     <label class="st-label">Notes <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="notes" class="st-input{{ $errors->has('notes') ? ' st-input--invalid' : '' }}" value="{{ old('notes') }}" placeholder="Any special notes...">
                     @error('notes')
@@ -381,8 +420,8 @@ document.addEventListener('DOMContentLoaded', function () {
         items.slice(0, 5).forEach(function (it) {
             var div = document.createElement('div');
             div.className = 'po-item';
-            div.setAttribute('data-po', it.po_number || '');
-            div.innerHTML = '<div class="po-item__title">' + (it.po_number || '') + '</div>'
+            div.setAttribute('data-po', is.po_number || '');
+            div.innerHTML = '<div class="po-item__title">' + (is.po_number || '') + '</div>'
                 + '<div class="po-item__sub">' + (it.vendor_name || '') + (it.plant ? (' • ' + it.plant) : '') + '</div>';
             div.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;';
             poSuggestions.appendChild(div);
@@ -498,6 +537,91 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
+    function normalizeVendorText(v) {
+        return (v || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function filterVendors() {
+        if (!vendorSelect || !vendorSearch || !vendorSuggestions) return;
+
+        var dir = directionSelect ? directionSelect.value : '';
+
+        if (!dir) {
+            vendorSearch.value = '';
+            vendorSearch.disabled = true;
+            vendorSearch.placeholder = 'Pilih Direction Dulu...';
+            vendorSelect.value = '';
+            clearVendorSuggestions();
+            return;
+        }
+
+        vendorSearch.disabled = false;
+        vendorSearch.placeholder = dir === 'outbound' ? 'Cari Customer (SAP)...' : 'Cari Supplier (SAP)...';
+
+        var q = (vendorSearch.value || '').trim();
+        // Don't search if query is empty, unless we want to show recent/all (maybe too heavy)
+        if (q.length < 2) {
+            clearVendorSuggestions();
+            return;
+        }
+
+        var requiredType = dir === 'outbound' ? 'customer' : 'supplier';
+
+        // Debounce AJAX request
+        if (vendorDebounceTimer) clearTimeout(vendorDebounceTimer);
+
+        vendorDebounceTimer = setTimeout(function () {
+            var finalUrl = String(urlVendorSearch || '') + '?q=' + encodeURIComponent(q) + '&type=' + encodeURIComponent(requiredType);
+
+            // Show loading indicator?
+            vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">Searching SAP...</div>';
+            vendorSuggestions.style.display = 'block';
+
+            getJson(finalUrl)
+                .then(function (data) {
+                    if (!data || !data.success || !data.data || data.data.length === 0) {
+                        vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">No Vendors Found in SAP/Local</div>';
+                        return;
+                    }
+
+                    var html = '';
+                    data.data.forEach(function (item) {
+                        var safeName = (item.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        var safeCode = (item.code || '');
+                        var sourceBadge = (item.source === 'sap') ? '<span class="st-badge st-badge--info" style="font-size:9px;margin-left:4px;">SAP</span>' : '';
+
+                        html += '<div class="vendor-suggestion-item" data-id="' + item.id + '" data-name="' + safeName + '" data-code="' + safeCode + '">'
+                             + '<div>' + safeName + sourceBadge + '</div>'
+                             + '<div style="font-size:10px;color:#6b7280;">' + safeCode + '</div>'
+                             + '</div>';
+                    });
+
+                    vendorSuggestions.innerHTML = html;
+                    vendorSuggestions.style.display = 'block';
+                })
+                .catch(function () {
+                    vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">Error Searching Vendor</div>';
+                });
+        }, 300);
+    }
+
+    function onDirectionChanged() {
+        var dir = directionSelect ? (directionSelect.value || '') : '';
+        if (vendorSelect) vendorSelect.value = '';
+        if (vendorSearch) vendorSearch.value = '';
+        clearVendorSuggestions();
+
+        if (!vendorSearch) return;
+        if (!dir) {
+            vendorSearch.disabled = true;
+            vendorSearch.placeholder = 'Pilih Direction Dulu...';
+            return;
+        }
+
+        vendorSearch.disabled = false;
+        vendorSearch.placeholder = 'Cari Vendor...';
+    }
+
     function filterGates() {
         if (!warehouseSelect || !gateSelect) return;
         var whId = warehouseSelect.value;
@@ -518,15 +642,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function initFlatpickrForETA() {
         if (!plannedStartInput) return;
         if (plannedStartInput._flatpickr) return;
-        
+
         // Retry if flatpickr not yet loaded
         if (typeof window.flatpickr !== 'function') {
             setTimeout(initFlatpickrForETA, 100);
             return;
         }
 
+        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
         var fp = window.flatpickr(plannedStartInput, {
             enableTime: true,
+            minDate: "today",
             time_24hr: true,
             allowInput: true,
             disableMobile: true,
@@ -534,6 +661,13 @@ document.addEventListener('DOMContentLoaded', function () {
             dateFormat: 'Y-m-d H:i',
             clickOpens: true,
             closeOnSelect: false,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
             onChange: function (selectedDates, dateStr, instance) {
                 try {
                     plannedStartInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -825,13 +959,49 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (directionSelect) {
         directionSelect.addEventListener('change', function () {
-            filterGates();
-            checkTimeOverlap();
-            updateRiskPreview();
-            updateGateRecommendation();
-            applySaveState();
+            onDirectionChanged();
+            filterVendors();
         });
     }
+    if (vendorSearch) {
+        vendorSearch.addEventListener('input', filterVendors);
+        vendorSearch.addEventListener('focus', filterVendors);
+    }
+    if (vendorSuggestions) {
+        vendorSuggestions.addEventListener('click', function (e) {
+            var target = e.target.closest('.vendor-suggestion-item');
+            if (!target) return;
+            var id = target.getAttribute('data-id');
+            var name = target.getAttribute('data-name');
+            var code = target.getAttribute('data-code') || '';
+
+            if (id && vendorSelect) {
+                // Check if option exists, if not add it (handled dynamic sync)
+                var exists = vendorSelect.querySelector('option[value="' + id + '"]');
+                if (!exists) {
+                    var newOpt = document.createElement('option');
+                    newOpt.value = id;
+                    newOpt.textContent = name;
+                    newOpt.setAttribute('selected', 'selected');
+                    vendorSelect.appendChild(newOpt);
+                }
+                vendorSelect.value = id;
+            }
+            if (vendorSearch && name) {
+                vendorSearch.value = normalizeVendorText(name);
+                // Optionally show code ?
+            }
+            clearVendorSuggestions();
+        });
+    }
+    document.addEventListener('click', function (e) {
+        if (vendorSearch && vendorSuggestions) {
+            var inside = e.target === vendorSearch || e.target.closest('#vendor_suggestions');
+            if (!inside) {
+                clearVendorSuggestions();
+            }
+        }
+    });
 
     if (warehouseSelect) {
         warehouseSelect.addEventListener('change', function () {

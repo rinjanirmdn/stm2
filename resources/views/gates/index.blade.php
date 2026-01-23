@@ -14,7 +14,7 @@
             $q->whereNull('slot_type')->orWhere('slot_type', 'planned');
         })
         ->get();
-    
+
     // Filter for Unassigned Slots (planned_gate_id is null)
     $unassignedSlots = $daySlots->filter(function($s) {
         return empty($s->planned_gate_id);
@@ -23,7 +23,7 @@
 <div class="st-dock-layout">
     <!-- Left Sidebar -->
     <aside class="st-dock-sidebar">
-        
+
         <!-- Mini Calendar (Interactive) -->
         <div id="dock_inline_calendar" style="width:100%;"></div>
 
@@ -35,32 +35,233 @@
                 <div style="font-weight:600; font-size:12px; color: #4b5563;">Bookings for: <span id="selected_date_display">{{ \Carbon\Carbon::parse($paramDate)->format('d.m.Y') }}</span></div>
                 <div class="st-dock-count" style="font-size:12px;">{{ $daySlots->count() }}</div>
             </div>
-            
             @php
-                // Calculate counts for valuable statuses
-                $countPending = $daySlots->whereIn('status', ['pending_approval', 'pending'])->count();
-                // Count slots that have been rescheduled (have an original plan)
-                $countRescheduled = $daySlots->filter(function($slot) {
+                $rescheduledSlots = $daySlots->filter(function($slot) {
                     return !empty($slot->original_planned_start);
-                })->count();
+                });
+                $pendingSlots = $daySlots->whereIn('status', ['pending_approval', 'pending']);
+                $vendorSlots = $daySlots->where('status', 'pending_vendor_confirmation');
+                $scheduledSlots = $daySlots->where('status', \App\Models\Slot::STATUS_SCHEDULED);
+                $arrivedSlots = $daySlots->where('status', \App\Models\Slot::STATUS_ARRIVED);
+                $waitingSlots = $daySlots->where('status', \App\Models\Slot::STATUS_WAITING);
+                $inProgressSlots = $daySlots->where('status', \App\Models\Slot::STATUS_IN_PROGRESS);
+                $completedSlots = $daySlots->where('status', \App\Models\Slot::STATUS_COMPLETED);
             @endphp
             <div class="st-dock-legend">
                 <!-- Pending Approval -->
-                <div class="st-legend-item st-legend-item--pending_approval">
-                    <div class="st-dock-legend-indicator">
-                        <div class="st-dock-dot"></div>
-                        <span>Pending Approval</span>
+                <div class="st-legend-group">
+                    <div class="st-legend-item st-legend-item--pending_approval">
+                        <div class="st-dock-legend-indicator">
+                            <div class="st-dock-dot"></div>
+                            <span>Pending Approval</span>
+                        </div>
+                        <span class="st-dock-count">{{ $pendingSlots->count() }}</span>
                     </div>
-                    <span class="st-dock-count">{{ $countPending }}</span>
+                    @if($pendingSlots->count() > 0)
+                    <div class="st-dock-legend-list">
+                        @foreach($pendingSlots as $ps)
+                        <div class="st-dock-legend-card" onclick="focusSlot({{ $ps->id }})" title="View on grid">
+                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                                <span class="st-dock-legend-card-ticket">{{ $ps->ticket_number }}</span>
+                                <div class="st-dock-legend-card-actions">
+                                    <div class="st-dock-legend-card-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
                 </div>
-                
-                <!-- Rescheduled -->
-                <div class="st-legend-item st-legend-item--rescheduled">
-                    <div class="st-dock-legend-indicator">
-                        <div class="st-dock-dot"></div>
-                        <span>Rescheduled</span>
+
+                <!-- Awaiting Vendor -->
+                <div class="st-legend-group">
+                    <div class="st-legend-item st-legend-item--awaiting_vendor">
+                        <div class="st-dock-legend-indicator">
+                            <div class="st-dock-dot"></div>
+                            <span>Awaiting Vendor</span>
+                        </div>
+                        <span class="st-dock-count">{{ $vendorSlots->count() }}</span>
                     </div>
-                    <span class="st-dock-count">{{ $countRescheduled }}</span>
+                    @if($vendorSlots->count() > 0)
+                    <div class="st-dock-legend-list">
+                        @foreach($vendorSlots as $vs)
+                        <div class="st-dock-legend-card" onclick="focusSlot({{ $vs->id }})" title="View on grid">
+                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                                <span class="st-dock-legend-card-ticket">{{ $vs->ticket_number }}</span>
+                                <div class="st-dock-legend-card-actions">
+                                    <div class="st-dock-legend-card-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Rescheduled -->
+                <div class="st-legend-group">
+                    <div class="st-legend-item st-legend-item--rescheduled">
+                        <div class="st-dock-legend-indicator">
+                            <div class="st-dock-dot"></div>
+                            <span>Rescheduled</span>
+                        </div>
+                        <span class="st-dock-count">{{ $rescheduledSlots->count() }}</span>
+                    </div>
+                    @if($rescheduledSlots->count() > 0)
+                    <div class="st-dock-legend-list">
+                        @foreach($rescheduledSlots as $rs)
+                        <div class="st-dock-legend-card" onclick="focusSlot({{ $rs->id }})" title="View on grid">
+                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                                <span class="st-dock-legend-card-ticket">{{ $rs->ticket_number }}</span>
+                                <div class="st-dock-legend-card-actions">
+                                    <div class="st-dock-legend-card-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Scheduled -->
+                <div class="st-legend-group">
+                    <div class="st-legend-item st-legend-item--scheduled">
+                        <div class="st-dock-legend-indicator">
+                            <div class="st-dock-dot"></div>
+                            <span>Scheduled</span>
+                        </div>
+                        <span class="st-dock-count">{{ $scheduledSlots->count() }}</span>
+                    </div>
+                    @if($scheduledSlots->count() > 0)
+                    <div class="st-dock-legend-list">
+                        @foreach($scheduledSlots as $ss)
+                        <div class="st-dock-legend-card" onclick="focusSlot({{ $ss->id }})" title="View on grid">
+                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                                <span class="st-dock-legend-card-ticket">{{ $ss->ticket_number }}</span>
+                                <div class="st-dock-legend-card-actions">
+                                    <div class="st-dock-legend-card-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Arrived -->
+                <div class="st-legend-group">
+                    <div class="st-legend-item st-legend-item--arrived">
+                        <div class="st-dock-legend-indicator">
+                            <div class="st-dock-dot"></div>
+                            <span>Arrived</span>
+                        </div>
+                        <span class="st-dock-count">{{ $arrivedSlots->count() }}</span>
+                    </div>
+                    @if($arrivedSlots->count() > 0)
+                    <div class="st-dock-legend-list">
+                        @foreach($arrivedSlots as $as)
+                        <div class="st-dock-legend-card" onclick="focusSlot({{ $as->id }})" title="View on grid">
+                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                                <span class="st-dock-legend-card-ticket">{{ $as->ticket_number }}</span>
+                                <div class="st-dock-legend-card-actions">
+                                    <div class="st-dock-legend-card-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Waiting -->
+                <div class="st-legend-group">
+                    <div class="st-legend-item st-legend-item--waiting">
+                        <div class="st-dock-legend-indicator">
+                            <div class="st-dock-dot"></div>
+                            <span>Waiting</span>
+                        </div>
+                        <span class="st-dock-count">{{ $waitingSlots->count() }}</span>
+                    </div>
+                    @if($waitingSlots->count() > 0)
+                    <div class="st-dock-legend-list">
+                        @foreach($waitingSlots as $ws)
+                        <div class="st-dock-legend-card" onclick="focusSlot({{ $ws->id }})" title="View on grid">
+                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                                <span class="st-dock-legend-card-ticket">{{ $ws->ticket_number }}</span>
+                                <div class="st-dock-legend-card-actions">
+                                    <div class="st-dock-legend-card-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+                <!-- In Progress -->
+                <div class="st-legend-group">
+                    <div class="st-legend-item st-legend-item--in_progress">
+                        <div class="st-dock-legend-indicator">
+                            <div class="st-dock-dot"></div>
+                            <span>In Progress</span>
+                        </div>
+                        <span class="st-dock-count">{{ $inProgressSlots->count() }}</span>
+                    </div>
+                    @if($inProgressSlots->count() > 0)
+                    <div class="st-dock-legend-list">
+                        @foreach($inProgressSlots as $is)
+                        <div class="st-dock-legend-card" onclick="focusSlot({{ $is->id }})" title="View on grid">
+                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                                <span class="st-dock-legend-card-ticket">{{ $is->ticket_number }}</span>
+                                <div class="st-dock-legend-card-actions">
+                                    <div class="st-dock-legend-card-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Completed -->
+                <div class="st-legend-group">
+                    <div class="st-legend-item st-legend-item--completed">
+                        <div class="st-dock-legend-indicator">
+                            <div class="st-dock-dot"></div>
+                            <span>Completed</span>
+                        </div>
+                        <span class="st-dock-count">{{ $completedSlots->count() }}</span>
+                    </div>
+                    @if($completedSlots->count() > 0)
+                    <div class="st-dock-legend-list">
+                        @foreach($completedSlots as $cs)
+                        <div class="st-dock-legend-card" onclick="focusSlot({{ $cs->id }})" title="View on grid">
+                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                                <span class="st-dock-legend-card-ticket">{{ $cs->ticket_number }}</span>
+                                <div class="st-dock-legend-card-actions">
+                                    <div class="st-dock-legend-card-btn">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -74,7 +275,7 @@
                 <i class="fa-solid fa-magnifying-glass st-dock-search-icon"></i>
                 <input type="text" id="gate_search_input" placeholder="Search for a Booking (Ticket or Vendor)">
             </div>
-            
+
             <div style="display:flex;gap:12px;align-items:center;">
                 <button class="st-btn st-btn--primary st-btn--sm" onclick="window.location.href='{{ route('slots.create') }}'">
                     Create Slots
@@ -148,7 +349,7 @@
                         @php
                             // Use planned_start and planned_end
                             $st = \Carbon\Carbon::parse($slot->planned_start);
-                            
+
                             // Robust Duration Calculation
                             $durMinutes = 0;
                             $rawDur = $slot->planned_duration;
@@ -161,7 +362,7 @@
                                 } else {
                                     // Handle integer minutes or hours
                                     $val = (float)$rawDur;
-                                    if ($val > 0 && $val <= 8) { 
+                                    if ($val > 0 && $val <= 8) {
                                         // Assume hours if value is small (<= 8)
                                         $durMinutes = $val * 60;
                                     } else {
@@ -179,7 +380,7 @@
                                 if (!empty($slot->planned_end)) {
                                      $et = \Carbon\Carbon::parse($slot->planned_end);
                                      // Verify it's not simply 'now' (parsing null)
-                                     // Actually Eloquent returns null if column missing, verify raw attribute? 
+                                     // Actually Eloquent returns null if column missing, verify raw attribute?
                                      // We'll trust Carbon result if it's different enough from Now? No.
                                      // Just recalculate duration
                                      $durMinutes = $et->diffInMinutes($st);
@@ -191,15 +392,15 @@
                                 $durMinutes = 120; // Default to 2 hours if data missing/bad, matching user expectation
                                 $et = $st->copy()->addMinutes($durMinutes);
                             }
-                            
+
                             // Re-sync duration variable for height
                             $duration = $durMinutes;
 
                             // Calculate position relative to 07:00
                             // 1 hour = 60px. 1 minute = 1 px.
                             $minutesFrom7 = ($st->hour - 7) * 60 + $st->minute;
-                            if ($minutesFrom7 < 0) $minutesFrom7 = 0; 
-                            
+                            if ($minutesFrom7 < 0) $minutesFrom7 = 0;
+
                             // Ensure layout doesn't break
                             // $duration is already set above
 
@@ -207,7 +408,7 @@
                             // Default: Planned Start (ETA) - Calculated End
                             $startTime = $st;
                             $endTime = $et;
-                            
+
                             if ($slot->status === 'completed') {
                                 // Use Actual Arrival and Actual Finish
                                 $actualStart = $slot->arrival_time ? \Carbon\Carbon::parse($slot->arrival_time) : $st;
@@ -221,16 +422,16 @@
                             $bgClass = 'bg-' . $slot->status_badge_color;
 
                             // Calculate dynamic font sizes based on duration
-                            // Flexible scaling: 
+                            // Flexible scaling:
                             // Very Small (<30m): minimal info (Ticket + Status Icon)
                             // Small (30-50m): Compact (Ticket, Vendor, Status Line)
                             // Normal (>50m): Full info
-                            
+
                             $h = $duration;
-                            
+
                             // Base styles
                             $cardStyle = "top:{$minutesFrom7}px; height:{$duration}px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;";
-                            
+
                             if ($h < 35) {
                                 // Micro View (Very short duration)
                                 $cardStyle .= "padding: 1px 4px;";
@@ -251,19 +452,19 @@
                                 $statusSize = "10px";
                             }
                         @endphp
-                        
+
                         @php
                             $targetRoute = in_array($slot->status, ['pending_approval', 'pending'])
                                 ? route('bookings.show', $slot->id)
                                 : route('slots.show', $slot->id);
                         @endphp
-                        
+
                         <!-- Slot Card -->
-                        <div class="st-dock-card {{ $bgClass }}" 
+                        <div id="slot-{{ $slot->id }}" class="st-dock-card {{ $bgClass }}"
                              style="{{ $cardStyle }}"
                              ondblclick="window.location.href='{{ $targetRoute }}'"
                              title="{{ $slot->ticket_number }} ({{ $slot->status }}) - {{ $slot->vendor->name ?? '' }}">
-                            
+
                             <!-- Header: Ticket & Time -->
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; line-height:1.1;">
                                 <div style="font-weight:700; font-size:{{ $titleSize }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
@@ -278,13 +479,13 @@
                             @if($h >= 35)
                             <div style="font-size:{{ $vendorSize }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0.9; margin-top: auto; margin-bottom: auto;">
                                 {{ $slot->vendor->name ?? '-' }}
-                                
+
                                 @php
                                     $activeStatuses = ['scheduled', 'arrived', 'waiting', 'in_progress', 'completed'];
                                 @endphp
                                 @if($slot->original_planned_start && !empty($slot->approval_notes) && $h >= 60 && in_array($slot->status, $activeStatuses))
                                 <div style="font-size: 9px; font-style: italic; opacity: 0.8; margin-top: 1px; color: #fff; font-weight: 400; display: flex; align-items: center; gap: 4px;">
-                                    <i class="fas fa-sticky-note" style="font-size: 8px;"></i> 
+                                    <i class="fas fa-sticky-note" style="font-size: 8px;"></i>
                                     <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $slot->approval_notes }}</span>
                                 </div>
                                 @endif
@@ -397,11 +598,19 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize Sidebar Calendar
     if (typeof flatpickr !== 'undefined') {
+        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
         flatpickr("#dock_inline_calendar", {
             inline: true,
             dateFormat: "Y-m-d",
             defaultDate: "{{ $paramDate }}",
             theme: "light", // ensure light theme
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
             onChange: function(selectedDates, dateStr, instance) {
                 document.getElementById('selected_date_display').innerText = instance.formatDate(selectedDates[0], "d.m.Y");
                 // Reload page with new date param
@@ -426,7 +635,7 @@ function openApproveModal(id, ticket) {
     const modal = document.getElementById('approveModal');
     const ticketSpan = document.getElementById('modalTicketNumber');
     const form = document.getElementById('approveForm');
-    
+
     ticketSpan.innerText = ticket;
     form.action = "{{ url('/bookings') }}/" + id + "/approve";
     modal.classList.add('active');
@@ -467,16 +676,16 @@ if (searchInput) {
 function performSearch(query) {
     query = query.toLowerCase().trim();
     const cards = document.querySelectorAll('.st-dock-card');
-    
+
     cards.forEach(card => {
-        // Find ticket number 
+        // Find ticket number
         const ticketElement = card.querySelector('div[style*="font-weight:700"]');
         const ticket = ticketElement ? ticketElement.innerText.toLowerCase() : '';
-        
+
         // Find vendor name
         const vendorElement = card.querySelector('div[style*="opacity:0.9"]');
         const vendor = vendorElement ? vendorElement.innerText.toLowerCase() : '';
-        
+
         if (query === '' || ticket.includes(query) || vendor.includes(query)) {
             card.style.opacity = '1';
             card.style.pointerEvents = 'auto';
@@ -487,6 +696,29 @@ function performSearch(query) {
             card.style.filter = 'grayscale(100%)';
         }
     });
+}
+
+function focusSlot(id) {
+    const card = document.getElementById('slot-' + id);
+    if (!card) {
+        // If not in this gate grid, check if we need to search or just go to detail
+        return;
+    }
+
+    // Scroll to the card
+    card.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+
+    // Highlight effect
+    card.style.transition = 'all 0.3s ease';
+    card.style.zIndex = '100';
+    card.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.8)';
+    card.style.transform = 'scale(1.05)';
+
+    setTimeout(() => {
+        card.style.boxShadow = '';
+        card.style.transform = '';
+        card.style.zIndex = '';
+    }, 2000);
 }
 </script>
 <style>
