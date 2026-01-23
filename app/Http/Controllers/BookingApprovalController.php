@@ -30,7 +30,10 @@ class BookingApprovalController extends Controller
         $query = BookingRequest::with(['requester', 'approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate']);
 
         // Default to pending approval
-        $status = $request->get('status', 'pending_approval');
+        $status = $request->get('status', BookingRequest::STATUS_PENDING);
+        if ($status === 'pending_approval') {
+            $status = BookingRequest::STATUS_PENDING;
+        }
 
         if ($status === 'all') {
             // no-op

@@ -221,13 +221,13 @@
             <div class="cb-grid">
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Date <span style="color: #ef4444;">*</span></label>
-                    <input type="date" name="planned_date" class="vendor-form-input" required
-                           min="{{ date('Y-m-d') }}" value="{{ old('planned_date', request('date', date('Y-m-d'))) }}" id="planned_date">
+                    <input type="text" name="planned_date" class="vendor-form-input flatpickr-date" required
+                           value="{{ old('planned_date', request('date', date('Y-m-d'))) }}" id="planned_date" autocomplete="off">
                 </div>
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Time <span style="color: #ef4444;">*</span></label>
                     <input type="time" name="planned_time" class="vendor-form-input" required
-                           min="07:00" max="22:00" value="{{ old('planned_time', request('time', '09:00')) }}" id="planned_time">
+                           min="07:00" max="19:00" value="{{ old('planned_time', request('time', '09:00')) }}" id="planned_time">
                 </div>
             </div>
             <input type="hidden" name="planned_duration" id="planned_duration" value="{{ old('planned_duration') }}">
@@ -339,9 +339,88 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlPoDetailTemplate = '{{ route('vendor.ajax.po_detail', ['poNumber' => '__PO__']) }}';
     const urlAvailableSlots = '{{ route('vendor.ajax.available_slots') }}';
     const defaultWarehouseId = {{ (int) ($defaultWarehouseId ?? 0) }};
+    const holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
     let poDebounceTimer = null;
     function escapeHtml(str) {
         return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+    }
+
+    function toIsoDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getMinAllowedDateTime() {
+        const now = new Date();
+        now.setSeconds(0, 0);
+        const minAllowed = new Date(now.getTime() + 4 * 60 * 60 * 1000);
+        return minAllowed;
+    }
+
+    function applyTimeRules() {
+        const date = dateInput.value;
+        const time = timeInput.value;
+        const minAllowed = getMinAllowedDateTime();
+        const minDateStr = toIsoDate(new Date());
+
+        timeInput.setCustomValidity('');
+
+        if (!date) {
+            return;
+        }
+
+        const selected = time ? new Date(`${date}T${time}:00`) : null;
+        const minAllowedStr = toIsoDate(minAllowed);
+
+        if (date === minAllowedStr) {
+            const minTime = `${String(minAllowed.getHours()).padStart(2, '0')}:${String(minAllowed.getMinutes()).padStart(2, '0')}`;
+            timeInput.min = minTime;
+        } else {
+            timeInput.min = '07:00';
+        }
+
+        if (selected && selected.getTime() < minAllowed.getTime()) {
+            timeInput.setCustomValidity('Booking harus minimal 4 jam dari sekarang.');
+        }
+
+        if (time && time > '19:00') {
+            timeInput.setCustomValidity('Booking maksimal jam 19:00.');
+        }
+    }
+
+    function initDatePicker() {
+        if (typeof window.flatpickr !== 'function') return;
+        if (!dateInput || dateInput.getAttribute('data-st-flatpickr') === '1') return;
+        dateInput.setAttribute('data-st-flatpickr', '1');
+
+        window.flatpickr(dateInput, {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            disableMobile: true,
+            minDate: 'today',
+            disable: [function(date) {
+                const ds = toIsoDate(date);
+                return date.getDay() === 0 || Boolean(holidayData[ds]);
+            }],
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
+                if (dayElem.dateObj.getDay() === 0) {
+                    dayElem.classList.add('is-sunday');
+                    dayElem.title = 'Minggu';
+                }
+                if (holidayData[ds]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[ds];
+                }
+            },
+            onChange: function() {
+                applyTimeRules();
+                checkAvailability();
+                loadLiveAvailability();
+            }
+        });
     }
 
     // Summary update
@@ -354,6 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Availability check
     function checkAvailability() {
         updateSummary();
+        applyTimeRules();
         const date = dateInput.value;
         const time = timeInput.value;
         const duration = durationInput.value;
@@ -361,6 +441,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!date || !time || !duration) {
             summaryStatus.className = 'cb-summary__status cb-summary__status--checking';
             summaryStatus.innerHTML = '<i class="fas fa-info-circle"></i> Fill required fields';
+            return;
+        }
+
+        if (!timeInput.checkValidity()) {
+            summaryStatus.className = 'cb-summary__status cb-summary__status--unavailable';
+            summaryStatus.innerHTML = `<i class="fas fa-times-circle"></i> ${timeInput.validationMessage || 'Invalid time'}`;
             return;
         }
 
@@ -429,6 +515,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (el === dateInput) loadLiveAvailability();
         });
     });
+    if (timeInput) {
+        timeInput.addEventListener('input', () => {
+            applyTimeRules();
+            checkAvailability();
+        });
+    }
 
     // PO Functions
     function closePoSuggestions() {
@@ -544,6 +636,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initial load
+    initDatePicker();
+    applyTimeRules();
     updateSummary();
     loadLiveAvailability();
     if (poInput?.value.trim()) fetchPoDetail(poInput.value.trim());

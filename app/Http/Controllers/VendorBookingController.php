@@ -7,10 +7,13 @@ use App\Models\BookingRequest;
 use App\Models\BookingRequestItem;
 use App\Models\Slot;
 use App\Models\TruckTypeDuration;
+use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\BookingApprovalService;
 use App\Services\PoSearchService;
 use App\Services\SlotService;
+use App\Notifications\BookingRequestSubmitted;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -192,6 +195,66 @@ class VendorBookingController extends Controller
         $s = preg_replace('/[^0-9\.-]/', '', $s);
 
         return (float) $s;
+    }
+
+    private function resolvePlannedDuration(?string $truckType): ?int
+    {
+        $truckType = trim((string) ($truckType ?? ''));
+        if ($truckType === '') {
+            return null;
+        }
+
+        $row = TruckTypeDuration::where('truck_type', $truckType)->first();
+        $duration = (int) ($row?->target_duration_minutes ?? 0);
+
+        return $duration > 0 ? $duration : null;
+    }
+
+    private function resolveDirection(array $poDetail): string
+    {
+        $direction = strtolower(trim((string) ($poDetail['direction'] ?? '')));
+        if (in_array($direction, ['inbound', 'outbound'], true)) {
+            return $direction;
+        }
+
+        $customerCode = trim((string) ($poDetail['customer_code'] ?? ''));
+        $supplierCode = trim((string) ($poDetail['supplier_code'] ?? ''));
+
+        if ($customerCode !== '') {
+            return 'outbound';
+        }
+
+        if ($supplierCode !== '') {
+            return 'inbound';
+        }
+
+        return 'inbound';
+    }
+
+    private function notifyAdminsBookingRequest(BookingRequest $bookingRequest): void
+    {
+        try {
+            $admins = User::whereHas('roles', function ($q) {
+                $q->whereIn(DB::raw('LOWER(roles_name)'), [
+                    'admin',
+                    'section head',
+                    'super admin',
+                    'super administrator',
+                ]);
+            })->get();
+
+            if ($admins->isEmpty()) {
+                Log::warning('No admin recipients found for booking request notification', [
+                    'booking_request_id' => $bookingRequest->id,
+                ]);
+            }
+
+            foreach ($admins as $admin) {
+                $admin->notify(new BookingRequestSubmitted($bookingRequest));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send booking request notification: ' . $e->getMessage());
+        }
     }
 
     private function getVendorCodeForUser(): string
@@ -411,6 +474,34 @@ class VendorBookingController extends Controller
         ]);
 
         $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
+        try {
+            $plannedStartAt = Carbon::createFromFormat('Y-m-d H:i:s', $plannedStart);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'Invalid planned schedule.');
+        }
+
+        if ($plannedStartAt->isSunday()) {
+            return back()->withInput()->with('error', 'Tanggal booking tidak boleh di hari Minggu.');
+        }
+
+        if (Schema::hasTable('holidays')) {
+            $holidayDate = $plannedStartAt->format('Y-m-d');
+            $holiday = DB::table('holidays')->where('holiday_date', $holidayDate)->first();
+            if ($holiday) {
+                $holidayLabel = trim((string) ($holiday->description ?? ''));
+                $msg = $holidayLabel !== '' ? "Tanggal booking adalah hari libur: {$holidayLabel}." : 'Tanggal booking tidak boleh di hari libur.';
+                return back()->withInput()->with('error', $msg);
+            }
+        }
+
+        $minAllowed = now()->addHours(4);
+        if ($plannedStartAt->lessThan($minAllowed)) {
+            return back()->withInput()->with('error', 'Booking harus minimal 4 jam dari sekarang.');
+        }
+
+        if ($plannedStartAt->format('H:i') > '19:00') {
+            return back()->withInput()->with('error', 'Booking maksimal di jam 19:00.');
+        }
         $plannedDuration = $this->resolvePlannedDuration($request->truck_type);
         if ($plannedDuration === null) {
             return back()->withInput()->with('error', 'Please select a truck type to determine duration.');
@@ -548,6 +639,8 @@ class VendorBookingController extends Controller
                     'qty_requested' => $qty,
                 ]);
             }
+
+            $this->notifyAdminsBookingRequest($bookingRequest);
 
             return redirect()
                 ->route('vendor.bookings.show', $bookingRequest->id)
