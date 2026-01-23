@@ -85,12 +85,24 @@
             </a>
             @endcan
 
+            @can('bookings.index')
+            <a href="{{ route('bookings.index') }}" title="Booking Requests" class="st-sidebar__link{{ request()->routeIs('bookings.*') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Booking Requests</span>
+            </a>
+            @endcan
+
             @can('reports.transactions')
             <a href="{{ route('reports.transactions') }}" title="Reports" class="st-sidebar__link{{ request()->routeIs('reports.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-chart-line"></i>
                 <span>Reports</span>
             </a>
             @endcan
+
+            <a href="{{ route('notifications.index') }}" title="Notifications" class="st-sidebar__link{{ request()->routeIs('notifications.index') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </a>
 
             @can('trucks.index')
             <a href="{{ route('trucks.index') }}" title="Trucks" class="st-sidebar__link{{ request()->routeIs('trucks.*') ? ' st-sidebar__link--active' : '' }}">
@@ -147,10 +159,10 @@
                             <div class="st-notification-dropdown" id="st-notification-dropdown">
                                 <div class="st-notification-header">
                                     <span>Notifications</span>
-                                    <a href="{{ route('notifications.index') }}" class="st-notification-link" style="margin-left:auto;">View all</a>
-                                    @if(auth()->user()->unreadNotifications->count() > 0)
-                                        <a href="{{ route('notifications.markAllRead') }}" class="st-notification-link">Mark all read</a>
-                                    @endif
+                                    <div class="st-notification-actions">
+                                        <button type="button" class="st-notification-link" id="st-notification-clear">Clear</button>
+                                        <button type="button" class="st-notification-link" id="st-notification-mark-all">Mark all read</button>
+                                    </div>
                                 </div>
                                 <div class="st-notification-list">
                                     @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
@@ -227,6 +239,21 @@
             if (typeof window.initTooltips === 'function') {
                 window.initTooltips();
             }
+
+var stMarkAllBtn = document.getElementById('st-notification-mark-all');
+var stClearBtn = document.getElementById('st-notification-clear');
+if (stMarkAllBtn) {
+    stMarkAllBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        markAllAsRead();
+    });
+}
+if (stClearBtn) {
+    stClearBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        clearAllNotifications();
+    });
+}
         });
     } else {
         // DOM sudah ready
@@ -457,6 +484,38 @@ function markAsRead(id) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
             'Content-Type': 'application/json'
         }
+    });
+}
+
+function markAllAsRead() {
+    fetch('{{ route('notifications.markAllRead') }}', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(function () {
+        document.querySelectorAll('.st-notification-item--unread').forEach(function (item) {
+            item.classList.remove('st-notification-item--unread');
+        });
+        var badge = document.querySelector('.st-notification-badge');
+        if (badge) badge.remove();
+    });
+}
+
+function clearAllNotifications() {
+    fetch('{{ route('notifications.clearAll') }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    }).then(function () {
+        var list = document.querySelector('.st-notification-list');
+        if (list) {
+            list.innerHTML = '<div class="st-notification-empty"><i class="fas fa-bell-slash" style="font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><p style="margin:0;font-size:0.875rem;">No notifications yet</p></div>';
+        }
+        var badge = document.querySelector('.st-notification-badge');
+        if (badge) badge.remove();
     });
 }
 

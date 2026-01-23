@@ -25,7 +25,7 @@ class BookingApprovalService
      * Operating hours for booking
      */
     public const OPERATING_START_HOUR = 7;  // 07:00
-    public const OPERATING_END_HOUR = 23;   // 23:00
+    public const OPERATING_END_HOUR = 20;   // 20:00 (still filtered to 19:00 max)
 
     /**
      * Create a new booking request from vendor
@@ -379,6 +379,12 @@ class BookingApprovalService
         $slots = [];
         $startHour = self::OPERATING_START_HOUR;
         $endHour = self::OPERATING_END_HOUR;
+        $minAllowed = null;
+        $todayStr = (new DateTime())->format('Y-m-d');
+        if ($date === $todayStr) {
+            $minAllowed = new DateTime();
+            $minAllowed->modify('+4 hours');
+        }
 
         // Get existing slots for the date
         $existingSlots = DB::table('slots')
@@ -397,7 +403,15 @@ class BookingApprovalService
         for ($hour = $startHour; $hour < $endHour; $hour++) {
             foreach ([0, 30] as $minute) {
                 $timeStr = sprintf('%02d:%02d', $hour, $minute);
+                if ($timeStr > '19:00') {
+                    continue;
+                }
+
                 $dateTimeStr = $date . ' ' . $timeStr . ':00';
+                $checkTime = new DateTime($dateTimeStr);
+                if ($minAllowed && $checkTime < $minAllowed) {
+                    continue;
+                }
                 
                 $isOccupied = false;
                 $occupyingSlot = null;
@@ -406,8 +420,6 @@ class BookingApprovalService
                     $existingStart = new DateTime($existing->planned_start);
                     $existingEnd = clone $existingStart;
                     $existingEnd->modify("+{$existing->planned_duration} minutes");
-
-                    $checkTime = new DateTime($dateTimeStr);
 
                     if ($checkTime >= $existingStart && $checkTime < $existingEnd) {
                         $isOccupied = true;
