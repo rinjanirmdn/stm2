@@ -1,117 +1,302 @@
 @extends('vendor.layouts.vendor')
 
-@section('title', 'Slot Availability - Vendor Portal')
+@section('title', 'Gate Availability - Vendor Portal')
 
 @section('content')
-<div class="vendor-card">
-    <div class="vendor-card__header">
-        <h1 class="vendor-card__title">
-            <i class="fas fa-calendar-alt"></i>
-            Slot Availability
-        </h1>
-        <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary">
-            <i class="fas fa-plus"></i>
-            New Booking
-        </a>
-    </div>
+<style>
+    .av-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+    .av-sidebar {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        padding: 20px;
+        position: sticky;
+        top: 20px;
+        max-height: calc(100dvh - 120px);
+        overflow: auto;
+    }
+    .av-sidebar__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .av-sidebar__title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 16px;
+    }
+    .av-sidebar__toggle {
+        display: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #334155;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+    }
+    .av-sidebar__warehouse {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 20px;
+    }
+    .av-calendar {
+        margin-bottom: 20px;
+    }
+    .av-calendar__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .av-calendar__nav {
+        display: flex;
+        gap: 4px;
+    }
+    .av-calendar__nav-btn {
+        width: 28px;
+        height: 28px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        transition: all 0.15s;
+    }
+    .av-calendar__nav-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+    .av-calendar__grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        text-align: center;
+        font-size: 12px;
+    }
+    .av-calendar__day-header {
+        padding: 6px 0;
+        font-weight: 600;
+        color: #64748b;
+    }
+    .av-calendar__day {
+        padding: 8px 4px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+        color: #374151;
+    }
+    .av-calendar__day:hover { background: #f1f5f9; }
+    .av-calendar__day--today { background: #dbeafe; color: #1e40af; font-weight: 600; }
+    .av-calendar__day--selected { background: #1e40af; color: white; font-weight: 600; }
+    .av-calendar__day--other { color: #9ca3af; }
 
-    <!-- Filters -->
-    <form method="GET" action="{{ route('vendor.availability') }}" style="margin-bottom: 1.5rem;">
-        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
-            <div class="vendor-form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
-                <label class="vendor-form-label">Warehouse</label>
-                <select name="warehouse_id" class="vendor-form-select" id="warehouse_select" onchange="this.form.submit()">
-                    @foreach($warehouses as $warehouse)
-                        <option value="{{ $warehouse->id }}" {{ $selectedWarehouse?->id == $warehouse->id ? 'selected' : '' }}>
-                            {{ $warehouse->wh_code }} - {{ $warehouse->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            
-            <div class="vendor-form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
-                <label class="vendor-form-label">Date</label>
-                <input type="date" name="date" class="vendor-form-input" id="date_select" 
-                       value="{{ $selectedDate }}" min="{{ date('Y-m-d') }}" onchange="this.form.submit()">
-            </div>
+    .av-main {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+    .av-main__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f8fafc;
+    }
+    .av-main__title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .av-main__actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .av-main__mobile-filter {
+        display: none;
+    }
+
+    .av-available-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px;
+    }
+    .av-available-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: left;
+    }
+    .av-available-item:hover {
+        border-color: #bfdbfe;
+        box-shadow: 0 6px 16px rgba(30, 64, 175, 0.08);
+        transform: translateY(-1px);
+    }
+    .av-available-time {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 14px;
+    }
+    .av-slot__vendor { font-size: 10px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .av-slot__action {
+        margin-top: 4px;
+        padding: 4px 8px;
+        background: #1e40af;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .av-slot--available {
+        background: #f0fdf4;
+        border: 1px dashed #86efac;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #22c55e;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .av-slot--available:hover {
+        background: #dcfce7;
+        border-color: #22c55e;
+    }
+
+    .av-break {
+        background: #f1f5f9;
+        text-align: center;
+        padding: 12px;
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 500;
+        grid-column: 2 / -1;
+    }
+
+    @media (max-width: 900px) {
+        .av-layout { grid-template-columns: 1fr; }
+        .av-sidebar {
+            position: static;
+            max-height: none;
+            overflow: visible;
+            padding: 14px;
+        }
+        .av-sidebar__toggle {
+            display: inline-flex;
+        }
+        .av-sidebar__title {
+            margin-bottom: 0;
+            font-size: 16px;
+        }
+        .av-sidebar__body {
+            display: none;
+            margin-top: 12px;
+        }
+        .av-sidebar--open .av-sidebar__body {
+            display: block;
+        }
+
+        .av-main__mobile-filter {
+            display: inline-flex;
+        }
+
+        .av-grid-wrapper {
+            max-height: calc(100dvh - 260px);
+        }
+    }
+</style>
+
+<div class="av-layout">
+    <!-- LEFT SIDEBAR: Calendar -->
+    <div class="av-sidebar" id="av-sidebar">
+        <div class="av-sidebar__top">
+            <div class="av-sidebar__title">Availability</div>
+            <button type="button" class="av-sidebar__toggle" id="av-sidebar-toggle" aria-label="Toggle filters">
+                <i class="fas fa-sliders"></i>
+            </button>
         </div>
-    </form>
 
-    <!-- Calendar Legend -->
-    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; font-size: 0.875rem;">
-        <span style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 24px; height: 24px; background: #f0fdf4; border: 2px solid #86efac; border-radius: 4px;"></span>
-            Available
-        </span>
-        <span style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 24px; height: 24px; background: #fef3c7; border: 2px solid #fcd34d; border-radius: 4px;"></span>
-            Pending Approval
-        </span>
-        <span style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 24px; height: 24px; background: #dcfce7; border: 2px solid #22c55e; border-radius: 4px;"></span>
-            Scheduled
-        </span>
-        <span style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 24px; height: 24px; background: #dbeafe; border: 2px solid #3b82f6; border-radius: 4px;"></span>
-            Arrived
-        </span>
-        <span style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 24px; height: 24px; background: #ede9fe; border: 2px solid #8b5cf6; border-radius: 4px;"></span>
-            In Progress
-        </span>
-        <span style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="width: 24px; height: 24px; background: #fce7f3; border: 2px solid #ec4899; border-radius: 4px;"></span>
-            Needs Confirmation
-        </span>
-    </div>
+        <div class="av-sidebar__body" id="av-sidebar-body">
+        <form method="GET" action="{{ route('vendor.availability') }}" id="av-form">
+            <input type="hidden" name="date" id="hidden-date" value="{{ $selectedDate }}">
+        </form>
 
-    <!-- Timeline Calendar -->
-    <div id="calendar-container" style="overflow-x: auto;">
-        <div style="text-align: center; padding: 3rem; color: #64748b;">
-            <i class="fas fa-spinner fa-spin fa-2x"></i>
-            <p style="margin-top: 1rem;">Loading Availability...</p>
+        <!-- Mini Calendar -->
+        <div class="av-calendar">
+            <div class="av-calendar__header">
+                <span id="calendar-month">{{ \Carbon\Carbon::parse($selectedDate)->format('F Y') }}</span>
+                <div class="av-calendar__nav">
+                    <button type="button" class="av-calendar__nav-btn" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <button type="button" class="av-calendar__nav-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="av-calendar__grid">
+                <div class="av-calendar__day-header">Mo</div>
+                <div class="av-calendar__day-header">Tu</div>
+                <div class="av-calendar__day-header">We</div>
+                <div class="av-calendar__day-header">Th</div>
+                <div class="av-calendar__day-header">Fr</div>
+                <div class="av-calendar__day-header">Sa</div>
+                <div class="av-calendar__day-header">Su</div>
+            </div>
+            <div class="av-calendar__grid" id="calendar-days"></div>
+        </div>
+
         </div>
     </div>
-</div>
 
-<!-- Operating Hours Info -->
-<div class="vendor-card">
-    <div class="vendor-card__header">
-        <h2 class="vendor-card__title">
-            <i class="fas fa-info-circle"></i>
-            Booking Information
-        </h2>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-        <div style="padding: 1rem; background: #f8fafc; border-radius: 10px;">
-            <h4 style="margin: 0 0 0.5rem; color: #1e293b;">
-                <i class="fas fa-clock" style="color: #3b82f6;"></i>
-                Operating Hours
-            </h4>
-            <p style="margin: 0; color: #64748b;">
-                <strong>07:00 - 23:00</strong> daily
-            </p>
+    <!-- RIGHT MAIN: Time Availability -->
+    <div class="av-main">
+        <div class="av-main__header">
+            <span class="av-main__title">
+                <i class="fas fa-clock"></i>
+                {{ \Carbon\Carbon::parse($selectedDate)->format('l, d F Y') }}
+            </span>
+            <div class="av-main__actions">
+                <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm av-main__mobile-filter" id="av-mobile-filter-btn">
+                    <i class="fas fa-sliders"></i> Filters
+                </button>
+                <a href="{{ route('vendor.bookings.create', ['date' => $selectedDate]) }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
+                    <i class="fas fa-plus"></i> New Booking
+                </a>
+            </div>
         </div>
         
-        <div style="padding: 1rem; background: #f8fafc; border-radius: 10px;">
-            <h4 style="margin: 0 0 0.5rem; color: #1e293b;">
-                <i class="fas fa-hourglass-half" style="color: #10b981;"></i>
-                Slot Duration
-            </h4>
-            <p style="margin: 0; color: #64748b;">
-                Minimum <strong>30 Minutes</strong>, Based on Truck Type
-            </p>
-        </div>
-        
-        <div style="padding: 1rem; background: #f8fafc; border-radius: 10px;">
-            <h4 style="margin: 0 0 0.5rem; color: #1e293b;">
-                <i class="fas fa-check-double" style="color: #8b5cf6;"></i>
-                Approval Process
-            </h4>
-            <p style="margin: 0; color: #64748b;">
-                Admin Will Review and Approve Your Booking
-            </p>
+        <div id="availability-list">
+            <div style="text-align: center; padding: 60px 20px; color: #64748b;">
+                <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 12px;"></i>
+                <p>Loading availability...</p>
+            </div>
         </div>
     </div>
 </div>
@@ -121,158 +306,127 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const warehouseId = '{{ $selectedWarehouse?->id }}';
-    const selectedDate = '{{ $selectedDate }}';
-    
-    if (warehouseId && selectedDate) {
-        loadCalendar(warehouseId, selectedDate);
+    let currentDate = new Date('{{ $selectedDate }}');
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const sidebar = document.getElementById('av-sidebar');
+    const sidebarToggle = document.getElementById('av-sidebar-toggle');
+    const mobileFilterBtn = document.getElementById('av-mobile-filter-btn');
+
+    function toggleSidebar() {
+        if (!sidebar) return;
+        sidebar.classList.toggle('av-sidebar--open');
     }
 
-    function loadCalendar(warehouseId, date) {
-        const container = document.getElementById('calendar-container');
-        
-        fetch(`{{ route('vendor.ajax.calendar_slots') }}?warehouse_id=${warehouseId}&date=${date}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.gates) {
-                    renderCalendar(data.gates, date);
-                } else {
-                    container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Failed to Load Availability</p>';
-                }
-            })
-            .catch(error => {
-                container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Error Loading Availability</p>';
-            });
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+    if (mobileFilterBtn) {
+        mobileFilterBtn.addEventListener('click', toggleSidebar);
     }
 
-    function renderCalendar(gates, date) {
-        const container = document.getElementById('calendar-container');
-        const hours = [];
+    // Initialize
+    renderMiniCalendar();
+    if (warehouseId) {
+        loadAvailability();
+    }
+
+    // Mini Calendar
+    function renderMiniCalendar() {
+        const container = document.getElementById('calendar-days');
+        const monthLabel = document.getElementById('calendar-month');
         
-        for (let h = 7; h < 23; h++) {
-            hours.push(h.toString().padStart(2, '0') + ':00');
-            hours.push(h.toString().padStart(2, '0') + ':30');
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        monthLabel.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDay = (firstDay.getDay() + 6) % 7; // Monday = 0
+        
+        let html = '';
+        
+        // Previous month days
+        const prevMonth = new Date(year, month, 0);
+        for (let i = startDay - 1; i >= 0; i--) {
+            const day = prevMonth.getDate() - i;
+            html += `<div class="av-calendar__day av-calendar__day--other">${day}</div>`;
         }
-
-        const statusColors = {
-            'pending_approval': { bg: '#fef3c7', border: '#fcd34d', text: '#92400e' },
-            'scheduled': { bg: '#dcfce7', border: '#22c55e', text: '#166534' },
-            'arrived': { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
-            'waiting': { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
-            'in_progress': { bg: '#ede9fe', border: '#8b5cf6', text: '#5b21b6' },
-            'pending_vendor_confirmation': { bg: '#fce7f3', border: '#ec4899', text: '#9d174d' },
-            'completed': { bg: '#f1f5f9', border: '#94a3b8', text: '#475569' },
-        };
-
-        let html = `
-            <table style="width: 100%; border-collapse: collapse; min-width: ${100 + gates.length * 150}px;">
-                <thead>
-                    <tr>
-                        <th style="padding: 1rem; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; position: sticky; left: 0; z-index: 10; width: 80px; text-align: center; border-radius: 8px 0 0 0;">
-                            Time
-                        </th>
-        `;
-
-        gates.forEach((g, i) => {
-            const isLast = i === gates.length - 1;
-            html += `
-                <th style="padding: 1rem; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; min-width: 150px; text-align: center; ${isLast ? 'border-radius: 0 8px 0 0;' : ''}">
-                    <i class="fas fa-door-open"></i>
-                    ${g.gate.name}
-                </th>
-            `;
-        });
-
-        html += '</tr></thead><tbody>';
-
-        // Track which cells are spanned
-        const spannedCells = {};
-        gates.forEach((g, gIdx) => {
-            spannedCells[gIdx] = {};
-        });
-
-        hours.forEach((hour, hIdx) => {
-            html += `<tr>`;
-            html += `
-                <td style="padding: 0.75rem; background: #f8fafc; font-weight: 600; color: #374151; text-align: center; position: sticky; left: 0; z-index: 5; border-bottom: 1px solid #e5e7eb;">
-                    ${hour}
-                </td>
-            `;
-
-            gates.forEach((g, gIdx) => {
-                // Check if this cell is spanned
-                if (spannedCells[gIdx][hIdx]) {
-                    return; // Skip - already covered by rowspan
-                }
-
-                // Find slot that starts at this hour
-                const slot = g.slots.find(s => s.start_time === hour);
-                
-                if (slot) {
-                    // Calculate rows to span (each row is 30 min)
-                    const rowspan = Math.max(1, Math.ceil(slot.duration / 30));
-                    
-                    // Mark cells as spanned
-                    for (let i = 1; i < rowspan; i++) {
-                        if (hIdx + i < hours.length) {
-                            spannedCells[gIdx][hIdx + i] = true;
-                        }
-                    }
-
-                    const colors = statusColors[slot.status] || { bg: '#f3f4f6', border: '#d1d5db', text: '#374151' };
-                    
-                    html += `
-                        <td rowspan="${rowspan}" style="padding: 0.5rem; background: ${colors.bg}; border: 2px solid ${colors.border}; border-radius: 8px; vertical-align: top;">
-                            <div style="font-weight: 600; color: ${colors.text}; font-size: 0.75rem;">
-                                ${slot.start_time} - ${slot.end_time}
-                            </div>
-                            <div style="font-size: 0.7rem; color: ${colors.text}; opacity: 0.8; margin-top: 0.25rem;">
-                                ${slot.vendor_name}
-                            </div>
-                            <div style="margin-top: 0.5rem;">
-                                <span style="display: inline-block; padding: 0.125rem 0.5rem; background: ${colors.border}; color: white; border-radius: 9999px; font-size: 0.625rem; font-weight: 600;">
-                                    ${slot.status_label}
-                                </span>
-                            </div>
-                        </td>
-                    `;
-                } else {
-                    // Check if occupied by slot from earlier
-                    const occupiedSlot = g.slots.find(s => {
-                        const startIdx = hours.indexOf(s.start_time);
-                        if (startIdx === -1) return false;
-                        const endIdx = startIdx + Math.ceil(s.duration / 30);
-                        return hIdx > startIdx && hIdx < endIdx;
-                    });
-
-                    if (!occupiedSlot) {
-                        html += `
-                            <td style="padding: 0.75rem; background: #f0fdf4; border: 1px dashed #86efac; text-align: center; cursor: pointer; transition: all 0.2s;" 
-                                onclick="bookSlot('${date}', '${hour}', ${g.gate.id})"
-                                onmouseover="this.style.background='#dcfce7'"
-                                onmouseout="this.style.background='#f0fdf4'">
-                                <i class="fas fa-plus" style="color: #22c55e; opacity: 0.5;"></i>
-                            </td>
-                        `;
-                    }
-                }
-            });
-
-            html += '</tr>';
-        });
-
-        html += '</tbody></table>';
+        
+        // Current month days
+        const selectedStr = '{{ $selectedDate }}';
+        const todayStr = today.toISOString().split('T')[0];
+        
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            let classes = 'av-calendar__day';
+            if (dateStr === todayStr) classes += ' av-calendar__day--today';
+            if (dateStr === selectedStr) classes += ' av-calendar__day--selected';
+            html += `<div class="${classes}" onclick="selectDate('${dateStr}')">${day}</div>`;
+        }
+        
+        // Next month days
+        const remaining = 42 - (startDay + lastDay.getDate());
+        for (let day = 1; day <= remaining && day <= 7; day++) {
+            html += `<div class="av-calendar__day av-calendar__day--other">${day}</div>`;
+        }
+        
         container.innerHTML = html;
     }
 
-    // Function to book a slot
-    window.bookSlot = function(date, time, gateId) {
-        const url = new URL('{{ route("vendor.bookings.create") }}', window.location.origin);
-        url.searchParams.set('date', date);
-        url.searchParams.set('time', time);
-        url.searchParams.set('gate_id', gateId);
-        url.searchParams.set('warehouse_id', '{{ $selectedWarehouse?->id }}');
-        window.location.href = url.toString();
+    window.changeMonth = function(delta) {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        renderMiniCalendar();
     };
+
+    window.selectDate = function(dateStr) {
+        document.getElementById('hidden-date').value = dateStr;
+        document.getElementById('av-form').submit();
+    };
+
+    // Availability list
+    function loadAvailability() {
+        const container = document.getElementById('availability-list');
+        const date = '{{ $selectedDate }}';
+
+        fetch(`{{ route('vendor.ajax.available_slots') }}?warehouse_id=${warehouseId}&date=${date}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || !data.slots) {
+                    container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">Failed to load</p>';
+                    return;
+                }
+                const available = data.slots.filter(s => s.is_available);
+                if (!available.length) {
+                    container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">No available times</p>';
+                    return;
+                }
+                let html = '<div class="av-available-list">';
+                available.forEach(slot => {
+                    html += `
+                        <button type="button" class="av-available-item" data-time="${slot.time}">
+                            <span class="av-available-time">${slot.time}</span>
+                        </button>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+
+                container.querySelectorAll('.av-available-item[data-time]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const url = new URL('{{ route("vendor.bookings.create") }}', window.location.origin);
+                        url.searchParams.set('date', date);
+                        url.searchParams.set('time', btn.dataset.time);
+                        window.location.href = url.toString();
+                    });
+                });
+            })
+            .catch(() => {
+                container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">Error loading availability</p>';
+            });
+    }
 });
 </script>
 @endpush

@@ -99,13 +99,6 @@
             </a>
             @endcan
 
-            @can('vendors.index')
-            <a href="{{ route('vendors.index') }}" title="Vendors" class="st-sidebar__link{{ request()->routeIs('vendors.*') ? ' st-sidebar__link--active' : '' }}">
-                <i class="fas fa-truck"></i>
-                <span>Vendors</span>
-            </a>
-            @endcan
-
             @can('trucks.index')
             <a href="{{ route('trucks.index') }}" title="Trucks" class="st-sidebar__link{{ request()->routeIs('trucks.*') ? ' st-sidebar__link--active' : '' }}">
                     <i class="fas fa-truck-field"></i>

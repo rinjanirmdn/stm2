@@ -551,13 +551,12 @@
                                 $stLabel = ucwords(str_replace('_',' ', $st));
                                 
                                 $badgeMap = [
-                                    'scheduled' => 'bg-scheduled',
-                                    'arrived' => 'bg-waiting',
+                                    'scheduled' => 'bg-secondary',
                                     'waiting' => 'bg-waiting',
+                                    'arrived' => 'bg-info',
                                     'in_progress' => 'bg-in_progress',
                                     'completed' => 'bg-completed',
                                     'cancelled' => 'bg-danger',
-                                    'pending_vendor_confirmation' => 'bg-warning',
                                     'pending_approval' => 'bg-pending_approval',
                                 ];
                                 $badgeClass = $badgeMap[$st] ?? 'bg-secondary';

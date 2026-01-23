@@ -12,7 +12,6 @@ use App\Http\Controllers\SlotController;
 use App\Http\Controllers\TruckTypeDurationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorBookingController;
-use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -126,6 +125,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::get('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
+    Route::post('/notifications/clear', [\App\Http\Controllers\NotificationController::class, 'clearAll'])->name('notifications.clearAll');
 
     // SAP API Integration
     Route::prefix('api/sap')->name('api.sap.')->group(function () {
@@ -145,16 +145,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/health', [SapController::class, 'health'])->name('health');
         Route::get('/metadata', [SapController::class, 'metadata']);
         Route::get('/test-po', [SapController::class, 'testPoConnection'])->name('test.po');
-    });
-
-    Route::prefix('vendors')->name('vendors.')->group(function () {
-        Route::get('/', [VendorController::class, 'index'])->name('index');
-
-        // New AJAX search endpoint
-        Route::get('/ajax/search', [VendorController::class, 'ajaxSearch'])->name('ajax.search');
-
-        Route::get('/import', [VendorController::class, 'import'])->name('import');
-        Route::post('/import', [VendorController::class, 'importStore'])->name('import.store');
     });
 
     Route::prefix('trucks')->name('trucks.')->group(function () {
@@ -217,10 +207,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}', [VendorBookingController::class, 'show'])->whereNumber('id')->name('show');
             Route::get('/{id}/ticket', [VendorBookingController::class, 'ticket'])->whereNumber('id')->name('ticket');
             Route::post('/{id}/cancel', [VendorBookingController::class, 'cancel'])->whereNumber('id')->name('cancel');
-            
-            // Confirm/Reject Admin Reschedule
-            Route::get('/{id}/confirm', [VendorBookingController::class, 'confirmForm'])->whereNumber('id')->name('confirm');
-            Route::post('/{id}/confirm', [VendorBookingController::class, 'confirmStore'])->whereNumber('id')->name('confirm.store');
         });
         
         // Availability

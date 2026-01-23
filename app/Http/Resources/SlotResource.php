@@ -17,9 +17,7 @@ class SlotResource extends JsonResource
         return [
             'id' => $this->id,
             'ticket_number' => $this->ticket_number,
-            'po_number' => $this->when($this->po_id, function() {
-                return $this->po_number ?? null;
-            }),
+            'po_number' => $this->po_number,
             'mat_doc' => $this->mat_doc,
             'sj_start_number' => $this->sj_start_number,
             'sj_complete_number' => $this->sj_complete_number,
@@ -33,7 +31,6 @@ class SlotResource extends JsonResource
                 'code' => $this->warehouse_code,
             ],
             'vendor' => $this->vendor_name ? [
-                'id' => $this->bp_id,
                 'name' => $this->vendor_name,
             ] : null,
             'planned_gate' => $this->when($this->planned_gate_id, [

@@ -1,4 +1,8 @@
-@php($isVendor = auth()->user() && method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('vendor'))
+@php
+    $isVendor = auth()->user()
+        && method_exists(auth()->user(), 'hasRole')
+        && auth()->user()->hasRole('vendor');
+@endphp
 @extends($isVendor ? 'vendor.layouts.vendor' : 'layouts.app')
 
 @section('title', 'Notifications')

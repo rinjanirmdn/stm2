@@ -70,23 +70,6 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="st-form-field" style="position:relative;">
-                    <label class="st-label">Vendor <span class="st-text--optional">(Optional)</span></label>
-                    <input
-                        type="text"
-                        id="vendor_search"
-                        class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
-                        placeholder="Pilih Direction Dulu..."
-                        style="margin-bottom:4px;"
-                        value="{{ old('vendor_search') }}"
-                        {{ old('direction', $slot->direction ?? '') ? '' : 'disabled' }}
-                    >
-                    <input type="hidden" name="vendor_id" id="vendor_id" value="{{ old('vendor_id', $slot->vendor_id ?? '') }}">
-                    <div id="vendor_suggestions" class="st-suggestions" style="display:none;"></div>
-                    @error('vendor_id')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
-                    @enderror
-                </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
@@ -150,6 +133,5 @@
     </div>
 
     <script type="application/json" id="truck_types_json">{{ json_encode(array_values($truckTypes)) }}</script>
-    <script type="application/json" id="vendors_json">{{ json_encode($vendors->map(function($v) { return ['id' => $v->id, 'name' => $v->name, 'code' => $v->code, 'type' => $v->type]; })->values()) }}</script>
     <script type="application/json" id="truck_type_durations_json">{{ json_encode($truckTypeDurations) }}</script>
 @endsection

@@ -49,7 +49,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderByDesc('s.actual_start')
-            ->select(['s.id', 's.po_id', 's.actual_start'])
+            ->select(['s.id', 's.po_number', 's.actual_start'])
             ->first();
     }
 
@@ -75,7 +75,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderBy('s.planned_start', 'asc')
-            ->select(['s.id', 's.po_id', 's.planned_start', 's.status'])
+            ->select(['s.id', 's.po_number', 's.planned_start', 's.status'])
             ->first();
     }
 
@@ -118,7 +118,7 @@ class GateStatusService
             return '-';
         }
 
-        $truckNumber = (string) (DB::table('po')->where('id', (int) $currentSlot->po_id)->value('po_number') ?? '');
+        $truckNumber = (string) ($currentSlot->po_number ?? '');
         $startTime = date('H:i', strtotime((string) $currentSlot->actual_start));
 
         return $truckNumber !== '' ? ('PO ' . $truckNumber . ' @ ' . $startTime) : '-';
@@ -133,7 +133,7 @@ class GateStatusService
             return '-';
         }
 
-        $truckNumber = (string) (DB::table('po')->where('id', (int) $nextSlot->po_id)->value('po_number') ?? '');
+        $truckNumber = (string) ($nextSlot->po_number ?? '');
         $startTime = date('H:i', strtotime((string) $nextSlot->planned_start));
 
         return $truckNumber !== '' ? ('PO ' . $truckNumber . ' @ ' . $startTime) : '-';

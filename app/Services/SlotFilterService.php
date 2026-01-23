@@ -76,9 +76,9 @@ class SlotFilterService
         $lateAddExpr = $this->slotService->getDateAddExpression('s.planned_start', 15);
 
         return [
-            'po' => 't.po_number',
+            'po' => 's.po_number',
             'mat_doc' => 's.mat_doc',
-            'vendor' => 'v.bp_name',
+            'vendor' => 's.vendor_name',
             'warehouse' => 'w.wh_name',
             'gate' => 'g.gate_number',
             'direction' => 's.direction',
@@ -111,16 +111,14 @@ class SlotFilterService
         return DB::table('slots as s')
             ->select([
                 's.*',
-                't.po_number as truck_number',
+                's.po_number as truck_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                'v.bp_name as vendor_name',
+                's.vendor_name',
                 'g.gate_number',
                 'td.target_duration_minutes',
             ])
-            ->join('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->leftJoin('gates as g', function($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                      ->on('s.warehouse_id', '=', 'g.warehouse_id');
@@ -139,9 +137,9 @@ class SlotFilterService
         if ($search !== '') {
             $like = '%' . $search . '%';
             $query->where(function ($sub) use ($like) {
-                $sub->where('t.po_number', 'like', $like)
+                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('v.bp_name', 'like', $like)
+                    ->orWhere('s.vendor_name', 'like', $like)
                     ->orWhere('w.wh_name', 'like', $like)
                     ->orWhere('s.direction', 'like', $like)
                     ->orWhere('s.status', 'like', $like);
@@ -151,12 +149,12 @@ class SlotFilterService
         // Specific field searches
         $truckSearch = trim($request->query('truck', ''));
         if ($truckSearch !== '') {
-            $query->where('t.po_number', 'like', '%' . $truckSearch . '%');
+            $query->where('s.po_number', 'like', '%' . $truckSearch . '%');
         }
 
         $vendorSearch = trim($request->query('vendor', ''));
         if ($vendorSearch !== '') {
-            $query->where('v.bp_name', 'like', '%' . $vendorSearch . '%');
+            $query->where('s.vendor_name', 'like', '%' . $vendorSearch . '%');
         }
 
         $matDocSearch = trim($request->query('mat_doc', ''));

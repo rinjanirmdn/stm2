@@ -14,9 +14,10 @@ class SlotDTO
     public ?string $truckNumber = null;
     public ?string $truckType = null;
     public ?string $direction = null;
-    public ?int $poId = null;
     public ?int $warehouseId = null;
-    public ?int $vendorId = null;
+    public ?string $vendorCode = null;
+    public ?string $vendorName = null;
+    public ?string $vendorType = null;
     public ?int $plannedGateId = null;
     public ?int $actualGateId = null;
     public ?string $status = null;
@@ -45,7 +46,6 @@ class SlotDTO
     // Related data
     public ?string $warehouseName = null;
     public ?string $warehouseCode = null;
-    public ?string $vendorName = null;
     public ?int $plannedGateNumber = null;
     public ?int $actualGateNumber = null;
 
@@ -93,9 +93,10 @@ class SlotDTO
             'truck_number' => $this->truckNumber,
             'truck_type' => $this->truckType,
             'direction' => $this->direction,
-            'po_id' => $this->poId,
             'warehouse_id' => $this->warehouseId,
-            'bp_id' => $this->vendorId,
+            'vendor_code' => $this->vendorCode,
+            'vendor_name' => $this->vendorName,
+            'vendor_type' => $this->vendorType,
             'planned_gate_id' => $this->plannedGateId,
             'actual_gate_id' => $this->actualGateId,
             'status' => $this->status,

@@ -3,253 +3,434 @@
 @section('title', 'Create Booking - Vendor Portal')
 
 @section('content')
-<div class="vendor-card">
-    <div class="vendor-card__header">
-        <h1 class="vendor-card__title">
-            <i class="fas fa-plus-circle"></i>
-            Create New Booking
-        </h1>
-        <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">
-            <i class="fas fa-arrow-left"></i>
-            Back
-        </a>
-    </div>
+<style>
+    .cb-layout {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 20px;
+        align-items: start;
+        padding-bottom: 100px;
+    }
+    .cb-form {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        padding: 24px;
+    }
+    .cb-form__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .cb-form__title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .cb-section {
+        margin-bottom: 24px;
+    }
+    .cb-section__title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .cb-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
 
-    <form method="POST" action="{{ route('vendor.bookings.store') }}" id="booking-form" enctype="multipart/form-data">
-        @csrf
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-            <!-- Left Column -->
-            <div>
-                <h3 style="margin-bottom: 1rem; color: #374151; font-size: 1rem; font-weight: 600;">
-                    <i class="fas fa-warehouse"></i>
-                    Location & Direction
-                </h3>
-                
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Warehouse <span style="color: #ef4444;">*</span></label>
-                    <select name="warehouse_id" class="vendor-form-select" required id="warehouse_id">
-                        <option value="">Select Warehouse</option>
-                        @foreach($warehouses as $warehouse)
-                            <option value="{{ $warehouse->id }}" {{ old('warehouse_id') == $warehouse->id ? 'selected' : '' }}>
-                                {{ $warehouse->wh_code }} - {{ $warehouse->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('warehouse_id')
-                        <small style="color: #ef4444;">{{ $message }}</small>
-                    @enderror
+    .cb-sidebar {
+        position: sticky;
+        top: 20px;
+    }
+    .cb-availability {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+    .cb-availability__header {
+        background: #1e3a5f;
+        color: white;
+        padding: 14px 16px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .cb-availability__body {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .cb-slot-row {
+        display: flex;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .cb-slot-time {
+        width: 60px;
+        padding: 10px 8px;
+        background: #f8fafc;
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    .cb-slot-gates {
+        display: flex;
+        flex: 1;
+        gap: 4px;
+        padding: 4px;
+    }
+    .cb-slot-cell {
+        flex: 1;
+        min-height: 32px;
+        border-radius: 4px;
+        font-size: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .cb-slot-cell--available { background: #f0fdf4; border: 1px dashed #86efac; color: #16a34a; }
+    .cb-slot-cell--available:hover { background: #dcfce7; }
+    .cb-slot-cell--booked { background: #dbeafe; border: 1px solid #3b82f6; color: #1e40af; font-weight: 600; }
+    .cb-slot-cell--pending { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; }
+    .cb-slot-cell--selected { background: #1e40af; color: white; border-color: #1e40af; }
+
+    .cb-summary {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.1);
+        padding: 16px 24px;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+    }
+    .cb-summary__info {
+        display: flex;
+        gap: 32px;
+        font-size: 13px;
+    }
+    .cb-summary__item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .cb-summary__label {
+        color: #64748b;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+    .cb-summary__value {
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .cb-summary__status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .cb-summary__status--available { background: #dcfce7; color: #166534; }
+    .cb-summary__status--unavailable { background: #fee2e2; color: #991b1b; }
+    .cb-summary__status--checking { background: #f1f5f9; color: #64748b; }
+    .cb-summary__actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+        .cb-layout { grid-template-columns: 1fr; }
+        .cb-sidebar { position: static; }
+        .cb-grid { grid-template-columns: 1fr; }
+        .cb-summary { flex-wrap: wrap; }
+        .cb-summary__info { flex-wrap: wrap; gap: 16px; }
+    }
+</style>
+
+<form method="POST" action="{{ route('vendor.bookings.store') }}" id="booking-form" enctype="multipart/form-data">
+@csrf
+
+<div class="cb-layout">
+    <!-- LEFT: Form -->
+    <div class="cb-form">
+        <div class="cb-form__header">
+            <h1 class="cb-form__title">
+                <i class="fas fa-plus-circle"></i>
+                Create New Booking
+            </h1>
+            <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+
+        <!-- PO Section -->
+        <div class="cb-section">
+            <div class="cb-section__title"><i class="fas fa-file-invoice"></i> PO/DO Information</div>
+            <div class="vendor-form-group">
+                <label class="vendor-form-label">PO/DO Number <span style="color: #ef4444;">*</span></label>
+                <div style="position: relative;">
+                    <input type="text" name="po_number" id="po_number" class="vendor-form-input" autocomplete="off"
+                           placeholder="Type PO/DO..." required value="{{ old('po_number') }}">
+                    <button type="button" id="po_clear" class="vendor-btn--secondary" style="position:absolute; right:8px; top:8px; font-size:12px; padding:4px 8px; border-radius:6px;">Clear</button>
+                    <div id="po_suggestions" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:#fff; border:1px solid #e5e7eb; border-radius:10px; margin-top:6px; max-height:260px; overflow:auto; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);"></div>
                 </div>
-
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">PO/DO Number <span style="color: #ef4444;">*</span></label>
-                    <div style="position: relative;">
-                        <input
-                            type="text"
-                            name="po_number"
-                            id="po_number"
-                            class="vendor-form-input"
-                            autocomplete="off"
-                            placeholder="Type PO/DO..."
-                            required
-                            value="{{ old('po_number') }}"
-                        >
-                        <div id="po_suggestions" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:#fff; border:1px solid #e5e7eb; border-radius:10px; margin-top:6px; max-height:260px; overflow:auto;"></div>
-                        <div id="po_preview" style="margin-top:8px;"></div>
-                    </div>
-                    @error('po_number')
-                        <small style="color: #ef4444;">{{ $message }}</small>
-                    @enderror
-                    <small style="color: #64748b;">Suggestions Only Show PO/DO Assigned to Your Vendor.</small>
-                </div>
-
-                <div class="vendor-form-group" id="po_items_group" style="display:none;">
-                    <label class="vendor-form-label">PO Items & Quantity for This Booking <span style="color: #ef4444;">*</span></label>
-                    <div id="po_items_box"></div>
-                    <small style="color: #64748b;">Input Quantity to Deliver Now. Remaining Quantity Will Stay Available for Future Bookings.</small>
-                </div>
-
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Direction <span style="color: #ef4444;">*</span></label>
-                    <select name="direction" class="vendor-form-select" required id="direction">
-                        <option value="">Select Direction</option>
-                        <option value="inbound" {{ old('direction', $defaultDirection ?? '') === 'inbound' ? 'selected' : '' }}>Inbound (Delivery)</option>
-                        <option value="outbound" {{ old('direction', $defaultDirection ?? '') === 'outbound' ? 'selected' : '' }}>Outbound (Pickup)</option>
-                    </select>
-                    @error('direction')
-                        <small style="color: #ef4444;">{{ $message }}</small>
-                    @enderror
-                </div>
-
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Preferred Gate (Optional)</label>
-                    <select name="planned_gate_id" class="vendor-form-select" id="gate_select">
-                        <option value="">Auto-assign by Admin</option>
-                        <!-- Gates will be loaded via JavaScript based on warehouse -->
-                    </select>
-                    <small style="color: #64748b;">Leave Empty for Admin to Assign the Best Available Gate</small>
-                </div>
-
-                <h3 style="margin-bottom: 1rem; margin-top: 2rem; color: #374151; font-size: 1rem; font-weight: 600;">
-                    <i class="fas fa-truck"></i>
-                    Vehicle Information
-                </h3>
-
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Truck Type</label>
-                    <select name="truck_type" class="vendor-form-select" id="truck_type">
-                        <option value="">Select Truck Type</option>
-                        @foreach($truckTypes as $type)
-                            <option value="{{ $type->truck_type }}" 
-                                    data-duration="{{ $type->target_duration_minutes }}"
-                                    {{ old('truck_type') === $type->truck_type ? 'selected' : '' }}>
-                                {{ $type->truck_type }} ({{ $type->target_duration_minutes }} Min)
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Vehicle Number (Optional)</label>
-                    <input type="text" name="vehicle_number" class="vendor-form-input" 
-                           placeholder="e.g., B 1234 ABC" value="{{ old('vehicle_number') }}">
-                    <small style="color: #64748b;">Can Be Provided Later Before Arrival</small>
-                </div>
+                <div id="po_preview" style="margin-top:8px;"></div>
             </div>
+            <div class="vendor-form-group" id="po_items_group" style="display:none;">
+                <label class="vendor-form-label">Items & Quantity</label>
+                <div id="po_items_box" style="max-height:320px; overflow:auto;"></div>
+            </div>
+        </div>
 
-            <!-- Right Column -->
-            <div>
-                <h3 style="margin-bottom: 1rem; color: #374151; font-size: 1rem; font-weight: 600;">
-                    <i class="fas fa-file-pdf"></i>
-                    Documents
-                </h3>
+        <!-- Documents -->
+        <div class="cb-section">
+            <div class="cb-section__title"><i class="fas fa-file-pdf"></i> Documents</div>
+            <div class="vendor-form-group">
+                <label class="vendor-form-label">COA (PDF, Max 10MB) <span style="color: #ef4444;">*</span></label>
+                <input type="file" name="coa_pdf" class="vendor-form-input" accept="application/pdf" required>
+            </div>
+        </div>
 
+        <!-- Schedule -->
+        <div class="cb-section">
+            <div class="cb-section__title"><i class="fas fa-calendar-alt"></i> Date & Time</div>
+            <div class="cb-grid">
                 <div class="vendor-form-group">
-                    <label class="vendor-form-label">COA (PDF) <span style="color: #ef4444;">*</span></label>
-                    <input type="file" name="coa_pdf" class="vendor-form-input" accept="application/pdf" required>
-                    @error('coa_pdf')
-                        <small style="color: #ef4444;">{{ $message }}</small>
-                    @enderror
-                </div>
-
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Surat Jalan (PDF) (Optional)</label>
-                    <input type="file" name="surat_jalan_pdf" class="vendor-form-input" accept="application/pdf">
-                    @error('surat_jalan_pdf')
-                        <small style="color: #ef4444;">{{ $message }}</small>
-                    @enderror
-                </div>
-
-                <h3 style="margin-bottom: 1rem; margin-top: 2rem; color: #374151; font-size: 1rem; font-weight: 600;">
-                    <i class="fas fa-calendar"></i>
-                    Schedule Preference
-                </h3>
-
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Preferred Date <span style="color: #ef4444;">*</span></label>
+                    <label class="vendor-form-label">Date <span style="color: #ef4444;">*</span></label>
                     <input type="date" name="planned_date" class="vendor-form-input" required
-                           min="{{ date('Y-m-d') }}" value="{{ old('planned_date', date('Y-m-d')) }}" id="planned_date">
-                    @error('planned_date')
-                        <small style="color: #ef4444;">{{ $message }}</small>
-                    @enderror
+                           min="{{ date('Y-m-d') }}" value="{{ old('planned_date', request('date', date('Y-m-d'))) }}" id="planned_date">
                 </div>
-
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Time <span style="color: #ef4444;">*</span></label>
                     <input type="time" name="planned_time" class="vendor-form-input" required
-                           min="07:00" max="22:00" value="{{ old('planned_time', '09:00') }}" id="planned_time">
-                    <small style="color: #64748b;">Operating hours: 07:00 - 23:00</small>
-                    @error('planned_time')
-                        <small style="color: #ef4444;">{{ $message }}</small>
-                    @enderror
+                           min="07:00" max="22:00" value="{{ old('planned_time', request('time', '09:00')) }}" id="planned_time">
                 </div>
+            </div>
+            <input type="hidden" name="planned_duration" id="planned_duration" value="{{ old('planned_duration') }}">
+        </div>
 
+        <!-- Vehicle & Documents -->
+        <div class="cb-section">
+            <div class="cb-section__title"><i class="fas fa-truck"></i> Vehicle Details</div>
+            <div class="cb-grid">
                 <div class="vendor-form-group">
-                    <label class="vendor-form-label">Duration (Minutes) <span style="color: #ef4444;">*</span></label>
-                    <input type="number" name="planned_duration" class="vendor-form-input" required
-                           min="30" max="480" step="30" value="{{ old('planned_duration', 60) }}" id="planned_duration">
-                    <small style="color: #64748b;">Duration Is Auto-suggested Based on Truck Type</small>
-                    @error('planned_duration')
-                        <div class="vendor-form-error">{{ $message }}</div>
-                    @enderror
+                    <label class="vendor-form-label">Truck Type</label>
+                    <select name="truck_type" class="vendor-form-select" id="truck_type">
+                        <option value="">Select Type</option>
+                        @foreach($truckTypes as $type)
+                            <option value="{{ $type->truck_type }}" data-duration="{{ $type->target_duration_minutes }}">
+                                {{ $type->truck_type }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-
-                <!-- Availability Check -->
-                <div id="availability-check" style="padding: 1rem; border-radius: 10px; background: #f8fafc; margin-top: 1rem; display: none;">
-                    <div id="availability-result"></div>
+                <div class="vendor-form-group">
+                    <label class="vendor-form-label">Vehicle Number</label>
+                    <input type="text" name="vehicle_number" class="vendor-form-input" placeholder="B 1234 ABC" value="{{ old('vehicle_number') }}">
                 </div>
+                <div class="vendor-form-group">
+                    <label class="vendor-form-label">Driver Name</label>
+                    <input type="text" name="driver_name" class="vendor-form-input" placeholder="Driver name" value="{{ old('driver_name') }}">
+                </div>
+                <div class="vendor-form-group">
+                    <label class="vendor-form-label">Driver Number</label>
+                    <input type="text" name="driver_number" class="vendor-form-input" placeholder="08xxxxxxxxxx" value="{{ old('driver_number') }}">
+                </div>
+            </div>
+            <div class="vendor-form-group">
+                <label class="vendor-form-label">Notes</label>
+                <textarea name="notes" class="vendor-form-textarea" rows="2" placeholder="Special requests...">{{ old('notes') }}</textarea>
+            </div>
+        </div>
+    </div>
 
-                <div class="vendor-form-group" style="margin-top: 1.5rem;">
-                    <label class="vendor-form-label">Notes (Optional)</label>
-                    <textarea name="notes" class="vendor-form-textarea" rows="3" 
-                              placeholder="Any Special Requests or Notes...">{{ old('notes') }}</textarea>
+    <!-- RIGHT: Live Availability -->
+    <div class="cb-sidebar">
+        <div class="cb-availability">
+            <div class="cb-availability__header">
+                <i class="fas fa-calendar-alt"></i>
+                Live Availability
+            </div>
+            <div class="cb-availability__body" id="live-availability">
+                <div style="text-align: center; padding: 40px 20px; color: #64748b;">
+                    <i class="fas fa-clock" style="font-size: 32px; opacity: 0.3; margin-bottom: 8px;"></i>
+                    <p style="margin: 0; font-size: 13px;">Select a date to load availability</p>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 1rem; justify-content: flex-end;">
-            <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">
-                Cancel
-            </a>
-            <button type="submit" class="vendor-btn vendor-btn--primary" id="submit-btn">
-                <i class="fas fa-paper-plane"></i>
-                Submit Booking Request
-            </button>
+<!-- Sticky Summary -->
+<div class="cb-summary">
+    <div class="cb-summary__info">
+        <div class="cb-summary__item">
+            <span class="cb-summary__label">Date</span>
+            <span class="cb-summary__value" id="summary-date">-</span>
         </div>
-    </form>
+        <div class="cb-summary__item">
+            <span class="cb-summary__label">Time</span>
+            <span class="cb-summary__value" id="summary-time">-</span>
+        </div>
+        <div class="cb-summary__item">
+            <span class="cb-summary__label">Duration</span>
+            <span class="cb-summary__value" id="summary-duration">-</span>
+        </div>
+    </div>
+    <div id="summary-status" class="cb-summary__status cb-summary__status--checking">
+        <i class="fas fa-circle-notch fa-spin"></i> Checking...
+    </div>
+    <div class="cb-summary__actions">
+        <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">Cancel</a>
+        <button type="submit" class="vendor-btn vendor-btn--primary" id="submit-btn">
+            <i class="fas fa-paper-plane"></i> Submit Booking
+        </button>
+    </div>
 </div>
 
-<!-- Availability Calendar Preview -->
-<div class="vendor-card">
-    <div class="vendor-card__header">
-        <h2 class="vendor-card__title">
-            <i class="fas fa-calendar-alt"></i>
-            Slot Availability Preview
-        </h2>
-    </div>
-    
-    <div id="calendar-preview" style="min-height: 200px;">
-        <p style="text-align: center; color: #64748b; padding: 2rem;">
-            Select a Warehouse and Date to See Availability
-        </p>
-    </div>
-</div>
+</form>
 @endsection
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const warehouseSelect = document.getElementById('warehouse_id');
-    const gateSelect = document.getElementById('gate_select');
     const truckTypeSelect = document.getElementById('truck_type');
     const durationInput = document.getElementById('planned_duration');
     const dateInput = document.getElementById('planned_date');
     const timeInput = document.getElementById('planned_time');
-    const availabilityCheck = document.getElementById('availability-check');
-    const availabilityResult = document.getElementById('availability-result');
-    const calendarPreview = document.getElementById('calendar-preview');
+    const liveAvailability = document.getElementById('live-availability');
 
     const poInput = document.getElementById('po_number');
     const poSuggestions = document.getElementById('po_suggestions');
     const poPreview = document.getElementById('po_preview');
     const poItemsGroup = document.getElementById('po_items_group');
     const poItemsBox = document.getElementById('po_items_box');
-    const directionSelect = document.getElementById('direction');
-    const vendorType = '{{ $vendorType ?? '' }}';
-    const defaultDirection = '{{ $defaultDirection ?? '' }}';
+    const poClearBtn = document.getElementById('po_clear');
+    const summaryDate = document.getElementById('summary-date');
+    const summaryTime = document.getElementById('summary-time');
+    const summaryDuration = document.getElementById('summary-duration');
+    const summaryStatus = document.getElementById('summary-status');
 
     const urlPoSearch = '{{ route('vendor.ajax.po_search') }}';
     const urlPoDetailTemplate = '{{ route('vendor.ajax.po_detail', ['poNumber' => '__PO__']) }}';
-
+    const urlAvailableSlots = '{{ route('vendor.ajax.available_slots') }}';
+    const defaultWarehouseId = {{ (int) ($defaultWarehouseId ?? 0) }};
     let poDebounceTimer = null;
-    let directionTouched = false;
-
     function escapeHtml(str) {
-        return String(str || '').replace(/[&<>"']/g, function (m) {
-            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]);
-        });
+        return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
     }
 
+    // Summary update
+    function updateSummary() {
+        summaryDate.textContent = dateInput.value || '-';
+        summaryTime.textContent = timeInput.value || '-';
+        summaryDuration.textContent = durationInput.value ? durationInput.value + ' min' : '-';
+    }
+
+    // Availability check
+    function checkAvailability() {
+        updateSummary();
+        const date = dateInput.value;
+        const time = timeInput.value;
+        const duration = durationInput.value;
+
+        if (!date || !time || !duration) {
+            summaryStatus.className = 'cb-summary__status cb-summary__status--checking';
+            summaryStatus.innerHTML = '<i class="fas fa-info-circle"></i> Fill required fields';
+            return;
+        }
+
+        summaryStatus.className = 'cb-summary__status cb-summary__status--checking';
+        summaryStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Checking...';
+
+        const plannedStart = date + ' ' + time + ':00';
+
+        // Global blocking is enforced server-side on submit.
+        summaryStatus.className = 'cb-summary__status cb-summary__status--checking';
+        summaryStatus.innerHTML = '<i class="fas fa-info-circle"></i> Will be checked on submit';
+    }
+    function loadLiveAvailability() {
+        const date = dateInput.value;
+        if (!date || !defaultWarehouseId) {
+            liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #64748b;">Select a date to load availability.</div>';
+            return;
+        }
+
+        liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #64748b;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+        const url = urlAvailableSlots + '?warehouse_id=' + encodeURIComponent(defaultWarehouseId) + '&date=' + encodeURIComponent(date);
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(resp => {
+                const slots = (resp && resp.success) ? (resp.slots || []) : [];
+                const available = slots.filter(s => s.is_available);
+                if (!available.length) {
+                    liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #64748b;">No available times for this date.</div>';
+                    return;
+                }
+                let html = '<div style="padding: 6px 0;">';
+                available.forEach(slot => {
+                    html += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; border-bottom:1px solid #f1f5f9;">
+                            <span style="font-size:12px; font-weight:600; color:#1e293b;">${slot.time}</span>
+                            <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm" data-time="${slot.time}" style="padding:4px 10px;">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                liveAvailability.innerHTML = html;
+
+                liveAvailability.querySelectorAll('button[data-time]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        timeInput.value = btn.dataset.time;
+                        checkAvailability();
+                    });
+                });
+            })
+            .catch(() => {
+                liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #ef4444;">Failed to load availability.</div>';
+            });
+    }
+    truckTypeSelect.addEventListener('change', function() {
+        const dur = this.options[this.selectedIndex].dataset.duration;
+        durationInput.value = dur || '';
+        checkAvailability();
+    });
+
+    [dateInput, timeInput].forEach(el => {
+        el.addEventListener('change', () => {
+            checkAvailability();
+            if (el === dateInput) loadLiveAvailability();
+        });
+    });
+
+    // PO Functions
     function closePoSuggestions() {
         if (!poSuggestions) return;
         poSuggestions.style.display = 'none';
@@ -263,23 +444,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderPoSuggestions(items) {
-        if (!poSuggestions) return;
-        if (!items || items.length === 0) {
-            showPoSuggestionsMessage(
-                '<div style="padding:12px; color:#64748b; font-size:13px;">No PO/DO Found for Your Vendor</div>'
-            );
+        if (!items || !items.length) {
+            showPoSuggestionsMessage('<div style="padding:12px; color:#64748b; font-size:13px;">No PO/DO Found</div>');
             return;
         }
         let html = '';
-        items.forEach(function (it) {
-            const po = it.po_number || '';
-            const vendorName = it.vendor_name || '';
-            const dir = it.direction || '';
-            html += '<div class="po-item" data-po="' + escapeHtml(po) + '" data-dir="' + escapeHtml(dir) + '" '
-                + 'style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9;">'
-                + '<div style="font-weight:600;">' + escapeHtml(po) + '</div>'
-                + '<div style="font-size:12px; color:#64748b;">' + escapeHtml(vendorName) + (dir ? (' | ' + escapeHtml(dir)) : '') + '</div>'
-                + '</div>';
+        items.forEach(it => {
+            html += `<div class="po-item" data-po="${escapeHtml(it.po_number)}" data-dir="${escapeHtml(it.direction || '')}" 
+                style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9;">
+                <div style="font-weight:600;">${escapeHtml(it.po_number)}</div>
+                <div style="font-size:12px; color:#64748b;">${escapeHtml(it.vendor_name || '')}</div>
+            </div>`;
         });
         poSuggestions.innerHTML = html;
         poSuggestions.style.display = 'block';
@@ -287,399 +462,91 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setPoPreview(data) {
         if (!poPreview) return;
-        if (!data) {
-            poPreview.innerHTML = '';
-            if (poItemsGroup) poItemsGroup.style.display = 'none';
-            if (poItemsBox) poItemsBox.innerHTML = '';
-            return;
-        }
-        const vendorName = data.vendor_name || '-';
-        const vendorCode = data.vendor_code || '';
-        const direction = data.direction || '';
-        poPreview.innerHTML = ''
-            + '<div style="padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#f8fafc;">'
-            + '<div style="font-size:12px; color:#64748b; margin-bottom:4px;">PO Preview</div>'
-            + '<div style="font-weight:600;">' + escapeHtml(data.po_number || '') + '</div>'
-            + '<div style="font-size:12px; color:#475569;">Vendor: ' + escapeHtml(vendorName) + (vendorCode ? (' (' + escapeHtml(vendorCode) + ')') : '') + '</div>'
-            + (direction ? ('<div style="font-size:12px; color:#475569;">Direction: ' + escapeHtml(direction) + '</div>') : '')
-            + '</div>';
+        if (!data) { poPreview.innerHTML = ''; if (poItemsGroup) poItemsGroup.style.display = 'none'; return; }
+        poPreview.innerHTML = `<div style="padding:10px 12px; border:1px solid #e5e7eb; border-radius:8px; background:#f8fafc;">
+            <div style="font-weight:600;">${escapeHtml(data.po_number)}</div>
+            <div style="font-size:12px; color:#475569;">Vendor: ${escapeHtml(data.vendor_name || '-')}</div>
+        </div>`;
     }
 
     function renderPoItems(items) {
-        if (!poItemsGroup || !poItemsBox) return;
-        if (!Array.isArray(items) || items.length === 0) {
-            poItemsGroup.style.display = 'none';
-            poItemsBox.innerHTML = '';
+        if (!poItemsGroup || !poItemsBox || !items || !items.length) {
+            if (poItemsGroup) poItemsGroup.style.display = 'none';
             return;
         }
-
-        function formatQty(val) {
-            const n = Number(val);
-            if (!isFinite(n)) return String(val ?? '');
-            const isInt = Math.abs(n - Math.round(n)) < 1e-9;
-            const fmt = new Intl.NumberFormat('id-ID', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: isInt ? 0 : 3,
-            });
-            return fmt.format(n);
-        }
-
-        let html = '';
-        html += '<div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">';
-        html += '<div style="display:grid; grid-template-columns: 90px 1fr 110px 110px; gap:0; background:#f8fafc; padding:10px 12px; font-weight:600; font-size:12px; color:#475569;">'
-            + '<div>Item</div><div>Material</div><div style="text-align:right;">Remaining</div><div>Qty Now</div>'
-            + '</div>';
-
-        items.forEach(function(it, idx) {
-            const itemNo = it.item_no || '';
-            const mat = (it.material || '') + (it.description ? (' - ' + it.description) : '');
-            const uom = it.uom || '';
-            const remaining = (it.remaining_qty != null ? it.remaining_qty : 0);
-
-            html += '<div style="display:grid; grid-template-columns: 90px 1fr 110px 110px; gap:0; padding:10px 12px; border-top:1px solid #f1f5f9; align-items:center;">'
-                + '<div style="font-weight:600;">' + escapeHtml(itemNo) + '</div>'
-                + '<div style="font-size:12px; color:#475569;">' + escapeHtml(mat) + '</div>'
-                + '<div style="text-align:right; font-size:12px; color:#0f172a;">' + escapeHtml(formatQty(remaining)) + ' ' + escapeHtml(uom) + '</div>'
-                + '<div>'
-                + '<input type="number" min="0" step="0.001" name="po_items[' + escapeHtml(itemNo) + '][qty]"'
-                + ' style="width:100%; padding:8px 10px; border:2px solid #e5e7eb; border-radius:10px;"'
-                + ' max="' + escapeHtml(remaining) + '" />'
-                + '</div>'
-                + '</div>';
+        let html = '<div style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; font-size:12px;">';
+        items.forEach(it => {
+            html += `<div style="display:flex; gap:8px; padding:8px 10px; border-top:1px solid #f1f5f9; align-items:center;">
+                <span style="font-weight:600; min-width:60px;">${escapeHtml(it.item_no)}</span>
+                <span style="flex:1; color:#475569;">${escapeHtml(it.material || '')}</span>
+                <span style="min-width:80px; text-align:right;">${it.remaining_qty} ${escapeHtml(it.uom || '')}</span>
+                <input type="number" min="0" step="0.001" name="po_items[${escapeHtml(it.item_no)}][qty]" 
+                    style="width:80px; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px;" max="${it.remaining_qty}">
+            </div>`;
         });
-
         html += '</div>';
         poItemsBox.innerHTML = html;
         poItemsGroup.style.display = 'block';
     }
 
-    function getJson(url) {
-        return fetch(url, { headers: { 'Accept': 'application/json' } }).then(r => r.json());
-    }
-
     function fetchPoDetail(poNumber) {
-        if (!poNumber) {
-            setPoPreview(null);
-            return;
-        }
-        const url = String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber));
-        getJson(url)
-            .then(function (resp) {
-                if (!resp || !resp.success) {
-                    setPoPreview(null);
-                    if (poItemsGroup && poItemsBox) {
-                        const msg = (resp && resp.message) ? String(resp.message) : 'PO Detail Not Found or Not Assigned to Your Vendor.';
-                        poItemsBox.innerHTML = '<div style="padding:10px 12px; border:1px solid #fecaca; background:#fef2f2; color:#991b1b; border-radius:10px; font-size:13px;">' + escapeHtml(msg) + '</div>';
-                        poItemsGroup.style.display = 'block';
-                    }
-                    return;
-                }
-                const data = resp.data || null;
-                setPoPreview(data);
-                renderPoItems((data && data.items) ? data.items : []);
-                if (!directionTouched && directionSelect && data && data.direction) {
-                    directionSelect.value = String(data.direction);
-                }
+        if (!poNumber) { setPoPreview(null); return; }
+        const url = urlPoDetailTemplate.replace('__PO__', encodeURIComponent(poNumber));
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(resp => {
+                if (!resp.success) { setPoPreview(null); return; }
+                setPoPreview(resp.data);
+                renderPoItems(resp.data?.items || []);
             })
-            .catch(function () {
-                setPoPreview(null);
-                if (poItemsGroup && poItemsBox) {
-                    poItemsBox.innerHTML = '<div style="padding:10px 12px; border:1px solid #fecaca; background:#fef2f2; color:#991b1b; border-radius:10px; font-size:13px;">Failed to Load PO Detail. Please Try Again.</div>';
-                    poItemsGroup.style.display = 'block';
-                }
-            });
-    }
-
-    if (directionSelect) {
-        directionSelect.addEventListener('change', function () {
-            directionTouched = true;
-        });
-    }
-
-    if (directionSelect && !directionSelect.value && defaultDirection) {
-        directionSelect.value = defaultDirection;
+            .catch(() => setPoPreview(null));
     }
 
     if (poInput) {
-        poInput.addEventListener('input', function () {
-            const q = (poInput.value || '').trim();
+        poInput.addEventListener('input', function() {
+            const q = poInput.value.trim();
             setPoPreview(null);
             if (poDebounceTimer) clearTimeout(poDebounceTimer);
-            poDebounceTimer = setTimeout(function () {
-                if (!q) {
-                    closePoSuggestions();
-                    return;
-                }
-                showPoSuggestionsMessage(
-                    '<div style="padding:12px; color:#64748b; font-size:13px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>'
-                );
-                getJson(urlPoSearch + '?q=' + encodeURIComponent(q))
-                    .then(function (resp) {
-                        if (!resp || !resp.success) {
-                            showPoSuggestionsMessage(
-                                '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to Load Suggestions</div>'
-                            );
-                            return;
-                        }
-                        renderPoSuggestions(resp.data || []);
-                    })
-                    .catch(function () {
-                        showPoSuggestionsMessage(
-                            '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to Load Suggestions</div>'
-                        );
-                    });
+            poDebounceTimer = setTimeout(() => {
+                if (!q) { closePoSuggestions(); return; }
+                showPoSuggestionsMessage('<div style="padding:12px;"><i class="fas fa-spinner fa-spin"></i></div>');
+                fetch(urlPoSearch + '?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+                    .then(r => r.json())
+                    .then(resp => renderPoSuggestions(resp.data || []))
+                    .catch(() => showPoSuggestionsMessage('<div style="padding:12px; color:#ef4444;">Error</div>'));
             }, 250);
         });
+        poInput.addEventListener('blur', () => { if (poInput.value.trim()) fetchPoDetail(poInput.value.trim()); });
+    }
 
-        poInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const q = (poInput.value || '').trim();
-                if (q) {
-                    closePoSuggestions();
-                    fetchPoDetail(q);
-                }
-            }
-        });
-
-        poInput.addEventListener('blur', function () {
-            const q = (poInput.value || '').trim();
-            if (q) {
-                fetchPoDetail(q);
-            }
-        });
-
-        poInput.addEventListener('focus', function () {
-            const q = (poInput.value || '').trim();
-            if (!q) return;
-            showPoSuggestionsMessage(
-                '<div style="padding:12px; color:#64748b; font-size:13px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>'
-            );
-            getJson(urlPoSearch + '?q=' + encodeURIComponent(q))
-                .then(function (resp) {
-                    if (!resp || !resp.success) {
-                        showPoSuggestionsMessage(
-                            '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to Load Suggestions</div>'
-                        );
-                        return;
-                    }
-                    renderPoSuggestions(resp.data || []);
-                })
-                .catch(function () {
-                    showPoSuggestionsMessage(
-                        '<div style="padding:12px; color:#ef4444; font-size:13px;">Failed to Load Suggestions</div>'
-                    );
-                });
+    if (poClearBtn) {
+        poClearBtn.addEventListener('click', function () {
+            if (poInput) poInput.value = '';
+            setPoPreview(null);
+            if (poItemsBox) poItemsBox.innerHTML = '';
+            if (poItemsGroup) poItemsGroup.style.display = 'none';
+            closePoSuggestions();
         });
     }
 
     if (poSuggestions) {
-        poSuggestions.addEventListener('click', function (e) {
+        poSuggestions.addEventListener('click', e => {
             const item = e.target.closest('.po-item');
-            if (!item || !poInput) return;
-            const po = item.getAttribute('data-po') || '';
-            poInput.value = po;
+            if (!item) return;
+            poInput.value = item.dataset.po;
             closePoSuggestions();
-            fetchPoDetail(po);
-
-            const dir = item.getAttribute('data-dir') || '';
-            if (!directionTouched && directionSelect && dir) {
-                directionSelect.value = dir;
-            }
+            fetchPoDetail(item.dataset.po);
         });
     }
 
-    document.addEventListener('click', function (e) {
-        if (!poSuggestions || !poInput) return;
-        if (e.target === poInput || poSuggestions.contains(e.target)) return;
-        closePoSuggestions();
+    document.addEventListener('click', e => {
+        if (poSuggestions && !poInput.contains(e.target) && !poSuggestions.contains(e.target)) closePoSuggestions();
     });
-
-    if (poInput && (poInput.value || '').trim() !== '') {
-        fetchPoDetail((poInput.value || '').trim());
-    }
-
-    // Gate data from backend
-    const gatesData = @json($gates);
-
-    // Update gates when warehouse changes
-    warehouseSelect.addEventListener('change', function() {
-        const warehouseId = this.value;
-        gateSelect.innerHTML = '<option value="">Auto-assign by Admin</option>';
-
-        if (warehouseId && gatesData[warehouseId]) {
-            gatesData[warehouseId].forEach(function(gate) {
-                const option = document.createElement('option');
-                option.value = gate.id;
-                option.textContent = gate.name || 'Gate ' + gate.gate_number;
-                gateSelect.appendChild(option);
-            });
-        }
-
-        loadCalendarPreview();
-    });
-
-    // Update duration when truck type changes
-    truckTypeSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const duration = selectedOption.dataset.duration;
-        if (duration) {
-            durationInput.value = duration;
-        }
-        checkAvailability();
-    });
-
-    // Check availability when inputs change
-    [dateInput, timeInput, durationInput, gateSelect].forEach(function(input) {
-        input.addEventListener('change', checkAvailability);
-    });
-
-    dateInput.addEventListener('change', loadCalendarPreview);
-
-    function checkAvailability() {
-        const warehouseId = warehouseSelect.value;
-        const gateId = gateSelect.value;
-        const date = dateInput.value;
-        const time = timeInput.value;
-        const duration = durationInput.value;
-
-        if (!warehouseId || !date || !time || !duration) {
-            availabilityCheck.style.display = 'none';
-            return;
-        }
-
-        const plannedStart = date + ' ' + time + ':00';
-
-        fetch(`{{ route('vendor.ajax.check_availability') }}?warehouse_id=${warehouseId}&gate_id=${gateId}&planned_start=${encodeURIComponent(plannedStart)}&planned_duration=${duration}`)
-            .then(response => response.json())
-            .then(data => {
-                availabilityCheck.style.display = 'block';
-                
-                if (data.available) {
-                    let riskText = '';
-                    let riskColor = '#10b981';
-                    
-                    if (data.blocking_risk === 0) {
-                        riskText = 'Low Risk - Good Time Slot!';
-                    } else if (data.blocking_risk === 1) {
-                        riskText = 'Medium Risk - Some Overlap with Other Bookings';
-                        riskColor = '#f59e0b';
-                    } else {
-                        riskText = 'High Risk - Consider Another Time';
-                        riskColor = '#ef4444';
-                    }
-                    
-                    availabilityResult.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #10b981;">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Time Slot Is Available</span>
-                        </div>
-                        <div style="margin-top: 0.5rem; color: ${riskColor}; font-size: 0.875rem;">
-                            <i class="fas fa-info-circle"></i>
-                            ${riskText}
-                        </div>
-                    `;
-                } else {
-                    availabilityResult.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #ef4444;">
-                            <i class="fas fa-times-circle"></i>
-                            <span>${data.reason || 'Time Slot Is Not Available'}</span>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Error checking availability:', error);
-            });
-    }
-
-    function loadCalendarPreview() {
-        const warehouseId = warehouseSelect.value;
-        const date = dateInput.value;
-
-        if (!warehouseId || !date) {
-            calendarPreview.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">Select a Warehouse and Date to See Availability</p>';
-            return;
-        }
-
-        calendarPreview.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
-
-        fetch(`{{ route('vendor.ajax.calendar_slots') }}?warehouse_id=${warehouseId}&date=${date}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.gates) {
-                    renderCalendar(data.gates, date);
-                }
-            })
-            .catch(error => {
-                calendarPreview.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Failed to Load Availability</p>';
-            });
-    }
-
-    function renderCalendar(gates, date) {
-        const hours = [];
-        for (let h = 7; h < 23; h++) {
-            hours.push(h.toString().padStart(2, '0') + ':00');
-        }
-
-        let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
-        html += '<thead><tr><th style="padding: 0.5rem; border: 1px solid #e5e7eb; background: #f8fafc;">Time</th>';
-        
-        gates.forEach(g => {
-            html += `<th style="padding: 0.5rem; border: 1px solid #e5e7eb; background: #f8fafc; min-width: 120px;">${g.gate.name}</th>`;
-        });
-        html += '</tr></thead><tbody>';
-
-        hours.forEach(hour => {
-            html += `<tr><td style="padding: 0.5rem; border: 1px solid #e5e7eb; font-weight: 500;">${hour}</td>`;
-            
-            gates.forEach(g => {
-                const slot = g.slots.find(s => s.start_time === hour || (s.start_time < hour && s.end_time > hour));
-                
-                if (slot && slot.start_time === hour) {
-                    const statusColors = {
-                        'pending_approval': '#fef3c7',
-                        'scheduled': '#dcfce7',
-                        'arrived': '#dbeafe',
-                        'in_progress': '#ede9fe',
-                        'pending_vendor_confirmation': '#fce7f3'
-                    };
-                    const color = statusColors[slot.status] || '#f3f4f6';
-                    const rowspan = Math.ceil(slot.duration / 60) || 1;
-                    
-                    html += `<td style="padding: 0.5rem; border: 1px solid #e5e7eb; background: ${color}; vertical-align: top;" rowspan="${rowspan}">
-                        <div style="font-weight: 500;">${slot.start_time} - ${slot.end_time}</div>
-                        <div style="font-size: 0.75rem; color: #64748b;">${slot.vendor_name}</div>
-                        <div style="font-size: 0.7rem; margin-top: 0.25rem;">${slot.status_label}</div>
-                    </td>`;
-                } else if (!slot || slot.start_time === hour) {
-                    // Check if current hour is occupied by a slot from earlier
-                    const occupiedSlot = g.slots.find(s => s.start_time < hour && s.end_time > hour);
-                    if (!occupiedSlot) {
-                        html += `<td style="padding: 0.5rem; border: 1px solid #e5e7eb; background: #f0fdf4; text-align: center; color: #16a34a;">
-                            <i class="fas fa-check" style="opacity: 0.5;"></i>
-                        </td>`;
-                    }
-                }
-            });
-            html += '</tr>';
-        });
-
-        html += '</tbody></table></div>';
-        html += '<div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.75rem;">';
-        html += '<span><span style="display: inline-block; width: 12px; height: 12px; background: #f0fdf4; border: 1px solid #e5e7eb; margin-right: 0.25rem;"></span> Available</span>';
-        html += '<span><span style="display: inline-block; width: 12px; height: 12px; background: #fef3c7; border: 1px solid #e5e7eb; margin-right: 0.25rem;"></span> Pending Approval</span>';
-        html += '<span><span style="display: inline-block; width: 12px; height: 12px; background: #dcfce7; border: 1px solid #e5e7eb; margin-right: 0.25rem;"></span> Scheduled</span>';
-        html += '<span><span style="display: inline-block; width: 12px; height: 12px; background: #ede9fe; border: 1px solid #e5e7eb; margin-right: 0.25rem;"></span> In Progress</span>';
-        html += '</div>';
-
-        calendarPreview.innerHTML = html;
-    }
 
     // Initial load
-    if (warehouseSelect.value) {
-        warehouseSelect.dispatchEvent(new Event('change'));
-    }
+    updateSummary();
+    loadLiveAvailability();
+    if (poInput?.value.trim()) fetchPoDetail(poInput.value.trim());
 });
 </script>
 @endpush

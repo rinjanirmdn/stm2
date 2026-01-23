@@ -7,13 +7,6 @@ use Illuminate\Validation\Rule;
 
 class SlotStoreRequest extends FormRequest
 {
-    protected function prepareForValidation(): void
-    {
-        if ($this->has('vendor_id') && ! $this->has('bp_id')) {
-            $this->merge(['bp_id' => $this->input('vendor_id')]);
-        }
-    }
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -68,11 +61,6 @@ class SlotStoreRequest extends FormRequest
                 'integer',
                 'exists:warehouses,id'
             ],
-            'bp_id' => [
-                'nullable',
-                'integer',
-                'exists:business_partner,id'
-            ],
             'planned_gate_id' => [
                 'nullable',
                 'integer',
@@ -114,7 +102,6 @@ class SlotStoreRequest extends FormRequest
             'direction.in' => 'Direction harus inbound atau outbound.',
             'warehouse_id.required' => 'Warehouse wajib dipilih.',
             'warehouse_id.exists' => 'Warehouse tidak ditemukan.',
-            'bp_id.exists' => 'Vendor tidak ditemukan.',
             'planned_gate_id.exists' => 'Gate tidak ditemukan.',
             'planned_start.required' => 'Planned start wajib diisi.',
             'planned_start.date' => 'Planned start harus berupa tanggal yang valid.',

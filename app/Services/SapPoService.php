@@ -61,84 +61,127 @@ class SapPoService
         $sapClient = trim((string) config('services.sap_po.sap_client', '210'));
         $verifySsl = (bool) config('services.sap_po.verify_ssl', false);
 
-        // Build OData filter URL (don't URL encode, let HTTP client handle it)
-        $url = rtrim($baseUrl, '/') . $servicePath . '/ZPOA_DTL_LIST/Set';
+        // NOTE:
+        // This SAP Gateway endpoint rejects $filter/$top and only allows limited query options.
+        // We fetch pages without server-side filtering and apply filtering client-side.
+        // Some gateways are also picky about collection URLs, so we try a fallback without '/Set'.
+        $urlWithSet = rtrim($baseUrl, '/') . $servicePath . '/ZPOA_DTL_LIST/Set';
+        $urlWithoutSet = rtrim($baseUrl, '/') . $servicePath . '/ZPOA_DTL_LIST';
 
         try {
             $req = $this->buildSapRequest($timeout, $token, $username, $password, $sapClient, $verifySsl)->acceptJson();
-            
-            // Use query params array for proper encoding
-            $response = $req->get($url, [
-                '$filter' => "contains(PoNo,'{$query}')",
-                '$top' => $limit
-            ]);
 
-            \Log::info('SAP PO Search', [
-                'url' => $url,
-                'filter' => "contains(PoNo,'{$query}')",
-                'status' => $response->status(),
-                'body' => substr($response->body(), 0, 500)
-            ]);
-            
-            if (!$response->successful()) {
-                return [];
-            }
+            // Only allowed options: keep it minimal
+            $queryParams = [
+                '$select' => 'PoNo,DocDate,SupplierCode,SupplierName,CustomerCode,CustomerName',
+            ];
 
-            $json = $response->json();
-            $rows = $json['value'] ?? [];
-            
-            // Group by PoNo to get unique POs
-            $seen = [];
-            $results = [];
-            
-            foreach ($rows as $item) {
-                $poNo = (string)($item['PoNo'] ?? '');
-                if ($poNo === '' || isset($seen[$poNo])) continue;
-                
-                $seen[$poNo] = true;
-                
-                $supplierCode = (string) ($item['SupplierCode'] ?? '');
-                $supplierName = (string) ($item['SupplierName'] ?? '');
-                $customerCode = (string) ($item['CustomerCode'] ?? '');
-                $customerName = (string) ($item['CustomerName'] ?? '');
+            foreach ([$urlWithSet, $urlWithoutSet] as $baseListUrl) {
+                $results = [];
+                $seen = [];
+                $maxPages = 8;
+                $page = 0;
+                $nextUrl = $baseListUrl;
 
-                $partnerRole = '';
-                $direction = '';
-                $partnerCode = '';
-                $partnerName = '';
+                while ($nextUrl !== '' && $page < $maxPages && count($results) < $limit) {
+                    $page++;
 
-                if ($customerCode !== '') {
-                    $partnerRole = 'customer';
-                    $direction = 'outbound';
-                    $partnerCode = $customerCode;
-                    $partnerName = $customerName;
-                } else {
-                    $partnerRole = 'supplier';
-                    $direction = 'inbound';
-                    $partnerCode = $supplierCode;
-                    $partnerName = $supplierName;
+                    $response = $req->get($nextUrl, $nextUrl === $baseListUrl ? $queryParams : []);
+
+                    \Log::info('SAP PO Search', [
+                        'url' => $nextUrl,
+                        'status' => $response->status(),
+                        'body' => substr($response->body(), 0, 500),
+                    ]);
+
+                    if (!$response->successful()) {
+                        // Try next URL variant
+                        break;
+                    }
+
+                    $json = $response->json();
+                    $rows = is_array($json) ? ($json['value'] ?? []) : [];
+                    if (!is_array($rows)) {
+                        $rows = [];
+                    }
+
+                    foreach ($rows as $item) {
+                        if (!is_array($item)) {
+                            continue;
+                        }
+
+                        $poNo = (string)($item['PoNo'] ?? '');
+                        if ($poNo === '') {
+                            continue;
+                        }
+
+                        // Client-side contains filter
+                        if (stripos($poNo, $query) === false) {
+                            continue;
+                        }
+
+                        if (isset($seen[$poNo])) {
+                            continue;
+                        }
+                        $seen[$poNo] = true;
+
+                        $supplierCode = (string) ($item['SupplierCode'] ?? '');
+                        $supplierName = (string) ($item['SupplierName'] ?? '');
+                        $customerCode = (string) ($item['CustomerCode'] ?? '');
+                        $customerName = (string) ($item['CustomerName'] ?? '');
+
+                        $partnerRole = '';
+                        $direction = '';
+                        $partnerCode = '';
+                        $partnerName = '';
+
+                        if ($customerCode !== '') {
+                            $partnerRole = 'customer';
+                            $direction = 'outbound';
+                            $partnerCode = $customerCode;
+                            $partnerName = $customerName;
+                        } else {
+                            $partnerRole = 'supplier';
+                            $direction = 'inbound';
+                            $partnerCode = $supplierCode;
+                            $partnerName = $supplierName;
+                        }
+
+                        $results[] = [
+                            'po_number' => $poNo,
+                            // Backward-compatible fields used across the app
+                            'vendor_code' => $partnerCode,
+                            'vendor_name' => $partnerName,
+                            // Explicit fields (new)
+                            'supplier_code' => $supplierCode,
+                            'supplier_name' => $supplierName,
+                            'customer_code' => $customerCode,
+                            'customer_name' => $customerName,
+                            'partner_role' => $partnerRole,
+                            'direction' => $direction,
+                            'doc_date' => (string)($item['DocDate'] ?? ''),
+                            'plant' => '',
+                            'warehouse_name' => '',
+                            'items' => [],
+                        ];
+
+                        if (count($results) >= $limit) {
+                            break;
+                        }
+                    }
+
+                    $nextUrl = '';
+                    if (is_array($json)) {
+                        $nextUrl = (string) ($json['@odata.nextLink'] ?? $json['odata.nextLink'] ?? '');
+                    }
                 }
 
-                $results[] = [
-                    'po_number' => $poNo,
-                    // Backward-compatible fields used across the app
-                    'vendor_code' => $partnerCode,
-                    'vendor_name' => $partnerName,
-                    // Explicit fields (new)
-                    'supplier_code' => $supplierCode,
-                    'supplier_name' => $supplierName,
-                    'customer_code' => $customerCode,
-                    'customer_name' => $customerName,
-                    'partner_role' => $partnerRole,
-                    'direction' => $direction,
-                    'doc_date' => (string)($item['DocDate'] ?? ''),
-                    'plant' => '',
-                    'warehouse_name' => '',
-                    'items' => [],
-                ];
+                if (!empty($results)) {
+                    return $results;
+                }
             }
-            
-            return $results;
+
+            return [];
         } catch (\Throwable $e) {
             \Log::warning('SAP PO Search Error', ['error' => $e->getMessage()]);
             return [];
@@ -227,7 +270,7 @@ class SapPoService
 
                 return [
                     'po_number' => (string) ($data['po_number'] ?? $data['poNumber'] ?? $data['po'] ?? $poNumber),
-                    'vendor_code' => (string) ($data['vendor_code'] ?? $data['vendorCode'] ?? $data['vendor_id'] ?? $data['vendorId'] ?? ''),
+                    'vendor_code' => (string) ($data['vendor_code'] ?? $data['vendorCode'] ?? ''),
                     'vendor_name' => (string) ($data['vendor_name'] ?? $data['vendorName'] ?? $data['vendor'] ?? ''),
                     'plant' => (string) ($data['plant'] ?? $data['wh'] ?? ''),
                     'warehouse_name' => (string) ($data['warehouse_name'] ?? $data['warehouseName'] ?? ''),

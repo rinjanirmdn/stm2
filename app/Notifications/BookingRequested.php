@@ -23,7 +23,7 @@ class BookingRequested extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $vendorName = $this->slot->vendor?->name ?? 'Unknown Vendor';
+        $vendorName = $this->slot->vendor_name ?? 'Unknown Vendor';
         $plannedDate = $this->slot->planned_start?->format('d M Y H:i') ?? '-';
 
         return (new MailMessage)
@@ -42,7 +42,7 @@ class BookingRequested extends Notification
     {
         return [
             'title' => 'New Booking Request',
-            'message' => 'Request from ' . ($this->slot->vendor?->name ?? 'Vendor') . ' for ' . $this->slot->ticket_number,
+            'message' => 'Request from ' . ($this->slot->vendor_name ?? 'Vendor') . ' for ' . $this->slot->ticket_number,
             'action_url' => route('bookings.show', $this->slot->id, false),
             'icon' => 'fas fa-plus-circle',
             'color' => 'blue',

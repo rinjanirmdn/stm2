@@ -7,7 +7,7 @@
 @php
     $paramDate = request('date_from', date('Y-m-d'));
     // Fetch active slots for the date (exclude cancelled and rejected)
-    $daySlots = \App\Models\Slot::with('vendor')
+    $daySlots = \App\Models\Slot::query()
         ->whereDate('planned_start', $paramDate)
         ->whereNotIn('status', ['cancelled', 'rejected'])
         ->where(function($q) {
@@ -39,7 +39,6 @@
             @php
                 // Calculate counts for valuable statuses
                 $countPending = $daySlots->whereIn('status', ['pending_approval', 'pending'])->count();
-                $countVendor = $daySlots->where('status', 'pending_vendor_confirmation')->count();
                 // Count slots that have been rescheduled (have an original plan)
                 $countRescheduled = $daySlots->filter(function($slot) {
                     return !empty($slot->original_planned_start);
@@ -53,15 +52,6 @@
                         <span>Pending Approval</span>
                     </div>
                     <span class="st-dock-count">{{ $countPending }}</span>
-                </div>
-                
-                <!-- Awaiting Vendor -->
-                <div class="st-legend-item st-legend-item--awaiting_vendor">
-                    <div class="st-dock-legend-indicator">
-                        <div class="st-dock-dot"></div>
-                        <span>Awaiting Vendor</span>
-                    </div>
-                    <span class="st-dock-count">{{ $countVendor }}</span>
                 </div>
                 
                 <!-- Rescheduled -->
@@ -263,7 +253,7 @@
                         @endphp
                         
                         @php
-                            $targetRoute = in_array($slot->status, ['pending_approval', 'pending_vendor_confirmation', 'pending'])
+                            $targetRoute = in_array($slot->status, ['pending_approval', 'pending'])
                                 ? route('bookings.show', $slot->id)
                                 : route('slots.show', $slot->id);
                         @endphp
@@ -322,7 +312,7 @@
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
-                                @elseif(in_array($slot->status, ['pending', 'pending_vendor_confirmation']))
+                                @elseif(in_array($slot->status, ['pending']))
                                     @if($h >= 40)
                                     <button class="st-dock-btn-confirm" style="font-size:9px; padding:1px 6px; height:auto; min-height:16px;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">Act</button>
                                     @else

@@ -292,7 +292,6 @@ class BottleneckAnalysisService
                     $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
-                ->leftJoin('po as t', 's.po_id', '=', 't.id')
                 ->whereDate('s.arrival_time', $date)
                 ->whereNotNull('s.arrival_time')
                 ->whereNotNull('s.actual_start')
@@ -301,7 +300,7 @@ class BottleneckAnalysisService
                     'w.wh_code as warehouse_code',
                     'w.wh_name as warehouse_name',
                     'g.gate_number',
-                    't.po_number',
+                    's.po_number',
                     's.arrival_time',
                     's.actual_start',
                     's.actual_finish',

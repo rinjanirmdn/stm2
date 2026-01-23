@@ -467,13 +467,12 @@
                                 }
 
                                 $badgeMap = [
-                                    'scheduled' => 'bg-scheduled',
-                                    'arrived' => 'bg-waiting',
+                                    'scheduled' => 'bg-secondary',
+                                    'arrived' => 'bg-info',
                                     'waiting' => 'bg-waiting',
                                     'in_progress' => 'bg-in_progress',
                                     'completed' => 'bg-completed',
                                     'cancelled' => 'bg-danger',
-                                    'pending_vendor_confirmation' => 'bg-warning',
                                     'rejected' => 'bg-danger',
                                     'pending_approval' => 'bg-pending_approval',
                                 ];

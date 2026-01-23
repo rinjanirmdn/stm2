@@ -65,6 +65,33 @@ class SlotService
         return $query->count();
     }
 
+    public function countWarehouseOverlap(int $warehouseId, array $statuses, string $start, string $end, ?int $excludeSlotId = null): int
+    {
+        $warehouseId = (int) $warehouseId;
+        if ($warehouseId <= 0) {
+            return 0;
+        }
+
+        $statuses = array_values(array_filter(array_map('strval', $statuses), fn ($s) => trim($s) !== ''));
+        if (empty($statuses)) {
+            return 0;
+        }
+
+        $dateAddExpr = $this->getDateAddExpression('s.planned_start', 's.planned_duration');
+
+        $query = DB::table('slots as s')
+            ->where('s.warehouse_id', $warehouseId)
+            ->whereIn('s.status', $statuses)
+            ->whereRaw("? < {$dateAddExpr}", [$start])
+            ->whereRaw('? > s.planned_start', [$end]);
+
+        if ($excludeSlotId) {
+            $query->where('s.id', '<>', $excludeSlotId);
+        }
+
+        return $query->count();
+    }
+
     /**
      * Calculate planned finish time from start time and duration
      */

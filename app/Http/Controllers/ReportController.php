@@ -27,33 +27,31 @@ class ReportController extends Controller
         $like = '%' . $q . '%';
 
         $rows = DB::table('slots as s')
-            ->join('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->where('s.status', 'completed')
             ->where(function ($sub) use ($like) {
-                $sub->where('t.po_number', 'like', $like)
+                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.ticket_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('v.bp_name', 'like', $like)
+                    ->orWhere('s.vendor_name', 'like', $like)
                     ->orWhere('w.wh_name', 'like', $like);
             })
             ->select([
-                't.po_number',
+                's.po_number',
                 's.ticket_number',
                 's.mat_doc',
-                'v.bp_name as vendor_name',
+                's.vendor_name',
                 'w.wh_name as warehouse_name',
             ])
             ->orderByRaw("CASE
-                WHEN t.po_number LIKE ? THEN 1
+                WHEN s.po_number LIKE ? THEN 1
                 WHEN s.ticket_number LIKE ? THEN 2
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 3
-                WHEN v.bp_name LIKE ? THEN 4
+                WHEN s.vendor_name LIKE ? THEN 4
                 WHEN w.wh_name LIKE ? THEN 5
                 ELSE 6
             END", [$q . '%', $q . '%', $q . '%', $q . '%', $q . '%'])
-            ->orderBy('t.po_number')
+            ->orderBy('s.po_number')
             ->limit(10)
             ->get();
 
@@ -249,7 +247,6 @@ class ReportController extends Controller
             'directionFilter' => array_values(array_filter((array) $request->query('direction', []), fn ($v) => (string) $v !== '')),
             'lateFilter' => array_values(array_filter((array) $request->query('late', []), fn ($v) => (string) $v !== '')),
             'warehouseFilter' => array_values(array_filter((array) $request->query('warehouse_id', []), fn ($v) => (string) $v !== '')),
-            'vendorFilter' => array_values(array_filter((array) $request->query('vendor_id', []), fn ($v) => (string) $v !== '')),
             'targetStatusFilter' => array_values(array_filter((array) $request->query('target_status', []), fn ($v) => (string) $v !== '')),
         ];
     }

@@ -7,6 +7,7 @@ use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
 use App\Services\TimeCalculationService;
+use App\Services\SlotReceiptReconciliationService;
 use App\Exports\SlotsExport;
 use App\Models\Slot;
 use App\Models\SlotPoItem;
@@ -31,42 +32,14 @@ class SlotController extends Controller
         private readonly PoSearchService $poSearchService,
         private readonly SlotConflictService $conflictService,
         private readonly SlotFilterService $filterService,
-        private readonly TimeCalculationService $timeService
+        private readonly TimeCalculationService $timeService,
+        private readonly SlotReceiptReconciliationService $receiptReconciliationService
     ) {
     }
 
     public function ajaxPoSearch(Request $request)
     {
         $results = $this->poSearchService->searchPo($request->get('q', ''));
-
-        /* 
-        // SECURITY FILTER DISABLED FOR TESTING
-        // Filter by Vendor if user is a vendor
-        if (auth()->check() && (auth()->user()->hasRole('vendor') || auth()->user()->hasRole('Vendor'))) {
-             $userVendorId = auth()->user()->vendor_id;
-             
-             if ($userVendorId) {
-                 $vendorCode = \Illuminate\Support\Facades\DB::table('business_partner')
-                    ->where('id', $userVendorId)
-                    ->value('bp_code');
-                 
-                 if ($vendorCode) {
-                     $results = array_filter($results, function($po) use ($vendorCode) {
-                          $poVendor = isset($po['vendor_code']) ? trim($po['vendor_code']) : '';
-                          $myVendor = trim($vendorCode);
-                          
-                          return strcasecmp($poVendor, $myVendor) === 0 || 
-                                 (is_numeric($poVendor) && is_numeric($myVendor) && intval($poVendor) == intval($myVendor));
-                     });
-                     
-                     $results = array_values($results);
-                 } else {
-                     // Allow empty for testing if vendor code not set?
-                     // $results = [];
-                 }
-             }
-        }
-        */
 
         return response()->json([
             'success' => true,
@@ -110,28 +83,26 @@ class SlotController extends Controller
         $like = '%' . $q . '%';
 
         $rows = DB::table('slots as s')
-            ->join('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->where(function ($sub) use ($like) {
-                $sub->where('t.po_number', 'like', $like)
+                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('v.bp_name', 'like', $like);
+                    ->orWhere('s.vendor_name', 'like', $like);
             })
             ->where('s.status', '<>', 'completed')
             ->select([
-                't.po_number as truck_number',
+                's.po_number as truck_number',
                 's.mat_doc',
-                'v.bp_name as vendor_name',
+                's.vendor_name',
                 'w.wh_name as warehouse_name',
             ])
             ->orderByRaw("CASE
-                WHEN t.po_number LIKE ? THEN 1
+                WHEN s.po_number LIKE ? THEN 1
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 2
-                WHEN v.bp_name LIKE ? THEN 3
+                WHEN s.vendor_name LIKE ? THEN 3
                 ELSE 4
             END", [$q . '%', $q . '%', $q . '%'])
-            ->orderBy('t.po_number')
+            ->orderBy('s.po_number')
             ->limit(10)
             ->get();
 
@@ -218,15 +189,8 @@ class SlotController extends Controller
     private function loadSlotDetailRow(int $slotId): ?object
     {
         return DB::table('slots as s')
-            ->join('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->leftJoin('users as ru', 's.requested_by', '=', 'ru.id')
-            ->leftJoin('business_partner as rv', 'ru.vendor_id', '=', 'rv.id')
-            ->leftJoin('business_partner as rvc', function ($join) {
-                $join->on(DB::raw('LOWER(ru.vendor_code)'), '=', DB::raw('LOWER(rvc.bp_code)'));
-            })
-            ->leftJoin('business_partner as pv', 't.bp_id', '=', 'pv.id')
             ->leftJoin('gates as pg', 's.planned_gate_id', '=', 'pg.id')
             ->leftJoin('gates as ag', 's.actual_gate_id', '=', 'ag.id')
             ->leftJoin('warehouses as wpg', 'pg.warehouse_id', '=', 'wpg.id')
@@ -235,11 +199,11 @@ class SlotController extends Controller
             ->where('s.id', $slotId)
             ->select([
                 's.*',
-                't.po_number as po_number',
-                't.po_number as truck_number',
+                's.po_number as po_number',
+                's.po_number as truck_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                DB::raw('COALESCE(v.bp_name, rv.bp_name, rvc.bp_name, pv.bp_name) as vendor_name'),
+                's.vendor_name',
                 'pg.gate_number as planned_gate_number',
                 'ag.gate_number as actual_gate_number',
                 'wpg.wh_code as planned_gate_warehouse_code',
@@ -379,18 +343,6 @@ class SlotController extends Controller
             ->select(['id', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
-        $vendorsQ = DB::table('business_partner')
-            ->select([
-                'id',
-                'bp_name as name',
-                'bp_code as code',
-                'bp_type as type',
-            ])
-            ->orderBy('bp_name');
-        if (Schema::hasColumn('business_partner', 'is_active')) {
-            $vendorsQ->where('is_active', true);
-        }
-        $vendors = $vendorsQ->get();
         $gates = DB::table('gates as g')
             ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', true)
@@ -407,7 +359,6 @@ class SlotController extends Controller
 
         return view('slots.create', [
             'warehouses' => $warehouses,
-            'vendors' => $vendors,
             'gates' => $gates,
             'truckTypes' => $truckTypes,
             'truckTypeDurations' => $truckTypeDurations,
@@ -423,7 +374,6 @@ class SlotController extends Controller
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
             'warehouse_id' => 'required|integer|exists:warehouses,id',
-            'vendor_id' => 'nullable|integer|exists:business_partner,id',
             'planned_gate_id' => 'nullable|integer|exists:gates,id',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
@@ -438,8 +388,6 @@ class SlotController extends Controller
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
         $direction = (string) $request->input('direction', '');
         $warehouseId = (int) $request->input('warehouse_id', 0);
-        $vendorId = $request->input('vendor_id') !== null && (string) $request->input('vendor_id') !== '' ? (int) $request->input('vendor_id') : null;
-        $bpId = $vendorId;
         $plannedGateId = $request->input('planned_gate_id') !== null && (string) $request->input('planned_gate_id') !== '' ? (int) $request->input('planned_gate_id') : null;
         $plannedStart = (string) $request->input('planned_start', '');
         $plannedDurationMinutes = (int) $request->input('planned_duration', 60);
@@ -596,23 +544,16 @@ class SlotController extends Controller
         }
 
         $slotId = 0;
-        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $vendorId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $selectedItems, $poDetail) {
-            $truck = DB::table('po')->where('po_number', $truckNumber)->select(['id'])->first();
-            if ($truck) {
-                $truckId = (int) $truck->id;
-            } else {
-                $truckId = (int) DB::table('po')->insertGetId([
-                    'po_number' => $truckNumber,
-                ]);
-            }
-
+        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $selectedItems, $poDetail) {
             $now = date('Y-m-d H:i:s');
             $ticket = $this->slotService->generateTicketNumber($warehouseId, $plannedGateId);
             $slotId = (int) DB::table('slots')->insertGetId([
-                'po_id' => $truckId,
+                'po_number' => $truckNumber,
                 'direction' => $direction,
                 'warehouse_id' => $warehouseId,
-                'bp_id' => $vendorId,
+                'vendor_code' => $poDetail['vendor_code'] ?? null,
+                'vendor_name' => $poDetail['vendor_name'] ?? null,
+                'vendor_type' => $poDetail['vendor_type'] ?? null,
                 'planned_gate_id' => $plannedGateId,
                 'planned_start' => $plannedStart,
                 'planned_duration' => $plannedDurationMinutes,
@@ -786,49 +727,18 @@ class SlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Slot not found');
         }
 
-        if (empty($slot->vendor_name)) {
-            $requesterId = (int) ($slot->requested_by ?? 0);
-            if ($requesterId > 0 && Schema::hasTable('users')) {
-                $ru = DB::table('users')->where('id', $requesterId)->select(['vendor_id', 'vendor_code'])->first();
-
-                $vendorName = '';
-                $vendorId = (int) ($ru->vendor_id ?? 0);
-                if ($vendorId > 0) {
-                    $bp = DB::table('business_partner')->where('id', $vendorId)->select(['bp_name'])->first();
-                    $vendorName = trim((string) ($bp->bp_name ?? ''));
-                }
-
-                if ($vendorName === '') {
-                    $vendorCode = trim((string) ($ru->vendor_code ?? ''));
-                    if ($vendorCode !== '') {
-                        $bp = DB::table('business_partner')
-                            ->whereRaw('LOWER(bp_code) = LOWER(?)', [$vendorCode])
-                            ->select(['bp_name'])
-                            ->first();
-                        $vendorName = trim((string) ($bp->bp_name ?? ''));
+        $poNumber = trim((string) ($slot->po_number ?? ''));
+        if ($poNumber !== '') {
+            try {
+                $poDetail = $this->poSearchService->getPoDetail($poNumber);
+                if (is_array($poDetail)) {
+                    $vn = trim((string) ($poDetail['vendor_name'] ?? ''));
+                    if ($vn !== '') {
+                        $slot->vendor_name = $vn;
                     }
                 }
-
-                if ($vendorName !== '') {
-                    $slot->vendor_name = $vendorName;
-                }
-            }
-        }
-
-        if (empty($slot->vendor_name)) {
-            $poNumber = trim((string) ($slot->po_number ?? ''));
-            if ($poNumber !== '') {
-                try {
-                    $poDetail = $this->poSearchService->getPoDetail($poNumber);
-                    if (is_array($poDetail)) {
-                        $vn = trim((string) ($poDetail['vendor_name'] ?? ''));
-                        if ($vn !== '') {
-                            $slot->vendor_name = $vn;
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    // ignore SAP errors on detail view
-                }
+            } catch (\Throwable $e) {
+                // ignore SAP errors on detail view
             }
         }
 
@@ -956,18 +866,16 @@ class SlotController extends Controller
 
         // Build query
         $query = DB::table('slots as s')
-            ->leftJoin('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->leftJoin('gates as g', 's.actual_gate_id', '=', 'g.id')
             ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'unplanned'")
             ->select([
                 's.*',
-                't.po_number as truck_number',
+                's.po_number as truck_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                'v.bp_name as vendor_name',
+                's.vendor_name',
                 'g.gate_number as actual_gate_number',
                 'td.target_duration_minutes',
             ]);
@@ -976,15 +884,15 @@ class SlotController extends Controller
         if ($request->filled('q')) {
             $search = '%' . $request->get('q') . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('t.po_number', 'like', $search)
+                $q->where('s.po_number', 'like', $search)
                   ->orWhere('s.mat_doc', 'like', $search)
-                  ->orWhere('v.bp_name', 'like', $search)
+                  ->orWhere('s.vendor_name', 'like', $search)
                   ->orWhere('s.sj_complete_number', 'like', $search);
             });
         }
 
         if ($request->filled('po_number')) {
-            $query->where('t.po_number', 'like', '%' . $request->get('po_number') . '%');
+            $query->where('s.po_number', 'like', '%' . $request->get('po_number') . '%');
         }
 
         if ($request->filled('mat_doc')) {
@@ -992,7 +900,7 @@ class SlotController extends Controller
         }
 
         if ($request->filled('vendor')) {
-            $query->where('v.bp_name', 'like', '%' . $request->get('vendor') . '%');
+            $query->where('s.vendor_name', 'like', '%' . $request->get('vendor') . '%');
         }
 
         if ($request->filled('warehouse')) {
@@ -1042,9 +950,9 @@ class SlotController extends Controller
                 }
                 $d = $dirs[$i] ?? 'desc';
                 if ($s === 'po_number') {
-                    $query->orderBy('t.po_number', $d);
+                    $query->orderBy('s.po_number', $d);
                 } elseif ($s === 'vendor_name') {
-                    $query->orderBy('v.bp_name', $d);
+                    $query->orderBy('s.vendor_name', $d);
                 } elseif ($s === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $d);
                 } elseif ($s === 'sj_complete_number') {
@@ -1060,9 +968,9 @@ class SlotController extends Controller
             $actualSort = $querySort ?? 'created_at';
             if (in_array($actualSort, $allowedSorts, true)) {
                 if ($actualSort === 'po_number') {
-                    $query->orderBy('t.po_number', $dir);
+                    $query->orderBy('s.po_number', $dir);
                 } elseif ($actualSort === 'vendor_name') {
-                    $query->orderBy('v.bp_name', $dir);
+                    $query->orderBy('s.vendor_name', $dir);
                 } elseif ($actualSort === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $dir);
                 } elseif ($actualSort === 'sj_complete_number') {
@@ -1122,18 +1030,6 @@ class SlotController extends Controller
             ->select(['id', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
-        $vendorsQ = DB::table('business_partner')
-            ->select([
-                'id',
-                'bp_name as name',
-                'bp_code as code',
-                'bp_type as type',
-            ])
-            ->orderBy('bp_name');
-        if (Schema::hasColumn('business_partner', 'is_active')) {
-            $vendorsQ->where('is_active', true);
-        }
-        $vendors = $vendorsQ->get();
         $gates = DB::table('gates as g')
             ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', true)
@@ -1144,7 +1040,7 @@ class SlotController extends Controller
 
         $truckTypes = $this->getTruckTypeOptions();
 
-        return view('unplanned.create', compact('warehouses', 'vendors', 'gates', 'truckTypes'));
+        return view('unplanned.create', compact('warehouses', 'gates', 'truckTypes'));
     }
 
     public function unplannedStore(Request $request)
@@ -1160,7 +1056,6 @@ class SlotController extends Controller
         $poNumber = trim((string) $request->input('po_number', ''));
         $direction = (string) $request->input('direction', '');
         $warehouseId = (int) $request->input('warehouse_id', 0);
-        $vendorId = $request->input('vendor_id') !== null && (string) $request->input('vendor_id') !== '' ? (int) $request->input('vendor_id') : null;
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
         $arrivalInput = trim((string) $request->input('actual_arrival', ''));
 
@@ -1241,21 +1136,14 @@ class SlotController extends Controller
             $status = 'waiting';
         }
 
-        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $vendorId, $actualGateId, $arrivalTime, $matDoc, $sjNumber, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $hasQty, $selectedItems, $poDetail) {
-            $truck = DB::table('po')->where('po_number', $poNumber)->select(['id'])->first();
-            if ($truck) {
-                $truckId = (int) $truck->id;
-            } else {
-                $truckId = (int) DB::table('po')->insertGetId([
-                    'po_number' => $poNumber,
-                ]);
-            }
-
+        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $sjNumber, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $hasQty, $selectedItems, $poDetail) {
             $slotId = (int) DB::table('slots')->insertGetId([
-                'po_id' => $truckId,
+                'po_number' => $poNumber,
                 'direction' => $direction,
                 'warehouse_id' => $warehouseId,
-                'bp_id' => $vendorId,
+                'vendor_code' => $poDetail['vendor_code'] ?? null,
+                'vendor_name' => $poDetail['vendor_name'] ?? null,
+                'vendor_type' => $poDetail['vendor_type'] ?? null,
                 'actual_gate_id' => $actualGateId,
                 'arrival_time' => $arrivalTime,
                 'mat_doc' => $matDoc !== '' ? $matDoc : null,
@@ -1652,6 +1540,9 @@ class SlotController extends Controller
                 'driver_number' => $driverNumber,
                 'late_reason' => $notes !== '' ? $notes : null,
             ]);
+
+            // Reconcile receipts with SAP QtyGRTotal (including LIFO reversal handling)
+            $this->receiptReconciliationService->reconcileSlotCompletion($slotId);
 
             // Auto-cancel obsolete scheduled slots when a slot is completed
             if ($slotInfo && $slotInfo->actual_gate_id) {
@@ -2127,7 +2018,7 @@ class SlotController extends Controller
 
     public function export()
     {
-        $slots = Slot::with(['vendor', 'warehouse', 'plannedGate', 'actualGate', 'po'])
+        $slots = Slot::with(['warehouse', 'plannedGate', 'actualGate'])
             ->orderBy('created_at', 'desc')
             ->get();
 

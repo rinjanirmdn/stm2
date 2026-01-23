@@ -1,4 +1,4 @@
-/* ===== WINDSURF: Master Semantic Color System (Warehouse Edition) ===== */
+﻿/* ===== WINDSURF: Master Semantic Color System (Warehouse Edition) ===== */
 :root {
     /* --- BRANDING & BASE --- */
     --primary: #0284c7;
@@ -5015,8 +5015,7 @@ table.st-table td form {
 }
 
 .bg-warning,
-.bg-waiting,
-.bg-pending_vendor_confirmation {
+.bg-waiting {
     background-color: #f59e0b !important;
     color: #ffffff !important;
     border: none !important;

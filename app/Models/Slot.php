@@ -19,7 +19,6 @@ class Slot extends Model
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_PENDING_APPROVAL = 'pending_approval';
-    public const STATUS_PENDING_VENDOR_CONFIRMATION = 'pending_vendor_confirmation';
     public const STATUS_REJECTED = 'rejected';
 
     /**
@@ -41,9 +40,11 @@ class Slot extends Model
         'driver_name',
         'driver_number',
         'direction',
-        'po_id',
+        'po_number',
         'warehouse_id',
-        'bp_id',
+        'vendor_code',
+        'vendor_name',
+        'vendor_type',
         'planned_gate_id',
         'actual_gate_id',
         'status',
@@ -67,7 +68,6 @@ class Slot extends Model
         'approval_notes',
         'requested_at',
         'approved_at',
-        'vendor_confirmed_at',
         'original_planned_start',
         'original_planned_gate_id',
     ];
@@ -80,7 +80,6 @@ class Slot extends Model
         'cancelled_at' => 'datetime',
         'requested_at' => 'datetime',
         'approved_at' => 'datetime',
-        'vendor_confirmed_at' => 'datetime',
         'original_planned_start' => 'datetime',
         'is_late' => 'boolean',
         'moved_gate' => 'boolean',
@@ -100,7 +99,6 @@ class Slot extends Model
             self::STATUS_COMPLETED,
             self::STATUS_CANCELLED,
             self::STATUS_PENDING_APPROVAL,
-            self::STATUS_PENDING_VENDOR_CONFIRMATION,
             self::STATUS_REJECTED,
         ];
     }
@@ -110,9 +108,7 @@ class Slot extends Model
      */
     public static function vendorActionStatuses(): array
     {
-        return [
-            self::STATUS_PENDING_VENDOR_CONFIRMATION,
-        ];
+        return [];
     }
 
     /**
@@ -136,7 +132,6 @@ class Slot extends Model
             self::STATUS_WAITING,
             self::STATUS_IN_PROGRESS,
             self::STATUS_PENDING_APPROVAL,
-            self::STATUS_PENDING_VENDOR_CONFIRMATION,
         ];
     }
 
@@ -149,21 +144,12 @@ class Slot extends Model
     }
 
     /**
-     * Check if slot is pending vendor confirmation
-     */
-    public function isPendingVendorConfirmation(): bool
-    {
-        return $this->status === self::STATUS_PENDING_VENDOR_CONFIRMATION;
-    }
-
-    /**
      * Check if slot needs action
      */
     public function needsAction(): bool
     {
         return in_array($this->status, [
             self::STATUS_PENDING_APPROVAL,
-            self::STATUS_PENDING_VENDOR_CONFIRMATION,
         ]);
     }
 
@@ -183,7 +169,6 @@ class Slot extends Model
             self::STATUS_COMPLETED => 'Completed',
             self::STATUS_CANCELLED => 'Cancelled',
             self::STATUS_PENDING_APPROVAL => 'Pending Approval',
-            self::STATUS_PENDING_VENDOR_CONFIRMATION => 'Pending Confirmation',
             default => ucfirst(str_replace('_', ' ', $this->status)),
         };
     }
@@ -205,7 +190,6 @@ class Slot extends Model
             self::STATUS_CANCELLED => 'dark',
             self::STATUS_PENDING_APPROVAL => 'pending_approval',
             self::STATUS_REJECTED => 'danger',
-            self::STATUS_PENDING_VENDOR_CONFIRMATION => 'warning',
             default => 'secondary',
         };
     }
@@ -215,11 +199,6 @@ class Slot extends Model
     public function warehouse()
     {
         return $this->belongsTo(Warehouse::class);
-    }
-
-    public function vendor()
-    {
-        return $this->belongsTo(Vendor::class, 'bp_id');
     }
 
     public function plannedGate()
@@ -235,11 +214,6 @@ class Slot extends Model
     public function originalPlannedGate()
     {
         return $this->belongsTo(Gate::class, 'original_planned_gate_id');
-    }
-
-    public function po()
-    {
-        return $this->belongsTo(PO::class, 'po_id');
     }
 
     public function creator()
@@ -276,23 +250,7 @@ class Slot extends Model
     }
 
     /**
-     * Scope for pending vendor confirmation slots
-     */
-    public function scopePendingVendorConfirmation($query)
-    {
-        return $query->where('status', self::STATUS_PENDING_VENDOR_CONFIRMATION);
-    }
-
-    /**
      * Scope for vendor's own bookings
-     */
-    public function scopeForVendor($query, $vendorId)
-    {
-        return $query->where('bp_id', $vendorId);
-    }
-
-    /**
-     * Scope for bookings requested by a user
      */
     public function scopeRequestedBy($query, $userId)
     {

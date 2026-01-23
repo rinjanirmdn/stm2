@@ -88,7 +88,7 @@ class DashboardController extends Controller
 
         // Get Pending Approvals
         $pendingApprovals = \App\Models\Slot::where('status', 'pending_approval')
-            ->with(['requester', 'vendor', 'warehouse'])
+            ->with(['requester', 'warehouse'])
             ->orderBy('created_at', 'asc')
             ->limit(10)
             ->get();

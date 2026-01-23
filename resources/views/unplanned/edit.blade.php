@@ -60,18 +60,6 @@
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Vendor <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
-                    <select name="vendor_id" class="st-select{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}">
-                        <option value="">- Optional -</option>
-                        @foreach ($vendors as $v)
-                            <option value="{{ $v->id }}" {{ (string) old('vendor_id', $slot->vendor_id ?? '') === (string) $v->id ? 'selected' : '' }}>{{ $v->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('vendor_id')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="st-form-field">
                     <label class="st-label">Warehouse <span style="color:#dc2626;">*</span></label>
                     <select name="warehouse_id" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
                         <option value="">Choose...</option>

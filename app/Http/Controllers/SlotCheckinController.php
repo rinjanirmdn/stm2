@@ -13,7 +13,7 @@ class SlotCheckinController extends Controller
      */
     public function show($slotId)
     {
-        $slot = Slot::with(['warehouse', 'vendor', 'plannedGate', 'actualGate'])
+        $slot = Slot::with(['warehouse', 'plannedGate', 'actualGate'])
             ->findOrFail($slotId);
 
         if (((string) ($slot->slot_type ?? 'planned')) === 'unplanned') {
@@ -35,7 +35,7 @@ class SlotCheckinController extends Controller
      */
     public function store(Request $request, $slotId)
     {
-        $slot = Slot::with(['warehouse', 'vendor', 'plannedGate', 'actualGate'])
+        $slot = Slot::with(['warehouse', 'plannedGate', 'actualGate'])
             ->findOrFail($slotId);
 
         if (((string) ($slot->slot_type ?? 'planned')) === 'unplanned') {

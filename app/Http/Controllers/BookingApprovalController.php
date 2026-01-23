@@ -3,22 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Gate;
+use App\Models\BookingRequest;
 use App\Models\Slot;
+use App\Models\SlotPoItem;
 use App\Models\TruckTypeDuration;
 use App\Models\Warehouse;
 use App\Services\BookingApprovalService;
-use App\Services\PoSearchService;
 use App\Services\SlotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class BookingApprovalController extends Controller
 {
     public function __construct(
         private readonly BookingApprovalService $bookingService,
         private readonly SlotService $slotService,
-        private readonly PoSearchService $poSearchService,
     ) {}
 
     /**
@@ -26,19 +27,12 @@ class BookingApprovalController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Slot::with(['warehouse', 'plannedGate', 'vendor', 'requester']);
+        $query = BookingRequest::with(['requester', 'approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate']);
 
-        // Default to pending approval
-        $status = $request->get('status', 'pending_approval');
-        
+        $status = $request->get('status', BookingRequest::STATUS_PENDING);
+
         if ($status === 'all') {
-            // Show all booking requests (not regular slots)
-            $query->whereNotNull('requested_by');
-        } elseif ($status === 'pending') {
-            $query->whereIn('status', [
-                Slot::STATUS_PENDING_APPROVAL,
-                Slot::STATUS_PENDING_VENDOR_CONFIRMATION,
-            ]);
+            // no-op
         } else {
             $query->where('status', $status);
         }
@@ -51,35 +45,25 @@ class BookingApprovalController extends Controller
             $query->whereDate('planned_start', '<=', $request->date_to);
         }
 
-        // Filter by warehouse
-        if ($request->filled('warehouse_id')) {
-            $query->where('warehouse_id', $request->warehouse_id);
-        }
-
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('ticket_number', 'like', "%{$search}%")
-                    ->orWhereHas('vendor', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%{$search}%");
-                    })
+                $q->where('request_number', 'like', "%{$search}%")
+                    ->orWhere('po_number', 'like', "%{$search}%")
+                    ->orWhere('supplier_name', 'like', "%{$search}%")
                     ->orWhereHas('requester', function ($q2) use ($search) {
                         $q2->where('full_name', 'like', "%{$search}%");
                     });
             });
         }
 
-        $bookings = $query->orderBy('requested_at', 'desc')->paginate(20);
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(20);
 
         // Get counts for tabs
         $counts = [
-            'pending_approval' => Slot::where('status', Slot::STATUS_PENDING_APPROVAL)->count(),
-            'pending_vendor' => Slot::where('status', Slot::STATUS_PENDING_VENDOR_CONFIRMATION)->count(),
-            'scheduled' => Slot::whereNotNull('requested_by')
-                ->where('status', Slot::STATUS_SCHEDULED)
-                ->whereDate('planned_start', '>=', now())
-                ->count(),
+            'pending' => BookingRequest::where('status', BookingRequest::STATUS_PENDING)->count(),
+            'approved' => BookingRequest::where('status', BookingRequest::STATUS_APPROVED)->count(),
         ];
 
         $warehousesQ = Warehouse::query();
@@ -96,63 +80,15 @@ class BookingApprovalController extends Controller
      */
     public function show($id)
     {
-        $booking = Slot::with([
-            'warehouse',
-            'plannedGate',
-            'actualGate',
-            'originalPlannedGate',
-            'vendor',
+        $booking = BookingRequest::with([
+            'items',
             'requester',
             'approver',
-            'bookingHistories.performer',
-            'po',
+            'convertedSlot',
+            'convertedSlot.warehouse',
+            'convertedSlot.plannedGate',
+            'convertedSlot.actualGate',
         ])->findOrFail($id);
-
-        // PO Items: Use slot_po_items as the authoritative source for booked qty in this booking.
-        $poNumber = $booking->po?->po_number ? trim((string) $booking->po->po_number) : '';
-        $bookedItems = collect();
-        if (Schema::hasTable('slot_po_items')) {
-            $bookedItems = $booking->poItems()->get();
-            if ($poNumber === '' && $bookedItems->isNotEmpty()) {
-                $poNumber = trim((string) ($bookedItems->first()->po_number ?? ''));
-            }
-        }
-
-        $bookedByItem = [];
-        foreach ($bookedItems as $bi) {
-            $itemNo = trim((string) ($bi->item_no ?? ''));
-            if ($itemNo === '') continue;
-            $bookedByItem[$itemNo] = (float) ($bi->qty_booked ?? 0);
-        }
-
-        $poItems = [];
-        if ($poNumber !== '') {
-            $detail = $this->poSearchService->getPoDetail($poNumber);
-            $items = is_array($detail['items'] ?? null) ? $detail['items'] : [];
-
-            // Enrich SAP items with booked qty for this slot
-            foreach ($items as $it) {
-                if (!is_array($it)) continue;
-                $itemNo = trim((string) ($it['item_no'] ?? ''));
-                if ($itemNo === '') continue;
-                $it['qty_booked_slot'] = (float) ($bookedByItem[$itemNo] ?? 0);
-                $poItems[] = $it;
-            }
-        }
-
-        // Fallback: if SAP detail not available, use booked items only
-        if (empty($poItems) && $bookedItems->isNotEmpty()) {
-            foreach ($bookedItems as $bi) {
-                $poItems[] = [
-                    'item_no' => (string) ($bi->item_no ?? ''),
-                    'material' => (string) ($bi->material_code ?? ''),
-                    'description' => (string) ($bi->material_name ?? ''),
-                    'qty' => null,
-                    'uom' => (string) ($bi->uom ?? ''),
-                    'qty_booked_slot' => (float) ($bi->qty_booked ?? 0),
-                ];
-            }
-        }
 
         $warehousesQ = Warehouse::query();
         if (Schema::hasColumn('warehouses', 'is_active')) {
@@ -170,7 +106,7 @@ class BookingApprovalController extends Controller
             ->groupBy('warehouse_id');
         $truckTypes = TruckTypeDuration::orderBy('truck_type')->get();
 
-        return view('admin.bookings.show', compact('booking', 'warehouses', 'gates', 'truckTypes', 'poNumber', 'poItems'));
+        return view('admin.bookings.show', compact('booking', 'warehouses', 'gates', 'truckTypes'));
     }
 
     /**
@@ -180,23 +116,22 @@ class BookingApprovalController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string|max:500',
-            'warehouse_id' => 'nullable|integer|exists:warehouses,id',
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
             'planned_gate_id' => 'nullable|integer|exists:gates,id',
         ]);
 
-        $slot = Slot::whereIn('status', [
-                Slot::STATUS_PENDING_APPROVAL,
-                Slot::STATUS_PENDING_VENDOR_CONFIRMATION,
-            ])->findOrFail($id);
+        $bookingRequest = BookingRequest::where('id', $id)
+            ->where('status', BookingRequest::STATUS_PENDING)
+            ->with(['items', 'requester'])
+            ->firstOrFail();
 
         try {
-            $requestedWarehouseId = $request->filled('warehouse_id') ? (int) $request->warehouse_id : null;
-            $warehouseId = $requestedWarehouseId ?: (int) ($slot->warehouse_id ?? 0);
-            $plannedStart = (string) ($slot->planned_start ?? '');
-            $durationMinutes = (int) ($slot->planned_duration ?? 0);
+            $warehouseId = (int) $request->warehouse_id;
+            $plannedStart = (string) ($bookingRequest->planned_start?->format('Y-m-d H:i:s') ?? '');
+            $durationMinutes = (int) ($bookingRequest->planned_duration ?? 0);
 
             $requestedGateId = $request->filled('planned_gate_id') ? (int) $request->planned_gate_id : null;
-            $effectiveGateId = $requestedGateId ?: (!empty($slot->planned_gate_id) ? (int) $slot->planned_gate_id : null);
+            $effectiveGateId = $requestedGateId ?: null;
 
             if ($requestedGateId) {
                 $gateOk = Gate::where('id', $requestedGateId)->where('warehouse_id', $warehouseId)->exists();
@@ -212,7 +147,7 @@ class BookingApprovalController extends Controller
                         $requestedGateId,
                         $plannedStart,
                         $durationMinutes,
-                        (int) $slot->id
+                        null
                     );
                     if (empty($check['available'])) {
                         $reason = (string) ($check['reason'] ?? 'Gate tidak tersedia');
@@ -238,7 +173,7 @@ class BookingApprovalController extends Controller
                             $gid,
                             $plannedStart,
                             $durationMinutes,
-                            (int) $slot->id
+                            null
                         );
                         if (empty($check['available'])) {
                             continue;
@@ -257,23 +192,60 @@ class BookingApprovalController extends Controller
                 }
             }
 
-            if ($requestedWarehouseId && $requestedWarehouseId !== (int) ($slot->warehouse_id ?? 0)) {
-                $slot->warehouse_id = $requestedWarehouseId;
-            }
-            if ($effectiveGateId) {
-                $slot->planned_gate_id = $effectiveGateId;
-            } else {
-                $slot->planned_gate_id = null;
-            }
+            $slot = DB::transaction(function () use ($bookingRequest, $warehouseId, $effectiveGateId, $request) {
+                $vendorType = $bookingRequest->direction === 'outbound' ? 'customer' : 'supplier';
+                $slot = Slot::create([
+                    'ticket_number' => null,
+                    'direction' => $bookingRequest->direction,
+                    'warehouse_id' => $warehouseId,
+                    'po_number' => $bookingRequest->po_number,
+                    'vendor_code' => $bookingRequest->supplier_code,
+                    'vendor_name' => $bookingRequest->supplier_name,
+                    'vendor_type' => $vendorType,
+                    'planned_gate_id' => $effectiveGateId,
+                    'planned_start' => $bookingRequest->planned_start,
+                    'planned_duration' => (int) $bookingRequest->planned_duration,
+                    'truck_type' => $bookingRequest->truck_type,
+                    'vehicle_number_snap' => $bookingRequest->vehicle_number,
+                    'driver_name' => $bookingRequest->driver_name,
+                    'driver_number' => $bookingRequest->driver_number,
+                    'late_reason' => $bookingRequest->notes,
+                    'coa_path' => $bookingRequest->coa_path,
+                    'surat_jalan_path' => $bookingRequest->surat_jalan_path,
+                    'status' => Slot::STATUS_PENDING_APPROVAL,
+                    'slot_type' => 'planned',
+                    'created_by' => $bookingRequest->requested_by,
+                    'requested_by' => $bookingRequest->requested_by,
+                    'requested_at' => $bookingRequest->created_at,
+                ]);
 
-            if ($slot->isDirty(['warehouse_id', 'planned_gate_id'])) {
-                $slot->save();
-            }
+                foreach ($bookingRequest->items as $it) {
+                    SlotPoItem::create([
+                        'slot_id' => $slot->id,
+                        'po_number' => $bookingRequest->po_number,
+                        'item_no' => $it->item_no,
+                        'material_code' => $it->material_code,
+                        'material_name' => $it->material_name,
+                        'uom' => $it->unit_po,
+                        'qty_booked' => (float) ($it->qty_requested ?? 0),
+                    ]);
+                }
 
-            $this->bookingService->approveBooking($slot, Auth::user(), $request->notes);
+                $this->bookingService->approveBooking($slot, Auth::user(), $request->notes);
+
+                $bookingRequest->update([
+                    'status' => BookingRequest::STATUS_APPROVED,
+                    'approved_by' => Auth::id(),
+                    'approved_at' => now(),
+                    'approval_notes' => $request->notes,
+                    'converted_slot_id' => $slot->id,
+                ]);
+
+                return $slot;
+            });
 
             return redirect()
-                ->route('bookings.show', $slot->id)
+                ->route('bookings.show', $bookingRequest->id)
                 ->with('success', 'Booking approved successfully.');
         } catch (\Throwable $e) {
             return back()->with('error', 'Failed to approve booking: ' . $e->getMessage());
@@ -289,18 +261,19 @@ class BookingApprovalController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $slot = Slot::whereIn('status', [
-                Slot::STATUS_PENDING_APPROVAL,
-                Slot::STATUS_PENDING_VENDOR_CONFIRMATION,
-                Slot::STATUS_SCHEDULED,
-            ])->findOrFail($id);
+        $bookingRequest = BookingRequest::where('id', $id)
+            ->where('status', BookingRequest::STATUS_PENDING)
+            ->firstOrFail();
 
         try {
-            $this->bookingService->rejectBooking($slot, Auth::user(), $request->reason);
+            $bookingRequest->update([
+                'status' => BookingRequest::STATUS_REJECTED,
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+                'approval_notes' => $request->reason,
+            ]);
 
-            return redirect()
-                ->route('bookings.index')
-                ->with('success', 'Booking rejected.');
+            return redirect()->route('bookings.index')->with('success', 'Booking rejected.');
         } catch (\Throwable $e) {
             return back()->with('error', 'Failed to reject booking: ' . $e->getMessage());
         }
@@ -311,12 +284,9 @@ class BookingApprovalController extends Controller
      */
     public function rescheduleForm($id)
     {
-        $booking = Slot::whereIn('status', [
-                Slot::STATUS_PENDING_APPROVAL,
-                Slot::STATUS_PENDING_VENDOR_CONFIRMATION,
-                Slot::STATUS_SCHEDULED,
-            ])
-            ->with(['warehouse', 'plannedGate', 'vendor', 'requester'])
+        $booking = BookingRequest::where('id', $id)
+            ->where('status', BookingRequest::STATUS_PENDING)
+            ->with(['requester'])
             ->findOrFail($id);
 
         $warehousesQ = Warehouse::query();
@@ -347,46 +317,43 @@ class BookingApprovalController extends Controller
             'planned_date' => 'required|date|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'planned_duration' => 'required|integer|min:30|max:480',
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
             'planned_gate_id' => 'nullable|exists:gates,id',
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $slot = Slot::whereIn('status', [
-                Slot::STATUS_PENDING_APPROVAL,
-                Slot::STATUS_PENDING_VENDOR_CONFIRMATION,
-                Slot::STATUS_SCHEDULED,
-            ])->findOrFail($id);
+        $bookingRequest = BookingRequest::where('id', $id)
+            ->where('status', BookingRequest::STATUS_PENDING)
+            ->with(['items', 'requester'])
+            ->firstOrFail();
 
         $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
 
-        // Check availability
-        $availability = $this->bookingService->checkAvailability(
-            $slot->warehouse_id,
-            $request->planned_gate_id ?? $slot->planned_gate_id,
-            $plannedStart,
-            $request->planned_duration,
-            $slot->id
-        );
-
-        if (!$availability['available']) {
-            return back()
-                ->withInput()
-                ->with('error', $availability['reason']);
+        // Update schedule on request (final schedule before approval)
+        $plannedEnd = $this->slotService->computePlannedFinish($plannedStart, (int) $request->planned_duration);
+        if ($plannedEnd === null) {
+            return back()->withInput()->with('error', 'Invalid planned schedule.');
         }
 
-        try {
-            $this->bookingService->rescheduleBooking($slot, Auth::user(), [
-                'planned_start' => $plannedStart,
-                'planned_duration' => $request->planned_duration,
-                'planned_gate_id' => $request->planned_gate_id ?? $slot->planned_gate_id,
-            ], $request->notes);
+        $dateAddExpr = $this->slotService->getDateAddExpression('br.planned_start', 'br.planned_duration');
+        $pendingOverlap = (int) DB::table('booking_requests as br')
+            ->where('br.status', BookingRequest::STATUS_PENDING)
+            ->where('br.id', '<>', (int) $bookingRequest->id)
+            ->whereRaw("? < {$dateAddExpr}", [$plannedStart])
+            ->whereRaw('? > br.planned_start', [$plannedEnd])
+            ->count();
 
-            return redirect()
-                ->route('bookings.show', $slot->id)
-                ->with('success', 'Booking rescheduled. Waiting for vendor confirmation.');
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Failed to reschedule booking: ' . $e->getMessage());
+        if ($pendingOverlap > 0) {
+            return back()->withInput()->with('error', 'Waktu ini sedang diblokir karena menunggu konfirmasi tim WH');
         }
+
+        $bookingRequest->update([
+            'planned_start' => $plannedStart,
+            'planned_duration' => (int) $request->planned_duration,
+            'approval_notes' => $request->notes,
+        ]);
+
+        return $this->approve($request, $id);
     }
 
     /**
@@ -413,7 +380,7 @@ class BookingApprovalController extends Controller
         $slots = Slot::where('warehouse_id', $warehouseId)
             ->whereDate('planned_start', $date)
             ->whereNotIn('status', [Slot::STATUS_CANCELLED])
-            ->with(['vendor', 'requester'])
+            ->with(['requester'])
             ->get()
             ->groupBy('planned_gate_id');
 
@@ -428,7 +395,7 @@ class BookingApprovalController extends Controller
                 'slots' => $gateSlots->map(fn($s) => [
                     'id' => $s->id,
                     'ticket_number' => $s->ticket_number,
-                    'vendor_name' => $s->vendor?->name ?? '-',
+                    'vendor_name' => $s->vendor_name ?? '-',
                     'requester_name' => $s->requester?->full_name ?? '-',
                     'start_time' => $s->planned_start->format('H:i'),
                     'end_time' => $s->planned_start->copy()->addMinutes($s->planned_duration)->format('H:i'),
@@ -455,7 +422,7 @@ class BookingApprovalController extends Controller
      */
     public function pendingCount()
     {
-        $count = Slot::where('status', Slot::STATUS_PENDING_APPROVAL)->count();
+        $count = BookingRequest::where('status', BookingRequest::STATUS_PENDING)->count();
 
         return response()->json([
             'success' => true,

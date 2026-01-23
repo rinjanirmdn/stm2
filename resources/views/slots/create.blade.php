@@ -63,49 +63,6 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="st-form-field" style="position:relative;">
-                    <label class="st-label">Vendor <span class="st-text--optional">(Optional)</span></label>
-                    @php
-                        $oldVendorName = '';
-                        $oldVendorId = old('vendor_id');
-                        if ($oldVendorId !== null && (string) $oldVendorId !== '') {
-                            foreach ($vendors as $v) {
-                                if ((string) ($v->id ?? '') === (string) $oldVendorId) {
-                                    $oldVendorName = (string) ($v->name ?? '');
-                                    break;
-                                }
-                            }
-                        }
-                    @endphp
-                    <input
-                        type="text"
-                        id="vendor_search"
-                        class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
-                        placeholder="Pilih Direction Dulu..."
-                        style="margin-bottom:4px;"
-                        autocomplete="off"
-                        {{ old('direction') ? '' : 'disabled' }}
-                        value="{{ $oldVendorName }}"
-                    >
-                    <div id="vendor_suggestions" class="st-suggestions st-suggestions--vendor" style="display:none;"></div>
-
-                    <select name="vendor_id" id="vendor_id" style="display:none;">
-                        <option value="">- Optional -</option>
-                        @foreach ($vendors as $vendor)
-                            <option
-                                value="{{ $vendor->id }}"
-                                data-type="{{ $vendor->type ?? 'supplier' }}"
-                                data-name="{{ strtolower($vendor->name ?? '') }}"
-                                {{ (string)old('vendor_id') === (string)$vendor->id ? 'selected' : '' }}
-                            >
-                                {{ $vendor->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('vendor_id')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
-                    @enderror
-                </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
@@ -274,7 +231,6 @@
         'schedule_preview' => route('slots.ajax.schedule_preview'),
         'po_search' => route('slots.ajax.po_search'),
         'po_detail_template' => route('slots.ajax.po_detail', ['poNumber' => '__PO__']),
-        'vendor_search' => route('vendors.ajax.search'),
     ]) !!}</script>
 @endsection
 
@@ -287,9 +243,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var poSuggestions = document.getElementById('po_suggestions');
     var poPreview = document.getElementById('po_preview');
     var poItemsGroup = document.getElementById('po_items_group');
-    var vendorSelect = document.getElementById('vendor_id');
-    var vendorSearch = document.getElementById('vendor_search');
-    var vendorSuggestions = document.getElementById('vendor_suggestions');
 
     var warehouseSelect = document.getElementById('warehouse_id');
     var gateSelect = document.getElementById('planned_gate_id');
@@ -347,7 +300,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var urlSchedulePreview = slotRoutes.schedule_preview || '';
     var urlPoSearch = slotRoutes.po_search || '';
     var urlPoDetailTemplate = slotRoutes.po_detail_template || '';
-    var urlVendorSearch = slotRoutes.vendor_search || '';
 
     var oldPoItems = {};
     try {
@@ -356,8 +308,6 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) {
         oldPoItems = {};
     }
-
-    var vendorDebounceTimer = null;
 
     function csrfToken() {
         var el = document.querySelector('meta[name="csrf-token"]');
@@ -411,12 +361,6 @@ document.addEventListener('DOMContentLoaded', function () {
         updateGateRecommendation();
         checkTimeOverlap();
         applySaveState();
-    }
-
-    function clearVendorSuggestions() {
-        if (!vendorSuggestions) return;
-        vendorSuggestions.style.display = 'none';
-        vendorSuggestions.innerHTML = '';
     }
 
     function closePoSuggestions() {
@@ -537,18 +481,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 setPoPreview(data.data);
-                if (data.data && vendorSelect && vendorSearch) {
-                    var vid = data.data.vendor_id;
-                    if (vid !== undefined && vid !== null && String(vid) !== '' && String(vid) !== '0') {
-                        vendorSelect.value = String(vid);
-                        clearVendorSuggestions();
-                    }
-
-                    if (data.data.vendor_name !== undefined && data.data.vendor_name !== null && String(data.data.vendor_name).trim() !== '') {
-                        vendorSearch.value = normalizeVendorText(data.data.vendor_name || '');
-                        clearVendorSuggestions();
-                    }
-                }
                 if (data.data && directionSelect) {
                     var vtype = (data.data.vendor_type || '').toLowerCase();
                     // Use direction from backend if available
@@ -564,91 +496,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(function () {
                 setPoPreview(null);
             });
-    }
-
-    function normalizeVendorText(v) {
-        return (v || '').replace(/\s+/g, ' ').trim();
-    }
-
-    function filterVendors() {
-        if (!vendorSelect || !vendorSearch || !vendorSuggestions) return;
-
-        var dir = directionSelect ? directionSelect.value : '';
-
-        if (!dir) {
-            vendorSearch.value = '';
-            vendorSearch.disabled = true;
-            vendorSearch.placeholder = 'Pilih Direction Dulu...';
-            vendorSelect.value = '';
-            clearVendorSuggestions();
-            return;
-        }
-
-        vendorSearch.disabled = false;
-        vendorSearch.placeholder = dir === 'outbound' ? 'Cari Customer (SAP)...' : 'Cari Supplier (SAP)...';
-
-        var q = (vendorSearch.value || '').trim();
-        // Don't search if query is empty, unless we want to show recent/all (maybe too heavy)
-        if (q.length < 2) {
-            clearVendorSuggestions();
-            return;
-        }
-
-        var requiredType = dir === 'outbound' ? 'customer' : 'supplier';
-
-        // Debounce AJAX request
-        if (vendorDebounceTimer) clearTimeout(vendorDebounceTimer);
-
-        vendorDebounceTimer = setTimeout(function () {
-            var finalUrl = String(urlVendorSearch || '') + '?q=' + encodeURIComponent(q) + '&type=' + encodeURIComponent(requiredType);
-            
-            // Show loading indicator?
-            vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">Searching SAP...</div>';
-            vendorSuggestions.style.display = 'block';
-
-            getJson(finalUrl)
-                .then(function (data) {
-                    if (!data || !data.success || !data.data || data.data.length === 0) {
-                        vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">No Vendors Found in SAP/Local</div>';
-                        return;
-                    }
-
-                    var html = '';
-                    data.data.forEach(function (item) {
-                        var safeName = (item.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        var safeCode = (item.code || '');
-                        var sourceBadge = (item.source === 'sap') ? '<span class="st-badge st-badge--info" style="font-size:9px;margin-left:4px;">SAP</span>' : '';
-                        
-                        html += '<div class="vendor-suggestion-item" data-id="' + item.id + '" data-name="' + safeName + '" data-code="' + safeCode + '">' 
-                             + '<div>' + safeName + sourceBadge + '</div>'
-                             + '<div style="font-size:10px;color:#6b7280;">' + safeCode + '</div>'
-                             + '</div>';
-                    });
-
-                    vendorSuggestions.innerHTML = html;
-                    vendorSuggestions.style.display = 'block';
-                })
-                .catch(function () {
-                    vendorSuggestions.innerHTML = '<div class="st-suggestion-empty">Error Searching Vendor</div>';
-                });
-        }, 300);
-    }
-
-    function onDirectionChanged() {
-        var dir = directionSelect ? (directionSelect.value || '') : '';
-        if (vendorSelect) vendorSelect.value = '';
-        if (vendorSearch) vendorSearch.value = '';
-        clearVendorSuggestions();
-
-        if (!vendorSearch) return;
-        if (!dir) {
-            vendorSearch.disabled = true;
-            vendorSearch.placeholder = 'Pilih Direction Dulu...';
-            return;
-        }
-
-        vendorSearch.disabled = false;
-        vendorSearch.placeholder = 'Cari Vendor...';
     }
 
     function filterGates() {
@@ -978,49 +825,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (directionSelect) {
         directionSelect.addEventListener('change', function () {
-            onDirectionChanged();
-            filterVendors();
+            filterGates();
+            checkTimeOverlap();
+            updateRiskPreview();
+            updateGateRecommendation();
+            applySaveState();
         });
     }
-    if (vendorSearch) {
-        vendorSearch.addEventListener('input', filterVendors);
-        vendorSearch.addEventListener('focus', filterVendors);
-    }
-    if (vendorSuggestions) {
-        vendorSuggestions.addEventListener('click', function (e) {
-            var target = e.target.closest('.vendor-suggestion-item');
-            if (!target) return;
-            var id = target.getAttribute('data-id');
-            var name = target.getAttribute('data-name');
-            var code = target.getAttribute('data-code') || '';
-            
-            if (id && vendorSelect) {
-                // Check if option exists, if not add it (handled dynamic sync)
-                var exists = vendorSelect.querySelector('option[value="' + id + '"]');
-                if (!exists) {
-                    var newOpt = document.createElement('option');
-                    newOpt.value = id;
-                    newOpt.textContent = name;
-                    newOpt.setAttribute('selected', 'selected');
-                    vendorSelect.appendChild(newOpt);
-                }
-                vendorSelect.value = id;
-            }
-            if (vendorSearch && name) {
-                vendorSearch.value = normalizeVendorText(name);
-                // Optionally show code ?
-            }
-            clearVendorSuggestions();
-        });
-    }
-    document.addEventListener('click', function (e) {
-        if (vendorSearch && vendorSuggestions) {
-            var inside = e.target === vendorSearch || e.target.closest('#vendor_suggestions');
-            if (!inside) {
-                clearVendorSuggestions();
-            }
-        }
-    });
 
     if (warehouseSelect) {
         warehouseSelect.addEventListener('change', function () {

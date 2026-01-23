@@ -8,7 +8,7 @@
     <div class="st-card__header">
         <h2 class="st-card__title">
             <i class="fas fa-ticket"></i>
-            {{ $booking->ticket_number }}
+            {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
         </h2>
         <div class="st-card__actions">
             <a href="{{ route('bookings.index') }}" class="st-button st-button--secondary">
@@ -19,29 +19,22 @@
     </div>
 
     <!-- Status Alert -->
-    @if($booking->status === 'pending_approval')
+    @if($booking->status === 'pending')
     <div class="st-alert st-alert--warning">
         <i class="fas fa-clock"></i>
         <div>
             <strong>Pending Approval</strong> - This booking request is waiting for your action.
         </div>
     </div>
-    @elseif($booking->status === 'pending_vendor_confirmation')
-    <div class="st-alert st-alert--warning">
-        <i class="fas fa-hourglass-half"></i>
-        <div>
-            <strong>Awaiting Vendor</strong> - Waiting for vendor to confirm the rescheduled time.
-        </div>
-    </div>
-    @elseif($booking->status === 'scheduled')
+    @elseif($booking->status === 'approved')
     <div class="st-alert st-alert--success">
         <i class="fas fa-check-circle"></i>
-        <strong>Confirmed</strong> - This booking is approved and scheduled.
+        <strong>Approved</strong> - This booking request has been approved.
     </div>
     @elseif($booking->status === 'cancelled')
     <div class="st-alert st-alert--danger">
         <i class="fas fa-times-circle"></i>
-        <strong>Cancelled</strong> - {{ $booking->cancelled_reason ?? $booking->approval_notes }}
+        <strong>Cancelled</strong> - {{ $booking->approval_notes }}
     </div>
     @endif
 
@@ -54,15 +47,29 @@
             </h3>
             <table class="st-detail-table">
                 <tr>
-                    <td>Ticket</td>
-                    <td><strong>{{ $booking->ticket_number }}</strong></td>
+                    <td>Request</td>
+                    <td><strong>{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</strong></td>
                 </tr>
                 <tr>
                     <td>Status</td>
                     <td>
-                        <span class="st-badge st-badge--{{ $booking->status_badge_color }}">
-                            {{ $booking->status_label }}
-                        </span>
+                        @php
+                            $badgeColor = match($booking->status) {
+                                'pending' => 'warning',
+                                'approved' => 'success',
+                                'rejected' => 'danger',
+                                'cancelled' => 'secondary',
+                                default => 'secondary',
+                            };
+                            $badgeLabel = match($booking->status) {
+                                'pending' => 'Pending',
+                                'approved' => 'Approved',
+                                'rejected' => 'Rejected',
+                                'cancelled' => 'Cancelled',
+                                default => ucfirst(str_replace('_',' ', (string) $booking->status)),
+                            };
+                        @endphp
+                        <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
                     </td>
                 </tr>
                 <tr>
@@ -94,8 +101,8 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>Vendor</td>
-                    <td>{{ $booking->vendor?->name ?? '-' }}</td>
+                    <td>Supplier</td>
+                    <td>{{ $booking->supplier_name ?? '-' }}</td>
                 </tr>
                 <tr>
                     <td>Requested By</td>
@@ -120,11 +127,11 @@
             <table class="st-detail-table">
                 <tr>
                     <td>PO Number</td>
-                    <td><strong>{{ $poNumber ?? ($booking->po?->po_number ?? '-') }}</strong></td>
+                    <td><strong>{{ $booking->po_number ?? '-' }}</strong></td>
                 </tr>
             </table>
 
-            @if(!empty($poItems))
+            @if($booking->items && $booking->items->count() > 0)
                 <div class="st-table-wrapper" style="margin-top: 10px;">
                     <table class="st-table">
                         <thead>
@@ -132,24 +139,27 @@
                                 <th style="width:80px;">Item</th>
                                 <th>Material</th>
                                 <th style="width:140px; text-align:right;">Qty PO</th>
-                                <th style="width:140px; text-align:right;">Qty Booked</th>
+                                <th style="width:140px; text-align:right;">Qty GR Total</th>
+                                <th style="width:140px; text-align:right;">Qty Requested</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($poItems as $it)
+                            @foreach($booking->items as $it)
                                 @php
-                                    $itemNo = (string) ($it['item_no'] ?? '');
-                                    $mat = trim((string) ($it['material'] ?? ''));
-                                    $desc = trim((string) ($it['description'] ?? ''));
-                                    $uom = trim((string) ($it['uom'] ?? ''));
-                                    $qtyPo = $it['qty'] ?? null;
-                                    $qtyBooked = $it['qty_booked_slot'] ?? 0;
+                                    $itemNo = (string) ($it->item_no ?? '');
+                                    $mat = trim((string) ($it->material_code ?? ''));
+                                    $desc = trim((string) ($it->material_name ?? ''));
+                                    $uom = trim((string) ($it->unit_po ?? ''));
+                                    $qtyPo = $it->qty_po ?? null;
+                                    $qtyGrTotal = $it->qty_gr_total ?? null;
+                                    $qtyReq = $it->qty_requested ?? 0;
                                 @endphp
                                 <tr>
                                     <td><strong>{{ $itemNo }}</strong></td>
                                     <td>{{ $mat }}{{ $desc !== '' ? (' - ' . $desc) : '' }}</td>
                                     <td style="text-align:right;">{{ $qtyPo !== null ? $qtyPo : '-' }} {{ $uom }}</td>
-                                    <td style="text-align:right;"><strong>{{ $qtyBooked }}</strong> {{ $uom }}</td>
+                                    <td style="text-align:right;">{{ $qtyGrTotal !== null ? $qtyGrTotal : '-' }} {{ $uom }}</td>
+                                    <td style="text-align:right;"><strong>{{ $qtyReq }}</strong> {{ $uom }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -168,23 +178,13 @@
             <table class="st-detail-table">
                 <tr>
                     <td>Warehouse</td>
-                    @php
-                        $effectiveGate = $booking->actualGate ?: $booking->plannedGate;
-                        $effectiveWarehouse = $booking->warehouse ?: ($effectiveGate?->warehouse);
-                        $whCode = $effectiveWarehouse?->wh_code ?? null;
-                        $whName = $effectiveWarehouse?->wh_name ?? ($effectiveWarehouse?->name ?? null);
-                    @endphp
                     <td>
-                        @if(!empty($whCode) || !empty($whName))
-                            {{ trim(($whCode ? ($whCode . ' - ') : '') . ($whName ?? '')) }}
-                        @else
-                            -
-                        @endif
+                        {{ $booking->convertedSlot?->warehouse?->wh_code ?? '-' }}
                     </td>
                 </tr>
                 <tr>
                     <td>Gate</td>
-                    <td>{{ $effectiveGate?->gate_number ?? ($effectiveGate?->name ?? 'To be assigned') }}</td>
+                    <td>{{ $booking->convertedSlot?->plannedGate?->gate_number ?? ($booking->convertedSlot?->plannedGate?->name ?? 'To be assigned') }}</td>
                 </tr>
                 <tr>
                     <td>Date</td>
@@ -198,14 +198,6 @@
                     <td>Duration</td>
                     <td>{{ $booking->planned_duration }} Min</td>
                 </tr>
-                @if($booking->original_planned_start && $booking->original_planned_start->ne($booking->planned_start))
-                <tr>
-                    <td>Original Request</td>
-                    <td style="text-decoration: line-through; color: var(--st-text-muted);">
-                        {{ $booking->original_planned_start->format('d M Y H:i') }}
-                    </td>
-                </tr>
-                @endif
             </table>
         </div>
 
@@ -221,11 +213,11 @@
                 </tr>
                 <tr>
                     <td>Vehicle Number</td>
-                    <td>{{ $booking->vehicle_number_snap ?? '-' }}</td>
+                    <td>{{ $booking->vehicle_number ?? '-' }}</td>
                 </tr>
                 <tr>
                     <td>Requested At</td>
-                    <td>{{ $booking->requested_at?->format('d M Y H:i') ?? '-' }}</td>
+                    <td>{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>
                 </tr>
                 @if($booking->approved_at)
                 <tr>
@@ -242,7 +234,7 @@
     </div>
 
     <!-- Action Buttons -->
-    @if(in_array((string) $booking->status, ['pending_approval', 'pending_vendor_confirmation'], true))
+    @if(in_array((string) $booking->status, ['pending'], true))
     <div class="st-action-section">
         <h3 class="st-detail-title">
             <i class="fas fa-gavel"></i>
@@ -257,9 +249,10 @@
                     <div>
                         <label class="st-label" style="margin-bottom:6px; display:block;">Warehouse</label>
                         @php
-                            $currentWarehouseId = old('warehouse_id', (string)($booking->warehouse_id ?? ($effectiveWarehouse?->id ?? '')));
+                            $currentWarehouseId = old('warehouse_id', '');
                         @endphp
                         <select name="warehouse_id" id="approval_warehouse_id" class="st-select" style="min-width:220px;">
+                            <option value="">Select Warehouse</option>
                             @foreach($warehouses as $wh)
                                 @php
                                     $wid = (int) ($wh->id ?? 0);
@@ -286,7 +279,7 @@
                             if ($gateOptions->isEmpty()) {
                                 $gateOptions = $gates->flatten(1);
                             }
-                            $currentGateId = old('planned_gate_id', (string)($booking->planned_gate_id ?? ($effectiveGate?->id ?? '')));
+                            $currentGateId = old('planned_gate_id', '');
                         @endphp
                         <select name="planned_gate_id" id="approval_planned_gate_id" class="st-select" style="min-width:220px;">
                             <option value="">Auto</option>
@@ -321,7 +314,7 @@
             @endcan
 
             @can('bookings.reject')
-            <button type="button" class="st-button st-button--danger st-button--lg" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->ticket_number }}')">
+            <button type="button" class="st-button st-button--danger st-button--lg" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
                 <i class="fas fa-times"></i>
                 Reject Booking
             </button>
@@ -396,49 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endpush
 
-<!-- Booking History -->
-@if($booking->bookingHistories && $booking->bookingHistories->count() > 0)
-<div class="st-card">
-    <div class="st-card__header">
-        <h2 class="st-card__title">
-            <i class="fas fa-history"></i>
-            Activity History
-        </h2>
-    </div>
-    
-    <div class="st-timeline">
-        @foreach($booking->bookingHistories as $history)
-        <div class="st-timeline__item">
-            <div class="st-timeline__marker"></div>
-            <div class="st-timeline__content">
-                <div class="st-timeline__header">
-                    <span class="st-badge st-badge--{{ $history->action_badge_color }}">
-                        {{ $history->action_label }}
-                    </span>
-                    <span class="st-timeline__user">by {{ $history->performer?->full_name ?? 'System' }}</span>
-                    <span class="st-timeline__time">{{ $history->created_at->format('d M Y H:i') }}</span>
-                </div>
-                
-                @if($history->notes)
-                <p class="st-timeline__notes">{{ $history->notes }}</p>
-                @endif
-                
-                @if($history->old_planned_start || $history->new_planned_start)
-                <div class="st-timeline__changes">
-                    @if($history->old_planned_start)
-                    <span class="st-text-strikethrough">{{ \Carbon\Carbon::parse($history->old_planned_start)->format('d M Y H:i') }}</span>
-                    @endif
-                    @if($history->new_planned_start)
-                    <span> → {{ \Carbon\Carbon::parse($history->new_planned_start)->format('d M Y H:i') }}</span>
-                    @endif
-                </div>
-                @endif
-            </div>
-        </div>
-        @endforeach
-    </div>
-</div>
-@endif
+
 
 <style>
 .st-grid--3 {

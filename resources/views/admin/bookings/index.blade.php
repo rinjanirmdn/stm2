@@ -7,20 +7,15 @@
 <div class="st-card">
     <!-- Stats Tabs -->
     <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-        <a href="{{ route('bookings.index', ['status' => 'pending_approval']) }}" 
-           class="st-stat-tab {{ $status === 'pending_approval' ? 'st-stat-tab--active' : '' }}">
-            <span class="st-stat-tab__count">{{ $counts['pending_approval'] }}</span>
-            <span class="st-stat-tab__label">Pending Approval</span>
+        <a href="{{ route('bookings.index', ['status' => 'pending']) }}" 
+           class="st-stat-tab {{ $status === 'pending' ? 'st-stat-tab--active' : '' }}">
+            <span class="st-stat-tab__count">{{ $counts['pending'] ?? 0 }}</span>
+            <span class="st-stat-tab__label">Pending</span>
         </a>
-        <a href="{{ route('bookings.index', ['status' => 'pending_vendor_confirmation']) }}" 
-           class="st-stat-tab {{ $status === 'pending_vendor_confirmation' ? 'st-stat-tab--active' : '' }}">
-            <span class="st-stat-tab__count">{{ $counts['pending_vendor'] }}</span>
-            <span class="st-stat-tab__label">Awaiting Vendor</span>
-        </a>
-        <a href="{{ route('bookings.index', ['status' => 'scheduled']) }}" 
-           class="st-stat-tab {{ $status === 'scheduled' ? 'st-stat-tab--active' : '' }}">
-            <span class="st-stat-tab__count">{{ $counts['scheduled'] }}</span>
-            <span class="st-stat-tab__label">Scheduled</span>
+        <a href="{{ route('bookings.index', ['status' => 'approved']) }}" 
+           class="st-stat-tab {{ $status === 'approved' ? 'st-stat-tab--active' : '' }}">
+            <span class="st-stat-tab__count">{{ $counts['approved'] ?? 0 }}</span>
+            <span class="st-stat-tab__label">Approved</span>
         </a>
         <a href="{{ route('bookings.index', ['status' => 'all']) }}" 
            class="st-stat-tab {{ $status === 'all' ? 'st-stat-tab--active' : '' }}">
@@ -33,18 +28,6 @@
         <input type="hidden" name="status" value="{{ $status }}">
         <div class="st-filter-row">
             <div class="st-filter-group">
-                <label class="st-label">Warehouse</label>
-                <select name="warehouse_id" class="st-select">
-                    <option value="">All Warehouses</option>
-                    @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}" {{ request('warehouse_id') == $wh->id ? 'selected' : '' }}>
-                            {{ $wh->wh_code }} - {{ $wh->wh_name ?? ($wh->name ?? '') }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            
-            <div class="st-filter-group">
                 <label class="st-label">From Date</label>
                 <input type="date" name="date_from" class="st-input" value="{{ request('date_from') }}">
             </div>
@@ -56,7 +39,7 @@
             
             <div class="st-filter-group">
                 <label class="st-label">Search</label>
-                <input type="text" name="search" class="st-input" placeholder="Ticket, Vendor, Requester..." value="{{ request('search') }}">
+                <input type="text" name="search" class="st-input" placeholder="Request No, PO, Supplier, Requester..." value="{{ request('search') }}">
             </div>
             
             <div class="st-filter-actions">
@@ -64,7 +47,7 @@
                     <i class="fas fa-search"></i>
                     Filter
                 </button>
-                @if(request()->hasAny(['warehouse_id', 'date_from', 'date_to', 'search']))
+                @if(request()->hasAny(['date_from', 'date_to', 'search']))
                 <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-button st-button--secondary">
                     <i class="fas fa-times"></i>
                     Clear
@@ -80,12 +63,14 @@
         <table class="st-table">
             <thead>
                 <tr>
-                    <th>Ticket</th>
-                    <th>Vendor</th>
+                    <th>Request</th>
+                    <th>PO</th>
+                    <th>Supplier</th>
                     <th>Requested By</th>
                     <th>COA</th>
                     <th>Surat Jalan</th>
                     <th>Scheduled</th>
+                    <th>Converted Ticket</th>
                     <th>Gate</th>
                     <th>Direction</th>
                     <th>Status</th>
@@ -98,10 +83,11 @@
                 <tr>
                     <td>
                         <a href="{{ route('bookings.show', $booking->id) }}" class="st-link">
-                            <strong>{{ $booking->ticket_number }}</strong>
+                            <strong>{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</strong>
                         </a>
                     </td>
-                    <td>{{ $booking->vendor?->name ?? '-' }}</td>
+                    <td>{{ $booking->po_number ?? '-' }}</td>
+                    <td>{{ $booking->supplier_name ?? '-' }}</td>
                     <td>{{ $booking->requester?->full_name ?? '-' }}</td>
                     <td>
                         @if(!empty($booking->coa_path))
@@ -121,19 +107,34 @@
                         {{ $booking->planned_start?->format('d M Y') ?? '-' }}
                         <br><small class="st-text-muted">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>
                     </td>
-                    <td>{{ $booking->plannedGate?->name ?? 'TBD' }}</td>
+                    <td>{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
+                    <td>{{ $booking->convertedSlot?->plannedGate?->name ?? 'TBD' }}</td>
                     <td>
                         <span class="st-badge st-badge--{{ $booking->direction }}">
                             {{ ucfirst($booking->direction) }}
                         </span>
                     </td>
                     <td>
-                        <span class="st-badge st-badge--{{ $booking->status_badge_color }}">
-                            {{ $booking->status_label }}
-                        </span>
+                        @php
+                            $badgeColor = match($booking->status) {
+                                'pending' => 'warning',
+                                'approved' => 'success',
+                                'rejected' => 'danger',
+                                'cancelled' => 'secondary',
+                                default => 'secondary',
+                            };
+                            $badgeLabel = match($booking->status) {
+                                'pending' => 'Pending',
+                                'approved' => 'Approved',
+                                'rejected' => 'Rejected',
+                                'cancelled' => 'Cancelled',
+                                default => ucfirst(str_replace('_',' ', (string) $booking->status)),
+                            };
+                        @endphp
+                        <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
                     </td>
                     <td>
-                        {{ $booking->requested_at?->format('d M Y H:i') ?? '-' }}
+                        {{ $booking->created_at?->format('d M Y H:i') ?? '-' }}
                     </td>
                     <td>
                         <div class="st-action-buttons">
@@ -141,12 +142,11 @@
                                 <i class="fas fa-eye"></i>
                             </a>
                             
-                            @if($booking->status === 'pending_approval')
+                            @if($booking->status === 'pending')
                             @can('bookings.approve')
-                            <button type="button" class="st-button st-button--sm st-button--success" title="Approve" 
-                                    onclick="openApproveModal({{ $booking->id }}, '{{ $booking->ticket_number }}')">
+                            <a href="{{ route('bookings.show', $booking->id) }}" class="st-button st-button--sm st-button--success" title="Approve">
                                 <i class="fas fa-check"></i>
-                            </button>
+                            </a>
                             @endcan
                             
                             @can('bookings.reschedule')
@@ -157,7 +157,7 @@
                             
                             @can('bookings.reject')
                             <button type="button" class="st-button st-button--sm st-button--danger" title="Reject" 
-                                    onclick="openRejectModal({{ $booking->id }}, '{{ $booking->ticket_number }}')">
+                                    onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
                                 <i class="fas fa-times"></i>
                             </button>
                             @endcan

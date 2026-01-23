@@ -3,151 +3,281 @@
 @section('title', 'My Bookings - Vendor Portal')
 
 @section('content')
-<div class="vendor-card">
-    <div class="vendor-card__header">
-        <h1 class="vendor-card__title">
-            <i class="fas fa-calendar-days"></i>
-            My Bookings
-        </h1>
-        <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary">
-            <i class="fas fa-plus"></i>
-            New Booking
-        </a>
-    </div>
+<style>
+    .mb-tabs {
+        display: flex;
+        gap: 0;
+        background: #ffffff;
+        border-radius: 12px 12px 0 0;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .mb-tab {
+        flex: 1;
+        padding: 16px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-right: 1px solid #e5e7eb;
+        text-decoration: none;
+        color: #64748b;
+        font-weight: 500;
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+    .mb-tab:last-child { border-right: none; }
+    .mb-tab:hover { background: #f8fafc; color: #1e293b; }
+    .mb-tab--active {
+        background: #ffffff;
+        color: #1e40af;
+        font-weight: 600;
+        border-bottom: 3px solid #1e40af;
+        margin-bottom: -2px;
+    }
+    .mb-tab__count {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .mb-tab--action .mb-tab__count { color: #ef4444; }
+    .mb-tab--pending .mb-tab__count { color: #f59e0b; }
+    .mb-tab--scheduled .mb-tab__count { color: #3b82f6; }
+    .mb-tab--completed .mb-tab__count { color: #10b981; }
+    .mb-tab--all .mb-tab__count { color: #64748b; }
 
-    <!-- Filters -->
-    <form method="GET" action="{{ route('vendor.bookings.index') }}" style="margin-bottom: 1.5rem;">
-        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
-            <div class="vendor-form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
-                <label class="vendor-form-label">Status</label>
-                <select name="status" class="vendor-form-select">
-                    <option value="">All Statuses</option>
-                    <option value="pending_approval" {{ request('status') === 'pending_approval' ? 'selected' : '' }}>Pending Approval</option>
-                    <option value="pending_vendor_confirmation" {{ request('status') === 'pending_vendor_confirmation' ? 'selected' : '' }}>Needs Confirmation</option>
-                    <option value="scheduled" {{ request('status') === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
-                    <option value="arrived" {{ request('status') === 'arrived' ? 'selected' : '' }}>Arrived</option>
-                    <option value="in_progress" {{ request('status') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                    <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                </select>
-            </div>
-            
-            <div class="vendor-form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
-                <label class="vendor-form-label">From Date</label>
-                <input type="date" name="date_from" class="vendor-form-input" value="{{ request('date_from') }}">
-            </div>
-            
-            <div class="vendor-form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
-                <label class="vendor-form-label">To Date</label>
-                <input type="date" name="date_to" class="vendor-form-input" value="{{ request('date_to') }}">
-            </div>
-            
-            <div class="vendor-form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
-                <label class="vendor-form-label">Search</label>
-                <input type="text" name="search" class="vendor-form-input" placeholder="Ticket or Vehicle..." value="{{ request('search') }}">
-            </div>
-            
-            <button type="submit" class="vendor-btn vendor-btn--primary">
-                <i class="fas fa-search"></i>
-                Filter
-            </button>
-            
-            @if(request()->hasAny(['status', 'date_from', 'date_to', 'search']))
-            <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">
-                <i class="fas fa-times"></i>
-                Clear
-            </a>
-            @endif
-        </div>
+    .mb-content {
+        background: #ffffff;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        padding: 20px;
+    }
+
+    .mb-search {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .mb-search__input {
+        flex: 1;
+        min-width: 200px;
+        padding: 10px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    .mb-search__input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .mb-row {
+        display: flex;
+        align-items: center;
+        padding: 14px 16px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        background: #f8fafc;
+        transition: all 0.15s;
+        gap: 16px;
+        text-decoration: none;
+        color: inherit;
+    }
+    .mb-row:hover { background: #f1f5f9; transform: translateX(2px); }
+    .mb-row--action { background: #fef2f2; border-left: 4px solid #ef4444; }
+    .mb-row--action:hover { background: #fee2e2; }
+
+    .mb-row__ticket {
+        font-weight: 700;
+        color: #1e293b;
+        min-width: 110px;
+    }
+    .mb-row__time {
+        color: #475569;
+        font-size: 13px;
+        min-width: 140px;
+    }
+    .mb-row__gate {
+        color: #64748b;
+        font-size: 13px;
+        min-width: 80px;
+    }
+    .mb-row__direction {
+        min-width: 80px;
+    }
+    .mb-row__status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        min-width: 100px;
+        text-align: center;
+    }
+    .mb-row__status--pending { background: #fef3c7; color: #92400e; }
+    .mb-row__status--scheduled { background: #dbeafe; color: #1e40af; }
+    .mb-row__status--completed { background: #dcfce7; color: #166534; }
+    .mb-row__status--action { background: #fee2e2; color: #991b1b; }
+    .mb-row__status--progress { background: #ede9fe; color: #5b21b6; }
+    .mb-row__status--cancelled { background: #f1f5f9; color: #64748b; }
+
+    .mb-row__actions {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+    }
+    .mb-row__btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        font-size: 12px;
+    }
+    .mb-row__btn--view { background: #e0e7ff; color: #3730a3; }
+    .mb-row__btn--view:hover { background: #c7d2fe; }
+    .mb-row__btn--confirm { background: #dcfce7; color: #166534; }
+    .mb-row__btn--confirm:hover { background: #bbf7d0; }
+    .mb-row__btn--cancel { background: #fee2e2; color: #991b1b; }
+    .mb-row__btn--cancel:hover { background: #fecaca; }
+
+    .mb-empty {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+    .mb-empty__icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+        .mb-tabs { flex-wrap: wrap; }
+        .mb-tab { flex: 1 1 50%; }
+        .mb-row { flex-wrap: wrap; gap: 8px; }
+        .mb-row__actions { width: 100%; justify-content: flex-end; }
+    }
+</style>
+
+@php
+    $currentStatus = request('status', '');
+    $tabCounts = is_array($counts ?? null) ? $counts : [];
+@endphp
+
+<!-- Status Tabs -->
+<div class="mb-tabs">
+    <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page'), ['status' => 'pending'])) }}" 
+       class="mb-tab mb-tab--pending {{ $currentStatus === 'pending' ? 'mb-tab--active' : '' }}">
+        <span class="mb-tab__count">{{ ($tabCounts['pending'] ?? 0) }}</span>
+        <span>Pending</span>
+    </a>
+    <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page'), ['status' => 'approved'])) }}" 
+       class="mb-tab mb-tab--scheduled {{ $currentStatus === 'approved' ? 'mb-tab--active' : '' }}">
+        <span class="mb-tab__count">{{ ($tabCounts['scheduled'] ?? 0) }}</span>
+        <span>Approved</span>
+    </a>
+    <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page', 'status'), ['status' => ''])) }}" 
+       class="mb-tab mb-tab--all {{ $currentStatus === '' ? 'mb-tab--active' : '' }}">
+        <span class="mb-tab__count">{{ ($tabCounts['all'] ?? $bookings->total()) }}</span>
+        <span>All</span>
+    </a>
+</div>
+
+<!-- Content -->
+<div class="mb-content">
+    <!-- Search Bar -->
+    <form method="GET" action="{{ route('vendor.bookings.index') }}" class="mb-search">
+        <input type="hidden" name="status" value="{{ $currentStatus }}">
+        <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO..." value="{{ request('search') }}">
+        <input type="date" name="date_from" class="mb-search__input" style="max-width: 150px;" value="{{ request('date_from') }}" placeholder="From">
+        <input type="date" name="date_to" class="mb-search__input" style="max-width: 150px;" value="{{ request('date_to') }}" placeholder="To">
+        <button type="submit" class="vendor-btn vendor-btn--primary vendor-btn--sm">
+            <i class="fas fa-search"></i> Search
+        </button>
+        @if(request()->hasAny(['search', 'date_from', 'date_to']))
+        <a href="{{ route('vendor.bookings.index', ['status' => $currentStatus]) }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
+            <i class="fas fa-times"></i>
+        </a>
+        @endif
     </form>
 
-    <!-- Bookings Table -->
+    <!-- Booking Rows -->
     @if($bookings->count() > 0)
-    <div style="overflow-x: auto;">
-        <table class="vendor-table">
-            <thead>
-                <tr>
-                    <th>Ticket</th>
-                    <th>Scheduled Time</th>
-                    <th>Duration</th>
-                    <th>Gate</th>
-                    <th>Direction</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($bookings as $booking)
-                <tr>
-                    <td>
-                        <strong>{{ $booking->ticket_number }}</strong>
-                        @if($booking->vehicle_number_snap)
-                        <br><small style="color: #64748b;">{{ $booking->vehicle_number_snap }}</small>
-                        @endif
-                    </td>
-                    <td>
-                        {{ $booking->planned_start?->format('d M Y') ?? '-' }}
-                        <br><small style="color: #64748b;">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>
-                    </td>
-                    <td>
-                        {{ $booking->planned_duration }} Min
-                    </td>
-                    <td>
-                        {{ $booking->plannedGate?->name ?? '-' }}
-                    </td>
-                    <td>
-                        <span class="vendor-badge vendor-badge--{{ $booking->direction === 'inbound' ? 'info' : 'warning' }}">
-                            <i class="fas fa-{{ $booking->direction === 'inbound' ? 'arrow-down' : 'arrow-up' }}"></i>
-                            {{ ucfirst($booking->direction) }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="vendor-badge vendor-badge--{{ $booking->status_badge_color }}">
-                            {{ $booking->status_label }}
-                        </span>
-                    </td>
-                    <td>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm" title="View">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            
-                            @if($booking->status === 'pending_vendor_confirmation')
-                            <a href="{{ route('vendor.bookings.confirm', $booking->id) }}" class="vendor-btn vendor-btn--primary vendor-btn--sm" title="Confirm">
-                                <i class="fas fa-check"></i>
-                            </a>
-                            @endif
-                            
-                            @if(in_array($booking->status, ['pending_approval', 'scheduled', 'pending_vendor_confirmation']))
-                            <form method="POST" action="{{ route('vendor.bookings.cancel', $booking->id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
-                                @csrf
-                                <input type="hidden" name="reason" value="Cancelled by vendor">
-                                <button type="submit" class="vendor-btn vendor-btn--danger vendor-btn--sm" title="Cancel">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </form>
-                            @endif
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+        @foreach($bookings as $booking)
+        @php
+            $statusClass = match($booking->status) {
+                'pending' => 'pending',
+                'approved' => 'scheduled',
+                'rejected' => 'cancelled',
+                'cancelled' => 'cancelled',
+                default => 'cancelled'
+            };
+            $statusLabel = match($booking->status) {
+                'pending' => 'Pending',
+                'approved' => 'Approved',
+                'rejected' => 'Rejected',
+                'cancelled' => 'Cancelled',
+                default => ucfirst(str_replace('_', ' ', $booking->status))
+            };
+        @endphp
+        <div class="mb-row">
+            <span class="mb-row__ticket">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</span>
+            <span class="mb-row__time">
+                <i class="fas fa-calendar" style="opacity: 0.5; margin-right: 4px;"></i>
+                {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}
+            </span>
+            <span class="mb-row__gate">
+                <i class="fas fa-door-open" style="opacity: 0.5; margin-right: 4px;"></i>
+                {{ $booking->convertedSlot?->plannedGate?->name ?? '-' }}
+            </span>
+            <span class="mb-row__direction">
+                @if($booking->direction === 'inbound')
+                    <i class="fas fa-arrow-down" style="color: #3b82f6;"></i> In
+                @else
+                    <i class="fas fa-arrow-up" style="color: #f59e0b;"></i> Out
+                @endif
+            </span>
+            <span class="mb-row__status mb-row__status--{{ $statusClass }}">{{ $statusLabel }}</span>
+            <div class="mb-row__actions">
+                <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="mb-row__btn mb-row__btn--view" title="View">
+                    <i class="fas fa-eye"></i>
+                </a>
+                @if(in_array($booking->status, ['pending']))
+                <form method="POST" action="{{ route('vendor.bookings.cancel', $booking->id) }}" style="display: inline;" onsubmit="return confirm('Cancel this booking?');">
+                    @csrf
+                    <input type="hidden" name="reason" value="Cancelled by vendor">
+                    <button type="submit" class="mb-row__btn mb-row__btn--cancel" title="Cancel">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </form>
+                @endif
+            </div>
+        </div>
+        @endforeach
 
-    <!-- Pagination -->
-    <div style="margin-top: 1.5rem;">
-        {{ $bookings->withQueryString()->links() }}
-    </div>
+        <!-- Pagination -->
+        <div style="margin-top: 20px; display: flex; justify-content: center;">
+            {{ $bookings->withQueryString()->links() }}
+        </div>
     @else
-    <div style="text-align: center; padding: 3rem; color: #64748b;">
-        <i class="fas fa-calendar-xmark" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-        <p>No Bookings Found.</p>
-        <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary" style="margin-top: 1rem;">
-            <i class="fas fa-plus"></i>
-            Create Booking
-        </a>
-    </div>
+        <div class="mb-empty">
+            <div class="mb-empty__icon"><i class="fas fa-inbox"></i></div>
+            <p style="font-size: 16px; margin-bottom: 4px;">No bookings found</p>
+            <p style="font-size: 13px;">Try adjusting your filters or create a new booking</p>
+            <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary" style="margin-top: 16px;">
+                <i class="fas fa-plus"></i> Create Booking
+            </a>
+        </div>
     @endif
 </div>
 @endsection

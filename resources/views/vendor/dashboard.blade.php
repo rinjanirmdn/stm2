@@ -1,124 +1,205 @@
 @extends('vendor.layouts.vendor')
 
-@section('title', 'Vendor Self-Service Portal')
+@section('title', 'Dashboard - Vendor Portal')
 
 @section('content')
-<!-- Welcome & Stats Section -->
-<div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">
-        Welcome back, {{ auth()->user()->full_name }}
-    </h1>
-    <p style="color: #64748b;">Manage your slot bookings directly from this dashboard.</p>
-</div>
+<style>
+    .vd-status-strip {
+        display: flex;
+        gap: 0;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        margin-bottom: 20px;
+    }
+    .vd-status-item {
+        flex: 1;
+        padding: 16px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-right: 1px solid #e5e7eb;
+        text-decoration: none;
+        color: inherit;
+    }
+    .vd-status-item:last-child { border-right: none; }
+    .vd-status-item:hover { background: #f8fafc; }
+    .vd-status-item__count {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+    .vd-status-item__label {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .vd-status-item--warning .vd-status-item__count { color: #f59e0b; }
+    .vd-status-item--danger .vd-status-item__count { color: #ef4444; }
+    .vd-status-item--info .vd-status-item__count { color: #3b82f6; }
+    .vd-status-item--success .vd-status-item__count { color: #10b981; }
 
-@if(isset($actionRequired) && $actionRequired->count() > 0)
-    <div class="vendor-alert vendor-alert--warning">
-        <div>
-            <strong>Action Required:</strong>
-            You have {{ $actionRequired->count() }} booking(s) that require your attention.
-            <ul style="margin: 0.5rem 0 0 1.5rem;">
-                @foreach($actionRequired as $req)
-                    <li>
-                        Booking #{{ $req->ticket_number }} is 
-                        @if($req->status == 'pending_vendor_confirmation')
-                            pending your confirmation (Rescheduled).
-                        @else
-                            {{ str_replace('_', ' ', $req->status) }}.
-                        @endif
-                        <a href="{{ route('vendor.bookings.show', $req->id) }}" style="text-decoration: underline; font-weight: 600;">View</a>
-                    </li>
-                @endforeach
-            </ul>
-        </div>
-    </div>
+    .vd-action-box {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 2px solid #f59e0b;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+    }
+    .vd-action-box__title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #92400e;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .vd-action-box__list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .vd-action-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 12px 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .vd-action-item__info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .vd-action-item__ticket {
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .vd-action-item__desc {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .vd-section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .vd-booking-row {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #e5e7eb;
+        gap: 12px;
+    }
+    .vd-booking-row:last-child { border-bottom: none; }
+    .vd-booking-row__ticket { min-width: 100px; }
+    .vd-booking-row__time { flex: 1; }
+
+    @media (max-width: 768px) {
+        .vd-status-strip { flex-wrap: wrap; }
+        .vd-status-item { flex: 1 1 50%; border-bottom: 1px solid #e5e7eb; }
+    }
+</style>
+
+<!-- Status Strip (Clickable) -->
+@if(isset($stats))
+<div class="vd-status-strip">
+    <a href="{{ route('vendor.bookings.index', ['status' => 'pending']) }}" class="vd-status-item vd-status-item--warning">
+        <div class="vd-status-item__count">{{ $stats['pending_approval'] ?? 0 }}</div>
+        <div class="vd-status-item__label">Pending Approval</div>
+    </a>
+    <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}" class="vd-status-item vd-status-item--info">
+        <div class="vd-status-item__count">{{ $stats['scheduled'] ?? 0 }}</div>
+        <div class="vd-status-item__label">Scheduled</div>
+    </a>
+    <a href="{{ route('vendor.bookings.index', ['status' => 'completed']) }}" class="vd-status-item vd-status-item--success">
+        <div class="vd-status-item__count">{{ $stats['completed_this_month'] ?? 0 }}</div>
+        <div class="vd-status-item__label">Completed ({{ date('M') }})</div>
+    </a>
+</div>
 @endif
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
-    
-    <!-- LEFT COLUMN: NEW BOOKING -->
-    <div class="vendor-card" style="position: sticky; top: 1rem;">
-        <div class="vendor-card__header">
-            <h2 class="vendor-card__title">
-                <i class="fas fa-plus-circle" style="color: #3b82f6;"></i>
-                Create Booking
-            </h2>
-        </div>
-
-        <div style="color:#64748b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem;">
-            Use the full booking form to submit documents (COA/SJ) and select PO items/quantity.
-        </div>
-
-        <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary" style="width: 100%; justify-content: center;">
-            <i class="fas fa-plus"></i>
-            Create New Booking
+<!-- Recent Bookings -->
+<div class="vendor-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 class="vd-section-title" style="margin: 0;">
+            <i class="fas fa-clock-rotate-left"></i>
+            Recent Bookings
+        </h2>
+        <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
+            View All
         </a>
     </div>
 
-    <!-- RIGHT COLUMN: MY BOOKINGS -->
-    <div>
-        <div class="vendor-card">
-            <div class="vendor-card__header">
-                <h2 class="vendor-card__title">
-                    <i class="fas fa-list" style="color: #64748b;"></i>
-                    Recent Bookings
-                </h2>
-                <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">View All</a>
-            </div>
-
-            @if($recentBookings->count() > 0)
-                <div class="vendor-table-wrapper">
-                    <table class="vendor-table">
-                        <thead>
-                            <tr>
-                                <th>Ticket</th>
-                                <th>Date/Time</th>
-                                <th>Status</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($recentBookings as $booking)
-                                <tr>
-                                    <td style="font-weight: 600;">{{ $booking->ticket_number }}</td>
-                                    <td>
-                                        <div>{{ $booking->planned_start->format('d M Y') }}</div>
-                                        <small style="color: #64748b;">{{ $booking->planned_start->format('H:i') }}</small>
-                                    </td>
-                                    <td>
-                                        @php
-                                            $badges = [
-                                                'pending_approval' => 'pending_approval',
-                                                'scheduled' => 'secondary',
-                                                'rejected' => 'danger',
-                                                'completed' => 'success',
-                                                'pending_vendor_confirmation' => 'warning',
-                                                'cancelled' => 'secondary'
-                                            ];
-                                            $badge = $badges[$booking->status] ?? 'secondary';
-                                            $label = str_replace('_', ' ', ucfirst($booking->status));
-                                            if($booking->status == 'pending_vendor_confirmation') $label = 'Action Needed';
-                                        @endphp
-                                        <span class="vendor-badge vendor-badge--{{ $badge }}">{{ $label }}</span>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
-                                            <i class="fas fa-chevron-right"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <div style="text-align: center; padding: 2rem; color: #94a3b8;">
-                    <i class="fas fa-clipboard-list" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
-                    <p>No Booking History Found.</p>
-                </div>
-            @endif
+    @if($recentBookings->count() > 0)
+        <div>
+            @foreach($recentBookings as $booking)
+            <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vd-booking-row" style="text-decoration: none;">
+                <span class="vd-booking-row__ticket st-card__title">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</span>
+                <span class="vd-booking-row__time">
+                    <span class="st-text--muted">{{ $booking->planned_start->format('d M') }} · {{ $booking->planned_start->format('H:i') }}
+                    @if($booking->convertedSlot?->plannedGate)
+                        · Gate {{ $booking->convertedSlot->plannedGate->gate_number }}
+                    @endif
+                    </span>
+                    <div class="st-text--small-muted">
+                        PO: {{ $booking->po_number ?? '-' }}
+                        @if($booking->status === 'cancelled' && !empty($booking->approval_notes))
+                            · Reason: {{ $booking->approval_notes }}
+                        @endif
+                    </div>
+                </span>
+                @php
+                    $badgeColor = match($booking->status) {
+                        'pending' => 'warning',
+                        'approved' => 'success',
+                        'rejected' => 'danger',
+                        'cancelled' => 'secondary',
+                        default => 'secondary',
+                    };
+                    $badgeLabel = match($booking->status) {
+                        'pending' => 'Pending',
+                        'approved' => 'Approved',
+                        'rejected' => 'Rejected',
+                        'cancelled' => 'Cancelled',
+                        default => ucfirst(str_replace('_',' ', (string) $booking->status)),
+                    };
+                @endphp
+                <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
+                <i class="fas fa-chevron-right" style="color: #94a3b8;"></i>
+            </a>
+            @endforeach
         </div>
-
-        
-    </div>
+    @else
+        <div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+            <i class="fas fa-calendar-xmark" style="font-size: 32px; margin-bottom: 8px; opacity: 0.5;"></i>
+            <p style="margin: 0;">No bookings yet</p>
+            <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary" style="margin-top: 12px;">
+                <i class="fas fa-plus"></i> Create First Booking
+            </a>
+        </div>
+    @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+});
+</script>
+@endpush

@@ -23,7 +23,7 @@ class User extends Authenticatable
         'full_name',
         'email',
         'role',
-        'vendor_id',
+        'vendor_code',
         'is_active',
         'password',
     ];
@@ -60,14 +60,6 @@ class User extends Authenticatable
 
     /**
      * Get the vendor associated with this user
-     */
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Vendor::class);
-    }
-
-    /**
-     * Get bookings requested by this vendor user
      */
     public function requestedBookings(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

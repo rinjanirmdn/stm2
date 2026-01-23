@@ -305,7 +305,7 @@
         @if($status === 'pending_approval')
             @if(auth()->user()->hasRole(['Admin', 'admin', 'Super Administrator', 'Section Head']))
                 @can('bookings.reschedule')
-                @if (!empty($slot->requested_by) && in_array($status, ['pending_approval', 'pending_vendor_confirmation', 'scheduled'], true))
+                @if (!empty($slot->requested_by) && in_array($status, ['pending_approval', 'scheduled'], true))
                     <a href="{{ route('bookings.reschedule', ['id' => $slot->id]) }}" class="st-btn st-btn--secondary">
                         <i class="fa-solid fa-calendar" style="margin-right:6px;"></i> Reschedule
                     </a>
@@ -326,16 +326,6 @@
             @else
                 <button type="button" class="st-btn st-btn--secondary" disabled>Waiting for Approval</button>
             @endif
-        @endif
-
-        @if($status === 'pending_vendor_confirmation')
-            @can('bookings.reschedule')
-            @if (!empty($slot->requested_by))
-                <a href="{{ route('bookings.reschedule', ['id' => $slot->id]) }}" class="st-btn st-btn--secondary">
-                    <i class="fa-solid fa-calendar" style="margin-right:6px;"></i> Reschedule
-                </a>
-            @endif
-            @endcan
         @endif
 
         @if (! $isUnplanned)

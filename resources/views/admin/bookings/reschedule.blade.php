@@ -8,7 +8,7 @@
     <div class="st-card__header">
         <h2 class="st-card__title">
             <i class="fas fa-calendar-alt"></i>
-            Reschedule Booking {{ $booking->ticket_number }}
+            Reschedule Request {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
         </h2>
         <a href="{{ route('bookings.show', $booking->id) }}" class="st-button st-button--secondary">
             <i class="fas fa-arrow-left"></i>
@@ -40,8 +40,8 @@
                 
                 <table class="st-detail-table">
                     <tr>
-                        <td>Vendor</td>
-                        <td><strong>{{ $booking->vendor?->name ?? '-' }}</strong></td>
+                        <td>Supplier</td>
+                        <td><strong>{{ $booking->supplier_name ?? '-' }}</strong></td>
                     </tr>
                     <tr>
                         <td>Direction</td>
@@ -64,10 +64,6 @@
                         <td>{{ $booking->planned_duration }} Min</td>
                     </tr>
                     <tr>
-                        <td>Preferred Gate</td>
-                        <td>{{ $booking->plannedGate?->name ?? 'No preference' }}</td>
-                    </tr>
-                    <tr>
                         <td>Truck Type</td>
                         <td>{{ $booking->truck_type ?? '-' }}</td>
                     </tr>
@@ -81,6 +77,21 @@
                     New Schedule
                 </h3>
                 
+                <div class="st-form-group">
+                    <label class="st-label">Warehouse <span class="st-required">*</span></label>
+                    <select name="warehouse_id" class="st-select" required id="warehouse_id">
+                        <option value="">Select Warehouse</option>
+                        @foreach($warehouses as $wh)
+                            <option value="{{ $wh->id }}" {{ old('warehouse_id') == $wh->id ? 'selected' : '' }}>
+                                {{ $wh->wh_code }} - {{ $wh->wh_name ?? ($wh->name ?? '') }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('warehouse_id')
+                        <span class="st-error">{{ $message }}</span>
+                    @enderror
+                </div>
+
                 <div class="st-form-group">
                     <label class="st-label">Date <span class="st-required">*</span></label>
                     <input type="date" name="planned_date" class="st-input" required
@@ -116,28 +127,16 @@
                 </div>
 
                 <div class="st-form-group">
-                    <label class="st-label">Gate</label>
+                    <label class="st-label">Gate (optional)</label>
                     <select name="planned_gate_id" class="st-select" id="gate_select">
                         <option value="">Auto-assign</option>
-                        @foreach($gates[$booking->warehouse_id] ?? [] as $gate)
-                            <option value="{{ $gate->id }}" 
-                                    {{ old('planned_gate_id', $booking->planned_gate_id) == $gate->id ? 'selected' : '' }}>
-                                {{ $gate->name ?? 'Gate ' . $gate->gate_number }}
-                            </option>
-                        @endforeach
                     </select>
-                </div>
-
-                <!-- Availability Check -->
-                <div id="availability-check" style="padding: 1rem; border-radius: 10px; background: var(--st-surface-alt, #f8fafc); margin-top: 1rem; display: none;">
-                    <div id="availability-result"></div>
                 </div>
 
                 <div class="st-form-group" style="margin-top: 1.5rem;">
                     <label class="st-label">Notes for Vendor</label>
                     <textarea name="notes" class="st-textarea" rows="3" 
                               placeholder="Explain Why You're Rescheduling This Booking...">{{ old('notes') }}</textarea>
-                    <small class="st-hint">The vendor will see this message and must confirm the new schedule.</small>
                 </div>
             </div>
         </div>
@@ -148,26 +147,10 @@
             </a>
             <button type="submit" class="st-button st-button--warning">
                 <i class="fas fa-calendar-alt"></i>
-                Reschedule & Request Confirmation
+                Reschedule & Approve
             </button>
         </div>
     </form>
-</div>
-
-<!-- Calendar Preview -->
-<div class="st-card">
-    <div class="st-card__header">
-        <h3 class="st-card__title">
-            <i class="fas fa-calendar-week"></i>
-            Availability Preview
-        </h3>
-    </div>
-    
-    <div id="calendar-preview" style="min-height: 200px;">
-        <p style="text-align: center; color: var(--st-text-muted); padding: 2rem;">
-            <i class="fas fa-spinner fa-spin"></i> Loading availability...
-        </p>
-    </div>
 </div>
 
 <style>
@@ -219,135 +202,67 @@
 </style>
 @endsection
 
+<script type="application/json" id="reschedule_gates_json">{!! $gates->map(function ($coll, $wid) {
+    $arr = [];
+    foreach ($coll as $g) {
+        $arr[] = [
+            'id' => (int) ($g->id ?? 0),
+            'warehouse_id' => (int) ($g->warehouse_id ?? 0),
+            'gate_number' => (string) ($g->gate_number ?? ''),
+            'name' => (string) ($g->name ?? ''),
+            'warehouse_code' => (string) ($g->warehouse?->wh_code ?? ''),
+        ];
+    }
+    return $arr;
+})->toJson() !!}</script>
+
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const dateInput = document.getElementById('planned_date');
-    const timeInput = document.getElementById('planned_time');
-    const durationInput = document.getElementById('planned_duration');
-    const gateSelect = document.getElementById('gate_select');
-    const availabilityCheck = document.getElementById('availability-check');
-    const availabilityResult = document.getElementById('availability-result');
-    const calendarPreview = document.getElementById('calendar-preview');
+document.addEventListener('DOMContentLoaded', function () {
+    var whSel = document.getElementById('warehouse_id');
+    var gateSel = document.getElementById('gate_select');
+    var gatesEl = document.getElementById('reschedule_gates_json');
+    if (!whSel || !gateSel || !gatesEl) return;
 
-    const warehouseId = '{{ $booking->warehouse_id }}';
+    var gatesData = {};
+    try {
+        gatesData = JSON.parse(gatesEl.textContent || '{}') || {};
+    } catch (e) {
+        gatesData = {};
+    }
 
-    // Check availability when inputs change
-    [dateInput, timeInput, durationInput, gateSelect].forEach(function(input) {
-        input.addEventListener('change', checkAvailability);
+    function buildGateLabel(g) {
+        var base = (g.gate_number || g.name || ('Gate #' + (g.id || '')));
+        var wc = (g.warehouse_code || '').trim();
+        return wc ? (wc + '-' + base) : base;
+    }
+
+    function refreshGateOptions() {
+        var wid = String(whSel.value || '');
+        var current = String(gateSel.value || '');
+        var list = gatesData[wid] || [];
+
+        gateSel.innerHTML = '<option value="">Auto-assign</option>';
+        list.forEach(function (g) {
+            if (!g || !g.id) return;
+            var opt = document.createElement('option');
+            opt.value = String(g.id);
+            opt.textContent = buildGateLabel(g);
+            gateSel.appendChild(opt);
+        });
+
+        if (current) {
+            gateSel.value = current;
+        }
+    }
+
+    whSel.addEventListener('change', function () {
+        gateSel.value = '';
+        refreshGateOptions();
     });
 
-    dateInput.addEventListener('change', loadCalendarPreview);
-
-    function checkAvailability() {
-        const gateId = gateSelect.value;
-        const date = dateInput.value;
-        const time = timeInput.value;
-        const duration = durationInput.value;
-
-        if (!date || !time || !duration) {
-            availabilityCheck.style.display = 'none';
-            return;
-        }
-
-        const plannedStart = date + ' ' + time + ':00';
-
-        fetch(`/bookings/ajax/calendar?warehouse_id=${warehouseId}&gate_id=${gateId}&planned_start=${encodeURIComponent(plannedStart)}&planned_duration=${duration}&exclude_slot_id={{ $booking->id }}`)
-            .then(response => response.json())
-            .then(data => {
-                availabilityCheck.style.display = 'block';
-                
-                if (data.available !== false) {
-                    availabilityResult.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-success, #10b981);">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Time Slot Is Available</span>
-                        </div>
-                    `;
-                } else {
-                    availabilityResult.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-danger, #ef4444);">
-                            <i class="fas fa-times-circle"></i>
-                            <span>${data.reason || 'Time Slot Is Not Available'}</span>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    }
-
-    function loadCalendarPreview() {
-        const date = dateInput.value;
-
-        if (!date) {
-            return;
-        }
-
-        calendarPreview.innerHTML = '<p style="text-align: center; color: var(--st-text-muted); padding: 2rem;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
-
-        fetch(`/bookings/ajax/calendar?warehouse_id=${warehouseId}&date=${date}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.gates) {
-                    renderCalendar(data.gates);
-                }
-            })
-            .catch(error => {
-                calendarPreview.innerHTML = '<p style="text-align: center; color: var(--st-danger); padding: 2rem;">Failed to load</p>';
-            });
-    }
-
-    function renderCalendar(gates) {
-        const hours = [];
-        for (let h = 7; h < 23; h++) {
-            hours.push(h.toString().padStart(2, '0') + ':00');
-        }
-
-        let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
-        html += '<thead><tr><th style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: var(--st-surface-alt, #f8fafc);">Time</th>';
-        
-        gates.forEach(g => {
-            html += `<th style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: var(--st-surface-alt, #f8fafc); min-width: 120px;">${g.gate.name}</th>`;
-        });
-        html += '</tr></thead><tbody>';
-
-        hours.forEach(hour => {
-            html += `<tr><td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); font-weight: 500;">${hour}</td>`;
-            
-            gates.forEach(g => {
-                const slot = g.slots.find(s => s.start_time === hour);
-                const occupiedSlot = g.slots.find(s => s.start_time < hour && s.end_time > hour);
-                
-                if (slot) {
-                    const isPending = slot.status === 'pending_approval';
-                    const isCurrentBooking = slot.id === {{ $booking->id }};
-                    const bgColor = isCurrentBooking ? '#fef3c7' : (isPending ? '#fce7f3' : '#dcfce7');
-                    
-                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: ${bgColor}; vertical-align: top;">
-                        <div style="font-weight: 500;">${slot.start_time} - ${slot.end_time}</div>
-                        <div style="font-size: 0.75rem; opacity: 0.7;">${slot.vendor_name}</div>
-                        ${isCurrentBooking ? '<div style="font-size: 0.7rem; color: #92400e; font-weight: 600;">Current</div>' : ''}
-                    </td>`;
-                } else if (!occupiedSlot) {
-                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: #f0fdf4; text-align: center; color: #16a34a;">
-                        <i class="fas fa-check" style="opacity: 0.5;"></i>
-                    </td>`;
-                } else {
-                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb);"></td>`;
-                }
-            });
-            html += '</tr>';
-        });
-
-        html += '</tbody></table></div>';
-        calendarPreview.innerHTML = html;
-    }
-
-    // Initial load
-    checkAvailability();
-    loadCalendarPreview();
+    refreshGateOptions();
 });
 </script>
 @endpush
+

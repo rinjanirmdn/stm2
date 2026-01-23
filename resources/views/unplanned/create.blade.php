@@ -58,41 +58,6 @@
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
-                <div class="st-form-field" style="position:relative;">
-                    <label class="st-label">Vendor <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
-                    @php
-                        $oldVendorName = '';
-                        $oldVendorId = old('vendor_id');
-                        if ($oldVendorId !== null && (string) $oldVendorId !== '') {
-                            foreach ($vendors as $v) {
-                                if ((string) ($v->id ?? '') === (string) $oldVendorId) {
-                                    $oldVendorName = (string) ($v->name ?? '');
-                                    break;
-                                }
-                            }
-                        }
-                    @endphp
-                    <input
-                        type="text"
-                        id="vendor_search"
-                        class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
-                        placeholder="Pilih Direction Dulu..."
-                        style="margin-bottom:4px;"
-                        autocomplete="off"
-                        {{ old('direction') ? '' : 'disabled' }}
-                        value="{{ $oldVendorName }}"
-                    >
-                    <div id="vendor_suggestions" class="st-suggestions st-suggestions--vendor" style="display:none;"></div>
-                    <select name="vendor_id" id="vendor_id" style="display:none;">
-                        <option value="">-</option>
-                        @foreach ($vendors as $v)
-                            <option value="{{ $v->id }}" data-direction="{{ $v->type ?? '' }}" {{ (string)old('vendor_id') === (string)$v->id ? 'selected' : '' }}>{{ $v->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('vendor_id')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
-                    @enderror
-                </div>
                 <div class="st-form-field">
                     <label class="st-label">Warehouse <span style="color:#dc2626;">*</span></label>
                     <select name="warehouse_id" id="unplanned-warehouse" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
@@ -245,8 +210,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var poSuggestions = document.getElementById('po_suggestions');
     var poPreview = document.getElementById('po_preview');
     var poItemsGroup = document.getElementById('po_items_group');
-    var vendorSelect = document.getElementById('vendor_id');
-    var vendorSearch = document.getElementById('vendor_search');
     var directionSelect = document.getElementById('direction');
     var poDebounceTimer = null;
 
@@ -433,16 +396,8 @@ document.addEventListener('DOMContentLoaded', function () {
             fetchPoDetail(po, function (data) {
                 if (data.success && data.data) {
                     setPoPreview(data.data);
-                    if (data.data.vendor_id && vendorSelect) {
-                        vendorSelect.value = String(data.data.vendor_id);
-                    }
-                    if (data.data.vendor_name && vendorSearch) {
-                        vendorSearch.value = data.data.vendor_name;
-                    }
                     if (data.data.direction && directionSelect) {
                         directionSelect.value = data.data.direction;
-                        // Trigger vendor filter refresh
-                        if (typeof filterVendors === 'function') filterVendors();
                     }
                 }
             });
@@ -455,99 +410,9 @@ document.addEventListener('DOMContentLoaded', function () {
         clearPoSuggestions();
     });
 
-    // Vendor autocomplete
-    var vendorSuggestions = document.getElementById('vendor_suggestions');
     var warehouseSelect = document.getElementById('unplanned-warehouse');
     var gateSelect = document.getElementById('unplanned-gate');
     var arrivalInput = document.getElementById('actual_arrival_input');
-
-    function clearVendorSuggestions() {
-        if (!vendorSuggestions) return;
-        vendorSuggestions.style.display = 'none';
-        vendorSuggestions.innerHTML = '';
-    }
-
-    function filterVendors() {
-        if (!vendorSelect || !vendorSearch) return;
-        var dir = (directionSelect ? directionSelect.value : '').toLowerCase();
-        var options = vendorSelect.querySelectorAll('option');
-        var matched = null;
-        var firstMatch = null;
-        options.forEach(function (opt) {
-            var optDir = (opt.getAttribute('data-direction') || '').toLowerCase();
-            if (dir === '' || optDir === dir || optDir === '') {
-                opt.style.display = '';
-                if (!firstMatch) firstMatch = opt.value;
-                if (opt.value === vendorSelect.value) matched = opt.value;
-            } else {
-                opt.style.display = 'none';
-            }
-        });
-        if (matched === null && firstMatch && vendorSelect.value === '') {
-            vendorSelect.value = firstMatch;
-        }
-    }
-
-    function fetchVendorSuggestions() {
-        if (!vendorSearch || !vendorSuggestions || !vendorSelect) return;
-        var q = (vendorSearch.value || '').trim();
-        var dir = (directionSelect ? directionSelect.value : '').toLowerCase();
-        if (q.length < 2) {
-            clearVendorSuggestions();
-            return;
-        }
-        var options = vendorSelect.querySelectorAll('option');
-        var html = '';
-        options.forEach(function (opt) {
-            var optDir = (opt.getAttribute('data-direction') || '').toLowerCase();
-            if (dir !== '' && optDir !== '' && optDir !== dir) return;
-            var name = (opt.textContent || '').trim();
-            if (name.toLowerCase().indexOf(q.toLowerCase()) !== -1) {
-                html += '<div data-vendor-id="' + opt.value + '" style="padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;">' + name + '</div>';
-            }
-        });
-        if (html === '') {
-            vendorSuggestions.innerHTML = '<div style="padding:6px 8px;color:#6b7280;">No Vendor Found</div>';
-        } else {
-            vendorSuggestions.innerHTML = html;
-        }
-        vendorSuggestions.style.display = 'block';
-    }
-
-    if (directionSelect) {
-        directionSelect.addEventListener('change', function () {
-            if (vendorSearch) {
-                vendorSearch.disabled = false;
-                vendorSearch.placeholder = 'Type Vendor Name...';
-                vendorSearch.value = '';
-                vendorSelect.value = '';
-            }
-            filterVendors();
-        });
-    }
-
-    if (vendorSearch) {
-        vendorSearch.addEventListener('input', fetchVendorSuggestions);
-        vendorSearch.addEventListener('focus', fetchVendorSuggestions);
-    }
-
-    if (vendorSuggestions) {
-        vendorSuggestions.addEventListener('click', function (e) {
-            var item = e.target;
-            if (item.tagName === 'DIV' && item.getAttribute('data-vendor-id')) {
-                var vid = item.getAttribute('data-vendor-id');
-                vendorSelect.value = vid;
-                vendorSearch.value = item.textContent;
-                clearVendorSuggestions();
-            }
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (!vendorSuggestions || !vendorSearch) return;
-        if (e.target === vendorSearch || vendorSuggestions.contains(e.target)) return;
-        clearVendorSuggestions();
-    });
 
     // Initialize flatpickr for arrival time when warehouse is selected
     function initFlatpickrForArrival() {
