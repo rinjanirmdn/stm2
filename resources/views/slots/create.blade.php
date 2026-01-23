@@ -28,7 +28,7 @@
                 <div class="st-form-field">
                     <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
                     <div style="position:relative;">
-                        <input type="text" id="po_number" autocomplete="off" name="po_number" maxlength="12" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
+                        <input type="text" id="po_number" autocomplete="off" name="po_number" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po" style="display:none;"></div>
                         <div id="po_preview" style="margin-top:8px;"></div>
                         <div id="po_items_group" style="display:none;margin-top:10px;"></div>
@@ -420,8 +420,8 @@ document.addEventListener('DOMContentLoaded', function () {
         items.slice(0, 5).forEach(function (it) {
             var div = document.createElement('div');
             div.className = 'po-item';
-            div.setAttribute('data-po', is.po_number || '');
-            div.innerHTML = '<div class="po-item__title">' + (is.po_number || '') + '</div>'
+            div.setAttribute('data-po', it.po_number || '');
+            div.innerHTML = '<div class="po-item__title">' + (it.po_number || '') + '</div>'
                 + '<div class="po-item__sub">' + (it.vendor_name || '') + (it.plant ? (' • ' + it.plant) : '') + '</div>';
             div.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;';
             poSuggestions.appendChild(div);
@@ -508,31 +508,74 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function fetchPoDetail(poNumber) {
+        console.log('fetchPoDetail called with:', poNumber);
         if (!poNumber) {
             setPoPreview(null);
             return;
         }
 
-        getJson(String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber)))
+        var url = String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber));
+        console.log('Fetching PO detail from:', url);
+
+        getJson(url)
             .then(function (data) {
+                console.log('PO Detail API Response:', data);
                 if (!data || !data.success) {
+                    console.warn('PO Detail failed or not found');
                     setPoPreview(null);
                     return;
                 }
+                
+                console.log('PO Data:', data.data);
                 setPoPreview(data.data);
+                
+                // Autofill Vendor Name
+                if (data.data && data.data.vendor_name) {
+                    var vendorSearchInput = document.getElementById('vendor_search');
+                    console.log('Vendor search input:', vendorSearchInput);
+                    console.log('Setting vendor name to:', data.data.vendor_name);
+                    if (vendorSearchInput) {
+                        vendorSearchInput.value = data.data.vendor_name;
+                        vendorSearchInput.disabled = false;
+                        console.log('Vendor name set successfully');
+                    }
+                }
+
+                // Autofill Direction
                 if (data.data && directionSelect) {
                     var vtype = (data.data.vendor_type || '').toLowerCase();
+                    var newDir = '';
+
+                    console.log('Vendor type:', vtype);
+                    console.log('Direction from API:', data.data.direction);
+
                     // Use direction from backend if available
                     if (data.data.direction) {
-                        directionSelect.value = data.data.direction;
+                        newDir = data.data.direction;
                     } else if (vtype === 'supplier') {
-                        directionSelect.value = 'inbound';
+                        newDir = 'inbound';
                     } else if (vtype === 'customer') {
-                        directionSelect.value = 'outbound';
+                        newDir = 'outbound';
+                    }
+
+                    console.log('New direction:', newDir);
+
+                    if (newDir) {
+                        directionSelect.value = newDir;
+                        console.log('Direction set to:', directionSelect.value);
+                        // Trigger change event to update UI states
+                        try {
+                            directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log('Direction change event dispatched');
+                        } catch (e) {
+                            console.error('Failed to dispatch change event:', e);
+                        }
+                        onDirectionChanged(); 
                     }
                 }
             })
-            .catch(function () {
+            .catch(function (err) {
+                console.error('Error fetching PO detail:', err);
                 setPoPreview(null);
             });
     }
@@ -1073,10 +1116,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         poInput.addEventListener('input', function () {
             var q = (poInput.value || '').trim();
-            if (q.length > 10) {
-                q = q.slice(0, 10);
-                poInput.value = q;
-            }
             setPoPreview(null);
 
             if (poDebounceTimer) clearTimeout(poDebounceTimer);
@@ -1097,6 +1136,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         poInput.addEventListener('focus', function () {
             var q = (poInput.value || '').trim();
+            if (q.length < 3) return; // Don't search on focus if empty/short
             getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
                 .then(function (data) {
                     if (!data || !data.success) {
@@ -1109,6 +1149,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     closePoSuggestions();
                 });
         });
+
+        // Auto-fetch detail on blur/change if user typed a full number directly
+        function autoFetchDetail() {
+            var val = (poInput.value || '').trim();
+            if (val.length >= 5) {
+                // Delay slightly to avoid conflict with suggestion click
+                setTimeout(function() {
+                    // Check if we already have data loaded? 
+                    // Actually fetchPoDetail handles re-fetching safely.
+                    fetchPoDetail(val);
+                }, 200);
+            }
+        }
+        poInput.addEventListener('change', autoFetchDetail);
+        poInput.addEventListener('blur', autoFetchDetail);
     }
 
     if (poSuggestions) {

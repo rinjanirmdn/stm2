@@ -32,15 +32,12 @@ class ReportController extends Controller
             ->where('s.status', 'completed')
             ->where(function ($sub) use ($like) {
                 $sub->where('s.po_number', 'like', $like)
-                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.ticket_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('s.vendor_name', 'like', $like)
                     ->orWhere('s.vendor_name', 'like', $like)
                     ->orWhere('w.wh_name', 'like', $like);
             })
             ->select([
-                's.po_number',
                 's.po_number',
                 's.ticket_number',
                 's.mat_doc',
@@ -49,15 +46,12 @@ class ReportController extends Controller
             ])
             ->orderByRaw("CASE
                 WHEN s.po_number LIKE ? THEN 1
-                WHEN s.po_number LIKE ? THEN 1
                 WHEN s.ticket_number LIKE ? THEN 2
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 3
-                WHEN s.vendor_name LIKE ? THEN 4
                 WHEN s.vendor_name LIKE ? THEN 4
                 WHEN w.wh_name LIKE ? THEN 5
                 ELSE 6
             END", [$q . '%', $q . '%', $q . '%', $q . '%', $q . '%'])
-            ->orderBy('s.po_number')
             ->orderBy('s.po_number')
             ->limit(10)
             ->get();

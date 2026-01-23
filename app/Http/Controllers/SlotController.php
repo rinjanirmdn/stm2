@@ -39,13 +39,22 @@ class SlotController extends Controller
 
     public function ajaxPoSearch(Request $request)
     {
-        $results = $this->poSearchService->searchPo($request->get('q', ''));
+        $q = (string) $request->query('q', '');
+
+        // Prefer SAP search for autocomplete responsiveness
+        $results = $this->poSearchService->searchPoSapOnly($q, 20);
+        if (empty($results)) {
+            // Fallback to hybrid search if SAP search fails
+            $results = $this->poSearchService->searchPo($q);
+        }
 
         return response()->json([
             'success' => true,
             'data' => $results,
         ]);
     }
+
+
 
     public function ajaxPoDetail(string $poNumber)
     {
@@ -86,9 +95,7 @@ class SlotController extends Controller
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
             ->where(function ($sub) use ($like) {
                 $sub->where('s.po_number', 'like', $like)
-                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('s.vendor_name', 'like', $like);
                     ->orWhere('s.vendor_name', 'like', $like);
             })
             ->where('s.status', '<>', 'completed')
@@ -100,13 +107,10 @@ class SlotController extends Controller
             ])
             ->orderByRaw("CASE
                 WHEN s.po_number LIKE ? THEN 1
-                WHEN s.po_number LIKE ? THEN 1
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 2
-                WHEN s.vendor_name LIKE ? THEN 3
                 WHEN s.vendor_name LIKE ? THEN 3
                 ELSE 4
             END", [$q . '%', $q . '%', $q . '%'])
-            ->orderBy('s.po_number')
             ->orderBy('s.po_number')
             ->limit(10)
             ->get();
@@ -362,9 +366,12 @@ class SlotController extends Controller
             ->pluck('target_duration_minutes', 'truck_type')
             ->all();
 
+        $vendors = [];
+
         return view('slots.create', [
             'warehouses' => $warehouses,
             'gates' => $gates,
+            'vendors' => $vendors,
             'truckTypes' => $truckTypes,
             'truckTypeDurations' => $truckTypeDurations,
         ]);
@@ -661,18 +668,7 @@ class SlotController extends Controller
             ->orderBy('wh_name')
             ->get();
 
-        $vendorsQ = DB::table('business_partner')
-            ->select([
-                'id',
-                'bp_name as name',
-                'bp_code as code',
-                'bp_type as type',
-            ])
-            ->orderBy('bp_name');
-        if (Schema::hasColumn('business_partner', 'is_active')) {
-            $vendorsQ->where('is_active', true);
-        }
-        $vendors = $vendorsQ->get();
+        $vendors = [];
 
         $gates = DB::table('gates as g')
             ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
@@ -1064,16 +1060,13 @@ class SlotController extends Controller
             $search = '%' . $request->get('q') . '%';
             $query->where(function ($q) use ($search) {
                 $q->where('s.po_number', 'like', $search)
-                $q->where('s.po_number', 'like', $search)
                   ->orWhere('s.mat_doc', 'like', $search)
-                  ->orWhere('s.vendor_name', 'like', $search)
                   ->orWhere('s.vendor_name', 'like', $search)
                   ->orWhere('s.sj_complete_number', 'like', $search);
             });
         }
 
         if ($request->filled('po_number')) {
-            $query->where('s.po_number', 'like', '%' . $request->get('po_number') . '%');
             $query->where('s.po_number', 'like', '%' . $request->get('po_number') . '%');
         }
 
@@ -1082,7 +1075,6 @@ class SlotController extends Controller
         }
 
         if ($request->filled('vendor')) {
-            $query->where('s.vendor_name', 'like', '%' . $request->get('vendor') . '%');
             $query->where('s.vendor_name', 'like', '%' . $request->get('vendor') . '%');
         }
 

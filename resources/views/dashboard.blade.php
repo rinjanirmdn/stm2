@@ -196,34 +196,34 @@
                                     </select>
                                 </div>
                                 <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
-                                    @foreach($avgTimesByTruckType ?? [] as $t)
+                                        @foreach($avgTimesByTruckType ?? [] as $t)
                                         @php
                                             $truckType = (string) data_get($t, 'truck_type', '-');
                                             $totalCount = (int) data_get($t, 'total_count', 0);
                                             $avgLeadMinutesByTruck = (float) data_get($t, 'avg_lead_minutes', 0);
                                             $avgProcessMinutesByTruck = (float) data_get($t, 'avg_process_minutes', 0);
                                         @endphp
-                                        <div style="padding:6px; border:1px solid #f1f5f9; background:#fff; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between;">
-                                            <div style="font-weight:700; color:#1e293b; font-size:11px; margin-bottom:4px; border-bottom:1px solid #f8fafc; padding-bottom:3px; display:flex; justify-content:space-between; align-items:center;">
-                                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $truckType }}">{{ $truckType }}</span>
-                                                <span style="font-size:9px; color:#94a3b8; font-weight:400;">{{ $totalCount }}</span>
+                                        <div style="padding:4px; border:1px solid #f1f5f9; background:#fff; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between; min-width:0;">
+                                            <div style="font-weight:700; color:#1e293b; font-size:10px; margin-bottom:4px; border-bottom:1px solid #f8fafc; padding-bottom:3px; display:flex; justify-content:space-between; align-items:center; gap:4px;">
+                                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;" title="{{ $truckType }}">{{ $truckType }}</span>
+                                                <span style="font-size:9px; color:#94a3b8; font-weight:400; flex-shrink:0;">{{ $totalCount }}</span>
                                             </div>
                                             <div style="display:flex; flex-direction:column; gap:4px;">
-                                                <div style="background:#f0f9ff; padding:3px 5px; border-radius:4px;">
-                                                    <div style="font-size:8px; color:#0369a1; text-transform:uppercase; font-weight:600; line-height:1;">Lead</div>
-                                                    <div class="lead-avg-truck" data-minutes="{{ $avgLeadMinutesByTruck }}" style="font-weight:800; color:#0369a1; font-size:12px;">
+                                                <div style="background:#f0f9ff; padding:3px 4px; border-radius:4px;">
+                                                    <div style="font-size:7px; color:#0369a1; text-transform:uppercase; font-weight:600; line-height:1;">Avg Lead Time</div>
+                                                    <div class="lead-avg-truck" data-minutes="{{ $avgLeadMinutesByTruck }}" style="font-weight:800; color:#0369a1; font-size:11px;">
                                                         @if($totalCount > 0)
-                                                            {{ number_format($avgLeadMinutesByTruck, 1) }}<span style="font-size:9px;">m</span>
+                                                            {{ number_format($avgLeadMinutesByTruck, 1) }}<span style="font-size:8px;">m</span>
                                                         @else
                                                             -
                                                         @endif
                                                     </div>
                                                 </div>
-                                                <div style="background:#f5f3ff; padding:3px 5px; border-radius:4px;">
-                                                    <div style="font-size:8px; color:#5b21b6; text-transform:uppercase; font-weight:600; line-height:1;">Proc</div>
-                                                    <div class="proc-avg-truck" data-minutes="{{ $avgProcessMinutesByTruck }}" style="font-weight:800; color:#5b21b6; font-size:12px;">
+                                                <div style="background:#f5f3ff; padding:3px 4px; border-radius:4px;">
+                                                    <div style="font-size:7px; color:#5b21b6; text-transform:uppercase; font-weight:600; line-height:1;">Avg Process Time</div>
+                                                    <div class="proc-avg-truck" data-minutes="{{ $avgProcessMinutesByTruck }}" style="font-weight:800; color:#5b21b6; font-size:11px;">
                                                         @if($totalCount > 0)
-                                                            {{ number_format($avgProcessMinutesByTruck, 1) }}<span style="font-size:9px;">m</span>
+                                                            {{ number_format($avgProcessMinutesByTruck, 1) }}<span style="font-size:8px;">m</span>
                                                         @else
                                                             -
                                                         @endif
@@ -415,7 +415,7 @@
                                     <div>Gate</div>
                                     <div style="font-size:9px;color:#9ca3af;font-weight:400;">Plan (Top) / Act (Btm)</div>
                                 </div>
-                                <div style="padding:10px 0;font-size:11px;font-weight:700;color:#374151;border-right:1px solid #e5e7eb;position:sticky;left:220px;background:#ffffff;z-index:20;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;">
+                                <div style="padding:10px 0;font-size:11px;font-weight:700;color:#374151;border-right:1px solid #e5e7eb;position:sticky;left:70px;background:#ffffff;z-index:20;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;">
                                     Lane
                                 </div>
                                 <div class="st-timeline__header-grid">
@@ -437,13 +437,17 @@
                                             continue;
                                         }
                                         $blocks = (array) (($timelineBlocksByGate ?? [])[$gateId] ?? []);
+                                        // Filter Warehouse name from title if present
+                                        $gateTitle = $g['title'] ?? '-';
+                                        $gateTitle = preg_replace('/^Warehouse\s*\d*\s*-\s*/i', '', $gateTitle);
+                                        $gateTitle = str_replace('Warehouse ', '', $gateTitle);
                                     @endphp
                                     <div class="st-timeline__row">
                                         <div class="st-timeline__row-left">
-                                            <div style="font-size:12px;font-weight:600;">{{ $g['title'] ?? '-' }}</div>
-                                            <div class="st-text--small st-text--muted">{{ $g['status_label'] ?? 'Idle' }}</div>
+                                            <div style="font-size:11px;font-weight:600;">{{ $gateTitle }}</div>
+                                            <div class="st-text--small st-text--muted" style="font-size:9px;">{{ $g['status_label'] ?? 'Idle' }}</div>
                                         </div>
-                                        <div style="border-right:1px solid #e5e7eb;position:sticky;left:220px;background:#ffffff;z-index:20;display:flex;flex-direction:column;font-size:9px;color:#6b7280;font-weight:600;">
+                                        <div style="border-right:1px solid #e5e7eb;position:sticky;left:70px;background:#ffffff;z-index:20;display:flex;flex-direction:column;font-size:9px;color:#6b7280;font-weight:600;">
                                             <div style="flex:1;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;border-bottom:1px dashed #f3f4f6;">Planned</div>
                                             <div style="flex:1;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;">Actual</div>
                                         </div>
@@ -603,8 +607,8 @@
                                 <h3 class="st-card__title">Schedule</h3>
                                 <div class="st-card__subtitle">Trucks, ETA, Gates, Status, and Estimated Finish</div>
                             </div>
-                            <div class="st-flex-wrap st-gap-2 align-items-center">
-                                <div class="st-text--small st-text--muted">Use filters to adjust Date/Time/Gate.</div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                <div class="st-text--small st-text--muted" style="text-align:right;">Use filters to adjust Date/Time/Gate.</div>
                                 @can('slots.create')
                                 <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
                                     <i class="fa-solid fa-plus st-mr-1"></i> Create Slot

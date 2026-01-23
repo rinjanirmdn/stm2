@@ -488,6 +488,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 altFormat: altFormat,
                 defaultHour: defaultHour,
                 defaultMinute: defaultMinute,
+                disable: [
+                    function (date) {
+                        // Disable Sundays (Day 0)
+                        return date.getDay() === 0;
+                    }
+                ],
                 onReady: function (selectedDates, dateStr, instance) {
                     if (!instance || !instance.calendarContainer || instance.calendarContainer._stBound) {
                         return;

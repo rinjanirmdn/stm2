@@ -2973,7 +2973,7 @@ input[type="datetime-local"].form-control {
 
 .st-timeline__header {
     display: grid;
-    grid-template-columns: 220px 60px 1fr;
+    grid-template-columns: 70px 60px 1fr;
     border-bottom: 1px solid #e5e7eb;
     position: sticky;
     top: 0;
@@ -2984,8 +2984,8 @@ input[type="datetime-local"].form-control {
 }
 
 .st-timeline__header-left {
-    padding: 10px 12px;
-    font-size: 12px;
+    padding: 10px 4px;
+    font-size: 11px;
     font-weight: 700;
     color: #374151;
     border-right: 1px solid #e5e7eb;
@@ -3003,14 +3003,14 @@ input[type="datetime-local"].form-control {
             rgba(148, 163, 184, 0.18) 0,
             rgba(148, 163, 184, 0.18) 1px,
             transparent 1px,
-            transparent var(--st-hour-width, 60px));
+            transparent var(--st-hour-width, 100px));
 }
 
 .st-timeline__hour {
     position: absolute;
     top: 0;
     height: 100%;
-    width: var(--st-hour-width, 60px);
+    width: var(--st-hour-width, 100px);
 }
 
 .st-timeline__hour span {
@@ -3027,14 +3027,14 @@ input[type="datetime-local"].form-control {
 
 .st-timeline__row {
     display: grid;
-    grid-template-columns: 220px 60px 1fr;
+    grid-template-columns: 70px 60px 1fr;
     border-bottom: 1px solid #f3f4f6;
     min-width: auto;
     width: 100%;
 }
 
 .st-timeline__row-left {
-    padding: 10px 12px;
+    padding: 10px 4px;
     border-right: 1px solid #e5e7eb;
     position: sticky;
     left: 0;
@@ -3060,7 +3060,7 @@ input[type="datetime-local"].form-control {
             rgba(148, 163, 184, 0.12) 0,
             rgba(148, 163, 184, 0.12) 1px,
             transparent 1px,
-            transparent var(--st-hour-width, 60px));
+            transparent var(--st-hour-width, 100px));
 }
 
 .st-timeline__lane--planned {
@@ -3079,7 +3079,7 @@ input[type="datetime-local"].form-control {
             rgba(148, 163, 184, 0.12) 0,
             rgba(148, 163, 184, 0.12) 1px,
             transparent 1px,
-            transparent var(--st-hour-width, 60px));
+            transparent var(--st-hour-width, 100px));
 }
 
 .st-timeline__now {
@@ -4395,18 +4395,20 @@ table.st-table td form {
     margin-top: 12px;
     display: flex;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: stretch;
+    overflow-x: auto;
+    padding-bottom: 12px;
 }
 
 .st-dashboard-schedule-chart-col {
-    min-width: 0;
-    flex: 0 1 340px;
+    min-width: 320px;
+    flex: 0 0 340px;
 }
 
 .st-dashboard-schedule-table-col {
-    min-width: 0;
-    flex: 1 1 720px;
+    min-width: 600px;
+    flex: 1 1 auto;
 }
 
 .st-dashboard-schedule-chart-card {
