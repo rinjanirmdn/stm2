@@ -83,10 +83,9 @@
                 
                 <div class="st-form-group">
                     <label class="st-label">Date <span class="st-required">*</span></label>
-                    <input type="date" name="planned_date" class="st-input" required
-                           min="{{ date('Y-m-d') }}" 
+                    <input type="text" name="planned_date" class="st-input" required
                            value="{{ old('planned_date', $booking->planned_start?->format('Y-m-d')) }}"
-                           id="planned_date">
+                           id="planned_date" placeholder="Select Date">
                     @error('planned_date')
                         <span class="st-error">{{ $message }}</span>
                     @enderror
@@ -232,12 +231,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const warehouseId = '{{ $booking->warehouse_id }}';
 
+    // Initialize Flatpickr for date input
+    if (dateInput) {
+        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+        window.flatpickr(dateInput, {
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            minDate: 'today',
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
+            onChange: function(selectedDates, dateStr, instance) {
+                checkAvailability();
+                loadCalendarPreview();
+            }
+        });
+    }
+
     // Check availability when inputs change
-    [dateInput, timeInput, durationInput, gateSelect].forEach(function(input) {
+    // dateInput onChange is handled by Flatpickr above
+    [timeInput, durationInput, gateSelect].forEach(function(input) {
         input.addEventListener('change', checkAvailability);
     });
-
-    dateInput.addEventListener('change', loadCalendarPreview);
 
     function checkAvailability() {
         const gateId = gateSelect.value;

@@ -21,7 +21,7 @@
         <!-- Legend -->
         <div class="st-gate-legend">
             <div class="st-gate-legend__title">STATUS LEGEND</div>
-            
+
             <div class="st-gate-legend__item">
                 <span class="st-status-dot" style="background-color: #e2e8f0;"></span>
                 <span>Pre-Booking</span>
@@ -97,7 +97,7 @@
                 <!-- Pre-Booking: Light Gray (#e2e8f0 / slate-200) -->
                 <!-- Confirmed: Dark Blue (#1e40af / blue-800 or similar) -->
                 <!-- In Progress: Purple (#7c3aed) -->
-                
+
                 @php
                     $hours = range(7, 23);
                 @endphp
@@ -373,13 +373,13 @@
         font-weight: 500;
         border-bottom: 1px solid transparent; /* Align with grid lines */
     }
-    
+
     .st-gate-column {
         flex: 1;
         position: relative;
         border-right: 1px solid #e2e8f0;
         /* Columns need height based on total hours (16 hours * 60px = 960px) */
-        min-height: {{ count($hours) * 60 }}px; 
+        min-height: {{ count($hours) * 60 }}px;
     }
     .st-col-deactive {
         background: repeating-linear-gradient(
@@ -566,10 +566,18 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize Inline Calendar
         if (typeof flatpickr !== 'undefined') {
+            var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
             flatpickr("#inline_calendar", {
                 inline: true,
                 dateFormat: "Y-m-d",
                 defaultDate: "today",
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                    if (holidayData[dateStr]) {
+                        dayElem.classList.add('is-holiday');
+                        dayElem.title = holidayData[dateStr];
+                    }
+                },
                 onChange: function(selectedDates, dateStr, instance) {
                     console.log("Date selected:", dateStr);
                     // Add logic to fetch schedule for date

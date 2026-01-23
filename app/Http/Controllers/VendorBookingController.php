@@ -275,7 +275,7 @@ class VendorBookingController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        
+
         $query = Slot::where('requested_by', $user->id)
             ->with(['warehouse', 'plannedGate', 'vendor', 'approver']);
 
@@ -477,7 +477,7 @@ class VendorBookingController extends Controller
         }
 
         $po = \Illuminate\Support\Facades\DB::table('po')->where('po_number', $poNumber)->first();
-        
+
         if ($po) {
             $poId = $po->id;
         } else {
@@ -502,7 +502,7 @@ class VendorBookingController extends Controller
 
             $slot = $this->bookingService->createBookingRequest([
                 'warehouse_id' => $request->warehouse_id,
-                'po_id' => $poId, 
+                'po_id' => $poId,
                 'direction' => $request->direction,
                 'planned_start' => $plannedStart,
                 'planned_duration' => $request->planned_duration,
@@ -577,10 +577,10 @@ class VendorBookingController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        
+
         // Find booking
         $booking = Slot::where('id', $id)
-            ->where('requested_by', $user->id) 
+            ->where('requested_by', $user->id)
             ->with(['warehouse', 'plannedGate', 'actualGate', 'vendor', 'requester', 'approver', 'bookingHistories.performer'])
             ->firstOrFail();
 
@@ -679,7 +679,7 @@ class VendorBookingController extends Controller
             } else {
                 // Propose new schedule
                 $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
-                
+
                 // Check availability
                 $availability = $this->bookingService->checkAvailability(
                     $slot->warehouse_id,
@@ -700,7 +700,7 @@ class VendorBookingController extends Controller
                     'planned_duration' => $request->planned_duration,
                     'planned_gate_id' => $request->planned_gate_id ?? $slot->planned_gate_id,
                 ], $request->notes ?? null);
-                
+
                 $message = 'New schedule proposed. Please wait for admin approval.';
             }
 
@@ -722,8 +722,8 @@ class VendorBookingController extends Controller
             $warehousesQ->where('is_active', true);
         }
         $warehouses = $warehousesQ->get();
-        $selectedWarehouse = $request->warehouse_id 
-            ? Warehouse::find($request->warehouse_id) 
+        $selectedWarehouse = $request->warehouse_id
+            ? Warehouse::find($request->warehouse_id)
             : $warehouses->first();
 
         $gatesQ = Gate::where('warehouse_id', $selectedWarehouse?->id);
@@ -792,7 +792,7 @@ class VendorBookingController extends Controller
     public function getTruckTypeDuration(Request $request)
     {
         $truckType = $request->truck_type;
-        
+
         $duration = TruckTypeDuration::where('truck_type', $truckType)->first();
 
         return response()->json([
@@ -872,9 +872,7 @@ class VendorBookingController extends Controller
         $slotId = (int) $id;
 
         $slot = DB::table('slots as s')
-            ->join('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->leftJoin('gates as pg', 's.planned_gate_id', '=', 'pg.id')
             ->leftJoin('gates as ag', 's.actual_gate_id', '=', 'ag.id')
             ->leftJoin('warehouses as wpg', 'pg.warehouse_id', '=', 'wpg.id')
@@ -883,11 +881,11 @@ class VendorBookingController extends Controller
             ->where('s.id', $slotId)
             ->select([
                 's.*',
-                't.po_number as po_number',
-                't.po_number as truck_number',
+                's.po_number as po_number',
+                's.po_number as truck_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                'v.bp_name as vendor_name',
+                's.vendor_name as vendor_name',
                 'pg.gate_number as planned_gate_number',
                 'ag.gate_number as actual_gate_number',
                 'wpg.wh_code as planned_gate_warehouse_code',

@@ -38,7 +38,7 @@ class LogController extends Controller
             'activity_type' => 'al.activity_type',
             'description' => 'al.description',
             'mat_doc' => 's.mat_doc',
-            'po' => 't.po_number',
+            'po' => 's.po_number',
             'user' => 'u.nik',
         ];
 
@@ -67,7 +67,6 @@ class LogController extends Controller
         $logsQ = DB::table('activity_logs as al')
             ->leftJoin('users as u', 'al.created_by', '=', 'u.id')
             ->leftJoin('slots as s', 'al.slot_id', '=', 's.id')
-            ->leftJoin('po as t', 's.po_id', '=', 't.id')
             ->select([
                 'al.id',
                 'al.slot_id',
@@ -79,7 +78,7 @@ class LogController extends Controller
                 'al.created_at',
                 'u.nik as created_by_nik',
                 's.mat_doc as slot_mat_doc',
-                't.po_number as slot_po_number',
+                's.po_number as slot_po_number',
             ]);
 
         if ($q !== '') {
@@ -88,7 +87,7 @@ class LogController extends Controller
                 $sub
                     ->where('al.description', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('t.po_number', 'like', $like);
+                    ->orWhere('s.po_number', 'like', $like);
             });
         }
 
@@ -114,7 +113,7 @@ class LogController extends Controller
             $logsQ->where('s.mat_doc', 'like', '%' . $fMatDoc . '%');
         }
         if ($fPo !== '') {
-            $logsQ->where('t.po_number', 'like', '%' . $fPo . '%');
+            $logsQ->where('s.po_number', 'like', '%' . $fPo . '%');
         }
         if ($fUser !== '') {
             $logsQ->where('u.nik', 'like', '%' . $fUser . '%');

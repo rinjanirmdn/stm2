@@ -66,6 +66,7 @@ class DashboardController extends Controller
         $targetSegmentStats = $this->statsService->getTargetSegmentStats($rangeStart, $rangeEnd);
         $trendData = $this->statsService->getTrendData($rangeStart, $rangeEnd);
         $averageTimes = $this->statsService->getAverageTimes($rangeStart, $rangeEnd);
+        $avgTimesByTruckType = $this->statsService->getAverageTimesByTruckType($rangeStart, $rangeEnd);
 
         // Get bottleneck analysis
         $bottleneckData = $this->bottleneckService->analyzeBottlenecks($rangeStart, $rangeEnd);
@@ -159,6 +160,34 @@ class DashboardController extends Controller
             // Average times
             'avgLeadMinutes' => $averageTimes['avg_lead_minutes'],
             'avgProcessMinutes' => $averageTimes['avg_process_minutes'],
+            'avgTimesByTruckType' => (function() use ($avgTimesByTruckType) {
+                $master = [
+                    'Container 40ft (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                    'Container 40ft (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                    'Container 20ft (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                    'Container 20ft (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                    'Wingbox (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                    'Wingbox (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                    'Fuso' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                    'CDD/CDE' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                ];
+
+                foreach ($avgTimesByTruckType as $item) {
+                    if (isset($master[$item->truck_type])) {
+                        $master[$item->truck_type] = [
+                            'avg_lead_minutes' => $item->avg_lead_minutes,
+                            'avg_process_minutes' => $item->avg_process_minutes,
+                            'total_count' => (int)$item->total_count,
+                        ];
+                    }
+                }
+
+                $result = [];
+                foreach ($master as $name => $data) {
+                    $result[] = (object) array_merge(['truck_type' => $name], $data);
+                }
+                return $result;
+            })(),
 
             // Gate status
             'gateCards' => $gateCards,
@@ -177,6 +206,7 @@ class DashboardController extends Controller
             'activityWarehouses' => $activityData['warehouses'],
             'activityUsers' => $activityData['users'],
             'recentActivities' => $activityData['activities'],
+            'holidays' => DB::table('holidays')->pluck('description', 'holiday_date')->toArray(),
         ]);
     }
 

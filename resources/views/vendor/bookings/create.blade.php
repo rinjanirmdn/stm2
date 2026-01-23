@@ -17,7 +17,7 @@
 
     <form method="POST" action="{{ route('vendor.bookings.store') }}" id="booking-form" enctype="multipart/form-data">
         @csrf
-        
+
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
             <!-- Left Column -->
             <div>
@@ -25,7 +25,7 @@
                     <i class="fas fa-warehouse"></i>
                     Location & Direction
                 </h3>
-                
+
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Warehouse <span style="color: #ef4444;">*</span></label>
                     <select name="warehouse_id" class="vendor-form-select" required id="warehouse_id">
@@ -100,7 +100,7 @@
                     <select name="truck_type" class="vendor-form-select" id="truck_type">
                         <option value="">Select Truck Type</option>
                         @foreach($truckTypes as $type)
-                            <option value="{{ $type->truck_type }}" 
+                            <option value="{{ $type->truck_type }}"
                                     data-duration="{{ $type->target_duration_minutes }}"
                                     {{ old('truck_type') === $type->truck_type ? 'selected' : '' }}>
                                 {{ $type->truck_type }} ({{ $type->target_duration_minutes }} Min)
@@ -111,7 +111,7 @@
 
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Vehicle Number (Optional)</label>
-                    <input type="text" name="vehicle_number" class="vendor-form-input" 
+                    <input type="text" name="vehicle_number" class="vendor-form-input"
                            placeholder="e.g., B 1234 ABC" value="{{ old('vehicle_number') }}">
                     <small style="color: #64748b;">Can Be Provided Later Before Arrival</small>
                 </div>
@@ -147,8 +147,8 @@
 
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Preferred Date <span style="color: #ef4444;">*</span></label>
-                    <input type="date" name="planned_date" class="vendor-form-input" required
-                           min="{{ date('Y-m-d') }}" value="{{ old('planned_date', date('Y-m-d')) }}" id="planned_date">
+                    <input type="text" name="planned_date" class="vendor-form-input" required
+                           placeholder="Select Date..." value="{{ old('planned_date', date('Y-m-d')) }}" id="planned_date">
                     @error('planned_date')
                         <small style="color: #ef4444;">{{ $message }}</small>
                     @enderror
@@ -181,7 +181,7 @@
 
                 <div class="vendor-form-group" style="margin-top: 1.5rem;">
                     <label class="vendor-form-label">Notes (Optional)</label>
-                    <textarea name="notes" class="vendor-form-textarea" rows="3" 
+                    <textarea name="notes" class="vendor-form-textarea" rows="3"
                               placeholder="Any Special Requests or Notes...">{{ old('notes') }}</textarea>
                 </div>
             </div>
@@ -207,7 +207,7 @@
             Slot Availability Preview
         </h2>
     </div>
-    
+
     <div id="calendar-preview" style="min-height: 200px;">
         <p style="text-align: center; color: #64748b; padding: 2rem;">
             Select a Warehouse and Date to See Availability
@@ -228,6 +228,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const availabilityCheck = document.getElementById('availability-check');
     const availabilityResult = document.getElementById('availability-result');
     const calendarPreview = document.getElementById('calendar-preview');
+
+    const holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+    // Initialize Flatpickr for date input
+    if (typeof flatpickr === 'function') {
+        flatpickr(dateInput, {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            allowInput: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            }
+        });
+    }
 
     const poInput = document.getElementById('po_number');
     const poSuggestions = document.getElementById('po_suggestions');
@@ -272,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         let html = '';
         items.forEach(function (it) {
-            const po = it.po_number || '';
+            const po = is.po_number || '';
             const vendorName = it.vendor_name || '';
             const dir = it.direction || '';
             html += '<div class="po-item" data-po="' + escapeHtml(po) + '" data-dir="' + escapeHtml(dir) + '" '
@@ -554,11 +572,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 availabilityCheck.style.display = 'block';
-                
+
                 if (data.available) {
                     let riskText = '';
                     let riskColor = '#10b981';
-                    
+
                     if (data.blocking_risk === 0) {
                         riskText = 'Low Risk - Good Time Slot!';
                     } else if (data.blocking_risk === 1) {
@@ -568,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         riskText = 'High Risk - Consider Another Time';
                         riskColor = '#ef4444';
                     }
-                    
+
                     availabilityResult.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: #10b981;">
                             <i class="fas fa-check-circle"></i>
@@ -624,7 +642,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
         html += '<thead><tr><th style="padding: 0.5rem; border: 1px solid #e5e7eb; background: #f8fafc;">Time</th>';
-        
+
         gates.forEach(g => {
             html += `<th style="padding: 0.5rem; border: 1px solid #e5e7eb; background: #f8fafc; min-width: 120px;">${g.gate.name}</th>`;
         });
@@ -632,10 +650,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         hours.forEach(hour => {
             html += `<tr><td style="padding: 0.5rem; border: 1px solid #e5e7eb; font-weight: 500;">${hour}</td>`;
-            
+
             gates.forEach(g => {
                 const slot = g.slots.find(s => s.start_time === hour || (s.start_time < hour && s.end_time > hour));
-                
+
                 if (slot && slot.start_time === hour) {
                     const statusColors = {
                         'pending_approval': '#fef3c7',
@@ -646,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     };
                     const color = statusColors[slot.status] || '#f3f4f6';
                     const rowspan = Math.ceil(slot.duration / 60) || 1;
-                    
+
                     html += `<td style="padding: 0.5rem; border: 1px solid #e5e7eb; background: ${color}; vertical-align: top;" rowspan="${rowspan}">
                         <div style="font-weight: 500;">${slot.start_time} - ${slot.end_time}</div>
                         <div style="font-size: 0.75rem; color: #64748b;">${slot.vendor_name}</div>

@@ -185,12 +185,21 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
     // Initialize Flatpickr Date Range Picker
     flatpickr("#date_range", {
         mode: "range",
         dateFormat: "Y-m-d",
+        disableMobile: true,
         locale: {
             rangeSeparator: " to "
+        },
+        onDayCreate: function(dObj, dStr, fp, dayElem) {
+            const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+            if (holidayData[dateStr]) {
+                dayElem.classList.add('is-holiday');
+                dayElem.title = holidayData[dateStr];
+            }
         },
         onChange: function(selectedDates, dateStr, instance) {
             if (selectedDates.length === 2) {

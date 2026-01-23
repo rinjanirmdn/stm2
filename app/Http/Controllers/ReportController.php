@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Slot;
 use App\Services\SlotService;
 use App\Services\TransactionReportService;
 use App\Services\ExportService;
@@ -27,33 +28,31 @@ class ReportController extends Controller
         $like = '%' . $q . '%';
 
         $rows = DB::table('slots as s')
-            ->join('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
-            ->where('s.status', 'completed')
+            ->where('s.status', Slot::STATUS_COMPLETED)
             ->where(function ($sub) use ($like) {
-                $sub->where('t.po_number', 'like', $like)
+                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.ticket_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('v.bp_name', 'like', $like)
+                    ->orWhere('s.vendor_name', 'like', $like)
                     ->orWhere('w.wh_name', 'like', $like);
             })
             ->select([
-                't.po_number',
+                's.po_number',
                 's.ticket_number',
                 's.mat_doc',
-                'v.bp_name as vendor_name',
+                's.vendor_name as vendor_name',
                 'w.wh_name as warehouse_name',
             ])
             ->orderByRaw("CASE
-                WHEN t.po_number LIKE ? THEN 1
+                WHEN s.po_number LIKE ? THEN 1
                 WHEN s.ticket_number LIKE ? THEN 2
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 3
-                WHEN v.bp_name LIKE ? THEN 4
+                WHEN s.vendor_name LIKE ? THEN 4
                 WHEN w.wh_name LIKE ? THEN 5
                 ELSE 6
             END", [$q . '%', $q . '%', $q . '%', $q . '%', $q . '%'])
-            ->orderBy('t.po_number')
+            ->orderBy('s.po_number')
             ->limit(10)
             ->get();
 
@@ -396,7 +395,7 @@ class ReportController extends Controller
         $slotService = app(SlotService::class);
         $label = $slotService->getGateDisplayName((string) ($gate->warehouse_code ?? ''), (string) ($gate->gate_number ?? ''));
         $activityType = $new === 1 ? 'gate_activation' : 'gate_deactivation';
-        $desc = $new === 1 ? "Gate activated: {$label}" : "Gate deactivated: {$label}";
+        $desc = $new === 1 ? "Gate Activated: {$label}" : "Gate Deactivated: {$label}";
         $slotService->logActivity(null, $activityType, $desc, $old, $new);
 
         return redirect()->back()->with('success', 'Gate status updated');

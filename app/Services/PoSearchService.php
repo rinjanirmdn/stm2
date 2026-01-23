@@ -30,18 +30,18 @@ class PoSearchService
         // 1. SAP Search - Exact Match using ZPOA_DTL_LIST
         // User must type at least 5 digits for reliable PO lookup
         $digitsOnly = preg_replace('/\D+/', '', $q);
-        
+
         if (strlen($digitsOnly) >= 5) {
             try {
                 $poDetail = $this->sapPoService->getByPoNumber($digitsOnly);
-                
+
                 if ($poDetail) {
                     // Determine direction dynamically
                     $poNumber = $poDetail['po_number'];
                     $firstChar = substr($poNumber, 0, 1);
                     $firstTwo = substr($poNumber, 0, 2);
                     $direction = 'inbound';
-                    
+
                     if ($firstChar === '8' || strtoupper($firstTwo) === 'DO') {
                         $direction = 'outbound';
                     }
@@ -62,7 +62,7 @@ class PoSearchService
             }
         }
 
-        
+
 
 
         // 2. Fallback: Search Local DB (For autocomplete responsiveness)
@@ -72,7 +72,7 @@ class PoSearchService
         $select = $this->buildPoSelectColumns();
         if (Schema::hasColumn('po', 'bp_id')) {
             $queryBuilder->leftJoin('business_partner as v', 'p.bp_id', '=', 'v.id');
-            $select[] = 'v.bp_name as vendor_name';
+            $select[] = 's.vendor_name as vendor_name';
             $select[] = 'v.bp_type as vendor_type';
             $select[] = 'v.bp_code as vendor_code';
         } elseif (Schema::hasColumn('po', 'vendor_name')) {
@@ -81,13 +81,13 @@ class PoSearchService
 
         $queryBuilder->select($select);
         $this->applySearchConditions($queryBuilder, $q);
-        
+
         $localResults = $queryBuilder
             ->limit(10)
             ->get();
-            
+
         $formattedLocal = $this->formatSearchResults($localResults);
-        
+
         // Merge results: SAP first, then Local (unique POs)
         foreach ($formattedLocal as $localItem) {
             // Check existence in $results
@@ -163,12 +163,12 @@ class PoSearchService
         // 1. Try SAP API first (Real-time data)
         try {
             $api = $this->sapPoService->getByPoNumber($lookupPo);
-            
+
             if ($api) {
                 // Data found in SAP!
                 $vendorCode = (string) ($api['vendor_code'] ?? '');
                 $vendorName = (string) ($api['vendor_name'] ?? '');
-                
+
                 // Sync vendor to local DB if vendor code exists
                 if ($vendorCode !== '') {
                     $this->sapVendorService->syncToLocal([
@@ -300,7 +300,7 @@ class PoSearchService
 
         if (Schema::hasColumn('po', 'bp_id')) {
             $query->leftJoin('business_partner as v', 'p.bp_id', '=', 'v.id');
-            $select[] = 'v.bp_name as vendor_name';
+            $select[] = 's.vendor_name as vendor_name';
             $select[] = 'v.bp_type as vendor_type';
             $select[] = 'v.bp_code as vendor_code';
         } elseif (Schema::hasColumn('po', 'vendor_name')) {

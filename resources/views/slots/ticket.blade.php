@@ -69,67 +69,40 @@
             background: transparent;
         }
 
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
+        .info-table {
+            width: 100%;
+            margin: 10px 0;
+            border-collapse: collapse;
+        }
+
+        .info-table td {
+            vertical-align: top;
+            padding: 2px 0;
             font-size: 11px;
         }
 
-        .label {
+        .label-col {
+            width: 85px;
             font-weight: bold;
         }
 
-        .value {
-            text-align: right;
-            max-width: 60%;
-            word-wrap: break-word;
+        .colon-col {
+            width: 10px;
+            font-weight: bold;
+            text-align: center;
         }
 
+        .value-col {
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        /* ... existing styles ... */
         .barcode-container {
             text-align: center;
             margin: 10pt 0;
         }
-
-        .barcode {
-            margin: 10px auto;
-        }
-
-        .barcode-html {
-            display: inline-block;
-        }
-
-        .barcode-html div {
-            display: inline-block;
-            vertical-align: top;
-        }
-
-        .barcode-html span {
-            display: inline-block;
-            height: 60px;
-        }
-
-        .barcode-wrap {
-            display: inline-block;
-            padding: 4px 10px;
-            background: #ffffff;
-        }
-
-        .barcode-note {
-            font-size: 9px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .footer {
-            position: absolute;
-            bottom: 10pt;
-            left: 10pt;
-            right: 10pt;
-            text-align: center;
-            font-size: 9px;
-            color: #999;
-        }
+        /* ... */
     </style>
 </head>
 <body>
@@ -137,32 +110,45 @@
         <div class="ticket-inner">
             <div class="header">
                 <div class="title">Slot Ticket Docking</div>
-                <div class="subtitle">{{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}</div>
+                <div class="subtitle">
+                    {{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}
+                </div>
+                @php
+                    $gateLetter = isset($slot->ticket_number) && strlen($slot->ticket_number) > 0 ? substr($slot->ticket_number, 0, 1) : '-';
+                @endphp
             </div>
 
             <div class="ticket-number">
                 {{ $slot->ticket_number ?? '' }}
             </div>
 
-            <div class="info-row">
-                <span class="label">PO/DO Number:</span>
-                <span class="value">{{ $slot->truck_number ?? '-' }}</span>
-            </div>
-
-            <div class="info-row">
-                <span class="label">Vendor:</span>
-                <span class="value">{{ $slot->vendor_name ?? '-' }}</span>
-            </div>
-
-            <div class="info-row">
-                <span class="label">Direction:</span>
-                <span class="value">{{ strtoupper((string) ($slot->direction ?? '')) }}</span>
-            </div>
-
-            <div class="info-row">
-                <span class="label">ETA:</span>
-                <span class="value">{{ $slot->planned_start ?? '-' }}</span>
-            </div>
+            <table class="info-table">
+                <tr>
+                    <td class="label-col">PO/DO Number</td>
+                    <td class="colon-col">:</td>
+                    <td class="value-col">{{ $slot->truck_number ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Vendor</td>
+                    <td class="colon-col">:</td>
+                    <td class="value-col">{{ $slot->vendor_name ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Activity</td>
+                    <td class="colon-col">:</td>
+                    <td class="value-col">{{ strtoupper((string) ($slot->direction ?? '')) }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">Gate</td>
+                    <td class="colon-col">:</td>
+                    <td class="value-col">{{ $gateLetter }}</td>
+                </tr>
+                <tr>
+                    <td class="label-col">ETA</td>
+                    <td class="colon-col">:</td>
+                    <td class="value-col">{{ $slot->planned_start ?? '-' }}</td>
+                </tr>
+            </table>
 
             <div class="barcode-container">
                 <div class="barcode">
@@ -194,8 +180,8 @@
                 <div class="barcode-note">Scan This Ticket Number with a Barcode Scanner.</div>
             </div>
 
-            <div class="footer">
-                Generated: {{ now()->format('Y-m-d H:i:s') }}
+            <div class="footer" style="text-align: center; position: absolute; bottom: 0; width: 100%;">
+               Generated: {{ now()->format('Y-m-d H:i:s') }}
             </div>
         </div>
     </div>

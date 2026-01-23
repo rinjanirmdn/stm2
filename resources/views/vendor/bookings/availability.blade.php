@@ -31,8 +31,8 @@
             
             <div class="vendor-form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
                 <label class="vendor-form-label">Date</label>
-                <input type="date" name="date" class="vendor-form-input" id="date_select" 
-                       value="{{ $selectedDate }}" min="{{ date('Y-m-d') }}" onchange="this.form.submit()">
+                <input type="text" name="date" class="vendor-form-input" id="date_select" 
+                       value="{{ $selectedDate }}" placeholder="Select Date">
             </div>
         </div>
     </form>
@@ -125,6 +125,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (warehouseId && selectedDate) {
         loadCalendar(warehouseId, selectedDate);
+    }
+
+    var dateSelect = document.getElementById('date_select');
+    if (dateSelect) {
+        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+        window.flatpickr(dateSelect, {
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            minDate: 'today',
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
+            onChange: function (selectedDates, dateStr, instance) {
+                dateSelect.form.submit();
+            }
+        });
     }
 
     function loadCalendar(warehouseId, date) {

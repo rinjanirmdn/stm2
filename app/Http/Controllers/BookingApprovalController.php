@@ -30,7 +30,7 @@ class BookingApprovalController extends Controller
 
         // Default to pending approval
         $status = $request->get('status', 'pending_approval');
-        
+
         if ($status === 'all') {
             // Show all booking requests (not regular slots)
             $query->whereNotNull('requested_by');

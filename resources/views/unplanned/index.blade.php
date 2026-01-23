@@ -314,10 +314,19 @@
         // Initialize Flatpickr range for arrival date
         var arrivalRangeInput = document.querySelector('input#unplanned_arrival_range');
         if (arrivalRangeInput) {
+            var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
             flatpickr(arrivalRangeInput, {
                 mode: 'range',
                 dateFormat: 'Y-m-d',
                 allowInput: true,
+                disableMobile: true,
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                    if (holidayData[dateStr]) {
+                        dayElem.classList.add('is-holiday');
+                        dayElem.title = holidayData[dateStr];
+                    }
+                },
                 onChange: function(selectedDates, dateStr, instance) {
                     // Update hidden fields
                     var fromInput = document.querySelector('input[name="arrival_from"]');

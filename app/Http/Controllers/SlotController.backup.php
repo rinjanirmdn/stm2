@@ -71,24 +71,24 @@ class SlotController extends Controller
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
             ->leftJoin('vendors as v', 's.vendor_id', '=', 'v.id')
             ->where(function ($sub) use ($like) {
-                $sub->where('t.po_number', 'like', $like)
+                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
                     ->orWhere('v.name', 'like', $like);
             })
             ->where('s.status', '<>', 'completed')
             ->select([
-                't.po_number as truck_number',
+                's.po_number as truck_number',
                 's.mat_doc',
                 'v.name as vendor_name',
                 'w.name as warehouse_name',
             ])
             ->orderByRaw("CASE
-                WHEN t.po_number LIKE ? THEN 1
+                WHEN s.po_number LIKE ? THEN 1
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 2
                 WHEN v.name LIKE ? THEN 3
                 ELSE 4
             END", [$q . '%', $q . '%', $q . '%'])
-            ->orderBy('t.po_number')
+            ->orderBy('s.po_number')
             ->limit(10)
             ->get();
 
@@ -185,7 +185,7 @@ class SlotController extends Controller
             ->where('s.id', $slotId)
             ->select([
                 's.*',
-                't.po_number as truck_number',
+                's.po_number as truck_number',
                 'w.name as warehouse_name',
                 'w.code as warehouse_code',
                 'v.name as vendor_name',
@@ -614,7 +614,7 @@ class SlotController extends Controller
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'unplanned'")
             ->select([
                 's.*',
-                't.po_number as truck_number',
+                's.po_number as truck_number',
                 'w.name as warehouse_name',
                 'w.code as warehouse_code',
                 'v.name as vendor_name',
@@ -625,7 +625,7 @@ class SlotController extends Controller
         if ($request->filled('q')) {
             $search = '%' . $request->get('q') . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('t.po_number', 'like', $search)
+                $q->where('s.po_number', 'like', $search)
                   ->orWhere('s.mat_doc', 'like', $search)
                   ->orWhere('v.name', 'like', $search)
                   ->orWhere('s.sj_complete_number', 'like', $search);
@@ -633,7 +633,7 @@ class SlotController extends Controller
         }
 
         if ($request->filled('po_number')) {
-            $query->where('t.po_number', 'like', '%' . $request->get('po_number') . '%');
+            $query->where('s.po_number', 'like', '%' . $request->get('po_number') . '%');
         }
 
         if ($request->filled('mat_doc')) {
@@ -660,7 +660,7 @@ class SlotController extends Controller
         if ($actualSort === 'arrival_time') {
             $query->orderBy('s.arrival_time', $dir);
         } elseif ($actualSort === 'po') {
-            $query->orderBy('t.po_number', $dir);
+            $query->orderBy('s.po_number', $dir);
         } elseif ($actualSort === 'mat_doc') {
             $query->orderBy('s.mat_doc', $dir);
         } elseif ($actualSort === 'vendor') {

@@ -49,7 +49,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderByDesc('s.actual_start')
-            ->select(['s.id', 's.po_id', 's.actual_start'])
+            ->select(['s.id', 's.actual_start'])
             ->first();
     }
 
@@ -75,7 +75,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderBy('s.planned_start', 'asc')
-            ->select(['s.id', 's.po_id', 's.planned_start', 's.status'])
+            ->select(['s.id', 's.planned_start', 's.status'])
             ->first();
     }
 

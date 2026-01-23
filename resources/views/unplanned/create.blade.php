@@ -283,8 +283,8 @@ document.addEventListener('DOMContentLoaded', function () {
         items.slice(0, 5).forEach(function (it) {
             var div = document.createElement('div');
             div.className = 'po-item';
-            div.setAttribute('data-po', it.po_number || '');
-            div.innerHTML = '<div class="po-item__title">' + (it.po_number || '') + '</div>'
+            div.setAttribute('data-po', is.po_number || '');
+            div.innerHTML = '<div class="po-item__title">' + (is.po_number || '') + '</div>'
                 + '<div class="po-item__sub">' + (it.vendor_name || '') + (it.plant ? (' • ' + it.plant) : '') + '</div>';
             div.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;';
             poSuggestions.appendChild(div);
@@ -553,15 +553,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function initFlatpickrForArrival() {
         if (!arrivalInput) return;
         if (arrivalInput._flatpickr) return;
-        
+
         // Retry if flatpickr not yet loaded
         if (typeof window.flatpickr !== 'function') {
             setTimeout(initFlatpickrForArrival, 100);
             return;
         }
 
+        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
         var fp = window.flatpickr(arrivalInput, {
             enableTime: true,
+            minDate: "today",
             time_24hr: true,
             allowInput: true,
             disableMobile: true,
@@ -569,6 +572,13 @@ document.addEventListener('DOMContentLoaded', function () {
             dateFormat: 'Y-m-d H:i',
             clickOpens: true,
             closeOnSelect: false,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
             onChange: function (selectedDates, dateStr, instance) {
                 try {
                     arrivalInput.dispatchEvent(new Event('input', { bubbles: true }));

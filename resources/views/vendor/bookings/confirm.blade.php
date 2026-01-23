@@ -165,8 +165,8 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
             <div class="vendor-form-group" style="margin-bottom: 0;">
                 <label class="vendor-form-label">Date <span style="color: #ef4444;">*</span></label>
-                <input type="date" name="planned_date" class="vendor-form-input" required
-                       min="{{ date('Y-m-d') }}" value="{{ $booking->planned_start?->format('Y-m-d') }}">
+                <input type="text" name="planned_date" id="planned_date_input" class="vendor-form-input" required
+                       value="{{ $booking->planned_start?->format('Y-m-d') }}" placeholder="Select Date">
             </div>
             
             <div class="vendor-form-group" style="margin-bottom: 0;">
@@ -220,6 +220,23 @@ document.addEventListener('DOMContentLoaded', function () {
             el.style.display = 'block';
             try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
         }
+    }
+
+    var dateInput = document.getElementById('planned_date_input');
+    if (dateInput) {
+        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+        window.flatpickr(dateInput, {
+            dateFormat: 'Y-m-d',
+            disableMobile: true,
+            minDate: 'today',
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            }
+        });
     }
 });
 </script>

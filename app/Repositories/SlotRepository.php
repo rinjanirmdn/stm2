@@ -48,32 +48,15 @@ class SlotRepository
     public function getSlotDetail(int $slotId): ?object
     {
         return DB::table('slots as s')
-            ->leftJoin('po as t', 's.po_id', '=', 't.id')
             ->leftJoin('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->leftJoin('gates as g1', 's.planned_gate_id', '=', 'g1.id')
             ->leftJoin('gates as g2', 's.actual_gate_id', '=', 'g2.id')
             ->leftJoin('warehouses as w1', 'g1.warehouse_id', '=', 'w1.id')
+            ->leftJoin('warehouses as w2', 'g2.warehouse_id', '=', 'w2.id')
             ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
             ->where('s.id', $slotId)
             ->select([
-                's.id',
-                's.ticket_number',
-                's.mat_doc',
-                's.sj_start_number',
-                's.sj_complete_number',
-                's.truck_type',
-                's.vehicle_number_snap',
-                's.driver_number',
-                's.direction',
-                's.po_id',
-                's.warehouse_id',
-                's.bp_id',
-                's.planned_gate_id',
-                's.actual_gate_id',
-                's.planned_start',
-                's.arrival_time',
-                's.actual_start',
+                's.*',
                 's.actual_finish',
                 's.planned_duration',
                 's.status',
@@ -87,10 +70,10 @@ class SlotRepository
                 's.created_by',
                 's.created_at',
                 's.updated_at',
-                't.po_number',
+                's.po_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                'v.bp_name as vendor_name',
+                's.vendor_name as vendor_name',
                 'g1.gate_number as planned_gate_number',
                 'g1.warehouse_id as planned_gate_warehouse_id',
                 'w1.wh_name as planned_gate_warehouse_name',
@@ -107,9 +90,7 @@ class SlotRepository
     public function getSlotsWithFilters(array $filters = [], int $perPage = 50)
     {
         $query = DB::table('slots as s')
-            ->leftJoin('po as t', 's.po_id', '=', 't.id')
             ->leftJoin('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->leftJoin('gates as g', 's.planned_gate_id', '=', 'g.id')
             ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'planned'")
@@ -145,10 +126,10 @@ class SlotRepository
                 's.created_by',
                 's.created_at',
                 's.updated_at',
-                't.po_number',
+                's.po_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                'v.bp_name as vendor_name',
+                's.vendor_name as vendor_name',
                 'g.gate_number',
                 'td.target_duration_minutes'
             ]);
@@ -157,9 +138,9 @@ class SlotRepository
         if (!empty($filters['search'])) {
             $search = '%' . $filters['search'] . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('t.po_number', 'like', $search)
+                $q->where('s.po_number', 'like', $search)
                   ->orWhere('s.mat_doc', 'like', $search)
-                  ->orWhere('v.bp_name', 'like', $search);
+                  ->orWhere('s.vendor_name', 'like', $search);
             });
         }
 
@@ -209,50 +190,19 @@ class SlotRepository
     public function getUnplannedSlots(int $limit = 50)
     {
         return DB::table('slots as s')
-            ->leftJoin('po as t', 's.po_id', '=', 't.id')
             ->leftJoin('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->leftJoin('gates as g', 's.actual_gate_id', '=', 'g.id')
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'unplanned'")
             ->orderByDesc(DB::raw('COALESCE(s.arrival_time, s.planned_start)'))
-            ->limit($limit)
             ->select([
-                's.id',
-                's.ticket_number',
-                's.mat_doc',
-                's.sj_start_number',
-                's.sj_complete_number',
-                's.truck_type',
-                's.vehicle_number_snap',
-                's.driver_number',
-                's.direction',
-                's.po_id',
-                's.warehouse_id',
-                's.bp_id',
-                's.planned_gate_id',
-                's.actual_gate_id',
-                's.planned_start',
-                's.arrival_time',
-                's.actual_start',
-                's.actual_finish',
-                's.planned_duration',
-                's.status',
-                's.slot_type',
-                's.is_late',
-                's.late_reason',
-                's.cancelled_reason',
-                's.cancelled_at',
-                's.moved_gate',
-                's.blocking_risk',
-                's.created_by',
-                's.created_at',
-                's.updated_at',
-                't.po_number',
+                's.*',
+                's.po_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                'v.bp_name as vendor_name',
-                'g.gate_number'
+                's.vendor_name as vendor_name',
+                'g.gate_number as actual_gate_number',
             ])
+            ->limit($limit)
             ->get();
     }
 

@@ -29,14 +29,13 @@ class GateStreamingService
                      ->where('s.planned_start', '<=', now())
                      ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)') . ' >= ?', [now()]);
             })
-            ->leftJoin('po as t', 's.po_id', '=', 't.id')
             ->select([
                 'g.id',
                 'g.gate_number',
                 'g.is_active',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                't.po_number',
+                's.po_number',
                 's.status as slot_status',
                 's.planned_start',
                 's.planned_duration',
@@ -51,7 +50,7 @@ class GateStreamingService
                 END as gate_status")
             ])
             ->groupBy('g.id', 'g.gate_number', 'g.is_active', 'w.wh_name', 'w.wh_code',
-                     't.po_number', 's.status', 's.planned_start', 's.planned_duration',
+                     's.po_number', 's.status', 's.planned_start', 's.planned_duration',
                      's.actual_start', 's.actual_finish')
             ->get();
     }
@@ -150,7 +149,6 @@ class GateStreamingService
                      ->where('s.planned_start', '<=', now())
                      ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)') . ' >= ?', [now()]);
             })
-            ->leftJoin('po as t', 's.po_id', '=', 't.id')
             ->where('g.id', $gateId)
             ->select([
                 'g.id',
@@ -158,7 +156,7 @@ class GateStreamingService
                 'g.is_active',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                't.po_number',
+                's.po_number',
                 's.status as slot_status',
                 's.planned_start',
                 's.planned_duration',
@@ -172,7 +170,7 @@ class GateStreamingService
                 END as gate_status")
             ])
             ->groupBy('g.id', 'g.gate_number', 'g.is_active', 'w.wh_name', 'w.wh_code',
-                     't.po_number', 's.status', 's.planned_start', 's.planned_duration',
+                     's.po_number', 's.status', 's.planned_start', 's.planned_duration',
                      's.actual_start', 's.actual_finish')
             ->first();
 

@@ -17,7 +17,7 @@
                     @csrf
 
                     <div class="st-form-field" style="margin-bottom:10px;">
-                        <label class="st-label">NIK</label>
+                        <label class="st-label">NIK/Username</label>
                         <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik') }}" required>
                     </div>
 
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var targetId = this.getAttribute('data-target');
             var input = document.getElementById(targetId);
             var icon = this.querySelector('i');
-            
+
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.remove('fa-eye');

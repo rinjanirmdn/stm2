@@ -101,14 +101,6 @@
                     <td>Requested By</td>
                     <td>{{ $booking->requester?->full_name ?? '-' }}</td>
                 </tr>
-                <tr>
-                    <td>Direction</td>
-                    <td>
-                        <span class="st-badge st-badge--{{ $booking->direction }}">
-                            {{ ucfirst($booking->direction) }}
-                        </span>
-                    </td>
-                </tr>
             </table>
         </div>
 
@@ -248,7 +240,7 @@
             <i class="fas fa-gavel"></i>
             Actions
         </h3>
-        
+
         <div class="st-action-buttons-group">
             @can('bookings.approve')
             <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" style="display: inline;">
@@ -405,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
             Activity History
         </h2>
     </div>
-    
+
     <div class="st-timeline">
         @foreach($booking->bookingHistories as $history)
         <div class="st-timeline__item">
@@ -418,11 +410,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     <span class="st-timeline__user">by {{ $history->performer?->full_name ?? 'System' }}</span>
                     <span class="st-timeline__time">{{ $history->created_at->format('d M Y H:i') }}</span>
                 </div>
-                
+
                 @if($history->notes)
                 <p class="st-timeline__notes">{{ $history->notes }}</p>
                 @endif
-                
+
                 @if($history->old_planned_start || $history->new_planned_start)
                 <div class="st-timeline__changes">
                     @if($history->old_planned_start)
@@ -563,7 +555,7 @@ function openApproveModal(id, ticket) {
     const modal = document.getElementById('approveModal');
     const ticketSpan = document.getElementById('modalTicketNumber');
     const form = document.getElementById('approveForm');
-    
+
     ticketSpan.innerText = ticket;
     form.action = "{{ url('/bookings') }}/" + id + "/approve";
     modal.classList.add('active');

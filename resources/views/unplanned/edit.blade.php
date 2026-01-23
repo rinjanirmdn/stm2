@@ -108,10 +108,10 @@
                     @php
                         $arrivalValue = old('arrival_time');
                         if ($arrivalValue === null || (string) $arrivalValue === '') {
-                            $arrivalValue = !empty($slot->arrival_time) ? \Carbon\Carbon::parse((string) $slot->arrival_time)->format('Y-m-d\\TH:i') : '';
+                            $arrivalValue = !empty($slot->arrival_time) ? \Carbon\Carbon::parse((string) $slot->arrival_time)->format('Y-m-d H:i') : '';
                         }
                     @endphp
-                    <input type="datetime-local" name="arrival_time" class="st-input{{ $errors->has('arrival_time') ? ' st-input--invalid' : '' }}" required value="{{ $arrivalValue }}">
+                    <input type="text" name="arrival_time" id="arrival_time_input" class="st-input{{ $errors->has('arrival_time') ? ' st-input--invalid' : '' }}" required value="{{ $arrivalValue }}" placeholder="Select Date and Time">
                     @error('arrival_time')
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
                     @enderror
@@ -142,10 +142,10 @@
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
                     <label class="st-label">Truck Type <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
-                    <select name="truck_type" class="st-select">
+                    <select name="truck_type" id="truck_type" class="st-select">
                         <option value="">-</option>
-                        @foreach ($truckTypes as $tt => $label)
-                            <option value="{{ $tt }}" {{ old('truck_type', $slot->truck_type ?? '') === $tt ? 'selected' : '' }}>{{ $label }}</option>
+                        @foreach ($truckTypes as $tt)
+                            <option value="{{ $tt }}" {{ old('truck_type', $slot->truck_type ?? '') === $tt ? 'selected' : '' }}>{{ $tt }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -168,8 +168,47 @@
 
             <div style="margin-top:4px;display:flex;gap:8px;">
                 <button type="submit" class="st-btn">Save</button>
-                <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--secondary">Cancel</a>
+                <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary">Cancel</a>
             </div>
         </form>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var arrivalInput = document.getElementById('arrival_time_input');
+        
+        function initFlatpickrForArrival() {
+            if (!arrivalInput) return;
+            if (arrivalInput._flatpickr) return;
+            
+            if (typeof window.flatpickr !== 'function') {
+                setTimeout(initFlatpickrForArrival, 100);
+                return;
+            }
+
+            var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+            window.flatpickr(arrivalInput, {
+                enableTime: true,
+                minDate: "today",
+                time_24hr: true,
+                allowInput: true,
+                disableMobile: true,
+                minuteIncrement: 1,
+                dateFormat: 'Y-m-d H:i',
+                clickOpens: true,
+                closeOnSelect: false,
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                    if (holidayData[dateStr]) {
+                        dayElem.classList.add('is-holiday');
+                        dayElem.title = holidayData[dateStr];
+                    }
+                }
+            });
+        }
+
+        initFlatpickrForArrival();
+    });
+    </script>
 @endsection

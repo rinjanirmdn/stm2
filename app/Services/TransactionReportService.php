@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Slot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -137,17 +138,15 @@ class TransactionReportService
     private function buildBaseTransactionQuery()
     {
         return DB::table('slots as s')
-            ->join('po as t', 's.po_id', '=', 't.id')
             ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('business_partner as v', 's.bp_id', '=', 'v.id')
             ->leftJoin('users as u', 's.created_by', '=', 'u.id')
             ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
             ->select([
                 's.*',
-                't.po_number',
+                's.po_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                'v.bp_name as vendor_name',
+                's.vendor_name',
                 'u.nik as created_by_nik',
                 'td.target_duration_minutes',
             ])
@@ -163,10 +162,10 @@ class TransactionReportService
         if ($search !== '') {
             $like = '%' . $search . '%';
             $query->where(function ($sub) use ($like) {
-                $sub->where('t.po_number', 'like', $like)
+                $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.ticket_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('v.bp_name', 'like', $like)
+                    ->orWhere('s.vendor_name', 'like', $like)
                     ->orWhere('w.wh_name', 'like', $like)
                     ->orWhere('s.sj_complete_number', 'like', $like)
                     ->orWhere('s.truck_type', 'like', $like)
@@ -179,7 +178,7 @@ class TransactionReportService
         // Specific field searches
         $poSearch = trim($request->query('po', ''));
         if ($poSearch !== '') {
-            $query->where('t.po_number', 'like', '%' . $poSearch . '%');
+            $query->where('s.po_number', 'like', '%' . $poSearch . '%');
         }
 
         $ticketSearch = trim($request->query('ticket', ''));
@@ -199,7 +198,7 @@ class TransactionReportService
 
         $vendorSearch = trim($request->query('vendor', ''));
         if ($vendorSearch !== '') {
-            $query->where('v.bp_name', 'like', '%' . $vendorSearch . '%');
+            $query->where('s.vendor_name', 'like', '%' . $vendorSearch . '%');
         }
     }
 
@@ -253,7 +252,6 @@ class TransactionReportService
         $statusArray = (array) $request->query('status', []);
         $directionArray = (array) $request->query('direction', []);
         $warehouseArray = (array) $request->query('warehouse_id', []);
-        $vendorArray = (array) $request->query('vendor_id', []);
 
         $slotTypeValues = array_values(array_filter($slotTypeArray, fn ($v) => (string) $v !== ''));
         if (!empty($slotTypeValues)) {
@@ -274,11 +272,6 @@ class TransactionReportService
         if (!empty($warehouseValues)) {
             $query->whereIn('s.warehouse_id', array_map('intval', $warehouseValues));
         }
-
-        $vendorValues = array_values(array_filter($vendorArray, fn ($v) => (string) $v !== ''));
-        if (!empty($vendorValues)) {
-            $query->whereIn('s.bp_id', array_map('intval', $vendorValues));
-        }
     }
 
     /**
@@ -289,7 +282,7 @@ class TransactionReportService
         $leadTimeMin = trim($request->query('lead_time_min', ''));
         $leadTimeMax = trim($request->query('lead_time_max', ''));
 
-        $leadExpr = $this->getTimestampDiffMinutesExpression('COALESCE(s.actual_start, s.arrival_time)', 's.actual_finish');
+        $leadExpr = $this->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
         if ($leadTimeMin !== '' && is_numeric($leadTimeMin)) {
             $query->whereRaw($leadExpr . ' >= ?', [(int) $leadTimeMin]);
         }
@@ -306,7 +299,7 @@ class TransactionReportService
             $needNotAchieve = in_array('not_achieve', $targetValues, true);
 
             if ($needAchieve xor $needNotAchieve) {
-                $leadExpr = $this->getTimestampDiffMinutesExpression('COALESCE(s.actual_start, s.arrival_time)', 's.actual_finish');
+                $leadExpr = $this->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
 
                 if ($needAchieve) {
                     $query->whereRaw("td.target_duration_minutes IS NOT NULL AND s.actual_finish IS NOT NULL AND COALESCE(s.actual_start, s.arrival_time) IS NOT NULL AND {$leadExpr} <= td.target_duration_minutes + 15");
@@ -346,14 +339,14 @@ class TransactionReportService
      */
     public function getSortMap(): array
     {
-        $leadExpr = $this->getTimestampDiffMinutesExpression('COALESCE(s.actual_start, s.arrival_time)', 's.actual_finish');
+        $leadExpr = $this->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
         $lateAddExpr = $this->getDateAddExpression('s.planned_start', 15);
 
         return [
-            'po' => 't.po_number',
+            'po' => 's.po_number',
             'ticket' => 's.ticket_number',
             'mat_doc' => 's.mat_doc',
-            'vendor' => 'v.bp_name',
+            'vendor' => 's.vendor_name',
             'warehouse' => 'w.wh_name',
             'direction' => 's.direction',
             'arrival' => 's.arrival_time',
@@ -370,15 +363,7 @@ class TransactionReportService
     {
         return [
             'warehouses' => DB::table('warehouses')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
-            'vendors' => DB::table('business_partner')
-                ->select([
-                    'id',
-                    'bp_name as name',
-                    'bp_code as code',
-                    'bp_type as type',
-                ])
-                ->orderBy('bp_name')
-                ->get(),
+            'vendors' => collect(),
         ];
     }
 }

@@ -10,7 +10,7 @@
                 <div class="st-form-row" style="align-items:flex-end;">
                     <div class="st-form-field" style="max-width:200px;">
                         <label class="st-label">Search</label>
-                        <input type="text" name="q" class="st-input" placeholder="NIK or name" value="{{ $q ?? '' }}">
+                        <input type="text" name="q" class="st-input" placeholder="NIK/Username or name" value="{{ $q ?? '' }}">
                     </div>
                     <div class="st-form-field" style="max-width:180px;">
                         <label class="st-label">Role</label>
@@ -59,20 +59,20 @@
                                 <th style="width:60px;">#</th>
                                 <th style="width:180px;">
                                     <div class="st-colhead">
-                                        <span class="st-colhead__label">NIK</span>
+                                        <span class="st-colhead__label">NIK/Username</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="nik" data-type="text" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="nik" title="Filter">⏷</button>
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="nik" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">NIK Filter</div>
-                                            <input type="text" name="nik" form="user-filter-form" class="st-input" placeholder="Cari NIK..." value="{{ $nik ?? '' }}">
+                                            <div style="font-weight:600;margin-bottom:6px;">NIK/Username Filter</div>
+                                            <input type="text" name="nik" form="user-filter-form" class="st-input" placeholder="Cari NIK/Username..." value="{{ $nik ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="nik">Clear</button>
                                             </div>
                                         </div>
                                         <div class="st-sort-panel" data-sort-panel="nik" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Sort NIK</div>
+                                            <div style="font-weight:600;margin-bottom:6px;">Sort NIK/Username</div>
                                             <button type="button" class="st-sort-option" data-sort="nik" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
                                                 A-Z
                                             </button>

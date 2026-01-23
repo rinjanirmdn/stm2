@@ -4,6 +4,46 @@
 @section('page_title', 'Slots')
 
 @section('content')
+    <!-- Custom Reject Booking Dialog -->
+    <div id="customConfirmDialog" class="st-dialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="st-card" style="width: 100%; max-width: 500px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <div class="st-card__header" style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937;">Cancel Booking</h3>
+            </div>
+            <div class="st-card__body" style="padding: 20px;">
+                <form id="cancel-booking-form" method="POST" action="">
+                    @csrf
+                    <p id="rejectConfirmationText" style="margin: 0 0 20px 0; color: #4b5563; line-height: 1.5; font-size: 14px;">
+                        Are you sure you want to cancel booking <span id="slotNumber" style="font-weight: 600;"></span>?
+                    </p>
+
+                    <div class="st-form-field" style="margin-bottom: 20px;">
+                        <label for="rejectReason" class="st-label" style="display: block; margin-bottom: 6px; font-size: 13px; color: #4b5563; font-weight: 500;">
+                            Reason for Cancellation
+                        </label>
+                        <textarea
+                            id="rejectReason"
+                            name="cancelled_reason"
+                            class="st-input"
+                            rows="4"
+                            required
+                            placeholder="Please Provide a Reason for Cancellation..."
+                        ></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 8px;">
+                        <button id="confirmRejectYes" type="submit" class="st-btn st-btn--danger" style="flex: 1; max-width: 220px;">
+                            CANCEL BOOKING
+                        </button>
+                        <button id="confirmRejectNo" type="button" class="st-btn st-btn--secondary" style="flex: 1; max-width: 220px;">
+                            BACK
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="tw-slots">
     <div class="st-card tw-card" style="margin-bottom:12px;">
         <div class="tw-card__body">
@@ -553,56 +593,47 @@
                                     <span class="st-table__status-badge {{ $blockingClass }}">{{ $blockingLabel }}</span>
                                 </td>
                                 <td>
-                                    <div class="tw-actionbar">
-                                        @if ($slotTypeVal === 'planned')
+                                    <div class="st-action-dropdown">
+                                        <button type="button" class="st-btn st-btn--ghost st-action-trigger" style="padding:4px 8px;font-size:16px;line-height:1;border:none;color:#6b7280;">
+                                            &#x22ee;
+                                        </button>
+                                        <div class="st-action-menu">
+                                            @if ($slotTypeVal === 'planned')
+                                                @if ($status === 'scheduled')
+                                                    @unless(optional(auth()->user())->hasRole('Operator'))
+                                                    @can('slots.edit')
+                                                    <a href="{{ route('slots.edit', ['slotId' => $row->id]) }}" class="st-action-item">Edit</a>
+                                                    @endcan
+                                                    @endunless
+                                                @endif
+
+                                                @if (!$hasArrival && $status === 'scheduled')
+                                                    <a href="{{ route('slots.arrival', ['slotId' => $row->id]) }}" class="st-action-item">Arrival</a>
+                                                @elseif (in_array($status, ['waiting'], true))
+                                                    <a href="{{ route('slots.start', ['slotId' => $row->id]) }}" class="st-action-item">Start</a>
+                                                @endif
+                                            @endif
+
+                                            @if ($status === 'in_progress')
+                                                <a href="{{ route('slots.complete', ['slotId' => $row->id]) }}" class="st-action-item">Complete</a>
+                                            @endif
+
                                             @if ($status === 'scheduled')
+                                                @can('slots.cancel')
+                                                <a href="{{ route('slots.cancel', ['slotId' => $row->id]) }}" class="st-action-item st-action-item--danger btn-cancel-slot">Cancel</a>
+                                                @endcan
+                                            @endif
+
+                                            @if (!empty($row->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
                                                 @unless(optional(auth()->user())->hasRole('Operator'))
-                                                @can('slots.edit')
-                                                <a href="{{ route('slots.edit', ['slotId' => $row->id]) }}" class="tw-action" data-tooltip="Edit" aria-label="Edit">
-                                                    <i class="fa-solid fa-pen"></i>
-                                                </a>
+                                                @can('slots.ticket')
+                                                <a href="{{ route('slots.ticket', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">Print Ticket</a>
                                                 @endcan
                                                 @endunless
                                             @endif
 
-                                            @if (!$hasArrival && $status === 'scheduled')
-                                                <a href="{{ route('slots.arrival', ['slotId' => $row->id]) }}" class="tw-action" data-tooltip="Arrival" aria-label="Arrival">
-                                                    <i class="fa-solid fa-truck"></i>
-                                                </a>
-                                            @elseif (in_array($status, ['waiting'], true))
-                                                <a href="{{ route('slots.start', ['slotId' => $row->id]) }}" class="tw-action tw-action--primary" data-tooltip="Start" aria-label="Start">
-                                                    <i class="fa-solid fa-play"></i>
-                                                </a>
-                                            @endif
-                                        @endif
-
-                                        @if ($status === 'in_progress')
-                                            <a href="{{ route('slots.complete', ['slotId' => $row->id]) }}" class="tw-action tw-action--primary" data-tooltip="Complete" aria-label="Complete">
-                                                <i class="fa-solid fa-check"></i>
-                                            </a>
-                                        @endif
-
-                                        @if ($status === 'scheduled')
-                                            @can('slots.cancel')
-                                            <a href="{{ route('slots.cancel', ['slotId' => $row->id]) }}" class="tw-action tw-action--danger btn-cancel-slot" data-tooltip="Cancel" aria-label="Cancel">
-                                                <i class="fa-solid fa-xmark"></i>
-                                            </a>
-                                            @endcan
-                                        @endif
-
-                                        @if (!empty($row->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
-                                            @unless(optional(auth()->user())->hasRole('Operator'))
-                                            @can('slots.ticket')
-                                            <a href="{{ route('slots.ticket', ['slotId' => $row->id]) }}" class="tw-action" data-tooltip="Print Ticket" aria-label="Print Ticket" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
-                                                <i class="fa-solid fa-print"></i>
-                                            </a>
-                                            @endcan
-                                            @endunless
-                                        @endif
-
-                                        <a href="{{ route('slots.show', ['slotId' => $row->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
-                                            <i class="fa-solid fa-eye"></i>
-                                        </a>
+                                            <a href="{{ route('slots.show', ['slotId' => $row->id]) }}" class="st-action-item">View</a>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -627,14 +658,44 @@ document.addEventListener('DOMContentLoaded', function () {
     // Tooltips handled globally in resources/js/main.js (st-global-tooltip)
 
     // Initialize Flatpickr for date inputs
+    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
     var dateInputs = document.querySelectorAll('input[type="date"][form="slot-filter-form"]');
     dateInputs.forEach(function(input) {
         flatpickr(input, {
             dateFormat: 'Y-m-d',
             allowInput: true,
             clickOpens: true,
-            theme: 'dark'
+            theme: 'dark',
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            }
         });
+    });
+
+    // Action Menu Toggle
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.st-action-trigger')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const trigger = e.target.closest('.st-action-trigger');
+            const menu = trigger.nextElementSibling;
+
+            // Close all other open menus
+            document.querySelectorAll('.st-action-menu.show').forEach(m => {
+                if (m !== menu) m.classList.remove('show');
+            });
+
+            menu.classList.toggle('show');
+        } else {
+            // Click outside, close all
+            document.querySelectorAll('.st-action-menu.show').forEach(m => {
+                m.classList.remove('show');
+            });
+        }
     });
 
     var filterForm = document.getElementById('slot-filter-form');
@@ -678,14 +739,96 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Global variables for confirmation dialog
+    let pendingCancelUrl = null;
+    let currentSlotNumber = '';
+
+    // Show confirmation dialog
+    function showConfirmDialog(slotNumber = '') {
+        const dialog = document.getElementById('customConfirmDialog');
+        const slotNumberElement = document.getElementById('slotNumber');
+        const rejectReason = document.getElementById('rejectReason');
+        const form = document.getElementById('cancel-booking-form');
+
+        if (dialog) {
+            dialog.style.display = 'flex';
+            if (slotNumberElement && slotNumber) {
+                currentSlotNumber = slotNumber;
+                slotNumberElement.textContent = slotNumber;
+            }
+            if (form && pendingCancelUrl) {
+                form.setAttribute('action', pendingCancelUrl);
+            }
+            if (rejectReason) {
+                rejectReason.value = '';
+                rejectReason.focus();
+            }
+        }
+    }
+
+    // Hide confirmation dialog
+    function hideConfirmDialog() {
+        const dialog = document.getElementById('customConfirmDialog');
+        if (dialog) {
+            dialog.style.display = 'none';
+        }
+        pendingCancelUrl = null;
+    }
+
+    // Setup event listeners for confirmation dialog
+    (function setupCancelBookingDialog() {
+        const dialog = document.getElementById('customConfirmDialog');
+        const btnNo = document.getElementById('confirmRejectNo');
+        const form = document.getElementById('cancel-booking-form');
+        const reasonEl = document.getElementById('rejectReason');
+
+        if (btnNo) {
+            btnNo.addEventListener('click', function () {
+                hideConfirmDialog();
+            });
+        }
+
+        if (dialog) {
+            dialog.addEventListener('click', function (e) {
+                if (e.target === dialog) {
+                    hideConfirmDialog();
+                }
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                const reason = reasonEl ? reasonEl.value.trim() : '';
+                if (!reason) {
+                    e.preventDefault();
+                    if (reasonEl) {
+                        reasonEl.focus();
+                    }
+                }
+            });
+        }
+    })();
+
     function bindCancelConfirm() {
         document.querySelectorAll('.btn-cancel-slot').forEach(function (btn) {
             if (btn.getAttribute('data-confirm-bound') === '1') return;
             btn.setAttribute('data-confirm-bound', '1');
+
             btn.addEventListener('click', function (e) {
-                if (!confirm('Yakin Ingin Membatalkan Slot Ini?')) {
-                    e.preventDefault();
+                e.preventDefault();
+                pendingCancelUrl = this.getAttribute('href');
+
+                // Extract slot number from the row (adjust selector as needed)
+                const row = this.closest('tr');
+                let slotNumber = 'this booking';
+                if (row) {
+                    const slotCell = row.querySelector('td:nth-child(2)'); // Adjust index if needed
+                    if (slotCell) {
+                        slotNumber = slotCell.textContent.trim();
+                    }
                 }
+
+                showConfirmDialog(slotNumber);
             });
         });
     }
@@ -1042,6 +1185,14 @@ document.addEventListener('DOMContentLoaded', function () {
             mode: 'range',
             dateFormat: 'Y-m-d',
             allowInput: true,
+            disableMobile: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
             onChange: function(selectedDates, dateStr, instance) {
                 // Update hidden fields
                 var fromInput = document.querySelector('input[name="date_from"]');
@@ -1066,6 +1217,14 @@ document.addEventListener('DOMContentLoaded', function () {
             mode: 'range',
             dateFormat: 'Y-m-d',
             allowInput: true,
+            disableMobile: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (holidayData[dateStr]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[dateStr];
+                }
+            },
             onChange: function(selectedDates, dateStr, instance) {
                 // Update hidden fields
                 var fromInput = document.querySelector('input[name="arrival_from"]');

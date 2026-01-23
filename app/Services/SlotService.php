@@ -141,6 +141,9 @@ class SlotService
     {
         $createdBy = $userId ?? Auth::id();
 
+        // Capitalize description properly
+        $description = $this->capitalizeDescription($description);
+
         $allowedTypes = [
             'gate_change',
             'status_change',
@@ -167,6 +170,42 @@ class SlotService
             'description' => $description,
             'created_by' => $createdBy,
         ]);
+    }
+
+    /**
+     * Capitalize description with proper title case
+     * First letter of each word capitalized, except conjunctions
+     */
+    private function capitalizeDescription(string $description): string
+    {
+        $conjunctions = ['and', 'or', 'but', 'for', 'nor', 'on', 'at', 'to', 'from', 'with', 'in', 'at'];
+
+        $words = explode(' ', $description);
+        $capitalized = [];
+
+        foreach ($words as $index => $word) {
+            // Skip empty words
+            if (trim($word) === '') {
+                $capitalized[] = $word;
+                continue;
+            }
+
+            // Always capitalize first word
+            if ($index === 0) {
+                $capitalized[] = ucfirst(strtolower($word));
+                continue;
+            }
+
+            // Check if word is a conjunction (case insensitive)
+            $lowerWord = strtolower($word);
+            if (in_array($lowerWord, $conjunctions, true)) {
+                $capitalized[] = strtolower($word);
+            } else {
+                $capitalized[] = ucfirst(strtolower($word));
+            }
+        }
+
+        return implode(' ', $capitalized);
     }
 
     public function getGateLetterByWarehouseAndNumber(string $warehouseCode, string $gateNumber): ?string
@@ -207,7 +246,7 @@ class SlotService
             return 'Gate ' . $letter;
         }
 
-        return 'Gate ' . $gateNorm;
+        return 'Gate ' . strtoupper($gateNorm);
     }
 
     public function buildLaneGroupFromMeta(string $warehouseCode, string $gateNumber, ?int $fallbackId = null): ?string

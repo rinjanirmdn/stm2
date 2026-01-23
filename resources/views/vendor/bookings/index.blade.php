@@ -31,27 +31,27 @@
                     <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
             </div>
-            
+
             <div class="vendor-form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
                 <label class="vendor-form-label">From Date</label>
-                <input type="date" name="date_from" class="vendor-form-input" value="{{ request('date_from') }}">
+                <input type="text" name="date_from" class="vendor-form-input flatpickr-date" value="{{ request('date_from') }}" placeholder="YYYY-MM-DD">
             </div>
-            
+
             <div class="vendor-form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
                 <label class="vendor-form-label">To Date</label>
-                <input type="date" name="date_to" class="vendor-form-input" value="{{ request('date_to') }}">
+                <input type="text" name="date_to" class="vendor-form-input flatpickr-date" value="{{ request('date_to') }}" placeholder="YYYY-MM-DD">
             </div>
-            
+
             <div class="vendor-form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
                 <label class="vendor-form-label">Search</label>
                 <input type="text" name="search" class="vendor-form-input" placeholder="Ticket or Vehicle..." value="{{ request('search') }}">
             </div>
-            
+
             <button type="submit" class="vendor-btn vendor-btn--primary">
                 <i class="fas fa-search"></i>
                 Filter
             </button>
-            
+
             @if(request()->hasAny(['status', 'date_from', 'date_to', 'search']))
             <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">
                 <i class="fas fa-times"></i>
@@ -111,13 +111,13 @@
                             <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            
+
                             @if($booking->status === 'pending_vendor_confirmation')
                             <a href="{{ route('vendor.bookings.confirm', $booking->id) }}" class="vendor-btn vendor-btn--primary vendor-btn--sm" title="Confirm">
                                 <i class="fas fa-check"></i>
                             </a>
                             @endif
-                            
+
                             @if(in_array($booking->status, ['pending_approval', 'scheduled', 'pending_vendor_confirmation']))
                             <form method="POST" action="{{ route('vendor.bookings.cancel', $booking->id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to cancel this booking?');">
                                 @csrf
@@ -151,3 +151,31 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.flatpickr !== 'function') return;
+    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+    var inputs = document.querySelectorAll('input.flatpickr-date');
+    Array.prototype.slice.call(inputs).forEach(function (input) {
+        if (!input || input.getAttribute('data-st-flatpickr') === '1') return;
+        input.setAttribute('data-st-flatpickr', '1');
+
+        window.flatpickr(input, {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            disableMobile: true,
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                var ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
+                if (holidayData[ds]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[ds];
+                }
+            }
+        });
+    });
+});
+</script>
+@endpush

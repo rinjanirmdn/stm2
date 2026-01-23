@@ -73,7 +73,6 @@ class SlotConflictService
         }
 
         $rows = DB::table('slots as s')
-            ->leftJoin('po as t', 's.po_id', '=', 't.id')
             ->leftJoin('gates as g', 's.actual_gate_id', '=', 'g.id')
             ->leftJoin('warehouses as w2', 'g.warehouse_id', '=', 'w2.id')
             ->whereIn('s.id', $slotIds)
@@ -82,7 +81,7 @@ class SlotConflictService
                 's.ticket_number',
                 's.status',
                 's.actual_start',
-                't.po_number as truck_number',
+                's.po_number as truck_number',
                 'g.gate_number as actual_gate_number',
                 'w2.wh_code as actual_wh_code',
             ])

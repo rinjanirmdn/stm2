@@ -292,12 +292,12 @@ class TimeCalculationService
         return [
             'CDD/CDE',
             'Fuso',
-            'Wingbox (paletize)',
-            'Wingbox (Louse)',
-            'Kontainer 20ft (paletize)',
-            'Kontainer 20ft (Louse)',
-            'Kontainer 40ft (paletize)',
-            'Kontainer 40ft (Louse)',
+            'Wingbox (Paletize)',
+            'Wingbox (Loose)',
+            'Container 20ft (Paletize)',
+            'Container 20ft (Loose)',
+            'Container 40ft (Paletize)',
+            'Container 40ft (Loose)',
             'Cargo',
         ];
     }
