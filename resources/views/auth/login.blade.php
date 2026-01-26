@@ -15,7 +15,7 @@
 
             <div style="text-align:center;margin-bottom:12px;">
                 <div style="font-size:16px;font-weight:700;">Sign in</div>
-                <div style="font-size:12px;color:#6b7280;">Masuk untuk melanjutkan</div>
+                <div style="font-size:12px;color:#6b7280;">Please sign in to continue</div>
             </div>
 
             @if ($errors->any())

@@ -79,7 +79,7 @@
                         type="text"
                         id="vendor_search"
                         class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
-                        placeholder="Pilih Direction Dulu..."
+                        placeholder="Choose Direction First..."
                         style="margin-bottom:4px;"
                         value="{{ old('vendor_search') }}"
                         {{ old('direction', $slot->direction ?? '') ? '' : 'disabled' }}
@@ -144,10 +144,10 @@
                     <label class="st-label">Risk & Schedule</label>
                     <div style="display:flex;gap:4px;align-items:start;">
                         <div style="flex:1;">
-                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Belum Dihitung.</div>
+                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Not Calculated.</div>
                             <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
                         </div>
-                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>Lihat Jadwal</button>
+                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>View Schedule</button>
                     </div>
                 </div>
             </div>

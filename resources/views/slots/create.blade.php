@@ -84,7 +84,7 @@
                         type="text"
                         id="vendor_search"
                         class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
-                        placeholder="Pilih Direction Dulu..."
+                        placeholder="Choose Direction First..."
                         style="margin-bottom:4px;"
                         autocomplete="off"
                         {{ old('direction') ? '' : 'disabled' }}
@@ -167,10 +167,10 @@
                     <label class="st-label">Risk & Schedule</label>
                     <div style="display:flex;gap:4px;align-items:start;">
                         <div style="flex:1;">
-                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Belum Dihitung.</div>
+                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Not Calculated.</div>
                             <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
                         </div>
-                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;">Lihat Jadwal</button>
+                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;" {{ old('warehouse_id') ? '' : 'disabled' }}>View Schedule</button>
                     </div>
                 </div>
             </div>
@@ -387,11 +387,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var minutes = tt && truckTypeDurations && truckTypeDurations[tt] ? parseInt(truckTypeDurations[tt], 10) : NaN;
 
         if (!tt || !isFinite(minutes) || minutes <= 0) {
-            // Jika truck type tidak ada di database, biarkan user input manual
+            // If truck type is not in the database, allow manual input
             plannedDurationInput.removeAttribute('readonly');
             plannedDurationInput.value = plannedDurationInput.value || '';
         } else {
-            // Jika truck type ada di database, isi otomatis dan readonly
+            // If truck type is in the database, autofill and set to readonly
             plannedDurationInput.setAttribute('readonly', 'readonly');
             plannedDurationInput.value = String(minutes);
         }
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function () {
             poItemsGroup.innerHTML = '';
         }
         if (!po) {
-            poPreview.textContent = 'Belum Ada Data PO/DO.';
+            poPreview.textContent = 'No PO/DO Data Yet.';
             return;
         }
 
@@ -504,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         html += '</tbody></table></div>';
-        html += '<div class="st-text--small st-text--muted" style="margin-top:6px;">Input quantity untuk pengiriman slot ini. Sisa qty tetap tersedia untuk slot berikutnya.</div>';
+        html += '<div class="st-text--small st-text--muted" style="margin-top:6px;">Input quantity for this slot delivery. Remaining qty remains available for the next slot.</div>';
 
         poItemsGroup.innerHTML = html;
         poItemsGroup.style.display = 'block';
@@ -595,14 +595,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!dir) {
             vendorSearch.value = '';
             vendorSearch.disabled = true;
-            vendorSearch.placeholder = 'Pilih Direction Dulu...';
+            vendorSearch.placeholder = 'Choose Direction First...';
             vendorSelect.value = '';
             clearVendorSuggestions();
             return;
         }
 
         vendorSearch.disabled = false;
-        vendorSearch.placeholder = dir === 'outbound' ? 'Cari Customer (SAP)...' : 'Cari Supplier (SAP)...';
+        vendorSearch.placeholder = dir === 'outbound' ? 'Search Customer (SAP)...' : 'Search Supplier (SAP)...';
 
         var q = (vendorSearch.value || '').trim();
         // Don't search if query is empty, unless we want to show recent/all (maybe too heavy)
@@ -660,12 +660,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!vendorSearch) return;
         if (!dir) {
             vendorSearch.disabled = true;
-            vendorSearch.placeholder = 'Pilih Direction Dulu...';
+            vendorSearch.placeholder = 'Choose Direction First...';
             return;
         }
 
         vendorSearch.disabled = false;
-        vendorSearch.placeholder = 'Cari Vendor...';
+        vendorSearch.placeholder = 'Search Vendor...';
     }
 
     function syncWarehouseFromGate() {
@@ -750,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var unit = durationUnitSelect.value;
 
         if (!whId || !start || !duration) {
-            riskPreview.textContent = 'Risk Belum Dihitung.';
+            riskPreview.textContent = 'Risk Not Calculated.';
             uiRiskHigh = false;
             uiRiskPending = false;
             applySaveState();
@@ -770,7 +770,7 @@ document.addEventListener('DOMContentLoaded', function () {
         postJson(urlCheckRisk, formData)
             .then(function (data) {
                 if (!data || !data.success) {
-                    riskPreview.textContent = 'Risk Tidak Dapat Dihitung.';
+                    riskPreview.textContent = 'Risk Cannot Be Calculated.';
                     uiRiskHigh = false;
                     uiRiskPending = false;
                     applySaveState();

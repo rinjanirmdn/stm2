@@ -108,7 +108,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="truck" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">PO Filter</div>
-                                            <input type="text" name="truck" form="slot-filter-form" class="st-input" placeholder="Cari PO..." value="{{ $truck ?? '' }}">
+                                            <input type="text" name="truck" form="slot-filter-form" class="st-input" placeholder="Search PO..." value="{{ $truck ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="truck">Clear</button>
                                             </div>
@@ -124,7 +124,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="mat_doc" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">MAT DOC Filter</div>
-                                            <input type="text" name="mat_doc" form="slot-filter-form" class="st-input" placeholder="Cari MAT DOC..." value="{{ $mat_doc ?? '' }}">
+                                            <input type="text" name="mat_doc" form="slot-filter-form" class="st-input" placeholder="Search MAT DOC..." value="{{ $mat_doc ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="mat_doc">Clear</button>
                                             </div>
@@ -140,7 +140,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
-                                            <input type="text" name="vendor" form="slot-filter-form" class="st-input" placeholder="Cari Vendor..." value="{{ $vendor ?? '' }}">
+                                            <input type="text" name="vendor" form="slot-filter-form" class="st-input" placeholder="Search Vendor..." value="{{ $vendor ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="vendor">Clear</button>
                                             </div>
@@ -236,7 +236,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="planned_start" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">ETA Range</div>
-                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input" placeholder="Pilih Rentang Tanggal" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' to '.$date_to) : '' }}" readonly style="cursor:pointer;">
+                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' to '.$date_to) : '' }}" readonly style="cursor:pointer;">
                                             <input type="hidden" name="date_from" form="slot-filter-form" value="{{ $date_from ?? '' }}">
                                             <input type="hidden" name="date_to" form="slot-filter-form" value="{{ $date_to ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
@@ -262,7 +262,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="arrival_presence" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Arrival Date Filter</div>
-                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input" placeholder="Pilih Rentang Tanggal" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' to '.$arrival_to) : '' }}" readonly style="cursor:pointer;">
+                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' to '.$arrival_to) : '' }}" readonly style="cursor:pointer;">
                                             <input type="hidden" name="arrival_from" form="slot-filter-form" value="{{ $arrival_from ?? '' }}">
                                             <input type="hidden" name="arrival_to" form="slot-filter-form" value="{{ $arrival_to ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">

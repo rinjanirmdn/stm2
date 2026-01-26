@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#4285f4">
-    <meta name="description" content="Sistem manajemen slot untuk warehouse gate scheduling">
+    <meta name="description" content="Slot management system for warehouse gate scheduling">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="SlotTM">
@@ -85,12 +85,7 @@
             </a>
             @endcan
 
-            @can('bookings.index')
-            <a href="{{ route('bookings.index') }}" title="Booking Requests" class="st-sidebar__link{{ request()->routeIs('bookings.*') ? ' st-sidebar__link--active' : '' }}">
-                <i class="fas fa-clipboard-list"></i>
-                <span>Booking Requests</span>
-            </a>
-            @endcan
+            
 
             @can('reports.transactions')
             <a href="{{ route('reports.transactions') }}" title="Reports" class="st-sidebar__link{{ request()->routeIs('reports.*') ? ' st-sidebar__link--active' : '' }}">
@@ -348,7 +343,7 @@ if ('serviceWorker' in navigator) {
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                             // New version available
-                            if (confirm('Aplikasi telah diperbarui. Muat ulang untuk menggunakan versi terbaru?')) {
+                            if (confirm('App updated. Reload to use the latest version?')) {
                                 window.location.reload();
                             }
                         }

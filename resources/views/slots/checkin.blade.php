@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -42,7 +42,7 @@
 
             <div class="qr-container">
                 <div id="qrcode"></div>
-                <p class="qr-hint">Scan QR Code untuk Check-in Cepat</p>
+                <p class="qr-hint">Scan QR Code for Fast Check-in</p>
             </div>
 
             @if($canCheckin)
@@ -71,7 +71,7 @@
         <div id="message" class="message"></div>
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>Memproses...</p>
+            <p>Processing...</p>
         </div>
     </div>
 
@@ -122,7 +122,7 @@
                     showMessage(data.message, 'error');
                 }
             } catch (error) {
-                showMessage('Terjadi Kesalahan. Silakan Coba Lagi.', 'error');
+                showMessage('An error occurred. Please try again.', 'error');
             } finally {
                 loading.style.display = 'none';
             }

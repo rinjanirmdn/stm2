@@ -108,7 +108,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="po" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">PO Filter</div>
-                                                <input type="text" name="po" class="st-input" placeholder="Cari PO..." value="{{ $po ?? '' }}">
+                                                <input type="text" name="po" class="st-input" placeholder="Search PO..." value="{{ $po ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="po">Clear</button>
                                                 </div>
@@ -133,7 +133,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="ticket" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Ticket Filter</div>
-                                                <input type="text" name="ticket" class="st-input" placeholder="Cari Ticket..." value="{{ $ticket ?? '' }}">
+                                                <input type="text" name="ticket" class="st-input" placeholder="Search Ticket..." value="{{ $ticket ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="ticket">Clear</button>
                                                 </div>
@@ -158,7 +158,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="mat_doc" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">MAT DOC Filter</div>
-                                                <input type="text" name="mat_doc" class="st-input" placeholder="Cari MAT DOC..." value="{{ $mat_doc ?? '' }}">
+                                                <input type="text" name="mat_doc" class="st-input" placeholder="Search MAT DOC..." value="{{ $mat_doc ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="mat_doc">Clear</button>
                                                 </div>
@@ -183,7 +183,7 @@
                                             </button>
                                             <div class="st-filter-panel" data-filter-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
-                                                <input type="text" name="vendor" class="st-input" placeholder="Cari Vendor..." value="{{ $vendor ?? '' }}">
+                                                <input type="text" name="vendor" class="st-input" placeholder="Search Vendor..." value="{{ $vendor ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="vendor">Clear</button>
                                                 </div>
@@ -277,10 +277,10 @@
                                             <div class="st-sort-panel" data-sort-panel="arrival" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Sort Arrival</div>
                                                 <button type="button" class="st-sort-option" data-sort="arrival" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
-                                                    Terbaru
+                                                    Newest
                                                 </button>
                                                 <button type="button" class="st-sort-option" data-sort="arrival" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
-                                                    Terlama
+                                                    Oldest
                                                 </button>
                                             </div>
                                         </div>
@@ -311,10 +311,10 @@
                                             <div class="st-sort-panel" data-sort-panel="lead_time" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">Sort Lead Time</div>
                                                 <button type="button" class="st-sort-option" data-sort="lead_time" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
-                                                    Tercepat
+                                                    Fastest
                                                 </button>
                                                 <button type="button" class="st-sort-option" data-sort="lead_time" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
-                                                    Terlama
+                                                    Slowest
                                                 </button>
                                             </div>
                                         </div>
@@ -386,7 +386,7 @@
                                             </span>
                                             <div class="st-filter-panel" data-filter-panel="user" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                                 <div style="font-weight:600;margin-bottom:6px;">User Filter</div>
-                                                <input type="text" name="user" class="st-input" placeholder="Cari User..." value="{{ $user ?? '' }}">
+                                                <input type="text" name="user" class="st-input" placeholder="Search User..." value="{{ $user ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="user">Clear</button>
                                                 </div>
