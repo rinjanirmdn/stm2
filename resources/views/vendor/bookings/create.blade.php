@@ -391,6 +391,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (time < '07:00' || time > '19:00') return false;
         const minAllowed = getMinAllowedDateTime();
         const selected = new Date(`${date}T${time}:00`);
+        const todayStr = toIsoDate(new Date());
+        if (date !== todayStr) {
+            return true;
+        }
         return selected.getTime() >= minAllowed.getTime();
     }
 

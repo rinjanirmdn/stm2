@@ -663,6 +663,7 @@ class VendorBookingController extends Controller
                 ]);
             }
 
+            Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
             $this->notifyAdminsBookingRequest($bookingRequest);
 
             return redirect()
@@ -715,6 +716,13 @@ class VendorBookingController extends Controller
                 'status' => BookingRequest::STATUS_CANCELLED,
                 'approval_notes' => $request->reason,
             ]);
+
+            if (! empty($booking->planned_start)) {
+                $cancelDate = $booking->planned_start instanceof \DateTimeInterface
+                    ? $booking->planned_start->format('Y-m-d')
+                    : date('Y-m-d', strtotime((string) $booking->planned_start));
+                Cache::forget("vendor_availability_{$cancelDate}");
+            }
 
             return redirect()
                 ->route('vendor.bookings.index')
@@ -779,10 +787,33 @@ class VendorBookingController extends Controller
                 $startTime = strtotime('+30 minutes', $startTime);
             }
             
+            // Global blocking: pending booking requests block all gates
+            $pendingRequests = BookingRequest::whereDate('planned_start', $date)
+                ->where('status', BookingRequest::STATUS_PENDING)
+                ->select('planned_start', 'planned_duration')
+                ->get();
+
+            $globalBlocked = [];
+            foreach ($pendingRequests as $requestRow) {
+                $start = Carbon::parse($requestRow->planned_start);
+                $slotStart = strtotime($start->format('H:i'));
+                $slotEnd = strtotime('+' . (int) $requestRow->planned_duration . ' minutes', $slotStart);
+                for ($currentTime = $slotStart; $currentTime < $slotEnd; $currentTime = strtotime('+30 minutes', $currentTime)) {
+                    $timeKey = date('H:i', $currentTime);
+                    $globalBlocked[$timeKey] = true;
+                }
+            }
+
             // Get all existing slots for the date - optimized query
             \Log::info('Getting slots for date: ' . $date);
             $existingSlots = Slot::whereDate('planned_start', $date)
-                ->whereIn('status', ['pending_approval', 'scheduled'])
+                ->whereIn('status', [
+                    Slot::STATUS_PENDING_APPROVAL,
+                    Slot::STATUS_SCHEDULED,
+                    Slot::STATUS_ARRIVED,
+                    Slot::STATUS_WAITING,
+                    Slot::STATUS_IN_PROGRESS,
+                ])
                 ->select('planned_start', 'planned_duration', 'planned_gate_id')
                 ->get();
             
@@ -814,6 +845,15 @@ class VendorBookingController extends Controller
             // Check availability for each time slot
             $availableSlots = [];
             foreach ($timeSlots as $time) {
+                if (! empty($globalBlocked[$time])) {
+                    $availableSlots[] = [
+                        'time' => $time,
+                        'is_available' => false,
+                        'available_gates' => 0,
+                    ];
+                    continue;
+                }
+
                 $conflictedGates = $timeConflicts[$time] ?? [];
                 $availableGates = $totalGates - count(array_unique($conflictedGates));
                 

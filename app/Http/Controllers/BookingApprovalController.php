@@ -211,6 +211,13 @@ class BookingApprovalController extends Controller
                 return $slot;
             });
 
+            if (! empty($bookingRequest->planned_start)) {
+                $approvedDate = $bookingRequest->planned_start instanceof \DateTimeInterface
+                    ? $bookingRequest->planned_start->format('Y-m-d')
+                    : date('Y-m-d', strtotime((string) $bookingRequest->planned_start));
+                \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$approvedDate}");
+            }
+
             return redirect()
                 ->route('bookings.show', $bookingRequest->id)
                 ->with('success', 'Booking approved successfully.');
@@ -324,6 +331,8 @@ class BookingApprovalController extends Controller
             'warehouse_id' => $warehouseId,
             'approval_notes' => $request->notes,
         ]);
+
+        \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
 
         return $this->approve($request, $id);
     }

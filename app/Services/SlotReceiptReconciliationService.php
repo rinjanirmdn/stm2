@@ -61,8 +61,21 @@ class SlotReceiptReconciliationService
         $sapQtyGrTotalNow = (float) ($sapItem['qty_gr_total'] ?? 0);
 
         // 2) Get or create checkpoint
-        $checkpoint = PoItemGrCheckpoint::getOrCreate($poNumber, $itemNo);
-        $checkpointLast = (float) $checkpoint->sap_qty_gr_total_last;
+        $checkpoint = PoItemGrCheckpoint::where('po_number', $poNumber)
+            ->where('item_no', $itemNo)
+            ->first();
+
+        if (! $checkpoint) {
+            $checkpoint = PoItemGrCheckpoint::create([
+                'po_number' => $poNumber,
+                'item_no' => $itemNo,
+                'sap_qty_gr_total_last' => $sapQtyGrTotalNow,
+                'updated_at' => now(),
+            ]);
+            $checkpointLast = $sapQtyGrTotalNow;
+        } else {
+            $checkpointLast = (float) $checkpoint->sap_qty_gr_total_last;
+        }
 
         // 3) Calculate delta
         $delta = $sapQtyGrTotalNow - $checkpointLast;

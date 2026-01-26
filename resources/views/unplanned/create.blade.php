@@ -243,8 +243,8 @@ document.addEventListener('DOMContentLoaded', function () {
         items.slice(0, 5).forEach(function (it) {
             var div = document.createElement('div');
             div.className = 'po-item';
-            div.setAttribute('data-po', is.po_number || '');
-            div.innerHTML = '<div class="po-item__title">' + (is.po_number || '') + '</div>'
+            div.setAttribute('data-po', it.po_number || '');
+            div.innerHTML = '<div class="po-item__title">' + (it.po_number || '') + '</div>'
                 + '<div class="po-item__sub">' + (it.vendor_name || '') + (it.plant ? (' • ' + it.plant) : '') + '</div>';
             div.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;';
             poSuggestions.appendChild(div);
