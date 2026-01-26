@@ -549,7 +549,7 @@ class SlotController extends Controller
             }
 
             if ($bestGateId === null) {
-                return back()->withInput()->with('error', 'Gate penuh / tidak tersedia untuk jadwal ini. Silakan pilih gate atau waktu lain.');
+                return back()->withInput()->with('error', 'Gate is full / unavailable for this schedule. Please choose another gate or time.');
             }
 
             $plannedGateId = (int) $bestGateId;

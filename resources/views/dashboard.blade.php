@@ -413,7 +413,6 @@
                             <div class="st-timeline__header">
                                 <div class="st-timeline__header-left" style="flex-direction:column;align-items:flex-start;justify-content:center;line-height:1.2;">
                                     <div>Gate</div>
-                                    <div style="font-size:9px;color:#9ca3af;font-weight:400;">Plan (Top) / Act (Btm)</div>
                                 </div>
                                 <div style="padding:10px 0;font-size:11px;font-weight:700;color:#374151;border-right:1px solid #e5e7eb;position:sticky;left:70px;background:#ffffff;z-index:20;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;">
                                     Lane
@@ -566,7 +565,14 @@
                 <div class="st-dashboard-schedule-row">
                     <div class="st-dashboard-schedule-chart-col">
                         <div class="st-chart-card st-dashboard-schedule-chart-card">
-                            <div class="st-chart-card__title">Chart Status</div>
+                            <div class="st-flex-between-center st-flex-wrap st-gap-2">
+                                <div class="st-chart-card__title st-mb-0">Chart Status</div>
+                                <select id="status_direction" class="st-select st-w-160">
+                                    <option value="all">All Direction</option>
+                                    <option value="inbound">Inbound</option>
+                                    <option value="outbound">Outbound</option>
+                                </select>
+                            </div>
                             <div class="st-chart-wrap st-chart-wrap--sm st-dashboard-schedule-chart-wrap">
                                 <canvas id="chart_process_status"></canvas>
                             </div>
@@ -574,27 +580,27 @@
                                 <div class="st-metric-row st-dashboard-schedule-metric-row">
                                     <div class="st-mini-card">
                                         <div class="st-text--small st-text--muted">Pending</div>
-                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['pending'] ?? 0) }}</div>
+                                        <div id="status_pending_value" class="st-metric-value-lg">{{ (int) ($processStatusCounts['pending'] ?? 0) }}</div>
                                     </div>
                                     <div class="st-mini-card">
                                         <div class="st-text--small st-text--muted">Scheduled</div>
-                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['scheduled'] ?? 0) }}</div>
+                                        <div id="status_scheduled_value" class="st-metric-value-lg">{{ (int) ($processStatusCounts['scheduled'] ?? 0) }}</div>
                                     </div>
                                     <div class="st-mini-card">
                                         <div class="st-text--small st-text--muted">Waiting</div>
-                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['waiting'] ?? 0) }}</div>
+                                        <div id="status_waiting_value" class="st-metric-value-lg">{{ (int) ($processStatusCounts['waiting'] ?? 0) }}</div>
                                     </div>
                                     <div class="st-mini-card">
                                         <div class="st-text--small st-text--muted">In Progress</div>
-                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['in_progress'] ?? 0) }}</div>
+                                        <div id="status_in_progress_value" class="st-metric-value-lg">{{ (int) ($processStatusCounts['in_progress'] ?? 0) }}</div>
                                     </div>
                                     <div class="st-mini-card">
                                         <div class="st-text--small st-text--muted">Completed</div>
-                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['completed'] ?? 0) }}</div>
+                                        <div id="status_completed_value" class="st-metric-value-lg">{{ (int) ($processStatusCounts['completed'] ?? 0) }}</div>
                                     </div>
                                     <div class="st-mini-card">
                                         <div class="st-text--small st-text--muted">Cancelled</div>
-                                        <div class="st-metric-value-lg">{{ (int) ($processStatusCounts['cancelled'] ?? 0) }}</div>
+                                        <div id="status_cancelled_value" class="st-metric-value-lg">{{ (int) ($processStatusCounts['cancelled'] ?? 0) }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -2081,15 +2087,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }, 'doughnut', true)); // isCompact = true for Direction Chart
 
-    var processStatusTotal0 = (
-        parseInt(processStatusCounts.pending || 0, 10) +
-        parseInt(processStatusCounts.scheduled || 0, 10) +
-        parseInt(processStatusCounts.waiting || 0, 10) +
-        parseInt(processStatusCounts.in_progress || 0, 10) +
-        parseInt(processStatusCounts.completed || 0, 10) +
-        parseInt(processStatusCounts.cancelled || 0, 10)
-    );
-    setChartMessage(processStatusCanvas, processStatusTotal0 <= 0 ? 'No Schedule data for selected filter.' : '');
+    var scheduleData = @json($schedule ?? []);
+
+    function calcProcessStatus(dir) {
+        var counts = {
+            pending: 0,
+            scheduled: 0,
+            waiting: 0,
+            in_progress: 0,
+            completed: 0,
+            cancelled: 0
+        };
+
+        (scheduleData || []).forEach(function (r) {
+            var rDir = (r && r.direction) ? String(r.direction).toLowerCase() : '';
+            if (dir && dir !== 'all' && rDir !== dir) return;
+
+            var st = (r && r.status) ? String(r.status).toLowerCase().trim() : 'scheduled';
+            if (st === 'arrived') st = 'waiting';
+            
+            if (st === 'pending_approval' || st === 'pending_vendor_confirmation') {
+                counts.pending++;
+            } else if (typeof counts[st] !== 'undefined') {
+                counts[st]++;
+            }
+        });
+        return counts;
+    }
 
     function getStatusBgColor(bgClass) {
         try {
@@ -2119,14 +2143,7 @@ document.addEventListener('DOMContentLoaded', function () {
         data: {
             labels: ['Pending', 'Scheduled', 'Waiting', 'In Progress', 'Completed', 'Cancelled'],
             datasets: [{
-                data: [
-                    parseInt(processStatusCounts.pending || 0, 10),
-                    parseInt(processStatusCounts.scheduled || 0, 10),
-                    parseInt(processStatusCounts.waiting || 0, 10),
-                    parseInt(processStatusCounts.in_progress || 0, 10),
-                    parseInt(processStatusCounts.completed || 0, 10),
-                    parseInt(processStatusCounts.cancelled || 0, 10)
-                ],
+                data: [0, 0, 0, 0, 0, 0],
                 backgroundColor: processStatusColors,
                 borderRadius: 4,
                 barThickness: 32
@@ -2168,23 +2185,58 @@ document.addEventListener('DOMContentLoaded', function () {
                         color: '#6b7280',
                         precision: 0
                     },
-                    suggestedMax: function() {
-                        var maxValue = Math.max(
-                            parseInt(processStatusCounts.pending || 0, 10),
-                            parseInt(processStatusCounts.scheduled || 0, 10),
-                            parseInt(processStatusCounts.waiting || 0, 10),
-                            parseInt(processStatusCounts.in_progress || 0, 10),
-                            parseInt(processStatusCounts.completed || 0, 10),
-                            parseInt(processStatusCounts.cancelled || 0, 10)
-                        );
-                        // Make the chart flexible: if max is 10 or less, use 10 as ceiling
-                        // If max is more than 10, add 20% padding
-                        return maxValue <= 10 ? 10 : Math.ceil(maxValue * 1.2);
-                    }
+                    suggestedMax: 10
                 }
             }
         }
     });
+
+    function updateProcessStatusUI(dir) {
+        var counts = calcProcessStatus(dir);
+        
+        var elPending = document.getElementById('status_pending_value');
+        var elScheduled = document.getElementById('status_scheduled_value');
+        var elWaiting = document.getElementById('status_waiting_value');
+        var elInProgress = document.getElementById('status_in_progress_value');
+        var elCompleted = document.getElementById('status_completed_value');
+        var elCancelled = document.getElementById('status_cancelled_value');
+        
+        if (elPending) elPending.textContent = counts.pending;
+        if (elScheduled) elScheduled.textContent = counts.scheduled;
+        if (elWaiting) elWaiting.textContent = counts.waiting;
+        if (elInProgress) elInProgress.textContent = counts.in_progress;
+        if (elCompleted) elCompleted.textContent = counts.completed;
+        if (elCancelled) elCancelled.textContent = counts.cancelled;
+
+        var total = counts.pending + counts.scheduled + counts.waiting + counts.in_progress + counts.completed + counts.cancelled;
+        setChartMessage(processStatusCanvas, total <= 0 ? 'No Schedule data for selected filter.' : '');
+
+        if (processStatusChart) {
+            processStatusChart.data.datasets[0].data = [
+                counts.pending,
+                counts.scheduled,
+                counts.waiting,
+                counts.in_progress,
+                counts.completed,
+                counts.cancelled
+            ];
+            
+            var maxVal = Math.max(counts.pending, counts.scheduled, counts.waiting, counts.in_progress, counts.completed, counts.cancelled);
+            var suggMax = maxVal <= 10 ? 10 : Math.ceil(maxVal * 1.2);
+            if (processStatusChart.options.scales.y) {
+                 processStatusChart.options.scales.y.suggestedMax = suggMax;
+            }
+            processStatusChart.update();
+        }
+    }
+
+    var statusDirSelect = document.getElementById('status_direction');
+    if (statusDirSelect) {
+        statusDirSelect.addEventListener('change', function() {
+            updateProcessStatusUI(statusDirSelect.value);
+        });
+    }
+    updateProcessStatusUI('all');
 
     var onTimeChart = makeChart(onTimeCanvas, withDataLabels({
         type: 'doughnut',

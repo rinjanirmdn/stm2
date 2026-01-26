@@ -66,7 +66,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="nik" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">NIK/Username Filter</div>
-                                            <input type="text" name="nik" form="user-filter-form" class="st-input" placeholder="Cari NIK/Username..." value="{{ $nik ?? '' }}">
+                                            <input type="text" name="nik" form="user-filter-form" class="st-input" placeholder="Search NIK/Username..." value="{{ $nik ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="nik">Clear</button>
                                             </div>
@@ -91,7 +91,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="full_name" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Full Name Filter</div>
-                                            <input type="text" name="full_name" form="user-filter-form" class="st-input" placeholder="Cari nama..." value="{{ $full_name ?? '' }}">
+                                            <input type="text" name="full_name" form="user-filter-form" class="st-input" placeholder="Search name..." value="{{ $full_name ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="full_name">Clear</button>
                                             </div>
@@ -175,10 +175,10 @@
                                         <div class="st-sort-panel" data-sort-panel="created_at" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Sort Created</div>
                                             <button type="button" class="st-sort-option" data-sort="created_at" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
-                                                Terbaru
+                                                Newest
                                             </button>
                                             <button type="button" class="st-sort-option" data-sort="created_at" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
-                                                Terlama
+                                                Oldest
                                             </button>
                                         </div>
                                     </div>

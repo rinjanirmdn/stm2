@@ -382,11 +382,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (selected && selected.getTime() < minAllowed.getTime()) {
-            timeInput.setCustomValidity('Booking harus minimal 4 jam dari sekarang.');
+            timeInput.setCustomValidity('Booking must be at least 4 hours from now.');
         }
 
         if (time && time > '19:00') {
-            timeInput.setCustomValidity('Booking maksimal jam 19:00.');
+            timeInput.setCustomValidity('Maximum booking time is 19:00.');
         }
     }
 
@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
                 if (dayElem.dateObj.getDay() === 0) {
                     dayElem.classList.add('is-sunday');
-                    dayElem.title = 'Minggu';
+                    dayElem.title = 'Sunday';
                 }
                 if (holidayData[ds]) {
                     dayElem.classList.add('is-holiday');

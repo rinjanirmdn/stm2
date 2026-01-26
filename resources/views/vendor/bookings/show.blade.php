@@ -214,10 +214,7 @@
     <!-- Actions -->
     @if(in_array($booking->status, ['pending', 'approved']))
     <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
-        <h3 style="margin-bottom: 1rem; color: #374151; font-size: 1rem; font-weight: 600;">
-            <i class="fas fa-cogs"></i>
-            Actions
-        </h3>
+        
         
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
             @if(!empty($booking->convertedSlot?->ticket_number))

@@ -64,7 +64,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="po" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">PO/DO Filter</div>
-                                            <input type="text" name="po_number" form="unplanned-filter-form" class="st-input" placeholder="Cari PO/DO..." value="{{ request('po_number') }}">
+                                            <input type="text" name="po_number" form="unplanned-filter-form" class="st-input" placeholder="Search PO/DO..." value="{{ request('po_number') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="po">Clear</button>
                                             </div>
@@ -80,7 +80,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="mat_doc" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">MAT DOC Filter</div>
-                                            <input type="text" name="mat_doc" form="unplanned-filter-form" class="st-input" placeholder="Cari MAT DOC..." value="{{ request('mat_doc') }}">
+                                            <input type="text" name="mat_doc" form="unplanned-filter-form" class="st-input" placeholder="Search MAT DOC..." value="{{ request('mat_doc') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="mat_doc">Clear</button>
                                             </div>
@@ -96,7 +96,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
-                                            <input type="text" name="vendor" form="unplanned-filter-form" class="st-input" placeholder="Cari Vendor..." value="{{ request('vendor') }}">
+                                            <input type="text" name="vendor" form="unplanned-filter-form" class="st-input" placeholder="Search Vendor..." value="{{ request('vendor') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="vendor">Clear</button>
                                             </div>
@@ -186,7 +186,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="arrival" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Arrival Range</div>
-                                            <input type="text" id="unplanned_arrival_range" name="arrival_range" form="unplanned-filter-form" class="st-input" placeholder="Pilih Rentang Tanggal" value="{{ (request('arrival_from') && request('arrival_to')) ? (request('arrival_from').' to '.request('arrival_to')) : ((request('arrival_from') || request('arrival_to')) ? (request('arrival_from') ?: request('arrival_to')) : '') }}" readonly style="cursor:pointer;">
+                                            <input type="text" id="unplanned_arrival_range" name="arrival_range" form="unplanned-filter-form" class="st-input" placeholder="Select Date Range" value="{{ (request('arrival_from') && request('arrival_to')) ? (request('arrival_from').' to '.request('arrival_to')) : ((request('arrival_from') || request('arrival_to')) ? (request('arrival_from') ?: request('arrival_to')) : '') }}" readonly style="cursor:pointer;">
                                             <input type="hidden" name="arrival_from" form="unplanned-filter-form" value="{{ request('arrival_from') }}">
                                             <input type="hidden" name="arrival_to" form="unplanned-filter-form" value="{{ request('arrival_to') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
@@ -204,7 +204,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="sj" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">SJ Filter</div>
-                                            <input type="text" name="sj_number" form="unplanned-filter-form" class="st-input" placeholder="Cari SJ..." value="{{ request('sj_number') }}">
+                                            <input type="text" name="sj_number" form="unplanned-filter-form" class="st-input" placeholder="Search SJ..." value="{{ request('sj_number') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="sj">Clear</button>
                                             </div>
