@@ -91,26 +91,26 @@ class SlotStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'po_number.exists' => 'PO number tidak ditemukan.',
-            'po_number.max' => 'PO number maksimal 50 karakter.',
-            'truck_number.max' => 'Truck number maksimal 50 karakter.',
-            'mat_doc.max' => 'Material document maksimal 50 karakter.',
-            'truck_type.max' => 'Truck type maksimal 100 karakter.',
-            'vehicle_number_snap.max' => 'Vehicle number maksimal 20 karakter.',
-            'driver_number.max' => 'Driver number maksimal 50 karakter.',
-            'direction.required' => 'Direction wajib dipilih.',
-            'direction.in' => 'Direction harus inbound atau outbound.',
-            'warehouse_id.required' => 'Warehouse wajib dipilih.',
-            'warehouse_id.exists' => 'Warehouse tidak ditemukan.',
-            'planned_gate_id.exists' => 'Gate tidak ditemukan.',
-            'planned_start.required' => 'Planned start wajib diisi.',
-            'planned_start.date' => 'Planned start harus berupa tanggal yang valid.',
-            'planned_start.after' => 'Planned start harus setelah waktu sekarang.',
-            'planned_duration.required' => 'Planned duration wajib diisi.',
-            'planned_duration.integer' => 'Planned duration harus berupa angka.',
-            'planned_duration.min' => 'Planned duration minimal 15 menit.',
-            'planned_duration.max' => 'Planned duration maksimal 1440 menit (24 jam).',
-            'slot_type.in' => 'Slot type harus planned atau unplanned.'
+            'po_number.exists' => 'PO number not found.',
+            'po_number.max' => 'PO number maximum 50 characters.',
+            'truck_number.max' => 'Truck number maximum 50 characters.',
+            'mat_doc.max' => 'Material document maximum 50 characters.',
+            'truck_type.max' => 'Truck type maximum 100 characters.',
+            'vehicle_number_snap.max' => 'Vehicle number maximum 20 characters.',
+            'driver_number.max' => 'Driver number maximum 50 characters.',
+            'direction.required' => 'Direction must be selected.',
+            'direction.in' => 'Direction must be inbound or outbound.',
+            'warehouse_id.required' => 'Warehouse must be selected.',
+            'warehouse_id.exists' => 'Warehouse not found.',
+            'planned_gate_id.exists' => 'Gate not found.',
+            'planned_start.required' => 'Planned start is required.',
+            'planned_start.date' => 'Planned start must be a valid date.',
+            'planned_start.after' => 'Planned start must be after current time.',
+            'planned_duration.required' => 'Planned duration is required.',
+            'planned_duration.integer' => 'Planned duration must be a number.',
+            'planned_duration.min' => 'Planned duration minimum 15 minutes.',
+            'planned_duration.max' => 'Planned duration maximum 1440 minutes (24 hours).',
+            'slot_type.in' => 'Slot type must be planned or unplanned.'
         ];
     }
 }

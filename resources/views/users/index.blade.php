@@ -7,31 +7,13 @@
     <div class="st-card" style="margin-bottom:12px;">
         <form method="GET" action="{{ route('users.index') }}">
             <div style="padding:12px;">
-                <div class="st-form-row" style="align-items:flex-end;">
+                <div class="st-form-row" style="gap:4px;align-items:flex-end;">
                     <div class="st-form-field" style="max-width:200px;">
                         <label class="st-label">Search</label>
                         <input type="text" name="q" class="st-input" placeholder="NIK/Username or name" value="{{ $q ?? '' }}">
                     </div>
-                    <div class="st-form-field" style="max-width:180px;">
-                        <label class="st-label">Role</label>
-                        <select name="role" class="st-select">
-                            <option value="">All Roles</option>
-                            <option value="admin" {{ ($role ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="section_head" {{ ($role ?? '') === 'section_head' ? 'selected' : '' }}>Section Head</option>
-                            <option value="operator" {{ ($role ?? '') === 'operator' ? 'selected' : '' }}>Operator</option>
-                        </select>
-                    </div>
-                    <div class="st-form-field" style="max-width:180px;">
-                        <label class="st-label">Status</label>
-                        <select name="status" class="st-select">
-                            <option value="">All Status</option>
-                            <option value="active" {{ ($status ?? '') === 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ ($status ?? '') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                        </select>
-                    </div>
-                    <div class="st-form-field" style="flex:0 0 auto;">
-                        <button type="submit" class="st-btn st-btn--secondary">Filter</button>
-                        <a href="{{ route('users.index') }}" class="st-btn st-btn--secondary">Reset</a>
+                    <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                        <a href="{{ route('users.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
                         <a href="{{ route('users.create') }}" class="st-btn st-btn--primary">Add User</a>
                     </div>
                 </div>
@@ -52,7 +34,7 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper">
+                <div class="st-table-wrapper" style="min-height: 400px;">
                     <table class="st-table">
                         <thead>
                             <tr>
@@ -68,7 +50,7 @@
                                             <div style="font-weight:600;margin-bottom:6px;">NIK/Username Filter</div>
                                             <input type="text" name="nik" form="user-filter-form" class="st-input" placeholder="Search NIK/Username..." value="{{ $nik ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="nik">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="nik">Clear</button>
                                             </div>
                                         </div>
                                         <div class="st-sort-panel" data-sort-panel="nik" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -93,7 +75,7 @@
                                             <div style="font-weight:600;margin-bottom:6px;">Full Name Filter</div>
                                             <input type="text" name="full_name" form="user-filter-form" class="st-input" placeholder="Search name..." value="{{ $full_name ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="full_name">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="full_name">Clear</button>
                                             </div>
                                         </div>
                                         <div class="st-sort-panel" data-sort-panel="full_name" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -123,7 +105,7 @@
                                                 <option value="operator" {{ ($role ?? '') === 'operator' ? 'selected' : '' }}>Operator</option>
                                             </select>
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="role">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="role">Clear</button>
                                             </div>
                                         </div>
                                         <div class="st-sort-panel" data-sort-panel="role" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -152,7 +134,7 @@
                                                 <option value="0" {{ ($is_active ?? '') === '0' ? 'selected' : '' }}>Inactive</option>
                                             </select>
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="is_active">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="is_active">Clear</button>
                                             </div>
                                         </div>
                                         <div class="st-sort-panel" data-sort-panel="is_active" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -266,3 +248,40 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on input change
+    const userFilterForm = document.getElementById('user-filter-form');
+    if (userFilterForm) {
+        // Auto-submit on select change
+        userFilterForm.addEventListener('change', function(e) {
+            if (e.target.tagName === 'SELECT') {
+                userFilterForm.submit();
+            }
+        });
+
+        // Auto-submit on input with debounce for text inputs
+        const textInputs = userFilterForm.querySelectorAll('input[type="text"]');
+        textInputs.forEach(function(input) {
+            let timeout;
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    userFilterForm.submit();
+                }, 500); // 500ms debounce
+            });
+
+            // Submit on Enter key
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    clearTimeout(timeout);
+                    userFilterForm.submit();
+                }
+            });
+        });
+    }
+});
+</script>
+@endpush

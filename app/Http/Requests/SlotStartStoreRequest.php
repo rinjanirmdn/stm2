@@ -44,11 +44,11 @@ class SlotStartStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'actual_start.required' => 'Waktu mulai aktual wajib diisi.',
-            'actual_start.date' => 'Waktu mulai aktual harus berupa tanggal yang valid.',
-            'actual_start.before_or_equal' => 'Waktu mulai aktual tidak boleh melebihi waktu sekarang.',
-            'vehicle_number_snap.max' => 'Vehicle number maksimal 20 karakter.',
-            'driver_number.max' => 'Driver number maksimal 50 karakter.'
+            'actual_start.required' => 'Actual start time is required.',
+            'actual_start.date' => 'Actual start time must be a valid date.',
+            'actual_start.before_or_equal' => 'Actual start time cannot be after current time.',
+            'vehicle_number_snap.max' => 'Vehicle number maximum 20 characters.',
+            'driver_number.max' => 'Driver number maximum 50 characters.'
         ];
     }
 }

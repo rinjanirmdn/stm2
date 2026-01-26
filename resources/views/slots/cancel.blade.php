@@ -24,7 +24,7 @@
 
             <div style="display:flex;gap:8px;">
                 <button type="submit" class="st-btn" style="background-color:#dc2626;border-color:#b91c1c;color:#ffffff;">Yes, Cancel Slot</button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--secondary">Back</a>
+                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Back</a>
             </div>
         </form>
     </div>

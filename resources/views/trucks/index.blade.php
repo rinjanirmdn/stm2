@@ -35,7 +35,7 @@
     <section class="st-row" style="flex:1;">
         <div class="st-col-12" style="flex:1;display:flex;flex-direction:column;">
             <div class="st-card" style="margin-bottom:0;flex:1;display:flex;flex-direction:column;">
-                <div class="st-table-wrapper">
+                <div class="st-table-wrapper" style="min-height: 400px;">
                     <table class="st-table">
                         <thead>
                             <tr>
@@ -99,13 +99,13 @@
         <div class="st-modal__content" style="width:400px;max-width:95vw;">
             <div class="st-modal__header">
                 <h3 class="st-modal__title" id="truck-modal-title">Add Truck</h3>
-                <button type="button" id="truck-modal-close" class="st-btn st-btn--secondary st-btn--sm">&times;</button>
+                <button type="button" id="truck-modal-close" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm">&times;</button>
             </div>
             <div class="st-modal__body">
                 <form id="truck-form" method="POST" action="{{ route('trucks.store') }}">
                     @csrf
                     <input type="hidden" id="truck-id" name="truck_id" value="">
-                    
+
                     <div class="st-form-field" style="margin-bottom:12px;">
                         <label class="st-label">Truck Type <span class="st-text--danger-dark">*</span></label>
                         <input type="text" id="truck-type-input" name="truck_type" class="st-input" maxlength="100" required>
@@ -117,7 +117,7 @@
                     </div>
 
                     <div style="display:flex;gap:8px;justify-content:flex-end;">
-                        <button type="button" id="truck-modal-cancel" class="st-btn st-btn--secondary">Cancel</button>
+                        <button type="button" id="truck-modal-cancel" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</button>
                         <button type="submit" class="st-btn st-btn--primary">Save</button>
                     </div>
                 </form>
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openModal(isEdit, data) {
         if (!modal) return;
-        
+
         if (isEdit && data) {
             modalTitle.textContent = 'Edit Truck';
             truckIdInput.value = data.id || '';
@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
             truckDurationInput.value = '';
             modalForm.action = '{{ route("trucks.store") }}';
         }
-        
+
         modal.style.display = 'flex';
         truckTypeInput.focus();
     }

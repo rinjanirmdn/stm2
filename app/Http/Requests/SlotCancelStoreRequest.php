@@ -34,7 +34,7 @@ class SlotCancelStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cancelled_reason.max' => 'Alasan pembatalan maksimal 500 karakter.'
+            'cancelled_reason.max' => 'Cancellation reason maximum 500 characters.'
         ];
     }
 }

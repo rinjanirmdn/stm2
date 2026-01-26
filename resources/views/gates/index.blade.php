@@ -560,7 +560,7 @@
             </div>
             <div class="st-custom-modal-footer">
                 <button type="submit" class="st-btn st-btn--primary" style="background-color: #166534; border-color: #166534;">Yes, Approve</button>
-                <button type="button" class="st-btn st-btn--secondary" onclick="closeApproveModal()">Cancel</button>
+                <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" onclick="closeApproveModal()">Cancel</button>
             </div>
         </form>
     </div>
@@ -585,7 +585,7 @@
             </div>
             <div class="st-custom-modal-footer">
                 <button type="submit" class="st-btn st-btn--primary" style="background-color: #dc2626; border-color: #dc2626; color: #fff;">Reject Booking</button>
-                <button type="button" class="st-btn st-btn--secondary" onclick="closeRejectModal()">Cancel</button>
+                <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" onclick="closeRejectModal()">Cancel</button>
             </div>
         </form>
     </div>

@@ -4,11 +4,95 @@
 
 @section('content')
 <style>
+    /* Vendor Availability Layout Specific */
+    .vendor-app .vendor-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        padding: 24px;
+        margin: 0;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    /* Force no scroll on body and main */
+    body {
+        overflow: hidden !important;
+    }
+
+    .vendor-app {
+        overflow: hidden !important;
+    }
+
+    .vendor-main {
+        overflow: hidden !important;
+    }
+
+    .av-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 72px - 48px);
+        width: 100%;
+        margin: 0;
+        background: #f1f5f9;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .av-scroll-container {
+        flex: 1;
+        overflow-y: auto;
+        background: #f1f5f9;
+        min-height: 0; /* Penting untuk flexbox */
+    }
+
+    .av-content-container {
+        background: #ffffff;
+        margin: 0;
+        min-height: 100%;
+        padding: 20px;
+    }
+
+    .av-footer-container {
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        padding: 16px 20px;
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 0 0 12px 12px;
+        position: sticky;
+        bottom: 0;
+        z-index: 100;
+        font-size: 14px;
+    }
+
+    /* Force footer visibility */
+    .av-container {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    .av-scroll-container {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        background: #f1f5f9;
+        min-height: 0 !important;
+        max-height: calc(100vh - 200px) !important;
+    }
+
     .av-layout {
         display: grid;
         grid-template-columns: 280px 1fr;
         gap: 20px;
         align-items: start;
+        height: 100%;
     }
     .av-sidebar {
         background: #ffffff;
@@ -236,9 +320,12 @@
     }
 </style>
 
-<div class="av-layout">
-    <!-- LEFT SIDEBAR: Calendar -->
-    <div class="av-sidebar" id="av-sidebar">
+<div class="av-container">
+    <div class="av-scroll-container">
+        <div class="av-content-container">
+            <div class="av-layout">
+                <!-- LEFT SIDEBAR: Calendar -->
+                <div class="av-sidebar" id="av-sidebar">
         <div class="av-sidebar__top">
             <div class="av-sidebar__title">Availability</div>
             <button type="button" class="av-sidebar__toggle" id="av-sidebar-toggle" aria-label="Toggle filters">
@@ -291,12 +378,22 @@
                 </a>
             </div>
         </div>
-        
+
         <div id="availability-list">
             <div style="text-align: center; padding: 60px 20px; color: #64748b;">
                 <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 12px;"></i>
                 <p>Loading availability...</p>
             </div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Container -->
+    <div class="av-footer-container">
+        <div style="text-align: center; color: #64748b; font-size: 14px;">
+            &copy; {{ date('Y') }} Slot Time Management. All rights reserved.
         </div>
     </div>
 </div>
@@ -336,29 +433,29 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderMiniCalendar() {
         const container = document.getElementById('calendar-days');
         const monthLabel = document.getElementById('calendar-month');
-        
+
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
-        
+
         monthLabel.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        
+
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const startDay = (firstDay.getDay() + 6) % 7; // Monday = 0
-        
+
         let html = '';
-        
+
         // Previous month days
         const prevMonth = new Date(year, month, 0);
         for (let i = startDay - 1; i >= 0; i--) {
             const day = prevMonth.getDate() - i;
             html += `<div class="av-calendar__day av-calendar__day--other">${day}</div>`;
         }
-        
+
         // Current month days
         const selectedStr = '{{ $selectedDate }}';
         const todayStr = today.toISOString().split('T')[0];
-        
+
         for (let day = 1; day <= lastDay.getDate(); day++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             let classes = 'av-calendar__day';
@@ -366,13 +463,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (dateStr === selectedStr) classes += ' av-calendar__day--selected';
             html += `<div class="${classes}" onclick="selectDate('${dateStr}')">${day}</div>`;
         }
-        
+
         // Next month days
         const remaining = 42 - (startDay + lastDay.getDate());
         for (let day = 1; day <= remaining && day <= 7; day++) {
             html += `<div class="av-calendar__day av-calendar__day--other">${day}</div>`;
         }
-        
+
         container.innerHTML = html;
     }
 

@@ -4,14 +4,61 @@
 
 @section('content')
 <style>
+    /* Vendor Dashboard Layout Specific */
+    .vendor-app .vendor-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        padding: 24px;
+        margin: 0;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .vd-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 72px - 48px);
+        width: 100%;
+        margin: 0;
+        background: #f1f5f9;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .vd-scroll-container {
+        flex: 1;
+        overflow-y: auto;
+        background: #f1f5f9;
+    }
+
+    .vd-content-container {
+        background: #ffffff;
+        margin: 0;
+        min-height: 100%;
+    }
+
+    .vd-footer-container {
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        padding: 16px 20px;
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 0 0 12px 12px;
+    }
+
     .vd-status-strip {
         display: flex;
         gap: 0;
         background: #ffffff;
-        border-radius: 12px;
+        border-radius: 12px 12px 0 0;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-        margin-bottom: 20px;
+        flex-shrink: 0;
     }
     .vd-status-item {
         flex: 1;
@@ -118,33 +165,49 @@
 
 <!-- Status Strip (Clickable) -->
 @if(isset($stats))
-<div class="vd-status-strip">
-    <a href="{{ route('vendor.bookings.index', ['status' => 'pending']) }}" class="vd-status-item vd-status-item--warning">
-        <div class="vd-status-item__count">{{ $stats['pending_approval'] ?? 0 }}</div>
-        <div class="vd-status-item__label">Pending Approval</div>
-    </a>
-    <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}" class="vd-status-item vd-status-item--info">
-        <div class="vd-status-item__count">{{ $stats['scheduled'] ?? 0 }}</div>
-        <div class="vd-status-item__label">Scheduled</div>
-    </a>
-    <a href="{{ route('vendor.bookings.index', ['status' => 'completed']) }}" class="vd-status-item vd-status-item--success">
-        <div class="vd-status-item__count">{{ $stats['completed_this_month'] ?? 0 }}</div>
-        <div class="vd-status-item__label">Completed ({{ date('M') }})</div>
-    </a>
-</div>
-@endif
-
-<!-- Recent Bookings -->
-<div class="vendor-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h2 class="vd-section-title" style="margin: 0;">
-            <i class="fas fa-clock-rotate-left"></i>
-            Recent Bookings
-        </h2>
-        <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
-            View All
+<div class="vd-container">
+    <div class="vd-status-strip">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'pending']) }}" class="vd-status-item vd-status-item--warning">
+            <div class="vd-status-item__count">{{ $stats['pending_approval'] ?? 0 }}</div>
+            <div class="vd-status-item__label">Pending Approval</div>
+        </a>
+        <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}" class="vd-status-item vd-status-item--info">
+            <div class="vd-status-item__count">{{ $stats['scheduled'] ?? 0 }}</div>
+            <div class="vd-status-item__label">Scheduled</div>
+        </a>
+        <a href="{{ route('vendor.bookings.index', ['status' => 'completed']) }}" class="vd-status-item vd-status-item--success">
+            <div class="vd-status-item__count">{{ $stats['completed_this_month'] ?? 0 }}</div>
+            <div class="vd-status-item__label">Completed ({{ date('M') }})</div>
+        </a>
+        <a href="{{ route('vendor.bookings.index', ['status' => 'completed']) }}" class="vd-status-item vd-status-item--warning">
+            <div class="vd-status-item__count">{{ $stats['late_arrivals_today'] ?? 0 }}</div>
+            <div class="vd-status-item__label">Late Arrivals Today</div>
+        </a>
+        <a href="{{ route('vendor.bookings.index', ['status' => 'completed']) }}" class="vd-status-item vd-status-item--info">
+            <div class="vd-status-item__count">{{ $stats['avg_waiting_time'] ?? 0 }}<span style="font-size: 14px;">m</span></div>
+            <div class="vd-status-item__label">Avg Waiting Time</div>
+        </a>
+        <a href="{{ route('vendor.bookings.index', ['status' => 'completed']) }}" class="vd-status-item vd-status-item--success">
+            <div class="vd-status-item__count">{{ $stats['on_time_arrivals_today'] ?? 0 }}</div>
+            <div class="vd-status-item__label">On-Time Arrivals</div>
         </a>
     </div>
+
+    <!-- Scroll Container -->
+    <div class="vd-scroll-container">
+        <!-- Content Container -->
+        <div class="vd-content-container">
+            <!-- Recent Bookings -->
+            <div class="vendor-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h2 class="vd-section-title" style="margin: 0;">
+                        <i class="fas fa-clock-rotate-left"></i>
+                        Recent Bookings
+                    </h2>
+                    <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
+                        View All
+                    </a>
+                </div>
 
     @if($recentBookings->count() > 0)
         <div>
@@ -179,8 +242,28 @@
                         'cancelled' => 'Cancelled',
                         default => ucfirst(str_replace('_',' ', (string) $booking->status)),
                     };
+
+                    // Arrival status logic - selalu tampilkan
+                    $arrivalStatus = '-';
+                    $arrivalColor = 'secondary';
+                    if($booking->actual_arrival && $booking->planned_start) {
+                        $arrivalDiff = $booking->actual_arrival->diffInMinutes($booking->planned_start, false);
+                        if($arrivalDiff > 15) {
+                            $arrivalStatus = 'Late';
+                            $arrivalColor = 'danger';
+                        } elseif($arrivalDiff >= -15 && $arrivalDiff <= 15) {
+                            $arrivalStatus = 'On-Time';
+                            $arrivalColor = 'success';
+                        } else {
+                            $arrivalStatus = 'Early';
+                            $arrivalColor = 'info';
+                        }
+                    }
                 @endphp
                 <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
+                <span class="st-badge st-badge--{{ $arrivalColor }}" style="font-size: 11px;">
+                    <i class="fas fa-clock" style="font-size: 10px; margin-right: 2px;"></i>{{ $arrivalStatus }}
+                </span>
                 <i class="fas fa-chevron-right" style="color: #94a3b8;"></i>
             </a>
             @endforeach
@@ -194,7 +277,18 @@
             </a>
         </div>
     @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Container -->
+    <div class="vd-footer-container">
+        <div style="text-align: center; color: #64748b; font-size: 14px;">
+            &copy; {{ date('Y') }} Slot Time Management. All rights reserved.
+        </div>
+    </div>
 </div>
+@endif
 @endsection
 
 @push('scripts')

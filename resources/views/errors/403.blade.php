@@ -11,7 +11,7 @@
                 <div class="st-card__subtitle">Kamu tidak punya akses ke halaman ini.</div>
 
                 <div style="margin-top:12px;display:flex;gap:8px;">
-                    <a href="{{ route('dashboard') }}" class="st-btn st-btn--secondary">Back to Dashboard</a>
+                    <a href="{{ route('dashboard') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Back to Dashboard</a>
                     <a href="{{ route('slots.index') }}" class="st-btn st-btn--ghost">Go to Slots</a>
                 </div>
             </div>

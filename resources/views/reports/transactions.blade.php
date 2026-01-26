@@ -30,7 +30,7 @@
                             readonly
                             style="cursor:pointer;flex:1;"
                         >
-                        <button type="button" id="clear-date-range" class="st-btn st-btn--secondary st-btn--sm" title="Reset all filters" style="padding:6px 12px;">
+                        <button type="button" id="clear-date-range" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm" title="Reset all filters" style="padding:6px 12px;">
                             Reset
                         </button>
                     </div>
@@ -65,7 +65,7 @@
                         <input type="hidden" name="sort[]" value="{{ $s }}">
                         <input type="hidden" name="dir[]" value="{{ $d }}">
                     @endforeach
-                    <div class="st-table-wrapper">
+                    <div class="st-table-wrapper" style="min-height: 400px;">
                         <table class="st-table">
                             <thead>
                                 <tr>
@@ -85,7 +85,7 @@
                                                     <option value="unplanned" {{ in_array('unplanned', $slotTypeFilter ?? [], true) ? 'selected' : '' }}>Unplanned</option>
                                                 </select>
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="type">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="type">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="type" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -110,7 +110,7 @@
                                                 <div style="font-weight:600;margin-bottom:6px;">PO Filter</div>
                                                 <input type="text" name="po" class="st-input" placeholder="Search PO..." value="{{ $po ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="po">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="po">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="po" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -135,7 +135,7 @@
                                                 <div style="font-weight:600;margin-bottom:6px;">Ticket Filter</div>
                                                 <input type="text" name="ticket" class="st-input" placeholder="Search Ticket..." value="{{ $ticket ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="ticket">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="ticket">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="ticket" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -160,7 +160,7 @@
                                                 <div style="font-weight:600;margin-bottom:6px;">MAT DOC Filter</div>
                                                 <input type="text" name="mat_doc" class="st-input" placeholder="Search MAT DOC..." value="{{ $mat_doc ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="mat_doc">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="mat_doc">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="mat_doc" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -185,7 +185,7 @@
                                                 <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
                                                 <input type="text" name="vendor" class="st-input" placeholder="Search Vendor..." value="{{ $vendor ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="vendor">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="vendor">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -215,7 +215,7 @@
                                                     @endforeach
                                                 </select>
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="warehouse">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="warehouse">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="warehouse" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -244,7 +244,7 @@
                                                     <option value="outbound" {{ in_array('outbound', $directionFilter ?? [], true) ? 'selected' : '' }}>Outbound</option>
                                                 </select>
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="direction">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="direction">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="direction" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -271,7 +271,7 @@
                                                 <input type="hidden" name="arrival_date_from" id="arrival_date_from" value="{{ $arrival_date_from ?? '' }}">
                                                 <input type="hidden" name="arrival_date_to" id="arrival_date_to" value="{{ $arrival_date_to ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="arrival_presence">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="arrival_presence">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="arrival" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -305,7 +305,7 @@
                                                     </div>
                                                 </div>
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="lead_time">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="lead_time">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="lead_time" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -334,7 +334,7 @@
                                                     <option value="not_achieve" {{ in_array('not_achieve', $targetStatusFilter ?? [], true) ? 'selected' : '' }}>Not Achieve</option>
                                                 </select>
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="target_status">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="target_status">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="target_status" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -363,7 +363,7 @@
                                                     <option value="late" {{ in_array('late', $lateFilter ?? [], true) ? 'selected' : '' }}>Late</option>
                                                 </select>
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="late">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="late">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="late" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
@@ -388,7 +388,7 @@
                                                 <div style="font-weight:600;margin-bottom:6px;">User Filter</div>
                                                 <input type="text" name="user" class="st-input" placeholder="Search User..." value="{{ $user ?? '' }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="user">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="user">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel" data-sort-panel="user" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">

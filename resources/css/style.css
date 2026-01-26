@@ -1715,6 +1715,46 @@ body {
     font-size: 10px;
 }
 
+/* Button outline blue hover and active effects */
+.st-btn[style*="background:transparent"][style*="color:var(--primary)"]:hover {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(2, 132, 199, 0.3);
+}
+
+.st-btn[style*="background:transparent"][style*="color:var(--primary)"]:active {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.4);
+}
+
+.st-btn[style*="background:transparent"][style*="color:var(--primary)"]:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Special handling for small buttons */
+.st-btn--sm[style*="background:transparent"][style*="color:var(--primary)"]:hover {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);
+}
+
+.st-btn--sm[style*="background:transparent"][style*="color:var(--primary)"]:active {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(2, 132, 199, 0.4);
+}
+
+.st-btn--sm[style*="background:transparent"][style*="color:var(--primary)"]:focus {
+    outline: 1px solid var(--primary);
+    outline-offset: 1px;
+}
+
 /* Override for buttons in table cells - ensure consistent styling */
 .st-table td .st-btn--sm,
 table.st-table td .st-btn--sm,
@@ -3670,8 +3710,10 @@ table.st-table tbody td .st-btn--primary:hover {
 table.st-table td .btn-outline-primary,
 .st-table tbody td .btn-outline-primary,
 table.st-table tbody td .btn-outline-primary,
-.st-table td .st-btn.btn-outline-primary,
-table.st-table td .st-btn.btn-outline-primary {
+.st-table td .st-btn[style*="background:transparent"][style*="color:var(--primary)"],
+table.st-table td .st-btn[style*="background:transparent"][style*="color:var(--primary)"],
+.st-table tbody td .st-btn[style*="background:transparent"][style*="color:var(--primary)"],
+table.st-table tbody td .st-btn[style*="background:transparent"][style*="color:var(--primary)"] {
     background: #ffffff;
     color: var(--primary);
     border-color: var(--primary);
@@ -3681,8 +3723,10 @@ table.st-table td .st-btn.btn-outline-primary {
 table.st-table td .btn-outline-primary:hover,
 .st-table tbody td .btn-outline-primary:hover,
 table.st-table tbody td .btn-outline-primary:hover,
-.st-table td .st-btn.btn-outline-primary:hover,
-table.st-table td .st-btn.btn-outline-primary:hover {
+.st-table td .st-btn[style*="background:transparent"][style*="color:var(--primary)"]:hover,
+table.st-table td .st-btn[style*="background:transparent"][style*="color:var(--primary)"]:hover,
+.st-table tbody td .st-btn[style*="background:transparent"][style*="color:var(--primary)"]:hover,
+table.st-table tbody td .st-btn[style*="background:transparent"][style*="color:var(--primary)"]:hover {
     background: var(--primary-bg);
     color: var(--primary);
     border-color: var(--primary);
@@ -5602,4 +5646,262 @@ table.st-table td form {
 .st-action-item--danger:hover {
     background-color: #fef2f2;
     color: #b91c1c;
+}
+
+/* ===== VENDOR DATE RANGE PICKER STYLING ===== */
+.date-range-input {
+    cursor: pointer;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    transition: all 0.2s ease;
+}
+
+.date-range-input:hover {
+    border-color: #9ca3af;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.date-range-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Flatpickr Modern Styling */
+.flatpickr-calendar {
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: visible;
+    font-family: 'Inter', sans-serif;
+    width: 330px !important;
+    min-width: 330px !important;
+    max-width: 330px !important;
+    box-sizing: border-box;
+    padding: 12px;
+    position: fixed !important;
+    z-index: 99999 !important;
+}
+
+.flatpickr-calendar.open {
+    animation: fadeInUp 0.2s ease-out;
+    z-index: 99999 !important;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.flatpickr-months {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+}
+
+.flatpickr-month {
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 14px;
+    flex: 1;
+    text-align: center;
+    margin: 0;
+}
+
+.flatpickr-next-month,
+.flatpickr-prev-month {
+    color: #64748b;
+    fill: #64748b;
+    transition: all 0.2s ease;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 2;
+}
+
+.flatpickr-next-month:hover,
+.flatpickr-prev-month:hover {
+    color: #3b82f6;
+    fill: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.flatpickr-weekdays {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+}
+
+.flatpickr-weekday {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    padding: 8px 0;
+    box-sizing: border-box;
+}
+
+.flatpickr-days {
+    padding: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+    display: block !important;
+}
+
+.flatpickr-day {
+    border-radius: 8px;
+    color: #475569;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    width: 35px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    margin: 1px !important;
+    box-sizing: border-box;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    flex: none !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+}
+
+.flatpickr-day:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #e2e8f0;
+    z-index: 2;
+}
+
+.flatpickr-day.selected {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    font-weight: 600;
+    z-index: 2;
+}
+
+.flatpickr-day.selected:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.flatpickr-day.inRange {
+    background: #eff6ff;
+    color: #1e40af;
+    border-color: #dbeafe;
+    z-index: 1;
+}
+
+.flatpickr-day.inRange:hover {
+    background: #dbeafe;
+    border-color: #bfdbfe;
+    z-index: 2;
+}
+
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    font-weight: 600;
+    z-index: 2;
+}
+
+.flatpickr-day.today {
+    border-color: #3b82f6;
+    font-weight: 600;
+}
+
+.flatpickr-day.today:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.flatpickr-day.disabled {
+    color: #cbd5e1;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.flatpickr-day.disabled:hover {
+    background: transparent;
+    border-color: transparent;
+}
+
+.flatpickr-day.is-holiday {
+    background: #fef2f2;
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.flatpickr-day.is-holiday:hover {
+    background: #fee2e2;
+    border-color: #fecaca;
+}
+
+/* Force 7-day layout with proper spacing */
+.flatpickr-days .flatpickr-day:nth-child(7n+1) {
+    clear: left;
+    margin-left: 1px !important;
+}
+
+.flatpickr-days .flatpickr-day:nth-child(7n) {
+    margin-right: 1px !important;
+}
+
+.flatpickr-days .flatpickr-day:nth-child(n+29) {
+    margin-bottom: 1px !important;
+}
+
+/* Force Saturday visibility with balanced margins */
+.flatpickr-days .flatpickr-day:nth-child(7n) {
+    width: 35px !important;
+    margin-right: 1px !important;
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Hide week numbers */
+.flatpickr-weeknumbers {
+    display: none !important;
+}
+
+.flatpickr-weekday:nth-child(8),
+.flatpickr-days .flatpickr-day:nth-child(8n) {
+    display: none !important;
 }

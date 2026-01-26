@@ -154,7 +154,7 @@ class BookingApprovalController extends Controller
                         null
                     );
                     if (empty($check['available'])) {
-                        $reason = (string) ($check['reason'] ?? 'Gate tidak tersedia');
+                        $reason = (string) ($check['reason'] ?? 'Gate not available');
                         return back()->with('error', $reason);
                     }
                     $effectiveGateId = $requestedGateId;
@@ -190,7 +190,7 @@ class BookingApprovalController extends Controller
                     }
 
                     if ($bestGateId === null) {
-                        return back()->with('error', 'Gate penuh / tidak tersedia untuk jadwal ini. Silakan reschedule atau pilih waktu lain.');
+                        return back()->with('error', 'Gate full / not available for this schedule. Please reschedule or choose another time.');
                     }
                     $effectiveGateId = $bestGateId;
                 }

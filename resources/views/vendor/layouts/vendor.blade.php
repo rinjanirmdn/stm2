@@ -13,21 +13,21 @@
     <meta name="apple-mobile-web-app-title" content="SlotTM Vendor">
 
     <title>@yield('title', 'Vendor Portal - Slot Time Management')</title>
-    
+
     <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    
+
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    
+
     @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    
+
     <style>
         :root {
             --vendor-bg: #f1f5f9;
@@ -55,7 +55,7 @@
                         radial-gradient(900px 500px at 90% 10%, rgba(16, 185, 129, 0.08), transparent 55%),
                         var(--vendor-bg);
         }
-        
+
         .vendor-header {
             background: #0f172a;
             color: white;
@@ -70,28 +70,32 @@
             top: 0;
             z-index: 50;
         }
-        
+
         .vendor-header__brand {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
-        
+
         .vendor-header__logo {
             height: 40px;
+            background: white;
+            padding: 2px;
+            border-radius: 6px;
+            object-fit: contain;
         }
-        
+
         .vendor-header__title {
             font-size: 1.25rem;
             font-weight: 600;
         }
-        
+
         .vendor-header__nav {
             display: flex;
             align-items: center;
             gap: 6px;
         }
-        
+
         .vendor-nav-link {
             padding: 10px 12px;
             border-radius: 10px;
@@ -104,12 +108,12 @@
             gap: 0.5rem;
             opacity: 0.9;
         }
-        
+
         .vendor-nav-link:hover {
             background: rgba(255, 255, 255, 0.08);
             opacity: 1;
         }
-        
+
         .vendor-nav-link.active {
             background: rgba(255, 255, 255, 0.12);
             opacity: 1;
@@ -122,33 +126,33 @@
             background: rgba(255, 255, 255, 0.12);
             margin: 0 6px;
         }
-        
+
         .vendor-header__user {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
-        
+
         .vendor-header__user-info {
             text-align: right;
         }
-        
+
         .vendor-header__user-name {
             font-weight: 600;
             display: block;
         }
-        
+
         .vendor-header__user-company {
             font-size: 0.875rem;
             opacity: 0.85;
         }
-        
+
         .vendor-main {
             max-width: 1400px;
             margin: 0 auto;
             padding: 18px 20px 28px;
         }
-        
+
         .vendor-card {
             background: var(--vendor-surface);
             border-radius: var(--vendor-radius);
@@ -157,7 +161,7 @@
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
-        
+
         .vendor-card__header {
             display: flex;
             justify-content: space-between;
@@ -166,7 +170,7 @@
             padding-bottom: 1rem;
             border-bottom: 1px solid #e5e7eb;
         }
-        
+
         .vendor-card__title {
             font-size: 1.25rem;
             font-weight: 600;
@@ -175,13 +179,13 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .vendor-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
         }
-        
+
         .vendor-stat-card {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             border-radius: 12px;
@@ -192,28 +196,28 @@
             transition: transform 0.2s ease;
             border: 1px solid rgba(15, 23, 42, 0.06);
         }
-        
+
         .vendor-stat-card:hover {
             transform: translateY(-2px);
             box-shadow: var(--vendor-shadow-sm);
         }
-        
+
         .vendor-stat-card--warning {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         }
-        
+
         .vendor-stat-card--info {
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         }
-        
+
         .vendor-stat-card--success {
             background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
         }
-        
+
         .vendor-stat-card--primary {
             background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
         }
-        
+
         .vendor-stat-card__icon {
             width: 48px;
             height: 48px;
@@ -223,42 +227,42 @@
             justify-content: center;
             font-size: 1.25rem;
         }
-        
+
         .vendor-stat-card--warning .vendor-stat-card__icon {
             background: #f59e0b;
             color: white;
         }
-        
+
         .vendor-stat-card--info .vendor-stat-card__icon {
             background: #3b82f6;
             color: white;
         }
-        
+
         .vendor-stat-card--success .vendor-stat-card__icon {
             background: #10b981;
             color: white;
         }
-        
+
         .vendor-stat-card--primary .vendor-stat-card__icon {
             background: #8b5cf6;
             color: white;
         }
-        
+
         .vendor-stat-card__content {
             flex: 1;
         }
-        
+
         .vendor-stat-card__value {
             font-size: 1.75rem;
             font-weight: 700;
             color: var(--vendor-text);
         }
-        
+
         .vendor-stat-card__label {
             font-size: 0.875rem;
             color: #64748b;
         }
-        
+
         .vendor-btn {
             display: inline-flex;
             align-items: center;
@@ -292,27 +296,27 @@
             outline: none;
             box-shadow: var(--vendor-ring);
         }
-        
+
         .vendor-btn--primary {
             background: linear-gradient(135deg, var(--vendor-brand) 0%, var(--vendor-brand-2) 100%);
             color: white;
         }
-        
+
         .vendor-btn--primary:hover {
             transform: translateY(-1px);
             box-shadow: 0 10px 20px rgba(37, 99, 235, 0.28);
         }
-        
+
         .vendor-btn--success {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
         }
-        
+
         .vendor-btn--danger {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
         }
-        
+
         .vendor-btn--secondary {
             background: var(--vendor-surface-2);
             color: #334155;
@@ -334,17 +338,17 @@
             background: rgba(255, 255, 255, 0.12);
             color: #ffffff;
         }
-        
+
         .vendor-btn--sm {
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
         }
-        
+
         .vendor-table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         .vendor-table th {
             text-align: left;
             padding: 1rem;
@@ -355,16 +359,16 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-        
+
         .vendor-table td {
             padding: 1rem;
             border-bottom: 1px solid #e5e7eb;
         }
-        
+
         .vendor-table tr:hover td {
             background: #f8fafc;
         }
-        
+
         .vendor-badge {
             display: inline-flex;
             align-items: center;
@@ -375,7 +379,7 @@
             font-weight: 600;
             text-transform: uppercase;
         }
-        
+
         .vendor-badge--warning {
             background: #fef3c7;
             color: #92400e;
@@ -385,38 +389,38 @@
             background: #fff7ed;
             color: #ea580c;
         }
-        
+
         .vendor-badge--success {
             background: #dcfce7;
             color: #166534;
         }
-        
+
         .vendor-badge--info {
             background: #dbeafe;
             color: #1e40af;
         }
-        
+
         .vendor-badge--danger {
             background: #fee2e2;
             color: #991b1b;
         }
-        
+
         .vendor-badge--secondary {
             background: #f1f5f9;
             color: #475569;
         }
-        
+
         .vendor-form-group {
             margin-bottom: 1.25rem;
         }
-        
+
         .vendor-form-label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
             color: #374151;
         }
-        
+
         .vendor-form-input,
         .vendor-form-select,
         .vendor-form-textarea {
@@ -428,7 +432,7 @@
             transition: border-color 0.2s ease;
             background: #ffffff;
         }
-        
+
         .vendor-form-input:focus,
         .vendor-form-select:focus,
         .vendor-form-textarea:focus {
@@ -436,7 +440,7 @@
             border-color: #3b82f6;
             box-shadow: var(--vendor-ring);
         }
-        
+
         .vendor-alert {
             padding: 1rem 1.25rem;
             border-radius: 10px;
@@ -445,38 +449,38 @@
             align-items: center;
             gap: 0.75rem;
         }
-        
+
         .vendor-alert--success {
             background: #dcfce7;
             color: #166534;
             border: 1px solid #86efac;
         }
-        
+
         .vendor-alert--error {
             background: #fee2e2;
             color: #991b1b;
             border: 1px solid #fecaca;
         }
-        
+
         .vendor-alert--warning {
             background: #fef3c7;
             color: #92400e;
             border: 1px solid #fde68a;
         }
-        
+
         .vendor-alert--info {
             background: #dbeafe;
             color: #1e40af;
             border: 1px solid #bfdbfe;
         }
-        
+
         .vendor-footer {
             text-align: center;
             padding: 2rem;
             color: #64748b;
             font-size: 0.875rem;
         }
-        
+
         @media (max-width: 768px) {
             .vendor-header {
                 height: auto;
@@ -484,16 +488,16 @@
                 flex-wrap: wrap;
                 gap: 10px;
             }
-            
+
             .vendor-header__nav {
                 flex-wrap: wrap;
                 justify-content: flex-start;
             }
-            
+
             .vendor-main {
                 padding: 12px;
             }
-            
+
             .vendor-stats {
                 grid-template-columns: 1fr;
             }
@@ -504,7 +508,7 @@
             position: relative;
             margin-right: 0.5rem;
         }
-        
+
         .notification-badge {
             position: absolute;
             top: 2px;
@@ -574,7 +578,7 @@
         .notification-action-btn--ghost {
             background: #f8fafc;
         }
-        
+
         .notification-list {
             max-height: 400px;
             overflow-y: auto;
@@ -598,7 +602,7 @@
         .notification-item--unread {
             background: #eff6ff;
         }
-        
+
         .notification-icon {
             width: 32px;
             height: 32px;
@@ -615,7 +619,7 @@
             font-size: 0.875rem;
             line-height: 1.4;
         }
-        
+
         .notification-time {
             font-size: 0.75rem;
             color: #94a3b8;
@@ -636,7 +640,7 @@
             <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" class="vendor-header__logo">
             <span class="vendor-header__title">Vendor Portal</span>
         </div>
-        
+
         <nav class="vendor-header__nav">
             <a href="{{ route('vendor.dashboard') }}" class="vendor-nav-link{{ request()->routeIs('vendor.dashboard') ? ' active' : '' }}">
                 Dashboard
@@ -655,7 +659,7 @@
                 New Booking
             </a>
         </nav>
-        
+
         <div class="vendor-header__user">
             <!-- Notification Component -->
             <div class="vendor-notification">
@@ -665,7 +669,7 @@
                         <span class="notification-badge" id="notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
                     @endif
                 </button>
-                
+
                 <div class="notification-dropdown" id="notification-dropdown">
                     <div class="notification-header">
                         <span>Notifications</span>
@@ -727,23 +731,19 @@
         @yield('content')
     </main>
 
-    <footer class="vendor-footer">
-        &copy; {{ date('Y') }} Slot Time Management. All rights reserved.
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Notification Toggle
             const notifBtn = document.getElementById('notification-btn');
             const notifDropdown = document.getElementById('notification-dropdown');
-            
+
             if (notifBtn && notifDropdown) {
                 notifBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     notifDropdown.classList.toggle('show');
                 });
-                
+
                 document.addEventListener('click', function(e) {
                     if (!notifDropdown.contains(e.target) && !notifBtn.contains(e.target)) {
                         notifDropdown.classList.remove('show');

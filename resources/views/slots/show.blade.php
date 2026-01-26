@@ -66,93 +66,237 @@
     <div class="st-card st-mb-3">
         <div class="st-p-3">
             <div class="st-mb-2">
-                <span class="st-table__status-badge {{ $isUnplanned ? 'st-status-on-time' : 'st-status-processing' }}">
-                    {{ $isUnplanned ? 'Unplanned Slot' : 'Planned Slot' }}
+                <span class="st-table__status-badge {{ $isUnplanned ? 'st-status-unplanned' : 'st-status-in_progress' }}">
+                    {{ $isUnplanned ? 'Unplanned' : 'Planned' }}
                 </span>
             </div>
 
             <div class="st-row" style="row-gap:14px;">
                 <div class="st-col-6">
-                    <h2 class="st-card__title st-mb-2">General Info</h2>
+                    <h2 class="st-card__title st-mb-2" style="font-size:14px;">Planning</h2>
 
-                    <div class="st-detail-grid">
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">PO/DO Number</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value st-detail-value--primary">{{ $slot->po_number ?? ($slot->po->po_number ?? '-') }}</div>
+                    <div class="st-detail-grid" style="font-size:12px;">
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">ETA</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $fmt($slot->planned_start ?? null) }}</div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">MAT DOC</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</div>
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Planned Duration</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $plannedDurationLabel }}</div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">SJ Start Number</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->sj_start_number) ? $slot->sj_start_number : '-' }}</div>
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Est. Finish</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">SJ Complete Number</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->sj_complete_number) ? $slot->sj_complete_number : '-' }}</div>
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Planned Gate</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->planned_gate_number) ? $plannedGateLabel : '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="st-detail-divider" style="margin:8px 0;"></div>
+
+                    <h2 class="st-card__title st-mb-2" style="font-size:14px;">Actual &amp; Status</h2>
+
+                    <div class="st-detail-grid" style="font-size:12px;">
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Status</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ strtoupper($status) }}</div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Ticket Number</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->ticket_number) ? $slot->ticket_number : '-' }}</div>
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Blocking Risk</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">
+                            @if ($isUnplanned || $status === 'cancelled')
+                                -
+                            @else
+                                @if ($blockingRisk >= 2)
+                                    <span class="st-table__status-badge st-status-late" style="font-size:10px;">High</span>
+                                @elseif ($blockingRisk === 1)
+                                    <span class="st-table__status-badge st-status-processing" style="font-size:10px;">Medium</span>
+                                @else
+                                    <span class="st-table__status-badge st-status-on-time" style="font-size:10px;">Low</span>
+                                @endif
+                            @endif
+                            </div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">COA</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Late</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">
+                            @if ($isUnplanned)
+                                -
+                            @elseif ($lateDisplay === 'late')
+                                Late
+                            @elseif ($lateDisplay === 'on_time')
+                                On Time
+                            @else
+                                -
+                            @endif
+                            </div>
+                        </div>
+
+                        @if (!empty($slot->late_reason))
+                            <div class="st-detail-item" style="padding:6px 8px;">
+                                <div class="st-detail-label" style="font-size:11px;">Notes</div>
+                                <div class="st-detail-colon" style="font-size:11px;">:</div>
+                                <div class="st-detail-value st-detail-value--prewrap" style="font-size:11px;">{{ $slot->late_reason }}</div>
+                            </div>
+                        @endif
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Arrival Time</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $fmt($slot->arrival_time ?? null) }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Actual Start</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $fmt($slot->actual_start ?? null) }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Actual Finish</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $fmt($slot->actual_finish ?? null) }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Waiting Time (Arrival → Start)</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $leadMinutes !== null ? $minutesLabel($leadMinutes) : '-' }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Process Time (Start → Finish)</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $processMinutes !== null ? $minutesLabel($processMinutes) : '-' }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Total Lead Time</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $totalLeadTimeMinutes !== null ? $minutesLabel($totalLeadTimeMinutes) : '-' }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Target Status</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">
+                            @if ($targetStatus === 'achieve')
+                                <span class="st-table__status-badge st-status-on-time" style="font-size:10px;">Achieve</span>
+                            @elseif ($targetStatus === 'not_achieve')
+                                <span class="st-table__status-badge st-status-late" style="font-size:10px;">Not Achieve</span>
+                            @else
+                                -
+                            @endif
+                            </div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Actual Gate</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->actual_gate_number) ? $actualGateLabel : '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="st-col-6">
+                    <h2 class="st-card__title st-mb-2" style="font-size:14px;">General Info</h2>
+
+                    <div class="st-detail-grid" style="font-size:12px;">
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">PO/DO Number</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value st-detail-value--primary" style="font-size:12px;">{{ $slot->po_number ?? ($slot->po->po_number ?? '-') }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">MAT DOC</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">SJ Start Number</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->sj_start_number) ? $slot->sj_start_number : '-' }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">SJ Complete Number</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->sj_complete_number) ? $slot->sj_complete_number : '-' }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Ticket Number</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->ticket_number) ? $slot->ticket_number : '-' }}</div>
+                        </div>
+
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">COA</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">
                             @if(!empty($slot->coa_path))
-                                <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                                <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener" style="font-size:10px;color:var(--primary);text-decoration:underline;cursor:pointer;">
+                                    <i class="fa-solid fa-file-pdf" style="margin-right:4px;"></i>View / Download
+                                </a>
                             @else
                                 -
                             @endif
                             </div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Surat Jalan</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Surat Jalan</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">
                             @if(!empty($slot->surat_jalan_path))
-                                <a href="{{ asset('storage/' . $slot->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
+                                <a href="{{ asset('storage/' . $slot->surat_jalan_path) }}" target="_blank" rel="noopener" style="font-size:10px;color:var(--primary);text-decoration:underline;cursor:pointer;">
+                                    <i class="fa-solid fa-file-pdf" style="margin-right:4px;"></i>View / Download
+                                </a>
                             @else
                                 -
                             @endif
                             </div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Vendor</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $slot->vendor_name ?? '-' }}</div>
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Vendor</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $slot->vendor_name ?? '-' }}</div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Warehouse</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $slot->warehouse_name ?? '-' }}</div>
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Warehouse</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">{{ $slot->warehouse_name ?? '-' }}</div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Direction</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Direction</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">
                             @php $dir = strtolower($slot->direction ?? ''); @endphp
                             @if($dir === 'inbound')
-                                <span class="st-badge-modern st-badge-modern--inbound">
+                                <span class="st-badge-modern st-badge-modern--inbound" style="font-size:10px;">
                                     Inbound
                                 </span>
                             @elseif($dir === 'outbound')
-                                <span class="st-badge-modern st-badge-modern--outbound">
+                                <span class="st-badge-modern st-badge-modern--outbound" style="font-size:10px;">
                                     Outbound
                                 </span>
                             @else
@@ -161,10 +305,10 @@
                             </div>
                         </div>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Truck Details</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">
+                        <div class="st-detail-item" style="padding:6px 8px;">
+                            <div class="st-detail-label" style="font-size:11px;">Truck Details</div>
+                            <div class="st-detail-colon" style="font-size:11px;">:</div>
+                            <div class="st-detail-value" style="font-size:11px;">
                             @php
                                 $truckParts = [];
                                 if (!empty($slot->truck_type)) {
@@ -179,7 +323,7 @@
                             @endphp
                             @if (!empty($truckParts))
                                 @foreach ($truckParts as $part)
-                                    <div>{{ $part }}</div>
+                                    <div style="font-size:10px;">{{ $part }}</div>
                                 @endforeach
                             @else
                                 -
@@ -188,161 +332,65 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="st-col-6">
-                    <h2 class="st-card__title st-mb-2">Planning</h2>
+            <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end;">
+                @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
+                    @unless(optional(auth()->user())->hasRole('Operator'))
+                    @can('slots.ticket')
+                    <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary" style="font-size:11px;padding:4px 8px;" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
+                        Print Ticket
+                    </a>
+                    @endcan
+                    @endunless
+                @endif
 
-                    <div class="st-detail-grid">
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">ETA</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $fmt($slot->planned_start ?? null) }}</div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Planned Duration</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $plannedDurationLabel }}</div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Est. Finish</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Planned Gate</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->planned_gate_number) ? $plannedGateLabel : '-' }}</div>
-                        </div>
-                    </div>
-
-                    <div class="st-detail-divider"></div>
-
-                    <h2 class="st-card__title st-mb-2">Actual &amp; Status</h2>
-
-                    <div class="st-detail-grid">
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Status</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ strtoupper($status) }}</div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Blocking Risk</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">
-                            @if ($isUnplanned || $status === 'cancelled')
-                                -
-                            @else
-                                @if ($blockingRisk >= 2)
-                                    <span class="st-table__status-badge st-status-late">High</span>
-                                @elseif ($blockingRisk === 1)
-                                    <span class="st-table__status-badge st-status-processing">Medium</span>
-                                @else
-                                    <span class="st-table__status-badge st-status-on-time">Low</span>
-                                @endif
-                            @endif
-                            </div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Late</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">
-                            @if ($isUnplanned)
-                                -
-                            @elseif ($lateDisplay === 'late')
-                                Late
-                            @elseif ($lateDisplay === 'on_time')
-                                On Time
-                            @else
-                                -
-                            @endif
-                            </div>
-                        </div>
-
-                        @if (!empty($slot->late_reason))
-                            <div class="st-detail-item">
-                                <div class="st-detail-label">Notes</div>
-                                <div class="st-detail-colon">:</div>
-                                <div class="st-detail-value st-detail-value--prewrap">{{ $slot->late_reason }}</div>
-                            </div>
+                @if($status === 'pending_approval')
+                    @if(auth()->user()->hasRole(['Admin', 'admin', 'Super Administrator', 'Section Head']))
+                        @can('bookings.reschedule')
+                        @if (!empty($slot->requested_by) && in_array($status, ['pending_approval', 'scheduled'], true))
+                            <a href="{{ route('bookings.reschedule', ['id' => $slot->id]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" style="font-size:11px;padding:4px 8px;">
+                                <i class="fa-solid fa-calendar" style="margin-right:4px;"></i> Reschedule
+                            </a>
                         @endif
+                        @endcan
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Arrival Time</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $fmt($slot->arrival_time ?? null) }}</div>
-                        </div>
+                        <form action="{{ route('slots.approve', $slot->id) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            @method('POST')
+                            <button type="submit" class="st-btn st-btn--primary" style="font-size:11px;padding:4px 8px;" onclick="return confirm('Are You Sure You Want to Approve This Booking?')">
+                                <i class="fa-solid fa-check" style="margin-right:4px;"></i> Approve
+                            </button>
+                        </form>
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Actual Start</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $fmt($slot->actual_start ?? null) }}</div>
-                        </div>
+                        <button type="button" class="st-btn st-btn--danger" style="font-size:11px;padding:4px 8px;" onclick="document.getElementById('reject-dialog').style.display='flex'">
+                            <i class="fa-solid fa-xmark" style="margin-right:4px;"></i> Reject
+                        </button>
+                    @else
+                        <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" style="font-size:11px;padding:4px 8px;" disabled>Waiting for Approval</button>
+                    @endif
+                @endif
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Actual Finish</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $fmt($slot->actual_finish ?? null) }}</div>
-                        </div>
+                @if (! $isUnplanned)
+                    @if (in_array($status, ['scheduled'], true))
+                        <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn" style="font-size:11px;padding:4px 8px;background:transparent;color:var(--primary);border:1px solid var(--primary);">Arrival</a>
+                    @elseif ($status === 'waiting')
+                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary" style="font-size:11px;padding:4px 8px;">Start Slot</a>
+                    @elseif ($status === 'in_progress')
+                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary" style="font-size:11px;padding:4px 8px;">Complete Slot</a>
+                    @endif
+                @else
+                    @if ($status === 'waiting')
+                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary" style="font-size:11px;padding:4px 8px;">Start Slot</a>
+                    @elseif ($status === 'in_progress')
+                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary" style="font-size:11px;padding:4px 8px;">Complete Slot</a>
+                    @endif
+                @endif
 
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Waiting Time (Arrival → Start)</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $leadMinutes !== null ? $minutesLabel($leadMinutes) : '-' }}</div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Process Time (Start → Finish)</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $processMinutes !== null ? $minutesLabel($processMinutes) : '-' }}</div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Total Lead Time</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $totalLeadTimeMinutes !== null ? $minutesLabel($totalLeadTimeMinutes) : '-' }}</div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Target Status</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">
-                            @if ($targetStatus === 'achieve')
-                                <span class="st-table__status-badge st-status-on-time">Achieve</span>
-                            @elseif ($targetStatus === 'not_achieve')
-                                <span class="st-table__status-badge st-status-late">Not Achieve</span>
-                            @else
-                                -
-                            @endif
-                            </div>
-                        </div>
-
-                        <div class="st-detail-item">
-                            <div class="st-detail-label">Actual Gate</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->actual_gate_number) ? $actualGateLabel : '-' }}</div>
-                        </div>
-                    </div>
-                </div>
+                <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" style="font-size:11px;padding:4px 8px;">Back</a>
             </div>
         </div>
     </div>
-
-    @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
-        @unless(optional(auth()->user())->hasRole('Operator'))
-        @can('slots.ticket')
-        <div style="margin-bottom:12px;display:flex;justify-content:flex-end;">
-            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
-                Print Ticket
-            </a>
-        </div>
-        @endcan
-        @endunless
-    @endif
 
     @if ($logs && count($logs) > 0)
         <div class="st-card" style="margin-bottom:12px;">
@@ -380,52 +428,6 @@
         </div>
     @endif
 
-    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        @if($status === 'pending_approval')
-            @if(auth()->user()->hasRole(['Admin', 'admin', 'Super Administrator', 'Section Head']))
-                @can('bookings.reschedule')
-                @if (!empty($slot->requested_by) && in_array($status, ['pending_approval', 'scheduled'], true))
-                    <a href="{{ route('bookings.reschedule', ['id' => $slot->id]) }}" class="st-btn st-btn--secondary">
-                        <i class="fa-solid fa-calendar" style="margin-right:6px;"></i> Reschedule
-                    </a>
-                @endif
-                @endcan
-
-                <form action="{{ route('slots.approve', $slot->id) }}" method="POST" style="display:inline-block;">
-                    @csrf
-                    @method('POST')
-                    <button type="submit" class="st-btn st-btn--primary" onclick="return confirm('Are You Sure You Want to Approve This Booking?')">
-                        <i class="fa-solid fa-check" style="margin-right:6px;"></i> Approve
-                    </button>
-                </form>
-
-                <button type="button" class="st-btn st-btn--danger" onclick="document.getElementById('reject-dialog').style.display='flex'">
-                    <i class="fa-solid fa-xmark" style="margin-right:6px;"></i> Reject
-                </button>
-            @else
-                <button type="button" class="st-btn st-btn--secondary" disabled>Waiting for Approval</button>
-            @endif
-        @endif
-
-        @if (! $isUnplanned)
-            @if (in_array($status, ['scheduled'], true))
-                <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary">Arrival</a>
-            @elseif ($status === 'waiting')
-                <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Slot</a>
-            @elseif ($status === 'in_progress')
-                <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Slot</a>
-            @endif
-        @else
-            @if ($status === 'waiting')
-                <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Slot</a>
-            @elseif ($status === 'in_progress')
-                <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Slot</a>
-            @endif
-        @endif
-
-        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('slots.index') }}" class="st-btn st-btn--secondary">Back</a>
-    </div>
-
     <!-- Reject Dialog -->
     <div id="reject-dialog" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
         <div class="st-card" style="width:100%; max-width:400px; padding:20px;">
@@ -437,7 +439,7 @@
                     <textarea name="reason" class="st-input" rows="3" required placeholder="Why Is This Booking Rejected?"></textarea>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
-                    <button type="button" class="st-btn st-btn--secondary" onclick="document.getElementById('reject-dialog').style.display='none'">Cancel</button>
+                    <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" onclick="document.getElementById('reject-dialog').style.display='none'">Cancel</button>
                     <button type="submit" class="st-btn st-btn--danger">Confirm Reject</button>
                 </div>
             </form>

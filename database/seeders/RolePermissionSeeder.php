@@ -13,7 +13,7 @@ class RolePermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Buat permissions untuk STM
+        // Create permissions for STM
         $permissions = [
             'dashboard.view',
             'dashboard.range_filter',
@@ -108,19 +108,19 @@ class RolePermissionSeeder extends Seeder
             Permission::findOrCreate($permission);
         }
 
-        // Buat role admin dengan semua permission
+        // Create admin role with all permissions
         $adminRole = Role::findOrCreate('Admin');
         $adminRole->givePermissionTo(Permission::all());
 
-        // Buat role vendor (akses portal vendor). Route vendor saat ini dilindungi oleh role:vendor.
-        // Beri permission minimum agar menu umum tetap bisa diakses jika dibutuhkan.
+        // Create vendor role (access vendor portal). Vendor route currently protected by role:vendor.
+        // Give minimum permissions so common menu can still be accessed if needed.
         $vendorRole = Role::findOrCreate('vendor');
         $vendorRole->givePermissionTo([
             'dashboard.view',
             'profile.index',
         ]);
 
-        // Buat role section_head dengan permission sesuai kebutuhan
+        // Create section_head role with permissions as needed
         $sectionHeadRole = Role::findOrCreate('Section Head');
         $sectionHeadPermissions = array_values(array_filter($permissions, function ($perm) {
             if (str_starts_with($perm, 'users.')) {
@@ -133,7 +133,7 @@ class RolePermissionSeeder extends Seeder
         }));
         $sectionHeadRole->givePermissionTo($sectionHeadPermissions);
 
-        // Buat role operator dengan permission terbatas (hanya arrival, start, complete)
+        // Create operator role with limited permissions (only arrival, start, complete)
         $operatorRole = Role::findOrCreate('Operator');
         $operatorRole->givePermissionTo([
             'dashboard.view',
@@ -162,7 +162,7 @@ class RolePermissionSeeder extends Seeder
             'checkin.store',
         ]);
 
-        // Assign role admin ke user dengan username admin atau user pertama
+        // Assign admin role to user with username admin or first user
         $adminUser = \App\Models\User::where('nik', 'admin')->first();
         if (!$adminUser) {
             $adminUser = \App\Models\User::first();

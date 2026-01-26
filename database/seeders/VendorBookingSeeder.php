@@ -36,14 +36,14 @@ class VendorBookingSeeder extends Seeder
             ['username' => 'vendor_user'],
             [
                 'nik' => 'VEND12345',
-                'full_name' => 'Budi Vendor',
+                'full_name' => 'Vendor User',
                 'email' => 'vendor@example.com',
                 'password' => Hash::make('password'),
                 'is_active' => true,
                 'vendor_id' => $vendor->id,
             ]
         );
-        
+
         // Assign vendor role
         if (!$vendorUser->hasRole('vendor')) {
             $vendorUser->assignRole('vendor');
@@ -76,7 +76,7 @@ class VendorBookingSeeder extends Seeder
     private function ensureRolesAndPermissions()
     {
         $permissions = [
-            'bookings.index', 'bookings.create', 'bookings.view', 
+            'bookings.index', 'bookings.create', 'bookings.view',
             'bookings.cancel', 'bookings.confirm', 'slots.availability',
             'bookings.manage', 'bookings.approve', 'bookings.reject', 'bookings.reschedule'
         ];
@@ -92,12 +92,12 @@ class VendorBookingSeeder extends Seeder
             ['roles_name' => 'vendor', 'roles_guard_name' => 'web'],
             ['roles_name' => 'vendor', 'roles_guard_name' => 'web']
         );
-        
+
         $vendorRole->syncPermissions([
-            'bookings.index', 'bookings.create', 'bookings.view', 
+            'bookings.index', 'bookings.create', 'bookings.view',
             'bookings.cancel', 'bookings.confirm', 'slots.availability'
         ]);
-        
+
         $adminRole = Role::where('roles_name', 'admin')->first();
         if ($adminRole) {
             $adminRole->givePermissionTo([

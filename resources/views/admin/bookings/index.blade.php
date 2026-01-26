@@ -7,17 +7,17 @@
 <div class="st-card">
     <!-- Stats Tabs -->
     <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-        <a href="{{ route('bookings.index', ['status' => 'pending']) }}" 
+        <a href="{{ route('bookings.index', ['status' => 'pending']) }}"
            class="st-stat-tab {{ $status === 'pending' ? 'st-stat-tab--active' : '' }}">
             <span class="st-stat-tab__count">{{ $counts['pending'] ?? 0 }}</span>
             <span class="st-stat-tab__label">Pending</span>
         </a>
-        <a href="{{ route('bookings.index', ['status' => 'approved']) }}" 
+        <a href="{{ route('bookings.index', ['status' => 'approved']) }}"
            class="st-stat-tab {{ $status === 'approved' ? 'st-stat-tab--active' : '' }}">
             <span class="st-stat-tab__count">{{ $counts['approved'] ?? 0 }}</span>
             <span class="st-stat-tab__label">Approved</span>
         </a>
-        <a href="{{ route('bookings.index', ['status' => 'all']) }}" 
+        <a href="{{ route('bookings.index', ['status' => 'all']) }}"
            class="st-stat-tab {{ $status === 'all' ? 'st-stat-tab--active' : '' }}">
             <span class="st-stat-tab__label">All Requests</span>
         </a>
@@ -31,22 +31,18 @@
                 <label class="st-label">From Date</label>
                 <input type="text" name="date_from" class="st-input" value="{{ request('date_from') }}" id="date_from_filter" placeholder="Select Date">
             </div>
-            
+
             <div class="st-filter-group">
                 <label class="st-label">To Date</label>
                 <input type="text" name="date_to" class="st-input" value="{{ request('date_to') }}" id="date_to_filter" placeholder="Select Date">
             </div>
-            
+
             <div class="st-filter-group">
                 <label class="st-label">Search</label>
                 <input type="text" name="search" class="st-input" placeholder="Request No, PO, Supplier, Requester..." value="{{ request('search') }}">
             </div>
-            
-            <div class="st-filter-actions">
-                <button type="submit" class="st-button st-button--primary">
-                    <i class="fas fa-search"></i>
-                    Filter
-                </button>
+
+            <div class="st-filter-actions" style="display:flex;justify-content:flex-end;">
                 @if(request()->hasAny(['date_from', 'date_to', 'search']))
                 <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-button st-button--secondary">
                     <i class="fas fa-times"></i>
@@ -141,22 +137,22 @@
                             <a href="{{ route('bookings.show', $booking->id) }}" class="st-button st-button--sm st-button--secondary" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            
+
                             @if($booking->status === 'pending')
                             @can('bookings.approve')
                             <a href="{{ route('bookings.show', $booking->id) }}" class="st-button st-button--sm st-button--success" title="Approve">
                                 <i class="fas fa-check"></i>
                             </a>
                             @endcan
-                            
+
                             @can('bookings.reschedule')
                             <a href="{{ route('bookings.reschedule', $booking->id) }}" class="st-button st-button--sm st-button--warning" title="Reschedule">
                                 <i class="fas fa-calendar-alt"></i>
                             </a>
                             @endcan
-                            
+
                             @can('bookings.reject')
-                            <button type="button" class="st-button st-button--sm st-button--danger" title="Reject" 
+                            <button type="button" class="st-button st-button--sm st-button--danger" title="Reject"
                                     onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -222,7 +218,7 @@
             </div>
             <div class="st-custom-modal-footer">
                 <button type="submit" class="st-btn st-btn--primary" style="background-color: #dc2626; border-color: #dc2626; color: #fff;">Reject Booking</button>
-                <button type="button" class="st-btn st-btn--secondary" onclick="closeRejectModal()">Cancel</button>
+                <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" onclick="closeRejectModal()">Cancel</button>
             </div>
         </form>
     </div>
@@ -293,6 +289,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initFilterFlatpickr(dateFrom);
     initFilterFlatpickr(dateTo);
+
+    // Auto-submit form on input change
+    const bookingFilterForm = document.getElementById('booking-filter-form');
+    if (bookingFilterForm) {
+        // Auto-submit on input with debounce for text inputs
+        const textInputs = bookingFilterForm.querySelectorAll('input[type="text"]');
+        textInputs.forEach(function(input) {
+            let timeout;
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    bookingFilterForm.submit();
+                }, 500); // 500ms debounce
+            });
+
+            // Submit on Enter key
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    clearTimeout(timeout);
+                    bookingFilterForm.submit();
+                }
+            });
+        });
+    }
 });
 
 function openRejectModal(bookingId, ticketNumber) {
@@ -310,7 +330,7 @@ function openApproveModal(id, ticket) {
     const modal = document.getElementById('approveModal');
     const ticketSpan = document.getElementById('modalTicketNumber');
     const form = document.getElementById('approveForm');
-    
+
     ticketSpan.innerText = ticket;
     form.action = "{{ url('/bookings') }}/" + id + "/approve";
     modal.classList.add('active');

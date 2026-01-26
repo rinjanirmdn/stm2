@@ -55,7 +55,7 @@
 
             <div style="display:flex;gap:8px;">
                 <button type="submit" class="st-btn">Complete Slot</button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--secondary">Cancel</a>
+                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
             </div>
         </form>
     </div>

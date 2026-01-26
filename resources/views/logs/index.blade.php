@@ -19,22 +19,23 @@
                 <input type="hidden" name="date_from" id="date_from" value="{{ $date_from ?? '' }}">
                 <input type="hidden" name="date_to" id="date_to" value="{{ $date_to ?? '' }}">
             </div>
-            <div class="st-form-field" style="max-width:200px;">
-                <label class="st-label">Type</label>
-                <select name="type" class="st-select">
-                    <option value="">All</option>
-                    @foreach ($allowedTypes as $t)
-                        <option value="{{ $t }}" {{ ($type ?? '') === $t ? 'selected' : '' }}>{{ ucwords(str_replace('_', ' ', $t)) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="st-form-field" style="max-width:220px;">
-                <label class="st-label">Search</label>
-                <input type="text" name="q" class="st-input" placeholder="MAT DOC / PO / Text" value="{{ $q ?? '' }}">
-            </div>
-            <div class="st-form-field" style="flex:0 0 auto;">
-                <button type="submit" class="st-btn st-btn--primary">Apply</button>
-                <a href="{{ route('logs.index') }}" class="st-btn st-btn--secondary">Reset</a>
+            <div class="st-form-row" style="gap:4px;align-items:flex-end;">
+                <div class="st-form-field">
+                    <label class="st-label">Type</label>
+                    <select name="type" class="st-select">
+                        <option value="">All</option>
+                        @foreach ($allowedTypes as $t)
+                            <option value="{{ $t }}" {{ ($type ?? '') === $t ? 'selected' : '' }}>{{ ucwords(str_replace('_', ' ', $t)) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="st-form-field" style="max-width:220px;">
+                    <label class="st-label">Search</label>
+                    <input type="text" name="q" class="st-input" placeholder="MAT DOC / PO / Text" value="{{ $q ?? '' }}">
+                </div>
+                <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                    <a href="{{ route('logs.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                </div>
             </div>
         </form>
     </div>
@@ -42,7 +43,7 @@
     <section class="st-row" style="flex:1;">
         <div class="st-col-12" style="flex:1;display:flex;flex-direction:column;">
             <div class="st-card" style="margin-bottom:0;flex:1;display:flex;flex-direction:column;">
-                <div class="st-table-wrapper">
+                <div class="st-table-wrapper" style="min-height: 400px;">
                     <form method="GET" id="logs-filter-form" data-multi-sort="1" action="{{ route('logs.index') }}">
                         <input type="hidden" name="q" value="{{ $q ?? '' }}">
                         <input type="hidden" name="type" value="{{ $type ?? '' }}">
@@ -235,5 +236,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Auto-submit form on input change
+    const logsFilterForm = document.getElementById('logs-filter-form');
+    if (logsFilterForm) {
+        // Auto-submit on select change
+        logsFilterForm.addEventListener('change', function(e) {
+            if (e.target.tagName === 'SELECT') {
+                logsFilterForm.submit();
+            }
+        });
+
+        // Auto-submit on input with debounce for text inputs
+        const textInputs = logsFilterForm.querySelectorAll('input[type="text"]');
+        textInputs.forEach(function(input) {
+            let timeout;
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    logsFilterForm.submit();
+                }, 500); // 500ms debounce
+            });
+
+            // Submit on Enter key
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    clearTimeout(timeout);
+                    logsFilterForm.submit();
+                }
+            });
+        });
+    }
 });
 </script>

@@ -16,9 +16,9 @@ class TruckTypeDurationSeeder extends Seeder
             ['truck_type' => 'CDE', 'target_duration_minutes' => 60],
             ['truck_type' => 'CDD', 'target_duration_minutes' => 45],
             ['truck_type' => 'Cargo', 'target_duration_minutes' => 60],
-            ['truck_type' => 'Cargo Kecil', 'target_duration_minutes' => 30],
-            ['truck_type' => 'Cargo Sedang', 'target_duration_minutes' => 90],
-            ['truck_type' => 'Cargo Besar', 'target_duration_minutes' => 120],
+            ['truck_type' => 'Small Cargo', 'target_duration_minutes' => 30],
+            ['truck_type' => 'Medium Cargo', 'target_duration_minutes' => 90],
+            ['truck_type' => 'Large Cargo', 'target_duration_minutes' => 120],
         ];
 
         foreach ($truckTypes as $type) {

@@ -11,7 +11,7 @@
                 <div style="font-size:12px;color:#6b7280;">Only Scheduled Planned Slots Can Be Edited</div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <a href="{{ route('slots.show', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary st-btn--sm">Back</a>
+                <a href="{{ route('slots.show', ['slotId' => $slot->id]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm">Back</a>
             </div>
         </div>
     </div>
@@ -197,7 +197,7 @@
 
             <div style="margin-top:4px;display:flex;gap:8px;">
                 <button type="submit" class="st-btn" id="save_button">Save</button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--secondary">Cancel</a>
+                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
             </div>
         </form>
     </div>

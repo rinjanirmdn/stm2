@@ -6,17 +6,19 @@
 @section('content')
     <div class="st-card" style="margin-bottom:12px;">
         <div style="padding:12px;">
-            <div class="st-form-row" style="align-items:flex-end;">
-                <div class="st-form-field" style="flex:1;min-width:260px;position:relative;">
+            <div class="st-form-row" style="gap:4px;align-items:flex-end;">
+                <div class="st-form-field" style="max-width:260px;">
                     <label class="st-label">Search</label>
-                    <input
-                        type="text"
-                        name="q"
-                        form="unplanned-filter-form"
-                        class="st-input"
-                        placeholder="PO/DO, MAT DOC, Vendor, Etc"
-                        value="{{ request('q') }}"
-                    >
+                    <div style="position:relative;">
+                        <input
+                            type="text"
+                            name="q"
+                            form="unplanned-filter-form"
+                            class="st-input"
+                            placeholder="PO/DO, MAT DOC, Vendor, Etc"
+                            value="{{ request('q') }}"
+                        >
+                    </div>
                 </div>
                 <div class="st-form-field" style="max-width:120px;">
                     <label class="st-label">Show</label>
@@ -26,9 +28,8 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="st-form-field" style="flex:0 0 auto;">
-                    <button type="submit" form="unplanned-filter-form" class="st-btn st-btn--secondary">Search</button>
-                    <a href="{{ route('unplanned.index') }}?sort=reset" class="st-btn st-btn--secondary">Reset</a>
+                <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                    <a href="{{ route('unplanned.index') }}?sort=reset" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
                     @can('unplanned.create')
                     <a href="{{ route('unplanned.create') }}" class="st-btn st-btn--primary">Create Unplanned</a>
                     @endcan
@@ -50,7 +51,7 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper">
+                <div class="st-table-wrapper" style="min-height: 400px;">
                     <table class="st-table">
                         <thead>
                             <tr>
@@ -66,7 +67,7 @@
                                             <div style="font-weight:600;margin-bottom:6px;">PO/DO Filter</div>
                                             <input type="text" name="po_number" form="unplanned-filter-form" class="st-input" placeholder="Search PO/DO..." value="{{ request('po_number') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="po">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="po">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -82,7 +83,7 @@
                                             <div style="font-weight:600;margin-bottom:6px;">MAT DOC Filter</div>
                                             <input type="text" name="mat_doc" form="unplanned-filter-form" class="st-input" placeholder="Search MAT DOC..." value="{{ request('mat_doc') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="mat_doc">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="mat_doc">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -98,7 +99,7 @@
                                             <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
                                             <input type="text" name="vendor" form="unplanned-filter-form" class="st-input" placeholder="Search Vendor..." value="{{ request('vendor') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="vendor">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="vendor">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -133,7 +134,7 @@
                                                 </div>
                                             </div>
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="whgate">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="whgate">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -153,7 +154,7 @@
                                                 <option value="outbound" {{ request('direction') === 'outbound' ? 'selected' : '' }}>Outbound</option>
                                             </select>
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="direction">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="direction">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -172,7 +173,7 @@
                                                 <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                                             </select>
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="status">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="status">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -190,7 +191,7 @@
                                             <input type="hidden" name="arrival_from" form="unplanned-filter-form" value="{{ request('arrival_from') }}">
                                             <input type="hidden" name="arrival_to" form="unplanned-filter-form" value="{{ request('arrival_to') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="arrival">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="arrival">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -206,7 +207,7 @@
                                             <div style="font-weight:600;margin-bottom:6px;">SJ Filter</div>
                                             <input type="text" name="sj_number" form="unplanned-filter-form" class="st-input" placeholder="Search SJ..." value="{{ request('sj_number') }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--secondary st-filter-clear" data-filter="sj">Clear</button>
+                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="sj">Clear</button>
                                             </div>
                                         </div>
                                     </div>

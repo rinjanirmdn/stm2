@@ -85,7 +85,7 @@
             </a>
             @endcan
 
-            
+
 
             @can('reports.transactions')
             <a href="{{ route('reports.transactions') }}" title="Reports" class="st-sidebar__link{{ request()->routeIs('reports.*') ? ' st-sidebar__link--active' : '' }}">
@@ -94,10 +94,6 @@
             </a>
             @endcan
 
-            <a href="{{ route('notifications.index') }}" title="Notifications" class="st-sidebar__link{{ request()->routeIs('notifications.index') ? ' st-sidebar__link--active' : '' }}">
-                <i class="fas fa-bell"></i>
-                <span>Notifications</span>
-            </a>
 
             @can('trucks.index')
             <a href="{{ route('trucks.index') }}" title="Trucks" class="st-sidebar__link{{ request()->routeIs('trucks.*') ? ' st-sidebar__link--active' : '' }}">
