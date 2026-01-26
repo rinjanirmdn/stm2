@@ -4,6 +4,81 @@
 
 @section('content')
 <style>
+    /* Vendor Bookings Layout Specific */
+    .vendor-app .vendor-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        padding: 24px;
+        margin: 0;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    /* Consistent search input styling */
+    .mb-search__input {
+        width: 200px !important;
+        padding: 8px 12px !important;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+
+    .mb-search__input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Date range input with icon */
+    .date-range-input {
+        padding-right: 40px !important;
+    }
+
+    .mb-search {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .mb-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 72px - 48px);
+        width: 100%;
+        margin: 0;
+        background: #f1f5f9;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .mb-scroll-container {
+        flex: 1;
+        overflow-y: auto;
+        background: #f1f5f9;
+    }
+
+    .mb-content-container {
+        background: #ffffff;
+        margin: 0;
+        min-height: 100%;
+    }
+
+    .mb-footer-container {
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        padding: 16px 20px;
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 0 0 12px 12px;
+    }
+
     .mb-tabs {
         display: flex;
         gap: 0;
@@ -12,6 +87,7 @@
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
         border-bottom: 2px solid #e5e7eb;
+        flex-shrink: 0;
     }
     .mb-tab {
         flex: 1;
@@ -50,10 +126,9 @@
     .mb-tab--all .mb-tab__count { color: #64748b; }
 
     .mb-content {
-        background: #ffffff;
-        border-radius: 0 0 12px 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        background: transparent;
         padding: 20px;
+        margin: 0;
     }
 
     .mb-search {
@@ -154,6 +229,11 @@
         text-align: center;
         padding: 60px 20px;
         color: #94a3b8;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
     .mb-empty__icon {
         font-size: 48px;
@@ -175,41 +255,48 @@
 @endphp
 
 <!-- Status Tabs -->
-<div class="mb-tabs">
-    <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page'), ['status' => 'pending'])) }}" 
-       class="mb-tab mb-tab--pending {{ $currentStatus === 'pending' ? 'mb-tab--active' : '' }}">
-        <span class="mb-tab__count">{{ ($tabCounts['pending'] ?? 0) }}</span>
-        <span>Pending</span>
-    </a>
-    <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page'), ['status' => 'approved'])) }}" 
-       class="mb-tab mb-tab--scheduled {{ $currentStatus === 'approved' ? 'mb-tab--active' : '' }}">
-        <span class="mb-tab__count">{{ ($tabCounts['scheduled'] ?? 0) }}</span>
-        <span>Approved</span>
-    </a>
-    <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page', 'status'), ['status' => ''])) }}" 
-       class="mb-tab mb-tab--all {{ $currentStatus === '' ? 'mb-tab--active' : '' }}">
-        <span class="mb-tab__count">{{ ($tabCounts['all'] ?? $bookings->total()) }}</span>
-        <span>All</span>
-    </a>
-</div>
+<div class="mb-container">
+    <div class="mb-scroll-container">
+        <div class="mb-tabs">
+            <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page'), ['status' => 'pending'])) }}"
+               class="mb-tab mb-tab--pending {{ $currentStatus === 'pending' ? 'mb-tab--active' : '' }}">
+                <span class="mb-tab__count">{{ ($tabCounts['pending'] ?? 0) }}</span>
+                <span>Pending</span>
+            </a>
+            <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page'), ['status' => 'approved'])) }}"
+               class="mb-tab mb-tab--scheduled {{ $currentStatus === 'approved' ? 'mb-tab--active' : '' }}">
+                <span class="mb-tab__count">{{ ($tabCounts['scheduled'] ?? 0) }}</span>
+                <span>Approved</span>
+            </a>
+            <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page', 'status'), ['status' => ''])) }}"
+               class="mb-tab mb-tab--all {{ $currentStatus === '' ? 'mb-tab--active' : '' }}">
+                <span class="mb-tab__count">{{ ($tabCounts['all'] ?? $bookings->total()) }}</span>
+                <span>All</span>
+            </a>
+        </div>
 
-<!-- Content -->
-<div class="mb-content">
-    <!-- Search Bar -->
-    <form method="GET" action="{{ route('vendor.bookings.index') }}" class="mb-search">
-        <input type="hidden" name="status" value="{{ $currentStatus }}">
-        <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO..." value="{{ request('search') }}">
-        <input type="date" name="date_from" class="mb-search__input" style="max-width: 150px;" value="{{ request('date_from') }}" placeholder="From">
-        <input type="date" name="date_to" class="mb-search__input" style="max-width: 150px;" value="{{ request('date_to') }}" placeholder="To">
-        <button type="submit" class="vendor-btn vendor-btn--primary vendor-btn--sm">
-            <i class="fas fa-search"></i> Search
-        </button>
-        @if(request()->hasAny(['search', 'date_from', 'date_to']))
-        <a href="{{ route('vendor.bookings.index', ['status' => $currentStatus]) }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
-            <i class="fas fa-times"></i>
-        </a>
-        @endif
-    </form>
+        <!-- Content Container -->
+        <div class="mb-content-container">
+            <div class="mb-content">
+                <!-- Search Bar -->
+                <form method="GET" action="{{ route('vendor.bookings.index') }}" class="mb-search">
+                    <input type="hidden" name="status" value="{{ $currentStatus }}">
+                    <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO..." value="{{ request('search') }}">
+                    <div class="date-range-container" style="position: relative;">
+                        <input type="text" id="date-range" class="mb-search__input date-range-input" placeholder="Select date range" readonly>
+                        <i class="fas fa-calendar-alt date-range-icon" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none;"></i>
+                    </div>
+                    <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
+                    <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
+                    <button type="submit" class="vendor-btn vendor-btn--primary vendor-btn--sm">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    @if(request()->hasAny(['search', 'date_from', 'date_to']))
+                    <a href="{{ route('vendor.bookings.index', ['status' => $currentStatus]) }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
+                        <i class="fas fa-times"></i>
+                    </a>
+                    @endif
+                </form>
 
     <!-- Booking Rows -->
     @if($bookings->count() > 0)
@@ -229,6 +316,23 @@
                 'cancelled' => 'Cancelled',
                 default => ucfirst(str_replace('_', ' ', $booking->status))
             };
+
+            // Arrival status logic - selalu tampilkan
+            $arrivalStatus = '-';
+            $arrivalColor = 'secondary';
+            if($booking->actual_arrival && $booking->planned_start) {
+                $arrivalDiff = $booking->actual_arrival->diffInMinutes($booking->planned_start, false);
+                if($arrivalDiff > 15) {
+                    $arrivalStatus = 'Late';
+                    $arrivalColor = 'danger';
+                } elseif($arrivalDiff >= -15 && $arrivalDiff <= 15) {
+                    $arrivalStatus = 'On-Time';
+                    $arrivalColor = 'success';
+                } else {
+                    $arrivalStatus = 'Early';
+                    $arrivalColor = 'info';
+                }
+            }
         @endphp
         <div class="mb-row">
             <span class="mb-row__ticket">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</span>
@@ -248,6 +352,9 @@
                 @endif
             </span>
             <span class="mb-row__status mb-row__status--{{ $statusClass }}">{{ $statusLabel }}</span>
+            <span class="mb-row__status mb-row__status--{{ $arrivalColor }}" style="font-size: 11px; margin-left: 4px;">
+                <i class="fas fa-clock" style="font-size: 10px; margin-right: 2px;"></i>{{ $arrivalStatus }}
+            </span>
             <div class="mb-row__actions">
                 <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="mb-row__btn mb-row__btn--view" title="View">
                     <i class="fas fa-eye"></i>
@@ -279,6 +386,16 @@
             </a>
         </div>
     @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Container -->
+    <div class="mb-footer-container">
+        <div style="text-align: center; color: #64748b; font-size: 14px;">
+            © {{ date('Y') }} Slot Time Management. All rights reserved.
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -287,6 +404,45 @@
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof window.flatpickr !== 'function') return;
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+    // Date Range Picker
+    var dateRangeInput = document.getElementById('date-range');
+    if (dateRangeInput) {
+        var dateFrom = document.getElementById('date_from');
+        var dateTo = document.getElementById('date_to');
+
+        // Set initial value if dates exist
+        if (dateFrom.value && dateTo.value) {
+            dateRangeInput.value = dateFrom.value + ' to ' + dateTo.value;
+        }
+
+        window.flatpickr(dateRangeInput, {
+            mode: 'range',
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd M Y',
+            allowInput: true,
+            disableMobile: true,
+            defaultDate: dateFrom.value && dateTo.value ? [dateFrom.value, dateTo.value] : null,
+            weekNumbers: false,
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    dateFrom.value = instance.formatDate(selectedDates[0], 'Y-m-d');
+                    dateTo.value = instance.formatDate(selectedDates[1], 'Y-m-d');
+                } else if (selectedDates.length === 0) {
+                    dateFrom.value = '';
+                    dateTo.value = '';
+                }
+            },
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                var ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
+                if (holidayData[ds]) {
+                    dayElem.classList.add('is-holiday');
+                    dayElem.title = holidayData[ds];
+                }
+            }
+        });
+    }
 
     var inputs = document.querySelectorAll('input.flatpickr-date');
     Array.prototype.slice.call(inputs).forEach(function (input) {

@@ -214,7 +214,7 @@
         @unless(optional(auth()->user())->hasRole('Operator'))
         @can('slots.ticket')
         <div style="margin-bottom:12px;display:flex;justify-content:flex-end;">
-            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
+            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
                 Print Ticket
             </a>
         </div>
@@ -265,6 +265,6 @@
             <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Slot</a>
         @endif
 
-        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('unplanned.index') }}" class="st-btn st-btn--secondary">Back</a>
+        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('unplanned.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Back</a>
     </div>
 @endsection

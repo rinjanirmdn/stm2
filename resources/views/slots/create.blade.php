@@ -226,7 +226,7 @@
 
             <div style="margin-top:4px;display:flex;gap:8px;">
                 <button type="submit" class="st-btn" id="save_button">Save</button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--secondary">Cancel</a>
+                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
             </div>
         </form>
     </div>
@@ -235,7 +235,7 @@
         <div class="st-modal__content" style="width:600px;max-width:95vw;">
             <div class="st-modal__header">
                 <h3 class="st-modal__title">Schedule Preview</h3>
-                <button type="button" id="schedule_modal_close" class="st-btn st-btn--secondary st-btn--sm">Close</button>
+                <button type="button" id="schedule_modal_close" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm">Close</button>
             </div>
             <div class="st-modal__body">
                 <div id="schedule_modal_info" class="st-modal__info"></div>
@@ -528,10 +528,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     setPoPreview(null);
                     return;
                 }
-                
+
                 console.log('PO Data:', data.data);
                 setPoPreview(data.data);
-                
+
                 // Autofill Vendor Name
                 if (data.data && data.data.vendor_name) {
                     var vendorSearchInput = document.getElementById('vendor_search');
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         } catch (e) {
                             console.error('Failed to dispatch change event:', e);
                         }
-                        onDirectionChanged(); 
+                        onDirectionChanged();
                     }
                 }
             })
@@ -1140,7 +1140,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (val.length >= 5) {
                 // Delay slightly to avoid conflict with suggestion click
                 setTimeout(function() {
-                    // Check if we already have data loaded? 
+                    // Check if we already have data loaded?
                     // Actually fetchPoDetail handles re-fetching safely.
                     fetchPoDetail(val);
                 }, 200);

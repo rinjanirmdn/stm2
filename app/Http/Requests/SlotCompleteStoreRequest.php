@@ -44,11 +44,11 @@ class SlotCompleteStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'actual_finish.required' => 'Waktu selesai aktual wajib diisi.',
-            'actual_finish.date' => 'Waktu selesai aktual harus berupa tanggal yang valid.',
-            'actual_finish.before_or_equal' => 'Waktu selesai aktual tidak boleh melebihi waktu sekarang.',
-            'sj_start_number.max' => 'SJ start number maksimal 50 karakter.',
-            'sj_complete_number.max' => 'SJ complete number maksimal 50 karakter.'
+            'actual_finish.required' => 'Actual finish time is required.',
+            'actual_finish.date' => 'Actual finish time must be a valid date.',
+            'actual_finish.before_or_equal' => 'Actual finish time cannot be after current time.',
+            'sj_start_number.max' => 'SJ start number maximum 50 characters.',
+            'sj_complete_number.max' => 'SJ complete number maximum 50 characters.'
         ];
     }
 }

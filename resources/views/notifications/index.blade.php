@@ -61,7 +61,7 @@
             <i class="fas fa-bell"></i>
             Notifications
         </h2>
-        <a href="{{ route('notifications.markAllRead') }}" class="st-btn st-btn--secondary">Mark all read</a>
+        <a href="{{ route('notifications.markAllRead') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Mark all read</a>
     </div>
 
     <div class="st-notification-list" style="max-height:none;">

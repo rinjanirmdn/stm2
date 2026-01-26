@@ -2035,16 +2035,16 @@ class SlotController extends Controller
 
         $label = 'Low';
         $badge = 'success';
-        $message = 'Risk rendah untuk kombinasi waktu dan gate ini.';
+        $message = 'Low risk for this time and gate combination.';
 
         if ($riskLevel === 1) {
             $label = 'Medium';
             $badge = 'warning';
-            $message = 'Perhatikan potensi blocking. Pertimbangkan cek jadwal di gate lain atau geser jam.';
+            $message = 'Watch for potential blocking. Consider checking schedules at other gates or shifting time.';
         } elseif ($riskLevel === 2) {
             $label = 'High';
             $badge = 'danger';
-            $message = 'Potensi blocking tinggi. Disarankan mengubah gate atau jam slot.';
+            $message = 'High blocking potential. Recommended to change gate or slot time.';
         }
 
         return response()->json([
@@ -2261,7 +2261,7 @@ class SlotController extends Controller
         if ($whCodeOut === 'WH2') {
             $letterOut = $this->slotService->getGateLetterByWarehouseAndNumber($whCodeOut, (string) $bestGate->gate_number);
             if ($letterOut === 'C') {
-                $note = 'WH2: Prioritaskan Gate C jika tersedia karena Gate B berada di depan/jalur dan dapat memblokir akses ke Gate C saat beroperasi.';
+                $note = 'WH2: Prioritize Gate C if available because Gate B is in front/line and can block access to Gate C when operating.';
             }
         }
 

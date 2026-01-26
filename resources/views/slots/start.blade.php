@@ -17,7 +17,7 @@
         <div style="font-size:12px;color:#6b7280;">Slot #{{ $slot->id }}</div>
         <div style="font-weight:600;">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-            Estimasi Durasi Proses: {{ (int) $plannedDurationMinutes }} Menit
+            Estimated Process Duration: {{ (int) $plannedDurationMinutes }} Minutes
         </div>
     </div>
 
@@ -25,9 +25,9 @@
         <div class="st-alert st-alert--error" style="margin-bottom:12px;">
             <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
             <div class="st-alert__text">
-                <div style="font-weight:600;margin-bottom:2px;">Lane Bentrok</div>
+                <div style="font-weight:600;margin-bottom:2px;">Lane Conflict</div>
                 <div style="font-size:12px;color:#111827;">
-                    <div style="margin-bottom:6px;">Slot Aktif yang Bentrok:</div>
+                    <div style="margin-bottom:6px;">Conflicting Active Slots:</div>
                     <ul style="margin:0;padding-left:16px;">
                         @foreach ($conflictLines as $line)
                             <li>{{ $line }}</li>
@@ -72,9 +72,9 @@
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
                                             $short = $row ? ('Slot #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Slot #' . $firstId) : 'Occupied');
-                                            $text .= ' (Terpakai: ' . $short . ')';
+                                            $text .= ' (In Use: ' . $short . ')';
                                         } else {
-                                            $text .= ' (Tersedia)';
+                                            $text .= ' (Available)';
                                         }
                                     @endphp
                                     <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $text }}</option>
@@ -94,9 +94,9 @@
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
                                             $short = $row ? ('Slot #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Slot #' . $firstId) : 'Occupied');
-                                            $text .= ' (Terpakai: ' . $short . ')';
+                                            $text .= ' (In Use: ' . $short . ')';
                                         } else {
-                                            $text .= ' (Tersedia)';
+                                            $text .= ' (Available)';
                                         }
                                     @endphp
                                     <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $text }}</option>
@@ -115,7 +115,7 @@
 
             <div style="display:flex;gap:8px;">
                 <button type="submit" class="st-btn">Start Slot</button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--secondary">Cancel</a>
+                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
             </div>
         </form>
     </div>

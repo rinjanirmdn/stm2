@@ -28,7 +28,7 @@
 
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
                         <button type="submit" class="st-btn st-btn--primary">Save</button>
-                        <a href="{{ route('trucks.index') }}" class="st-btn st-btn--secondary">Cancel</a>
+                        <a href="{{ route('trucks.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
                     </div>
                 </form>
             </div>

@@ -44,11 +44,11 @@ class SlotArrivalStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'arrival_time.required' => 'Waktu kedatangan wajib diisi.',
-            'arrival_time.date' => 'Waktu kedatangan harus berupa tanggal yang valid.',
-            'arrival_time.before_or_equal' => 'Waktu kedatangan tidak boleh melebihi waktu sekarang.',
-            'vehicle_number_snap.max' => 'Vehicle number maksimal 20 karakter.',
-            'driver_number.max' => 'Driver number maksimal 50 karakter.'
+            'arrival_time.required' => 'Arrival time is required.',
+            'arrival_time.date' => 'Arrival time must be a valid date.',
+            'arrival_time.before_or_equal' => 'Arrival time cannot be after current time.',
+            'vehicle_number_snap.max' => 'Vehicle number maximum 20 characters.',
+            'driver_number.max' => 'Driver number maximum 50 characters.'
         ];
     }
 }

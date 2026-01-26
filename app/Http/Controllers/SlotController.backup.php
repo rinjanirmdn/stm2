@@ -362,7 +362,7 @@ class SlotController extends Controller
             // If no duration found in master data, use manual input
             $plannedDurationMinutes = (int) $request->input('planned_duration', 0);
             if ($plannedDurationMinutes <= 0) {
-                return back()->withInput()->with('error', 'Truck Type tidak memiliki durasi standar. Silakan masukkan durasi manual (dalam menit).');
+                return back()->withInput()->with('error', 'Truck Type does not have a standard duration. Please enter manual duration (in minutes).');
             }
         }
 
@@ -445,7 +445,7 @@ class SlotController extends Controller
                     $plannedGateId = $bestValidGateId;
                 } else {
                     // No valid gate available without conflicts
-                    return back()->withInput()->with('error', 'Tidak dapat membuat slot karena semua gate memiliki jadwal bertabrakan pada waktu yang dipilih. Silakan pilih waktu lain.');
+                    return back()->withInput()->with('error', 'Cannot create slot because all gates have conflicting schedules at the selected time. Please choose another time.');
                 }
             }
         }
@@ -474,7 +474,7 @@ class SlotController extends Controller
 
         $blockingRisk = $this->slotService->calculateBlockingRisk($warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes);
         if ($blockingRisk >= 2) {
-            return back()->withInput()->with('error', 'Tidak dapat membuat slot karena blocking risk tinggi. Silakan pilih gate atau waktu lain.');
+            return back()->withInput()->with('error', 'Cannot create slot due to high blocking risk. Please choose another gate or time.');
         }
 
         $slotId = (int) DB::transaction(function () use ($truckNumber, $truckNumberInput, $direction, $warehouseId, $vendorId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $blockingRisk, $truckType, $plannedStartDt) {
@@ -1571,16 +1571,16 @@ class SlotController extends Controller
 
         $label = 'Low';
         $badge = 'success';
-        $message = 'Risk rendah untuk kombinasi waktu dan gate ini.';
+        $message = 'Low risk for this time and gate combination.';
 
         if ($riskLevel === 1) {
             $label = 'Medium';
             $badge = 'warning';
-            $message = 'Perhatikan potensi blocking. Pertimbangkan cek jadwal di gate lain atau geser jam.';
+            $message = 'Watch for potential blocking. Consider checking schedules at other gates or shifting time.';
         } elseif ($riskLevel === 2) {
             $label = 'High';
             $badge = 'danger';
-            $message = 'Potensi blocking tinggi. Disarankan mengubah gate atau jam slot.';
+            $message = 'High blocking potential. Recommended to change gate or slot time.';
         }
 
         return response()->json([
@@ -1797,7 +1797,7 @@ class SlotController extends Controller
         if ($whCodeOut === 'WH2') {
             $letterOut = $this->slotService->getGateLetterByWarehouseAndNumber($whCodeOut, (string) $bestGate->gate_number);
             if ($letterOut === 'C') {
-                $note = 'WH2: Prioritaskan Gate C jika tersedia karena Gate B berada di depan/jalur dan dapat memblokir akses ke Gate C saat beroperasi.';
+                $note = 'WH2: Prioritize Gate C if available because Gate B is in front/line and can block access to Gate C when operating.';
             }
         }
 

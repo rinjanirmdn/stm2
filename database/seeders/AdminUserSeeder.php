@@ -28,8 +28,8 @@ class AdminUserSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'nik' => 'Syamsudin',
-                'full_name' => 'Syamsudin',
+                'nik' => 'SectionHead',
+                'full_name' => 'Section Head',
                 'password' => Hash::make(env('DEFAULT_USER_PASSWORD', 'password')),
                 'role' => 'Section Head',
                 'role_id' => 3,
@@ -57,7 +57,7 @@ class AdminUserSeeder extends Seeder
         $this->command->info('✓ 3 users created successfully');
         $this->command->info('  - admin (Admin role)');
         $this->command->info('  - operator (Operator role)');
-        $this->command->info('  - Syamsudin (Section Head role)');
+        $this->command->info('  - SectionHead (Section Head role)');
         $this->command->info('  Password: ' . env('DEFAULT_USER_PASSWORD', 'password'));
     }
 }

@@ -13,7 +13,7 @@
         <div class="st-flex-between" style="gap:8px;flex-wrap:wrap;">
             <h1 class="st-page-title" style="margin:0;">Edit Unplanned Transaction</h1>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary st-btn--sm">Back</a>
+                <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm">Back</a>
             </div>
         </div>
         @if ($errors->any())
@@ -153,7 +153,7 @@
 
             <div style="margin-top:4px;display:flex;gap:8px;">
                 <button type="submit" class="st-btn">Save</button>
-                <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary">Cancel</a>
+                <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
             </div>
         </form>
     </div>
@@ -170,11 +170,11 @@
             if (!selected) return;
             warehouseSelect.value = selected.getAttribute('data-warehouse-id') || '';
         }
-        
+
         function initFlatpickrForArrival() {
             if (!arrivalInput) return;
             if (arrivalInput._flatpickr) return;
-            
+
             if (typeof window.flatpickr !== 'function') {
                 setTimeout(initFlatpickrForArrival, 100);
                 return;

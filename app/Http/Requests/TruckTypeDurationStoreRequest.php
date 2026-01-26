@@ -42,13 +42,13 @@ class TruckTypeDurationStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'truck_type.required' => 'Tipe truck wajib diisi.',
-            'truck_type.unique' => 'Tipe truck sudah ada.',
-            'truck_type.max' => 'Tipe truck maksimal 100 karakter.',
-            'target_duration_minutes.required' => 'Durasi target wajib diisi.',
-            'target_duration_minutes.integer' => 'Durasi target harus berupa angka.',
-            'target_duration_minutes.min' => 'Durasi target minimal 0 menit.',
-            'target_duration_minutes.max' => 'Durasi target maksimal 1440 menit (24 jam).'
+            'truck_type.required' => 'Truck type is required.',
+            'truck_type.unique' => 'Truck type already exists.',
+            'truck_type.max' => 'Truck type maximum 100 characters.',
+            'target_duration_minutes.required' => 'Target duration is required.',
+            'target_duration_minutes.integer' => 'Target duration must be a number.',
+            'target_duration_minutes.min' => 'Target duration minimum 0 minutes.',
+            'target_duration_minutes.max' => 'Target duration maximum 1440 minutes (24 hours).'
         ];
     }
 }

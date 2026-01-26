@@ -135,11 +135,11 @@ class BookingApprovalController extends Controller
                 ->where('is_active', true)
                 ->with('warehouse')
                 ->first();
-            
+
             if (!$gate) {
                 return back()->with('error', 'Selected gate is not active or not found.');
             }
-            
+
             $warehouseId = $gate->warehouse_id;
             $plannedStart = (string) ($bookingRequest->planned_start?->format('Y-m-d H:i:s') ?? '');
             $durationMinutes = (int) ($bookingRequest->planned_duration ?? 0);
@@ -298,11 +298,11 @@ class BookingApprovalController extends Controller
             ->where('is_active', true)
             ->with('warehouse')
             ->first();
-        
+
         if (!$gate) {
             return back()->withInput()->with('error', 'Selected gate is not active or not found.');
         }
-        
+
         $warehouseId = $gate->warehouse_id;
         $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
 

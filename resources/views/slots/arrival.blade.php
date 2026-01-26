@@ -29,7 +29,7 @@
                         @if (!empty($slot->ticket_number) && in_array((string) ($slot->status ?? ''), ['scheduled', 'waiting', 'in_progress'], true))
                             @unless(optional(auth()->user())->hasRole('Operator'))
                             @can('slots.ticket')
-                            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--secondary" style="white-space:nowrap;" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">Print Ticket</a>
+                            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" style="white-space:nowrap;" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">Print Ticket</a>
                             @endcan
                             @endunless
                         @endif
@@ -96,10 +96,9 @@
                     </div>
                 </div>
 
-                <div style="display:flex;gap:8px;">
-                    <button type="submit" class="st-btn">Save Arrival</button>
-                    <a href="{{ route('slots.index') }}" class="st-btn st-btn--secondary">Cancel</a>
-                </div>
+            <div style="display:flex;gap:8px;">
+                <button type="submit" class="st-btn">Save Arrival</button>
+                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
             </div>
         </form>
     </div>

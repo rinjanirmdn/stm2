@@ -50,7 +50,7 @@
                 <i class="fas fa-info-circle"></i>
                 Booking Information
             </h3>
-            
+
             <table style="width: 100%;">
                 <tr>
                     <td style="padding: 0.5rem 0; color: #64748b; width: 40%;">Ticket Number</td>
@@ -137,7 +137,7 @@
                 <i class="fas fa-clock"></i>
                 Schedule
             </h3>
-            
+
             <table style="width: 100%;">
                 <tr>
                     <td style="padding: 0.5rem 0; color: #64748b; width: 40%;">Scheduled Date</td>
@@ -147,6 +147,38 @@
                     <td style="padding: 0.5rem 0; color: #64748b;">Scheduled Time</td>
                     <td style="padding: 0.5rem 0; font-weight: 600;">{{ $booking->planned_start?->format('H:i') ?? '-' }}</td>
                 </tr>
+                @if($booking->actual_arrival)
+                <tr>
+                    <td style="padding: 0.5rem 0; color: #64748b;">Actual Arrival</td>
+                    <td style="padding: 0.5rem 0; font-weight: 600;">{{ $booking->actual_arrival->format('H:i') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.5rem 0; color: #64748b;">Arrival Status</td>
+                    <td style="padding: 0.5rem 0;">
+                        @php
+                            $arrivalDiff = $booking->actual_arrival->diffInMinutes($booking->planned_start, false);
+                            if($arrivalDiff > 15) {
+                                $arrivalStatus = 'Late';
+                                $arrivalColor = 'danger';
+                            } elseif($arrivalDiff >= -15 && $arrivalDiff <= 15) {
+                                $arrivalStatus = 'On-Time';
+                                $arrivalColor = 'success';
+                            } else {
+                                $arrivalStatus = 'Early';
+                                $arrivalColor = 'info';
+                            }
+                        @endphp
+                        <span class="vendor-badge vendor-badge--{{ $arrivalColor }}">
+                            <i class="fas fa-clock"></i> {{ $arrivalStatus }}
+                        </span>
+                        @if($arrivalDiff !== 0)
+                        <span style="font-size: 12px; color: #64748b; margin-left: 8px;">
+                            ({{ abs($arrivalDiff) }} min {{ $arrivalDiff > 0 ? 'after' : 'before' }} scheduled)
+                        </span>
+                        @endif
+                    </td>
+                </tr>
+                @endif
                 <tr>
                     <td style="padding: 0.5rem 0; color: #64748b;">Duration</td>
                     <td style="padding: 0.5rem 0;">{{ $booking->planned_duration }} Minutes</td>
@@ -169,7 +201,7 @@
                 <i class="fas fa-truck"></i>
                 Vehicle Information
             </h3>
-            
+
             <table style="width: 100%;">
                 <tr>
                     <td style="padding: 0.5rem 0; color: #64748b; width: 40%;">Truck Type</td>
@@ -192,7 +224,7 @@
                 <i class="fas fa-user-check"></i>
                 Approval Info
             </h3>
-            
+
             <table style="width: 100%;">
                 @if($booking->approver)
                 <tr>
@@ -214,8 +246,8 @@
     <!-- Actions -->
     @if(in_array($booking->status, ['pending', 'approved']))
     <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
-        
-        
+
+
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
             @if(!empty($booking->convertedSlot?->ticket_number))
             <a href="{{ route('vendor.bookings.ticket', $booking->convertedSlot->id) }}" class="vendor-btn vendor-btn--secondary" target="_blank">
@@ -223,9 +255,9 @@
                 Print Ticket
             </a>
             @endif
-            
+
             @if($booking->status === 'pending')
-                <form method="POST" action="{{ route('vendor.bookings.cancel', $booking->id) }}" 
+                <form method="POST" action="{{ route('vendor.bookings.cancel', $booking->id) }}"
                       onsubmit="return confirm('Are you sure you want to cancel this booking?');" style="display: inline;">
                     @csrf
                     <input type="hidden" name="reason" value="Cancelled by vendor">

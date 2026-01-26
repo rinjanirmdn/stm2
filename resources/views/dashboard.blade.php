@@ -7,26 +7,27 @@
     <section class="st-row">
         <div class="st-col-12">
             <div class="st-card" id="analytics-tabs-card">
-                <div class="st-card__header">
+                <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
                     <div>
                         <h2 class="st-card__title">Analytics Range</h2>
                         <div class="st-card__subtitle">Date Range for Analytics (Overview / KPI / Bottleneck)</div>
                     </div>
-                    <form method="GET" class="st-form-row" style="gap:8px;">
-                        <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
-                        <input type="hidden" name="activity_warehouse" value="{{ $activity_warehouse ?? 0 }}">
-                        <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
-                        <input type="hidden" id="range_start" name="range_start" value="{{ $range_start }}">
-                        <input type="hidden" id="range_end" name="range_end" value="{{ $range_end }}">
-                        <div class="st-form-field" style="min-width:260px;">
-                            <label class="st-label">Range</label>
-                            <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ ($range_start ?? '') && ($range_end ?? '') ? ($range_start.' to '.$range_end) : ($range_start ?? $today) }}">
-                        </div>
-                        <div class="st-form-field" style="align-self:flex-end;min-width:120px;flex:0 0 auto;">
-                            <button type="submit" class="st-btn st-btn--secondary">Apply</button>
-                            <a href="{{ route('dashboard', ['range_start' => \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'), 'range_end' => $today]) }}" class="st-btn st-btn--secondary">Reset</a>
-                        </div>
-                    </form>
+                    <div style="display:flex;justify-content:flex-end;flex:1;align-items:flex-end;">
+                        <form method="GET" class="st-form-row" style="gap:4px;align-items:flex-end;margin-left:auto;">
+                            <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
+                            <input type="hidden" name="activity_warehouse" value="{{ $activity_warehouse ?? 0 }}">
+                            <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
+                            <input type="hidden" id="range_start" name="range_start" value="{{ $range_start }}">
+                            <input type="hidden" id="range_end" name="range_end" value="{{ $range_end }}">
+                            <div class="st-form-field" style="min-width:260px;">
+                                <label class="st-label">Range</label>
+                                <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ ($range_start ?? '') && ($range_end ?? '') ? ($range_start.' to '.$range_end) : ($range_start ?? $today) }}">
+                            </div>
+                            <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                                <a href="{{ route('dashboard', ['range_start' => \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'), 'range_end' => $today]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(7, minmax(120px, 1fr));gap:8px;">
                     <div class="st-mini-card st-mini-card--with-info">
@@ -101,7 +102,7 @@
                         <div class="st-card__subtitle">Performance & Bottleneck Summary</div>
                     </div>
                     <div class="st-tabbar" role="tablist" aria-label="Analytics tabs">
-                        <button type="button" class="st-btn st-btn--secondary st-btn--sm st-tab-btn" data-tab="overview" aria-selected="true">Overview</button>
+                        <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm st-tab-btn" data-tab="overview" aria-selected="true">Overview</button>
                         <button type="button" class="st-btn st-btn--ghost st-btn--sm st-tab-btn" data-tab="kpi" aria-selected="false">KPI</button>
                     </div>
                 </div>
@@ -352,7 +353,8 @@
 
                         <div class="st-text--small st-text--muted">Slot Availability (Real-time Visual)</div>
                     </div>
-                    <form method="GET" id="schedule-filter-form" class="st-form-row" style="margin-top:4px;gap:8px;">
+                    <div style="display:flex;justify-content:flex-end;flex:1;align-items:flex-end;">
+                    <form method="GET" class="st-form-row" style="gap:4px;align-items:flex-end;margin-left:auto;">
                         <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
                         <input type="hidden" name="range_end" value="{{ $range_end ?? $today }}">
                         <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
@@ -364,11 +366,11 @@
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">From (HH:MM)</label>
-                            <input type="text" name="schedule_from" class="st-input" value="{{ $schedule_from ?? '' }}" placeholder="HH:MM">
+                            <input type="text" name="time_from" class="st-input" value="{{ $time_from ?? '00:00' }}" placeholder="00:00">
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">To (HH:MM)</label>
-                            <input type="text" name="schedule_to" class="st-input" value="{{ $schedule_to ?? '' }}" placeholder="HH:MM">
+                            <input type="text" name="time_to" class="st-input" value="{{ $time_to ?? '23:59' }}" placeholder="23:59">
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">Gate (Timeline)</label>
@@ -380,9 +382,8 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="st-form-field" style="align-self:flex-end;">
-                            <button type="submit" class="st-btn st-btn--secondary">Apply</button>
-                            <a href="{{ route('dashboard', ['range_start' => $range_start ?? $today, 'range_end' => $range_end ?? $today, 'activity_date' => $activity_date ?? $today, 'activity_warehouse' => $activity_warehouse ?? 0, 'activity_user' => $activity_user ?? 0]) }}" class="st-btn st-btn--secondary">Reset</a>
+                        <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                            <a href="{{ route('dashboard', ['range_start' => $range_start ?? $today, 'range_end' => $range_end ?? $today, 'activity_date' => $activity_date ?? $today, 'activity_warehouse' => $activity_warehouse ?? 0, 'activity_user' => $activity_user ?? 0]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
                         </div>
                     </form>
                 </div>
@@ -722,8 +723,8 @@
                         <h2 class="st-card__title">Activity Logs</h2>
                         <div class="st-card__subtitle">Status Changes and Events by Date, Warehouse, and User</div>
                     </div>
-                    <div style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
-                    <form method="GET" id="activity-filter-form" class="st-form-row" style="margin-top:4px;gap:8px;">
+                    <div style="display:flex;justify-content:flex-end;flex:1;align-items:flex-end;">
+                    <form method="GET" id="activity-filter-form" class="st-form-row" style="margin-top:4px;gap:4px;align-items:flex-end;margin-left:auto;">
                         <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
                         <input type="hidden" name="range_end" value="{{ $range_end ?? $today }}">
                         <div class="st-form-field">
@@ -734,8 +735,8 @@
                             <label class="st-label">Warehouse</label>
                             <select name="activity_warehouse" class="st-select">
                                 <option value="0">All</option>
-                                @foreach (($activityWarehouses ?? []) as $wh)
-                                    <option value="{{ (int) data_get($wh, 'id', 0) }}" {{ (int)($activity_warehouse ?? 0) === (int) data_get($wh, 'id', 0) ? 'selected' : '' }}>{{ (string) data_get($wh, 'name', '-') }}</option>
+                                @foreach (($warehouses ?? []) as $w)
+                                    <option value="{{ (int)($w->id ?? 0) }}" {{ (int)($activity_warehouse ?? 0) === (int)($w->id ?? 0) ? 'selected' : '' }}>{{ $w->name ?? '-' }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -748,8 +749,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="st-form-field" style="align-self:flex-end;">
-                            <button type="submit" class="st-btn st-btn--secondary">Apply</button>
+                        <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
                         </div>
                     </form>
                     </div>
@@ -843,7 +843,7 @@
                 </div>
             </div>
             <div class="st-timeline-modal__footer" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-                <a href="#" id="timeline-modal-view" class="st-btn st-btn--secondary st-btn--sm">View</a>
+                <a href="#" id="timeline-modal-view" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm">View</a>
                 <a href="#" id="timeline-modal-arrival" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Arrival</a>
                 <a href="#" id="timeline-modal-start" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Start</a>
                 <a href="#" id="timeline-modal-complete" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Complete</a>
@@ -952,13 +952,86 @@ document.addEventListener('DOMContentLoaded', function () {
 
                             // Format for display: 2026-01-01 to 2026-01-31
                             rangeInput.value = s + ' to ' + e;
+
+                            // Auto-submit form
+                            document.getElementById('range_start').form.submit();
                         }
                     }
                 });
             }
-    } catch (e) {
-        // ignore
-    }
+
+            // Auto-submit for other form elements
+            const analyticsForm = document.querySelector('form[action*="dashboard"]');
+            if (analyticsForm) {
+                // Auto-submit on select change
+                analyticsForm.addEventListener('change', function(e) {
+                    if (e.target.tagName === 'SELECT') {
+                        analyticsForm.submit();
+                    }
+                });
+
+                // Auto-submit on input with debounce for text inputs
+                const textInputs = analyticsForm.querySelectorAll('input[type="text"]:not(#analytics_range)');
+                textInputs.forEach(function(input) {
+                    let timeout;
+                    input.addEventListener('input', function() {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(function() {
+                            analyticsForm.submit();
+                        }, 500); // 500ms debounce
+                    });
+
+                    // Submit on Enter key
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            clearTimeout(timeout);
+                            analyticsForm.submit();
+                        }
+                    });
+                });
+            }
+        } catch (e) {
+            // ignore
+        }
+
+    // Auto-submit for all forms on dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit for all forms with selects and inputs
+        const allForms = document.querySelectorAll('form');
+        allForms.forEach(function(form) {
+            // Skip if form doesn't have action or is a modal form
+            if (!form.action || form.id.includes('modal') || form.id.includes('approve') || form.id.includes('reject')) {
+                return;
+            }
+
+            // Auto-submit on select change
+            form.addEventListener('change', function(e) {
+                if (e.target.tagName === 'SELECT') {
+                    form.submit();
+                }
+            });
+
+            // Auto-submit on input with debounce for text inputs (excluding date range inputs)
+            const textInputs = form.querySelectorAll('input[type="text"]:not([id*="range"]):not([id*="date"])');
+            textInputs.forEach(function(input) {
+                let timeout;
+                input.addEventListener('input', function() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(function() {
+                        form.submit();
+                    }, 500); // 500ms debounce
+                });
+
+                // Submit on Enter key
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        clearTimeout(timeout);
+                        form.submit();
+                    }
+                });
+            });
+        });
+    });
 
     const timeline = document.getElementById('dashboard-timeline');
     const infoContent = document.getElementById('timeline-info-content');
@@ -1282,8 +1355,15 @@ document.addEventListener('DOMContentLoaded', function () {
     function setTab(tab) {
         tabButtons.forEach(function (b) {
             var isActive = b.getAttribute('data-tab') === tab;
-            b.classList.toggle('st-btn--secondary', isActive);
-            b.classList.toggle('st-btn--ghost', !isActive);
+            if (isActive) {
+                b.style.background = 'var(--primary)';
+                b.style.color = '#ffffff';
+                b.style.borderColor = 'var(--primary)';
+            } else {
+                b.style.background = 'transparent';
+                b.style.color = 'var(--primary)';
+                b.style.borderColor = 'var(--primary)';
+            }
             b.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
         tabPanels.forEach(function (p) {
@@ -2105,7 +2185,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var st = (r && r.status) ? String(r.status).toLowerCase().trim() : 'scheduled';
             if (st === 'arrived') st = 'waiting';
-            
+
             if (st === 'pending_approval' || st === 'pending_vendor_confirmation') {
                 counts.pending++;
             } else if (typeof counts[st] !== 'undefined') {
@@ -2193,14 +2273,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateProcessStatusUI(dir) {
         var counts = calcProcessStatus(dir);
-        
+
         var elPending = document.getElementById('status_pending_value');
         var elScheduled = document.getElementById('status_scheduled_value');
         var elWaiting = document.getElementById('status_waiting_value');
         var elInProgress = document.getElementById('status_in_progress_value');
         var elCompleted = document.getElementById('status_completed_value');
         var elCancelled = document.getElementById('status_cancelled_value');
-        
+
         if (elPending) elPending.textContent = counts.pending;
         if (elScheduled) elScheduled.textContent = counts.scheduled;
         if (elWaiting) elWaiting.textContent = counts.waiting;
@@ -2220,7 +2300,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 counts.completed,
                 counts.cancelled
             ];
-            
+
             var maxVal = Math.max(counts.pending, counts.scheduled, counts.waiting, counts.in_progress, counts.completed, counts.cancelled);
             var suggMax = maxVal <= 10 ? 10 : Math.ceil(maxVal * 1.2);
             if (processStatusChart.options.scales.y) {

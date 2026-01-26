@@ -4,11 +4,95 @@
 
 @section('content')
 <style>
+    /* Vendor Availability Layout Specific */
+    .vendor-app .vendor-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: none;
+        padding: 24px;
+        margin: 0;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    /* Force no scroll on body and main */
+    body {
+        overflow: hidden !important;
+    }
+
+    .vendor-app {
+        overflow: hidden !important;
+    }
+
+    .vendor-main {
+        overflow: hidden !important;
+    }
+
+    .av-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 72px - 48px);
+        width: 100%;
+        margin: 0;
+        background: #f1f5f9;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .av-scroll-container {
+        flex: 1;
+        overflow-y: auto;
+        background: #f1f5f9;
+        min-height: 0; /* Penting untuk flexbox */
+    }
+
+    .av-content-container {
+        background: #ffffff;
+        margin: 0;
+        min-height: 100%;
+        padding: 20px;
+    }
+
+    .av-footer-container {
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        padding: 16px 20px;
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 0 0 12px 12px;
+        position: sticky;
+        bottom: 0;
+        z-index: 100;
+        font-size: 14px;
+    }
+
+    /* Force footer visibility */
+    .av-container {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    .av-scroll-container {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        background: #f1f5f9;
+        min-height: 0 !important;
+        max-height: calc(100vh - 200px) !important;
+    }
+
     .av-layout {
         display: grid;
         grid-template-columns: 280px 1fr;
         gap: 20px;
         align-items: start;
+        height: 100%;
     }
     .av-sidebar {
         background: #ffffff;
@@ -111,23 +195,23 @@
     .av-calendar__day--today { background: #dbeafe; color: #1e40af; font-weight: 600; }
     .av-calendar__day--selected { background: #1e40af; color: white; font-weight: 600; }
     .av-calendar__day--other { color: #9ca3af; }
-    .av-calendar__day--disabled { 
-        color: #d1d5db; 
-        background: #f9fafb; 
-        cursor: not-allowed !important; 
-        pointer-events: none; 
+    .av-calendar__day--disabled {
+        color: #d1d5db;
+        background: #f9fafb;
+        cursor: not-allowed !important;
+        pointer-events: none;
     }
-    .av-calendar__day--sunday { 
-        color: #ef4444; 
-        background: #fef2f2; 
-        cursor: not-allowed !important; 
-        pointer-events: none; 
+    .av-calendar__day--sunday {
+        color: #ef4444;
+        background: #fef2f2;
+        cursor: not-allowed !important;
+        pointer-events: none;
     }
-    .av-calendar__day--holiday { 
-        color: #f59e0b; 
-        background: #fffbeb; 
-        cursor: not-allowed !important; 
-        pointer-events: none; 
+    .av-calendar__day--holiday {
+        color: #f59e0b;
+        background: #fffbeb;
+        cursor: not-allowed !important;
+        pointer-events: none;
     }
 
     .av-main {
@@ -265,9 +349,12 @@
     }
 </style>
 
-<div class="av-layout">
-    <!-- LEFT SIDEBAR: Calendar -->
-    <div class="av-sidebar" id="av-sidebar">
+<div class="av-container">
+    <div class="av-scroll-container">
+        <div class="av-content-container">
+            <div class="av-layout">
+                <!-- LEFT SIDEBAR: Calendar -->
+                <div class="av-sidebar" id="av-sidebar">
         <div class="av-sidebar__top">
             <div class="av-sidebar__title">Availability</div>
             <button type="button" class="av-sidebar__toggle" id="av-sidebar-toggle" aria-label="Toggle filters">
@@ -320,13 +407,23 @@
                 </a>
             </div>
         </div>
-        
+
         <!-- Time Slots Grid -->
         <div id="availability-list" class="av-time-slots">
             <div style="text-align: center; padding: 60px 20px; color: #64748b;">
                 <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 12px;"></i>
                 <p>Loading availability...</p>
             </div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Container -->
+    <div class="av-footer-container">
+        <div style="text-align: center; color: #64748b; font-size: 14px;">
+            &copy; {{ date('Y') }} Slot Time Management. All rights reserved.
         </div>
     </div>
 </div>
@@ -387,31 +484,31 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderMiniCalendar() {
         const container = document.getElementById('calendar-days');
         const monthLabel = document.getElementById('calendar-month');
-        
+
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
-        
+
         // Update month label - using English
         monthLabel.textContent = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        
+
         // Clear and render calendar days
         container.innerHTML = '';
-        
+
         // Get first day of month and days in month
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const daysInMonth = lastDay.getDate();
-        
+
         // Adjust for Monday start
         let startDay = firstDay.getDay() - 1;
         if (startDay === -1) startDay = 6;
-        
+
         // Add empty cells for days before month starts
         for (let i = 0; i < startDay; i++) {
             const emptyDiv = document.createElement('div');
             container.appendChild(emptyDiv);
         }
-        
+
         // Add days of month
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
@@ -421,34 +518,34 @@ document.addEventListener('DOMContentLoaded', function() {
             const isPast = date < todayMidnight;
             const isSunday = date.getDay() === 0; // 0 = Sunday
             const isHoliday = holidayData[dateStr];
-            
+
             const dayDiv = document.createElement('div');
             dayDiv.className = 'av-calendar__day';
             dayDiv.textContent = day;
-            
+
             if (isToday) dayDiv.classList.add('av-calendar__day--today');
             if (isSelected) dayDiv.classList.add('av-calendar__day--selected');
             if (isPast) dayDiv.classList.add('av-calendar__day--disabled');
             if (isSunday) dayDiv.classList.add('av-calendar__day--sunday');
             if (isHoliday) dayDiv.classList.add('av-calendar__day--holiday');
-            
+
             // Disable clicking on past dates, Sundays, and holidays
             if (!isPast && !isSunday && !isHoliday) {
                 dayDiv.style.cursor = 'pointer';
                 dayDiv.addEventListener('click', () => selectDate(dateStr));
             }
-            
+
             // Add tooltips
             if (isSunday) {
                 dayDiv.title = 'Sunday - Not available';
             } else if (isHoliday) {
                 dayDiv.title = isHoliday + ' - Holiday';
             }
-            
+
             container.appendChild(dayDiv);
         }
     };
-    
+
     window.changeMonth = function(direction) {
         currentDate.setMonth(currentDate.getMonth() + direction);
         renderMiniCalendar();
@@ -458,14 +555,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('hidden-date').value = dateStr;
         document.getElementById('av-form').submit();
     };
-    
+
     function loadAvailability() {
         const container = document.getElementById('availability-list');
         const date = '{{ $selectedDate }}';
-        
+
         // Show loading state
         container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #64748b;"><i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 12px;"></i><p>Loading availability...</p></div>';
-        
+
         // Add timeout to show error if loading takes too long
         const timeout = setTimeout(() => {
             container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #ef4444;"><i class="fas fa-exclamation-triangle fa-2x" style="margin-bottom: 12px;"></i><p>Loading is taking longer than expected. Please try again.</p></div>';
@@ -490,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 clearTimeout(timeout);
-                
+
                 if (!data.success || !data.slots) {
                     container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">Failed to load</p>';
                     return;

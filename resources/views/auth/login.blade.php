@@ -9,17 +9,17 @@
 <body>
     <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
         <div class="st-card" style="width:100%;max-width:420px;padding:18px;">
-            <div style="display:flex;justify-content:center;margin-bottom:12px;">
-                <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" style="height:36px;object-fit:contain;">
+            <div style="display:flex;justify-content:center;margin-bottom:1px;min-height:70px;align-items:center;">
+                <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" style="height:70px;object-fit:contain;max-width:100%;">
             </div>
 
-            <div style="text-align:center;margin-bottom:12px;">
+            <div style="text-align:center;margin-bottom:5px;">
                 <div style="font-size:16px;font-weight:700;">Sign in</div>
                 <div style="font-size:12px;color:#6b7280;">Please sign in to continue</div>
             </div>
 
             @if ($errors->any())
-                <div class="st-alert st-alert--error" style="margin-bottom:10px;">
+                <div class="st-alert st-alert--error" style="margin-bottom:1px;">
                     <span class="st-alert__text">{{ $errors->first() }}</span>
                 </div>
             @endif
