@@ -36,9 +36,6 @@
                 <div class="st-dock-count" style="font-size:12px;">{{ $daySlots->count() }}</div>
             </div>
             @php
-                $rescheduledSlots = $daySlots->filter(function($slot) {
-                    return !empty($slot->original_planned_start);
-                });
                 $scheduledSlots = $daySlots->where('status', \App\Models\Slot::STATUS_SCHEDULED);
                 $arrivedSlots = $daySlots->where('status', \App\Models\Slot::STATUS_ARRIVED);
                 $waitingSlots = $daySlots->where('status', \App\Models\Slot::STATUS_WAITING);
@@ -46,33 +43,6 @@
                 $completedSlots = $daySlots->where('status', \App\Models\Slot::STATUS_COMPLETED);
             @endphp
             <div class="st-dock-legend">
-                <!-- Rescheduled -->
-                <div class="st-legend-group">
-                    <div class="st-legend-item st-legend-item--rescheduled">
-                        <div class="st-dock-legend-indicator">
-                            <div class="st-dock-dot"></div>
-                            <span>Rescheduled</span>
-                        </div>
-                        <span class="st-dock-count">{{ $rescheduledSlots->count() }}</span>
-                    </div>
-                    @if($rescheduledSlots->count() > 0)
-                    <div class="st-dock-legend-list">
-                        @foreach($rescheduledSlots as $rs)
-                        <div class="st-dock-legend-card" onclick="focusSlot({{ $rs->id }})" title="View on grid">
-                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
-                                <span class="st-dock-legend-card-ticket">{{ $rs->ticket_number }}</span>
-                                <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
-
                 <!-- Scheduled -->
                 <div class="st-legend-group">
                     <div class="st-legend-item st-legend-item--scheduled">
