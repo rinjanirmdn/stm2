@@ -15,7 +15,7 @@
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Scan Ticket / Input Manual <span style="color:#dc2626;">*</span></label>
+                    <label class="st-label">Scan Ticket / Manual Input <span style="color:#dc2626;">*</span></label>
                     <div style="display:flex;gap:8px;align-items:center;">
                         <input
                             type="text"
@@ -23,13 +23,17 @@
                             class="st-input"
                             required
                             value="{{ old('ticket_number') }}"
-                            placeholder="Scan barcode atau ketik nomor ticket..."
+                            placeholder="Scan barcode or enter ticket number..."
                         >
-                        <button type="button" id="btn_scan_ticket" class="st-btn st-btn--secondary" style="white-space:nowrap;">Scan via Camera</button>
+                        <button type="button" id="btn_scan_ticket" class="st-btn st-btn--secondary" style="white-space:nowrap; padding:8px 12px;" title="Scan via Camera">
+                            <i class="fas fa-camera"></i>
+                        </button>
                         @if (!empty($slot->ticket_number) && in_array((string) ($slot->status ?? ''), ['scheduled', 'waiting', 'in_progress'], true))
                             @unless(optional(auth()->user())->hasRole('Operator'))
                             @can('slots.ticket')
-                            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" style="white-space:nowrap;" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">Print Ticket</a>
+                            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); padding:8px 12px;" title="Print Ticket" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
+                                <i class="fas fa-print"></i>
+                            </a>
                             @endcan
                             @endunless
                         @endif
@@ -37,30 +41,32 @@
                     <div id="ticket_match_hint" class="st-text--small" style="margin-top:6px;color:#dc2626;display:none;"></div>
                     <div id="scan_camera_wrap" style="display:none;margin-top:8px;border:1px solid #e5e7eb;border-radius:8px;padding:8px;background:#f8fafc;">
                         <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;">
-                            <div style="font-size:12px;color:#475569;">Arahkan kamera ke barcode/QR ticket.</div>
-                            <button type="button" id="btn_scan_stop" class="st-btn st-btn--secondary" style="padding:4px 10px;font-size:11px;">Stop</button>
+                            <div style="font-size:12px;color:#475569;">Point camera at ticket barcode/QR.</div>
+                            <button type="button" id="btn_scan_stop" class="st-btn st-btn--secondary" style="padding:6px 10px;font-size:11px;" title="Stop Camera">
+                                <i class="fas fa-stop"></i>
+                            </button>
                         </div>
                         <video id="scan_camera" style="width:100%;max-width:360px;margin-top:8px;border-radius:6px;transform:scaleX(-1);" autoplay muted playsinline></video>
                         <div id="scan_qr_reader" style="width:100%;max-width:360px;margin-top:8px;border-radius:6px;display:none;transform:scaleX(-1);"></div>
                         <div id="scan_camera_status" class="st-text--small st-text--muted" style="margin-top:6px;"></div>
                     </div>
-                    <div class="st-text--small st-text--muted" style="margin-top:4px;">Setelah ticket terisi, form detail akan muncul.</div>
+                    <div class="st-text--small st-text--muted" style="margin-top:4px;">After ticket is filled, detail form will appear.</div>
                 </div>
             </div>
 
             <div id="arrival_details" style="display:none;">
                 <div class="st-form-row" style="margin-bottom:12px;">
                     <div class="st-form-field">
-                        <label class="st-label">Surat Jalan Number <span style="color:#dc2626;">*</span></label>
-                        <input type="text" name="sj_number" class="st-input" required value="{{ old('sj_number') }}" placeholder="Masukkan Nomor Surat Jalan...">
+                        <label class="st-label">Delivery Note Number <span style="color:#dc2626;">*</span></label>
+                        <input type="text" name="sj_number" class="st-input" required value="{{ old('sj_number') }}" placeholder="Enter Delivery Note Number...">
                     </div>
                 </div>
 
                 <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f8fafc;margin-bottom:12px;">
-                    <div style="font-weight:600;margin-bottom:8px;">Detail Slot</div>
+                    <div style="font-weight:600;margin-bottom:8px;">Slot Details</div>
                     <div style="font-size:12px;color:#475569;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;">
                         <div><strong>PO/DO:</strong> {{ $slot->po_number ?? $slot->truck_number ?? '-' }}</div>
-                        <div><strong>Vendor:</strong> {{ $slot->vendor_name ?? '-' }}</div>
+                        <div><strong>Supplier:</strong> {{ $slot->vendor_name ?? '-' }}</div>
                         <div><strong>Warehouse:</strong> {{ $slot->warehouse_name ?? '-' }}</div>
                         <div><strong>Direction:</strong> {{ ucfirst($slot->direction ?? '-') }}</div>
                         <div><strong>Planned Start:</strong> {{ $slot->planned_start ?? '-' }}</div>
@@ -92,14 +98,20 @@
                                 </table>
                             </div>
                         @else
-                            <div class="st-text--small st-text--muted">Tidak ada item detail pada slot ini.</div>
+                            <div class="st-text--small st-text--muted">No item details available for this slot.</div>
                         @endif
                     </div>
                 </div>
 
             <div style="display:flex;gap:8px;">
-                <button type="submit" class="st-btn">Save Arrival</button>
-                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
+                <button type="submit" class="st-btn" style="padding:8px 16px;" title="Save Arrival">
+                    <i class="fas fa-save"></i>
+                    <span style="margin-left:6px;">Save</span>
+                </button>
+                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); padding:8px 16px;" title="Cancel">
+                    <i class="fas fa-times"></i>
+                    <span style="margin-left:6px;">Cancel</span>
+                </a>
             </div>
         </form>
     </div>

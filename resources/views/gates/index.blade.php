@@ -415,6 +415,21 @@
                                     @endif
                                 </div>
 
+                                <!-- Dynamic Status Icons -->
+                                @if($slot->status === 'scheduled')
+                                    <div style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(255,255,255,0.9); border-radius:50%; margin-left:4px; cursor:pointer;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.arrival', $slot->id) }}'" title="Click to mark arrival">
+                                        <i class="fas fa-sign-in-alt" style="font-size:10px; color:#166534;"></i>
+                                    </div>
+                                @elseif($slot->status === 'waiting')
+                                    <div style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(255,255,255,0.9); border-radius:50%; margin-left:4px; cursor:pointer;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.start', $slot->id) }}'" title="Click to start">
+                                        <i class="fas fa-play" style="font-size:10px; color:#ea580c;"></i>
+                                    </div>
+                                @elseif($slot->status === 'in_progress')
+                                    <div style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(255,255,255,0.9); border-radius:50%; margin-left:4px; cursor:pointer;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.complete', $slot->id) }}'" title="Click to complete">
+                                        <i class="fas fa-check" style="font-size:10px; color:#0891b2;"></i>
+                                    </div>
+                                @endif
+
                                 @if($slot->status === 'pending_approval')
                                     <div style="display:flex; gap:3px; transform: scale(0.85); transform-origin: right center;">
                                         <button type="button" class="st-dock-action-btn" style="background:#fff; color:#166534; box-shadow:0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openApproveModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Confirm Booking">
