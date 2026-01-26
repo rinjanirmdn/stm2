@@ -120,8 +120,7 @@ class BookingApprovalController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string|max:500',
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
-            'planned_gate_id' => 'nullable|integer|exists:gates,id',
+            'planned_gate_id' => 'required|integer|exists:gates,id',
         ]);
 
         $bookingRequest = BookingRequest::where('id', $id)
@@ -130,73 +129,37 @@ class BookingApprovalController extends Controller
             ->firstOrFail();
 
         try {
-            $warehouseId = (int) $request->warehouse_id;
+            // Get warehouse from selected gate
+            $plannedGateId = $request->planned_gate_id;
+            $gate = Gate::where('id', $plannedGateId)
+                ->where('is_active', true)
+                ->with('warehouse')
+                ->first();
+
+            if (!$gate) {
+                return back()->with('error', 'Selected gate is not active or not found.');
+            }
+
+            $warehouseId = $gate->warehouse_id;
             $plannedStart = (string) ($bookingRequest->planned_start?->format('Y-m-d H:i:s') ?? '');
             $durationMinutes = (int) ($bookingRequest->planned_duration ?? 0);
 
-            $requestedGateId = $request->filled('planned_gate_id') ? (int) $request->planned_gate_id : null;
-            $effectiveGateId = $requestedGateId ?: null;
-
-            if ($requestedGateId) {
-                $gateOk = Gate::where('id', $requestedGateId)->where('warehouse_id', $warehouseId)->exists();
-                if (! $gateOk) {
-                    return back()->with('error', 'Gate tidak sesuai dengan warehouse yang dipilih.');
-                }
-            }
-
+            // Check availability for the selected gate
             if ($warehouseId > 0 && $plannedStart !== '' && $durationMinutes > 0) {
-                if ($requestedGateId) {
-                    $check = $this->bookingService->checkAvailability(
-                        $warehouseId,
-                        $requestedGateId,
-                        $plannedStart,
-                        $durationMinutes,
-                        null
-                    );
-                    if (empty($check['available'])) {
-                        $reason = (string) ($check['reason'] ?? 'Gate not available');
-                        return back()->with('error', $reason);
-                    }
-                    $effectiveGateId = $requestedGateId;
-                }
-
-                if (!$effectiveGateId) {
-                    $gatesQ = Gate::where('warehouse_id', $warehouseId);
-                    if (Schema::hasColumn('gates', 'is_active')) {
-                        $gatesQ->where('is_active', true);
-                    }
-                    $candidateGates = $gatesQ->orderBy('gate_number')->get();
-
-                    $bestGateId = null;
-                    $bestRisk = null;
-                    foreach ($candidateGates as $g) {
-                        $gid = (int) ($g->id ?? 0);
-                        if ($gid <= 0) continue;
-                        $check = $this->bookingService->checkAvailability(
-                            $warehouseId,
-                            $gid,
-                            $plannedStart,
-                            $durationMinutes,
-                            null
-                        );
-                        if (empty($check['available'])) {
-                            continue;
-                        }
-                        $risk = (int) ($check['blocking_risk'] ?? 0);
-                        if ($bestGateId === null || $risk < (int) $bestRisk) {
-                            $bestGateId = $gid;
-                            $bestRisk = $risk;
-                        }
-                    }
-
-                    if ($bestGateId === null) {
-                        return back()->with('error', 'Gate full / not available for this schedule. Please reschedule or choose another time.');
-                    }
-                    $effectiveGateId = $bestGateId;
+                $check = $this->bookingService->checkAvailability(
+                    $warehouseId,
+                    $plannedGateId,
+                    $plannedStart,
+                    $durationMinutes,
+                    null
+                );
+                if (empty($check['available'])) {
+                    $reason = (string) ($check['reason'] ?? 'Gate tidak tersedia');
+                    return back()->with('error', $reason);
                 }
             }
 
-            $slot = DB::transaction(function () use ($bookingRequest, $warehouseId, $effectiveGateId, $request) {
+            $slot = DB::transaction(function () use ($bookingRequest, $warehouseId, $plannedGateId, $request) {
                 $vendorType = $bookingRequest->direction === 'outbound' ? 'customer' : 'supplier';
                 $slot = Slot::create([
                     'ticket_number' => null,
@@ -206,7 +169,7 @@ class BookingApprovalController extends Controller
                     'vendor_code' => $bookingRequest->supplier_code,
                     'vendor_name' => $bookingRequest->supplier_name,
                     'vendor_type' => $vendorType,
-                    'planned_gate_id' => $effectiveGateId,
+                    'planned_gate_id' => $plannedGateId,
                     'planned_start' => $bookingRequest->planned_start,
                     'planned_duration' => (int) $bookingRequest->planned_duration,
                     'truck_type' => $bookingRequest->truck_type,
@@ -247,6 +210,13 @@ class BookingApprovalController extends Controller
 
                 return $slot;
             });
+
+            if (! empty($bookingRequest->planned_start)) {
+                $approvedDate = $bookingRequest->planned_start instanceof \DateTimeInterface
+                    ? $bookingRequest->planned_start->format('Y-m-d')
+                    : date('Y-m-d', strtotime((string) $bookingRequest->planned_start));
+                \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$approvedDate}");
+            }
 
             return redirect()
                 ->route('bookings.show', $bookingRequest->id)
@@ -293,23 +263,15 @@ class BookingApprovalController extends Controller
             ->with(['requester'])
             ->findOrFail($id);
 
-        $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('warehouses', 'is_active')) {
-            $warehousesQ->where('is_active', true);
-        }
-        $warehouses = $warehousesQ->get();
-
+        // Get all gates for gate-only selection
         $gatesQ = Gate::query();
         if (Schema::hasColumn('gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
-        $gates = $gatesQ
-            ->with('warehouse')
-            ->get()
-            ->groupBy('warehouse_id');
+        $gates = $gatesQ->with('warehouse')->get();
         $truckTypes = TruckTypeDuration::orderBy('truck_type')->get();
 
-        return view('admin.bookings.reschedule', compact('booking', 'warehouses', 'gates', 'truckTypes'));
+        return view('admin.bookings.reschedule', compact('booking', 'gates', 'truckTypes'));
     }
 
     /**
@@ -321,8 +283,7 @@ class BookingApprovalController extends Controller
             'planned_date' => 'required|date|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'planned_duration' => 'required|integer|min:30|max:480',
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
-            'planned_gate_id' => 'nullable|exists:gates,id',
+            'planned_gate_id' => 'required|integer|exists:gates,id',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -331,6 +292,18 @@ class BookingApprovalController extends Controller
             ->with(['items', 'requester'])
             ->firstOrFail();
 
+        // Get warehouse from selected gate
+        $plannedGateId = $request->planned_gate_id;
+        $gate = Gate::where('id', $plannedGateId)
+            ->where('is_active', true)
+            ->with('warehouse')
+            ->first();
+
+        if (!$gate) {
+            return back()->withInput()->with('error', 'Selected gate is not active or not found.');
+        }
+
+        $warehouseId = $gate->warehouse_id;
         $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
 
         // Update schedule on request (final schedule before approval)
@@ -354,8 +327,12 @@ class BookingApprovalController extends Controller
         $bookingRequest->update([
             'planned_start' => $plannedStart,
             'planned_duration' => (int) $request->planned_duration,
+            'planned_gate_id' => $plannedGateId,
+            'warehouse_id' => $warehouseId,
             'approval_notes' => $request->notes,
         ]);
+
+        \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
 
         return $this->approve($request, $id);
     }

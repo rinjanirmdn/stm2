@@ -16,6 +16,7 @@ use App\Notifications\BookingRequestSubmitted;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
@@ -390,13 +391,15 @@ class VendorBookingController extends Controller
     public function create()
     {
         $truckTypes = TruckTypeDuration::orderBy('truck_type')->get();
-        $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('warehouses', 'is_active')) {
-            $warehousesQ->where('is_active', true);
+        
+        // Get all gates for gate-only selection
+        $gatesQ = Gate::query();
+        if (Schema::hasColumn('gates', 'is_active')) {
+            $gatesQ->where('is_active', true);
         }
-        $defaultWarehouseId = $warehousesQ->orderBy('id')->value('id');
+        $gates = $gatesQ->with('warehouse')->get();
 
-        return view('vendor.bookings.create', compact('truckTypes', 'defaultWarehouseId'));
+        return view('vendor.bookings.create', compact('truckTypes', 'gates'));
     }
 
     public function ajaxPoSearch(Request $request)
@@ -462,6 +465,7 @@ class VendorBookingController extends Controller
             'po_number' => 'required|string', // Enforce here
             'po_items' => 'required|array',
             'po_items.*.qty' => 'nullable|numeric|min:0',
+            'planned_gate_id' => 'nullable|integer|exists:gates,id',
             'planned_date' => 'required|date|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'nullable|string|max:50',
@@ -473,6 +477,23 @@ class VendorBookingController extends Controller
             'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
+        // Auto-assign gate based on availability
+        $plannedGateId = $this->assignAvailableGate($request->planned_date, $request->planned_time);
+        
+        if (!$plannedGateId) {
+            return back()->withInput()->with('error', 'No available gates at the selected time. Please choose a different time.');
+        }
+        
+        $gate = Gate::where('id', $plannedGateId)
+            ->where('is_active', true)
+            ->with('warehouse')
+            ->first();
+        
+        if (!$gate) {
+            return back()->withInput()->with('error', 'Unable to assign an active gate.');
+        }
+        
+        $warehouseId = $gate->warehouse_id;
         $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
         try {
             $plannedStartAt = Carbon::createFromFormat('Y-m-d H:i:s', $plannedStart);
@@ -481,7 +502,7 @@ class VendorBookingController extends Controller
         }
 
         if ($plannedStartAt->isSunday()) {
-            return back()->withInput()->with('error', 'Tanggal booking tidak boleh di hari Minggu.');
+            return back()->withInput()->with('error', 'Booking date cannot be on Sunday.');
         }
 
         if (Schema::hasTable('holidays')) {
@@ -489,18 +510,18 @@ class VendorBookingController extends Controller
             $holiday = DB::table('holidays')->where('holiday_date', $holidayDate)->first();
             if ($holiday) {
                 $holidayLabel = trim((string) ($holiday->description ?? ''));
-                $msg = $holidayLabel !== '' ? "Tanggal booking adalah hari libur: {$holidayLabel}." : 'Tanggal booking tidak boleh di hari libur.';
+                $msg = $holidayLabel !== '' ? "Booking date is a holiday: {$holidayLabel}." : 'Booking date cannot be on a holiday.';
                 return back()->withInput()->with('error', $msg);
             }
         }
 
         $minAllowed = now()->addHours(4);
         if ($plannedStartAt->lessThan($minAllowed)) {
-            return back()->withInput()->with('error', 'Booking harus minimal 4 jam dari sekarang.');
+            return back()->withInput()->with('error', 'Booking must be at least 4 hours from now.');
         }
 
         if ($plannedStartAt->format('H:i') > '19:00') {
-            return back()->withInput()->with('error', 'Booking maksimal di jam 19:00.');
+            return back()->withInput()->with('error', 'Maximum booking time is 19:00.');
         }
         $plannedDuration = $this->resolvePlannedDuration($request->truck_type);
         if ($plannedDuration === null) {
@@ -585,6 +606,8 @@ class VendorBookingController extends Controller
                 'direction' => $direction,
                 'planned_start' => $plannedStart,
                 'planned_duration' => $plannedDuration,
+                'planned_gate_id' => $plannedGateId,
+                'warehouse_id' => $warehouseId,
                 'truck_type' => $request->truck_type,
                 'vehicle_number' => $request->vehicle_number,
                 'driver_name' => $driverName !== '' ? $driverName : null,
@@ -640,6 +663,7 @@ class VendorBookingController extends Controller
                 ]);
             }
 
+            Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
             $this->notifyAdminsBookingRequest($bookingRequest);
 
             return redirect()
@@ -693,6 +717,13 @@ class VendorBookingController extends Controller
                 'approval_notes' => $request->reason,
             ]);
 
+            if (! empty($booking->planned_start)) {
+                $cancelDate = $booking->planned_start instanceof \DateTimeInterface
+                    ? $booking->planned_start->format('Y-m-d')
+                    : date('Y-m-d', strtotime((string) $booking->planned_start));
+                Cache::forget("vendor_availability_{$cancelDate}");
+            }
+
             return redirect()
                 ->route('vendor.bookings.index')
                 ->with('success', 'Booking cancelled successfully.');
@@ -706,15 +737,24 @@ class VendorBookingController extends Controller
      */
     public function availability(Request $request)
     {
-        $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('warehouses', 'is_active')) {
-            $warehousesQ->where('is_active', true);
+        // Get all active gates for display
+        $gatesQ = Gate::query();
+        if (Schema::hasColumn('gates', 'is_active')) {
+            $gatesQ->where('is_active', true);
         }
-        $selectedWarehouse = $warehousesQ->orderBy('id')->first();
+        $gates = $gatesQ->with('warehouse')->get();
 
         $selectedDate = $request->date ?? now()->format('Y-m-d');
+        
+        // Get holidays for calendar
+        $holidays = [];
+        if (Schema::hasTable('holidays')) {
+            $holidays = DB::table('holidays')
+                ->pluck('description', 'holiday_date')
+                ->toArray();
+        }
 
-        return view('vendor.bookings.availability', compact('selectedWarehouse', 'selectedDate'));
+        return view('vendor.bookings.availability', compact('gates', 'selectedDate', 'holidays'));
     }
 
     /**
@@ -722,22 +762,130 @@ class VendorBookingController extends Controller
      */
     public function getAvailableSlots(Request $request)
     {
-        $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'date' => 'required|date',
-            'gate_id' => 'nullable|exists:gates,id',
-        ]);
+        try {
+            $request->validate([
+                'date' => 'required|date',
+            ]);
 
-        $slots = $this->bookingService->getAvailableSlots(
-            $request->warehouse_id,
-            $request->gate_id,
-            $request->date
-        );
+            $date = $request->date;
+            
+            // Use cache for 5 minutes to improve performance
+            $cacheKey = "vendor_availability_{$date}";
+            $cached = cache()->get($cacheKey);
+            
+            if ($cached) {
+                return response()->json($cached);
+            }
+            
+            // Get all time slots from 07:00 to 19:00 with 30-minute intervals
+            $timeSlots = [];
+            $startTime = strtotime('07:00');
+            $endTime = strtotime('19:00');
+            
+            while ($startTime <= $endTime) {
+                $timeSlots[] = date('H:i', $startTime);
+                $startTime = strtotime('+30 minutes', $startTime);
+            }
+            
+            // Global blocking: pending booking requests block all gates
+            $pendingRequests = BookingRequest::whereDate('planned_start', $date)
+                ->where('status', BookingRequest::STATUS_PENDING)
+                ->select('planned_start', 'planned_duration')
+                ->get();
 
-        return response()->json([
-            'success' => true,
-            'slots' => $slots,
-        ]);
+            $globalBlocked = [];
+            foreach ($pendingRequests as $requestRow) {
+                $start = Carbon::parse($requestRow->planned_start);
+                $slotStart = strtotime($start->format('H:i'));
+                $slotEnd = strtotime('+' . (int) $requestRow->planned_duration . ' minutes', $slotStart);
+                for ($currentTime = $slotStart; $currentTime < $slotEnd; $currentTime = strtotime('+30 minutes', $currentTime)) {
+                    $timeKey = date('H:i', $currentTime);
+                    $globalBlocked[$timeKey] = true;
+                }
+            }
+
+            // Get all existing slots for the date - optimized query
+            \Log::info('Getting slots for date: ' . $date);
+            $existingSlots = Slot::whereDate('planned_start', $date)
+                ->whereIn('status', [
+                    Slot::STATUS_PENDING_APPROVAL,
+                    Slot::STATUS_SCHEDULED,
+                    Slot::STATUS_ARRIVED,
+                    Slot::STATUS_WAITING,
+                    Slot::STATUS_IN_PROGRESS,
+                ])
+                ->select('planned_start', 'planned_duration', 'planned_gate_id')
+                ->get();
+            
+            \Log::info('Found ' . $existingSlots->count() . ' slots');
+            
+            // Build time conflicts map
+            $timeConflicts = [];
+            foreach ($existingSlots as $slot) {
+                $slotStart = strtotime($slot->planned_start->format('H:i'));
+                // Calculate end time based on duration
+                $slotEnd = strtotime('+ ' . $slot->planned_duration . ' minutes', $slotStart);
+                
+                $currentTime = $slotStart;
+                while ($currentTime < $slotEnd) {
+                    $timeKey = date('H:i', $currentTime);
+                    if (!isset($timeConflicts[$timeKey])) {
+                        $timeConflicts[$timeKey] = [];
+                    }
+                    $timeConflicts[$timeKey][] = $slot->planned_gate_id;
+                    $currentTime = strtotime('+30 minutes', $currentTime);
+                }
+            }
+            
+            // Get all active gates - cached query
+            $totalGates = Cache::remember('active_gates_count', 3600, function () {
+                return Gate::where('is_active', true)->count();
+            });
+            
+            // Check availability for each time slot
+            $availableSlots = [];
+            foreach ($timeSlots as $time) {
+                if (! empty($globalBlocked[$time])) {
+                    $availableSlots[] = [
+                        'time' => $time,
+                        'is_available' => false,
+                        'available_gates' => 0,
+                    ];
+                    continue;
+                }
+
+                $conflictedGates = $timeConflicts[$time] ?? [];
+                $availableGates = $totalGates - count(array_unique($conflictedGates));
+                
+                $availableSlots[] = [
+                    'time' => $time,
+                    'is_available' => $availableGates > 0,
+                    'available_gates' => $availableGates
+                ];
+            }
+            
+            $response = [
+                'success' => true,
+                'slots' => $availableSlots,
+            ];
+            
+            // Cache for 5 minutes
+            cache()->put($cacheKey, $response, 300);
+            
+            return response()->json($response);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Validation failed: ' . $e->getMessage()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error in getAvailableSlots: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load availability: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -746,22 +894,40 @@ class VendorBookingController extends Controller
     public function checkAvailability(Request $request)
     {
         $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
             'planned_start' => 'required|date',
             'planned_duration' => 'required|integer|min:30',
-            'gate_id' => 'nullable|exists:gates,id',
             'exclude_slot_id' => 'nullable|exists:slots,id',
         ]);
 
-        $result = $this->bookingService->checkAvailability(
-            $request->warehouse_id,
-            $request->gate_id,
-            $request->planned_start,
-            $request->planned_duration,
-            $request->exclude_slot_id
-        );
+        // Check all gates for availability
+        $gates = Gate::where('is_active', true)->get();
+        $availableGates = [];
+        
+        foreach ($gates as $gate) {
+            $result = $this->bookingService->checkAvailability(
+                $gate->warehouse_id,
+                $gate->id,
+                $request->planned_start,
+                $request->planned_duration,
+                $request->exclude_slot_id
+            );
+            
+            if ($result['available']) {
+                $availableGates[] = [
+                    'gate_id' => $gate->id,
+                    'gate_number' => $gate->gate_number,
+                    'warehouse_id' => $gate->warehouse_id,
+                ];
+            }
+        }
 
-        return response()->json($result);
+        return response()->json([
+            'available' => count($availableGates) > 0,
+            'available_gates' => $availableGates,
+            'message' => count($availableGates) > 0 ? 
+                sprintf('%d gate(s) available', count($availableGates)) : 
+                'No gates available at this time'
+        ]);
     }
 
     /**
@@ -785,26 +951,24 @@ class VendorBookingController extends Controller
     public function calendarSlots(Request $request)
     {
         $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
             'date' => 'required|date',
         ]);
 
         $date = $request->date;
-        $warehouseId = $request->warehouse_id;
 
-        // Get gates for this warehouse
-        $gatesQ = Gate::where('warehouse_id', $warehouseId);
+        // Get all active gates
+        $gatesQ = Gate::query();
         if (Schema::hasColumn('gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
         $gates = $gatesQ
             ->with(['warehouse'])
+            ->orderBy('warehouse_id')
             ->orderBy('gate_number')
             ->get();
 
-        // Get slots for the date
-        $slots = Slot::where('warehouse_id', $warehouseId)
-            ->whereDate('planned_start', $date)
+        // Get slots for the date across all warehouses
+        $slots = Slot::whereDate('planned_start', $date)
             ->where('status', Slot::STATUS_PENDING_APPROVAL)
             ->with(['requester'])
             ->get()
@@ -935,5 +1099,37 @@ class VendorBookingController extends Controller
             ->setPaper([0, 0, 252, 396], 'portrait');
 
         return $pdf->stream('ticket-' . ($slot->ticket_number ?? 'unknown') . '.pdf');
+    }
+    
+    /**
+     * Assign an available gate based on the planned date and time
+     */
+    private function assignAvailableGate($date, $time)
+    {
+        $plannedStart = $date . ' ' . $time . ':00';
+        
+        // Get all active gates
+        $gates = Gate::where('is_active', true)
+            ->with('warehouse')
+            ->orderBy('warehouse_id')
+            ->orderBy('gate_number')
+            ->get();
+            
+        foreach ($gates as $gate) {
+            // Check if gate is available at the planned time using bookingService
+            $result = $this->bookingService->checkAvailability(
+                $gate->warehouse_id,
+                $gate->id,
+                $plannedStart,
+                60, // Default duration check
+                null
+            );
+            
+            if ($result['available']) {
+                return $gate->id;
+            }
+        }
+        
+        return null;
     }
 }

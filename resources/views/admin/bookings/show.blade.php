@@ -175,8 +175,13 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>Gate</td>
-                    <td>{{ $booking->convertedSlot?->plannedGate?->gate_number ?? ($booking->convertedSlot?->plannedGate?->name ?? 'To be assigned') }}</td>
+                    <td style="color: #64748b;">Gate</td>
+                    <td>
+                        {{ app(\App\Services\SlotService::class)->getGateDisplayName(
+                            $booking->convertedSlot?->plannedGate?->warehouse->wh_code ?? '', 
+                            $booking->convertedSlot?->plannedGate?->gate_number ?? ''
+                        ) ?: 'To be assigned' }}
+                    </td>
                 </tr>
                 <tr>
                     <td>Date</td>
@@ -237,58 +242,28 @@
             @can('bookings.approve')
             <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" style="display: inline;">
                 @csrf
-                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+                <div style="display:flex; gap:1rem; align-items:end; flex-wrap:wrap;">
                     <div>
-                        <label class="st-label" style="margin-bottom:6px; display:block;">Warehouse</label>
+                        <label class="st-label" style="margin-bottom:6px; display:block;">Gate <span class="st-required">*</span></label>
                         @php
-                            $currentWarehouseId = old('warehouse_id', '');
+                            $allGates = $gates->flatten(1);
+                            $currentGateId = old('planned_gate_id', $booking->planned_gate_id ?? '');
                         @endphp
-                        <select name="warehouse_id" id="approval_warehouse_id" class="st-select" style="min-width:220px;">
-                            <option value="">Select Warehouse</option>
-                            @foreach($warehouses as $wh)
-                                @php
-                                    $wid = (int) ($wh->id ?? 0);
-                                    $wcode = trim((string) ($wh->wh_code ?? ($wh->code ?? '')));
-                                    $wname = trim((string) ($wh->wh_name ?? ($wh->name ?? '')));
-                                    $wlabel = trim(($wcode !== '' ? ($wcode . ' - ') : '') . $wname);
-                                @endphp
-                                @if($wid > 0)
-                                    <option value="{{ $wid }}" {{ (string)$currentWarehouseId === (string)$wid ? 'selected' : '' }}>
-                                        {{ $wlabel !== '' ? $wlabel : ('Warehouse #' . $wid) }}
-                                    </option>
-                                @endif
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="st-label" style="margin-bottom:6px; display:block;">Gate (optional)</label>
-                        @php
-                            $whId = (int) ($currentWarehouseId ?: 0);
-                            $gateOptions = $whId > 0 ? ($gates[$whId] ?? collect()) : collect();
-                            if ($gateOptions instanceof \Illuminate\Support\Collection === false) {
-                                $gateOptions = collect($gateOptions);
-                            }
-                            if ($gateOptions->isEmpty()) {
-                                $gateOptions = $gates->flatten(1);
-                            }
-                            $currentGateId = old('planned_gate_id', '');
-                        @endphp
-                        <select name="planned_gate_id" id="approval_planned_gate_id" class="st-select" style="min-width:220px;">
-                            <option value="">Auto</option>
-                            @foreach($gateOptions as $g)
+                        <select name="planned_gate_id" id="approval_planned_gate_id" class="st-select" style="min-width:220px;" required>
+                            <option value="">Select Gate...</option>
+                            @foreach($allGates as $g)
                                 @php
                                     $gid = $g->id ?? null;
-                                    $gwc = trim((string) ($g->warehouse?->wh_code ?? ''));
-                                    $base = $g->gate_number ?? ($g->name ?? ('Gate #' . ($gid ?? '')));
-                                    $label = $gwc !== '' ? ($gwc . '-' . $base) : $base;
+                                    $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($g->warehouse?->wh_code ?? '', $g->gate_number ?? '');
                                 @endphp
                                 @if($gid)
-                                    <option value="{{ $gid }}" {{ (string)$currentGateId === (string)$gid ? 'selected' : '' }}>
-                                        {{ $label }}
+                                    <option value="{{ $gid }}" data-warehouse-id="{{ $g->warehouse_id }}" {{ (string)$currentGateId === (string)$gid ? 'selected' : '' }}>
+                                        {{ $gateLabel }}
                                     </option>
                                 @endif
                             @endforeach
                         </select>
+                        <input type="hidden" name="warehouse_id" id="approval_warehouse_id" value="">
                     </div>
                 </div>
                 <button type="submit" class="st-button st-button--success st-button--lg" onclick="return confirm('Approve this booking with the current schedule?')">
@@ -333,50 +308,27 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var whSel = document.getElementById('approval_warehouse_id');
     var gateSel = document.getElementById('approval_planned_gate_id');
-    var gatesEl = document.getElementById('approval_gates_json');
-    if (!whSel || !gateSel || !gatesEl) return;
-
-    var gatesData = {};
-    try {
-        gatesData = JSON.parse(gatesEl.textContent || '{}') || {};
-    } catch (e) {
-        gatesData = {};
+    var warehouseHidden = document.getElementById('approval_warehouse_id');
+    
+    // Gate and warehouse sync
+    function syncWarehouseFromGate() {
+        if (!gateSel || !warehouseHidden) return;
+        var selected = gateSel.options[gateSel.selectedIndex];
+        if (!selected) return;
+        warehouseHidden.value = selected.getAttribute('data-warehouse-id') || '';
     }
-
-    function buildGateLabel(g) {
-        var base = (g.gate_number || g.name || ('Gate #' + (g.id || '')));
-        var wc = (g.warehouse_code || '').trim();
-        return wc ? (wc + '-' + base) : base;
-    }
-
-    function refreshGateOptions() {
-        var wid = String(whSel.value || '');
-        var current = String(gateSel.value || '');
-        var list = gatesData[wid] || [];
-
-        gateSel.innerHTML = '<option value="">Auto</option>';
-        list.forEach(function (g) {
-            if (!g || !g.id) return;
-            var opt = document.createElement('option');
-            opt.value = String(g.id);
-            opt.textContent = buildGateLabel(g);
-            gateSel.appendChild(opt);
+    
+    // Gate change listener
+    if (gateSel) {
+        gateSel.addEventListener('change', function() {
+            syncWarehouseFromGate();
         });
-
-        if (current) {
-            gateSel.value = current;
+        // Initial sync if gate is pre-selected
+        if (gateSel.value) {
+            syncWarehouseFromGate();
         }
     }
-
-    whSel.addEventListener('change', function () {
-        // reset gate selection when warehouse changes
-        gateSel.value = '';
-        refreshGateOptions();
-    });
-
-    refreshGateOptions();
 });
 </script>
 @endpush

@@ -385,8 +385,7 @@ class SlotController extends Controller
             'po_items.*.qty' => 'nullable|numeric|min:0',
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
-            'planned_gate_id' => 'nullable|integer|exists:gates,id',
+            'planned_gate_id' => 'required|integer|exists:gates,id',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
             'vehicle_number_snap' => 'nullable|string|max:50',
@@ -399,7 +398,6 @@ class SlotController extends Controller
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
         $direction = (string) $request->input('direction', '');
-        $warehouseId = (int) $request->input('warehouse_id', 0);
         $plannedGateId = $request->input('planned_gate_id') !== null && (string) $request->input('planned_gate_id') !== '' ? (int) $request->input('planned_gate_id') : null;
         $plannedStart = (string) $request->input('planned_start', '');
         $plannedDurationMinutes = (int) $request->input('planned_duration', 60);
@@ -408,6 +406,20 @@ class SlotController extends Controller
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
+
+        if (! $plannedGateId) {
+            return back()->withInput()->with('error', 'Gate is required');
+        }
+
+        $gateRow = DB::table('gates')
+            ->where('id', $plannedGateId)
+            ->where('is_active', true)
+            ->select(['id', 'warehouse_id'])
+            ->first();
+        if (! $gateRow) {
+            return back()->withInput()->with('error', 'Selected gate is not active');
+        }
+        $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         $selectedItems = (array) $request->input('po_items', []);
         $hasQty = false;
@@ -455,15 +467,8 @@ class SlotController extends Controller
             return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
         }
 
-        if ($truckNumber === '' || $warehouseId === 0 || $plannedStart === '' || $direction === '') {
-            return back()->withInput()->with('error', 'PO/DO number, direction, warehouse, and planned start are required');
-        }
-
-        if ($plannedGateId !== null) {
-            $gate = DB::table('gates')->where('id', $plannedGateId)->where('is_active', true)->select(['warehouse_id'])->first();
-            if (! $gate || (int) ($gate->warehouse_id ?? 0) !== $warehouseId) {
-                return back()->withInput()->with('error', 'Selected gate does not belong to chosen warehouse or is inactive');
-            }
+        if ($truckNumber === '' || $plannedStart === '' || $direction === '') {
+            return back()->withInput()->with('error', 'PO/DO number, direction, gate, and planned start are required');
         }
 
         try {
@@ -502,57 +507,8 @@ class SlotController extends Controller
             }
         }
 
-        if ($plannedGateId === null) {
-            $candidateGates = DB::table('gates')
-                ->where('warehouse_id', $warehouseId)
-                ->where('is_active', true)
-                ->orderBy('gate_number')
-                ->select(['id'])
-                ->get();
-
-            $startStr = $plannedStartDt->format('Y-m-d H:i:s');
-            $endStr = $plannedEndDt->format('Y-m-d H:i:s');
-
-            $bestGateId = null;
-            $bestRisk = null;
-            foreach ($candidateGates as $g) {
-                $gid = (int) ($g->id ?? 0);
-                if ($gid <= 0) continue;
-
-                $laneGroup = $this->slotService->getGateLaneGroup($gid);
-                $laneGateIds = $laneGroup ? $this->slotService->getGateIdsByLaneGroup($laneGroup) : [$gid];
-                if (empty($laneGateIds)) {
-                    $laneGateIds = [$gid];
-                }
-
-                $overlapCount = (int) DB::table('slots')
-                    ->whereIn('planned_gate_id', $laneGateIds)
-                    ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
-                    ->whereRaw('? < ' . $this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
-                    ->whereRaw('? > planned_start', [$endStr])
-                    ->count();
-
-                if ($overlapCount > 0) {
-                    continue;
-                }
-
-                $bcCheck = $this->slotService->validateWh2BcPlannedWindow($gid, $plannedStartDt, $plannedEndDt, 0);
-                if (empty($bcCheck['ok'])) {
-                    continue;
-                }
-
-                $risk = $this->slotService->calculateBlockingRisk($warehouseId, $gid, $plannedStart, $plannedDurationMinutes, null);
-                if ($bestGateId === null || (int) $risk < (int) $bestRisk) {
-                    $bestGateId = $gid;
-                    $bestRisk = (int) $risk;
-                }
-            }
-
-            if ($bestGateId === null) {
-                return back()->withInput()->with('error', 'Gate is full / unavailable for this schedule. Please choose another gate or time.');
-            }
-
-            $plannedGateId = (int) $bestGateId;
+        if (! $plannedGateId) {
+            return back()->withInput()->with('error', 'Gate penuh / tidak tersedia untuk jadwal ini. Silakan pilih gate atau waktu lain.');
         }
 
         $slotId = 0;
@@ -709,21 +665,33 @@ class SlotController extends Controller
             'po_number' => 'required|string|max:12',
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
             'vendor_id' => 'nullable|integer|exists:business_partner,id',
-            'planned_gate_id' => 'nullable|integer|exists:gates,id',
+            'planned_gate_id' => 'required|integer|exists:gates,id',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
         ]);
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
         $direction = (string) $request->input('direction', '');
-        $warehouseId = (int) $request->input('warehouse_id', 0);
         $vendorId = $request->input('vendor_id') !== null && (string) $request->input('vendor_id') !== '' ? (int) $request->input('vendor_id') : null;
         $plannedGateId = $request->input('planned_gate_id') !== null && (string) $request->input('planned_gate_id') !== '' ? (int) $request->input('planned_gate_id') : null;
         $plannedStart = (string) $request->input('planned_start', '');
         $plannedDurationMinutes = (int) $request->input('planned_duration', 60);
         $truckType = trim((string) $request->input('truck_type', ''));
+
+        if (! $plannedGateId) {
+            return back()->withInput()->with('error', 'Gate is required');
+        }
+
+        $gateRow = DB::table('gates')
+            ->where('id', $plannedGateId)
+            ->where('is_active', true)
+            ->select(['id', 'warehouse_id'])
+            ->first();
+        if (! $gateRow) {
+            return back()->withInput()->with('error', 'Selected gate is not active');
+        }
+        $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
             return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
@@ -1230,16 +1198,30 @@ class SlotController extends Controller
             'coa_pdf' => 'required|file|mimes:pdf|max:5120',
             'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
             'driver_name' => 'nullable|string|max:50',
+            'actual_gate_id' => 'required|integer|exists:gates,id',
         ]);
 
         $poNumber = trim((string) $request->input('po_number', ''));
         $direction = (string) $request->input('direction', '');
-        $warehouseId = (int) $request->input('warehouse_id', 0);
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
         $arrivalInput = trim((string) $request->input('actual_arrival', ''));
 
-        if ($poNumber === '' || $warehouseId === 0 || $arrivalInput === '' || $direction === '') {
-            return back()->withInput()->with('error', 'PO/DO number, direction, warehouse, and arrival time are required');
+        if (! $actualGateId) {
+            return back()->withInput()->with('error', 'Gate is required');
+        }
+
+        $gateRow = DB::table('gates')
+            ->where('id', $actualGateId)
+            ->where('is_active', true)
+            ->select(['id', 'warehouse_id'])
+            ->first();
+        if (! $gateRow) {
+            return back()->withInput()->with('error', 'Selected gate is not active');
+        }
+        $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
+
+        if ($poNumber === '' || $arrivalInput === '' || $direction === '') {
+            return back()->withInput()->with('error', 'PO/DO number, direction, gate, and arrival time are required');
         }
 
         if (strlen($poNumber) > 12) {
@@ -1441,18 +1423,30 @@ class SlotController extends Controller
         $request->validate([
             'po_number' => 'required|string|max:12',
             'direction' => 'required|in:inbound,outbound',
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
             'vendor_id' => 'nullable|integer|exists:business_partner,id',
-            'actual_gate_id' => 'nullable|integer|exists:gates,id',
+            'actual_gate_id' => 'required|integer|exists:gates,id',
             'arrival_time' => 'required|string',
         ]);
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
         $direction = (string) $request->input('direction', '');
-        $warehouseId = (int) $request->input('warehouse_id', 0);
         $vendorId = $request->input('vendor_id') !== null && (string) $request->input('vendor_id') !== '' ? (int) $request->input('vendor_id') : null;
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
         $arrivalTime = (string) $request->input('arrival_time', '');
+
+        if (! $actualGateId) {
+            return back()->withInput()->with('error', 'Gate is required');
+        }
+
+        $gateRow = DB::table('gates')
+            ->where('id', $actualGateId)
+            ->where('is_active', true)
+            ->select(['id', 'warehouse_id'])
+            ->first();
+        if (! $gateRow) {
+            return back()->withInput()->with('error', 'Selected gate is not active');
+        }
+        $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
             return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
@@ -1524,11 +1518,11 @@ class SlotController extends Controller
             return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled slots can be arrived');
         }
 
-        $truckTypes = $this->getTruckTypeOptions();
-
         return view('slots.arrival', [
             'slot' => $slot,
-            'truckTypes' => $truckTypes,
+            'slotItems' => SlotPoItem::where('slot_id', $slotId)
+                ->orderBy('item_no')
+                ->get(),
         ]);
     }
 
@@ -1549,19 +1543,16 @@ class SlotController extends Controller
 
         $ticketNumber = trim((string) $request->input('ticket_number', ''));
         $sjNumber = trim((string) $request->input('sj_number', ''));
-        $truckType = trim((string) $request->input('truck_type', ''));
-
-        if ($ticketNumber === '' || $sjNumber === '' || $truckType === '') {
-            return back()->withInput()->with('error', 'Ticket number, Surat Jalan number, and Truck Type are required');
+        if ($ticketNumber === '' || $sjNumber === '') {
+            return back()->withInput()->with('error', 'Ticket number and Surat Jalan number are required');
         }
 
-        DB::transaction(function () use ($slotId, $ticketNumber, $sjNumber, $truckType) {
+        DB::transaction(function () use ($slotId, $ticketNumber, $sjNumber) {
             $now = date('Y-m-d H:i:s');
             DB::table('slots')->where('id', $slotId)->update([
                 'arrival_time' => $now,
                 'ticket_number' => $ticketNumber,
                 'sj_start_number' => $sjNumber,
-                'truck_type' => $truckType,
                 'status' => Slot::STATUS_WAITING,
             ]);
 

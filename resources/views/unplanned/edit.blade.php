@@ -58,32 +58,29 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:none;">
                 <div class="st-form-field">
-                    <label class="st-label">Warehouse <span style="color:#dc2626;">*</span></label>
-                    <select name="warehouse_id" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
+                    <label class="st-label">Warehouse</label>
+                    <select name="warehouse_id" id="unplanned-warehouse" class="st-select">
                         <option value="">Choose...</option>
                         @foreach ($warehouses as $wh)
                             <option value="{{ $wh->id }}" {{ (string) old('warehouse_id', $slot->warehouse_id ?? '') === (string) $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
                         @endforeach
                     </select>
-                    @error('warehouse_id')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
-                    @enderror
                 </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Gate (Actual) <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
-                    <select name="actual_gate_id" class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}">
-                        <option value="">- Optional -</option>
+                    <label class="st-label">Gate (Actual) <span style="color:#dc2626;">*</span></label>
+                    <select name="actual_gate_id" id="unplanned-gate" class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}" required>
+                        <option value="">Choose Gate...</option>
                         @foreach ($gates as $gate)
                             @php
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
                             @endphp
-                            <option value="{{ $gate->id }}" {{ (string) old('actual_gate_id', $slot->actual_gate_id ?? '') === (string) $gate->id ? 'selected' : '' }}>
-                                {{ $gate->warehouse_name }} - {{ $gateLabel }}
+                            <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string) old('actual_gate_id', $slot->actual_gate_id ?? '') === (string) $gate->id ? 'selected' : '' }}>
+                                {{ $gateLabel }}
                             </option>
                         @endforeach
                     </select>
@@ -164,6 +161,15 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         var arrivalInput = document.getElementById('arrival_time_input');
+        var gateSelect = document.getElementById('unplanned-gate');
+        var warehouseSelect = document.getElementById('unplanned-warehouse');
+
+        function syncWarehouseFromGate() {
+            if (!warehouseSelect || !gateSelect) return;
+            var selected = gateSelect.options[gateSelect.selectedIndex];
+            if (!selected) return;
+            warehouseSelect.value = selected.getAttribute('data-warehouse-id') || '';
+        }
 
         function initFlatpickrForArrival() {
             if (!arrivalInput) return;
@@ -197,6 +203,13 @@
         }
 
         initFlatpickrForArrival();
+
+        if (gateSelect) {
+            gateSelect.addEventListener('change', syncWarehouseFromGate);
+            if (gateSelect.value) {
+                syncWarehouseFromGate();
+            }
+        }
     });
     </script>
 @endsection
