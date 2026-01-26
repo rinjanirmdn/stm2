@@ -728,8 +728,25 @@ function focusSlot(id) {
     width: 100% !important;
     max-width: 100% !important;
     box-shadow: none !important;
-    transform: scale(0.95);
-    transform-origin: top center;
+    transform: none;
+    transform-origin: initial;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+}
+
+.flatpickr-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+#dock_inline_calendar {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 </style>
 @endpush
