@@ -78,6 +78,13 @@
                 </a>
             @endcan
 
+            @can('bookings.index')
+            <a href="{{ route('bookings.index') }}" title="Booking Requests" class="st-sidebar__link{{ request()->routeIs('bookings.*') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Booking Requests</span>
+            </a>
+            @endcan
+
             @can('unplanned.index')
             <a href="{{ route('unplanned.index') }}" title="Unplanned" class="st-sidebar__link{{ request()->routeIs('unplanned.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-calendar-plus"></i>

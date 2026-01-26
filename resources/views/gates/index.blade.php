@@ -39,8 +39,6 @@
                 $rescheduledSlots = $daySlots->filter(function($slot) {
                     return !empty($slot->original_planned_start);
                 });
-                $pendingSlots = $daySlots->whereIn('status', ['pending_approval', 'pending']);
-                $vendorSlots = $daySlots->where('status', 'pending_vendor_confirmation');
                 $scheduledSlots = $daySlots->where('status', \App\Models\Slot::STATUS_SCHEDULED);
                 $arrivedSlots = $daySlots->where('status', \App\Models\Slot::STATUS_ARRIVED);
                 $waitingSlots = $daySlots->where('status', \App\Models\Slot::STATUS_WAITING);
@@ -48,60 +46,6 @@
                 $completedSlots = $daySlots->where('status', \App\Models\Slot::STATUS_COMPLETED);
             @endphp
             <div class="st-dock-legend">
-                <!-- Pending Approval -->
-                <div class="st-legend-group">
-                    <div class="st-legend-item st-legend-item--pending_approval">
-                        <div class="st-dock-legend-indicator">
-                            <div class="st-dock-dot"></div>
-                            <span>Pending Approval</span>
-                        </div>
-                        <span class="st-dock-count">{{ $pendingSlots->count() }}</span>
-                    </div>
-                    @if($pendingSlots->count() > 0)
-                    <div class="st-dock-legend-list">
-                        @foreach($pendingSlots as $ps)
-                        <div class="st-dock-legend-card" onclick="focusSlot({{ $ps->id }})" title="View on grid">
-                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
-                                <span class="st-dock-legend-card-ticket">{{ $ps->ticket_number }}</span>
-                                <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
-
-                <!-- Awaiting Vendor -->
-                <div class="st-legend-group">
-                    <div class="st-legend-item st-legend-item--awaiting_vendor">
-                        <div class="st-dock-legend-indicator">
-                            <div class="st-dock-dot"></div>
-                            <span>Awaiting Vendor</span>
-                        </div>
-                        <span class="st-dock-count">{{ $vendorSlots->count() }}</span>
-                    </div>
-                    @if($vendorSlots->count() > 0)
-                    <div class="st-dock-legend-list">
-                        @foreach($vendorSlots as $vs)
-                        <div class="st-dock-legend-card" onclick="focusSlot({{ $vs->id }})" title="View on grid">
-                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
-                                <span class="st-dock-legend-card-ticket">{{ $vs->ticket_number }}</span>
-                                <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
-
                 <!-- Rescheduled -->
                 <div class="st-legend-group">
                     <div class="st-legend-item st-legend-item--rescheduled">
