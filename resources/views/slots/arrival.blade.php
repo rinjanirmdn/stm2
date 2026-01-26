@@ -34,6 +34,7 @@
                             @endunless
                         @endif
                     </div>
+                    <div id="ticket_match_hint" class="st-text--small" style="margin-top:6px;color:#dc2626;display:none;"></div>
                     <div id="scan_camera_wrap" style="display:none;margin-top:8px;border:1px solid #e5e7eb;border-radius:8px;padding:8px;background:#f8fafc;">
                         <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;">
                             <div style="font-size:12px;color:#475569;">Arahkan kamera ke barcode/QR ticket.</div>
@@ -111,6 +112,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     var ticketInput = document.querySelector('input[name="ticket_number"]');
     var arrivalDetails = document.getElementById('arrival_details');
+    var ticketHint = document.getElementById('ticket_match_hint');
     var scanBtn = document.getElementById('btn_scan_ticket');
     var scanWrap = document.getElementById('scan_camera_wrap');
     var scanVideo = document.getElementById('scan_camera');
@@ -121,10 +123,23 @@ document.addEventListener('DOMContentLoaded', function () {
     var scanActive = false;
     var html5Qr = null;
 
+    var expectedTicket = "{{ (string) ($slot->ticket_number ?? '') }}";
+
     function toggleArrivalDetails() {
         if (!ticketInput || !arrivalDetails) return;
-        var hasTicket = (ticketInput.value || '').trim() !== '';
-        arrivalDetails.style.display = hasTicket ? 'block' : 'none';
+        var value = (ticketInput.value || '').trim();
+        var hasTicket = value !== '';
+        var matches = expectedTicket === '' || value === expectedTicket;
+        arrivalDetails.style.display = hasTicket && matches ? 'block' : 'none';
+        if (ticketHint) {
+            if (!hasTicket || matches) {
+                ticketHint.style.display = 'none';
+                ticketHint.textContent = '';
+            } else {
+                ticketHint.style.display = 'block';
+                ticketHint.textContent = 'Ticket number tidak sesuai dengan slot ini.';
+            }
+        }
     }
 
     function updateScanStatus(message) {
