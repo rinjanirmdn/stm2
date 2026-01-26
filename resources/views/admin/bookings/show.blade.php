@@ -4,12 +4,19 @@
 @section('page_title', 'Booking Detail')
 
 @section('content')
-<div class="st-card">
-    <div class="st-card__header">
-        <h2 class="st-card__title">
-            <i class="fas fa-ticket"></i>
-            {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
-        </h2>
+<div class="st-card booking-detail">
+    <div class="st-card__header booking-detail__header">
+        <div>
+            <h2 class="st-card__title">
+                <i class="fas fa-ticket"></i>
+                {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
+            </h2>
+            <div class="booking-detail__subtitle">
+                <span>{{ $booking->supplier_name ?? '-' }}</span>
+                <span class="booking-detail__dot">•</span>
+                <span>{{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}</span>
+            </div>
+        </div>
         <div class="st-card__actions">
             <a href="{{ route('bookings.index') }}" class="st-button st-button--secondary">
                 <i class="fas fa-arrow-left"></i>
@@ -39,7 +46,7 @@
     @endif
 
     <!-- Booking Details -->
-    <div class="st-grid st-grid--3">
+    <div class="booking-grid">
         <div class="st-detail-section">
             <h3 class="st-detail-title">
                 <i class="fas fa-info-circle"></i>
@@ -232,24 +239,24 @@
 
     <!-- Action Buttons -->
     @if(in_array((string) $booking->status, ['pending'], true))
-    <div class="st-action-section">
+    <div class="st-action-section booking-actions">
         <h3 class="st-detail-title">
             <i class="fas fa-gavel"></i>
             Actions
         </h3>
 
-        <div class="st-action-buttons-group">
+        <div class="booking-actions__layout">
             @can('bookings.approve')
-            <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" style="display: inline;">
+            <form method="POST" action="{{ route('bookings.approve', $booking->id) }}" class="booking-actions__form">
                 @csrf
-                <div style="display:flex; gap:1rem; align-items:end; flex-wrap:wrap;">
-                    <div>
-                        <label class="st-label" style="margin-bottom:6px; display:block;">Gate <span class="st-required">*</span></label>
+                <div class="booking-actions__controls">
+                    <div class="booking-actions__field">
+                        <label class="st-label">Gate <span class="st-required">*</span></label>
                         @php
                             $allGates = $gates->flatten(1);
                             $currentGateId = old('planned_gate_id', $booking->planned_gate_id ?? '');
                         @endphp
-                        <select name="planned_gate_id" id="approval_planned_gate_id" class="st-select" style="min-width:220px;" required>
+                        <select name="planned_gate_id" id="approval_planned_gate_id" class="st-select" required>
                             <option value="">Select Gate...</option>
                             @foreach($allGates as $g)
                                 @php
@@ -265,27 +272,29 @@
                         </select>
                         <input type="hidden" name="warehouse_id" id="approval_warehouse_id" value="">
                     </div>
+                    <button type="submit" class="st-button st-button--success st-button--lg booking-actions__submit" onclick="return confirm('Approve this booking with the current schedule?')">
+                        <i class="fas fa-check"></i>
+                        Approve Booking
+                    </button>
                 </div>
-                <button type="submit" class="st-button st-button--success st-button--lg" onclick="return confirm('Approve this booking with the current schedule?')">
-                    <i class="fas fa-check"></i>
-                    Approve Booking
-                </button>
             </form>
             @endcan
 
-            @can('bookings.reschedule')
-            <a href="{{ route('bookings.reschedule', $booking->id) }}" class="st-button st-button--warning st-button--lg">
-                <i class="fas fa-calendar-alt"></i>
-                Reschedule
-            </a>
-            @endcan
+            <div class="booking-actions__buttons">
+                @can('bookings.reschedule')
+                <a href="{{ route('bookings.reschedule', $booking->id) }}" class="st-button st-button--warning st-button--lg">
+                    <i class="fas fa-calendar-alt"></i>
+                    Reschedule
+                </a>
+                @endcan
 
-            @can('bookings.reject')
-            <button type="button" class="st-button st-button--danger st-button--lg" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
-                <i class="fas fa-times"></i>
-                Reject Booking
-            </button>
-            @endcan
+                @can('bookings.reject')
+                <button type="button" class="st-button st-button--danger st-button--lg" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+                    <i class="fas fa-times"></i>
+                    Reject Booking
+                </button>
+                @endcan
+            </div>
         </div>
     </div>
     @endif
@@ -336,17 +345,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 <style>
-.st-grid--3 {
+.booking-detail {
+    border: 1px solid var(--st-border, #e5e7eb);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.booking-detail__header {
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.booking-detail__subtitle {
+    margin-top: 0.35rem;
+    font-size: 0.875rem;
+    color: var(--st-text-muted, #64748b);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.booking-detail__dot {
+    opacity: 0.6;
+}
+
+.booking-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
     margin: 1.5rem 0;
 }
 
 .st-detail-section {
     background: var(--st-surface-alt, #f8fafc);
     padding: 1.25rem;
-    border-radius: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
 .st-detail-title {
@@ -361,16 +395,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
 .st-detail-table {
     width: 100%;
+    border-collapse: collapse;
 }
 
 .st-detail-table td {
-    padding: 0.5rem 0;
+    padding: 0.55rem 0;
     border-bottom: 1px solid var(--st-border, #e5e7eb);
+    vertical-align: top;
+}
+
+.st-detail-table tr:last-child td {
+    border-bottom: none;
 }
 
 .st-detail-table td:first-child {
     color: var(--st-text-muted, #64748b);
-    width: 40%;
+    width: 42%;
+    font-weight: 500;
+}
+
+.st-detail-table td:last-child {
+    color: var(--st-text, #0f172a);
 }
 
 .st-action-section {
@@ -384,6 +429,38 @@ document.addEventListener('DOMContentLoaded', function () {
     gap: 1rem;
     flex-wrap: wrap;
     margin-top: 1rem;
+}
+
+.booking-actions__layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.booking-actions__form {
+    width: 100%;
+}
+
+.booking-actions__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.booking-actions__field {
+    min-width: 220px;
+    flex: 1 1 240px;
+}
+
+.booking-actions__submit {
+    min-width: 200px;
+}
+
+.booking-actions__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
 }
 
 .st-button--lg {
@@ -450,6 +527,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
 .st-text-strikethrough {
     text-decoration: line-through;
+}
+
+@media (max-width: 768px) {
+    .booking-detail__header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .booking-actions__controls {
+        align-items: stretch;
+    }
+
+    .booking-actions__submit {
+        width: 100%;
+    }
 }
 </style>
 @push('scripts')
