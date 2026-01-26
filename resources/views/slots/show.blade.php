@@ -331,6 +331,37 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="st-detail-divider" style="margin:10px 0;"></div>
+
+                    <h2 class="st-card__title st-mb-2" style="font-size:14px;">Item &amp; Qty (Slot)</h2>
+
+                    @if (!empty($slotItems) && $slotItems->count() > 0)
+                        <div class="st-table-wrapper" style="margin-top:6px;">
+                            <table class="st-table" style="font-size:12px;">
+                                <thead>
+                                    <tr>
+                                        <th style="width:70px;">Item</th>
+                                        <th>Material</th>
+                                        <th style="width:120px;text-align:right;">Qty</th>
+                                        <th style="width:90px;">UOM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($slotItems as $item)
+                                        <tr>
+                                            <td><strong>{{ $item->item_no }}</strong></td>
+                                            <td>{{ $item->material_code ?? '-' }}{{ $item->material_name ? ' - ' . $item->material_name : '' }}</td>
+                                            <td style="text-align:right;">{{ number_format((float) ($item->qty_booked ?? 0), 3) }}</td>
+                                            <td>{{ $item->uom ?? '-' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="st-text--small st-text--muted">Tidak ada item detail pada slot ini.</div>
+                    @endif
                 </div>
             </div>
 

@@ -869,6 +869,10 @@ class SlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Slot not found');
         }
 
+        $slotItems = SlotPoItem::where('slot_id', $slotId)
+            ->orderBy('item_no')
+            ->get();
+
         $poNumber = trim((string) ($slot->po_number ?? ''));
         if ($poNumber !== '') {
             try {
@@ -969,6 +973,7 @@ class SlotController extends Controller
             'totalLeadTimeMinutes' => $totalLeadTimeMinutes,
             'targetStatus' => $targetStatus,
             'logs' => $logs,
+            'slotItems' => $slotItems,
         ]);
     }
 
@@ -1545,6 +1550,11 @@ class SlotController extends Controller
         $sjNumber = trim((string) $request->input('sj_number', ''));
         if ($ticketNumber === '' || $sjNumber === '') {
             return back()->withInput()->with('error', 'Ticket number and Surat Jalan number are required');
+        }
+
+        $expectedTicket = trim((string) ($slot->ticket_number ?? ''));
+        if ($expectedTicket !== '' && $ticketNumber !== $expectedTicket) {
+            return back()->withInput()->with('error', 'Ticket number does not match this slot.');
         }
 
         DB::transaction(function () use ($slotId, $ticketNumber, $sjNumber) {
