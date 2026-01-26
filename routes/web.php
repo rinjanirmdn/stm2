@@ -126,6 +126,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::get('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::post('/notifications/clear', [\App\Http\Controllers\NotificationController::class, 'clearAll'])->name('notifications.clearAll');
+    Route::get('/notifications/latest', [\App\Http\Controllers\NotificationController::class, 'latest'])->name('notifications.latest');
 
     // SAP API Integration
     Route::prefix('api/sap')->name('api.sap.')->group(function () {
@@ -247,6 +248,7 @@ Route::middleware('auth')->group(function () {
         // AJAX
         Route::get('/ajax/calendar', [BookingApprovalController::class, 'calendarData'])->name('ajax.calendar');
         Route::get('/ajax/pending-count', [BookingApprovalController::class, 'pendingCount'])->name('ajax.pending_count');
+        Route::get('/ajax/reminders', [BookingApprovalController::class, 'reminderData'])->name('ajax.reminders');
     });
 });
 

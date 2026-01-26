@@ -711,6 +711,15 @@
     </header>
 
     <main class="vendor-main">
+        <div id="vendor-notification-toast" style="display:none; position: fixed; right: 24px; top: 96px; z-index: 1200; min-width: 280px; max-width: 360px; background: #1d4ed8; color: #eff6ff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 12px 24px rgba(2, 6, 23, 0.25);">
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+                <i class="fas fa-bell" style="margin-top:2px;"></i>
+                <div style="flex:1;">
+                    <div style="font-weight:700; margin-bottom:4px;">New Notification</div>
+                    <div id="vendor-notification-toast-text" style="font-size:12px; line-height:1.4;"></div>
+                </div>
+            </div>
+        </div>
         @if (session('success'))
             <div class="vendor-alert vendor-alert--success">
                 <i class="fas fa-check-circle"></i>
@@ -844,6 +853,63 @@
                 return true;
             }
         }
+
+        @php
+            $vendorLatestUrl = \Illuminate\Support\Facades\Route::has('notifications.latest')
+                ? route('notifications.latest')
+                : null;
+        @endphp
+        (function () {
+            var latestUrl = {!! $vendorLatestUrl ? json_encode($vendorLatestUrl) : 'null' !!};
+            var toast = document.getElementById('vendor-notification-toast');
+            var toastText = document.getElementById('vendor-notification-toast-text');
+            var toastTimer = null;
+            var storageKey = 'vendor_last_notification_id';
+
+            if (!latestUrl || !toast || !toastText) {
+                return;
+            }
+
+            function showNotification(notification) {
+                if (!notification) {
+                    return;
+                }
+                toastText.textContent = (notification.title || 'Notification') + ' - ' + (notification.message || '');
+                toast.style.display = 'block';
+
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                }
+                toastTimer = setTimeout(function () {
+                    toast.style.display = 'none';
+                }, 3000);
+            }
+
+            function checkLatest() {
+                fetch(latestUrl, { headers: { 'Accept': 'application/json' } })
+                    .then(function (resp) { return resp.json(); })
+                    .then(function (data) {
+                        if (!data || !data.success || !data.notification) {
+                            return;
+                        }
+                        var lastId = localStorage.getItem(storageKey);
+                        if (!lastId) {
+                            localStorage.setItem(storageKey, data.notification.id);
+                            return;
+                        }
+                        if (lastId !== data.notification.id) {
+                            localStorage.setItem(storageKey, data.notification.id);
+                            showNotification(data.notification);
+                        }
+                    })
+                    .catch(function () {
+                        // ignore
+                    });
+            }
+
+            checkLatest();
+            setInterval(checkLatest, 60 * 1000);
+        })();
 
         document.addEventListener('DOMContentLoaded', function () {
             var markAllBtn = document.getElementById('notification-mark-all');

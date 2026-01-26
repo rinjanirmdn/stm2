@@ -410,4 +410,42 @@ class BookingApprovalController extends Controller
             'count' => $count,
         ]);
     }
+
+    /**
+     * AJAX: Reminder data for pending bookings within the next 5 hours
+     */
+    public function reminderData(Request $request)
+    {
+        $now = now();
+        $limit = $now->copy()->addHours(5);
+
+        $pending = BookingRequest::query()
+            ->where('status', BookingRequest::STATUS_PENDING)
+            ->whereNotNull('planned_start')
+            ->whereBetween('planned_start', [$now, $limit])
+            ->orderBy('planned_start')
+            ->limit(20)
+            ->get(['id', 'request_number', 'po_number', 'supplier_name', 'planned_start']);
+
+        $items = $pending->map(function (BookingRequest $booking) use ($now) {
+            $plannedStart = $booking->planned_start;
+            $minutesToStart = $plannedStart ? $now->diffInMinutes($plannedStart, false) : null;
+
+            return [
+                'id' => $booking->id,
+                'request_number' => $booking->request_number,
+                'po_number' => $booking->po_number,
+                'supplier_name' => $booking->supplier_name,
+                'planned_start' => $plannedStart ? $plannedStart->format('Y-m-d H:i') : null,
+                'minutes_to_start' => $minutesToStart,
+                'show_url' => route('bookings.show', $booking->id, false),
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'count' => $items->count(),
+            'items' => $items,
+        ]);
+    }
 }

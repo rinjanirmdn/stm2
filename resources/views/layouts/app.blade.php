@@ -210,6 +210,37 @@
                 </div>
             @endif
 
+            @can('bookings.index')
+            <div id="st-reminder-banner" style="display:none; margin-bottom: 16px; border: 1px solid #f59e0b; background: #fffbeb; color: #92400e; border-radius: 12px; padding: 12px 16px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:10px; font-weight:600;">
+                        <i class="fas fa-bell" aria-hidden="true"></i>
+                        <span>Reminder: Pending bookings nearing schedule</span>
+                    </div>
+                    <span id="st-reminder-count" style="font-size:12px; font-weight:700; padding:4px 8px; border-radius:999px; background:#fde68a; color:#92400e;">0</span>
+                </div>
+                <div id="st-reminder-list" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+            <div id="st-reminder-toast" style="display:none; position: fixed; right: 24px; top: 96px; z-index: 1200; min-width: 280px; max-width: 360px; background: #92400e; color: #fffbeb; border-radius: 12px; padding: 12px 14px; box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);">
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <i class="fas fa-bell" style="margin-top:2px;"></i>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; margin-bottom:4px;">Reminder Approvals</div>
+                        <div id="st-reminder-toast-text" style="font-size:12px; line-height:1.4;"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="st-notification-toast" style="display:none; position: fixed; right: 24px; top: 180px; z-index: 1200; min-width: 280px; max-width: 360px; background: #1e40af; color: #eff6ff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);">
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <i class="fas fa-bell" style="margin-top:2px;"></i>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; margin-bottom:4px;">New Notification</div>
+                        <div id="st-notification-toast-text" style="font-size:12px; line-height:1.4;"></div>
+                    </div>
+                </div>
+            </div>
+            @endcan
+
             @yield('content')
         </main>
 
@@ -326,6 +357,163 @@ if (stClearBtn) {
             // ignore
         }
     };
+</script>
+
+@can('bookings.index')
+@php
+    $reminderUrl = \Illuminate\Support\Facades\Route::has('bookings.ajax.reminders')
+        ? route('bookings.ajax.reminders')
+        : null;
+@endphp
+<script>
+    (function () {
+        var reminderUrl = {!! $reminderUrl ? json_encode($reminderUrl) : 'null' !!};
+        var banner = document.getElementById('st-reminder-banner');
+        var countEl = document.getElementById('st-reminder-count');
+        var listEl = document.getElementById('st-reminder-list');
+        var toast = document.getElementById('st-reminder-toast');
+        var toastText = document.getElementById('st-reminder-toast-text');
+        var toastTimer = null;
+
+        if (!reminderUrl || !banner || !countEl || !listEl) {
+            return;
+        }
+
+        function showToast(items) {
+            if (!toast || !toastText) {
+                return;
+            }
+            if (!items || !items.length) {
+                toast.style.display = 'none';
+                return;
+            }
+
+            var first = items[0];
+            var label = first.request_number || first.po_number || ('Request #' + first.id);
+            var minutes = typeof first.minutes_to_start === 'number'
+                ? Math.max(first.minutes_to_start, 0)
+                : null;
+            var countdown = minutes !== null ? (minutes + ' minutes to start') : 'Starts soon';
+            toastText.textContent = items.length + ' pending booking(s). Nearest: ' + label + ' - ' + countdown + '.';
+            toast.style.display = 'block';
+
+            if (toastTimer) {
+                clearTimeout(toastTimer);
+            }
+            toastTimer = setTimeout(function () {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
+        function renderReminder(items) {
+            if (!items || !items.length) {
+                banner.style.display = 'none';
+                listEl.innerHTML = '';
+                countEl.textContent = '0';
+                showToast([]);
+                return;
+            }
+
+            countEl.textContent = items.length;
+            banner.style.display = 'block';
+
+            listEl.innerHTML = items.map(function (item) {
+                var label = item.request_number || item.po_number || ('Request #' + item.id);
+                var supplier = item.supplier_name ? (' - ' + item.supplier_name) : '';
+                var minutes = typeof item.minutes_to_start === 'number'
+                    ? Math.max(item.minutes_to_start, 0)
+                    : null;
+                var countdown = minutes !== null ? (' (' + minutes + ' min)') : '';
+                var timeText = item.planned_start ? ('Planned: ' + item.planned_start) : 'Planned: -';
+                return (
+                    '<a href="' + item.show_url + '" style="display:flex; justify-content:space-between; gap:12px; padding:8px 12px; border-radius:10px; background:#fef3c7; color:#92400e; text-decoration:none;">
+                    <span style="font-weight:600;">' + label + supplier + '</span>' +
+                    '<span style="font-size:12px;">' + timeText + countdown + '</span>' +
+                    '</a>'
+                );
+            }).join('');
+
+            showToast(items);
+        }
+
+        function fetchReminders() {
+            fetch(reminderUrl, { headers: { 'Accept': 'application/json' } })
+                .then(function (resp) { return resp.json(); })
+                .then(function (data) {
+                    if (!data || !data.success) {
+                        renderReminder([]);
+                        return;
+                    }
+                    renderReminder(data.items || []);
+                })
+                .catch(function () {
+                    renderReminder([]);
+                });
+        }
+
+        fetchReminders();
+        setInterval(fetchReminders, 30 * 60 * 1000);
+    })();
+</script>
+@endcan
+
+<script>
+    (function () {
+        @php
+            $latestUrl = \Illuminate\Support\Facades\Route::has('notifications.latest')
+                ? route('notifications.latest')
+                : null;
+        @endphp
+        var latestUrl = {!! $latestUrl ? json_encode($latestUrl) : 'null' !!};
+        var toast = document.getElementById('st-notification-toast');
+        var toastText = document.getElementById('st-notification-toast-text');
+        var toastTimer = null;
+        var storageKey = 'st_last_notification_id';
+
+        if (!latestUrl || !toast || !toastText) {
+            return;
+        }
+
+        function showNotification(notification) {
+            if (!notification) {
+                return;
+            }
+            toastText.textContent = (notification.title || 'Notification') + ' - ' + (notification.message || '');
+            toast.style.display = 'block';
+
+            if (toastTimer) {
+                clearTimeout(toastTimer);
+            }
+            toastTimer = setTimeout(function () {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function checkLatest() {
+            fetch(latestUrl, { headers: { 'Accept': 'application/json' } })
+                .then(function (resp) { return resp.json(); })
+                .then(function (data) {
+                    if (!data || !data.success || !data.notification) {
+                        return;
+                    }
+                    var lastId = localStorage.getItem(storageKey);
+                    if (!lastId) {
+                        localStorage.setItem(storageKey, data.notification.id);
+                        return;
+                    }
+                    if (lastId !== data.notification.id) {
+                        localStorage.setItem(storageKey, data.notification.id);
+                        showNotification(data.notification);
+                    }
+                })
+                .catch(function () {
+                    // ignore
+                });
+        }
+
+        checkLatest();
+        setInterval(checkLatest, 60 * 1000);
+    })();
 </script>
 
 <!-- PWA Service Worker Registration -->

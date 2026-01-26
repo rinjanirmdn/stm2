@@ -52,4 +52,30 @@ class NotificationController extends Controller
 
         return back()->with('success', 'All notifications cleared.');
     }
+
+    /**
+     * Get latest notification for popup polling
+     */
+    public function latest(Request $request)
+    {
+        $notification = $request->user()
+            ->notifications()
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (! $notification) {
+            return response()->json(['success' => true, 'notification' => null]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'notification' => [
+                'id' => $notification->id,
+                'title' => $notification->data['title'] ?? 'Notification',
+                'message' => $notification->data['message'] ?? '',
+                'action_url' => $notification->data['action_url'] ?? '#',
+                'created_at' => $notification->created_at?->toIso8601String(),
+            ],
+        ]);
+    }
 }
