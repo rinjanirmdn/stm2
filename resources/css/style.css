@@ -4443,16 +4443,23 @@ table.st-table td form {
     align-items: stretch;
     overflow-x: auto;
     padding-bottom: 12px;
+    margin-right: -32px;
+    padding-right: 32px;
+    width: calc(100% + 32px);
+    box-sizing: border-box;
 }
 
 .st-dashboard-schedule-chart-col {
-    min-width: 320px;
-    flex: 0 0 340px;
+    min-width: 420px;
+    flex: 0 0 440px;
 }
 
 .st-dashboard-schedule-table-col {
     min-width: 600px;
     flex: 1 1 auto;
+    margin-right: 0;
+    padding-right: 0;
+    max-width: none;
 }
 
 .st-dashboard-schedule-chart-card {
@@ -4460,8 +4467,8 @@ table.st-table td form {
 }
 
 .st-dashboard-schedule-chart-wrap {
-    height: clamp(180px, 18vw, 230px) !important;
-    min-height: 180px;
+    height: clamp(240px, 22vw, 280px) !important;
+    min-height: 240px;
 }
 
 .st-dashboard-schedule-metrics-wrap {
