@@ -3,6 +3,9 @@
 @section('title', 'Create Booking - Vendor Portal')
 
 @section('content')
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.css">
+@endpush
 <style>
     .cb-layout {
         display: grid;
@@ -110,6 +113,26 @@
     .cb-slot-cell--booked { background: #dbeafe; border: 1px solid #3b82f6; color: #1e40af; font-weight: 600; }
     .cb-slot-cell--pending { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; }
     .cb-slot-cell--selected { background: #1e40af; color: white; border-color: #1e40af; }
+
+    .cb-slot-btn--disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .cb-time-input {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        outline: none;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .cb-time-input:focus {
+        border-color: #00bcd4;
+    }
 
     .cb-summary {
         position: fixed;
@@ -226,11 +249,13 @@
                 </div>
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Time <span style="color: #ef4444;">*</span></label>
-                    <input type="time" name="planned_time" class="vendor-form-input" required
-                           min="07:00" max="19:00" value="{{ old('planned_time', request('time', '09:00')) }}" id="planned_time">
+                    <input type="text" name="planned_time" class="vendor-form-input cb-time-input" required
+                           value="{{ old('planned_time', request('time', '09:00')) }}" id="planned_time" autocomplete="off" readonly inputmode="none">
+                    <small id="time-warning" style="display:none; color:#ef4444; font-size:12px; margin-top:6px;">Invalid time selection.</small>
                 </div>
             </div>
-            <input type="hidden" name="planned_duration" id="planned_duration" value="{{ old('planned_duration') }}">
+            <input type="hidden" name="planned_gate_id" id="planned_gate_id" value="">
+            <input type="hidden" name="warehouse_id" id="warehouse_hidden" value="">
         </div>
 
         <!-- Vehicle & Documents -->
@@ -316,6 +341,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const truckTypeSelect = document.getElementById('truck_type');
@@ -334,13 +360,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryTime = document.getElementById('summary-time');
     const summaryDuration = document.getElementById('summary-duration');
     const summaryStatus = document.getElementById('summary-status');
+    const timeWarning = document.getElementById('time-warning');
 
     const urlPoSearch = '{{ route('vendor.ajax.po_search') }}';
     const urlPoDetailTemplate = '{{ route('vendor.ajax.po_detail', ['poNumber' => '__PO__']) }}';
     const urlAvailableSlots = '{{ route('vendor.ajax.available_slots') }}';
-    const defaultWarehouseId = {{ (int) ($defaultWarehouseId ?? 0) }};
     const holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
     let poDebounceTimer = null;
+
     function escapeHtml(str) {
         return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
     }
@@ -359,11 +386,47 @@ document.addEventListener('DOMContentLoaded', function() {
         return minAllowed;
     }
 
+    function isTimeAllowed(date, time) {
+        if (!date || !time) return true;
+        if (time < '07:00' || time > '19:00') return false;
+        const minAllowed = getMinAllowedDateTime();
+        const selected = new Date(`${date}T${time}:00`);
+        return selected.getTime() >= minAllowed.getTime();
+    }
+
+    function setTimeWarning(message) {
+        if (!timeWarning) return;
+        if (!message) {
+            timeWarning.textContent = '';
+            timeWarning.style.display = 'none';
+            return;
+        }
+        timeWarning.textContent = message;
+        timeWarning.style.display = 'block';
+    }
+
+    function getPickerTimeValue() {
+        const holder = document.querySelector('.mdtp__time_holder, .mdtp__time');
+        if (holder && holder.textContent) {
+            return holder.textContent.trim();
+        }
+        return timeInput.value;
+    }
+
+    function syncTimePickerOkState() {
+        const okButton = document.querySelector('.mdtp__button.ok, .mdtp__button--ok, .mdtp__button-ok');
+        if (!okButton) return;
+        const candidateTime = getPickerTimeValue();
+        const valid = isTimeAllowed(dateInput.value, candidateTime);
+        okButton.disabled = !valid;
+        okButton.style.opacity = valid ? '' : '0.5';
+        okButton.style.pointerEvents = valid ? '' : 'none';
+    }
+
     function applyTimeRules() {
         const date = dateInput.value;
         const time = timeInput.value;
         const minAllowed = getMinAllowedDateTime();
-        const minDateStr = toIsoDate(new Date());
 
         timeInput.setCustomValidity('');
 
@@ -374,20 +437,78 @@ document.addEventListener('DOMContentLoaded', function() {
         const selected = time ? new Date(`${date}T${time}:00`) : null;
         const minAllowedStr = toIsoDate(minAllowed);
 
-        if (date === minAllowedStr) {
-            const minTime = `${String(minAllowed.getHours()).padStart(2, '0')}:${String(minAllowed.getMinutes()).padStart(2, '0')}`;
-            timeInput.min = minTime;
-        } else {
-            timeInput.min = '07:00';
-        }
+        const minTime = date === minAllowedStr
+            ? `${String(minAllowed.getHours()).padStart(2, '0')}:${String(minAllowed.getMinutes()).padStart(2, '0')}`
+            : '07:00';
+        const maxTime = '19:00';
+
+        timeInput.min = minTime;
+        timeInput.max = maxTime;
 
         if (selected && selected.getTime() < minAllowed.getTime()) {
-            timeInput.setCustomValidity('Booking harus minimal 4 jam dari sekarang.');
+            timeInput.setCustomValidity('Booking must be at least 4 hours from now.');
         }
 
         if (time && time > '19:00') {
-            timeInput.setCustomValidity('Booking maksimal jam 19:00.');
+            timeInput.setCustomValidity('Maximum booking time is 19:00.');
         }
+    }
+
+    function initTimePicker() {
+        if (typeof window.mdtimepicker !== 'function') return;
+        if (!timeInput || timeInput.getAttribute('data-st-timepicker') === '1') return;
+        timeInput.setAttribute('data-st-timepicker', '1');
+
+        timeInput.addEventListener('keydown', (event) => event.preventDefault());
+        timeInput.addEventListener('paste', (event) => event.preventDefault());
+        timeInput.addEventListener('input', () => {
+            applyTimeRules();
+            checkAvailability();
+            syncTimePickerOkState();
+        });
+
+        window.mdtimepicker('#planned_time', {
+            format: 'hh:mm',
+            is24hour: true,
+            theme: 'cyan',
+            hourPadding: true
+        });
+
+        timeInput.addEventListener('change', () => {
+            if (!isTimeAllowed(dateInput.value, timeInput.value)) {
+                timeInput.setCustomValidity('Booking must be at least 4 hours from now and no later than 19:00.');
+                timeInput.value = '';
+                setTimeWarning('Please choose a time at least 4 hours from now and no later than 19:00.');
+                syncTimePickerOkState();
+                updateSummary();
+                checkAvailability();
+                return;
+            }
+            setTimeWarning('');
+            applyTimeRules();
+            checkAvailability();
+            syncTimePickerOkState();
+        });
+
+        document.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!target) return;
+            if (target.closest('.mdtp__clock') || target.closest('.mdtp__time_holder') || target.closest('.mdtp__time')) {
+                setTimeout(syncTimePickerOkState, 0);
+            }
+            if (target.closest('.mdtp__button.ok, .mdtp__button--ok, .mdtp__button-ok')) {
+                const candidate = getPickerTimeValue();
+                if (!isTimeAllowed(dateInput.value, candidate)) {
+                    timeInput.setCustomValidity('Booking must be at least 4 hours from now and no later than 19:00.');
+                    timeInput.value = '';
+                    setTimeWarning('Please choose a time at least 4 hours from now and no later than 19:00.');
+                    updateSummary();
+                    checkAvailability();
+                } else {
+                    setTimeWarning('');
+                }
+            }
+        });
     }
 
     function initDatePicker() {
@@ -408,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
                 if (dayElem.dateObj.getDay() === 0) {
                     dayElem.classList.add('is-sunday');
-                    dayElem.title = 'Minggu';
+                    dayElem.title = 'Sunday';
                 }
                 if (holidayData[ds]) {
                     dayElem.classList.add('is-holiday');
@@ -461,15 +582,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function loadLiveAvailability() {
         const date = dateInput.value;
-        if (!date || !defaultWarehouseId) {
+        if (!date) {
             liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #64748b;">Select a date to load availability.</div>';
             return;
         }
 
         liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #64748b;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
 
-        const url = urlAvailableSlots + '?warehouse_id=' + encodeURIComponent(defaultWarehouseId) + '&date=' + encodeURIComponent(date);
-        fetch(url, { headers: { 'Accept': 'application/json' } })
+        // Load availability for all gates
+        const url = urlAvailableSlots + '?date=' + encodeURIComponent(date);
+        fetch(url, { 
+            headers: { 
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json' 
+            } 
+        })
             .then(r => r.json())
             .then(resp => {
                 const slots = (resp && resp.success) ? (resp.slots || []) : [];
@@ -480,12 +607,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 let html = '<div style="padding: 6px 0;">';
                 available.forEach(slot => {
+                    const isAllowed = isTimeAllowed(date, slot.time);
                     html += `
                         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; border-bottom:1px solid #f1f5f9;">
                             <span style="font-size:12px; font-weight:600; color:#1e293b;">${slot.time}</span>
-                            <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm" data-time="${slot.time}" style="padding:4px 10px;">
-                                <i class="fas fa-plus"></i>
-                            </button>
+                            ${isAllowed ? `
+                                <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm" data-time="${slot.time}" style="padding:4px 10px;">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            ` : `
+                                <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm cb-slot-btn--disabled" disabled style="padding:4px 10px;">
+                                    Not available
+                                </button>
+                            `}
                         </div>
                     `;
                 });
@@ -495,6 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 liveAvailability.querySelectorAll('button[data-time]').forEach(btn => {
                     btn.addEventListener('click', () => {
                         timeInput.value = btn.dataset.time;
+                        timeInput.dispatchEvent(new Event('change', { bubbles: true }));
                         checkAvailability();
                     });
                 });
@@ -508,6 +643,12 @@ document.addEventListener('DOMContentLoaded', function() {
         durationInput.value = dur || '';
         checkAvailability();
     });
+
+    // Initialize - load availability on page load if date is set
+    initTimePicker();
+    if (dateInput.value) {
+        loadLiveAvailability();
+    }
 
     [dateInput, timeInput].forEach(el => {
         el.addEventListener('change', () => {
@@ -584,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchPoDetail(poNumber) {
         if (!poNumber) { setPoPreview(null); return; }
         const url = urlPoDetailTemplate.replace('__PO__', encodeURIComponent(poNumber));
-        fetch(url, { headers: { 'Accept': 'application/json' } })
+        fetch(url, { headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' } })
             .then(r => r.json())
             .then(resp => {
                 if (!resp.success) { setPoPreview(null); return; }
@@ -602,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
             poDebounceTimer = setTimeout(() => {
                 if (!q) { closePoSuggestions(); return; }
                 showPoSuggestionsMessage('<div style="padding:12px;"><i class="fas fa-spinner fa-spin"></i></div>');
-                fetch(urlPoSearch + '?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+                fetch(urlPoSearch + '?q=' + encodeURIComponent(q), { headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' } })
                     .then(r => r.json())
                     .then(resp => renderPoSuggestions(resp.data || []))
                     .catch(() => showPoSuggestionsMessage('<div style="padding:12px; color:#ef4444;">Error</div>'));

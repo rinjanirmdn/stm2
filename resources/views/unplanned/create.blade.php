@@ -57,32 +57,29 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:none;">
                 <div class="st-form-field">
-                    <label class="st-label">Warehouse <span style="color:#dc2626;">*</span></label>
-                    <select name="warehouse_id" id="unplanned-warehouse" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
+                    <label class="st-label">Warehouse</label>
+                    <select name="warehouse_id" id="unplanned-warehouse" class="st-select">
                         <option value="">Choose...</option>
                         @foreach ($warehouses as $wh)
                             <option value="{{ $wh->id }}" {{ (string)old('warehouse_id') === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
                         @endforeach
                     </select>
-                    @error('warehouse_id')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
-                    @enderror
                 </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Gate (Actual) <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
-                    <select name="actual_gate_id" id="unplanned-gate" class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}" {{ old('warehouse_id') ? '' : 'disabled' }}>
-                        <option value="">- Optional -</option>
+                    <label class="st-label">Gate (Actual) <span style="color:#dc2626;">*</span></label>
+                    <select name="actual_gate_id" id="unplanned-gate" class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}" required>
+                        <option value="">Choose Gate...</option>
                         @foreach ($gates as $gate)
                             @php
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
                             @endphp
                             <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('actual_gate_id') === (string)$gate->id ? 'selected' : '' }}>
-                                {{ $gate->warehouse_name }} - {{ $gateLabel }}
+                                {{ $gateLabel }}
                             </option>
                         @endforeach
                     </select>
@@ -92,7 +89,7 @@
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Arrival Time <span style="color:#dc2626;">*</span></label>
-                    <input type="text" name="actual_arrival" id="actual_arrival_input" class="st-input{{ $errors->has('actual_arrival') ? ' st-input--invalid' : '' }}" required {{ old('warehouse_id') ? '' : 'disabled' }} value="{{ old('actual_arrival') }}" placeholder="Select Date and Time">
+                    <input type="text" name="actual_arrival" id="actual_arrival_input" class="st-input{{ $errors->has('actual_arrival') ? ' st-input--invalid' : '' }}" required value="{{ old('actual_arrival') }}" placeholder="Select Date and Time">
                     @error('actual_arrival')
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
                     @enderror
@@ -453,32 +450,18 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Flatpickr initialized for arrival:', fp);
     }
 
-    // Warehouse -> Gate dependency
-    if (warehouseSelect && gateSelect) {
-        warehouseSelect.addEventListener('change', function () {
-            var whId = this.value;
-            var options = gateSelect.querySelectorAll('option');
-            var hasEnabled = false;
-            options.forEach(function (opt) {
-                if (opt.value === '') {
-                    opt.style.display = '';
-                } else {
-                    var wh = opt.getAttribute('data-warehouse-id');
-                    if (wh === whId) {
-                        opt.style.display = '';
-                        hasEnabled = true;
-                    } else {
-                        opt.style.display = 'none';
-                    }
-                }
-            });
-            gateSelect.disabled = !hasEnabled;
-            if (!hasEnabled) gateSelect.value = '';
+    function syncWarehouseFromGate() {
+        if (!warehouseSelect || !gateSelect) return;
+        var selected = gateSelect.options[gateSelect.selectedIndex];
+        if (!selected) return;
+        warehouseSelect.value = selected.getAttribute('data-warehouse-id') || '';
+    }
+
+    if (gateSelect) {
+        gateSelect.addEventListener('change', function () {
+            syncWarehouseFromGate();
             if (arrivalInput) {
-                arrivalInput.disabled = !whId;
-                if (whId) {
-                    initFlatpickrForArrival();
-                }
+                arrivalInput.disabled = !(gateSelect.value || '').trim();
             }
         });
     }

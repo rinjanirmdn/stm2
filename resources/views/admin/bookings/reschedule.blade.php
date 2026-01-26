@@ -77,19 +77,20 @@
                     New Schedule
                 </h3>
                 
-                <div class="st-form-group">
-                    <label class="st-label">Warehouse <span class="st-required">*</span></label>
-                    <select name="warehouse_id" class="st-select" required id="warehouse_id">
-                        <option value="">Select Warehouse</option>
-                        @foreach($warehouses as $wh)
-                            <option value="{{ $wh->id }}" {{ old('warehouse_id') == $wh->id ? 'selected' : '' }}>
-                                {{ $wh->wh_code }} - {{ $wh->wh_name ?? ($wh->name ?? '') }}
+                <div class="admin-form-group">
+                    <label class="admin-form-label">Gate <span style="color: #ef4444;">*</span></label>
+                    <select name="planned_gate_id" id="gate_select" class="admin-form-select" required>
+                        <option value="">Select Gate...</option>
+                        @foreach ($gates as $gate)
+                            @php
+                                $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
+                            @endphp
+                            <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('planned_gate_id', $booking->planned_gate_id ?? '') === (string)$gate->id ? 'selected' : '' }}>
+                                {{ $gateLabel }}
                             </option>
                         @endforeach
                     </select>
-                    @error('warehouse_id')
-                        <span class="st-error">{{ $message }}</span>
-                    @enderror
+                    <input type="hidden" name="warehouse_id" id="warehouse_hidden" value="">
                 </div>
 
                 <div class="st-form-group">
@@ -123,13 +124,6 @@
                     @error('planned_duration')
                         <span class="st-error">{{ $message }}</span>
                     @enderror
-                </div>
-
-                <div class="st-form-group">
-                    <label class="st-label">Gate (optional)</label>
-                    <select name="planned_gate_id" class="st-select" id="gate_select">
-                        <option value="">Auto-assign</option>
-                    </select>
                 </div>
 
                 <div class="st-form-group" style="margin-top: 1.5rem;">
@@ -225,8 +219,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const availabilityCheck = document.getElementById('availability-check');
     const availabilityResult = document.getElementById('availability-result');
     const calendarPreview = document.getElementById('calendar-preview');
+    const warehouseHidden = document.getElementById('warehouse_hidden');
 
-    const warehouseId = '{{ $booking->warehouse_id }}';
+    // Gate and warehouse sync
+    function syncWarehouseFromGate() {
+        const gateSelect = document.getElementById('gate_select');
+        if (!gateSelect || !warehouseHidden) return;
+        const selected = gateSelect.options[gateSelect.selectedIndex];
+        if (!selected) return;
+        warehouseHidden.value = selected.getAttribute('data-warehouse-id') || '';
+        
+        // Load availability after warehouse changes
+        checkAvailability();
+        loadCalendarPreview();
+    }
 
     // Initialize Flatpickr for date input
     if (dateInput) {
@@ -268,6 +274,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const plannedStart = date + ' ' + time + ':00';
 
+        const warehouseId = (warehouseHidden && warehouseHidden.value) ? warehouseHidden.value : '{{ $booking->warehouse_id }}';
+        
         fetch(`/bookings/ajax/calendar?warehouse_id=${warehouseId}&gate_id=${gateId}&planned_start=${encodeURIComponent(plannedStart)}&planned_duration=${duration}&exclude_slot_id={{ $booking->id }}`)
             .then(response => response.json())
             .then(data => {
@@ -296,6 +304,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadCalendarPreview() {
         const date = dateInput.value;
+
+        const warehouseId = (warehouseHidden && warehouseHidden.value) ? warehouseHidden.value : '{{ $booking->warehouse_id }}';
 
         if (!date) {
             return;
@@ -359,6 +369,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         html += '</tbody></table></div>';
         calendarPreview.innerHTML = html;
+    }
+
+    // Gate change listener
+    const gateSelect = document.getElementById('gate_select');
+    if (gateSelect) {
+        gateSelect.addEventListener('change', function() {
+            syncWarehouseFromGate();
+        });
+        // Initial sync if gate is pre-selected
+        if (gateSelect.value) {
+            syncWarehouseFromGate();
+        }
     }
 
     // Initial load

@@ -100,11 +100,35 @@
         cursor: pointer;
         transition: all 0.15s;
         color: #374151;
+        font-size: 14px;
+        font-weight: 500;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     .av-calendar__day:hover { background: #f1f5f9; }
     .av-calendar__day--today { background: #dbeafe; color: #1e40af; font-weight: 600; }
     .av-calendar__day--selected { background: #1e40af; color: white; font-weight: 600; }
     .av-calendar__day--other { color: #9ca3af; }
+    .av-calendar__day--disabled { 
+        color: #d1d5db; 
+        background: #f9fafb; 
+        cursor: not-allowed !important; 
+        pointer-events: none; 
+    }
+    .av-calendar__day--sunday { 
+        color: #ef4444; 
+        background: #fef2f2; 
+        cursor: not-allowed !important; 
+        pointer-events: none; 
+    }
+    .av-calendar__day--holiday { 
+        color: #f59e0b; 
+        background: #fffbeb; 
+        cursor: not-allowed !important; 
+        pointer-events: none; 
+    }
 
     .av-main {
         background: #ffffff;
@@ -155,14 +179,19 @@
         text-align: left;
     }
     .av-available-item:hover {
-        border-color: #bfdbfe;
-        box-shadow: 0 6px 16px rgba(30, 64, 175, 0.08);
+        border-color: #2563eb;
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.12);
         transform: translateY(-1px);
     }
+    .av-available-item.cb-slot-btn--disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
     .av-available-time {
-        font-weight: 700;
+        font-size: 16px;
+        font-weight: 600;
         color: #1e293b;
-        font-size: 14px;
     }
     .av-slot__vendor { font-size: 10px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .av-slot__action {
@@ -246,11 +275,7 @@
             </button>
         </div>
 
-        <div class="av-sidebar__body" id="av-sidebar-body">
-        <form method="GET" action="{{ route('vendor.availability') }}" id="av-form">
-            <input type="hidden" name="date" id="hidden-date" value="{{ $selectedDate }}">
-        </form>
-
+        <div class="av-sidebar__body" id="av-sidebar__body">
         <!-- Mini Calendar -->
         <div class="av-calendar">
             <div class="av-calendar__header">
@@ -261,16 +286,20 @@
                 </div>
             </div>
             <div class="av-calendar__grid">
-                <div class="av-calendar__day-header">Mo</div>
-                <div class="av-calendar__day-header">Tu</div>
-                <div class="av-calendar__day-header">We</div>
-                <div class="av-calendar__day-header">Th</div>
-                <div class="av-calendar__day-header">Fr</div>
-                <div class="av-calendar__day-header">Sa</div>
-                <div class="av-calendar__day-header">Su</div>
+                <div class="av-calendar__day-header">Mon</div>
+                <div class="av-calendar__day-header">Tue</div>
+                <div class="av-calendar__day-header">Wed</div>
+                <div class="av-calendar__day-header">Thu</div>
+                <div class="av-calendar__day-header">Fri</div>
+                <div class="av-calendar__day-header">Sat</div>
+                <div class="av-calendar__day-header">Sun</div>
             </div>
             <div class="av-calendar__grid" id="calendar-days"></div>
         </div>
+
+        <form method="GET" action="{{ route('vendor.availability') }}" id="av-form">
+            <input type="hidden" name="date" id="hidden-date" value="{{ $selectedDate }}">
+        </form>
 
         </div>
     </div>
@@ -292,7 +321,8 @@
             </div>
         </div>
         
-        <div id="availability-list">
+        <!-- Time Slots Grid -->
+        <div id="availability-list" class="av-time-slots">
             <div style="text-align: center; padding: 60px 20px; color: #64748b;">
                 <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 12px;"></i>
                 <p>Loading availability...</p>
@@ -305,9 +335,32 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const warehouseId = '{{ $selectedWarehouse?->id }}';
+    const holidayData = @json($holidays ?? []);
     let currentDate = new Date('{{ $selectedDate }}');
     const today = new Date();
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    function pad2(value) {
+        return String(value).padStart(2, '0');
+    }
+
+    function toIsoDateLocal(dateObj) {
+        return `${dateObj.getFullYear()}-${pad2(dateObj.getMonth() + 1)}-${pad2(dateObj.getDate())}`;
+    }
+
+    function getMinAllowedDateTime() {
+        const now = new Date();
+        now.setSeconds(0, 0);
+        return new Date(now.getTime() + 4 * 60 * 60 * 1000);
+    }
+
+    function isTimeAllowed(dateStr, time) {
+        if (!dateStr || !time) return true;
+        if (time < '07:00' || time > '19:00') return false;
+        const minAllowed = getMinAllowedDateTime();
+        const selected = new Date(`${dateStr}T${time}:00`);
+        return selected.getTime() >= minAllowed.getTime();
+    }
     today.setHours(0,0,0,0);
 
     const sidebar = document.getElementById('av-sidebar');
@@ -328,9 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize
     renderMiniCalendar();
-    if (warehouseId) {
-        loadAvailability();
-    }
+    loadAvailability();
 
     // Mini Calendar
     function renderMiniCalendar() {
@@ -340,44 +391,66 @@ document.addEventListener('DOMContentLoaded', function() {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
-        monthLabel.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        // Update month label - using English
+        monthLabel.textContent = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         
+        // Clear and render calendar days
+        container.innerHTML = '';
+        
+        // Get first day of month and days in month
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
-        const startDay = (firstDay.getDay() + 6) % 7; // Monday = 0
+        const daysInMonth = lastDay.getDate();
         
-        let html = '';
+        // Adjust for Monday start
+        let startDay = firstDay.getDay() - 1;
+        if (startDay === -1) startDay = 6;
         
-        // Previous month days
-        const prevMonth = new Date(year, month, 0);
-        for (let i = startDay - 1; i >= 0; i--) {
-            const day = prevMonth.getDate() - i;
-            html += `<div class="av-calendar__day av-calendar__day--other">${day}</div>`;
+        // Add empty cells for days before month starts
+        for (let i = 0; i < startDay; i++) {
+            const emptyDiv = document.createElement('div');
+            container.appendChild(emptyDiv);
         }
         
-        // Current month days
-        const selectedStr = '{{ $selectedDate }}';
-        const todayStr = today.toISOString().split('T')[0];
-        
-        for (let day = 1; day <= lastDay.getDate(); day++) {
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            let classes = 'av-calendar__day';
-            if (dateStr === todayStr) classes += ' av-calendar__day--today';
-            if (dateStr === selectedStr) classes += ' av-calendar__day--selected';
-            html += `<div class="${classes}" onclick="selectDate('${dateStr}')">${day}</div>`;
+        // Add days of month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dateStr = toIsoDateLocal(date);
+            const isToday = date.toDateString() === today.toDateString();
+            const isSelected = dateStr === '{{ $selectedDate }}';
+            const isPast = date < todayMidnight;
+            const isSunday = date.getDay() === 0; // 0 = Sunday
+            const isHoliday = holidayData[dateStr];
+            
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'av-calendar__day';
+            dayDiv.textContent = day;
+            
+            if (isToday) dayDiv.classList.add('av-calendar__day--today');
+            if (isSelected) dayDiv.classList.add('av-calendar__day--selected');
+            if (isPast) dayDiv.classList.add('av-calendar__day--disabled');
+            if (isSunday) dayDiv.classList.add('av-calendar__day--sunday');
+            if (isHoliday) dayDiv.classList.add('av-calendar__day--holiday');
+            
+            // Disable clicking on past dates, Sundays, and holidays
+            if (!isPast && !isSunday && !isHoliday) {
+                dayDiv.style.cursor = 'pointer';
+                dayDiv.addEventListener('click', () => selectDate(dateStr));
+            }
+            
+            // Add tooltips
+            if (isSunday) {
+                dayDiv.title = 'Sunday - Not available';
+            } else if (isHoliday) {
+                dayDiv.title = isHoliday + ' - Holiday';
+            }
+            
+            container.appendChild(dayDiv);
         }
-        
-        // Next month days
-        const remaining = 42 - (startDay + lastDay.getDate());
-        for (let day = 1; day <= remaining && day <= 7; day++) {
-            html += `<div class="av-calendar__day av-calendar__day--other">${day}</div>`;
-        }
-        
-        container.innerHTML = html;
-    }
-
-    window.changeMonth = function(delta) {
-        currentDate.setMonth(currentDate.getMonth() + delta);
+    };
+    
+    window.changeMonth = function(direction) {
+        currentDate.setMonth(currentDate.getMonth() + direction);
         renderMiniCalendar();
     };
 
@@ -385,15 +458,39 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('hidden-date').value = dateStr;
         document.getElementById('av-form').submit();
     };
-
-    // Availability list
+    
     function loadAvailability() {
         const container = document.getElementById('availability-list');
         const date = '{{ $selectedDate }}';
+        
+        // Show loading state
+        container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #64748b;"><i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 12px;"></i><p>Loading availability...</p></div>';
+        
+        // Add timeout to show error if loading takes too long
+        const timeout = setTimeout(() => {
+            container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #ef4444;"><i class="fas fa-exclamation-triangle fa-2x" style="margin-bottom: 12px;"></i><p>Loading is taking longer than expected. Please try again.</p></div>';
+        }, 10000); // 10 seconds timeout
 
-        fetch(`{{ route('vendor.ajax.available_slots') }}?warehouse_id=${warehouseId}&date=${date}`)
-            .then(r => r.json())
+        fetch(`{{ route('vendor.ajax.available_slots') }}?date=${date}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        })
+            .then(r => {
+                if (r.status === 401) {
+                    // Session expired, reload page
+                    window.location.reload();
+                    return;
+                }
+                if (!r.ok) {
+                    throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                }
+                return r.json();
+            })
             .then(data => {
+                clearTimeout(timeout);
+                
                 if (!data.success || !data.slots) {
                     container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">Failed to load</p>';
                     return;
@@ -403,18 +500,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">No available times</p>';
                     return;
                 }
-                let html = '<div class="av-available-list">';
+                let html = '';
                 available.forEach(slot => {
+                    const isAllowed = isTimeAllowed(date, slot.time);
                     html += `
-                        <button type="button" class="av-available-item" data-time="${slot.time}">
+                        <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
                             <span class="av-available-time">${slot.time}</span>
+                            ${isAllowed ? '' : '<span class="av-available-note">Not available</span>'}
                         </button>
                     `;
                 });
-                html += '</div>';
                 container.innerHTML = html;
 
                 container.querySelectorAll('.av-available-item[data-time]').forEach(btn => {
+                    if (btn.hasAttribute('disabled')) {
+                        return;
+                    }
                     btn.addEventListener('click', () => {
                         const url = new URL('{{ route("vendor.bookings.create") }}', window.location.origin);
                         url.searchParams.set('date', date);
@@ -423,8 +524,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
             })
-            .catch(() => {
-                container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">Error loading availability</p>';
+            .catch(error => {
+                clearTimeout(timeout);
+                console.error('Error loading availability:', error);
+                container.innerHTML = `<p style="text-align: center; color: #ef4444; padding: 40px;">Error loading availability: ${error.message}</p>`;
             });
     }
 });

@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Slot;
+use App\Observers\SlotObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,5 +31,8 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('holidays', []);
             }
         });
+        
+        // Register Slot observer
+        Slot::observe(SlotObserver::class);
     }
 }

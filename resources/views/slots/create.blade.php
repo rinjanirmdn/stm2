@@ -109,22 +109,19 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="st-form-field">
-                    <label class="st-label">Warehouse <span class="st-text--danger-dark">*</span></label>
-                    <select name="warehouse_id" id="warehouse_id" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
+                <div class="st-form-field" style="display:none;">
+                    <label class="st-label">Warehouse</label>
+                    <select name="warehouse_id" id="warehouse_id" class="st-select">
                         <option value="">Choose...</option>
                         @foreach ($warehouses as $wh)
                             <option value="{{ $wh->id }}" {{ (string)old('warehouse_id') === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
                         @endforeach
                     </select>
-                    @error('warehouse_id')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
-                    @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Planned Gate <span class="st-text--optional">(Optional)</span></label>
-                    <select name="planned_gate_id" id="planned_gate_id" class="st-select{{ $errors->has('planned_gate_id') ? ' st-input--invalid' : '' }}" {{ old('warehouse_id') ? '' : 'disabled' }}>
-                        <option value="">- Optional -</option>
+                    <label class="st-label">Planned Gate <span class="st-text--danger-dark">*</span></label>
+                    <select name="planned_gate_id" id="planned_gate_id" class="st-select{{ $errors->has('planned_gate_id') ? ' st-input--invalid' : '' }}" required>
+                        <option value="">Choose Gate...</option>
                         @foreach ($gates as $gate)
                             @php
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
@@ -134,7 +131,7 @@
                                 data-warehouse-id="{{ $gate->warehouse_id }}"
                                 {{ (string)old('planned_gate_id') === (string)$gate->id ? 'selected' : '' }}
                             >
-                                {{ $gate->warehouse_name }} - {{ $gateLabel }}
+                                {{ $gateLabel }}
                             </option>
                         @endforeach
                     </select>
@@ -148,7 +145,7 @@
             <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
                 <div class="st-form-field">
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
-                    <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" required {{ old('warehouse_id') ? '' : 'disabled' }} value="{{ old('planned_start') }}" placeholder="Select Date and Time">
+                    <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" required value="{{ old('planned_start') }}" placeholder="Select Date and Time">
                     @error('planned_start')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
@@ -173,7 +170,7 @@
                             <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Belum Dihitung.</div>
                             <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
                         </div>
-                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;" {{ old('warehouse_id') ? '' : 'disabled' }}>Lihat Jadwal</button>
+                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;">Lihat Jadwal</button>
                     </div>
                 </div>
             </div>
@@ -270,6 +267,7 @@
         'schedule_preview' => route('slots.ajax.schedule_preview'),
         'po_search' => route('slots.ajax.po_search'),
         'po_detail_template' => route('slots.ajax.po_detail', ['poNumber' => '__PO__']),
+        'vendor_search' => route('api.sap.vendor.search'),
     ]) !!}</script>
 @endsection
 
@@ -282,6 +280,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var poSuggestions = document.getElementById('po_suggestions');
     var poPreview = document.getElementById('po_preview');
     var poItemsGroup = document.getElementById('po_items_group');
+
+    var vendorSearch = document.getElementById('vendor_search');
+    var vendorSelect = document.getElementById('vendor_id');
+    var vendorSuggestions = document.getElementById('vendor_suggestions');
 
     var warehouseSelect = document.getElementById('warehouse_id');
     var gateSelect = document.getElementById('planned_gate_id');
@@ -339,6 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var urlSchedulePreview = slotRoutes.schedule_preview || '';
     var urlPoSearch = slotRoutes.po_search || '';
     var urlPoDetailTemplate = slotRoutes.po_detail_template || '';
+    var urlVendorSearch = slotRoutes.vendor_search || '';
 
     var oldPoItems = {};
     try {
@@ -665,21 +668,12 @@ document.addEventListener('DOMContentLoaded', function () {
         vendorSearch.placeholder = 'Cari Vendor...';
     }
 
-    function filterGates() {
+    function syncWarehouseFromGate() {
         if (!warehouseSelect || !gateSelect) return;
-        var whId = warehouseSelect.value;
-        var options = gateSelect.querySelectorAll('option[data-warehouse-id]');
-        options.forEach(function (opt) {
-            if (!whId || opt.getAttribute('data-warehouse-id') === whId) {
-                opt.hidden = false;
-            } else {
-                opt.hidden = true;
-                if (opt.selected) {
-                    opt.selected = false;
-                    gateSelect.value = '';
-                }
-            }
-        });
+        var selected = gateSelect.options[gateSelect.selectedIndex];
+        if (!selected) return;
+        var wh = selected.getAttribute('data-warehouse-id') || '';
+        warehouseSelect.value = wh;
     }
 
     function initFlatpickrForETA() {
@@ -721,21 +715,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function applyWarehouseLockState() {
-        var hasWh = !!(warehouseSelect && warehouseSelect.value);
-
-        if (gateSelect) {
-            gateSelect.disabled = !hasWh;
-            if (!hasWh) {
-                gateSelect.value = '';
-            }
-        }
+        var hasGate = !!(gateSelect && gateSelect.value);
 
         if (plannedStartInput) {
-            plannedStartInput.disabled = !hasWh;
-            if (hasWh) {
+            plannedStartInput.disabled = !hasGate;
+            if (hasGate) {
                 initFlatpickrForETA();
             }
-            if (!hasWh) {
+            if (!hasGate) {
                 if (plannedStartInput._flatpickr) {
                     try { plannedStartInput._flatpickr.clear(); } catch (e) {}
                 }
@@ -744,12 +731,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (schedulePreviewBtn) {
-            schedulePreviewBtn.disabled = !hasWh;
+            schedulePreviewBtn.disabled = !hasGate;
         }
     }
 
-    function onWarehouseChanged() {
-        filterGates();
+    function onGateChanged() {
+        syncWarehouseFromGate();
         applyWarehouseLockState();
     }
 
@@ -1046,11 +1033,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    if (warehouseSelect) {
-        warehouseSelect.addEventListener('change', function () {
-            onWarehouseChanged();
+    if (gateSelect) {
+        gateSelect.addEventListener('change', function () {
+            onGateChanged();
             updateRiskPreview();
             updateGateRecommendation();
+            checkTimeOverlap();
         });
     }
 
@@ -1089,12 +1077,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (gateSelect) {
-        gateSelect.addEventListener('change', function () {
-            updateRiskPreview();
-            updateGateRecommendation();
-            checkTimeOverlap();
-        });
+    if (gateSelect && (gateSelect.value || '').trim() !== '') {
+        onGateChanged();
     }
 
     if (durationUnitSelect) {

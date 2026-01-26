@@ -27,6 +27,7 @@
     
     @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    @stack('styles')
     
     <style>
         :root {

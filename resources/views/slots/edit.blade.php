@@ -90,22 +90,19 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="st-form-field">
-                    <label class="st-label">Warehouse <span class="st-text--danger-dark">*</span></label>
-                    <select name="warehouse_id" id="warehouse_id" class="st-select{{ $errors->has('warehouse_id') ? ' st-input--invalid' : '' }}" required>
+                <div class="st-form-field" style="display:none;">
+                    <label class="st-label">Warehouse</label>
+                    <select name="warehouse_id" id="warehouse_id" class="st-select">
                         <option value="">Choose Warehouse...</option>
                         @foreach ($warehouses as $wh)
                             <option value="{{ $wh->id }}" {{ old('warehouse_id', $slot->warehouse_id ?? '') === (string) $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
                         @endforeach
                     </select>
-                    @error('warehouse_id')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
-                    @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Planned Gate <span class="st-text--optional">(Optional)</span></label>
-                    <select name="planned_gate_id" id="planned_gate_id" class="st-select{{ $errors->has('planned_gate_id') ? ' st-input--invalid' : '' }}">
-                        <option value="">- Optional -</option>
+                    <label class="st-label">Planned Gate <span class="st-text--danger-dark">*</span></label>
+                    <select name="planned_gate_id" id="planned_gate_id" class="st-select{{ $errors->has('planned_gate_id') ? ' st-input--invalid' : '' }}" required>
+                        <option value="">Choose Gate...</option>
                         @foreach ($gates as $gate)
                             @php
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
@@ -115,7 +112,7 @@
                                 data-warehouse-id="{{ $gate->warehouse_id }}"
                                 {{ old('planned_gate_id', $slot->planned_gate_id ?? '') === (string) $gate->id ? 'selected' : '' }}
                             >
-                                {{ $gate->warehouse_name }} - {{ $gateLabel }}
+                                {{ $gateLabel }}
                             </option>
                         @endforeach
                     </select>
@@ -211,7 +208,7 @@
         'schedule_preview' => route('slots.ajax.schedule_preview'),
         'po_search' => route('slots.ajax.po_search'),
         'po_detail_template' => route('slots.ajax.po_detail', ['poNumber' => '__PO__']),
-        'vendor_search' => route('vendors.ajax.search'),
+        'vendor_search' => route('api.sap.vendor.search'),
     ]) !!}</script>
 
     <script>
@@ -222,6 +219,14 @@
         var durationUnitSelect = document.querySelector('select[name="duration_unit"]');
         var truckTypeSelect = document.getElementById('truck_type');
         var gateSelect = document.getElementById('planned_gate_id');
+
+        function syncWarehouseFromGate() {
+            if (!warehouseSelect || !gateSelect) return;
+            var selected = gateSelect.options[gateSelect.selectedIndex];
+            if (!selected) return;
+            var wh = selected.getAttribute('data-warehouse-id') || '';
+            warehouseSelect.value = wh;
+        }
 
         function initFlatpickrForETA() {
             if (!plannedStartInput) return;
@@ -254,13 +259,15 @@
             });
         }
 
-        if (warehouseSelect && warehouseSelect.value) {
+        if (gateSelect && gateSelect.value) {
+            syncWarehouseFromGate();
             initFlatpickrForETA();
         }
 
-        if (warehouseSelect) {
-            warehouseSelect.addEventListener('change', function() {
-                if (warehouseSelect.value) {
+        if (gateSelect) {
+            gateSelect.addEventListener('change', function() {
+                syncWarehouseFromGate();
+                if (gateSelect.value) {
                     plannedStartInput.disabled = false;
                     initFlatpickrForETA();
                 } else {

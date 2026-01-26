@@ -181,16 +181,20 @@
                        min="30" max="480" step="10" value="{{ $booking->planned_duration }}">
             </div>
             
-            <div class="vendor-form-group" style="margin-bottom: 0;">
-                <label class="vendor-form-label">Gate (Optional)</label>
-                <select name="planned_gate_id" class="vendor-form-select">
-                    <option value="">Auto-assign</option>
-                    @foreach($gates[$booking->warehouse_id] ?? [] as $gate)
-                        <option value="{{ $gate->id }}" {{ $booking->planned_gate_id == $gate->id ? 'selected' : '' }}>
-                            {{ $gate->name ?? 'Gate ' . $gate->gate_number }}
+            <div class="vendor-form-group">
+                <label class="vendor-form-label">Gate <span style="color: #ef4444;">*</span></label>
+                <select name="planned_gate_id" class="vendor-form-select" required>
+                    <option value="">Select Gate...</option>
+                    @foreach ($gates as $gate)
+                        @php
+                            $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
+                        @endphp
+                        <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('planned_gate_id') === (string)$gate->id ? 'selected' : '' }}>
+                            {{ $gateLabel }}
                         </option>
                     @endforeach
                 </select>
+                <input type="hidden" name="warehouse_id" value="">
             </div>
         </div>
         
@@ -213,31 +217,54 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    if (window.location && window.location.hash === '#propose') {
-        var el = document.getElementById('propose-form');
-        if (el) {
-            el.style.display = 'block';
-            try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
-        }
+    // Gate and warehouse sync
+    function syncWarehouseFromGate(select) {
+        const warehouseHidden = select.parentElement.querySelector('input[name="warehouse_id"]');
+        if (!warehouseHidden) return;
+        const selected = select.options[select.selectedIndex];
+        if (!selected) return;
+        warehouseHidden.value = selected.getAttribute('data-warehouse-id') || '';
     }
 
-    var dateInput = document.getElementById('planned_date_input');
-    if (dateInput) {
-        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
-        window.flatpickr(dateInput, {
-            dateFormat: 'Y-m-d',
-            disableMobile: true,
-            minDate: 'today',
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                if (holidayData[dateStr]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = holidayData[dateStr];
-                }
+    document.addEventListener('DOMContentLoaded', function() {
+        const gateSelects = document.querySelectorAll('select[name="planned_gate_id"]');
+        gateSelects.forEach(select => {
+            // Initial sync if gate is pre-selected
+            if (select.value) {
+                syncWarehouseFromGate(select);
             }
+            // Add change listener
+            select.addEventListener('change', function() {
+                syncWarehouseFromGate(this);
+            });
         });
-    }
-});
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.location && window.location.hash === '#propose') {
+            var el = document.getElementById('propose-form');
+            if (el) {
+                el.style.display = 'block';
+                try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+            }
+        }
+
+        var dateInput = document.getElementById('planned_date_input');
+        if (dateInput) {
+            var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+            window.flatpickr(dateInput, {
+                dateFormat: 'Y-m-d',
+                disableMobile: true,
+                minDate: 'today',
+                onDayCreate: function(dObj, dStr, fp, dayElem) {
+                    const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                    if (holidayData[dateStr]) {
+                        dayElem.classList.add('is-holiday');
+                        dayElem.title = holidayData[dateStr];
+                    }
+                }
+            });
+        }
+    });
 </script>
 @endsection

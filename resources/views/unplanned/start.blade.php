@@ -67,7 +67,7 @@
                                         $st = $gateStatuses[$gid] ?? ['is_conflict' => false, 'overlapping_slots' => []];
                                         $isConflict = !empty($st['is_conflict']);
                                         $label = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
-                                        $text = trim(($gate->warehouse_name ?? '') . ' - ' . $label);
+                                        $text = $label;
                                         if ($isConflict) {
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
@@ -89,7 +89,7 @@
                                         $st = $gateStatuses[$gid] ?? ['is_conflict' => false, 'overlapping_slots' => []];
                                         $isConflict = !empty($st['is_conflict']);
                                         $label = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
-                                        $text = trim(($gate->warehouse_name ?? '') . ' - ' . $label);
+                                        $text = $label;
                                         if ($isConflict) {
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;

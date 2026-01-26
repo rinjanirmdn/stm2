@@ -222,6 +222,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/po/{poNumber}', [VendorBookingController::class, 'ajaxPoDetail'])->where('poNumber', '[A-Za-z0-9\-]+')->name('po_detail');
         });
     });
+    
+    // Remove duplicate AJAX routes
 
     // ========================================
     // ADMIN BOOKING APPROVAL ROUTES
