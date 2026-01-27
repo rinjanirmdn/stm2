@@ -180,6 +180,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 } catch (e) { }
             });
         });
+        return true;
+    }
+
+    function initMdTimePickers() {
+        if (typeof window.mdtimepicker !== 'function') {
+            return false;
+        }
+
+        var inputs = document.querySelectorAll('input[type="time"], input[name="schedule_from"], input[name="schedule_to"], input[name="time_from"], input[name="time_to"], input[id$="_time_input"], input[id$="_time"]');
+        Array.prototype.slice.call(inputs).forEach(function (input, index) {
+            if (!input || input.getAttribute('data-st-mdtimepicker') === '1') {
+                return;
+            }
+            input.setAttribute('data-st-mdtimepicker', '1');
+            if (!input.id) {
+                input.id = 'st-timepicker-' + index;
+            }
+
+            input.addEventListener('keydown', function (event) { event.preventDefault(); });
+            input.addEventListener('paste', function (event) { event.preventDefault(); });
+
+            window.mdtimepicker('#' + input.id, {
+                format: 'hh:mm',
+                is24hour: true,
+                theme: 'cyan',
+                hourPadding: true
+            });
+        });
+
+        return true;
     }
 
     function stFindAssociatedForm(el) {
@@ -311,6 +341,200 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.classList.remove('is-filtered');
             }
         });
+    }
+
+    function initDatePickers() {
+        var dateInputs = document.querySelectorAll('input.flatpickr-date, input[type="date"], input[id$="_date_input"], input[id$="_date"]');
+        if (typeof window.jQuery !== 'undefined' && typeof window.jQuery.fn.datepicker === 'function') {
+            Array.prototype.slice.call(dateInputs).forEach(function (input) {
+                if (!input || input.getAttribute('data-st-datepicker') === '1' || input.id === 'analytics_range') {
+                    return;
+                }
+                input.setAttribute('data-st-datepicker', '1');
+                try {
+                    input.type = 'text';
+                } catch (e) { }
+
+                window.jQuery(input).datepicker({
+                    dateFormat: 'yy-mm-dd'
+                });
+            });
+            return true;
+        }
+
+        if (typeof window.flatpickr === 'function') {
+            Array.prototype.slice.call(dateInputs).forEach(function (input) {
+                if (!input || input.getAttribute('data-st-flatpickr-date') === '1' || input.id === 'analytics_range') {
+                    return;
+                }
+                input.setAttribute('data-st-flatpickr-date', '1');
+                try {
+                    input.type = 'text';
+                } catch (e) { }
+
+                window.flatpickr(input, {
+                    enableTime: false,
+                    dateFormat: 'Y-m-d',
+                    allowInput: true,
+                    disableMobile: true
+                });
+            });
+            return true;
+        }
+
+        return false;
+    }
+
+    function initDatePickersWhenReady() {
+        if (initDatePickers()) {
+            return;
+        }
+
+        var attempts = 0;
+        var timer = setInterval(function () {
+            attempts += 1;
+            if (initDatePickers() || attempts >= 20) {
+                clearInterval(timer);
+            }
+        }, 150);
+    }
+
+    function getRangeFieldPair(input) {
+        var form = input ? (input.form || input.closest('form')) : null;
+        if (!form) return { from: null, to: null };
+
+        var name = String(input.getAttribute('name') || input.id || '').toLowerCase();
+        var from = null;
+        var to = null;
+
+        if (name.indexOf('arrival_date') !== -1) {
+            from = form.querySelector('input[name="arrival_date_from"]') || form.querySelector('input[name="arrival_from"]');
+            to = form.querySelector('input[name="arrival_date_to"]') || form.querySelector('input[name="arrival_to"]');
+        } else if (name.indexOf('arrival') !== -1) {
+            from = form.querySelector('input[name="arrival_from"]') || form.querySelector('input[name="arrival_date_from"]');
+            to = form.querySelector('input[name="arrival_to"]') || form.querySelector('input[name="arrival_date_to"]');
+        } else if (name.indexOf('planned_start') !== -1) {
+            from = form.querySelector('input[name="date_from"]');
+            to = form.querySelector('input[name="date_to"]');
+        } else {
+            from = form.querySelector('input[name="date_from"]');
+            to = form.querySelector('input[name="date_to"]');
+        }
+
+        return { from: from, to: to };
+    }
+
+    function initRangePickers() {
+        if (!window.jQuery || !window.jQuery.fn) {
+            return false;
+        }
+
+        var inputs = document.querySelectorAll('input[id$="_range"], input[name$="_range"], input[id*="date_range"], input[name*="date_range"]');
+        Array.prototype.slice.call(inputs).forEach(function (input) {
+            if (!input || input.getAttribute('data-st-range-init') === '1') {
+                return;
+            }
+
+            var pair = getRangeFieldPair(input);
+            var from = pair.from;
+            var to = pair.to;
+            input.setAttribute('data-st-range-init', '1');
+
+            var initialFrom = from && from.value ? from.value : '';
+            var initialTo = to && to.value ? to.value : '';
+            if (initialFrom && initialTo) {
+                input.value = initialFrom + ' to ' + initialTo;
+            } else if (initialFrom) {
+                input.value = initialFrom;
+            }
+
+            if (window.jQuery.fn.dateRangePicker) {
+                window.jQuery(input).dateRangePicker({
+                    autoClose: true,
+                    showShortcuts: false,
+                    singleMonth: true,
+                    format: 'YYYY-MM-DD'
+                }).bind('datepicker-change', function (event, obj) {
+                    var start = obj && obj.date1 ? window.jQuery.datepicker.formatDate('yy-mm-dd', obj.date1) : '';
+                    var end = obj && obj.date2 ? window.jQuery.datepicker.formatDate('yy-mm-dd', obj.date2) : '';
+                    if (from) from.value = start;
+                    if (to) to.value = end;
+                    if (start && end) {
+                        input.value = start + ' to ' + end;
+                    } else {
+                        input.value = start || '';
+                    }
+                });
+                return;
+            }
+
+            if (window.jQuery.fn.datepicker) {
+                window.jQuery(input).datepicker({
+                    dateFormat: 'yy-mm-dd',
+                    onSelect: function (dateText) {
+                        if (from) from.value = dateText;
+                        if (to) to.value = dateText;
+                        input.value = dateText;
+                    }
+                });
+            }
+        });
+
+        return true;
+    }
+
+    function initRangePickersWhenReady() {
+        if (initRangePickers()) {
+            return;
+        }
+
+        var attempts = 0;
+        var timer = setInterval(function () {
+            attempts += 1;
+            if (initRangePickers() || attempts >= 20) {
+                clearInterval(timer);
+            }
+        }, 150);
+    }
+
+    function initDateRangePickerOpeners() {
+        if (!window.jQuery) {
+            return false;
+        }
+
+        var inputs = document.querySelectorAll('input[id$="_range"], input[name$="_range"], input[id*="date_range"], input[name*="date_range"]');
+        Array.prototype.slice.call(inputs).forEach(function (input) {
+            if (!input || input.getAttribute('data-st-range-open') === '1') {
+                return;
+            }
+            input.setAttribute('data-st-range-open', '1');
+
+            function openRangePicker() {
+                var picker = window.jQuery(input).data('dateRangePicker');
+                if (picker && typeof picker.open === 'function') {
+                    picker.open();
+                }
+            }
+
+            input.addEventListener('click', openRangePicker);
+            input.addEventListener('focus', openRangePicker);
+        });
+
+        return true;
+    }
+
+    function initDateRangePickerOpenersWhenReady() {
+        if (initDateRangePickerOpeners()) {
+            return;
+        }
+
+        var attempts = 0;
+        var timer = setInterval(function () {
+            attempts += 1;
+            if (initDateRangePickerOpeners() || attempts >= 20) {
+                clearInterval(timer);
+            }
+        }, 150);
     }
 
     function stGetMultiSortState(form) {
@@ -572,10 +796,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function initTimePickers() {
         if (typeof window.flatpickr !== 'function') {
-            return;
+            return false;
         }
 
-        var inputs = document.querySelectorAll('input[type="time"], input[name="schedule_from"], input[name="schedule_to"]');
+        var inputs = document.querySelectorAll('input[type="time"], input[name="schedule_from"], input[name="schedule_to"], input[name="time_from"], input[name="time_to"]');
         Array.prototype.slice.call(inputs).forEach(function (input) {
             if (!input || input.getAttribute('data-st-flatpickr-time') === '1') {
                 return;
@@ -612,8 +836,28 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function initTimePickersWhenReady() {
+        if (initTimePickers()) {
+            return;
+        }
+
+        var attempts = 0;
+        var timer = setInterval(function () {
+            attempts += 1;
+            if (initTimePickers() || attempts >= 20) {
+                clearInterval(timer);
+                if (attempts >= 20) {
+                    initMdTimePickers();
+                }
+            }
+        }, 150);
+    }
+
     initDateTimeLocalPickers();
-    initTimePickers();
+    initDatePickersWhenReady();
+    initTimePickersWhenReady();
+    initDateRangePickerOpenersWhenReady();
+    initRangePickersWhenReady();
 
     var stActiveSortPanel = null;
     var stActiveSortForm = null;

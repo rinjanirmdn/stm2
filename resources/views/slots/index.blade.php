@@ -233,7 +233,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="planned_start" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">ETA Range</div>
-                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' to '.$date_to) : '' }}" readonly style="cursor:pointer;">
+                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' - '.$date_to) : '' }}" readonly style="cursor:pointer;" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
                                             <input type="hidden" name="date_from" form="slot-filter-form" value="{{ $date_from ?? '' }}">
                                             <input type="hidden" name="date_to" form="slot-filter-form" value="{{ $date_to ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
@@ -259,7 +259,7 @@
                                         </span>
                                         <div class="st-filter-panel" data-filter-panel="arrival_presence" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Arrival Date Filter</div>
-                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' to '.$arrival_to) : '' }}" readonly style="cursor:pointer;">
+                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' - '.$arrival_to) : '' }}" readonly style="cursor:pointer;" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
                                             <input type="hidden" name="arrival_from" form="slot-filter-form" value="{{ $arrival_from ?? '' }}">
                                             <input type="hidden" name="arrival_to" form="slot-filter-form" value="{{ $arrival_to ?? '' }}">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
@@ -1163,52 +1163,60 @@ document.addEventListener('DOMContentLoaded', function () {
     setupActiveFilters(); // Initialize active filter indicators
     setupSorting();
 
-    // Initialize single-date range picker for planned start
+    // Initialize true range picker for planned start
     var plannedStartRangeInput = document.querySelector('input#planned_start_range');
-    if (plannedStartRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
+    if (plannedStartRangeInput && window.jQuery && typeof window.jQuery.fn.daterangepicker !== 'undefined') {
         var fromInput = document.querySelector('input[name="date_from"]');
         var toInput = document.querySelector('input[name="date_to"]');
-        var initial = fromInput && fromInput.value ? fromInput.value : '';
+        var fromVal = fromInput ? fromInput.value : '';
+        var toVal = toInput ? toInput.value : '';
+        var initial = fromVal && toVal ? (fromVal + ' - ' + toVal) : (fromVal || '');
         if (initial) {
             plannedStartRangeInput.value = initial;
         }
 
-        window.jQuery(plannedStartRangeInput).dateRangePicker({
-            autoClose: true,
-            singleDate: true,
-            showShortcuts: false,
-            singleMonth: true,
-            format: 'YYYY-MM-DD'
-        }).bind('datepicker-change', function(event, obj) {
-            var value = (obj && obj.value) ? obj.value : '';
-            if (fromInput) fromInput.value = value;
-            if (toInput) toInput.value = value;
-            plannedStartRangeInput.value = value;
+        window.jQuery(plannedStartRangeInput).daterangepicker({
+            startDate: fromVal ? moment(fromVal) : moment(),
+            endDate: toVal ? moment(toVal) : moment(),
+            autoUpdateInput: true,
+            locale: {
+                format: 'YYYY-MM-DD'
+            }
+        }, function(start, end) {
+            var startStr = start.format('YYYY-MM-DD');
+            var endStr = end.format('YYYY-MM-DD');
+            if (fromInput) fromInput.value = startStr;
+            if (toInput) toInput.value = endStr;
+            plannedStartRangeInput.value = startStr + ' - ' + endStr;
             document.getElementById('slot-filter-form').submit();
         });
     }
 
-    // Initialize single-date range picker for arrival date
+    // Initialize true range picker for arrival date
     var arrivalDateRangeInput = document.querySelector('input#arrival_date_range');
-    if (arrivalDateRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
+    if (arrivalDateRangeInput && window.jQuery && typeof window.jQuery.fn.daterangepicker !== 'undefined') {
         var arrivalFromInput = document.querySelector('input[name="arrival_from"]');
         var arrivalToInput = document.querySelector('input[name="arrival_to"]');
-        var arrivalInitial = arrivalFromInput && arrivalFromInput.value ? arrivalFromInput.value : '';
+        var arrivalFromVal = arrivalFromInput ? arrivalFromInput.value : '';
+        var arrivalToVal = arrivalToInput ? arrivalToInput.value : '';
+        var arrivalInitial = arrivalFromVal && arrivalToVal ? (arrivalFromVal + ' - ' + arrivalToVal) : (arrivalFromVal || '');
         if (arrivalInitial) {
             arrivalDateRangeInput.value = arrivalInitial;
         }
 
-        window.jQuery(arrivalDateRangeInput).dateRangePicker({
-            autoClose: true,
-            singleDate: true,
-            showShortcuts: false,
-            singleMonth: true,
-            format: 'YYYY-MM-DD'
-        }).bind('datepicker-change', function(event, obj) {
-            var value = (obj && obj.value) ? obj.value : '';
-            if (arrivalFromInput) arrivalFromInput.value = value;
-            if (arrivalToInput) arrivalToInput.value = value;
-            arrivalDateRangeInput.value = value;
+        window.jQuery(arrivalDateRangeInput).daterangepicker({
+            startDate: arrivalFromVal ? moment(arrivalFromVal) : moment(),
+            endDate: arrivalToVal ? moment(arrivalToVal) : moment(),
+            autoUpdateInput: true,
+            locale: {
+                format: 'YYYY-MM-DD'
+            }
+        }, function(start, end) {
+            var startStr = start.format('YYYY-MM-DD');
+            var endStr = end.format('YYYY-MM-DD');
+            if (arrivalFromInput) arrivalFromInput.value = startStr;
+            if (arrivalToInput) arrivalToInput.value = endStr;
+            arrivalDateRangeInput.value = startStr + ' - ' + endStr;
             document.getElementById('slot-filter-form').submit();
         });
     }

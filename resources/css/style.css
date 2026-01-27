@@ -67,6 +67,22 @@
     --remaining-bg: #eef2ff;
 }
 
+/* Ensure jquery.daterangepicker overlay stays above dashboard cards */
+.date-picker-wrapper {
+    z-index: 99999 !important;
+}
+
+/* Ensure daterangepicker.js overlay stays above dashboard cards */
+.daterangepicker {
+    z-index: 99999 !important;
+}
+
+/* Ensure jQuery UI datepicker and flatpickr overlays are not clipped */
+.ui-datepicker,
+.flatpickr-calendar {
+    z-index: 99999 !important;
+}
+
 /* ===== Base Layout ===== */
 * {
     box-sizing: border-box;
@@ -1430,7 +1446,7 @@ body {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.12s ease;
-    z-index: 9999;
+    z-index: 100000;
 }
 
 .st-datepicker-tooltip--visible {

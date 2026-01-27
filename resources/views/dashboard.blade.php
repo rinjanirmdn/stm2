@@ -21,7 +21,7 @@
                             <input type="hidden" id="range_end" name="range_end" value="{{ $range_end }}">
                             <div class="st-form-field" style="min-width:260px;">
                                 <label class="st-label">Range</label>
-                                <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ ($range_start ?? '') && ($range_end ?? '') ? ($range_start.' to '.$range_end) : ($range_start ?? $today) }}">
+                                <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ $range_start ?? $today }}" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
                             </div>
                             <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
                                 <a href="{{ route('dashboard', ['range_start' => \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'), 'range_end' => $today]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
@@ -866,6 +866,82 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    function initAnalyticsRangePicker() {
+        var rangeInput = document.getElementById('analytics_range');
+        if (!rangeInput || !window.jQuery) return;
+        
+        // Use daterangepicker.js for true range selection
+        if (typeof $.fn.daterangepicker !== 'undefined') {
+            var startEl = document.getElementById('range_start');
+            var endEl = document.getElementById('range_end');
+            var startVal = startEl ? startEl.value : '';
+            var endVal = endEl ? endEl.value : '';
+            
+            // Set initial value
+            var startDate = startVal ? moment(startVal) : moment();
+            var endDate = endVal ? moment(endVal) : moment();
+            
+            // Initialize daterangepicker
+            $(rangeInput).daterangepicker({
+                startDate: startDate,
+                endDate: endDate,
+                autoUpdateInput: true,
+                locale: {
+                    format: 'YYYY-MM-DD'
+                }
+            }, function(start, end) {
+                var startStr = start.format('YYYY-MM-DD');
+                var endStr = end.format('YYYY-MM-DD');
+                if (startEl) startEl.value = startStr;
+                if (endEl) endEl.value = endStr;
+                rangeInput.value = startStr + ' - ' + endStr;
+                if (startEl && startEl.form) startEl.form.submit();
+            });
+            
+            // Set initial display value
+            if (startVal && endVal) {
+                rangeInput.value = startVal + ' - ' + endVal;
+            } else if (startVal) {
+                rangeInput.value = startVal + ' - ' + startVal;
+            }
+            
+            return;
+        }
+        
+        // Fallback to jQuery UI datepicker if daterangepicker is not available
+        if (window.jQuery.fn.datepicker) {
+            var startEl = document.getElementById('range_start');
+            var endEl = document.getElementById('range_end');
+            var startVal = startEl ? startEl.value : '';
+            var endVal = endEl ? endEl.value : '';
+            
+            // Set initial display value
+            if (startVal && endVal) {
+                rangeInput.value = startVal + ' - ' + endVal;
+            } else if (startVal) {
+                rangeInput.value = startVal + ' - ' + startVal;
+            }
+            
+            // Initialize datepicker for range selection
+            window.jQuery(rangeInput).datepicker({
+                dateFormat: 'yy-mm-dd',
+                beforeShow: function(input, inst) {
+                    // Show two months for range selection
+                    inst.dpDiv.addClass('ui-datepicker-range');
+                },
+                onSelect: function(dateText) {
+                    // For simplicity, set both start and end to the same date
+                    if (startEl) startEl.value = dateText;
+                    if (endEl) endEl.value = dateText;
+                    rangeInput.value = dateText + ' - ' + dateText;
+                    if (startEl && startEl.form) startEl.form.submit();
+                }
+            });
+        }
+    }
+
+    initAnalyticsRangePicker();
+
     // Scroll to timeline section if URL contains filter parameters
     if (window.location.search.includes('schedule_date') ||
         window.location.search.includes('timeline_gate') ||
@@ -1003,8 +1079,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Initialize generic date inputs
+        // Initialize generic date inputs (exclude analytics_range)
         document.querySelectorAll('.flatpickr-date, input[type="date"]').forEach(function (input) {
+            if (input.id === 'analytics_range') return; // Skip analytics_range
             initDatepicker(input, function(date) {
                 const ds = toIsoDate(date);
                 if (globalHolidayData[ds]) {
@@ -1013,29 +1090,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 return [true, '', ''];
             });
         });
-
-            // Initialize Analytics Range Picker (single date)
-            var rangeInput = document.getElementById('analytics_range');
-            if (rangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
-                var startVal = document.getElementById('range_start').value;
-                if (startVal) {
-                    rangeInput.value = startVal;
-                }
-
-                window.jQuery(rangeInput).dateRangePicker({
-                    autoClose: true,
-                    singleDate: true,
-                    showShortcuts: false,
-                    singleMonth: true,
-                    format: 'YYYY-MM-DD'
-                }).bind('datepicker-change', function(event, obj) {
-                    var value = (obj && obj.value) ? obj.value : '';
-                    document.getElementById('range_start').value = value;
-                    document.getElementById('range_end').value = value;
-                    rangeInput.value = value;
-                    document.getElementById('range_start').form.submit();
-                });
-            }
 
             // Auto-submit for other form elements
             const analyticsForm = document.querySelector('form[action*="dashboard"]');
