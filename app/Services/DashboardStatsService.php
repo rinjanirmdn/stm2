@@ -16,7 +16,7 @@ class DashboardStatsService
      */
     public function getRangeStats(string $start, string $end): array
     {
-        $rangeDate = DB::raw('DATE(planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(actual_start, arrival_time, planned_start))');
 
         // Get pending count from booking_requests
         $pendingCount = DB::table('booking_requests')

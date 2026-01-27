@@ -90,7 +90,7 @@
                         </button>
                         <div class="st-text--small st-text--muted">Total</div>
                         <div class="st-mini-card__value-row">
-                            <div style="font-size:26px;font-weight:700;">{{ $totalAllRange ?? 0 }}</div>
+                            <div style="font-size:26px;font-weight:700;">{{ ((int)($pendingRange ?? 0) + (int)($scheduledRange ?? 0) + (int)($waitingRange ?? 0) + (int)($activeRange ?? 0) + (int)($completedStatusRange ?? 0) + (int)($cancelledRange ?? 0)) }}</div>
                         </div>
                     </div>
                 </div>
@@ -102,7 +102,7 @@
                         <div class="st-card__subtitle">Performance & Bottleneck Summary</div>
                     </div>
                     <div class="st-tabbar" role="tablist" aria-label="Analytics tabs">
-                        <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm st-tab-btn" data-tab="overview" aria-selected="true">Overview</button>
+                        <button type="button" class="st-btn st-btn--sm st-tab-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" data-tab="overview" aria-selected="true">Overview</button>
                         <button type="button" class="st-btn st-btn--ghost st-btn--sm st-tab-btn" data-tab="kpi" aria-selected="false">KPI</button>
                     </div>
                 </div>
@@ -422,9 +422,8 @@
                                     @foreach ($timelineHours as $h)
                                         @php
                                             $hInt = (int) $h;
-                                            $minute = $hInt * 60;
                                         @endphp
-                                        <div class="st-timeline__hour" data-minute="{{ (int) $minute }}"><span>{{ str_pad((string)$hInt, 2, '0', STR_PAD_LEFT) }}</span></div>
+                                        <div class="st-timeline__hour"><span>{{ str_pad((string)$hInt, 2, '0', STR_PAD_LEFT) }}</span></div>
                                     @endforeach
                                 </div>
                             </div>
@@ -794,8 +793,8 @@
                             <label class="st-label">Warehouse</label>
                             <select name="activity_warehouse" class="st-select">
                                 <option value="0">All</option>
-                                @foreach (($warehouses ?? []) as $w)
-                                    <option value="{{ (int)($w->id ?? 0) }}" {{ (int)($activity_warehouse ?? 0) === (int)($w->id ?? 0) ? 'selected' : '' }}>{{ $w->name ?? '-' }}</option>
+                                @foreach (($activityWarehouses ?? []) as $w)
+                                    <option value="{{ (int) data_get($w, 'id', 0) }}" {{ (int)($activity_warehouse ?? 0) === (int) data_get($w, 'id', 0) ? 'selected' : '' }}>{{ (string) data_get($w, 'name', '-') }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -1075,25 +1074,94 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Initialize Analytics Range Picker (single date)
             var rangeInput = document.getElementById('analytics_range');
-            if (rangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
+            if (rangeInput) {
                 var startVal = document.getElementById('range_start').value;
-                if (startVal) {
+                var endVal = document.getElementById('range_end').value;
+                if (startVal && endVal) {
+                    rangeInput.value = startVal + (endVal !== startVal ? (' to ' + endVal) : '');
+                } else if (startVal) {
                     rangeInput.value = startVal;
                 }
 
-                window.jQuery(rangeInput).dateRangePicker({
-                    autoClose: true,
-                    singleDate: true,
-                    showShortcuts: false,
-                    singleMonth: true,
-                    format: 'YYYY-MM-DD'
-                }).bind('datepicker-change', function(event, obj) {
-                    var value = (obj && obj.value) ? obj.value : '';
-                    document.getElementById('range_start').value = value;
-                    document.getElementById('range_end').value = value;
-                    rangeInput.value = value;
-                    document.getElementById('range_start').form.submit();
-                });
+                function fmtYmd(d) {
+                    try {
+                        if (!d) return '';
+                        if (typeof window.moment === 'function') {
+                            return window.moment(d).format('YYYY-MM-DD');
+                        }
+                        var yyyy = d.getFullYear();
+                        var mm = String(d.getMonth() + 1).padStart(2, '0');
+                        var dd = String(d.getDate()).padStart(2, '0');
+                        return yyyy + '-' + mm + '-' + dd;
+                    } catch (e) {
+                        return '';
+                    }
+                }
+
+                var hasDateRangePicker = !!(window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.dateRangePicker === 'function');
+                if (hasDateRangePicker) {
+                    window.jQuery(rangeInput).dateRangePicker({
+                        autoClose: true,
+                        singleDate: false,
+                        showShortcuts: false,
+                        singleMonth: true,
+                        separator: ' to ',
+                        format: 'YYYY-MM-DD'
+                    }).bind('datepicker-change', function(event, obj) {
+                        var d1 = obj && obj.date1 ? fmtYmd(obj.date1) : '';
+                        var d2 = obj && obj.date2 ? fmtYmd(obj.date2) : '';
+
+                        // Fallback parse from value string if needed
+                        if ((!d1 || !d2) && obj && obj.value) {
+                            var parts = String(obj.value).split(' to ');
+                            d1 = d1 || (parts[0] ? String(parts[0]).trim() : '');
+                            d2 = d2 || (parts[1] ? String(parts[1]).trim() : '');
+                        }
+
+                        if (!d1) return;
+                        if (!d2) return; // wait until range end chosen
+
+                        document.getElementById('range_start').value = d1;
+                        document.getElementById('range_end').value = d2;
+                        rangeInput.value = d1 + (d2 !== d1 ? (' to ' + d2) : '');
+                        document.getElementById('range_start').form.submit();
+                    });
+
+                    // Sync initial selection
+                    try {
+                        var instInit = window.jQuery(rangeInput).data('dateRangePicker');
+                        if (instInit && typeof instInit.setDateRange === 'function' && startVal && endVal) {
+                            instInit.setDateRange(startVal, endVal);
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+
+                    rangeInput.addEventListener('click', function () {
+                        try {
+                            var inst = window.jQuery(rangeInput).data('dateRangePicker');
+                            if (inst && typeof inst.open === 'function') {
+                                inst.open();
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                    });
+                } else {
+                    initDatepicker(rangeInput, function(date) {
+                        const ds = toIsoDate(date);
+                        if (globalHolidayData[ds]) {
+                            return [true, 'is-holiday', globalHolidayData[ds]];
+                        }
+                        return [true, '', ''];
+                    }, function(dateText) {
+                        var value = String(dateText || '').trim();
+                        document.getElementById('range_start').value = value;
+                        document.getElementById('range_end').value = value;
+                        rangeInput.value = value;
+                        document.getElementById('range_start').form.submit();
+                    });
+                }
             }
 
             // Auto-submit for other form elements
@@ -1176,6 +1244,62 @@ document.addEventListener('DOMContentLoaded', function () {
     let lockedBlock = null;
     let hoverCard = null;
     let hoverHideTimer = null;
+
+    function layoutTimeline() {
+        if (!timeline) return;
+
+        const headerHours = timeline.querySelectorAll('.st-timeline__header-grid .st-timeline__hour');
+        const hoursCount = headerHours ? headerHours.length : 0;
+        if (!hoursCount) return;
+
+        const startHour = parseInt(timeline.getAttribute('data-start-hour') || '0', 10) || 0;
+        const startOffsetMin = startHour * 60;
+        const rangeMin = hoursCount * 60;
+
+        const laneEl = timeline.querySelector('.st-timeline__lane');
+        const laneWidth = laneEl ? (laneEl.clientWidth || 0) : 0;
+        if (!laneWidth) return;
+
+        const hourWidth = laneWidth / hoursCount;
+        timeline.style.setProperty('--st-hour-width', hourWidth + 'px');
+        const pxPerMinute = hourWidth / 60;
+
+        const blocks = timeline.querySelectorAll('.st-timeline__lane .st-timeline-block');
+        blocks.forEach(function (block) {
+            if (!block) return;
+
+            const leftMinAbs = parseInt(block.getAttribute('data-left') || '0', 10) || 0;
+            const widthMinAbs = parseInt(block.getAttribute('data-width') || '1', 10) || 1;
+
+            const startMinAbs = Math.max(0, leftMinAbs);
+            const endMinAbs = Math.max(startMinAbs + 1, startMinAbs + Math.max(1, widthMinAbs));
+
+            const relStart = clamp(startMinAbs - startOffsetMin, 0, rangeMin);
+            const relEnd = clamp(endMinAbs - startOffsetMin, 0, rangeMin);
+
+            if (relEnd <= 0 || relStart >= rangeMin || relEnd <= relStart) {
+                block.style.display = 'none';
+                return;
+            }
+
+            block.style.display = '';
+            block.style.left = (relStart * pxPerMinute) + 'px';
+            block.style.width = Math.max(1, (relEnd - relStart) * pxPerMinute) + 'px';
+        });
+    }
+
+    let timelineLayoutTimer = null;
+    function scheduleLayoutTimeline() {
+        if (timelineLayoutTimer) clearTimeout(timelineLayoutTimer);
+        timelineLayoutTimer = setTimeout(function () {
+            layoutTimeline();
+        }, 50);
+    }
+
+    if (timeline) {
+        scheduleLayoutTimeline();
+        window.addEventListener('resize', scheduleLayoutTimeline);
+    }
 
     function ensureHoverCard() {
         if (hoverCard) return hoverCard;
@@ -2304,6 +2428,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 'doughnut', true)); // isCompact = true for Direction Chart
 
     var scheduleData = @json($schedule ?? []);
+    var processStatusData = @json($processStatusCounts ?? []);
 
     function calcProcessStatus(dir) {
         var counts = {
@@ -2315,6 +2440,24 @@ document.addEventListener('DOMContentLoaded', function () {
             cancelled: 0
         };
 
+        // Gunakan data dari backend yang sudah dihitung
+        if (processStatusData && Object.keys(processStatusData).length > 0) {
+            counts.pending = processStatusData.pending || 0;
+            counts.scheduled = processStatusData.scheduled || 0;
+            counts.waiting = processStatusData.waiting || 0;
+            counts.in_progress = processStatusData.in_progress || 0;
+            counts.completed = processStatusData.completed || 0;
+            counts.cancelled = processStatusData.cancelled || 0;
+
+            // Filter by direction if needed
+            if (dir && dir !== 'all') {
+                // For now, use the same counts for all directions
+                // TODO: Add direction filtering if needed
+            }
+            return counts;
+        }
+
+        // Fallback to original logic if no backend data
         (scheduleData || []).forEach(function (r) {
             var rDir = (r && r.direction) ? String(r.direction).toLowerCase() : '';
             if (dir && dir !== 'all' && rDir !== dir) return;
@@ -2996,17 +3139,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 timeline._stLastScale = s;
 
                 try {
-                    timeline.querySelectorAll('.st-timeline__hour[data-minute]').forEach(function (el) {
-                        var minute = parseInt(el.getAttribute('data-minute') || '0', 10);
-                        if (isNaN(minute)) minute = 0;
-                        var rel = minute - s.startMins;
-                        var leftPx = Math.round(Math.max(0, rel) * s.pxPerMin);
-                        if (el._stLeftPx !== leftPx) {
-                            el._stLeftPx = leftPx;
-                            el.style.left = String(leftPx) + 'px';
-                        }
-                    });
-
+                    // Only handle timeline blocks positioning, hours are now handled by CSS Grid
                     timeline.querySelectorAll('.st-timeline-block[data-left][data-width]').forEach(function (el) {
                         var leftMin = parseInt(el.getAttribute('data-left') || '0', 10);
                         var widthMin = parseInt(el.getAttribute('data-width') || '1', 10);
@@ -3033,16 +3166,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         if (el.style.display === 'none') el.style.display = '';
 
-                        var leftPx = Math.round(Math.max(0, relLeft) * s.pxPerMin);
-                        var widthPx = Math.round(Math.max(1, relWidth) * s.pxPerMin);
+                        // Calculate grid column positions (17 columns for hours 7-23)
+                        var startHour = 7;
+                        var endHour = 23;
+                        var totalHours = endHour - startHour + 1; // 17 hours
 
-                        if (el._stLeftPx !== leftPx) {
-                            el._stLeftPx = leftPx;
-                            el.style.left = String(leftPx) + 'px';
+                        var startCol = Math.floor(relLeft / 60) + 1; // +1 because grid columns start at 1
+                        var endCol = Math.ceil((relLeft + relWidth) / 60) + 1;
+
+                        // Ensure columns are within bounds
+                        startCol = Math.max(1, Math.min(startCol, totalHours));
+                        endCol = Math.max(startCol, Math.min(endCol, totalHours + 1));
+
+                        if (el._stStartCol !== startCol) {
+                            el._stStartCol = startCol;
+                            el.style.gridColumnStart = String(startCol);
                         }
-                        if (el._stWidthPx !== widthPx) {
-                            el._stWidthPx = widthPx;
-                            el.style.width = String(widthPx) + 'px';
+                        if (el._stEndCol !== endCol) {
+                            el._stEndCol = endCol;
+                            el.style.gridColumnEnd = String(endCol);
                         }
                     });
                 } catch (e) {

@@ -1172,16 +1172,18 @@ body {
 
     .st-timeline__header,
     .st-timeline__row {
-        min-width: 800px;
+        min-width: auto;
+        width: 100%;
     }
 
     .st-timeline__header-grid,
     .st-timeline__row-grid {
-        width: 600px;
+        width: 100%;
     }
 
     .st-timeline__hour {
-        width: 50px;
+        /* Let JavaScript control the width */
+        width: var(--st-hour-width);
     }
 
     .st-timeline__hour span {
@@ -3076,13 +3078,12 @@ input[type="datetime-local"].form-control {
     margin-top: 10px;
     border: 1px solid #e5e7eb;
     border-radius: 10px;
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow: hidden;
     background: #ffffff;
     width: 100%;
     max-width: none;
     min-width: auto;
-    --st-hour-width: clamp(60px, 8vw, 120px);
+    --st-hour-width: 80px;
 }
 
 .st-timeline__header {
@@ -3113,6 +3114,8 @@ input[type="datetime-local"].form-control {
     position: relative;
     height: 42px;
     width: 100%;
+    display: grid;
+    grid-template-columns: repeat(17, 1fr);
     background-image: repeating-linear-gradient(to right,
             rgba(148, 163, 184, 0.18) 0,
             rgba(148, 163, 184, 0.18) 1px,
@@ -3121,17 +3124,19 @@ input[type="datetime-local"].form-control {
 }
 
 .st-timeline__hour {
-    position: absolute;
-    top: 0;
+    position: relative;
     height: 100%;
-    width: var(--st-hour-width, 100px);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid #e5e7eb;
 }
 
 .st-timeline__hour span {
-    position: absolute;
-    left: 6px;
-    top: 12px;
+    position: relative;
     font-size: 11px;
+    font-weight: 600;
     color: #6b7280;
 }
 
@@ -3170,6 +3175,7 @@ input[type="datetime-local"].form-control {
     height: 44px;
     width: 100%;
     border-radius: 6px;
+    display: block;
     background-image: repeating-linear-gradient(to right,
             rgba(148, 163, 184, 0.12) 0,
             rgba(148, 163, 184, 0.12) 1px,
@@ -3208,7 +3214,6 @@ input[type="datetime-local"].form-control {
 
 .st-timeline-block {
     position: absolute;
-    top: 7px;
     height: 30px;
     border-radius: 8px;
     border: 1px solid rgba(15, 23, 42, 0.10);
@@ -3220,6 +3225,8 @@ input[type="datetime-local"].form-control {
     justify-content: flex-start;
     z-index: 2;
     box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+    top: 7px;
+    margin: 0;
 }
 
 .st-timeline-block__label {
@@ -3232,10 +3239,6 @@ input[type="datetime-local"].form-control {
 
 /* Timeline responsive improvements */
 @media (max-width: 1400px) {
-    .st-timeline {
-        --st-hour-width: clamp(50px, 6vw, 100px);
-    }
-
     .st-timeline__header,
     .st-timeline__row {
         min-width: auto;
@@ -3248,15 +3251,12 @@ input[type="datetime-local"].form-control {
     }
 
     .st-timeline__hour {
+        /* Let JavaScript control the width */
         width: var(--st-hour-width);
     }
 }
 
 @media (max-width: 1200px) {
-    .st-timeline {
-        --st-hour-width: clamp(40px, 5vw, 80px);
-    }
-
     .st-timeline__header,
     .st-timeline__row {
         min-width: auto;
@@ -3269,6 +3269,7 @@ input[type="datetime-local"].form-control {
     }
 
     .st-timeline__hour {
+        /* Let JavaScript control the width */
         width: var(--st-hour-width);
     }
 
@@ -3280,10 +3281,6 @@ input[type="datetime-local"].form-control {
 }
 
 @media (max-width: 992px) {
-    .st-timeline {
-        --st-hour-width: clamp(35px, 4vw, 70px);
-    }
-
     .st-timeline__header,
     .st-timeline__row {
         min-width: auto;
@@ -3296,6 +3293,7 @@ input[type="datetime-local"].form-control {
     }
 
     .st-timeline__hour {
+        /* Let JavaScript control the width */
         width: var(--st-hour-width);
     }
 
@@ -3331,7 +3329,6 @@ input[type="datetime-local"].form-control {
     .st-timeline {
         font-size: 11px;
         border-radius: 6px;
-        --st-hour-width: clamp(30px, 3vw, 60px);
     }
 
     .st-timeline__header,
@@ -3346,6 +3343,7 @@ input[type="datetime-local"].form-control {
     }
 
     .st-timeline__hour {
+        /* Let JavaScript control the width */
         width: var(--st-hour-width);
     }
 
@@ -4694,6 +4692,29 @@ table.st-table td form {
     .st-detail-colon {
         display: none;
     }
+
+    .detail-grid-compact {
+        gap: 0.5rem;
+    }
+
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .detail-label {
+        font-size: 0.7rem;
+        min-width: 120px;
+    }
+
+    .detail-value {
+        font-size: 0.8rem;
+    }
+
+    .detail-value::before {
+        display: none;
+    }
 }
 
 
@@ -5786,6 +5807,14 @@ table.st-table td form {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
+.date-picker-wrapper {
+    z-index: 3000 !important;
+}
+
+.ui-datepicker {
+    z-index: 3000 !important;
+}
+
 /* Flatpickr Modern Styling */
 .flatpickr-calendar {
     border: none;
@@ -6108,36 +6137,47 @@ table.st-table td form {
 }
 
 .detail-grid-compact {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .detail-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     min-height: 2rem;
 }
 
 .detail-label {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--st-text-muted, #64748b);
     text-transform: capitalize;
     letter-spacing: 0.025em;
-    min-width: 90px;
-    flex-shrink: 0;
-}
-
-.detail-value {
-    font-size: 0.75rem;
-    color: var(--st-text, #0f172a);
-    font-weight: 500;
-    flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 0;
+    min-width: 140px;
+}
+
+.detail-value {
+    font-size: 0.875rem;
+    color: var(--st-text, #0f172a);
+    font-weight: 500;
+    word-break: break-word;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.detail-value::before {
+    content: ':';
+    color: var(--st-text-muted, #64748b);
+    font-weight: 600;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
 .detail-link {

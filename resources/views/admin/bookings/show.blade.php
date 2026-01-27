@@ -23,6 +23,16 @@
                 <i class="fas fa-arrow-left"></i>
                 Back
             </a>
+            @if($booking->status === 'pending')
+                <button type="button" class="st-btn st-btn--success" onclick="openApproveModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+                    <i class="fas fa-check"></i>
+                    Approve
+                </button>
+                <button type="button" class="st-btn st-btn--danger" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+                    <i class="fas fa-times"></i>
+                    Reject
+                </button>
+            @endif
         </div>
     </div>
 
@@ -137,7 +147,7 @@
                             {{ app(\App\Services\SlotService::class)->getGateDisplayName(
                                 $booking->convertedSlot?->plannedGate?->warehouse->wh_code ?? '',
                                 $booking->convertedSlot?->plannedGate?->gate_number ?? ''
-                            ) ?: '<span class="detail-empty">To be assigned</span>' }}
+                            ) ?: 'To be assigned' }}
                         </div>
                     </div>
                     <div class="detail-item">

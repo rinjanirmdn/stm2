@@ -11,6 +11,8 @@ use DateInterval;
 use DatePeriod;
 use DateTime;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -26,10 +28,10 @@ class DashboardController extends Controller
     public function __invoke(Request $request)
     {
         // FORCE CHECK: Direct DB query to bypass Permission Cache
-        if (auth()->check()) {
+        if (Auth::check()) {
             $isVendor = DB::table('model_has_roles')
                 ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
-                ->where('model_has_roles.model_id', auth()->id())
+                ->where('model_has_roles.model_id', Auth::id())
                 ->where(DB::raw('LOWER(roles.roles_name)'), 'vendor') // Fixed column name & Case insensitive
                 ->exists();
 
@@ -38,7 +40,7 @@ class DashboardController extends Controller
             }
 
             // Fallback (jaga-jaga Spatie load role dengan nama lain)
-            if (auth()->user()->hasRole(['Vendor', 'vendor'])) {
+            if (Auth::user() && Auth::user()->hasRole(['Vendor', 'vendor'])) {
                 return redirect()->route('vendor.dashboard');
             }
         }
@@ -109,7 +111,7 @@ class DashboardController extends Controller
         $allScheduleData = array_merge($schedule, $pendingBookings);
 
         // Debug: Log schedule data
-        \Log::info('Schedule data sent to view', [
+        Log::info('Schedule data sent to view', [
             'schedule_count' => count($schedule),
             'pending_count' => count($pendingBookings),
             'total_count' => count($allScheduleData),
@@ -134,6 +136,13 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        $totalAllRangeUi = (int) ($rangeStats['pending'] ?? 0)
+            + (int) ($rangeStats['scheduled'] ?? 0)
+            + (int) ($rangeStats['waiting'] ?? 0)
+            + (int) ($rangeStats['active'] ?? 0)
+            + (int) ($rangeStats['completed'] ?? 0)
+            + (int) ($rangeStats['cancelled'] ?? 0);
+
         return view('dashboard', [
             'pendingApprovals' => $pendingApprovals,
             'today' => $today,
@@ -142,7 +151,7 @@ class DashboardController extends Controller
 
             // Range statistics
             'totalRange' => $rangeStats['total'],
-            'totalAllRange' => $rangeStats['total_all'],
+            'totalAllRange' => $totalAllRangeUi,
             'cancelledRange' => $rangeStats['cancelled'],
             'activeRange' => $rangeStats['active'],
             'pendingRange' => $rangeStats['pending'],

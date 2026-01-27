@@ -55,7 +55,6 @@
             </div>
             @php
                 $scheduledSlots = $daySlots->where('status', \App\Models\Slot::STATUS_SCHEDULED);
-                $arrivedSlots = $daySlots->where('status', \App\Models\Slot::STATUS_ARRIVED);
                 $waitingSlots = $daySlots->where('status', \App\Models\Slot::STATUS_WAITING);
                 $inProgressSlots = $daySlots->where('status', \App\Models\Slot::STATUS_IN_PROGRESS);
                 $completedSlots = $daySlots->where('status', \App\Models\Slot::STATUS_COMPLETED);
@@ -73,38 +72,11 @@
                     @if($scheduledSlots->count() > 0)
                     <div class="st-dock-legend-list">
                         @foreach($scheduledSlots as $ss)
-                        <div class="st-dock-legend-card" onclick="focusSlot({{ $ss->id }})" title="View on grid">
+                        <div class="st-dock-legend-card">
                             <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
                                 <span class="st-dock-legend-card-ticket">{{ $ss->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
-
-                <!-- Arrived -->
-                <div class="st-legend-group">
-                    <div class="st-legend-item st-legend-item--arrived">
-                        <div class="st-dock-legend-indicator">
-                            <div class="st-dock-dot"></div>
-                            <span>Arrived</span>
-                        </div>
-                        <span class="st-dock-count">{{ $arrivedSlots->count() }}</span>
-                    </div>
-                    @if($arrivedSlots->count() > 0)
-                    <div class="st-dock-legend-list">
-                        @foreach($arrivedSlots as $as)
-                        <div class="st-dock-legend-card" onclick="focusSlot({{ $as->id }})" title="View on grid">
-                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
-                                <span class="st-dock-legend-card-ticket">{{ $as->ticket_number }}</span>
-                                <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn">
+                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $ss->id }})" title="View on grid">
                                         <i class="fas fa-eye"></i>
                                     </div>
                                 </div>
@@ -127,11 +99,11 @@
                     @if($waitingSlots->count() > 0)
                     <div class="st-dock-legend-list">
                         @foreach($waitingSlots as $ws)
-                        <div class="st-dock-legend-card" onclick="focusSlot({{ $ws->id }})" title="View on grid">
+                        <div class="st-dock-legend-card">
                             <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
                                 <span class="st-dock-legend-card-ticket">{{ $ws->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn">
+                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $ws->id }})" title="View on grid">
                                         <i class="fas fa-eye"></i>
                                     </div>
                                 </div>
@@ -154,11 +126,11 @@
                     @if($inProgressSlots->count() > 0)
                     <div class="st-dock-legend-list">
                         @foreach($inProgressSlots as $is)
-                        <div class="st-dock-legend-card" onclick="focusSlot({{ $is->id }})" title="View on grid">
+                        <div class="st-dock-legend-card">
                             <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
                                 <span class="st-dock-legend-card-ticket">{{ $is->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn">
+                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $is->id }})" title="View on grid">
                                         <i class="fas fa-eye"></i>
                                     </div>
                                 </div>
@@ -181,11 +153,11 @@
                     @if($completedSlots->count() > 0)
                     <div class="st-dock-legend-list">
                         @foreach($completedSlots as $cs)
-                        <div class="st-dock-legend-card" onclick="focusSlot({{ $cs->id }})" title="View on grid">
+                        <div class="st-dock-legend-card">
                             <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
                                 <span class="st-dock-legend-card-ticket">{{ $cs->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn">
+                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $cs->id }})" title="View on grid">
                                         <i class="fas fa-eye"></i>
                                     </div>
                                 </div>
