@@ -550,17 +550,54 @@
                         'completed' => 0,
                         'cancelled' => 0,
                     ];
-                    foreach (($schedule ?? []) as $r) {
-                        $st0 = trim(strtolower((string)($r['status'] ?? 'scheduled')));
-                        if ($st0 === 'arrived') {
-                            $st0 = 'waiting';
-                        }
-                        if (in_array($st0, ['pending_approval', 'pending_vendor_confirmation'], true)) {
-                            $processStatusCounts['pending']++;
-                        } elseif (isset($processStatusCounts[$st0])) {
-                            $processStatusCounts[$st0]++;
-                        }
-                    }
+
+                    // Query langsung ke database untuk chart status (100% akurat)
+                    $dateFilter = $schedule_date ?? date('Y-m-d');
+
+                    // Hitung slots per status langsung dari database
+                    $slotStats = \DB::table('slots')
+                        ->where(function($q) use ($dateFilter) {
+                            $q->whereDate('actual_start', $dateFilter)
+                              ->orWhereDate('planned_start', $dateFilter);
+                        })
+                        ->where(function($q) {
+                            $q->whereNull('slot_type')
+                              ->orWhere('slot_type', '!=', 'unplanned');
+                        })
+                        ->whereNotIn('status', ['pending_approval', 'cancelled'])
+                        ->selectRaw('
+                            SUM(CASE WHEN status = \'scheduled\' THEN 1 ELSE 0 END) as scheduled,
+                            SUM(CASE WHEN status = \'waiting\' THEN 1 ELSE 0 END) as waiting,
+                            SUM(CASE WHEN status = \'arrived\' THEN 1 ELSE 0 END) as arrived,
+                            SUM(CASE WHEN status = \'in_progress\' THEN 1 ELSE 0 END) as in_progress,
+                            SUM(CASE WHEN status = \'completed\' THEN 1 ELSE 0 END) as completed,
+                            SUM(CASE WHEN status = \'cancelled\' THEN 1 ELSE 0 END) as cancelled
+                        ')
+                        ->first();
+
+                    $processStatusCounts['scheduled'] = (int)($slotStats->scheduled ?? 0);
+                    $processStatusCounts['waiting'] = (int)(($slotStats->waiting ?? 0) + ($slotStats->arrived ?? 0));
+                    $processStatusCounts['in_progress'] = (int)($slotStats->in_progress ?? 0);
+                    $processStatusCounts['completed'] = (int)($slotStats->completed ?? 0);
+                    $processStatusCounts['cancelled'] = (int)($slotStats->cancelled ?? 0);
+
+                    // Debug: Log direct query result
+                    \Log::info('Direct database query result', [
+                        'date_filter' => $dateFilter,
+                        'slot_stats' => (array)$slotStats,
+                        'final_counts' => $processStatusCounts
+                    ]);
+
+                    // Tambahkan pending bookings dari booking_requests
+                    $pendingCount = \App\Models\BookingRequest::where('status', \App\Models\BookingRequest::STATUS_PENDING)
+                        ->when(($schedule_from ?? '') && ($schedule_to ?? ''), function($q) use ($schedule_from, $schedule_to) {
+                            return $q->whereBetween('planned_start', [$schedule_from, $schedule_to]);
+                        }, function($q) use ($schedule_date) {
+                            return $q->whereDate('planned_start', $schedule_date ?? date('Y-m-d'));
+                        })
+                        ->count();
+
+                    $processStatusCounts['pending'] += $pendingCount;
                 @endphp
 
                 <div class="st-dashboard-schedule-row">
@@ -641,6 +678,11 @@
                         <tbody>
                         @forelse (($schedule ?? []) as $row)
                             @php
+                                // Skip anomali data
+                                if ((!isset($row['id']) || $row['id'] <= 0) && (!isset($row['is_pending_booking']) || !$row['is_pending_booking'])) {
+                                    continue;
+                                }
+
                                 $st = (string)($row['status'] ?? 'scheduled');
                                 $stLabel = ucwords(str_replace('_',' ', $st));
 
@@ -651,18 +693,27 @@
                                     'in_progress' => 'bg-in_progress',
                                     'completed' => 'bg-completed',
                                     'cancelled' => 'bg-danger',
-                                    'pending_approval' => 'bg-pending_approval',
+                                    'pending_approval' => 'st-badge--pending_approval',
+                                    'pending' => 'st-badge--pending_approval', // Use same class for pending bookings
                                 ];
                                 $badgeClass = $badgeMap[$st] ?? 'bg-secondary';
                                 if ($st === 'arrived') {
                                     $stLabel = 'Waiting'; // Map arrive to Waiting label as per other views
+                                } elseif ($st === 'pending') {
+                                    $stLabel = 'Pending'; // Show as Pending for pending bookings
                                 }
 
                                 $performance = (string)($row['performance'] ?? '');
                                 $priority = (string)($row['priority'] ?? 'low');
                             @endphp
                             <tr>
-                                <td>{{ $row['po_number'] ?? ('Slot #' . (int)($row['id'] ?? 0)) }}</td>
+                                <td>
+                                    @if(isset($row['is_pending_booking']) && $row['is_pending_booking'])
+                                        {{ $row['request_number'] ?? ('REQ-' . ($row['id'] ?? 0)) }}
+                                    @else
+                                        {{ $row['po_number'] ?? ('Slot #' . (int)($row['id'] ?? 0)) }}
+                                    @endif
+                                </td>
                                 <td>{{ $row['vendor_name'] ?? '-' }}</td>
                                 <td>{{ $row['warehouse_name'] ?? '-' }}</td>
                                 <td>{{ $row['gate_label'] ?? '-' }}</td>
@@ -678,10 +729,13 @@
                                 <td>{{ $row['est_finish'] ?? '-' }}</td>
                                 <td>
                                     <div class="tw-actionbar">
+                                        @if(isset($row['id']) && $row['id'])
                                         <a href="{{ route('slots.show', ['slotId' => $row['id']]) }}" class="tw-action" data-tooltip="View" aria-label="View">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
+                                        @endif
                                         @if ($st === 'scheduled')
+                                            @if(isset($row['id']) && $row['id'])
                                             <a href="{{ route('slots.arrival', ['slotId' => $row['id']]) }}" class="tw-action" data-tooltip="Arrival" aria-label="Arrival">
                                                 <i class="fa-solid fa-truck"></i>
                                             </a>
@@ -690,14 +744,19 @@
                                                 <i class="fa-solid fa-xmark"></i>
                                             </a>
                                             @endcan
+                                            @endif
                                         @elseif (in_array($st, ['arrived', 'waiting'], true))
+                                            @if(isset($row['id']) && $row['id'])
                                             <a href="{{ route('slots.start', ['slotId' => $row['id']]) }}" class="tw-action tw-action--primary" data-tooltip="Start" aria-label="Start">
                                                 <i class="fa-solid fa-play"></i>
                                             </a>
+                                            @endif
                                         @elseif ($st === 'in_progress')
+                                            @if(isset($row['id']) && $row['id'])
                                             <a href="{{ route('slots.complete', ['slotId' => $row['id']]) }}" class="tw-action tw-action--primary" data-tooltip="Complete" aria-label="Complete">
                                                 <i class="fa-solid fa-check"></i>
                                             </a>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>

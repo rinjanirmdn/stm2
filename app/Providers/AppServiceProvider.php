@@ -22,16 +22,20 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
-            if (\Illuminate\Support\Facades\Schema::hasTable('holidays')) {
+            // Use HolidayHelper instead of database table
+            try {
                 $holidays = \Illuminate\Support\Facades\Cache::remember('public_holidays', 86400, function () {
-                    return \Illuminate\Support\Facades\DB::table('holidays')->pluck('description', 'holiday_date')->toArray();
+                    $year = now()->year;
+                    $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
+                    return collect($holidayData)->pluck('name', 'date')->toArray();
                 });
                 $view->with('holidays', $holidays);
-            } else {
+            } catch (\Exception $e) {
+                // If holiday helper fails, use empty array
                 $view->with('holidays', []);
             }
         });
-        
+
         // Register Slot observer
         Slot::observe(SlotObserver::class);
     }

@@ -467,9 +467,9 @@
         }
 
         .vendor-alert--warning {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fde68a;
+            background: #fbbf24 !important;
+            color: #ffffff !important;
+            border: 1px solid #f59e0b;
         }
 
         .vendor-alert--info {

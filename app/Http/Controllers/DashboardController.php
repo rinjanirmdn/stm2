@@ -89,7 +89,7 @@ class DashboardController extends Controller
             ->get(['id', 'status', 'direction', 'planned_start', 'supplier_name', 'po_number', 'request_number'])
             ->map(function($booking) {
                 return [
-                    'id' => $booking->id,
+                    'id' => null, // Pending bookings don't have slot ID yet
                     'status' => $booking->status,
                     'direction' => $booking->direction,
                     'planned_start' => $booking->planned_start,
@@ -98,14 +98,25 @@ class DashboardController extends Controller
                     'request_number' => $booking->request_number,
                     'ticket_number' => $booking->request_number,
                     'vendor_name' => $booking->supplier_name,
-                    'warehouse_name' => '',
-                    'truck_type' => '',
+                    'warehouse_name' => null, // Not available in booking_requests
+                    'truck_type' => null, // Not available in booking_requests
+                    'is_pending_booking' => true, // Flag to identify pending bookings
                 ];
             })
             ->toArray();
 
         // Merge pending bookings with schedule data for chart
         $allScheduleData = array_merge($schedule, $pendingBookings);
+
+        // Debug: Log schedule data
+        \Log::info('Schedule data sent to view', [
+            'schedule_count' => count($schedule),
+            'pending_count' => count($pendingBookings),
+            'total_count' => count($allScheduleData),
+            'schedule_data' => $schedule,
+            'pending_data' => $pendingBookings,
+            'merged_data' => $allScheduleData
+        ]);
 
         // Get activity data
         $activityData = $this->statsService->getActivityStats($activityDate, $activityWarehouseId, $activityUserId);
@@ -226,6 +237,7 @@ class DashboardController extends Controller
             'schedule_from' => $scheduleFrom,
             'schedule_to' => $scheduleTo,
             'schedule' => $allScheduleData, // Includes pending from booking_requests
+            'slots_only' => $schedule, // Pure slots data for chart
             'timelineBlocksByGate' => $timelineBlocks,
 
             // Activity data
@@ -235,8 +247,22 @@ class DashboardController extends Controller
             'activityWarehouses' => $activityData['warehouses'],
             'activityUsers' => $activityData['users'],
             'recentActivities' => $activityData['activities'],
-            'holidays' => DB::table('holidays')->pluck('description', 'holiday_date')->toArray(),
+            'holidays' => $this->getHolidaysForYear($today),
         ]);
+    }
+
+    /**
+     * Get holidays for current year
+     */
+    private function getHolidaysForYear(string $date): array
+    {
+        try {
+            $year = date('Y', strtotime($date));
+            $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
+            return collect($holidayData)->pluck('name', 'date')->toArray();
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     /**

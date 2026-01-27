@@ -10,7 +10,7 @@
             <i class="fas fa-calendar-alt"></i>
             Reschedule Request {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
         </h2>
-        <a href="{{ route('bookings.show', $booking->id) }}" class="st-button st-button--secondary">
+        <a href="{{ route('bookings.show', $booking->id) }}" class="st-btn st-btn--secondary">
             <i class="fas fa-arrow-left"></i>
             Back
         </a>
@@ -20,16 +20,16 @@
     <div class="st-alert st-alert--info">
         <i class="fas fa-info-circle"></i>
         <div>
-            <strong>Current Request:</strong> 
-            {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }} 
-            ({{ $booking->planned_duration }} Min) 
+            <strong>Current Request:</strong>
+            {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}
+            ({{ $booking->planned_duration }} Min)
             - Requested by {{ $booking->requester?->full_name ?? 'Vendor' }}
         </div>
     </div>
 
     <form method="POST" action="{{ route('bookings.reschedule.store', $booking->id) }}">
         @csrf
-        
+
         <div class="st-form-grid">
             <!-- Left Column: Current Info -->
             <div class="st-form-section">
@@ -37,7 +37,7 @@
                     <i class="fas fa-clock"></i>
                     Vendor's Request
                 </h3>
-                
+
                 <table class="st-detail-table">
                     <tr>
                         <td>Supplier</td>
@@ -76,7 +76,7 @@
                     <i class="fas fa-edit"></i>
                     New Schedule
                 </h3>
-                
+
                 <div class="admin-form-group">
                     <label class="admin-form-label">Gate <span style="color: #ef4444;">*</span></label>
                     <select name="planned_gate_id" id="gate_select" class="admin-form-select" required>
@@ -128,17 +128,17 @@
 
                 <div class="st-form-group" style="margin-top: 1.5rem;">
                     <label class="st-label">Notes for Vendor</label>
-                    <textarea name="notes" class="st-textarea" rows="3" 
+                    <textarea name="notes" class="st-textarea" rows="3"
                               placeholder="Explain Why You're Rescheduling This Booking...">{{ old('notes') }}</textarea>
                 </div>
             </div>
         </div>
 
         <div class="st-form-actions">
-            <a href="{{ route('bookings.show', $booking->id) }}" class="st-button st-button--secondary">
+            <a href="{{ route('bookings.show', $booking->id) }}" class="st-btn st-btn--secondary">
                 Cancel
             </a>
-            <button type="submit" class="st-button st-button--warning">
+            <button type="submit" class="st-btn st-btn--warning">
                 <i class="fas fa-calendar-alt"></i>
                 Reschedule & Approve
             </button>
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selected = gateSelect.options[gateSelect.selectedIndex];
         if (!selected) return;
         warehouseHidden.value = selected.getAttribute('data-warehouse-id') || '';
-        
+
         // Load availability after warehouse changes
         checkAvailability();
         loadCalendarPreview();
@@ -376,12 +376,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const plannedStart = date + ' ' + time + ':00';
 
         const warehouseId = (warehouseHidden && warehouseHidden.value) ? warehouseHidden.value : '{{ $booking->warehouse_id }}';
-        
+
         fetch(`/bookings/ajax/calendar?warehouse_id=${warehouseId}&gate_id=${gateId}&planned_start=${encodeURIComponent(plannedStart)}&planned_duration=${duration}&exclude_slot_id={{ $booking->id }}`)
             .then(response => response.json())
             .then(data => {
                 availabilityCheck.style.display = 'block';
-                
+
                 if (data.available !== false) {
                     availabilityResult.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-success, #10b981);">
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
         html += '<thead><tr><th style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: var(--st-surface-alt, #f8fafc);">Time</th>';
-        
+
         gates.forEach(g => {
             html += `<th style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: var(--st-surface-alt, #f8fafc); min-width: 120px;">${g.gate.name}</th>`;
         });
@@ -442,16 +442,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         hours.forEach(hour => {
             html += `<tr><td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); font-weight: 500;">${hour}</td>`;
-            
+
             gates.forEach(g => {
                 const slot = g.slots.find(s => s.start_time === hour);
                 const occupiedSlot = g.slots.find(s => s.start_time < hour && s.end_time > hour);
-                
+
                 if (slot) {
                     const isPending = slot.status === 'pending_approval';
                     const isCurrentBooking = slot.id === {{ $booking->id }};
                     const bgColor = isCurrentBooking ? '#fef3c7' : (isPending ? '#fce7f3' : '#dcfce7');
-                    
+
                     html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: ${bgColor}; vertical-align: top;">
                         <div style="font-weight: 500;">${slot.start_time} - ${slot.end_time}</div>
                         <div style="font-size: 0.75rem; opacity: 0.7;">${slot.vendor_name}</div>

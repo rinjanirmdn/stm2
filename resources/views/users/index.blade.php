@@ -12,7 +12,7 @@
                         <label class="st-label">Search</label>
                         <input type="text" name="q" class="st-input" placeholder="NIK/Username or name" value="{{ $q ?? '' }}">
                     </div>
-                    <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                    <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;gap:8px;">
                         <a href="{{ route('users.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
                         <a href="{{ route('users.create') }}" class="st-btn st-btn--primary">Add User</a>
                     </div>
