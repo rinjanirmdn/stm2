@@ -64,7 +64,6 @@
                     <th>Supplier</th>
                     <th>Requested By</th>
                     <th>COA</th>
-                    <th>Surat Jalan</th>
                     <th>Scheduled</th>
                     <th>Converted Ticket</th>
                     <th>Gate</th>
@@ -87,14 +86,7 @@
                     <td>{{ $booking->requester?->full_name ?? '-' }}</td>
                     <td>
                         @if(!empty($booking->coa_path))
-                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View</a>
-                        @else
-                            -
-                        @endif
-                    </td>
-                    <td>
-                        @if(!empty($booking->surat_jalan_path))
-                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View</a>
+                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: underline;">View</a>
                         @else
                             -
                         @endif

@@ -260,20 +260,7 @@
                             </div>
                         </div>
 
-                        <div class="st-detail-item" style="padding:6px 8px;">
-                            <div class="st-detail-label" style="font-size:11px;">Surat Jalan</div>
-                            <div class="st-detail-colon" style="font-size:11px;">:</div>
-                            <div class="st-detail-value" style="font-size:11px;">
-                            @if(!empty($slot->surat_jalan_path))
-                                <a href="{{ asset('storage/' . $slot->surat_jalan_path) }}" target="_blank" rel="noopener" style="font-size:10px;color:var(--primary);text-decoration:underline;cursor:pointer;">
-                                    <i class="fa-solid fa-file-pdf" style="margin-right:4px;"></i>View / Download
-                                </a>
-                            @else
-                                -
-                            @endif
-                            </div>
-                        </div>
-
+                        
                         <div class="st-detail-item" style="padding:6px 8px;">
                             <div class="st-detail-label" style="font-size:11px;">Vendor</div>
                             <div class="st-detail-colon" style="font-size:11px;">:</div>

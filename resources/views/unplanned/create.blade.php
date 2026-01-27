@@ -156,13 +156,6 @@
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="st-form-field">
-                    <label class="st-label">Surat Jalan (PDF) <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
-                    <input type="file" name="surat_jalan_pdf" class="st-input{{ $errors->has('surat_jalan_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
-                    @error('surat_jalan_pdf')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
-                    @enderror
-                </div>
             </div>
 
             <div style="margin-top:4px;display:flex;gap:8px;">
