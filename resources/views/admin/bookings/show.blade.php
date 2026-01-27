@@ -91,23 +91,13 @@
                     <td>COA</td>
                     <td>
                         @if(!empty($booking->coa_path))
-                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: underline;">View / Download</a>
                         @else
                             -
                         @endif
                     </td>
                 </tr>
-                <tr>
-                    <td>Surat Jalan</td>
-                    <td>
-                        @if(!empty($booking->surat_jalan_path))
-                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
-                        @else
-                            -
-                        @endif
-                    </td>
-                </tr>
-                <tr>
+                                <tr>
                     <td>Supplier</td>
                     <td>{{ $booking->supplier_name ?? '-' }}</td>
                 </tr>

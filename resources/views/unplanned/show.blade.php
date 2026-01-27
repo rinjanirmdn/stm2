@@ -80,21 +80,13 @@
                         <div style="font-weight:600;">COA</div>
                         <div>
                             @if(!empty($slot->coa_path))
-                                <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                                <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: underline;">View / Download</a>
                             @else
                                 -
                             @endif
                         </div>
 
-                        <div style="font-weight:600;">Surat Jalan</div>
-                        <div>
-                            @if(!empty($slot->surat_jalan_path))
-                                <a href="{{ asset('storage/' . $slot->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
-                            @else
-                                -
-                            @endif
-                        </div>
-
+                        
                         <div style="font-weight:600;">Vendor</div>
                         <div>{{ $slot->vendor_name ?? '-' }}</div>
 

@@ -177,12 +177,7 @@
         font-size: 13px;
         min-width: 140px;
     }
-    .mb-row__gate {
-        color: #64748b;
-        font-size: 13px;
-        min-width: 80px;
-    }
-    .mb-row__direction {
+        .mb-row__direction {
         min-width: 80px;
     }
     .mb-row__status {
@@ -340,11 +335,7 @@
                 <i class="fas fa-calendar" style="opacity: 0.5; margin-right: 4px;"></i>
                 {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}
             </span>
-            <span class="mb-row__gate">
-                <i class="fas fa-door-open" style="opacity: 0.5; margin-right: 4px;"></i>
-                {{ $booking->convertedSlot?->plannedGate?->name ?? '-' }}
-            </span>
-            <span class="mb-row__direction">
+                        <span class="mb-row__direction">
                 @if($booking->direction === 'inbound')
                     <i class="fas fa-arrow-down" style="color: #3b82f6;"></i> In
                 @else

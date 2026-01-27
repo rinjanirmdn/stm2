@@ -199,18 +199,11 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                 <div class="st-form-field">
                     <label class="st-label">COA (PDF) <span class="st-text--danger-dark">*</span></label>
                     <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
                     @error('coa_pdf')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="st-form-field">
-                    <label class="st-label">Surat Jalan (PDF) <span class="st-text--optional">(optional)</span></label>
-                    <input type="file" name="surat_jalan_pdf" class="st-input{{ $errors->has('surat_jalan_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
-                    @error('surat_jalan_pdf')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
