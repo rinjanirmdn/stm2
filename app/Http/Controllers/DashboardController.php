@@ -36,7 +36,7 @@ class DashboardController extends Controller
             if ($isVendor) {
                 return redirect()->route('vendor.dashboard');
             }
-            
+
             // Fallback (jaga-jaga Spatie load role dengan nama lain)
             if (auth()->user()->hasRole(['Vendor', 'vendor'])) {
                 return redirect()->route('vendor.dashboard');
@@ -77,6 +77,35 @@ class DashboardController extends Controller
         // Get schedule and timeline data
         $schedule = $this->timelineService->getSchedule($scheduleDate, $scheduleFrom, $scheduleTo);
         $timelineBlocks = $this->timelineService->getTimelineBlocks($scheduleDate);
+
+        // Add pending bookings from booking_requests to schedule data for chart
+        $pendingBookings = \App\Models\BookingRequest::query()
+            ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
+            ->when($scheduleFrom && $scheduleTo, function($q) use ($scheduleFrom, $scheduleTo) {
+                return $q->whereBetween('planned_start', [$scheduleFrom, $scheduleTo]);
+            }, function($q) use ($scheduleDate) {
+                return $q->whereDate('planned_start', $scheduleDate);
+            })
+            ->get(['id', 'status', 'direction', 'planned_start', 'supplier_name', 'po_number', 'request_number'])
+            ->map(function($booking) {
+                return [
+                    'id' => $booking->id,
+                    'status' => $booking->status,
+                    'direction' => $booking->direction,
+                    'planned_start' => $booking->planned_start,
+                    'supplier_name' => $booking->supplier_name,
+                    'po_number' => $booking->po_number,
+                    'request_number' => $booking->request_number,
+                    'ticket_number' => $booking->request_number,
+                    'vendor_name' => $booking->supplier_name,
+                    'warehouse_name' => '',
+                    'truck_type' => '',
+                ];
+            })
+            ->toArray();
+
+        // Merge pending bookings with schedule data for chart
+        $allScheduleData = array_merge($schedule, $pendingBookings);
 
         // Get activity data
         $activityData = $this->statsService->getActivityStats($activityDate, $activityWarehouseId, $activityUserId);
@@ -196,7 +225,7 @@ class DashboardController extends Controller
             'schedule_date' => $scheduleDate,
             'schedule_from' => $scheduleFrom,
             'schedule_to' => $scheduleTo,
-            'schedule' => $schedule,
+            'schedule' => $allScheduleData, // Includes pending from booking_requests
             'timelineBlocksByGate' => $timelineBlocks,
 
             // Activity data

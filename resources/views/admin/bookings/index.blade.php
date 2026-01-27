@@ -113,7 +113,7 @@
                     <td>
                         @php
                             $badgeColor = match($booking->status) {
-                                'pending' => 'warning',
+                                'pending' => 'pending_approval',
                                 'approved' => 'success',
                                 'rejected' => 'danger',
                                 'cancelled' => 'secondary',

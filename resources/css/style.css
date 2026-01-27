@@ -2860,8 +2860,8 @@ input[type="datetime-local"].form-control {
 }
 
 .st-badge--pending_approval {
-    background: #fff7ed;
-    color: #ea580c;
+    background: #fef3c7;
+    color: #92400e;
 }
 
 /* Standard Semantic Badges to match Slot Model returns */
@@ -4503,19 +4503,23 @@ table.st-table td form {
     padding-right: 32px;
     width: calc(100% + 32px);
     box-sizing: border-box;
+    min-width: 0; /* Prevent flex items from overflowing */
 }
 
 .st-dashboard-schedule-chart-col {
     min-width: 420px;
     flex: 0 0 440px;
+    min-width: 0; /* Prevent overflow */
 }
 
 .st-dashboard-schedule-table-col {
-    min-width: 600px;
+    min-width: 400px; /* Reduced from 600px */
     flex: 1 1 auto;
     margin-right: 0;
     padding-right: 0;
     max-width: none;
+    min-width: 0; /* Prevent overflow */
+    overflow: hidden; /* Hide overflow */
 }
 
 .st-dashboard-schedule-chart-card {
@@ -4545,6 +4549,40 @@ table.st-table td form {
 @media (max-width: 520px) {
     .st-dashboard-schedule-metric-row {
         grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Responsive adjustments for zoom levels */
+@media (max-width: 1200px) {
+    .st-dashboard-schedule-table-col {
+        min-width: 350px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .st-dashboard-schedule-table-col {
+        min-width: 300px;
+    }
+
+    .st-dashboard-schedule-chart-col {
+        min-width: 380px;
+        flex: 0 0 400px;
+    }
+}
+
+@media (max-width: 800px) {
+    .st-dashboard-schedule-row {
+        flex-wrap: wrap;
+        width: 100%;
+        margin-right: 0;
+        padding-right: 0;
+    }
+
+    .st-dashboard-schedule-chart-col,
+    .st-dashboard-schedule-table-col {
+        flex: 1 1 100%;
+        min-width: 100%;
+        max-width: 100%;
     }
 }
 
@@ -5439,13 +5477,13 @@ table.st-table td form {
 }
 
 .st-legend-item--pending_approval {
-    background-color: #fff7ed;
-    color: #9a3412;
-    border-color: #ffedd5;
+    background-color: #fef3c7;
+    color: #92400e;
+    border-color: #fef3c7;
 }
 
 .st-legend-item--pending_approval .st-dock-dot {
-    background-color: #f97316;
+    background-color: #f59e0b;
 }
 
 .st-legend-item--awaiting_vendor {
@@ -5540,9 +5578,9 @@ table.st-table td form {
 
 .bg-pending,
 .bg-pending_approval {
-    background-color: #ea580c !important;
-    /* Orange-600 */
-    color: #ffffff !important;
+    background-color: #fef3c7 !important;
+    /* Amber-100 */
+    color: #92400e !important;
     border: none !important;
 }
 

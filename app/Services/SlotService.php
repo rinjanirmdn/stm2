@@ -192,10 +192,14 @@ class SlotService
         }
 
         return DB::table('activity_logs')->insert([
-            'slot_id' => $slotId,
-            'activity_type' => $activityType,
+            'type' => $activityType,
             'description' => $description,
-            'created_by' => $createdBy,
+            'mat_doc' => null,
+            'po_number' => null,
+            'slot_id' => $slotId,
+            'user_id' => $createdBy,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 

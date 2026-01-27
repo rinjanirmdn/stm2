@@ -44,40 +44,43 @@
         </div>
     </div>
 
-    <div class="tw-slots">
-    <div class="st-card tw-card" style="margin-bottom:12px;">
-        <div class="tw-card__body">
-            <div class="st-form-row" style="gap:4px;align-items:flex-end;">
-                <div class="st-form-field" style="max-width:260px;">
-                    <label class="st-label">Search</label>
-                    <div style="position:relative;">
-                        <input type="text" name="q" form="slot-filter-form" class="st-input" placeholder="Truck, MAT DOC, Vendor, Etc" value="{{ $search }}">
-                        <div id="slot-search-suggestions" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:30;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;max-height:220px;overflow:auto;min-width:260px;"></div>
+    <section class="st-row" style="margin:0;padding:0 0 2px 0;">
+        <div class="st-col-12" style="display:flex;flex-direction:column;">
+            <div class="st-card tw-card tw-card--table" style="margin:0;">
+                <div class="tw-card__body">
+                    <div class="st-form-row" style="gap:4px;align-items:flex-end;">
+                        <div class="st-form-field" style="max-width:260px;">
+                            <label class="st-label">Search</label>
+                            <div style="position:relative;">
+                                <input type="text" name="q" form="slot-filter-form" class="st-input" placeholder="Truck, MAT DOC, Vendor, Etc" value="{{ $search }}">
+                                <div id="slot-search-suggestions" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:30;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;max-height:220px;overflow:auto;min-width:260px;"></div>
+                            </div>
+                        </div>
+                        <div class="st-form-field" style="max-width:120px;">
+                            <label class="st-label">Show</label>
+                            <select name="page_size" form="slot-filter-form" class="st-select">
+                                @foreach (['10','25','50','100','all'] as $ps)
+                                    <option value="{{ $ps }}" {{ $pageSize === $ps ? 'selected' : '' }}>{{ strtoupper($ps) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;gap:8px;">
+                            <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                            @unless(optional(auth()->user())->hasRole('Operator'))
+                            @can('slots.create')
+                            <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary">Create Slot</a>
+                            @endcan
+                            @endunless
+                        </div>
                     </div>
-                </div>
-                <div class="st-form-field" style="max-width:120px;">
-                    <label class="st-label">Show</label>
-                    <select name="page_size" form="slot-filter-form" class="st-select">
-                        @foreach (['10','25','50','100','all'] as $ps)
-                            <option value="{{ $ps }}" {{ $pageSize === $ps ? 'selected' : '' }}>{{ strtoupper($ps) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
-                    <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
-                    @unless(optional(auth()->user())->hasRole('Operator'))
-                    @can('slots.create')
-                    <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary">Create Slot</a>
-                    @endcan
-                    @endunless
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <section class="st-row" style="margin:0;padding:0;">
-        <div class="st-col-12" style="display:flex;flex-direction:column;">
-            <div class="st-card tw-card tw-card--table" style="margin:0;">
+    <section class="st-row" style="margin:0;padding:0;flex:1;min-height:0;">
+        <div class="st-col-12" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+            <div class="st-card tw-card tw-card--table" style="margin:0;flex:1;min-height:0;">
                 <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -88,8 +91,8 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper tw-table-wrap" style="min-height: 400px;">
-                    <table class="st-table tw-table">
+                <div class="st-table-wrapper tw-table-wrap" style="min-height: 400px;flex:1;display:flex;flex-direction:column;">
+                    <table class="st-table tw-table" style="flex:1;">
                         <thead>
                             <tr>
                                 <th style="width:40px;">#</th>
@@ -642,7 +645,6 @@
             </div>
         </div>
     </section>
-    </div>
 @endsection
 
 @push('scripts')
