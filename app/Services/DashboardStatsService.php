@@ -18,7 +18,13 @@ class DashboardStatsService
     {
         $rangeDate = DB::raw('DATE(planned_start)');
 
-        // Single query with conditional aggregation instead of 10 separate queries
+        // Get pending count from booking_requests
+        $pendingCount = DB::table('booking_requests')
+            ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
+            ->whereBetween(DB::raw('DATE(planned_start)'), [$start, $end])
+            ->count();
+
+        // Single query with conditional aggregation for other stats (from slots)
         $stats = DB::table('slots')
             ->whereBetween($rangeDate, [$start, $end])
             ->selectRaw("
@@ -43,7 +49,7 @@ class DashboardStatsService
             'active' => (int) ($stats->active ?? 0),
             'scheduled' => (int) ($stats->scheduled ?? 0),
             'waiting' => (int) ($stats->waiting ?? 0),
-            'pending' => (int) ($stats->pending ?? 0),
+            'pending' => $pendingCount, // From booking_requests
             'completed' => (int) ($stats->completed ?? 0),
             'late' => (int) ($stats->late ?? 0),
             'inbound' => (int) ($stats->inbound ?? 0),

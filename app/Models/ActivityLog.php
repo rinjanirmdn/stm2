@@ -16,6 +16,8 @@ class ActivityLog extends Model
         'po_number',
         'slot_id',
         'user_id',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [

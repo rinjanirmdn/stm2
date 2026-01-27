@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Gate;
 use App\Models\BookingRequest;
 use App\Models\Slot;
@@ -12,6 +13,7 @@ use App\Services\BookingApprovalService;
 use App\Services\SlotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
@@ -159,6 +161,8 @@ class BookingApprovalController extends Controller
                 }
             }
 
+            Log::info('Approve booking request started', ['booking_id' => $id, 'user_id' => Auth::id()]);
+
             $slot = DB::transaction(function () use ($bookingRequest, $warehouseId, $plannedGateId, $request) {
                 $vendorType = $bookingRequest->direction === 'outbound' ? 'customer' : 'supplier';
                 $slot = Slot::create([
@@ -200,6 +204,8 @@ class BookingApprovalController extends Controller
 
                 $this->bookingService->approveBooking($slot, Auth::user(), $request->notes);
 
+                Log::info('Booking service approve completed', ['slot_id' => $slot->id]);
+
                 $bookingRequest->update([
                     'status' => BookingRequest::STATUS_APPROVED,
                     'approved_by' => Auth::id(),
@@ -208,8 +214,25 @@ class BookingApprovalController extends Controller
                     'converted_slot_id' => $slot->id,
                 ]);
 
+                Log::info('Booking request updated to approved', ['booking_id' => $id]);
+
                 return $slot;
             });
+
+            // Test direct ActivityLog creation
+            try {
+                ActivityLog::create([
+                    'type' => 'test_booking_approved',
+                    'description' => "Test: Approved booking request for PO: {$bookingRequest->po_number}",
+                    'po_number' => $bookingRequest->po_number,
+                    'mat_doc' => null,
+                    'slot_id' => $slot->id,
+                    'user_id' => Auth::id(),
+                ]);
+                Log::info('Test ActivityLog created successfully');
+            } catch (\Throwable $e) {
+                Log::error('Test ActivityLog creation failed: ' . $e->getMessage());
+            }
 
             if (! empty($bookingRequest->planned_start)) {
                 $approvedDate = $bookingRequest->planned_start instanceof \DateTimeInterface

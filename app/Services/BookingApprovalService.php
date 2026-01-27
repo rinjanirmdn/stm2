@@ -2,14 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\ActivityLog;
 use App\Models\BookingHistory;
 use App\Models\Gate;
 use App\Models\Slot;
 use App\Models\User;
 use App\Notifications\BookingApproved;
 use App\Notifications\BookingRejected;
-use App\Notifications\BookingSubmitted;
 use App\Notifications\BookingRequested;
+use App\Notifications\BookingSubmitted;
 use DateTime;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -87,6 +88,24 @@ class BookingApprovalService
             ]
         );
 
+        // Log activity
+            try {
+                ActivityLog::create([
+                    'type' => 'booking_requested',
+                    'description' => "New booking request submitted for PO: {$slot->po_number}",
+                    'po_number' => $slot->po_number,
+                    'mat_doc' => $slot->mat_doc ?? null,
+                    'slot_id' => $slot->id,
+                    'user_id' => $vendor->id,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to log activity for booking request: ' . $e->getMessage(), [
+                    'slot_id' => $slot->id,
+                    'po_number' => $slot->po_number,
+                    'vendor_id' => $vendor->id,
+                ]);
+            }
+
         // Notify admins about new booking request
         $this->notifyAdminsNewBooking($slot);
 
@@ -136,6 +155,24 @@ class BookingApprovalService
                 $oldStatus,
                 $notes
             );
+
+            // Log activity
+            try {
+                ActivityLog::create([
+                    'type' => 'booking_approved',
+                    'description' => "Approved booking request for PO: {$slot->po_number}",
+                    'po_number' => $slot->po_number,
+                    'mat_doc' => $slot->mat_doc ?? null,
+                    'slot_id' => $slot->id,
+                    'user_id' => $admin->id,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to log activity for booking approval: ' . $e->getMessage(), [
+                    'slot_id' => $slot->id,
+                    'po_number' => $slot->po_number,
+                    'admin_id' => $admin->id,
+                ]);
+            }
 
             // Notify vendor
             $this->notifyVendorApproved($slot);
@@ -221,6 +258,25 @@ class BookingApprovalService
                 $reason
             );
 
+            // Log activity
+            try {
+                ActivityLog::create([
+                    'type' => 'booking_rejected',
+                    'description' => "Rejected booking request for PO: {$slot->po_number} - Reason: {$reason}",
+                    'po_number' => $slot->po_number,
+                    'mat_doc' => $slot->mat_doc ?? null,
+                    'slot_id' => $slot->id,
+                    'user_id' => $admin->id,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to log activity for booking rejection: ' . $e->getMessage(), [
+                    'slot_id' => $slot->id,
+                    'po_number' => $slot->po_number,
+                    'admin_id' => $admin->id,
+                    'reason' => $reason,
+                ]);
+            }
+
             // Notify vendor
             $this->notifyVendorRejected($slot);
 
@@ -269,7 +325,7 @@ class BookingApprovalService
         // Validate operating hours
         $startDt = new DateTime($plannedStart);
         $hour = (int) $startDt->format('H');
-        
+
         if ($hour < self::OPERATING_START_HOUR || $hour >= self::OPERATING_END_HOUR) {
             return [
                 'available' => false,
@@ -281,7 +337,7 @@ class BookingApprovalService
         $endDt = clone $startDt;
         $endDt->modify("+{$durationMinutes} minutes");
         $endHour = (int) $endDt->format('H');
-        
+
         if ($endHour >= self::OPERATING_END_HOUR && $endDt->format('i') > '00') {
             return [
                 'available' => false,
@@ -340,7 +396,7 @@ class BookingApprovalService
         if ($gateId) {
             $laneGroup = $this->slotService->getGateLaneGroup($gateId);
             $laneGateIds = $laneGroup ? $this->slotService->getGateIdsByLaneGroup($laneGroup) : [$gateId];
-            
+
             $overlapCount = $this->slotService->checkLaneOverlap(
                 $laneGateIds,
                 $startDt->format('Y-m-d H:i:s'),
@@ -412,7 +468,7 @@ class BookingApprovalService
                 if ($minAllowed && $checkTime < $minAllowed) {
                     continue;
                 }
-                
+
                 $isOccupied = false;
                 $occupyingSlot = null;
 
