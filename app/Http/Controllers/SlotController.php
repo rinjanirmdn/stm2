@@ -393,6 +393,7 @@ class SlotController extends Controller
             'driver_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:500',
             'coa_pdf' => 'required|file|mimes:pdf|max:5120',
+            'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
@@ -580,6 +581,12 @@ class SlotController extends Controller
             $coaName = 'coa_' . $slotId . '_' . time() . '.pdf';
             $coaPath = $coaFile->storeAs('booking-documents/' . $slotId, $coaName, 'public');
             $updates['coa_path'] = $coaPath;
+        }
+        if ($request->hasFile('surat_jalan_pdf')) {
+            $sjFile = $request->file('surat_jalan_pdf');
+            $sjName = 'surat_jalan_' . $slotId . '_' . time() . '.pdf';
+            $sjPath = $sjFile->storeAs('booking-documents/' . $slotId, $sjName, 'public');
+            $updates['surat_jalan_path'] = $sjPath;
         }
         if (!empty($updates)) {
             DB::table('slots')->where('id', $slotId)->update($updates);
@@ -1194,6 +1201,7 @@ class SlotController extends Controller
             'po_items' => 'nullable|array',
             'po_items.*.qty' => 'nullable|numeric|min:0',
             'coa_pdf' => 'required|file|mimes:pdf|max:5120',
+            'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
             'driver_name' => 'nullable|string|max:50',
             'actual_gate_id' => 'required|integer|exists:gates,id',
         ]);

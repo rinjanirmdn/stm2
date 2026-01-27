@@ -4,6 +4,7 @@
 
 @section('content')
 @push('styles')
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.css">
 @endpush
 <style>
@@ -244,7 +245,7 @@
             <div class="cb-grid">
                 <div class="vendor-form-group">
                     <label class="vendor-form-label">Date <span style="color: #ef4444;">*</span></label>
-                    <input type="text" name="planned_date" class="vendor-form-input flatpickr-date" required
+                    <input type="text" name="planned_date" class="vendor-form-input" required
                            value="{{ old('planned_date', request('date', date('Y-m-d'))) }}" id="planned_date" autocomplete="off">
                 </div>
                 <div class="vendor-form-group">
@@ -341,6 +342,8 @@
 @endsection
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -516,43 +519,162 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initDatePicker() {
-        if (typeof window.flatpickr !== 'function') return;
-        if (!dateInput || dateInput.getAttribute('data-st-flatpickr') === '1') return;
-        dateInput.setAttribute('data-st-flatpickr', '1');
+        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
+        if (!dateInput || dateInput.getAttribute('data-st-datepicker') === '1') return;
+        dateInput.setAttribute('data-st-datepicker', '1');
 
-        window.flatpickr(dateInput, {
-            dateFormat: 'Y-m-d',
-            allowInput: true,
-            disableMobile: true,
-            minDate: 'today',
-            disable: [function(date) {
-                const ds = toIsoDate(date);
-                return date.getDay() === 0 || Boolean(holidayData[ds]);
-            }],
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
-                if (dayElem.dateObj.getDay() === 0) {
-                    dayElem.classList.add('is-sunday');
-                    dayElem.title = 'Sunday';
+        function applyDatepickerTooltips(inst) {
+            if (!inst || !inst.dpDiv) return;
+            const dp = window.jQuery(inst.dpDiv);
+
+            dp.find('.st-datepicker-cell-tooltip').remove();
+
+            dp.find('td.is-sunday, td.is-holiday').each(function() {
+                const cell = window.jQuery(this);
+                const dayText = cell.find('a, span').first().text();
+                if (!dayText) return;
+                const fallbackYear = inst.drawYear ?? inst.selectedYear;
+                const fallbackMonth = inst.drawMonth ?? inst.selectedMonth;
+                const year = cell.data('year') ?? fallbackYear;
+                const month = cell.data('month') ?? fallbackMonth;
+                if (year === undefined || month === undefined) return;
+                const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayText).padStart(2, '0')}`;
+                let title = '';
+                if (cell.hasClass('is-sunday')) {
+                    title = 'Sunday';
                 }
-                if (holidayData[ds]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = holidayData[ds];
+                if (cell.hasClass('is-holiday')) {
+                    title = holidayData[ds] || 'Holiday';
                 }
-            },
-            onChange: function() {
+                if (title) {
+                    cell.attr('data-st-tooltip', title);
+                    cell.find('a, span').attr('data-st-tooltip', title);
+                }
+                cell.removeAttr('title');
+                cell.find('a, span').removeAttr('title');
+            });
+
+            dp.find('td.is-sunday, td.is-holiday').each(function() {
+                const cell = window.jQuery(this);
+                const tooltipText = cell.attr('data-st-tooltip') || '';
+                if (!tooltipText) return;
+            });
+        }
+
+        function bindDatepickerHover(inst) {
+            if (!inst || !inst.dpDiv) return;
+            const dp = window.jQuery(inst.dpDiv);
+            let hideTimer = null;
+            let tooltip = document.getElementById('st-datepicker-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'st-datepicker-tooltip';
+                tooltip.className = 'st-datepicker-tooltip';
+                document.body.appendChild(tooltip);
+            }
+
+            dp.off('mouseenter.st-tooltip mousemove.st-tooltip mouseleave.st-tooltip', 'td.is-sunday, td.is-holiday');
+            dp.on('mouseenter.st-tooltip', 'td.is-sunday, td.is-holiday', function(event) {
+                const text = window.jQuery(this).attr('data-st-tooltip') || '';
+                if (!text) return;
+                if (hideTimer) {
+                    clearTimeout(hideTimer);
+                    hideTimer = null;
+                }
+                tooltip.textContent = text;
+                tooltip.classList.add('st-datepicker-tooltip--visible');
+                tooltip.style.left = `${event.clientX + 12}px`;
+                tooltip.style.top = `${event.clientY + 12}px`;
+            });
+            dp.on('mousemove.st-tooltip', 'td.is-sunday, td.is-holiday', function(event) {
+                tooltip.style.left = `${event.clientX + 12}px`;
+                tooltip.style.top = `${event.clientY + 12}px`;
+            });
+            dp.on('mouseleave.st-tooltip', 'td.is-sunday, td.is-holiday', function() {
+                hideTimer = setTimeout(function() {
+                    tooltip.classList.remove('st-datepicker-tooltip--visible');
+                }, 300);
+            });
+        }
+
+        function bindDatepickerClicks(inst) {
+            if (!inst || !inst.dpDiv) return;
+            const dp = window.jQuery(inst.dpDiv);
+
+            dp.off('click.st-select', 'a[href="#"]');
+            dp.on('click.st-select', 'a[href="#"]', function(event) {
+                event.preventDefault();
+                const cell = window.jQuery(this).closest('td');
+                if (cell.hasClass('ui-state-disabled')) return;
+                const year = cell.data('year');
+                const month = cell.data('month');
+                const dayText = window.jQuery(this).text();
+                if (year === undefined || month === undefined || !dayText) return;
+                const pickedDate = new Date(year, month, parseInt(dayText, 10));
+                const formatted = window.jQuery.datepicker.formatDate('yy-mm-dd', pickedDate);
+                window.jQuery(dateInput).datepicker('setDate', formatted);
+                dateInput.value = formatted;
                 applyTimeRules();
                 checkAvailability();
                 loadLiveAvailability();
+                window.jQuery(dateInput).datepicker('hide');
+            });
+        }
+
+        window.jQuery(dateInput).datepicker({
+            dateFormat: 'yy-mm-dd',
+            minDate: 0,
+            beforeShowDay: function(date) {
+                const ds = toIsoDate(date);
+                const isSunday = date.getDay() === 0;
+                const isHoliday = Boolean(holidayData[ds]);
+                if (isSunday) {
+                    return [false, 'is-sunday', 'Sunday'];
+                }
+                if (isHoliday) {
+                    return [false, 'is-holiday', holidayData[ds]];
+                }
+                return [true, '', ''];
+            },
+            beforeShow: function(input, inst) {
+                setTimeout(function() {
+                    applyDatepickerTooltips(inst);
+                    bindDatepickerHover(inst);
+                    bindDatepickerClicks(inst);
+                }, 0);
+            },
+            onChangeMonthYear: function(year, month, inst) {
+                setTimeout(function() {
+                    applyDatepickerTooltips(inst);
+                    bindDatepickerHover(inst);
+                    bindDatepickerClicks(inst);
+                }, 0);
             }
         });
+
+        const inst = window.jQuery(dateInput).data('datepicker');
+        if (inst) {
+            applyDatepickerTooltips(inst);
+            bindDatepickerHover(inst);
+            bindDatepickerClicks(inst);
+        }
     }
 
     // Summary update
     function updateSummary() {
-        summaryDate.textContent = dateInput.value || '-';
-        summaryTime.textContent = timeInput.value || '-';
-        summaryDuration.textContent = durationInput.value ? durationInput.value + ' min' : '-';
+        const dateValue = dateInput ? dateInput.value : '';
+        const timeValue = timeInput ? timeInput.value : '';
+        const durationValue = durationInput ? durationInput.value : '';
+
+        if (summaryDate) {
+            summaryDate.textContent = dateValue || '-';
+        }
+        if (summaryTime) {
+            summaryTime.textContent = timeValue || '-';
+        }
+        if (summaryDuration) {
+            summaryDuration.textContent = durationValue ? durationValue + ' min' : '-';
+        }
     }
 
     // Availability check

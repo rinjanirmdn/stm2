@@ -177,7 +177,12 @@
         font-size: 13px;
         min-width: 140px;
     }
-        .mb-row__direction {
+    .mb-row__gate {
+        color: #64748b;
+        font-size: 13px;
+        min-width: 80px;
+    }
+    .mb-row__direction {
         min-width: 80px;
     }
     .mb-row__status {
@@ -339,7 +344,11 @@
                 <i class="fas fa-calendar" style="opacity: 0.5; margin-right: 4px;"></i>
                 {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}
             </span>
-                        <span class="mb-row__direction">
+            <span class="mb-row__gate">
+                <i class="fas fa-door-open" style="opacity: 0.5; margin-right: 4px;"></i>
+                {{ $booking->convertedSlot?->plannedGate?->name ?? '-' }}
+            </span>
+            <span class="mb-row__direction">
                 @if($booking->direction === 'inbound')
                     <i class="fas fa-arrow-down" style="color: #3b82f6;"></i> In
                 @else
@@ -397,64 +406,138 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    if (typeof window.flatpickr !== 'function') return;
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
-    // Date Range Picker
-    var dateRangeInput = document.getElementById('date-range');
-    if (dateRangeInput) {
-        var dateFrom = document.getElementById('date_from');
-        var dateTo = document.getElementById('date_to');
+    function toIsoDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
-        // Set initial value if dates exist
-        if (dateFrom.value && dateTo.value) {
-            dateRangeInput.value = dateFrom.value + ' to ' + dateTo.value;
+    function applyDatepickerTooltips(inst) {
+        if (!inst || !inst.dpDiv) return;
+        const dp = window.jQuery(inst.dpDiv);
+
+        dp.find('td.is-holiday').each(function() {
+            const cell = window.jQuery(this);
+            const dayText = cell.find('a, span').first().text();
+            if (!dayText) return;
+            const fallbackYear = inst.drawYear ?? inst.selectedYear;
+            const fallbackMonth = inst.drawMonth ?? inst.selectedMonth;
+            const year = cell.data('year') ?? fallbackYear;
+            const month = cell.data('month') ?? fallbackMonth;
+            if (year === undefined || month === undefined) return;
+            const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayText).padStart(2, '0')}`;
+            const title = holidayData[ds] || '';
+            if (title) {
+                cell.attr('data-st-tooltip', title);
+                cell.find('a, span').attr('data-st-tooltip', title);
+            }
+            cell.removeAttr('title');
+            cell.find('a, span').removeAttr('title');
+        });
+    }
+
+    function bindDatepickerHover(inst) {
+        if (!inst || !inst.dpDiv) return;
+        const dp = window.jQuery(inst.dpDiv);
+        let hideTimer = null;
+        let tooltip = document.getElementById('st-datepicker-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'st-datepicker-tooltip';
+            tooltip.className = 'st-datepicker-tooltip';
+            document.body.appendChild(tooltip);
         }
 
-        window.flatpickr(dateRangeInput, {
-            mode: 'range',
-            dateFormat: 'Y-m-d',
-            altInput: true,
-            altFormat: 'd M Y',
-            allowInput: true,
-            disableMobile: true,
-            defaultDate: dateFrom.value && dateTo.value ? [dateFrom.value, dateTo.value] : null,
-            weekNumbers: false,
-            onChange: function(selectedDates, dateStr, instance) {
-                if (selectedDates.length === 2) {
-                    dateFrom.value = instance.formatDate(selectedDates[0], 'Y-m-d');
-                    dateTo.value = instance.formatDate(selectedDates[1], 'Y-m-d');
-                } else if (selectedDates.length === 0) {
-                    dateFrom.value = '';
-                    dateTo.value = '';
-                }
-            },
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                var ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
-                if (holidayData[ds]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = holidayData[ds];
-                }
+        dp.off('mouseenter.st-tooltip mousemove.st-tooltip mouseleave.st-tooltip', 'td.is-holiday');
+        dp.on('mouseenter.st-tooltip', 'td.is-holiday', function(event) {
+            const text = window.jQuery(this).attr('data-st-tooltip') || '';
+            if (!text) return;
+            if (hideTimer) {
+                clearTimeout(hideTimer);
+                hideTimer = null;
             }
+            tooltip.textContent = text;
+            tooltip.classList.add('st-datepicker-tooltip--visible');
+            tooltip.style.left = `${event.clientX + 12}px`;
+            tooltip.style.top = `${event.clientY + 12}px`;
+        });
+        dp.on('mousemove.st-tooltip', 'td.is-holiday', function(event) {
+            tooltip.style.left = `${event.clientX + 12}px`;
+            tooltip.style.top = `${event.clientY + 12}px`;
+        });
+        dp.on('mouseleave.st-tooltip', 'td.is-holiday', function() {
+            hideTimer = setTimeout(function() {
+                tooltip.classList.remove('st-datepicker-tooltip--visible');
+            }, 300);
+        });
+    }
+
+    function initDatepicker(el, beforeShowDay, onSelect) {
+        if (!el) return;
+        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
+        if (el.getAttribute('data-st-datepicker') === '1') return;
+        el.setAttribute('data-st-datepicker', '1');
+
+        window.jQuery(el).datepicker({
+            dateFormat: 'yy-mm-dd',
+            beforeShowDay: beforeShowDay,
+            beforeShow: function(input, inst) {
+                setTimeout(function() {
+                    applyDatepickerTooltips(inst);
+                    bindDatepickerHover(inst);
+                }, 0);
+            },
+            onChangeMonthYear: function(year, month, inst) {
+                setTimeout(function() {
+                    applyDatepickerTooltips(inst);
+                    bindDatepickerHover(inst);
+                }, 0);
+            },
+            onSelect: onSelect
+        });
+
+        const inst = window.jQuery(el).data('datepicker');
+        if (inst) {
+            applyDatepickerTooltips(inst);
+            bindDatepickerHover(inst);
+        }
+    }
+
+    // Date Range Picker (single date)
+    var dateRangeInput = document.getElementById('date-range');
+    if (dateRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
+        var dateFrom = document.getElementById('date_from');
+        var dateTo = document.getElementById('date_to');
+        var initial = dateFrom && dateFrom.value ? dateFrom.value : '';
+        if (initial) {
+            dateRangeInput.value = initial;
+        }
+
+        window.jQuery(dateRangeInput).dateRangePicker({
+            autoClose: true,
+            singleDate: true,
+            showShortcuts: false,
+            singleMonth: true,
+            format: 'YYYY-MM-DD'
+        }).bind('datepicker-change', function(event, obj) {
+            var value = (obj && obj.value) ? obj.value : '';
+            if (dateFrom) dateFrom.value = value;
+            if (dateTo) dateTo.value = value;
+            dateRangeInput.value = value;
         });
     }
 
     var inputs = document.querySelectorAll('input.flatpickr-date');
     Array.prototype.slice.call(inputs).forEach(function (input) {
-        if (!input || input.getAttribute('data-st-flatpickr') === '1') return;
-        input.setAttribute('data-st-flatpickr', '1');
-
-        window.flatpickr(input, {
-            dateFormat: 'Y-m-d',
-            allowInput: true,
-            disableMobile: true,
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                var ds = fp.formatDate(dayElem.dateObj, 'Y-m-d');
-                if (holidayData[ds]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = holidayData[ds];
-                }
+        initDatepicker(input, function(date) {
+            const ds = toIsoDate(date);
+            if (holidayData[ds]) {
+                return [true, 'is-holiday', holidayData[ds]];
             }
+            return [true, '', ''];
         });
     });
 });
