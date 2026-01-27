@@ -85,7 +85,11 @@
         text-transform: uppercase;
         letter-spacing: 0.03em;
     }
-    .vd-status-item--warning .vd-status-item__count { color: #f59e0b; }
+    .vd-status-item--warning .vd-status-item__count {
+        background: #fbbf24 !important;
+        color: #ffffff !important;
+        border: 1px solid #f59e0b;
+    }
     .vd-status-item--danger .vd-status-item__count { color: #ef4444; }
     .vd-status-item--info .vd-status-item__count { color: #3b82f6; }
     .vd-status-item--success .vd-status-item__count { color: #10b981; }

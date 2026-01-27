@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\HolidayHelper;
 use Illuminate\Support\Facades\DB;
 
 class ScheduleTimelineService
@@ -34,7 +35,38 @@ class ScheduleTimelineService
             ->orderByRaw('COALESCE(s.actual_start, s.planned_start) ASC')
             ->get();
 
-        return $this->formatScheduleData($scheduleRows);
+        $scheduleData = $this->formatScheduleData($scheduleRows);
+
+        // Add holiday information
+        $scheduleData['isHoliday'] = HolidayHelper::isHoliday($date);
+        $scheduleData['holidayName'] = HolidayHelper::getHolidayName($date);
+        $scheduleData['isWorkingDay'] = HolidayHelper::isWorkingDay($date);
+
+        return $scheduleData;
+    }
+
+    /**
+     * Check if date is holiday
+     */
+    public function isHoliday(string $date): bool
+    {
+        return HolidayHelper::isHoliday($date);
+    }
+
+    /**
+     * Check if date is working day
+     */
+    public function isWorkingDay(string $date): bool
+    {
+        return HolidayHelper::isWorkingDay($date);
+    }
+
+    /**
+     * Get holiday name for date
+     */
+    public function getHolidayName(string $date): ?string
+    {
+        return HolidayHelper::getHolidayName($date);
     }
 
     /**
@@ -349,6 +381,8 @@ class ScheduleTimelineService
                   ->orWhere('s.slot_type', '!=', 'unplanned');
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
+            ->whereNotNull('s.id')
+            ->where('s.id', '>', 0)
             ->select([
                 's.id',
                 's.status',
@@ -384,6 +418,8 @@ class ScheduleTimelineService
                   ->orWhere('s.slot_type', '!=', 'unplanned');
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
+            ->whereNotNull('s.id')
+            ->where('s.id', '>', 0)
             ->select([
                 's.id',
                 's.direction',
@@ -414,6 +450,19 @@ class ScheduleTimelineService
         $schedule = [];
 
         foreach ($rows as $r) {
+            // Debug: Log anomali data
+            if (empty($r->id) || $r->id <= 0) {
+                \Log::warning('Anomali slot data found', [
+                    'id' => $r->id,
+                    'status' => $r->status,
+                    'po_number' => $r->po_number,
+                    'vendor_name' => $r->vendor_name,
+                    'planned_start' => $r->planned_start,
+                    'data' => (array)$r
+                ]);
+                continue;
+            }
+
             $eta = !empty($r->planned_start) ? date('H:i', strtotime((string) $r->planned_start)) : '-';
             $estFinish = '-';
 
@@ -441,7 +490,7 @@ class ScheduleTimelineService
             $performance = $this->getPerformanceStatus($r);
 
             $schedule[] = [
-                'id' => (int) ($r->id ?? 0),
+                'id' => (int) $r->id,
                 'po_number' => (string) ($r->po_number ?? ''),
                 'vendor_name' => (string) ($r->vendor_name ?? '-'),
                 'warehouse_name' => (string) ($r->warehouse_name ?? ''),

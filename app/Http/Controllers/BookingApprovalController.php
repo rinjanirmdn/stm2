@@ -417,7 +417,22 @@ class BookingApprovalController extends Controller
             'success' => true,
             'date' => $date,
             'gates' => $calendarData,
+            'holidays' => $this->getHolidaysForDate($date),
         ]);
+    }
+
+    /**
+     * Get holidays for a specific date
+     */
+    private function getHolidaysForDate(string $date): array
+    {
+        try {
+            $year = date('Y', strtotime($date));
+            $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
+            return collect($holidayData)->pluck('name', 'date')->toArray();
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     /**

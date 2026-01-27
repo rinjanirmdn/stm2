@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\HolidayHelper;
 use DateTime;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -807,5 +808,49 @@ class SlotService
             return 1;  // Medium
         }
         return 2;      // High
+    }
+
+    /**
+     * Check if a date is a holiday using HolidayHelper
+     *
+     * @param \DateTime|string $date
+     * @return bool
+     */
+    public function isHoliday($date): bool
+    {
+        return HolidayHelper::isHoliday($date);
+    }
+
+    /**
+     * Check if a date is a working day (not weekend and not holiday)
+     *
+     * @param \DateTime|string $date
+     * @return bool
+     */
+    public function isWorkingDay($date): bool
+    {
+        return HolidayHelper::isWorkingDay($date);
+    }
+
+    /**
+     * Get holiday name for a specific date
+     *
+     * @param \DateTime|string $date
+     * @return string|null
+     */
+    public function getHolidayName($date): ?string
+    {
+        return HolidayHelper::getHolidayName($date);
+    }
+
+    /**
+     * Get all holidays for a year
+     *
+     * @param int $year
+     * @return array
+     */
+    public function getHolidaysByYear(int $year): array
+    {
+        return HolidayHelper::getHolidaysByYear($year);
     }
 }

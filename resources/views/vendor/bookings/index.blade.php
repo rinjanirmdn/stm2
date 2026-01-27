@@ -189,7 +189,11 @@
         min-width: 100px;
         text-align: center;
     }
-    .mb-row__status--pending { background: #fef3c7; color: #92400e; }
+    .mb-row__status--pending {
+        background: #fbbf24 !important;
+        color: #ffffff !important;
+        border: 1px solid #f59e0b;
+    }
     .mb-row__status--scheduled { background: #dbeafe; color: #1e40af; }
     .mb-row__status--completed { background: #dcfce7; color: #166534; }
     .mb-row__status--action { background: #fee2e2; color: #991b1b; }

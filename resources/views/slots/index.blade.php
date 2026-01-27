@@ -78,9 +78,9 @@
         </div>
     </section>
 
-    <section class="st-row" style="margin:0;padding:0;flex:1;min-height:0;">
-        <div class="st-col-12" style="display:flex;flex-direction:column;flex:1;min-height:0;">
-            <div class="st-card tw-card tw-card--table" style="margin:0;flex:1;min-height:0;">
+    <section class="st-row" style="margin:0;padding:0;">
+        <div class="st-col-12" style="display:flex;flex-direction:column;">
+            <div class="st-card tw-card tw-card--table" style="margin:0;">
                 <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -91,8 +91,8 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper tw-table-wrap" style="min-height: 400px;flex:1;display:flex;flex-direction:column;">
-                    <table class="st-table tw-table" style="flex:1;">
+                <div class="st-table-wrapper" style="min-height: 400px; padding: 16px;">
+                    <table class="st-table">
                         <thead>
                             <tr>
                                 <th style="width:40px;">#</th>
@@ -515,13 +515,13 @@
                                 ];
                                 $badgeClass = $badgeMap[$status] ?? 'bg-secondary';
                             @endphp
-                            <tr>
-                                <td>{{ $rowNumber }}</td>
-                                <td>{{ $row->truck_number }}</td>
-                                <td>{{ $row->mat_doc ?? '-' }}</td>
-                                <td>{{ $row->vendor_name ?? '-' }}</td>
-                                <td>{{ $whGateLabel }}</td>
-                                <td>
+                            <tr style="height: 48px;">
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $rowNumber }}</td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $row->truck_number }}</td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $row->mat_doc ?? '-' }}</td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $row->vendor_name ?? '-' }}</td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $whGateLabel }}</td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
                                     @php $dir = strtolower($row->direction ?? ''); @endphp
                                     @if($dir === 'inbound')
                                         <span class="st-badge-modern st-badge-modern--inbound">
@@ -535,32 +535,37 @@
                                         {{ strtoupper($row->direction ?? '') }}
                                     @endif
                                 </td>
-                                <td>{{ $fmt($row->planned_start ?? null) }}</td>
-                                <td>{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</td>
-                                <td>{{ !empty($row->arrival_time) ? $fmt($row->arrival_time) : '-' }}</td>
-                                <td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $fmt($row->planned_start ?? null) }}</td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ !empty($row->arrival_time) ? $fmt($row->arrival_time) : '-' }}</td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
                                     @if ($leadTimeMinutes !== null)
                                         @php
                                             $m = (int) $leadTimeMinutes;
                                             $h = $m / 60;
                                         @endphp
-                                        {{ $m }} Min
-                                        @if ($h >= 1)
-                                            ({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }} Hours)
-                                        @endif
-                                        <div style="font-size:11px;color:#6b7280;margin-top:2px;line-height:1.3;">
-                                            @if ($waitingMinutes !== null)
-                                                <div>Waiting: {{ (int) $waitingMinutes }} Min</div>
+                                        <div style="line-height: 1.2;">
+                                            {{ $m }} Min
+                                            @if ($h >= 1)
+                                                <div style="font-size: 10px; color: #6b7280;">({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }}h)</div>
                                             @endif
-                                            @if ($processMinutes !== null)
-                                                <div>Process: {{ (int) $processMinutes }} Min</div>
+                                            @if ($waitingMinutes !== null || $processMinutes !== null)
+                                                <div style="font-size: 9px; color: #9ca3af; margin-top: 1px;">
+                                                    @if ($waitingMinutes !== null)
+                                                        W:{{ (int) $waitingMinutes }}m
+                                                    @endif
+                                                    @if ($processMinutes !== null)
+                                                        @if ($waitingMinutes !== null) | @endif
+                                                        P:{{ (int) $processMinutes }}m
+                                                    @endif
+                                                </div>
                                             @endif
                                         </div>
                                     @else
                                         -
                                     @endif
                                 </td>
-                                <td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
                                     @if ($status === 'completed' && (empty($row->actual_start) || empty($row->actual_finish)))
                                         <span class="badge bg-status-changes">Data Error</span>
                                     @elseif ($plannedDurationMinutes === null || $plannedDurationMinutes <= 0 || $leadTimeMinutes === null)
@@ -573,7 +578,7 @@
                                         -
                                     @endif
                                 </td>
-                                <td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
                                     @if ($lateDisplay === 'late')
                                         <span class="st-table__status-badge st-status-late">Late</span>
                                     @elseif ($lateDisplay === 'on_time')
@@ -582,13 +587,13 @@
                                         -
                                     @endif
                                 </td>
-                                <td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
                                     <span class="badge {{ $badgeClass }}">{{ ucwords(str_replace('_',' ', $status)) }}</span>
                                 </td>
-                                <td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
                                     <span class="st-table__status-badge {{ $blockingClass }}">{{ $blockingLabel }}</span>
                                 </td>
-                                <td>
+                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
                                     <div class="st-action-dropdown">
                                         <button type="button" class="st-btn st-btn--ghost st-action-trigger" style="padding:4px 8px;font-size:16px;line-height:1;border:none;color:#6b7280;">
                                             &#x22ee;
