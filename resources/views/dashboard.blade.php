@@ -900,63 +900,140 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    if (typeof window.flatpickr !== 'function') return;
     try {
         // Use global holiday helper
         var globalHolidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
-        var flatpickrConfig = {
-            dateFormat: "Y-m-d",
-            allowInput: true,
-            clickOpens: true,
-            disableMobile: true,
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                if (globalHolidayData[dateStr]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = globalHolidayData[dateStr];
+        function toIsoDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function applyDatepickerTooltips(inst) {
+            if (!inst || !inst.dpDiv) return;
+            const dp = window.jQuery(inst.dpDiv);
+
+            dp.find('td.is-holiday').each(function() {
+                const cell = window.jQuery(this);
+                const dayText = cell.find('a, span').first().text();
+                if (!dayText) return;
+                const fallbackYear = inst.drawYear ?? inst.selectedYear;
+                const fallbackMonth = inst.drawMonth ?? inst.selectedMonth;
+                const year = cell.data('year') ?? fallbackYear;
+                const month = cell.data('month') ?? fallbackMonth;
+                if (year === undefined || month === undefined) return;
+                const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayText).padStart(2, '0')}`;
+                const title = globalHolidayData[ds] || '';
+                if (title) {
+                    cell.attr('data-st-tooltip', title);
+                    cell.find('a, span').attr('data-st-tooltip', title);
                 }
+                cell.removeAttr('title');
+                cell.find('a, span').removeAttr('title');
+            });
+        }
+
+        function bindDatepickerHover(inst) {
+            if (!inst || !inst.dpDiv) return;
+            const dp = window.jQuery(inst.dpDiv);
+            let hideTimer = null;
+            let tooltip = document.getElementById('st-datepicker-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'st-datepicker-tooltip';
+                tooltip.className = 'st-datepicker-tooltip';
+                document.body.appendChild(tooltip);
             }
-        };
+
+            dp.off('mouseenter.st-tooltip mousemove.st-tooltip mouseleave.st-tooltip', 'td.is-holiday');
+            dp.on('mouseenter.st-tooltip', 'td.is-holiday', function(event) {
+                const text = window.jQuery(this).attr('data-st-tooltip') || '';
+                if (!text) return;
+                if (hideTimer) {
+                    clearTimeout(hideTimer);
+                    hideTimer = null;
+                }
+                tooltip.textContent = text;
+                tooltip.classList.add('st-datepicker-tooltip--visible');
+                tooltip.style.left = `${event.clientX + 12}px`;
+                tooltip.style.top = `${event.clientY + 12}px`;
+            });
+            dp.on('mousemove.st-tooltip', 'td.is-holiday', function(event) {
+                tooltip.style.left = `${event.clientX + 12}px`;
+                tooltip.style.top = `${event.clientY + 12}px`;
+            });
+            dp.on('mouseleave.st-tooltip', 'td.is-holiday', function() {
+                hideTimer = setTimeout(function() {
+                    tooltip.classList.remove('st-datepicker-tooltip--visible');
+                }, 300);
+            });
+        }
+
+        function initDatepicker(el, beforeShowDay, onSelect) {
+            if (!el) return;
+            if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
+            if (el.getAttribute('data-st-datepicker') === '1') return;
+            el.setAttribute('data-st-datepicker', '1');
+            try { el.type = 'text'; } catch (e) {}
+
+            window.jQuery(el).datepicker({
+                dateFormat: 'yy-mm-dd',
+                beforeShowDay: beforeShowDay,
+                beforeShow: function(input, inst) {
+                    setTimeout(function() {
+                        applyDatepickerTooltips(inst);
+                        bindDatepickerHover(inst);
+                    }, 0);
+                },
+                onChangeMonthYear: function(year, month, inst) {
+                    setTimeout(function() {
+                        applyDatepickerTooltips(inst);
+                        bindDatepickerHover(inst);
+                    }, 0);
+                },
+                onSelect: onSelect
+            });
+
+            const inst = window.jQuery(el).data('datepicker');
+            if (inst) {
+                applyDatepickerTooltips(inst);
+                bindDatepickerHover(inst);
+            }
+        }
 
         // Initialize generic date inputs
-        flatpickr(".flatpickr-date, input[type='date']", flatpickrConfig);
+        document.querySelectorAll('.flatpickr-date, input[type="date"]').forEach(function (input) {
+            initDatepicker(input, function(date) {
+                const ds = toIsoDate(date);
+                if (globalHolidayData[ds]) {
+                    return [true, 'is-holiday', globalHolidayData[ds]];
+                }
+                return [true, '', ''];
+            });
+        });
 
-            // Initialize Analytics Range Picker
+            // Initialize Analytics Range Picker (single date)
             var rangeInput = document.getElementById('analytics_range');
-            if (rangeInput) {
+            if (rangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
                 var startVal = document.getElementById('range_start').value;
-                var endVal = document.getElementById('range_end').value;
+                if (startVal) {
+                    rangeInput.value = startVal;
+                }
 
-                // Use already defined globalHolidayData
-                var hData = globalHolidayData || {};
-
-                flatpickr(rangeInput, {
-                    mode: 'range',
-                    dateFormat: 'Y-m-d',
-                    disableMobile: true,
-                    defaultDate: [startVal, endVal],
-                    onDayCreate: function(dObj, dStr, fp, dayElem) {
-                        const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                        if (hData[dateStr]) {
-                            dayElem.classList.add('is-holiday');
-                            dayElem.title = hData[dateStr];
-                        }
-                    },
-                    onClose: function(selectedDates, dateStr, instance) {
-                        if (selectedDates.length === 2) {
-                            var s = instance.formatDate(selectedDates[0], 'Y-m-d');
-                            var e = instance.formatDate(selectedDates[1], 'Y-m-d');
-                            document.getElementById('range_start').value = s;
-                            document.getElementById('range_end').value = e;
-
-                            // Format for display: 2026-01-01 to 2026-01-31
-                            rangeInput.value = s + ' to ' + e;
-
-                            // Auto-submit form
-                            document.getElementById('range_start').form.submit();
-                        }
-                    }
+                window.jQuery(rangeInput).dateRangePicker({
+                    autoClose: true,
+                    singleDate: true,
+                    showShortcuts: false,
+                    singleMonth: true,
+                    format: 'YYYY-MM-DD'
+                }).bind('datepicker-change', function(event, obj) {
+                    var value = (obj && obj.value) ? obj.value : '';
+                    document.getElementById('range_start').value = value;
+                    document.getElementById('range_end').value = value;
+                    rangeInput.value = value;
+                    document.getElementById('range_start').form.submit();
                 });
             }
 

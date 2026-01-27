@@ -12,10 +12,27 @@
             <p>Monage Your Gate Schedule</p>
         </div>
 
-        <!-- Date Picker (Static Mockup) -->
+        <!-- Date Picker (Vendor Availability Style) -->
         <div class="st-gate-calendar-widget">
-            <div class="flatpickr-inline-container" id="inline_calendar"></div>
-            <!-- We will initialize flatpickr here via JS -->
+            <div class="av-calendar" id="inline_calendar">
+                <div class="av-calendar__header">
+                    <span id="inline_calendar_month">{{ \Carbon\Carbon::now()->format('F Y') }}</span>
+                    <div class="av-calendar__nav">
+                        <button type="button" class="av-calendar__nav-btn" id="inline_calendar_prev"><i class="fas fa-chevron-left"></i></button>
+                        <button type="button" class="av-calendar__nav-btn" id="inline_calendar_next"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="av-calendar__grid">
+                    <div class="av-calendar__day-header">Mon</div>
+                    <div class="av-calendar__day-header">Tue</div>
+                    <div class="av-calendar__day-header">Wed</div>
+                    <div class="av-calendar__day-header">Thu</div>
+                    <div class="av-calendar__day-header">Fri</div>
+                    <div class="av-calendar__day-header">Sat</div>
+                    <div class="av-calendar__day-header">Sun</div>
+                </div>
+                <div class="av-calendar__grid" id="inline_calendar_days"></div>
+            </div>
         </div>
 
         <!-- Legend -->
@@ -558,32 +575,176 @@
         padding: 10px;
         border: 1px solid #e2e8f0;
     }
+    .av-calendar__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .av-calendar__nav {
+        display: flex;
+        gap: 4px;
+    }
+    .av-calendar__nav-btn {
+        width: 28px;
+        height: 28px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        transition: all 0.15s;
+    }
+    .av-calendar__nav-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+    .av-calendar__grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        text-align: center;
+        font-size: 12px;
+    }
+    .av-calendar__day-header {
+        padding: 6px 0;
+        font-weight: 600;
+        color: #64748b;
+    }
+    .av-calendar__day {
+        padding: 8px 4px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+        color: #374151;
+        font-size: 14px;
+        font-weight: 500;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .av-calendar__day:hover { background: #f1f5f9; }
+    .av-calendar__day--today { background: #dbeafe; color: #1e40af; font-weight: 600; }
+    .av-calendar__day--selected { background: #1e40af; color: white; font-weight: 600; }
+    .av-calendar__day--disabled {
+        color: #d1d5db;
+        background: #f9fafb;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+    .av-calendar__day--sunday {
+        color: #ef4444;
+        background: #fef2f2;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+    .av-calendar__day--holiday {
+        color: #f59e0b;
+        background: #fffbeb;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Inline Calendar
-        if (typeof flatpickr !== 'undefined') {
-            var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
-            flatpickr("#inline_calendar", {
-                inline: true,
-                dateFormat: "Y-m-d",
-                defaultDate: "today",
-                onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                    if (holidayData[dateStr]) {
-                        dayElem.classList.add('is-holiday');
-                        dayElem.title = holidayData[dateStr];
-                    }
-                },
-                onChange: function(selectedDates, dateStr, instance) {
-                    console.log("Date selected:", dateStr);
-                    // Add logic to fetch schedule for date
+        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+        var currentDate = new Date();
+        var today = new Date();
+        var todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        var selectedDate = new Date();
+
+        function pad2(value) {
+            return String(value).padStart(2, '0');
+        }
+
+        function toIsoDateLocal(dateObj) {
+            return `${dateObj.getFullYear()}-${pad2(dateObj.getMonth() + 1)}-${pad2(dateObj.getDate())}`;
+        }
+
+        function renderMiniCalendar() {
+            var container = document.getElementById('inline_calendar_days');
+            var monthLabel = document.getElementById('inline_calendar_month');
+            if (!container || !monthLabel) return;
+
+            var year = currentDate.getFullYear();
+            var month = currentDate.getMonth();
+            monthLabel.textContent = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            container.innerHTML = '';
+
+            var firstDay = new Date(year, month, 1);
+            var lastDay = new Date(year, month + 1, 0);
+            var daysInMonth = lastDay.getDate();
+            var startDay = firstDay.getDay() - 1;
+            if (startDay === -1) startDay = 6;
+
+            for (var i = 0; i < startDay; i++) {
+                container.appendChild(document.createElement('div'));
+            }
+
+            for (var day = 1; day <= daysInMonth; day++) {
+                var date = new Date(year, month, day);
+                var dateStr = toIsoDateLocal(date);
+                var isToday = date.toDateString() === today.toDateString();
+                var isSelected = dateStr === toIsoDateLocal(selectedDate);
+                var isPast = date < todayMidnight;
+                var isSunday = date.getDay() === 0;
+                var isHoliday = holidayData[dateStr];
+
+                var dayDiv = document.createElement('div');
+                dayDiv.className = 'av-calendar__day';
+                dayDiv.textContent = day;
+
+                if (isToday) dayDiv.classList.add('av-calendar__day--today');
+                if (isSelected) dayDiv.classList.add('av-calendar__day--selected');
+                if (isPast) dayDiv.classList.add('av-calendar__day--disabled');
+                if (isSunday) dayDiv.classList.add('av-calendar__day--sunday');
+                if (isHoliday) dayDiv.classList.add('av-calendar__day--holiday');
+
+                if (!isPast && !isSunday && !isHoliday) {
+                    dayDiv.addEventListener('click', function(ds) {
+                        return function() {
+                            selectedDate = new Date(ds);
+                            console.log('Date selected:', ds);
+                            renderMiniCalendar();
+                        };
+                    }(dateStr));
                 }
+
+                if (isSunday) {
+                    dayDiv.title = 'Sunday - Not available';
+                } else if (isHoliday) {
+                    dayDiv.title = isHoliday + ' - Holiday';
+                }
+
+                container.appendChild(dayDiv);
+            }
+        }
+
+        var prevBtn = document.getElementById('inline_calendar_prev');
+        var nextBtn = document.getElementById('inline_calendar_next');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderMiniCalendar();
             });
         }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderMiniCalendar();
+            });
+        }
+
+        renderMiniCalendar();
 
         // Search Focus interaction
         const searchInput = document.querySelector('.st-input--search');

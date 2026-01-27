@@ -312,47 +312,30 @@
     @push('scripts')
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize Flatpickr range for arrival date
+        // Initialize single-date range picker for arrival date
         var arrivalRangeInput = document.querySelector('input#unplanned_arrival_range');
-        if (arrivalRangeInput) {
-            var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
-            flatpickr(arrivalRangeInput, {
-                mode: 'range',
-                dateFormat: 'Y-m-d',
-                allowInput: true,
-                disableMobile: true,
-                onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                    if (holidayData[dateStr]) {
-                        dayElem.classList.add('is-holiday');
-                        dayElem.title = holidayData[dateStr];
-                    }
-                },
-                onChange: function(selectedDates, dateStr, instance) {
-                    // Update hidden fields
-                    var fromInput = document.querySelector('input[name="arrival_from"]');
-                    var toInput = document.querySelector('input[name="arrival_to"]');
-                    if (selectedDates.length === 2) {
-                        fromInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                        toInput.value = flatpickr.formatDate(selectedDates[1], 'Y-m-d');
-                        // Only auto-submit when we have a complete range
-                        setTimeout(function() {
-                            document.getElementById('unplanned-filter-form').submit();
-                        }, 100);
-                    } else if (selectedDates.length === 1) {
-                        fromInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                        toInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                        // Don't auto-submit for single date in range mode, let user complete the range
-                    }
-                },
-                onClose: function(selectedDates, dateStr, instance) {
-                    // Submit form when user closes the date picker
-                    if (selectedDates.length > 0) {
-                        setTimeout(function() {
-                            document.getElementById('unplanned-filter-form').submit();
-                        }, 100);
-                    }
-                }
+        if (arrivalRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
+            var fromInput = document.querySelector('input[name="arrival_from"]');
+            var toInput = document.querySelector('input[name="arrival_to"]');
+            var initial = fromInput && fromInput.value ? fromInput.value : '';
+            if (initial) {
+                arrivalRangeInput.value = initial;
+            }
+
+            window.jQuery(arrivalRangeInput).dateRangePicker({
+                autoClose: true,
+                singleDate: true,
+                showShortcuts: false,
+                singleMonth: true,
+                format: 'YYYY-MM-DD'
+            }).bind('datepicker-change', function(event, obj) {
+                var value = (obj && obj.value) ? obj.value : '';
+                if (fromInput) fromInput.value = value;
+                if (toInput) toInput.value = value;
+                arrivalRangeInput.value = value;
+                setTimeout(function() {
+                    document.getElementById('unplanned-filter-form').submit();
+                }, 100);
             });
         }
 

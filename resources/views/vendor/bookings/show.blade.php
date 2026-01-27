@@ -88,10 +88,38 @@
                     </td>
                 </tr>
                 <tr>
+                    <td style="padding: 0.5rem 0; color: #64748b;">Warehouse</td>
+                    <td style="padding: 0.5rem 0;">
+                        @php
+                            $whCode = $booking->convertedSlot?->warehouse?->wh_code ?? null;
+                            $whName = $booking->convertedSlot?->warehouse?->wh_name ?? ($booking->convertedSlot?->warehouse?->name ?? null);
+                        @endphp
+                        @if(!empty($whCode) || !empty($whName))
+                            {{ trim(($whCode ? ($whCode . ' - ') : '') . ($whName ?? '')) }}
+                        @else
+                            -
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.5rem 0; color: #64748b;">Gate</td>
+                    <td style="padding: 0.5rem 0;">{{ $booking->convertedSlot?->plannedGate?->gate_number ?? ($booking->convertedSlot?->plannedGate?->name ?? 'To be assigned') }}</td>
+                </tr>
+                <tr>
                     <td style="padding: 0.5rem 0; color: #64748b;">COA</td>
                     <td style="padding: 0.5rem 0;">
                         @if(!empty($booking->coa_path))
-                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: underline;">View / Download</a>
+                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
+                        @else
+                            -
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.5rem 0; color: #64748b;">Surat Jalan</td>
+                    <td style="padding: 0.5rem 0;">
+                        @if(!empty($booking->surat_jalan_path))
+                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
                         @else
                             -
                         @endif
@@ -151,6 +179,10 @@
                     </td>
                 </tr>
                 @endif
+                <tr>
+                    <td style="padding: 0.5rem 0; color: #64748b;">Duration</td>
+                    <td style="padding: 0.5rem 0;">{{ $booking->planned_duration }} Minutes</td>
+                </tr>
                 <tr>
                     <td style="padding: 0.5rem 0; color: #64748b;">Requested At</td>
                     <td style="padding: 0.5rem 0;">{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>

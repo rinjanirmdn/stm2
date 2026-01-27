@@ -186,56 +186,29 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
-    // Initialize Flatpickr Date Range Picker
-    flatpickr("#date_range", {
-        mode: "range",
-        dateFormat: "Y-m-d",
-        disableMobile: true,
-        locale: {
-            rangeSeparator: " to "
-        },
-        onDayCreate: function(dObj, dStr, fp, dayElem) {
-            const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-            if (holidayData[dateStr]) {
-                dayElem.classList.add('is-holiday');
-                dayElem.title = holidayData[dateStr];
-            }
-        },
-        onChange: function(selectedDates, dateStr, instance) {
-            if (selectedDates.length === 2) {
-                // Format date in local timezone
-                var dateFrom = selectedDates[0].getFullYear() + '-' +
-                              String(selectedDates[0].getMonth() + 1).padStart(2, '0') + '-' +
-                              String(selectedDates[0].getDate()).padStart(2, '0');
-                var dateTo = selectedDates[1].getFullYear() + '-' +
-                            String(selectedDates[1].getMonth() + 1).padStart(2, '0') + '-' +
-                            String(selectedDates[1].getDate()).padStart(2, '0');
-                document.getElementById('date_from').value = dateFrom;
-                document.getElementById('date_to').value = dateTo;
-            } else if (selectedDates.length === 1) {
-                // Format date in local timezone
-                var dateFrom = selectedDates[0].getFullYear() + '-' +
-                              String(selectedDates[0].getMonth() + 1).padStart(2, '0') + '-' +
-                              String(selectedDates[0].getDate()).padStart(2, '0');
-                document.getElementById('date_from').value = dateFrom;
-                document.getElementById('date_to').value = dateFrom;
-            } else {
-                document.getElementById('date_from').value = '';
-                document.getElementById('date_to').value = '';
-            }
-        },
-        onReady: function(selectedDates, dateStr, instance) {
-            // Set initial value if dates are pre-filled
-            var dateFrom = document.getElementById('date_from').value;
-            var dateTo = document.getElementById('date_to').value;
-            if (dateFrom && dateTo) {
-                instance.setDate([dateFrom, dateTo]);
-            } else if (dateFrom) {
-                instance.setDate([dateFrom]);
-            }
+    var dateRangeInput = document.getElementById('date_range');
+    var dateFromInput = document.getElementById('date_from');
+    var dateToInput = document.getElementById('date_to');
+
+    if (dateRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
+        var initial = dateFromInput && dateFromInput.value ? dateFromInput.value : '';
+        if (initial) {
+            dateRangeInput.value = initial;
         }
-    });
+
+        window.jQuery(dateRangeInput).dateRangePicker({
+            autoClose: true,
+            singleDate: true,
+            showShortcuts: false,
+            singleMonth: true,
+            format: 'YYYY-MM-DD'
+        }).bind('datepicker-change', function(event, obj) {
+            var value = (obj && obj.value) ? obj.value : '';
+            if (dateFromInput) dateFromInput.value = value;
+            if (dateToInput) dateToInput.value = value;
+            dateRangeInput.value = value;
+        });
+    }
 
     // Auto-submit form on input change
     const logsFilterForm = document.getElementById('logs-filter-form');

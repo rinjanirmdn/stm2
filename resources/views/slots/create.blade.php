@@ -145,7 +145,11 @@
             <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
                 <div class="st-form-field">
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
-                    <input type="text" name="planned_start" id="planned_start_input" class="st-input{{ $errors->has('planned_start') ? ' st-input--invalid' : '' }}" required value="{{ old('planned_start') }}" placeholder="Select Date and Time">
+                    <input type="hidden" name="planned_start" id="planned_start_input" value="{{ old('planned_start') }}">
+                    <div style="display:flex;gap:8px;">
+                        <input type="text" id="planned_start_date_input" class="st-input" placeholder="Select Date" autocomplete="off">
+                        <input type="text" id="planned_start_time_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly>
+                    </div>
                     @error('planned_start')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
@@ -199,11 +203,18 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                 <div class="st-form-field">
                     <label class="st-label">COA (PDF) <span class="st-text--danger-dark">*</span></label>
                     <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
                     @error('coa_pdf')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Surat Jalan (PDF) <span class="st-text--optional">(optional)</span></label>
+                    <input type="file" name="surat_jalan_pdf" class="st-input{{ $errors->has('surat_jalan_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
+                    @error('surat_jalan_pdf')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
@@ -281,6 +292,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var warehouseSelect = document.getElementById('warehouse_id');
     var gateSelect = document.getElementById('planned_gate_id');
     var plannedStartInput = document.getElementById('planned_start_input');
+    var plannedStartDateInput = document.getElementById('planned_start_date_input');
+    var plannedStartTimeInput = document.getElementById('planned_start_time_input');
     var plannedDurationInput = document.querySelector('input[name="planned_duration"]');
     var durationUnitSelect = document.querySelector('select[name="duration_unit"]');
 
@@ -303,6 +316,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var scheduleModalClose = document.getElementById('schedule_modal_close');
     var schedulePreviewBtn = document.getElementById('btn_schedule_preview');
 
+    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
     var uiHasOverlap = false;
     var uiOverlapPending = false;
 
@@ -310,10 +325,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!plannedStartInput) return;
         var safe = String(val || '').trim();
         safe = safe.replace('T', ' ');
-        if (plannedStartInput._flatpickr) {
-            plannedStartInput._flatpickr.setDate(safe, false, 'Y-m-d H:i');
-        } else {
-            plannedStartInput.value = safe;
+        plannedStartInput.value = safe;
+
+        if (plannedStartDateInput && plannedStartTimeInput) {
+            if (safe) {
+                var parts = safe.split(' ');
+                plannedStartDateInput.value = parts[0] || '';
+                plannedStartTimeInput.value = (parts[1] || '').slice(0, 5);
+            } else {
+                plannedStartDateInput.value = '';
+                plannedStartTimeInput.value = '';
+            }
         }
     }
 
@@ -669,42 +691,139 @@ document.addEventListener('DOMContentLoaded', function () {
         warehouseSelect.value = wh;
     }
 
-    function initFlatpickrForETA() {
-        if (!plannedStartInput) return;
-        if (plannedStartInput._flatpickr) return;
+    function applyDatepickerTooltips(inst) {
+        if (!inst || !inst.dpDiv) return;
+        const dp = window.jQuery(inst.dpDiv);
 
-        // Retry if flatpickr not yet loaded
-        if (typeof window.flatpickr !== 'function') {
-            setTimeout(initFlatpickrForETA, 100);
-            return;
+        dp.find('td.is-holiday').each(function() {
+            const cell = window.jQuery(this);
+            const dayText = cell.find('a, span').first().text();
+            if (!dayText) return;
+            const fallbackYear = inst.drawYear ?? inst.selectedYear;
+            const fallbackMonth = inst.drawMonth ?? inst.selectedMonth;
+            const year = cell.data('year') ?? fallbackYear;
+            const month = cell.data('month') ?? fallbackMonth;
+            if (year === undefined || month === undefined) return;
+            const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayText).padStart(2, '0')}`;
+            const title = holidayData[ds] || '';
+            if (title) {
+                cell.attr('data-st-tooltip', title);
+                cell.find('a, span').attr('data-st-tooltip', title);
+            }
+            cell.removeAttr('title');
+            cell.find('a, span').removeAttr('title');
+        });
+    }
+
+    function bindDatepickerHover(inst) {
+        if (!inst || !inst.dpDiv) return;
+        const dp = window.jQuery(inst.dpDiv);
+        let hideTimer = null;
+        let tooltip = document.getElementById('st-datepicker-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'st-datepicker-tooltip';
+            tooltip.className = 'st-datepicker-tooltip';
+            document.body.appendChild(tooltip);
         }
 
-        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+        dp.off('mouseenter.st-tooltip mousemove.st-tooltip mouseleave.st-tooltip', 'td.is-holiday');
+        dp.on('mouseenter.st-tooltip', 'td.is-holiday', function(event) {
+            const text = window.jQuery(this).attr('data-st-tooltip') || '';
+            if (!text) return;
+            if (hideTimer) {
+                clearTimeout(hideTimer);
+                hideTimer = null;
+            }
+            tooltip.textContent = text;
+            tooltip.classList.add('st-datepicker-tooltip--visible');
+            tooltip.style.left = `${event.clientX + 12}px`;
+            tooltip.style.top = `${event.clientY + 12}px`;
+        });
+        dp.on('mousemove.st-tooltip', 'td.is-holiday', function(event) {
+            tooltip.style.left = `${event.clientX + 12}px`;
+            tooltip.style.top = `${event.clientY + 12}px`;
+        });
+        dp.on('mouseleave.st-tooltip', 'td.is-holiday', function() {
+            hideTimer = setTimeout(function() {
+                tooltip.classList.remove('st-datepicker-tooltip--visible');
+            }, 300);
+        });
+    }
 
-        var fp = window.flatpickr(plannedStartInput, {
-            enableTime: true,
-            minDate: "today",
-            time_24hr: true,
-            allowInput: true,
-            disableMobile: true,
-            minuteIncrement: 1,
-            dateFormat: 'Y-m-d H:i',
-            clickOpens: true,
-            closeOnSelect: false,
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                if (holidayData[dateStr]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = holidayData[dateStr];
+    function initEtaDatepicker() {
+        if (!plannedStartDateInput) return;
+        if (plannedStartDateInput.getAttribute('data-st-datepicker') === '1') return;
+        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
+        plannedStartDateInput.setAttribute('data-st-datepicker', '1');
+
+        window.jQuery(plannedStartDateInput).datepicker({
+            dateFormat: 'yy-mm-dd',
+            minDate: 0,
+            beforeShowDay: function(date) {
+                var ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+                if (holidayData[ds]) {
+                    return [true, 'is-holiday', holidayData[ds]];
                 }
+                return [true, '', ''];
             },
-            onChange: function (selectedDates, dateStr, instance) {
-                try {
-                    plannedStartInput.dispatchEvent(new Event('input', { bubbles: true }));
-                } catch (e) {}
+            beforeShow: function(input, inst) {
+                setTimeout(function() {
+                    applyDatepickerTooltips(inst);
+                    bindDatepickerHover(inst);
+                }, 0);
+            },
+            onChangeMonthYear: function(year, month, inst) {
+                setTimeout(function() {
+                    applyDatepickerTooltips(inst);
+                    bindDatepickerHover(inst);
+                }, 0);
+            },
+            onSelect: function() {
+                syncPlannedStart();
+                updateRiskPreview();
+                updateGateRecommendation();
+                checkTimeOverlap();
+                window.jQuery(plannedStartDateInput).datepicker('hide');
             }
         });
-        console.log('Flatpickr initialized for ETA:', fp);
+    }
+
+    function initEtaTimepicker() {
+        if (!plannedStartTimeInput) return;
+        if (plannedStartTimeInput.getAttribute('data-st-timepicker') === '1') return;
+        if (typeof window.mdtimepicker !== 'function') return;
+        plannedStartTimeInput.setAttribute('data-st-timepicker', '1');
+
+        plannedStartTimeInput.addEventListener('keydown', function (event) { event.preventDefault(); });
+        plannedStartTimeInput.addEventListener('paste', function (event) { event.preventDefault(); });
+
+        window.mdtimepicker('#planned_start_time_input', {
+            format: 'hh:mm',
+            is24hour: true,
+            theme: 'cyan',
+            hourPadding: true
+        });
+
+        plannedStartTimeInput.addEventListener('change', function () {
+            syncPlannedStart();
+            updateRiskPreview();
+            updateGateRecommendation();
+            checkTimeOverlap();
+        });
+    }
+
+    function syncPlannedStart() {
+        if (!plannedStartInput || !plannedStartDateInput || !plannedStartTimeInput) return;
+        var dateVal = (plannedStartDateInput.value || '').trim();
+        var timeVal = (plannedStartTimeInput.value || '').trim();
+        if (dateVal && timeVal) {
+            plannedStartInput.value = dateVal + ' ' + timeVal;
+        } else if (dateVal) {
+            plannedStartInput.value = dateVal;
+        } else {
+            plannedStartInput.value = '';
+        }
     }
 
     function applyWarehouseLockState() {
@@ -712,14 +831,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (plannedStartInput) {
             plannedStartInput.disabled = !hasGate;
+            if (plannedStartDateInput) plannedStartDateInput.disabled = !hasGate;
+            if (plannedStartTimeInput) plannedStartTimeInput.disabled = !hasGate;
             if (hasGate) {
-                initFlatpickrForETA();
-            }
-            if (!hasGate) {
-                if (plannedStartInput._flatpickr) {
-                    try { plannedStartInput._flatpickr.clear(); } catch (e) {}
-                }
+                initEtaDatepicker();
+                initEtaTimepicker();
+            } else {
                 plannedStartInput.value = '';
+                if (plannedStartDateInput) plannedStartDateInput.value = '';
+                if (plannedStartTimeInput) plannedStartTimeInput.value = '';
             }
         }
 
@@ -1035,26 +1155,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (plannedStartInput) {
-        plannedStartInput.addEventListener('focus', function () {
-            initFlatpickrForETA();
-            if (plannedStartInput._flatpickr) {
-                try { plannedStartInput._flatpickr.open(); } catch (e) {}
-            }
-        });
-
-        plannedStartInput.addEventListener('click', function () {
-            initFlatpickrForETA();
-            if (plannedStartInput._flatpickr) {
-                try { plannedStartInput._flatpickr.open(); } catch (e) {}
-            }
-        });
-
-        plannedStartInput.addEventListener('input', function () {
+    if (plannedStartDateInput) {
+        plannedStartDateInput.addEventListener('change', function () {
+            syncPlannedStart();
             updateRiskPreview();
             updateGateRecommendation();
             checkTimeOverlap();
         });
+    }
+
+    if (plannedStartTimeInput) {
+        plannedStartTimeInput.addEventListener('input', function () {
+            syncPlannedStart();
+            updateRiskPreview();
+            updateGateRecommendation();
+            checkTimeOverlap();
+        });
+    }
+
+    if (plannedStartInput && plannedStartInput.value) {
+        setPlannedStartValue(plannedStartInput.value);
     }
 
     if (plannedDurationInput) {

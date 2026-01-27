@@ -1381,6 +1381,62 @@ body {
     border-radius: 50%;
 }
 
+/* Global jQuery UI Datepicker styling (holidays + Sundays) */
+.ui-datepicker td.is-sunday a {
+    background: #fff7ed;
+    border-color: #fb923c;
+    color: #9a3412;
+    font-weight: 600;
+}
+
+.ui-datepicker td.is-holiday a {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+    font-weight: 600;
+}
+
+.ui-datepicker td.is-sunday,
+.ui-datepicker td.is-holiday {
+    position: relative;
+}
+
+.ui-datepicker td.ui-state-disabled {
+    pointer-events: auto !important;
+}
+
+.ui-datepicker td.ui-state-disabled .ui-state-default {
+    pointer-events: auto !important;
+}
+
+.ui-datepicker,
+.ui-datepicker .ui-datepicker-calendar,
+.ui-datepicker table,
+.ui-datepicker tbody,
+.ui-datepicker tr,
+.ui-datepicker td {
+    overflow: visible;
+}
+
+.st-datepicker-tooltip {
+    position: fixed;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+    z-index: 9999;
+}
+
+.st-datepicker-tooltip--visible {
+    opacity: 1;
+}
+
 
 .st-tabbar {
     display: flex;

@@ -650,21 +650,23 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Tooltips handled globally in resources/js/main.js (st-global-tooltip)
 
-    // Initialize Flatpickr for date inputs
+    // Initialize jQuery UI datepicker for date inputs
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
     var dateInputs = document.querySelectorAll('input[type="date"][form="slot-filter-form"]');
     dateInputs.forEach(function(input) {
-        flatpickr(input, {
-            dateFormat: 'Y-m-d',
-            allowInput: true,
-            clickOpens: true,
-            theme: 'dark',
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                if (holidayData[dateStr]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = holidayData[dateStr];
+        if (!window.jQuery || !window.jQuery.fn.datepicker) return;
+        if (input.getAttribute('data-st-datepicker') === '1') return;
+        input.setAttribute('data-st-datepicker', '1');
+        try { input.type = 'text'; } catch (e) {}
+
+        window.jQuery(input).datepicker({
+            dateFormat: 'yy-mm-dd',
+            beforeShowDay: function(date) {
+                var ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+                if (holidayData[ds]) {
+                    return [true, 'is-holiday', holidayData[ds]];
                 }
+                return [true, '', ''];
             }
         });
     });
@@ -1159,79 +1161,53 @@ document.addEventListener('DOMContentLoaded', function () {
     setupActiveFilters(); // Initialize active filter indicators
     setupSorting();
 
-    // Common Flatpickr configuration for consistent styling
-    var commonFlatpickrConfig = {
-        dateFormat: 'Y-m-d',
-        allowInput: true,
-        onChange: function(selectedDates, dateStr, instance) {
-            // Auto-submit when date is selected
-            if (dateStr) {
-                document.getElementById('slot-filter-form').submit();
-            }
-        }
-    };
-
-    // Initialize Flatpickr range for planned start
+    // Initialize single-date range picker for planned start
     var plannedStartRangeInput = document.querySelector('input#planned_start_range');
-    if (plannedStartRangeInput) {
-        flatpickr(plannedStartRangeInput, {
-            mode: 'range',
-            dateFormat: 'Y-m-d',
-            allowInput: true,
-            disableMobile: true,
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                if (holidayData[dateStr]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = holidayData[dateStr];
-                }
-            },
-            onChange: function(selectedDates, dateStr, instance) {
-                // Update hidden fields
-                var fromInput = document.querySelector('input[name="date_from"]');
-                var toInput = document.querySelector('input[name="date_to"]');
-                if (selectedDates.length === 2) {
-                    fromInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                    toInput.value = flatpickr.formatDate(selectedDates[1], 'Y-m-d');
-                } else if (selectedDates.length === 1) {
-                    fromInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                    toInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                }
-                // Auto-submit
-                document.getElementById('slot-filter-form').submit();
-            }
+    if (plannedStartRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
+        var fromInput = document.querySelector('input[name="date_from"]');
+        var toInput = document.querySelector('input[name="date_to"]');
+        var initial = fromInput && fromInput.value ? fromInput.value : '';
+        if (initial) {
+            plannedStartRangeInput.value = initial;
+        }
+
+        window.jQuery(plannedStartRangeInput).dateRangePicker({
+            autoClose: true,
+            singleDate: true,
+            showShortcuts: false,
+            singleMonth: true,
+            format: 'YYYY-MM-DD'
+        }).bind('datepicker-change', function(event, obj) {
+            var value = (obj && obj.value) ? obj.value : '';
+            if (fromInput) fromInput.value = value;
+            if (toInput) toInput.value = value;
+            plannedStartRangeInput.value = value;
+            document.getElementById('slot-filter-form').submit();
         });
     }
 
-    // Initialize Flatpickr range for arrival date
+    // Initialize single-date range picker for arrival date
     var arrivalDateRangeInput = document.querySelector('input#arrival_date_range');
-    if (arrivalDateRangeInput) {
-        flatpickr(arrivalDateRangeInput, {
-            mode: 'range',
-            dateFormat: 'Y-m-d',
-            allowInput: true,
-            disableMobile: true,
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
-                if (holidayData[dateStr]) {
-                    dayElem.classList.add('is-holiday');
-                    dayElem.title = holidayData[dateStr];
-                }
-            },
-            onChange: function(selectedDates, dateStr, instance) {
-                // Update hidden fields
-                var fromInput = document.querySelector('input[name="arrival_from"]');
-                var toInput = document.querySelector('input[name="arrival_to"]');
-                if (selectedDates.length === 2) {
-                    fromInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                    toInput.value = flatpickr.formatDate(selectedDates[1], 'Y-m-d');
-                } else if (selectedDates.length === 1) {
-                    fromInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                    toInput.value = flatpickr.formatDate(selectedDates[0], 'Y-m-d');
-                }
-                // Auto-submit
-                document.getElementById('slot-filter-form').submit();
-            }
+    if (arrivalDateRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
+        var arrivalFromInput = document.querySelector('input[name="arrival_from"]');
+        var arrivalToInput = document.querySelector('input[name="arrival_to"]');
+        var arrivalInitial = arrivalFromInput && arrivalFromInput.value ? arrivalFromInput.value : '';
+        if (arrivalInitial) {
+            arrivalDateRangeInput.value = arrivalInitial;
+        }
+
+        window.jQuery(arrivalDateRangeInput).dateRangePicker({
+            autoClose: true,
+            singleDate: true,
+            showShortcuts: false,
+            singleMonth: true,
+            format: 'YYYY-MM-DD'
+        }).bind('datepicker-change', function(event, obj) {
+            var value = (obj && obj.value) ? obj.value : '';
+            if (arrivalFromInput) arrivalFromInput.value = value;
+            if (arrivalToInput) arrivalToInput.value = value;
+            arrivalDateRangeInput.value = value;
+            document.getElementById('slot-filter-form').submit();
         });
     }
 
