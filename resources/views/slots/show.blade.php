@@ -229,18 +229,6 @@
                         </div>
 
                         <div class="st-detail-item" style="padding:6px 8px;">
-                            <div class="st-detail-label" style="font-size:11px;">SJ Start Number</div>
-                            <div class="st-detail-colon" style="font-size:11px;">:</div>
-                            <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->sj_start_number) ? $slot->sj_start_number : '-' }}</div>
-                        </div>
-
-                        <div class="st-detail-item" style="padding:6px 8px;">
-                            <div class="st-detail-label" style="font-size:11px;">SJ Complete Number</div>
-                            <div class="st-detail-colon" style="font-size:11px;">:</div>
-                            <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->sj_complete_number) ? $slot->sj_complete_number : '-' }}</div>
-                        </div>
-
-                        <div class="st-detail-item" style="padding:6px 8px;">
                             <div class="st-detail-label" style="font-size:11px;">Ticket Number</div>
                             <div class="st-detail-colon" style="font-size:11px;">:</div>
                             <div class="st-detail-value" style="font-size:11px;">{{ !empty($slot->ticket_number) ? $slot->ticket_number : '-' }}</div>
@@ -252,20 +240,6 @@
                             <div class="st-detail-value" style="font-size:11px;">
                             @if(!empty($slot->coa_path))
                                 <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener" style="font-size:10px;color:var(--primary);text-decoration:underline;cursor:pointer;">
-                                    <i class="fa-solid fa-file-pdf" style="margin-right:4px;"></i>View / Download
-                                </a>
-                            @else
-                                -
-                            @endif
-                            </div>
-                        </div>
-
-                        <div class="st-detail-item" style="padding:6px 8px;">
-                            <div class="st-detail-label" style="font-size:11px;">Surat Jalan</div>
-                            <div class="st-detail-colon" style="font-size:11px;">:</div>
-                            <div class="st-detail-value" style="font-size:11px;">
-                            @if(!empty($slot->surat_jalan_path))
-                                <a href="{{ asset('storage/' . $slot->surat_jalan_path) }}" target="_blank" rel="noopener" style="font-size:10px;color:var(--primary);text-decoration:underline;cursor:pointer;">
                                     <i class="fa-solid fa-file-pdf" style="margin-right:4px;"></i>View / Download
                                 </a>
                             @else

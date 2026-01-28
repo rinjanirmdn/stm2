@@ -212,13 +212,6 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Surat Jalan (PDF) <span class="st-text--optional">(optional)</span></label>
-                    <input type="file" name="surat_jalan_pdf" class="st-input{{ $errors->has('surat_jalan_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
-                    @error('surat_jalan_pdf')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="st-form-field">
                     <label class="st-label">Notes <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="notes" class="st-input{{ $errors->has('notes') ? ' st-input--invalid' : '' }}" value="{{ old('notes') }}" placeholder="Any special notes...">
                     @error('notes')

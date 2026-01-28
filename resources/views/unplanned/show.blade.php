@@ -86,15 +86,6 @@
                             @endif
                         </div>
 
-                        <div style="font-weight:600;">Surat Jalan</div>
-                        <div>
-                            @if(!empty($slot->surat_jalan_path))
-                                <a href="{{ asset('storage/' . $slot->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
-                            @else
-                                -
-                            @endif
-                        </div>
-
                         <div style="font-weight:600;">Vendor</div>
                         <div>{{ $slot->vendor_name ?? '-' }}</div>
 

@@ -167,7 +167,6 @@ class TransactionReportService
                     ->orWhere('s.mat_doc', 'like', $like)
                     ->orWhere('s.vendor_name', 'like', $like)
                     ->orWhere('w.wh_name', 'like', $like)
-                    ->orWhere('s.sj_complete_number', 'like', $like)
                     ->orWhere('s.truck_type', 'like', $like)
                     ->orWhere('s.vehicle_number_snap', 'like', $like)
                     ->orWhere('s.driver_number', 'like', $like)

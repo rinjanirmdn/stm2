@@ -55,12 +55,6 @@
             </div>
 
             <div id="arrival_details" style="display:none;">
-                <div class="st-form-row" style="margin-bottom:12px;">
-                    <div class="st-form-field">
-                        <label class="st-label">Delivery Note Number <span style="color:#dc2626;">*</span></label>
-                        <input type="text" name="sj_number" class="st-input" required value="{{ old('sj_number') }}" placeholder="Enter Delivery Note Number...">
-                    </div>
-                </div>
 
                 <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f8fafc;margin-bottom:12px;">
                     <div style="font-weight:600;margin-bottom:8px;">Slot Details</div>

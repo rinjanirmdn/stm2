@@ -393,7 +393,6 @@ class SlotController extends Controller
             'driver_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:500',
             'coa_pdf' => 'required|file|mimes:pdf|max:5120',
-            'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
@@ -581,12 +580,6 @@ class SlotController extends Controller
             $coaName = 'coa_' . $slotId . '_' . time() . '.pdf';
             $coaPath = $coaFile->storeAs('booking-documents/' . $slotId, $coaName, 'public');
             $updates['coa_path'] = $coaPath;
-        }
-        if ($request->hasFile('surat_jalan_pdf')) {
-            $sjFile = $request->file('surat_jalan_pdf');
-            $sjName = 'surat_jalan_' . $slotId . '_' . time() . '.pdf';
-            $sjPath = $sjFile->storeAs('booking-documents/' . $slotId, $sjName, 'public');
-            $updates['surat_jalan_path'] = $sjPath;
         }
         if (!empty($updates)) {
             DB::table('slots')->where('id', $slotId)->update($updates);
@@ -1034,8 +1027,7 @@ class SlotController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('s.po_number', 'like', $search)
                   ->orWhere('s.mat_doc', 'like', $search)
-                  ->orWhere('s.vendor_name', 'like', $search)
-                  ->orWhere('s.sj_complete_number', 'like', $search);
+                  ->orWhere('s.vendor_name', 'like', $search);
             });
         }
 
@@ -1080,14 +1072,10 @@ class SlotController extends Controller
             $query->whereDate('s.arrival_time', '<=', $arrivalTo);
         }
 
-        if ($request->filled('sj_number')) {
-            $query->where('s.sj_complete_number', 'like', '%' . $request->get('sj_number') . '%');
-        }
-
         // Apply sorting
         $allowedSorts = [
             'po_number', 'mat_doc', 'vendor_name', 'warehouse_name',
-            'direction', 'arrival_time', 'sj_complete_number', 'created_at'
+            'direction', 'arrival_time', 'created_at'
         ];
 
         $applied = 0;
@@ -1099,14 +1087,10 @@ class SlotController extends Controller
                 $d = $dirs[$i] ?? 'desc';
                 if ($s === 'po_number') {
                     $query->orderBy('s.po_number', $d);
-                    $query->orderBy('s.po_number', $d);
                 } elseif ($s === 'vendor_name') {
-                    $query->orderBy('s.vendor_name', $d);
                     $query->orderBy('s.vendor_name', $d);
                 } elseif ($s === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $d);
-                } elseif ($s === 'sj_complete_number') {
-                    $query->orderBy('s.sj_complete_number', $d);
                 } else {
                     $query->orderBy('s.' . $s, $d);
                 }
@@ -1125,8 +1109,6 @@ class SlotController extends Controller
                     $query->orderBy('s.vendor_name', $dir);
                 } elseif ($actualSort === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $dir);
-                } elseif ($actualSort === 'sj_complete_number') {
-                    $query->orderBy('s.sj_complete_number', $dir);
                 } else {
                     $query->orderBy('s.' . $actualSort, $dir);
                 }
@@ -1201,7 +1183,6 @@ class SlotController extends Controller
             'po_items' => 'nullable|array',
             'po_items.*.qty' => 'nullable|numeric|min:0',
             'coa_pdf' => 'required|file|mimes:pdf|max:5120',
-            'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
             'driver_name' => 'nullable|string|max:50',
             'actual_gate_id' => 'required|integer|exists:gates,id',
         ]);
@@ -1246,7 +1227,6 @@ class SlotController extends Controller
         $arrivalTime = $arrivalDt->format('Y-m-d H:i:s');
 
         $matDoc = trim((string) $request->input('mat_doc', ''));
-        $sjNumber = trim((string) $request->input('sj_number', ''));
         $truckType = trim((string) $request->input('truck_type', ''));
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
@@ -1302,7 +1282,7 @@ class SlotController extends Controller
             $status = 'waiting';
         }
 
-        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $sjNumber, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $hasQty, $selectedItems, $poDetail) {
+        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $hasQty, $selectedItems, $poDetail) {
             $slotId = (int) DB::table('slots')->insertGetId([
                 'po_number' => $poNumber,
                 'direction' => $direction,
@@ -1313,7 +1293,6 @@ class SlotController extends Controller
                 'actual_gate_id' => $actualGateId,
                 'arrival_time' => $arrivalTime,
                 'mat_doc' => $matDoc !== '' ? $matDoc : null,
-                'sj_complete_number' => $sjNumber !== '' ? $sjNumber : null,
                 'truck_type' => $truckType !== '' ? $truckType : null,
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
@@ -1458,7 +1437,6 @@ class SlotController extends Controller
         }
 
         $matDoc = trim((string) $request->input('mat_doc', ''));
-        $sjNumber = trim((string) $request->input('sj_number', ''));
         $truckType = trim((string) $request->input('truck_type', ''));
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
@@ -1474,7 +1452,7 @@ class SlotController extends Controller
             $status = 'waiting'; // Unplanned is usually waiting
         }
 
-        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $actualGateId, $arrivalTime, $matDoc, $sjNumber, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status) {
+        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status) {
             $truck = DB::table('po')->where('po_number', $truckNumber)->select(['id'])->first();
             if ($truck) {
                 $truckId = (int) $truck->id;
@@ -1492,7 +1470,6 @@ class SlotController extends Controller
                 'actual_gate_id' => $actualGateId,
                 'arrival_time' => $arrivalTime,
                 'mat_doc' => $matDoc !== '' ? $matDoc : null,
-                'sj_complete_number' => $sjNumber !== '' ? $sjNumber : null,
                 'truck_type' => $truckType !== '' ? $truckType : null,
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
@@ -1547,9 +1524,8 @@ class SlotController extends Controller
         }
 
         $ticketNumber = trim((string) $request->input('ticket_number', ''));
-        $sjNumber = trim((string) $request->input('sj_number', ''));
-        if ($ticketNumber === '' || $sjNumber === '') {
-            return back()->withInput()->with('error', 'Ticket number and Surat Jalan number are required');
+        if ($ticketNumber === '') {
+            return back()->withInput()->with('error', 'Ticket number is required');
         }
 
         $expectedTicket = trim((string) ($slot->ticket_number ?? ''));
@@ -1557,17 +1533,16 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Ticket number does not match this slot.');
         }
 
-        DB::transaction(function () use ($slotId, $ticketNumber, $sjNumber) {
+        DB::transaction(function () use ($slotId, $ticketNumber) {
             $now = date('Y-m-d H:i:s');
             DB::table('slots')->where('id', $slotId)->update([
                 'arrival_time' => $now,
                 'ticket_number' => $ticketNumber,
-                'sj_start_number' => $sjNumber,
                 'status' => Slot::STATUS_WAITING,
             ]);
 
             $this->slotService->logActivity($slotId, 'status_change', 'Status Changed to Waiting After Arrival');
-            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket ' . $ticketNumber . ' and SJ ' . $sjNumber);
+            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket ' . $ticketNumber);
         });
 
         return redirect()->route('slots.show', ['slotId' => $slotId])->with('success', 'Arrival recorded');
@@ -1834,7 +1809,6 @@ class SlotController extends Controller
         }
 
         $matDoc = trim((string) $request->input('mat_doc', ''));
-        $sjNumber = trim((string) $request->input('sj_number', ''));
         // Truck type comes from slot data, not from form
         $truckType = (string) ($slot->truck_type ?? '');
         $vehicleNumber = trim((string) $request->input('vehicle_number', ''));
@@ -1842,11 +1816,11 @@ class SlotController extends Controller
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
 
-        if ($matDoc === '' || $sjNumber === '' || $truckType === '' || $vehicleNumber === '' || $driverNumber === '') {
+        if ($matDoc === '' || $truckType === '' || $vehicleNumber === '' || $driverNumber === '') {
             return back()->withInput()->with('error', 'All required fields must be filled');
         }
 
-        DB::transaction(function () use ($slotId, $matDoc, $sjNumber, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes) {
+        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes) {
             $now = date('Y-m-d H:i:s');
 
             // Get slot info before updating
@@ -1860,7 +1834,6 @@ class SlotController extends Controller
                 'status' => 'completed',
                 'actual_finish' => $now,
                 'mat_doc' => $matDoc,
-                'sj_complete_number' => $sjNumber,
                 'truck_type' => $truckType,
                 'vehicle_number_snap' => $vehicleNumber,
                 'driver_name' => $driverName !== '' ? $driverName : null,
@@ -1876,7 +1849,7 @@ class SlotController extends Controller
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $slotInfo->actual_finish, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot Completed with MAT DOC ' . $matDoc . ', SJ ' . $sjNumber . ', Truck ' . $truckType . ', Vehicle ' . $vehicleNumber . ', Driver ' . $driverNumber);
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot Completed with MAT DOC ' . $matDoc . ', Truck ' . $truckType . ', Vehicle ' . $vehicleNumber . ', Driver ' . $driverNumber);
         });
 
         return redirect()->route('slots.index')->with('success', 'Slot completed');

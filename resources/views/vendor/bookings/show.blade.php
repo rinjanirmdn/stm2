@@ -118,16 +118,6 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="vb-table__label">Surat Jalan</td>
-                    <td>
-                        @if(!empty($booking->surat_jalan_path))
-                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
-                        @else
-                            -
-                        @endif
-                    </td>
-                </tr>
-                <tr>
                     <td class="vb-table__label">PO Number</td>
                     <td>{{ $booking->po_number ?? '-' }}</td>
                 </tr>

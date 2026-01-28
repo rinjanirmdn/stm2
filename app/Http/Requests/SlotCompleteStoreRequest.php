@@ -24,16 +24,6 @@ class SlotCompleteStoreRequest extends FormRequest
                 'required',
                 'date',
                 'before_or_equal:now'
-            ],
-            'sj_start_number' => [
-                'nullable',
-                'string',
-                'max:50'
-            ],
-            'sj_complete_number' => [
-                'nullable',
-                'string',
-                'max:50'
             ]
         ];
     }
@@ -46,9 +36,7 @@ class SlotCompleteStoreRequest extends FormRequest
         return [
             'actual_finish.required' => 'Actual finish time is required.',
             'actual_finish.date' => 'Actual finish time must be a valid date.',
-            'actual_finish.before_or_equal' => 'Actual finish time cannot be after current time.',
-            'sj_start_number.max' => 'SJ start number maximum 50 characters.',
-            'sj_complete_number.max' => 'SJ complete number maximum 50 characters.'
+            'actual_finish.before_or_equal' => 'Actual finish time cannot be after current time.'
         ];
     }
 }

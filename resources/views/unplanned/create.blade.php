@@ -115,10 +115,6 @@
                     <label class="st-label">MAT DOC <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc') }}">
                 </div>
-                <div class="st-form-field">
-                    <label class="st-label">SJ Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
-                    <input type="text" name="sj_number" class="st-input" value="{{ old('sj_number') }}">
-                </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
@@ -157,13 +153,6 @@
                     <label class="st-label">COA (PDF) <span style="color:#dc2626;">*</span></label>
                     <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
                     @error('coa_pdf')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="st-form-field">
-                    <label class="st-label">Surat Jalan (PDF) <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
-                    <input type="file" name="surat_jalan_pdf" class="st-input{{ $errors->has('surat_jalan_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
-                    @error('surat_jalan_pdf')
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>

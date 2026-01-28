@@ -474,7 +474,6 @@ class VendorBookingController extends Controller
             'driver_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:500',
             'coa_pdf' => 'required|file|mimes:pdf|max:10240',
-            'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         // Auto-assign gate based on availability
@@ -624,12 +623,6 @@ class VendorBookingController extends Controller
                 $coaName = 'coa_' . $bookingRequest->id . '_' . time() . '.pdf';
                 $coaPath = $coaFile->storeAs('booking-documents/' . $bookingRequest->id, $coaName, 'public');
                 $updates['coa_path'] = $coaPath;
-            }
-            if ($request->hasFile('surat_jalan_pdf')) {
-                $sjFile = $request->file('surat_jalan_pdf');
-                $sjName = 'surat_jalan_' . $bookingRequest->id . '_' . time() . '.pdf';
-                $sjPath = $sjFile->storeAs('booking-documents/' . $bookingRequest->id, $sjName, 'public');
-                $updates['surat_jalan_path'] = $sjPath;
             }
             if (!empty($updates)) {
                 $bookingRequest->update($updates);

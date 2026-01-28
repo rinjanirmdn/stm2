@@ -182,7 +182,6 @@ class BookingApprovalController extends Controller
                     'driver_number' => $bookingRequest->driver_number,
                     'late_reason' => $bookingRequest->notes,
                     'coa_path' => $bookingRequest->coa_path,
-                    'surat_jalan_path' => $bookingRequest->surat_jalan_path,
                     'status' => Slot::STATUS_PENDING_APPROVAL,
                     'slot_type' => 'planned',
                     'created_by' => $bookingRequest->requested_by,

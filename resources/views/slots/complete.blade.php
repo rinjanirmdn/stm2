@@ -18,10 +18,6 @@
                     <label class="st-label">Material Document <span style="color:#dc2626;">*</span></label>
                     <input type="text" name="mat_doc" class="st-input" required value="{{ old('mat_doc') }}">
                 </div>
-                <div class="st-form-field">
-                    <label class="st-label">Surat Jalan Number (Final) <span style="color:#dc2626;">*</span></label>
-                    <input type="text" name="sj_number" class="st-input" required value="{{ old('sj_number', $slot->sj_start_number ?? '') }}">
-                </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">

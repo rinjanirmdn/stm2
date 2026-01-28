@@ -30,7 +30,6 @@ class BookingRequest extends Model
         'driver_number',
         'notes',
         'coa_path',
-        'surat_jalan_path',
         'status',
         'approved_by',
         'approved_at',

@@ -1948,12 +1948,213 @@
     gap: 16px;
 }
 
+.vendor-page--bookings-create .cb-row--sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+    grid-column: 1 / -1;
+}
+
+.vendor-page--bookings-create .cb-row--sections-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vendor-page--bookings-create .cb-row--sections .cb-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.vendor-page--bookings-create .cb-row--sections .cb-section__title {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.vendor-page--bookings-create .cb-stack {
+    display: grid;
+    gap: 16px;
+}
+
+.vendor-page--bookings-create .cb-row--sections .cb-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.vendor-page--bookings-create .cb-row--sections .cb-textarea {
+    flex: 1;
+    min-height: 60px;
+    resize: none;
+}
+
+/* Live Availability Display */
+.vendor-page--bookings-create .cb-availability {
+    margin-top: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.vendor-page--bookings-create .cb-availability__header {
+    background: #f1f5f9;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vendor-page--bookings-create .cb-availability__content {
+    padding: 10px 12px;
+    background: #fff;
+    min-height: 40px;
+}
+
+.vendor-page--bookings-create .cb-availability__placeholder,
+.vendor-page--bookings-create .cb-availability__loading,
+.vendor-page--bookings-create .cb-availability__empty,
+.vendor-page--bookings-create .cb-availability__error {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vendor-page--bookings-create .cb-availability__loading .cb-spinner {
+    width: 14px;
+    height: 14px;
+}
+
+.vendor-page--bookings-create .cb-availability__empty {
+    color: #f59e0b;
+}
+
+.vendor-page--bookings-create .cb-availability__ok {
+    color: #16a34a;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vendor-page--bookings-create .cb-availability__error {
+    color: #dc2626;
+}
+
+.vendor-page--bookings-create .cb-availability__gate {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.vendor-page--bookings-create .cb-availability__gate:last-child {
+    border-bottom: none;
+}
+
+.vendor-page--bookings-create .cb-availability__gate-name {
+    font-weight: 500;
+    color: #334155;
+}
+
+.vendor-page--bookings-create .cb-availability__gate-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vendor-page--bookings-create .cb-availability__gate--available .cb-availability__gate-status {
+    color: #16a34a;
+}
+
+.vendor-page--bookings-create .cb-availability__gate--busy .cb-availability__gate-status {
+    color: #dc2626;
+}
+
+/* Mini Availability (Hourly) */
+.vendor-page--bookings-create .cb-availability-mini {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+    min-height: 140px;
+}
+
+.vendor-page--bookings-create .cb-availability-mini__placeholder {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.vendor-page--bookings-create .cb-availability-mini__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.vendor-page--bookings-create .cb-availability-mini__item {
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid transparent;
+    background: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+}
+
+.vendor-page--bookings-create .cb-availability-mini__item--available {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.vendor-page--bookings-create .cb-availability-mini__item--busy {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+    cursor: not-allowed;
+}
+
+.vendor-page--bookings-create .cb-availability-mini__item--selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.vendor-page--bookings-create .cb-availability-mini__item-time {
+    font-weight: 600;
+}
+
+.vendor-page--bookings-create .cb-availability-mini__item-status {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
 @media (max-width: 768px) {
     .vendor-page--bookings-create .cb-form {
         grid-template-columns: 1fr;
     }
 
     .vendor-page--bookings-create .cb-row {
+        grid-template-columns: 1fr;
+    }
+
+    .vendor-page--bookings-create .cb-row--sections {
+        grid-template-columns: 1fr;
+    }
+
+    .vendor-page--bookings-create .cb-row--sections-3 {
         grid-template-columns: 1fr;
     }
 }
