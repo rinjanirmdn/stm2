@@ -332,13 +332,32 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (type === 'button' || type === 'submit' || type === 'reset') return;
                     if (type === 'hidden') return;
                 } catch (e) { }
+                try {
+                    var tag2 = (el.tagName || '').toLowerCase();
+                    if (tag2 === 'input') {
+                        var n = String(el.getAttribute('name') || '');
+                        var id = String(el.id || '');
+                        var isRange = (n && /_range$/i.test(n)) || (id && /_range$/i.test(id)) || (n && n.toLowerCase().indexOf('date_range') !== -1);
+                        if (isRange && typeof getRangeFieldPair === 'function') {
+                            var pair = getRangeFieldPair(el);
+                            var fromVal = pair && pair.from ? String(pair.from.value || '').trim() : '';
+                            var toVal = pair && pair.to ? String(pair.to.value || '').trim() : '';
+                            if (fromVal !== '' || toVal !== '') {
+                                active = true;
+                            }
+                            return;
+                        }
+                    }
+                } catch (e) { }
                 if (stHasNonEmptyValue(el)) active = true;
             });
 
             if (active) {
                 btn.classList.add('is-filtered');
+                btn.classList.add('st-filter-trigger--active');
             } else {
                 btn.classList.remove('is-filtered');
+                btn.classList.remove('st-filter-trigger--active');
             }
         });
     }

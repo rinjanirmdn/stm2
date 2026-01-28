@@ -402,6 +402,11 @@ class SlotController extends Controller
         $plannedStart = (string) $request->input('planned_start', '');
         $plannedDurationMinutes = (int) $request->input('planned_duration', 60);
         $truckType = trim((string) $request->input('truck_type', ''));
+
+        $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
+        $driverName = trim((string) $request->input('driver_name', ''));
+        $driverNumber = trim((string) $request->input('driver_number', ''));
+        $notes = trim((string) $request->input('notes', ''));
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
@@ -669,7 +674,16 @@ class SlotController extends Controller
             'planned_gate_id' => 'required|integer|exists:gates,id',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
+            'vehicle_number_snap' => 'nullable|string|max:50',
+            'driver_name' => 'nullable|string|max:50',
+            'driver_number' => 'nullable|string|max:50',
+            'notes' => 'nullable|string|max:500',
+            'coa_pdf' => 'nullable|file|mimes:pdf|max:5120',
         ]);
+
+        if (! $request->hasFile('coa_pdf') && trim((string) ($slot->coa_path ?? '')) === '') {
+            return back()->withInput()->withErrors(['coa_pdf' => 'COA (PDF) is required.']);
+        }
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
         $direction = (string) $request->input('direction', '');
@@ -678,6 +692,11 @@ class SlotController extends Controller
         $plannedStart = (string) $request->input('planned_start', '');
         $plannedDurationMinutes = (int) $request->input('planned_duration', 60);
         $truckType = trim((string) $request->input('truck_type', ''));
+
+        $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
+        $driverName = trim((string) $request->input('driver_name', ''));
+        $driverNumber = trim((string) $request->input('driver_number', ''));
+        $notes = trim((string) $request->input('notes', ''));
 
         if (! $plannedGateId) {
             return back()->withInput()->with('error', 'Gate is required');
@@ -741,7 +760,7 @@ class SlotController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType) {
+        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes) {
             $truck = DB::table('po')->where('po_number', $truckNumber)->select(['id'])->first();
             if ($truck) {
                 $truckId = (int) $truck->id;
@@ -760,11 +779,25 @@ class SlotController extends Controller
                 'planned_start' => $plannedStart,
                 'planned_duration' => $plannedDurationMinutes,
                 'truck_type' => $truckType,
+                'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
+                'driver_name' => $driverName !== '' ? $driverName : null,
+                'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'late_reason' => $notes !== '' ? $notes : null,
                 'updated_at' => now(),
             ]);
 
             $this->slotService->logActivity($slotId, 'status_change', 'Slot Updated');
         });
+
+        if ($request->hasFile('coa_pdf')) {
+            $coaFile = $request->file('coa_pdf');
+            $coaName = 'coa_' . $slotId . '_' . time() . '.pdf';
+            $coaPath = $coaFile->storeAs('booking-documents/' . $slotId, $coaName, 'public');
+            DB::table('slots')->where('id', $slotId)->update([
+                'coa_path' => $coaPath,
+                'updated_at' => now(),
+            ]);
+        }
 
         // Calculate blocking risk immediately after update
         $blockingRisk = $this->slotService->calculateBlockingRisk(
@@ -1200,7 +1233,7 @@ class SlotController extends Controller
         $request->validate([
             'po_items' => 'nullable|array',
             'po_items.*.qty' => 'nullable|numeric|min:0',
-            'coa_pdf' => 'required|file|mimes:pdf|max:5120',
+            'coa_pdf' => 'nullable|file|mimes:pdf|max:5120',
             'surat_jalan_pdf' => 'nullable|file|mimes:pdf|max:5120',
             'driver_name' => 'nullable|string|max:50',
             'actual_gate_id' => 'required|integer|exists:gates,id',

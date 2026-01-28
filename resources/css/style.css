@@ -409,8 +409,23 @@ body {
     color: var(--st-primary-color);
 }
 
-.btn-filter.is-filtered::after,
-.st-filter-trigger.is-filtered::after {
+.st-filter-trigger.is-filtered {
+    color: var(--st-primary-color);
+}
+
+.st-filter-trigger.is-filtered svg path,
+.st-filter-trigger.is-filtered .icon-box,
+.st-filter-trigger.is-filtered .icon-box svg {
+    color: var(--st-primary-color) !important;
+}
+
+.st-filter-trigger.is-filtered .icon-box svg,
+.st-filter-trigger.is-filtered .icon-box svg * {
+    stroke: var(--st-primary-color) !important;
+}
+
+.st-filter-trigger.is-filtered::after,
+.btn-filter.is-filtered::after {
     content: '';
     position: absolute;
     top: -2px;
@@ -3066,6 +3081,16 @@ input[type="datetime-local"].form-control {
     background: transparent !important;
     border-radius: 0 !important;
     font-weight: inherit !important;
+}
+
+.st-filter-trigger.is-filtered,
+.st-filter-trigger.is-filtered.st-filter-trigger--active {
+    color: var(--st-primary-color) !important;
+}
+
+.st-filter-trigger.is-filtered:hover,
+.st-filter-header .st-filter-trigger.is-filtered:hover {
+    color: var(--st-primary-color) !important;
 }
 
 
@@ -6120,18 +6145,19 @@ table.st-table td form {
 }
 
 .detail-card__header {
-    background: var(--st-primary, #3b82f6);
-    color: white;
+    background: transparent;
+    color: var(--st-text, #0f172a);
     padding: 0.75rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-bottom: 1px solid var(--st-border, #e5e7eb);
 }
 
 .detail-card__title {
     margin: 0;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -6139,7 +6165,8 @@ table.st-table td form {
 
 .detail-card__meta {
     font-size: 0.75rem;
-    opacity: 0.9;
+    opacity: 1;
+    color: var(--st-text-muted, #64748b);
 }
 
 .detail-card__body {
