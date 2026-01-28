@@ -2,6 +2,8 @@
 
 @section('title', 'Confirm Booking - Vendor Portal')
 
+@section('page_class', 'vendor-page--layout vendor-page--bookings-confirm')
+
 @section('content')
 <div class="vendor-card">
     <div class="vendor-card__header">
@@ -19,34 +21,34 @@
         <i class="fas fa-info-circle"></i>
         <div>
             <strong>Admin Has Rescheduled Your Booking.</strong>
-            <p style="margin: 0.25rem 0 0;">Please review the new schedule below and confirm, reject, or propose a different time.</p>
+            <p class="vc-info-text">Please review the new schedule below and confirm, reject, or propose a different time.</p>
         </div>
     </div>
 
     <!-- Schedule Comparison -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 1.5rem 0;">
+    <div class="vc-compare-grid">
         <!-- Original Request -->
-        <div style="padding: 1.25rem; background: #fee2e2; border-radius: 12px; border: 1px solid #fecaca;">
-            <h3 style="margin: 0 0 1rem; color: #991b1b; font-size: 0.875rem; font-weight: 600;">
+        <div class="vc-card vc-card--danger">
+            <h3 class="vc-card__title vc-card__title--danger">
                 <i class="fas fa-times-circle"></i>
                 Your Original Request
             </h3>
-            <table style="width: 100%; font-size: 0.875rem;">
+            <table class="vc-card__table">
                 <tr>
-                    <td style="padding: 0.25rem 0; color: #7f1d1d;">Date</td>
-                    <td style="padding: 0.25rem 0; font-weight: 500; text-align: right;">
+                    <td class="vc-card__label vc-card__label--danger">Date</td>
+                    <td class="vc-card__value">
                         {{ $booking->original_planned_start?->format('d M Y') ?? $booking->requested_at?->format('d M Y') ?? '-' }}
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.25rem 0; color: #7f1d1d;">Time</td>
-                    <td style="padding: 0.25rem 0; font-weight: 500; text-align: right;">
+                    <td class="vc-card__label vc-card__label--danger">Time</td>
+                    <td class="vc-card__value">
                         {{ $booking->original_planned_start?->format('H:i') ?? '-' }}
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.25rem 0; color: #7f1d1d;">Gate</td>
-                    <td style="padding: 0.25rem 0; font-weight: 500; text-align: right;">
+                    <td class="vc-card__label vc-card__label--danger">Gate</td>
+                    <td class="vc-card__value">
                         {{ $booking->originalPlannedGate?->name ?? 'Auto-assign' }}
                     </td>
                 </tr>
@@ -54,38 +56,38 @@
         </div>
 
         <!-- Arrow -->
-        <div style="display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-arrow-right" style="font-size: 2rem; color: #3b82f6;"></i>
+        <div class="vc-arrow">
+            <i class="fas fa-arrow-right vc-arrow__icon"></i>
         </div>
 
         <!-- New Schedule -->
-        <div style="padding: 1.25rem; background: #dcfce7; border-radius: 12px; border: 1px solid #86efac;">
-            <h3 style="margin: 0 0 1rem; color: #166534; font-size: 0.875rem; font-weight: 600;">
+        <div class="vc-card vc-card--success">
+            <h3 class="vc-card__title vc-card__title--success">
                 <i class="fas fa-check-circle"></i>
                 New Schedule (Admin Proposed)
             </h3>
-            <table style="width: 100%; font-size: 0.875rem;">
+            <table class="vc-card__table">
                 <tr>
-                    <td style="padding: 0.25rem 0; color: #14532d;">Date</td>
-                    <td style="padding: 0.25rem 0; font-weight: 600; text-align: right;">
+                    <td class="vc-card__label vc-card__label--success">Date</td>
+                    <td class="vc-card__value vc-card__value--strong">
                         {{ $booking->planned_start?->format('d M Y') ?? '-' }}
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.25rem 0; color: #14532d;">Time</td>
-                    <td style="padding: 0.25rem 0; font-weight: 600; text-align: right;">
+                    <td class="vc-card__label vc-card__label--success">Time</td>
+                    <td class="vc-card__value vc-card__value--strong">
                         {{ $booking->planned_start?->format('H:i') ?? '-' }}
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.25rem 0; color: #14532d;">Duration</td>
-                    <td style="padding: 0.25rem 0; font-weight: 600; text-align: right;">
+                    <td class="vc-card__label vc-card__label--success">Duration</td>
+                    <td class="vc-card__value vc-card__value--strong">
                         {{ $booking->planned_duration }} Min
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.25rem 0; color: #14532d;">Gate</td>
-                    <td style="padding: 0.25rem 0; font-weight: 600; text-align: right;">
+                    <td class="vc-card__label vc-card__label--success">Gate</td>
+                    <td class="vc-card__value vc-card__value--strong">
                         {{ $booking->plannedGate?->name ?? 'TBD' }}
                     </td>
                 </tr>
@@ -94,95 +96,95 @@
     </div>
 
     @if($booking->approval_notes)
-    <div style="padding: 1rem; background: #f8fafc; border-radius: 10px; margin-bottom: 1.5rem;">
-        <strong style="color: #374151;">Admin Notes:</strong>
-        <p style="margin: 0.5rem 0 0; color: #64748b;">{{ $booking->approval_notes }}</p>
+    <div class="vc-notes">
+        <strong class="vc-notes__label">Admin Notes:</strong>
+        <p class="vc-notes__text">{{ $booking->approval_notes }}</p>
     </div>
     @endif
 
     <!-- Action Buttons -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;">
+    <div class="vc-actions">
         <!-- Confirm -->
         <form method="POST" action="{{ route('vendor.bookings.confirm.store', $booking->id) }}">
             @csrf
             <input type="hidden" name="action" value="confirm">
-            <button type="submit" class="vendor-btn vendor-btn--success" style="width: 100%; padding: 1.25rem; font-size: 1rem;">
+            <button type="submit" class="vendor-btn vendor-btn--success vc-action-btn">
                 <i class="fas fa-check"></i>
                 Accept New Schedule
             </button>
         </form>
 
         <!-- Reject -->
-        <button type="button" class="vendor-btn vendor-btn--danger" style="width: 100%; padding: 1.25rem; font-size: 1rem;" onclick="document.getElementById('reject-form').style.display='block'; this.style.display='none';">
+        <button type="button" class="vendor-btn vendor-btn--danger vc-action-btn" onclick="document.getElementById('reject-form').classList.remove('vendor-hidden'); this.classList.add('vendor-hidden');">
             <i class="fas fa-times"></i>
             Reject & Cancel
         </button>
 
         <!-- Propose New -->
-        <button type="button" class="vendor-btn vendor-btn--primary" style="width: 100%; padding: 1.25rem; font-size: 1rem;" onclick="document.getElementById('propose-form').style.display='block';">
+        <button type="button" class="vendor-btn vendor-btn--primary vc-action-btn" onclick="document.getElementById('propose-form').classList.remove('vendor-hidden');">
             <i class="fas fa-calendar-alt"></i>
             Propose Different Time
         </button>
     </div>
 
     <!-- Reject Form (Hidden) -->
-    <form method="POST" action="{{ route('vendor.bookings.confirm.store', $booking->id) }}" id="reject-form" style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: #fee2e2; border-radius: 12px;">
+    <form method="POST" action="{{ route('vendor.bookings.confirm.store', $booking->id) }}" id="reject-form" class="vc-form vc-form--danger vendor-hidden">
         @csrf
         <input type="hidden" name="action" value="reject">
         
-        <h3 style="margin: 0 0 1rem; color: #991b1b;">
+        <h3 class="vc-form__title vc-form__title--danger">
             <i class="fas fa-times-circle"></i>
             Reject Booking
         </h3>
         
         <div class="vendor-form-group">
-            <label class="vendor-form-label">Reason for Rejection <span style="color: #ef4444;">*</span></label>
+            <label class="vendor-form-label">Reason for Rejection <span class="vendor-required">*</span></label>
             <textarea name="reason" class="vendor-form-textarea" rows="3" required 
                       placeholder="Please Explain Why You're Rejecting This Schedule..."></textarea>
         </div>
         
-        <div style="display: flex; gap: 1rem;">
+        <div class="vc-form__actions">
             <button type="submit" class="vendor-btn vendor-btn--danger">
                 <i class="fas fa-times"></i>
                 Confirm Rejection
             </button>
-            <button type="button" class="vendor-btn vendor-btn--secondary" onclick="document.getElementById('reject-form').style.display='none';">
+            <button type="button" class="vendor-btn vendor-btn--secondary" onclick="document.getElementById('reject-form').classList.add('vendor-hidden');">
                 Cancel
             </button>
         </div>
     </form>
 
     <!-- Propose New Schedule Form (Hidden) -->
-    <form method="POST" action="{{ route('vendor.bookings.confirm.store', $booking->id) }}" id="propose-form" style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: #dbeafe; border-radius: 12px;">
+    <form method="POST" action="{{ route('vendor.bookings.confirm.store', $booking->id) }}" id="propose-form" class="vc-form vc-form--info vendor-hidden">
         @csrf
         <input type="hidden" name="action" value="propose">
         
-        <h3 style="margin: 0 0 1rem; color: #1e40af;">
+        <h3 class="vc-form__title vc-form__title--info">
             <i class="fas fa-calendar-alt"></i>
             Propose New Schedule
         </h3>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-            <div class="vendor-form-group" style="margin-bottom: 0;">
-                <label class="vendor-form-label">Date <span style="color: #ef4444;">*</span></label>
+
+        <div class="vc-propose-grid">
+            <div class="vendor-form-group vendor-form-group--tight">
+                <label class="vendor-form-label">Date <span class="vendor-required">*</span></label>
                 <input type="text" name="planned_date" id="planned_date_input" class="vendor-form-input" required
                        value="{{ $booking->planned_start?->format('Y-m-d') }}" placeholder="Select Date">
             </div>
             
-            <div class="vendor-form-group" style="margin-bottom: 0;">
-                <label class="vendor-form-label">Time <span style="color: #ef4444;">*</span></label>
+            <div class="vendor-form-group vendor-form-group--tight">
+                <label class="vendor-form-label">Time <span class="vendor-required">*</span></label>
                 <input type="time" name="planned_time" class="vendor-form-input" required
                        min="07:00" max="22:00" value="{{ $booking->planned_start?->format('H:i') }}">
             </div>
             
-            <div class="vendor-form-group" style="margin-bottom: 0;">
-                <label class="vendor-form-label">Duration (Min) <span style="color: #ef4444;">*</span></label>
+            <div class="vendor-form-group vendor-form-group--tight">
+                <label class="vendor-form-label">Duration (Min) <span class="vendor-required">*</span></label>
                 <input type="number" name="planned_duration" class="vendor-form-input" required
                        min="30" max="480" step="10" value="{{ $booking->planned_duration }}">
             </div>
             
             <div class="vendor-form-group">
-                <label class="vendor-form-label">Gate <span style="color: #ef4444;">*</span></label>
+                <label class="vendor-form-label">Gate <span class="vendor-required">*</span></label>
                 <select name="planned_gate_id" class="vendor-form-select" required>
                     <option value="">Select Gate...</option>
                     @foreach ($gates as $gate)
@@ -198,18 +200,18 @@
             </div>
         </div>
         
-        <div class="vendor-form-group" style="margin-top: 1rem;">
+        <div class="vendor-form-group vc-form__notes">
             <label class="vendor-form-label">Notes (Optional)</label>
             <textarea name="notes" class="vendor-form-textarea" rows="2" 
                       placeholder="Any Additional Notes..."></textarea>
         </div>
-        
-        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+
+        <div class="vc-form__actions">
             <button type="submit" class="vendor-btn vendor-btn--primary">
                 <i class="fas fa-paper-plane"></i>
                 Submit New Proposal
             </button>
-            <button type="button" class="vendor-btn vendor-btn--secondary" onclick="document.getElementById('propose-form').style.display='none';">
+            <button type="button" class="vendor-btn vendor-btn--secondary" onclick="document.getElementById('propose-form').classList.add('vendor-hidden');">
                 Cancel
             </button>
         </div>
@@ -276,8 +278,8 @@
                     const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayText).padStart(2, '0')}`;
                     const title = holidayData[ds] || '';
                     if (title) {
-                        cell.attr('data-st-tooltip', title);
-                        cell.find('a, span').attr('data-st-tooltip', title);
+                        cell.attr('data-vendor-tooltip', title);
+                        cell.find('a, span').attr('data-vendor-tooltip', title);
                     }
                     cell.removeAttr('title');
                     cell.find('a, span').removeAttr('title');
@@ -288,41 +290,41 @@
                 if (!inst || !inst.dpDiv) return;
                 const dp = window.jQuery(inst.dpDiv);
                 let hideTimer = null;
-                let tooltip = document.getElementById('st-datepicker-tooltip');
+                let tooltip = document.getElementById('vendor-datepicker-tooltip');
                 if (!tooltip) {
                     tooltip = document.createElement('div');
-                    tooltip.id = 'st-datepicker-tooltip';
-                    tooltip.className = 'st-datepicker-tooltip';
+                    tooltip.id = 'vendor-datepicker-tooltip';
+                    tooltip.className = 'vendor-datepicker-tooltip';
                     document.body.appendChild(tooltip);
                 }
 
-                dp.off('mouseenter.st-tooltip mousemove.st-tooltip mouseleave.st-tooltip', 'td.is-holiday');
-                dp.on('mouseenter.st-tooltip', 'td.is-holiday', function(event) {
-                    const text = window.jQuery(this).attr('data-st-tooltip') || '';
+                dp.off('mouseenter.vendor-tooltip mousemove.vendor-tooltip mouseleave.vendor-tooltip', 'td.is-holiday');
+                dp.on('mouseenter.vendor-tooltip', 'td.is-holiday', function(event) {
+                    const text = window.jQuery(this).attr('data-vendor-tooltip') || '';
                     if (!text) return;
                     if (hideTimer) {
                         clearTimeout(hideTimer);
                         hideTimer = null;
                     }
                     tooltip.textContent = text;
-                    tooltip.classList.add('st-datepicker-tooltip--visible');
+                    tooltip.classList.add('vendor-datepicker-tooltip--visible');
                     tooltip.style.left = `${event.clientX + 12}px`;
                     tooltip.style.top = `${event.clientY + 12}px`;
                 });
-                dp.on('mousemove.st-tooltip', 'td.is-holiday', function(event) {
+                dp.on('mousemove.vendor-tooltip', 'td.is-holiday', function(event) {
                     tooltip.style.left = `${event.clientX + 12}px`;
                     tooltip.style.top = `${event.clientY + 12}px`;
                 });
-                dp.on('mouseleave.st-tooltip', 'td.is-holiday', function() {
+                dp.on('mouseleave.vendor-tooltip', 'td.is-holiday', function() {
                     hideTimer = setTimeout(function() {
-                        tooltip.classList.remove('st-datepicker-tooltip--visible');
+                        tooltip.classList.remove('vendor-datepicker-tooltip--visible');
                     }, 300);
                 });
             }
 
             if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
-            if (dateInput.getAttribute('data-st-datepicker') === '1') return;
-            dateInput.setAttribute('data-st-datepicker', '1');
+            if (dateInput.getAttribute('data-vendor-datepicker') === '1') return;
+            dateInput.setAttribute('data-vendor-datepicker', '1');
 
             window.jQuery(dateInput).datepicker({
                 dateFormat: 'yy-mm-dd',

@@ -2,352 +2,10 @@
 
 @section('title', 'Gate Availability - Vendor Portal')
 
+@section('body_class', 'vendor-body--no-scroll')
+@section('page_class', 'vendor-page--layout vendor-page--availability')
+
 @section('content')
-<style>
-    /* Vendor Availability Layout Specific */
-    .vendor-app .vendor-main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        max-width: none;
-        padding: 24px;
-        margin: 0;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    /* Force no scroll on body and main */
-    body {
-        overflow: hidden !important;
-    }
-
-    .vendor-app {
-        overflow: hidden !important;
-    }
-
-    .vendor-main {
-        overflow: hidden !important;
-    }
-
-    .av-container {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 72px - 48px);
-        width: 100%;
-        margin: 0;
-        background: #f1f5f9;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .av-scroll-container {
-        flex: 1;
-        overflow-y: auto;
-        background: #f1f5f9;
-        min-height: 0; /* Penting untuk flexbox */
-    }
-
-    .av-content-container {
-        background: #ffffff;
-        margin: 0;
-        min-height: 100%;
-        padding: 20px;
-    }
-
-    .av-footer-container {
-        background: #ffffff;
-        border-top: 1px solid #e5e7eb;
-        padding: 16px 20px;
-        flex-shrink: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 0 0 12px 12px;
-        position: sticky;
-        bottom: 0;
-        z-index: 100;
-        font-size: 14px;
-    }
-
-    /* Force footer visibility */
-    .av-container {
-        display: flex !important;
-        flex-direction: column !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
-        overflow: hidden !important;
-    }
-
-    .av-scroll-container {
-        flex: 1 !important;
-        overflow-y: auto !important;
-        background: #f1f5f9;
-        min-height: 0 !important;
-        max-height: calc(100vh - 200px) !important;
-    }
-
-    .av-layout {
-        display: grid;
-        grid-template-columns: 280px 1fr;
-        gap: 20px;
-        align-items: start;
-        height: 100%;
-    }
-    .av-sidebar {
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-        padding: 20px;
-        position: sticky;
-        top: 20px;
-        max-height: calc(100dvh - 120px);
-        overflow: auto;
-    }
-    .av-sidebar__top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
-    .av-sidebar__title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 16px;
-    }
-    .av-sidebar__toggle {
-        display: none;
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        border: 1px solid #e5e7eb;
-        background: #fff;
-        color: #334155;
-        cursor: pointer;
-        align-items: center;
-        justify-content: center;
-    }
-    .av-sidebar__warehouse {
-        font-size: 13px;
-        color: #64748b;
-        margin-bottom: 20px;
-    }
-    .av-calendar {
-        margin-bottom: 20px;
-    }
-    .av-calendar__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        font-weight: 600;
-        color: #1e293b;
-    }
-    .av-calendar__nav {
-        display: flex;
-        gap: 4px;
-    }
-    .av-calendar__nav-btn {
-        width: 28px;
-        height: 28px;
-        border: 1px solid #e5e7eb;
-        background: #fff;
-        border-radius: 6px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #64748b;
-        transition: all 0.15s;
-    }
-    .av-calendar__nav-btn:hover {
-        background: #f1f5f9;
-        color: #1e293b;
-    }
-    .av-calendar__grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 2px;
-        text-align: center;
-        font-size: 12px;
-    }
-    .av-calendar__day-header {
-        padding: 6px 0;
-        font-weight: 600;
-        color: #64748b;
-    }
-    .av-calendar__day {
-        padding: 8px 4px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.15s;
-        color: #374151;
-        font-size: 14px;
-        font-weight: 500;
-        min-height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .av-calendar__day:hover { background: #f1f5f9; }
-    .av-calendar__day--today { background: #dbeafe; color: #1e40af; font-weight: 600; }
-    .av-calendar__day--selected { background: #1e40af; color: white; font-weight: 600; }
-    .av-calendar__day--other { color: #9ca3af; }
-    .av-calendar__day--disabled {
-        color: #d1d5db;
-        background: #f9fafb;
-        cursor: not-allowed !important;
-        pointer-events: none;
-    }
-    .av-calendar__day--sunday {
-        color: #ef4444;
-        background: #fef2f2;
-        cursor: not-allowed !important;
-        pointer-events: none;
-    }
-    .av-calendar__day--holiday {
-        color: #f59e0b;
-        background: #fffbeb;
-        cursor: not-allowed !important;
-        pointer-events: none;
-    }
-
-    .av-main {
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-        overflow: hidden;
-    }
-    .av-main__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        border-bottom: 1px solid #e5e7eb;
-        background: #f8fafc;
-    }
-    .av-main__title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #1e293b;
-    }
-    .av-main__actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .av-main__mobile-filter {
-        display: none;
-    }
-
-    .av-available-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 16px;
-    }
-    .av-available-item {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 16px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        background: #ffffff;
-        cursor: pointer;
-        transition: all 0.15s;
-        text-align: left;
-    }
-    .av-available-item:hover {
-        border-color: #2563eb;
-        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.12);
-        transform: translateY(-1px);
-    }
-    .av-available-item.cb-slot-btn--disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
-    .av-available-time {
-        font-size: 16px;
-        font-weight: 600;
-        color: #1e293b;
-    }
-    .av-slot__vendor { font-size: 10px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .av-slot__action {
-        margin-top: 4px;
-        padding: 4px 8px;
-        background: #1e40af;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .av-slot--available {
-        background: #f0fdf4;
-        border: 1px dashed #86efac;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #22c55e;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all 0.15s;
-    }
-    .av-slot--available:hover {
-        background: #dcfce7;
-        border-color: #22c55e;
-    }
-
-    .av-break {
-        background: #f1f5f9;
-        text-align: center;
-        padding: 12px;
-        font-size: 12px;
-        color: #64748b;
-        font-weight: 500;
-        grid-column: 2 / -1;
-    }
-
-    @media (max-width: 900px) {
-        .av-layout { grid-template-columns: 1fr; }
-        .av-sidebar {
-            position: static;
-            max-height: none;
-            overflow: visible;
-            padding: 14px;
-        }
-        .av-sidebar__toggle {
-            display: inline-flex;
-        }
-        .av-sidebar__title {
-            margin-bottom: 0;
-            font-size: 16px;
-        }
-        .av-sidebar__body {
-            display: none;
-            margin-top: 12px;
-        }
-        .av-sidebar--open .av-sidebar__body {
-            display: block;
-        }
-
-        .av-main__mobile-filter {
-            display: inline-flex;
-        }
-
-        .av-grid-wrapper {
-            max-height: calc(100dvh - 260px);
-        }
-    }
-</style>
 
 <div class="av-container">
     <div class="av-scroll-container">
@@ -410,8 +68,8 @@
 
         <!-- Time Slots Grid -->
         <div id="availability-list" class="av-time-slots">
-            <div style="text-align: center; padding: 60px 20px; color: #64748b;">
-                <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 12px;"></i>
+            <div class="av-empty">
+                <i class="fas fa-spinner fa-spin av-empty__icon av-empty__icon--spinner"></i>
                 <p>Loading availability...</p>
             </div>
         </div>
@@ -422,7 +80,7 @@
 
     <!-- Footer Container -->
     <div class="av-footer-container">
-        <div style="text-align: center; color: #64748b; font-size: 14px;">
+        <div class="av-footer-text">
             &copy; {{ date('Y') }} Slot Time Management. All rights reserved.
         </div>
     </div>
@@ -561,11 +219,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const date = '{{ $selectedDate }}';
 
         // Show loading state
-        container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #64748b;"><i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 12px;"></i><p>Loading availability...</p></div>';
+        container.innerHTML = '<div class="av-empty"><i class="fas fa-spinner fa-spin av-empty__icon av-empty__icon--spinner"></i><p>Loading availability...</p></div>';
 
         // Add timeout to show error if loading takes too long
         const timeout = setTimeout(() => {
-            container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #ef4444;"><i class="fas fa-exclamation-triangle fa-2x" style="margin-bottom: 12px;"></i><p>Loading is taking longer than expected. Please try again.</p></div>';
+            container.innerHTML = '<div class="av-empty av-empty--error"><i class="fas fa-exclamation-triangle av-empty__icon av-empty__icon--alert"></i><p>Loading is taking longer than expected. Please try again.</p></div>';
         }, 10000); // 10 seconds timeout
 
         fetch(`{{ route('vendor.ajax.available_slots') }}?date=${date}`, {
@@ -589,12 +247,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearTimeout(timeout);
 
                 if (!data.success || !data.slots) {
-                    container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">Failed to load</p>';
+                    container.innerHTML = '<p class="av-empty av-empty--error av-empty--compact">Failed to load</p>';
                     return;
                 }
                 const available = data.slots.filter(s => s.is_available);
                 if (!available.length) {
-                    container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">No available times</p>';
+                    container.innerHTML = '<p class="av-empty av-empty--compact">No available times</p>';
                     return;
                 }
                 let html = '';
@@ -624,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 clearTimeout(timeout);
                 console.error('Error loading availability:', error);
-                container.innerHTML = `<p style="text-align: center; color: #ef4444; padding: 40px;">Error loading availability: ${error.message}</p>`;
+                container.innerHTML = `<p class="av-empty av-empty--error av-empty--compact">Error loading availability: ${error.message}</p>`;
             });
     }
 });

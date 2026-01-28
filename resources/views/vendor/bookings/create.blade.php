@@ -2,912 +2,378 @@
 
 @section('title', 'Create Booking - Vendor Portal')
 
+@section('page_class', 'vendor-page--layout vendor-page--bookings-create')
+
 @section('content')
-@push('styles')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.css">
-@endpush
-<style>
-    .cb-layout {
-        display: grid;
-        grid-template-columns: 1fr 380px;
-        gap: 20px;
-        align-items: start;
-        padding-bottom: 100px;
-    }
-    .cb-form {
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-        padding: 24px;
-    }
-    .cb-form__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    .cb-form__title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #1e293b;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .cb-section {
-        margin-bottom: 24px;
-    }
-    .cb-section__title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #475569;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-    .cb-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-    }
 
-    .cb-sidebar {
-        position: sticky;
-        top: 20px;
-    }
-    .cb-availability {
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-        overflow: hidden;
-    }
-    .cb-availability__header {
-        background: #1e3a5f;
-        color: white;
-        padding: 14px 16px;
-        font-weight: 600;
-        font-size: 14px;
-    }
-    .cb-availability__body {
-        max-height: 500px;
-        overflow-y: auto;
-    }
-    .cb-slot-row {
-        display: flex;
-        border-bottom: 1px solid #f1f5f9;
-    }
-    .cb-slot-time {
-        width: 60px;
-        padding: 10px 8px;
-        background: #f8fafc;
-        font-size: 11px;
-        font-weight: 600;
-        color: #64748b;
-        text-align: center;
-        flex-shrink: 0;
-    }
-    .cb-slot-gates {
-        display: flex;
-        flex: 1;
-        gap: 4px;
-        padding: 4px;
-    }
-    .cb-slot-cell {
-        flex: 1;
-        min-height: 32px;
-        border-radius: 4px;
-        font-size: 9px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.15s;
-    }
-    .cb-slot-cell--available { background: #f0fdf4; border: 1px dashed #86efac; color: #16a34a; }
-    .cb-slot-cell--available:hover { background: #dcfce7; }
-    .cb-slot-cell--booked { background: #dbeafe; border: 1px solid #3b82f6; color: #1e40af; font-weight: 600; }
-    .cb-slot-cell--pending { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; }
-    .cb-slot-cell--selected { background: #1e40af; color: white; border-color: #1e40af; }
-
-    .cb-slot-btn--disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
-
-    .cb-time-input {
-        padding: 10px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        outline: none;
-        cursor: pointer;
-        text-align: center;
-    }
-
-    .cb-time-input:focus {
-        border-color: #00bcd4;
-    }
-
-    .cb-summary {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: #ffffff;
-        border-top: 1px solid #e5e7eb;
-        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.1);
-        padding: 16px 24px;
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 24px;
-    }
-    .cb-summary__info {
-        display: flex;
-        gap: 32px;
-        font-size: 13px;
-    }
-    .cb-summary__item {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .cb-summary__label {
-        color: #64748b;
-        font-size: 11px;
-        text-transform: uppercase;
-    }
-    .cb-summary__value {
-        font-weight: 600;
-        color: #1e293b;
-    }
-    .cb-summary__status {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-    }
-    .cb-summary__status--available { background: #dcfce7; color: #166534; }
-    .cb-summary__status--unavailable { background: #fee2e2; color: #991b1b; }
-    .cb-summary__status--checking { background: #f1f5f9; color: #64748b; }
-    .cb-summary__actions {
-        display: flex;
-        gap: 12px;
-    }
-
-    @media (max-width: 900px) {
-        .cb-layout { grid-template-columns: 1fr; }
-        .cb-sidebar { position: static; }
-        .cb-grid { grid-template-columns: 1fr; }
-        .cb-summary { flex-wrap: wrap; }
-        .cb-summary__info { flex-wrap: wrap; gap: 16px; }
-    }
-</style>
-
-<form method="POST" action="{{ route('vendor.bookings.store') }}" id="booking-form" enctype="multipart/form-data">
-@csrf
-
-<div class="cb-layout">
-    <!-- LEFT: Form -->
-    <div class="cb-form">
-        <div class="cb-form__header">
-            <h1 class="cb-form__title">
-                <i class="fas fa-plus-circle"></i>
-                Create New Booking
-            </h1>
-            <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
-        </div>
-
-        <!-- PO Section -->
-        <div class="cb-section">
-            <div class="cb-section__title"><i class="fas fa-file-invoice"></i> PO/DO Information</div>
-            <div class="vendor-form-group">
-                <label class="vendor-form-label">PO/DO Number <span style="color: #ef4444;">*</span></label>
-                <div style="position: relative;">
-                    <input type="text" name="po_number" id="po_number" class="vendor-form-input" autocomplete="off"
-                           placeholder="Type PO/DO..." required value="{{ old('po_number') }}">
-                    <button type="button" id="po_clear" class="vendor-btn--secondary" style="position:absolute; right:8px; top:8px; font-size:12px; padding:4px 8px; border-radius:6px;">Clear</button>
-                    <div id="po_suggestions" style="display:none; position:absolute; top:100%; left:0; right:0; z-index:50; background:#fff; border:1px solid #e5e7eb; border-radius:10px; margin-top:6px; max-height:260px; overflow:auto; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);"></div>
-                </div>
-                <div id="po_preview" style="margin-top:8px;"></div>
+<div class="cb-container">
+    <div class="cb-scroll-container">
+        <div class="cb-content-container">
+            <div class="cb-header">
+                <h1 class="cb-header__title">
+                    <i class="fas fa-plus-circle"></i>
+                    Create New Booking
+                </h1>
+                <a href="{{ route('vendor.bookings.index') }}" class="cb-btn cb-btn--secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Bookings
+                </a>
             </div>
-            <div class="vendor-form-group" id="po_items_group" style="display:none;">
-                <label class="vendor-form-label">Items & Quantity</label>
-                <div id="po_items_box" style="max-height:320px; overflow:auto;"></div>
-            </div>
-        </div>
 
-        <!-- Documents -->
-        <div class="cb-section">
-            <div class="cb-section__title"><i class="fas fa-file-pdf"></i> Documents</div>
-            <div class="vendor-form-group">
-                <label class="vendor-form-label">COA (PDF, Max 10MB) <span style="color: #ef4444;">*</span></label>
-                <input type="file" name="coa_pdf" class="vendor-form-input" accept="application/pdf" required>
-            </div>
-        </div>
+            @if(session('error'))
+                <div class="cb-alert cb-alert--error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ session('error') }}
+                </div>
+            @endif
 
-        <!-- Schedule -->
-        <div class="cb-section">
-            <div class="cb-section__title"><i class="fas fa-calendar-alt"></i> Date & Time</div>
-            <div class="cb-grid">
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Date <span style="color: #ef4444;">*</span></label>
-                    <input type="text" name="planned_date" class="vendor-form-input" required
-                           value="{{ old('planned_date', request('date', date('Y-m-d'))) }}" id="planned_date" autocomplete="off">
-                </div>
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Time <span style="color: #ef4444;">*</span></label>
-                    <input type="text" name="planned_time" class="vendor-form-input cb-time-input" required
-                           value="{{ old('planned_time', request('time', '09:00')) }}" id="planned_time" autocomplete="off" readonly inputmode="none">
-                    <small id="time-warning" style="display:none; color:#ef4444; font-size:12px; margin-top:6px;">Invalid time selection.</small>
-                </div>
-            </div>
-            <input type="hidden" name="planned_gate_id" id="planned_gate_id" value="">
-            <input type="hidden" name="warehouse_id" id="warehouse_hidden" value="">
-        </div>
+            <form method="POST" action="{{ route('vendor.bookings.store') }}" enctype="multipart/form-data" id="booking-form">
+                @csrf
 
-        <!-- Vehicle & Documents -->
-        <div class="cb-section">
-            <div class="cb-section__title"><i class="fas fa-truck"></i> Vehicle Details</div>
-            <div class="cb-grid">
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Truck Type</label>
-                    <select name="truck_type" class="vendor-form-select" id="truck_type">
-                        <option value="">Select Type</option>
-                        @foreach($truckTypes as $type)
-                            <option value="{{ $type->truck_type }}" data-duration="{{ $type->target_duration_minutes }}">
-                                {{ $type->truck_type }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Vehicle Number</label>
-                    <input type="text" name="vehicle_number" class="vendor-form-input" placeholder="B 1234 ABC" value="{{ old('vehicle_number') }}">
-                </div>
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Driver Name</label>
-                    <input type="text" name="driver_name" class="vendor-form-input" placeholder="Driver name" value="{{ old('driver_name') }}">
-                </div>
-                <div class="vendor-form-group">
-                    <label class="vendor-form-label">Driver Number</label>
-                    <input type="text" name="driver_number" class="vendor-form-input" placeholder="08xxxxxxxxxx" value="{{ old('driver_number') }}">
-                </div>
-            </div>
-            <div class="vendor-form-group">
-                <label class="vendor-form-label">Notes</label>
-                <textarea name="notes" class="vendor-form-textarea" rows="2" placeholder="Special requests...">{{ old('notes') }}</textarea>
-            </div>
-        </div>
-    </div>
+                <div class="cb-form">
+                    <!-- PO Selection Section -->
+                    <div class="cb-section cb-section--full">
+                        <h3 class="cb-section__title">
+                            <i class="fas fa-file-invoice"></i>
+                            PO/DO Selection
+                        </h3>
 
-    <!-- RIGHT: Live Availability -->
-    <div class="cb-sidebar">
-        <div class="cb-availability">
-            <div class="cb-availability__header">
-                <i class="fas fa-calendar-alt"></i>
-                Live Availability
-            </div>
-            <div class="cb-availability__body" id="live-availability">
-                <div style="text-align: center; padding: 40px 20px; color: #64748b;">
-                    <i class="fas fa-clock" style="font-size: 32px; opacity: 0.3; margin-bottom: 8px;"></i>
-                    <p style="margin: 0; font-size: 13px;">Select a date to load availability</p>
+                        <div class="cb-field">
+                            <label class="cb-label cb-label--required">PO/DO Number</label>
+                            <div class="cb-po-search">
+                                <input type="text" 
+                                       id="po-search" 
+                                       class="cb-input" 
+                                       placeholder="Search PO/DO number..."
+                                       autocomplete="off"
+                                       value="{{ old('po_number') }}">
+                                <input type="hidden" name="po_number" id="po-number-hidden" value="{{ old('po_number') }}">
+                                <div class="cb-po-results" id="po-results"></div>
+                            </div>
+                            <div class="cb-loading" id="po-loading">
+                                <div class="cb-spinner"></div>
+                                <span>Searching...</span>
+                            </div>
+                            @error('po_number')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- PO Items Table -->
+                        <div id="po-items-container" class="cb-po-items-container">
+                            <label class="cb-label">PO Items</label>
+                            <table class="cb-po-items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Material</th>
+                                        <th>PO Qty</th>
+                                        <th>GR Total</th>
+                                        <th>Remaining</th>
+                                        <th>Book Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="po-items-body"></tbody>
+                            </table>
+                            <div class="cb-hint">Enter quantities for items you want to book.</div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Section -->
+                    <div class="cb-section">
+                        <h3 class="cb-section__title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Schedule
+                        </h3>
+
+                        <div class="cb-field">
+                            <label class="cb-label cb-label--required">Date</label>
+                            <input type="date" 
+                                   name="planned_date" 
+                                   class="cb-input" 
+                                   id="planned-date"
+                                   min="{{ date('Y-m-d') }}"
+                                   value="{{ old('planned_date') }}"
+                                   required>
+                            <div class="cb-hint">Minimum 4 hours from now. No Sundays or holidays.</div>
+                            @error('planned_date')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="cb-field">
+                            <label class="cb-label cb-label--required">Time</label>
+                            <input type="time" 
+                                   name="planned_time" 
+                                   class="cb-input" 
+                                   id="planned-time"
+                                   min="07:00"
+                                   max="19:00"
+                                   value="{{ old('planned_time', '08:00') }}"
+                                   required>
+                            <div class="cb-hint">Operating hours: 07:00 - 19:00</div>
+                            @error('planned_time')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="cb-field">
+                            <label class="cb-label cb-label--required">Truck Type</label>
+                            <select name="truck_type" class="cb-select" required>
+                                <option value="">-- Select Truck Type --</option>
+                                @foreach($truckTypes as $type)
+                                    <option value="{{ $type->truck_type }}" {{ old('truck_type') == $type->truck_type ? 'selected' : '' }}>
+                                        {{ $type->truck_type }} ({{ $type->target_duration_minutes }} min)
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('truck_type')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Vehicle & Driver Section -->
+                    <div class="cb-section">
+                        <h3 class="cb-section__title">
+                            <i class="fas fa-truck"></i>
+                            Vehicle & Driver
+                        </h3>
+
+                        <div class="cb-field">
+                            <label class="cb-label">Vehicle Number</label>
+                            <input type="text" 
+                                   name="vehicle_number" 
+                                   class="cb-input" 
+                                   placeholder="e.g., B 1234 ABC"
+                                   value="{{ old('vehicle_number') }}"
+                                   maxlength="50">
+                            @error('vehicle_number')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="cb-field">
+                            <label class="cb-label">Driver Name</label>
+                            <input type="text" 
+                                   name="driver_name" 
+                                   class="cb-input" 
+                                   placeholder="Driver's full name"
+                                   value="{{ old('driver_name') }}"
+                                   maxlength="50">
+                            @error('driver_name')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="cb-field">
+                            <label class="cb-label">Driver Phone</label>
+                            <input type="text" 
+                                   name="driver_number" 
+                                   class="cb-input" 
+                                   placeholder="e.g., 08123456789"
+                                   value="{{ old('driver_number') }}"
+                                   maxlength="50">
+                            @error('driver_number')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Documents Section -->
+                    <div class="cb-section cb-section--full">
+                        <h3 class="cb-section__title">
+                            <i class="fas fa-file-pdf"></i>
+                            Documents
+                        </h3>
+
+                        <div class="cb-row">
+                            <div class="cb-field">
+                                <label class="cb-label cb-label--required">COA (Certificate of Analysis)</label>
+                                <input type="file" 
+                                       name="coa_pdf" 
+                                       class="cb-file-input" 
+                                       accept=".pdf"
+                                       required>
+                                <div class="cb-hint">PDF only, max 10MB</div>
+                                @error('coa_pdf')
+                                    <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="cb-field">
+                                <label class="cb-label">Surat Jalan</label>
+                                <input type="file" 
+                                       name="surat_jalan_pdf" 
+                                       class="cb-file-input" 
+                                       accept=".pdf">
+                                <div class="cb-hint">PDF only, max 5MB (optional)</div>
+                                @error('surat_jalan_pdf')
+                                    <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="cb-section cb-section--full">
+                        <h3 class="cb-section__title">
+                            <i class="fas fa-sticky-note"></i>
+                            Additional Notes
+                        </h3>
+
+                        <div class="cb-field">
+                            <textarea name="notes" 
+                                      class="cb-textarea" 
+                                      placeholder="Any additional information..."
+                                      maxlength="500">{{ old('notes') }}</textarea>
+                            <div class="cb-hint">Maximum 500 characters</div>
+                            @error('notes')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                <div class="cb-actions">
+                    <a href="{{ route('vendor.bookings.index') }}" class="cb-btn cb-btn--secondary">
+                        Cancel
+                    </a>
+                    <button type="submit" class="cb-btn cb-btn--primary" id="submit-btn">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Booking Request
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Sticky Summary -->
-<div class="cb-summary">
-    <div class="cb-summary__info">
-        <div class="cb-summary__item">
-            <span class="cb-summary__label">Date</span>
-            <span class="cb-summary__value" id="summary-date">-</span>
-        </div>
-        <div class="cb-summary__item">
-            <span class="cb-summary__label">Time</span>
-            <span class="cb-summary__value" id="summary-time">-</span>
-        </div>
-        <div class="cb-summary__item">
-            <span class="cb-summary__label">Duration</span>
-            <span class="cb-summary__value" id="summary-duration">-</span>
-        </div>
-    </div>
-    <div id="summary-status" class="cb-summary__status cb-summary__status--checking">
-        <i class="fas fa-circle-notch fa-spin"></i> Checking...
-    </div>
-    <div class="cb-summary__actions">
-        <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">Cancel</a>
-        <button type="submit" class="vendor-btn vendor-btn--primary" id="submit-btn">
-            <i class="fas fa-paper-plane"></i> Submit Booking
-        </button>
-    </div>
-</div>
-
-</form>
-@endsection
-
-@push('scripts')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const truckTypeSelect = document.getElementById('truck_type');
-    const durationInput = document.getElementById('planned_duration');
-    const dateInput = document.getElementById('planned_date');
-    const timeInput = document.getElementById('planned_time');
-    const liveAvailability = document.getElementById('live-availability');
+    const poSearch = document.getElementById('po-search');
+    const poResults = document.getElementById('po-results');
+    const poHidden = document.getElementById('po-number-hidden');
+    const poLoading = document.getElementById('po-loading');
+    const poItemsContainer = document.getElementById('po-items-container');
+    const poItemsBody = document.getElementById('po-items-body');
 
-    const poInput = document.getElementById('po_number');
-    const poSuggestions = document.getElementById('po_suggestions');
-    const poPreview = document.getElementById('po_preview');
-    const poItemsGroup = document.getElementById('po_items_group');
-    const poItemsBox = document.getElementById('po_items_box');
-    const poClearBtn = document.getElementById('po_clear');
-    const summaryDate = document.getElementById('summary-date');
-    const summaryTime = document.getElementById('summary-time');
-    const summaryDuration = document.getElementById('summary-duration');
-    const summaryStatus = document.getElementById('summary-status');
-    const timeWarning = document.getElementById('time-warning');
+    let searchTimeout = null;
 
-    const urlPoSearch = '{{ route('vendor.ajax.po_search') }}';
-    const urlPoDetailTemplate = '{{ route('vendor.ajax.po_detail', ['poNumber' => '__PO__']) }}';
-    const urlAvailableSlots = '{{ route('vendor.ajax.available_slots') }}';
-    const holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
-    let poDebounceTimer = null;
-
-    function escapeHtml(str) {
-        return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
-    }
-
-    function toIsoDate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    function getMinAllowedDateTime() {
-        const now = new Date();
-        now.setSeconds(0, 0);
-        const minAllowed = new Date(now.getTime() + 4 * 60 * 60 * 1000);
-        return minAllowed;
-    }
-
-    function isTimeAllowed(date, time) {
-        if (!date || !time) return true;
-        if (time < '07:00' || time > '19:00') return false;
-        const minAllowed = getMinAllowedDateTime();
-        const selected = new Date(`${date}T${time}:00`);
-        const todayStr = toIsoDate(new Date());
-        if (date !== todayStr) {
-            return true;
-        }
-        return selected.getTime() >= minAllowed.getTime();
-    }
-
-    function setTimeWarning(message) {
-        if (!timeWarning) return;
-        if (!message) {
-            timeWarning.textContent = '';
-            timeWarning.style.display = 'none';
-            return;
-        }
-        timeWarning.textContent = message;
-        timeWarning.style.display = 'block';
-    }
-
-    function getPickerTimeValue() {
-        const holder = document.querySelector('.mdtp__time_holder, .mdtp__time');
-        if (holder && holder.textContent) {
-            return holder.textContent.trim();
-        }
-        return timeInput.value;
-    }
-
-    function syncTimePickerOkState() {
-        const okButton = document.querySelector('.mdtp__button.ok, .mdtp__button--ok, .mdtp__button-ok');
-        if (!okButton) return;
-        const candidateTime = getPickerTimeValue();
-        const valid = isTimeAllowed(dateInput.value, candidateTime);
-        okButton.disabled = !valid;
-        okButton.style.opacity = valid ? '' : '0.5';
-        okButton.style.pointerEvents = valid ? '' : 'none';
-    }
-
-    function applyTimeRules() {
-        const date = dateInput.value;
-        const time = timeInput.value;
-        const minAllowed = getMinAllowedDateTime();
-
-        timeInput.setCustomValidity('');
-
-        if (!date) {
+    // PO Search
+    poSearch.addEventListener('input', function() {
+        const q = this.value.trim();
+        
+        if (q.length < 2) {
+            poResults.classList.remove('show');
             return;
         }
 
-        const selected = time ? new Date(`${date}T${time}:00`) : null;
-        const minAllowedStr = toIsoDate(minAllowed);
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            poLoading.classList.add('show');
+            
+            fetch('{{ route("vendor.ajax.po_search") }}?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(data => {
+                    poLoading.classList.remove('show');
+                    
+                    if (data.success && data.data.length > 0) {
+                        poResults.innerHTML = data.data.map(po => `
+                            <div class="cb-po-item" data-po="${po.po_number}">
+                                <div class="cb-po-item__number">${po.po_number}</div>
+                                <div class="cb-po-item__info">${po.vendor_name || ''} | ${po.direction || ''}</div>
+                            </div>
+                        `).join('');
+                        poResults.classList.add('show');
+                    } else {
+                        poResults.innerHTML = '<div class="cb-po-item">No results found</div>';
+                        poResults.classList.add('show');
+                    }
+                })
+                .catch(err => {
+                    poLoading.classList.remove('show');
+                    console.error('Search error:', err);
+                });
+        }, 300);
+    });
 
-        const minTime = date === minAllowedStr
-            ? `${String(minAllowed.getHours()).padStart(2, '0')}:${String(minAllowed.getMinutes()).padStart(2, '0')}`
-            : '07:00';
-        const maxTime = '19:00';
+    // Select PO
+    poResults.addEventListener('click', function(e) {
+        const item = e.target.closest('.cb-po-item');
+        if (!item || !item.dataset.po) return;
 
-        timeInput.min = minTime;
-        timeInput.max = maxTime;
+        const poNumber = item.dataset.po;
+        poSearch.value = poNumber;
+        poHidden.value = poNumber;
+        poResults.classList.remove('show');
 
-        if (selected && selected.getTime() < minAllowed.getTime()) {
-            timeInput.setCustomValidity('Booking must be at least 4 hours from now.');
-        }
-
-        if (time && time > '19:00') {
-            timeInput.setCustomValidity('Maximum booking time is 19:00.');
-        }
-    }
-
-    function initTimePicker() {
-        if (typeof window.mdtimepicker !== 'function') return;
-        if (!timeInput || timeInput.getAttribute('data-st-timepicker') === '1') return;
-        timeInput.setAttribute('data-st-timepicker', '1');
-
-        timeInput.addEventListener('keydown', (event) => event.preventDefault());
-        timeInput.addEventListener('paste', (event) => event.preventDefault());
-        timeInput.addEventListener('input', () => {
-            applyTimeRules();
-            checkAvailability();
-            syncTimePickerOkState();
-        });
-
-        window.mdtimepicker('#planned_time', {
-            format: 'hh:mm',
-            is24hour: true,
-            theme: 'cyan',
-            hourPadding: true
-        });
-
-        timeInput.addEventListener('change', () => {
-            if (!isTimeAllowed(dateInput.value, timeInput.value)) {
-                timeInput.setCustomValidity('Booking must be at least 4 hours from now and no later than 19:00.');
-                timeInput.value = '';
-                setTimeWarning('Please choose a time at least 4 hours from now and no later than 19:00.');
-                syncTimePickerOkState();
-                updateSummary();
-                checkAvailability();
-                return;
-            }
-            setTimeWarning('');
-            applyTimeRules();
-            checkAvailability();
-            syncTimePickerOkState();
-        });
-
-        document.addEventListener('click', (event) => {
-            const target = event.target;
-            if (!target) return;
-            if (target.closest('.mdtp__clock') || target.closest('.mdtp__time_holder') || target.closest('.mdtp__time')) {
-                setTimeout(syncTimePickerOkState, 0);
-            }
-            if (target.closest('.mdtp__button.ok, .mdtp__button--ok, .mdtp__button-ok')) {
-                const candidate = getPickerTimeValue();
-                if (!isTimeAllowed(dateInput.value, candidate)) {
-                    timeInput.setCustomValidity('Booking must be at least 4 hours from now and no later than 19:00.');
-                    timeInput.value = '';
-                    setTimeWarning('Please choose a time at least 4 hours from now and no later than 19:00.');
-                    updateSummary();
-                    checkAvailability();
-                } else {
-                    setTimeWarning('');
-                }
-            }
-        });
-    }
-
-    function initDatePicker() {
-        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
-        if (!dateInput || dateInput.getAttribute('data-st-datepicker') === '1') return;
-        dateInput.setAttribute('data-st-datepicker', '1');
-
-        function applyDatepickerTooltips(inst) {
-            if (!inst || !inst.dpDiv) return;
-            const dp = window.jQuery(inst.dpDiv);
-
-            dp.find('.st-datepicker-cell-tooltip').remove();
-
-            dp.find('td.is-sunday, td.is-holiday').each(function() {
-                const cell = window.jQuery(this);
-                const dayText = cell.find('a, span').first().text();
-                if (!dayText) return;
-                const fallbackYear = inst.drawYear ?? inst.selectedYear;
-                const fallbackMonth = inst.drawMonth ?? inst.selectedMonth;
-                const year = cell.data('year') ?? fallbackYear;
-                const month = cell.data('month') ?? fallbackMonth;
-                if (year === undefined || month === undefined) return;
-                const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayText).padStart(2, '0')}`;
-                let title = '';
-                if (cell.hasClass('is-sunday')) {
-                    title = 'Sunday';
-                }
-                if (cell.hasClass('is-holiday')) {
-                    title = holidayData[ds] || 'Holiday';
-                }
-                if (title) {
-                    cell.attr('data-st-tooltip', title);
-                    cell.find('a, span').attr('data-st-tooltip', title);
-                }
-                cell.removeAttr('title');
-                cell.find('a, span').removeAttr('title');
-            });
-
-            dp.find('td.is-sunday, td.is-holiday').each(function() {
-                const cell = window.jQuery(this);
-                const tooltipText = cell.attr('data-st-tooltip') || '';
-                if (!tooltipText) return;
-            });
-        }
-
-        function bindDatepickerHover(inst) {
-            if (!inst || !inst.dpDiv) return;
-            const dp = window.jQuery(inst.dpDiv);
-            let hideTimer = null;
-            let tooltip = document.getElementById('st-datepicker-tooltip');
-            if (!tooltip) {
-                tooltip = document.createElement('div');
-                tooltip.id = 'st-datepicker-tooltip';
-                tooltip.className = 'st-datepicker-tooltip';
-                document.body.appendChild(tooltip);
-            }
-
-            dp.off('mouseenter.st-tooltip mousemove.st-tooltip mouseleave.st-tooltip', 'td.is-sunday, td.is-holiday');
-            dp.on('mouseenter.st-tooltip', 'td.is-sunday, td.is-holiday', function(event) {
-                const text = window.jQuery(this).attr('data-st-tooltip') || '';
-                if (!text) return;
-                if (hideTimer) {
-                    clearTimeout(hideTimer);
-                    hideTimer = null;
-                }
-                tooltip.textContent = text;
-                tooltip.classList.add('st-datepicker-tooltip--visible');
-                tooltip.style.left = `${event.clientX + 12}px`;
-                tooltip.style.top = `${event.clientY + 12}px`;
-            });
-            dp.on('mousemove.st-tooltip', 'td.is-sunday, td.is-holiday', function(event) {
-                tooltip.style.left = `${event.clientX + 12}px`;
-                tooltip.style.top = `${event.clientY + 12}px`;
-            });
-            dp.on('mouseleave.st-tooltip', 'td.is-sunday, td.is-holiday', function() {
-                hideTimer = setTimeout(function() {
-                    tooltip.classList.remove('st-datepicker-tooltip--visible');
-                }, 300);
-            });
-        }
-
-        function bindDatepickerClicks(inst) {
-            if (!inst || !inst.dpDiv) return;
-            const dp = window.jQuery(inst.dpDiv);
-
-            dp.off('click.st-select', 'a[href="#"]');
-            dp.on('click.st-select', 'a[href="#"]', function(event) {
-                event.preventDefault();
-                const cell = window.jQuery(this).closest('td');
-                if (cell.hasClass('ui-state-disabled')) return;
-                const year = cell.data('year');
-                const month = cell.data('month');
-                const dayText = window.jQuery(this).text();
-                if (year === undefined || month === undefined || !dayText) return;
-                const pickedDate = new Date(year, month, parseInt(dayText, 10));
-                const formatted = window.jQuery.datepicker.formatDate('yy-mm-dd', pickedDate);
-                window.jQuery(dateInput).datepicker('setDate', formatted);
-                dateInput.value = formatted;
-                applyTimeRules();
-                checkAvailability();
-                loadLiveAvailability();
-                window.jQuery(dateInput).datepicker('hide');
-            });
-        }
-
-        window.jQuery(dateInput).datepicker({
-            dateFormat: 'yy-mm-dd',
-            minDate: 0,
-            beforeShowDay: function(date) {
-                const ds = toIsoDate(date);
-                const isSunday = date.getDay() === 0;
-                const isHoliday = Boolean(holidayData[ds]);
-                if (isSunday) {
-                    return [false, 'is-sunday', 'Sunday'];
-                }
-                if (isHoliday) {
-                    return [false, 'is-holiday', holidayData[ds]];
-                }
-                return [true, '', ''];
-            },
-            beforeShow: function(input, inst) {
-                setTimeout(function() {
-                    applyDatepickerTooltips(inst);
-                    bindDatepickerHover(inst);
-                    bindDatepickerClicks(inst);
-                }, 0);
-            },
-            onChangeMonthYear: function(year, month, inst) {
-                setTimeout(function() {
-                    applyDatepickerTooltips(inst);
-                    bindDatepickerHover(inst);
-                    bindDatepickerClicks(inst);
-                }, 0);
-            }
-        });
-
-        const inst = window.jQuery(dateInput).data('datepicker');
-        if (inst) {
-            applyDatepickerTooltips(inst);
-            bindDatepickerHover(inst);
-            bindDatepickerClicks(inst);
-        }
-    }
-
-    // Summary update
-    function updateSummary() {
-        const dateValue = dateInput ? dateInput.value : '';
-        const timeValue = timeInput ? timeInput.value : '';
-        const durationValue = durationInput ? durationInput.value : '';
-
-        if (summaryDate) {
-            summaryDate.textContent = dateValue || '-';
-        }
-        if (summaryTime) {
-            summaryTime.textContent = timeValue || '-';
-        }
-        if (summaryDuration) {
-            summaryDuration.textContent = durationValue ? durationValue + ' min' : '-';
-        }
-    }
-
-    // Availability check
-    function checkAvailability() {
-        updateSummary();
-        applyTimeRules();
-        const date = dateInput.value;
-        const time = timeInput.value;
-        const duration = durationInput.value;
-
-        if (!date || !time || !duration) {
-            summaryStatus.className = 'cb-summary__status cb-summary__status--checking';
-            summaryStatus.innerHTML = '<i class="fas fa-info-circle"></i> Fill required fields';
-            return;
-        }
-
-        if (!timeInput.checkValidity()) {
-            summaryStatus.className = 'cb-summary__status cb-summary__status--unavailable';
-            summaryStatus.innerHTML = `<i class="fas fa-times-circle"></i> ${timeInput.validationMessage || 'Invalid time'}`;
-            return;
-        }
-
-        summaryStatus.className = 'cb-summary__status cb-summary__status--checking';
-        summaryStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Checking...';
-
-        const plannedStart = date + ' ' + time + ':00';
-
-        // Global blocking is enforced server-side on submit.
-        summaryStatus.className = 'cb-summary__status cb-summary__status--checking';
-        summaryStatus.innerHTML = '<i class="fas fa-info-circle"></i> Will be checked on submit';
-    }
-    function loadLiveAvailability() {
-        const date = dateInput.value;
-        if (!date) {
-            liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #64748b;">Select a date to load availability.</div>';
-            return;
-        }
-
-        liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #64748b;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
-
-        // Load availability for all gates
-        const url = urlAvailableSlots + '?date=' + encodeURIComponent(date);
-        fetch(url, { 
-            headers: { 
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json' 
-            } 
-        })
+        // Fetch PO details
+        poLoading.classList.add('show');
+        fetch('{{ url("vendor/ajax/po") }}/' + encodeURIComponent(poNumber))
             .then(r => r.json())
-            .then(resp => {
-                const slots = (resp && resp.success) ? (resp.slots || []) : [];
-                const available = slots.filter(s => s.is_available);
-                if (!available.length) {
-                    liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #64748b;">No available times for this date.</div>';
-                    return;
+            .then(data => {
+                poLoading.classList.remove('show');
+                
+                if (data.success && data.data.items) {
+                    renderPoItems(data.data.items);
                 }
-                let html = '<div style="padding: 6px 0;">';
-                available.forEach(slot => {
-                    const isAllowed = isTimeAllowed(date, slot.time);
-                    html += `
-                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; border-bottom:1px solid #f1f5f9;">
-                            <span style="font-size:12px; font-weight:600; color:#1e293b;">${slot.time}</span>
-                            ${isAllowed ? `
-                                <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm" data-time="${slot.time}" style="padding:4px 10px;">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            ` : `
-                                <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm cb-slot-btn--disabled" disabled style="padding:4px 10px;">
-                                    Not available
-                                </button>
-                            `}
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                liveAvailability.innerHTML = html;
-
-                liveAvailability.querySelectorAll('button[data-time]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        timeInput.value = btn.dataset.time;
-                        timeInput.dispatchEvent(new Event('change', { bubbles: true }));
-                        checkAvailability();
-                    });
-                });
             })
-            .catch(() => {
-                liveAvailability.innerHTML = '<div style="padding: 16px; font-size: 13px; color: #ef4444;">Failed to load availability.</div>';
+            .catch(err => {
+                poLoading.classList.remove('show');
+                console.error('Detail error:', err);
             });
-    }
-    truckTypeSelect.addEventListener('change', function() {
-        const dur = this.options[this.selectedIndex].dataset.duration;
-        durationInput.value = dur || '';
-        checkAvailability();
     });
-
-    // Initialize - load availability on page load if date is set
-    initTimePicker();
-    if (dateInput.value) {
-        loadLiveAvailability();
-    }
-
-    [dateInput, timeInput].forEach(el => {
-        el.addEventListener('change', () => {
-            checkAvailability();
-            if (el === dateInput) loadLiveAvailability();
-        });
-    });
-    if (timeInput) {
-        timeInput.addEventListener('input', () => {
-            applyTimeRules();
-            checkAvailability();
-        });
-    }
-
-    // PO Functions
-    function closePoSuggestions() {
-        if (!poSuggestions) return;
-        poSuggestions.style.display = 'none';
-        poSuggestions.innerHTML = '';
-    }
-
-    function showPoSuggestionsMessage(html) {
-        if (!poSuggestions) return;
-        poSuggestions.innerHTML = html;
-        poSuggestions.style.display = 'block';
-    }
-
-    function renderPoSuggestions(items) {
-        if (!items || !items.length) {
-            showPoSuggestionsMessage('<div style="padding:12px; color:#64748b; font-size:13px;">No PO/DO Found</div>');
-            return;
-        }
-        let html = '';
-        items.forEach(it => {
-            html += `<div class="po-item" data-po="${escapeHtml(it.po_number)}" data-dir="${escapeHtml(it.direction || '')}" 
-                style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9;">
-                <div style="font-weight:600;">${escapeHtml(it.po_number)}</div>
-                <div style="font-size:12px; color:#64748b;">${escapeHtml(it.vendor_name || '')}</div>
-            </div>`;
-        });
-        poSuggestions.innerHTML = html;
-        poSuggestions.style.display = 'block';
-    }
-
-    function setPoPreview(data) {
-        if (!poPreview) return;
-        if (!data) { poPreview.innerHTML = ''; if (poItemsGroup) poItemsGroup.style.display = 'none'; return; }
-        poPreview.innerHTML = `<div style="padding:10px 12px; border:1px solid #e5e7eb; border-radius:8px; background:#f8fafc;">
-            <div style="font-weight:600;">${escapeHtml(data.po_number)}</div>
-            <div style="font-size:12px; color:#475569;">Vendor: ${escapeHtml(data.vendor_name || '-')}</div>
-        </div>`;
-    }
 
     function renderPoItems(items) {
-        if (!poItemsGroup || !poItemsBox || !items || !items.length) {
-            if (poItemsGroup) poItemsGroup.style.display = 'none';
+        if (!items || items.length === 0) {
+            poItemsContainer.classList.remove('is-visible');
             return;
         }
-        let html = '<div style="border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; font-size:12px;">';
-        items.forEach(it => {
-            html += `<div style="display:flex; gap:8px; padding:8px 10px; border-top:1px solid #f1f5f9; align-items:center;">
-                <span style="font-weight:600; min-width:60px;">${escapeHtml(it.item_no)}</span>
-                <span style="flex:1; color:#475569;">${escapeHtml(it.material || '')}</span>
-                <span style="min-width:80px; text-align:right;">${it.remaining_qty} ${escapeHtml(it.uom || '')}</span>
-                <input type="number" min="0" step="0.001" name="po_items[${escapeHtml(it.item_no)}][qty]" 
-                    style="width:80px; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px;" max="${it.remaining_qty}">
-            </div>`;
-        });
-        html += '</div>';
-        poItemsBox.innerHTML = html;
-        poItemsGroup.style.display = 'block';
+
+        poItemsBody.innerHTML = items.map((item, idx) => {
+            const remaining = (parseFloat(item.qty_po) || 0) - (parseFloat(item.qty_gr_total) || 0);
+            return `
+                <tr>
+                    <td>${item.item_no || (idx + 1)}</td>
+                    <td>${item.material_name || item.material_code || '-'}</td>
+                    <td>${item.qty_po || 0} ${item.unit_po || ''}</td>
+                    <td>${item.qty_gr_total || 0}</td>
+                    <td>${remaining.toFixed(2)}</td>
+                    <td>
+                        <input type="hidden" name="po_items[${idx}][item_no]" value="${item.item_no || ''}">
+                        <input type="hidden" name="po_items[${idx}][material_code]" value="${item.material_code || ''}">
+                        <input type="hidden" name="po_items[${idx}][material_name]" value="${item.material_name || ''}">
+                        <input type="number" 
+                               name="po_items[${idx}][qty]" 
+                               value="${remaining > 0 ? remaining.toFixed(2) : 0}"
+                               min="0" 
+                               max="${remaining}"
+                               step="0.001">
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        poItemsContainer.classList.add('is-visible');
     }
 
-    function fetchPoDetail(poNumber) {
-        if (!poNumber) { setPoPreview(null); return; }
-        const url = urlPoDetailTemplate.replace('__PO__', encodeURIComponent(poNumber));
-        fetch(url, { headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' } })
-            .then(r => r.json())
-            .then(resp => {
-                if (!resp.success) { setPoPreview(null); return; }
-                setPoPreview(resp.data);
-                renderPoItems(resp.data?.items || []);
-            })
-            .catch(() => setPoPreview(null));
-    }
-
-    if (poInput) {
-        poInput.addEventListener('input', function() {
-            const q = poInput.value.trim();
-            setPoPreview(null);
-            if (poDebounceTimer) clearTimeout(poDebounceTimer);
-            poDebounceTimer = setTimeout(() => {
-                if (!q) { closePoSuggestions(); return; }
-                showPoSuggestionsMessage('<div style="padding:12px;"><i class="fas fa-spinner fa-spin"></i></div>');
-                fetch(urlPoSearch + '?q=' + encodeURIComponent(q), { headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' } })
-                    .then(r => r.json())
-                    .then(resp => renderPoSuggestions(resp.data || []))
-                    .catch(() => showPoSuggestionsMessage('<div style="padding:12px; color:#ef4444;">Error</div>'));
-            }, 250);
-        });
-        poInput.addEventListener('blur', () => { if (poInput.value.trim()) fetchPoDetail(poInput.value.trim()); });
-    }
-
-    if (poClearBtn) {
-        poClearBtn.addEventListener('click', function () {
-            if (poInput) poInput.value = '';
-            setPoPreview(null);
-            if (poItemsBox) poItemsBox.innerHTML = '';
-            if (poItemsGroup) poItemsGroup.style.display = 'none';
-            closePoSuggestions();
-        });
-    }
-
-    if (poSuggestions) {
-        poSuggestions.addEventListener('click', e => {
-            const item = e.target.closest('.po-item');
-            if (!item) return;
-            poInput.value = item.dataset.po;
-            closePoSuggestions();
-            fetchPoDetail(item.dataset.po);
-        });
-    }
-
-    document.addEventListener('click', e => {
-        if (poSuggestions && !poInput.contains(e.target) && !poSuggestions.contains(e.target)) closePoSuggestions();
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e) {
+        if (!poSearch.contains(e.target) && !poResults.contains(e.target)) {
+            poResults.classList.remove('show');
+        }
     });
 
-    // Initial load
-    initDatePicker();
-    applyTimeRules();
-    updateSummary();
-    loadLiveAvailability();
-    if (poInput?.value.trim()) fetchPoDetail(poInput.value.trim());
+    // Form validation
+    document.getElementById('booking-form').addEventListener('submit', function(e) {
+        const poNumber = poHidden.value.trim();
+        if (!poNumber) {
+            e.preventDefault();
+            alert('Please select a PO/DO number');
+            poSearch.focus();
+            return false;
+        }
+    });
 });
 </script>
-@endpush
+@endsection
