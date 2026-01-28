@@ -8,7 +8,7 @@
         $urlPoSearch = route('slots.ajax.po_search');
         $urlPoDetailTemplate = route('slots.ajax.po_detail', ['poNumber' => '__PO__']);
     @endphp
-    <div class="st-card">
+    <div class="st-card" style="font-size:12px;">
         <form method="POST" action="{{ route('unplanned.store') }}" enctype="multipart/form-data">
             @csrf
 
@@ -55,21 +55,6 @@
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;display:none;">
-                <div class="st-form-field">
-                    <label class="st-label">Warehouse</label>
-                    <select name="warehouse_id" id="unplanned-warehouse" class="st-select">
-                        <option value="">Choose...</option>
-                        @foreach ($warehouses as $wh)
-                            <option value="{{ $wh->id }}" {{ (string)old('warehouse_id') === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
                     <label class="st-label">Gate (Actual) <span style="color:#dc2626;">*</span></label>
                     <select name="actual_gate_id" id="unplanned-gate" class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}" required>
@@ -87,10 +72,25 @@
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;display:none;">
+                <div class="st-form-field">
+                    <label class="st-label">Warehouse</label>
+                    <select name="warehouse_id" id="unplanned-warehouse" class="st-select">
+                        <option value="">Choose...</option>
+                        @foreach ($warehouses as $wh)
+                            <option value="{{ $wh->id }}" {{ (string)old('warehouse_id') === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
                     <label class="st-label">Arrival Time <span style="color:#dc2626;">*</span></label>
                     <input type="hidden" name="actual_arrival" id="actual_arrival_input" value="{{ old('actual_arrival') }}">
-                    <div style="display:flex;gap:8px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                         <input type="text" id="actual_arrival_date_input" class="st-input" placeholder="Select Date" autocomplete="off">
                         <input type="text" id="actual_arrival_time_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly>
                     </div>
@@ -98,19 +98,6 @@
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;">
-                <label class="st-label" style="font-weight:600;">Queue Status</label>
-                <div style="display:flex;gap:12px;align-items:center;">
-                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-                        <input type="checkbox" name="set_waiting" value="1" {{ old('set_waiting') === '1' ? 'checked' : '' }} style="margin:0;">
-                        <span>Set to Waiting</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
                     <label class="st-label">MAT DOC <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc') }}">
@@ -131,16 +118,23 @@
                     <label class="st-label">Vehicle Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="vehicle_number_snap" class="st-input" value="{{ old('vehicle_number_snap') }}">
                 </div>
+                <div class="st-form-field">
+                    <label class="st-label">Driver Name <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <input type="text" name="driver_name" class="st-input" value="{{ old('driver_name') }}">
+                </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
                 <div class="st-form-field">
-                    <label class="st-label">Driver Name <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
-                    <input type="text" name="driver_name" class="st-input" value="{{ old('driver_name') }}">
+                    <label class="st-label">Driver Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <input type="text" name="driver_number" class="st-input" value="{{ old('driver_number') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Driver Number <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
-                    <input type="text" name="driver_number" class="st-input" value="{{ old('driver_number') }}">
+                    <label class="st-label">COA (PDF) <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
+                    @error('coa_pdf')
+                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
@@ -149,12 +143,13 @@
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">
-                <div class="st-form-field">
-                    <label class="st-label">COA (PDF) <span style="color:#dc2626;">*</span></label>
-                    <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
-                    @error('coa_pdf')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
-                    @enderror
+                <div class="st-form-field" style="width:100%;">
+                    <label class="st-label" style="font-weight:600;">Queue Status</label>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <span class="st-badge st-badge--secondary">Waiting</span>
+                        <span class="st-text-muted" style="font-size:12px;">Set to Waiting</span>
+                    </div>
+                    <input type="hidden" name="set_waiting" value="1">
                 </div>
             </div>
 

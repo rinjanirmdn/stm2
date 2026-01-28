@@ -12,6 +12,7 @@ use App\Models\Warehouse;
 use App\Services\BookingApprovalService;
 use App\Services\SlotService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -29,7 +30,12 @@ class BookingApprovalController extends Controller
      */
     public function index(Request $request)
     {
-        $query = BookingRequest::with(['requester', 'approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate']);
+        $query = BookingRequest::query()
+            ->with(['requester', 'approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate'])
+            ->leftJoin('users as u_requester', 'booking_requests.requested_by', '=', 'u_requester.id')
+            ->leftJoin('slots as s_converted', 'booking_requests.converted_slot_id', '=', 's_converted.id')
+            ->leftJoin('gates as g_planned', 's_converted.planned_gate_id', '=', 'g_planned.id')
+            ->select('booking_requests.*');
 
         // Default to pending approval
         $status = $request->get('status', BookingRequest::STATUS_PENDING);
@@ -40,15 +46,92 @@ class BookingApprovalController extends Controller
         if ($status === 'all') {
             // no-op
         } else {
-            $query->where('status', $status);
+            $query->where('booking_requests.status', $status);
+        }
+
+        $dateFrom = trim((string) $request->query('date_from', ''));
+        $dateTo = trim((string) $request->query('date_to', ''));
+        if ($dateFrom === '' && $dateTo === '') {
+            $dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $dateTo = Carbon::now()->format('Y-m-d');
+            $request->merge([
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+            ]);
         }
 
         // Filter by date
         if ($request->filled('date_from')) {
-            $query->whereDate('planned_start', '>=', $request->date_from);
+            $query->whereDate('booking_requests.planned_start', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $query->whereDate('planned_start', '<=', $request->date_to);
+            $query->whereDate('booking_requests.planned_start', '<=', $request->date_to);
+        }
+
+        // Column filters
+        $requestNumber = trim((string) $request->query('request_number', ''));
+        if ($requestNumber !== '') {
+            $query->where('booking_requests.request_number', 'like', '%' . $requestNumber . '%');
+        }
+
+        $poNumber = trim((string) $request->query('po_number', ''));
+        if ($poNumber !== '') {
+            $query->where('booking_requests.po_number', 'like', '%' . $poNumber . '%');
+        }
+
+        $supplierName = trim((string) $request->query('supplier_name', ''));
+        if ($supplierName !== '') {
+            $query->where('booking_requests.supplier_name', 'like', '%' . $supplierName . '%');
+        }
+
+        $requestedBy = trim((string) $request->query('requested_by', ''));
+        if ($requestedBy !== '') {
+            $query->where(function ($q) use ($requestedBy) {
+                $q->where('u_requester.full_name', 'like', '%' . $requestedBy . '%')
+                    ->orWhere('u_requester.username', 'like', '%' . $requestedBy . '%');
+            });
+        }
+
+        $coa = trim((string) $request->query('coa', ''));
+        if ($coa === '1') {
+            $query->whereNotNull('booking_requests.coa_path')->where('booking_requests.coa_path', '<>', '');
+        } elseif ($coa === '0') {
+            $query->where(function ($q) {
+                $q->whereNull('booking_requests.coa_path')->orWhere('booking_requests.coa_path', '=', '');
+            });
+        }
+
+        $plannedStart = trim((string) $request->query('planned_start', ''));
+        if ($plannedStart !== '') {
+            $query->whereDate('booking_requests.planned_start', '=', $plannedStart);
+        }
+
+        $convertedTicket = trim((string) $request->query('converted_ticket', ''));
+        if ($convertedTicket !== '') {
+            $query->where('s_converted.ticket_number', 'like', '%' . $convertedTicket . '%');
+        }
+
+        $gate = trim((string) $request->query('gate', ''));
+        if ($gate !== '') {
+            $query->where(function ($q) use ($gate) {
+                $q->where('g_planned.name', 'like', '%' . $gate . '%')
+                    ->orWhere('g_planned.gate_number', 'like', '%' . $gate . '%');
+            });
+        }
+
+        $direction = trim((string) $request->query('direction', ''));
+        if ($direction !== '') {
+            $query->where('booking_requests.direction', '=', $direction);
+        }
+
+        $statusFilter = trim((string) $request->query('status_filter', ''));
+        if ($statusFilter !== '') {
+            $query->where('booking_requests.status', '=', $statusFilter);
+        }
+
+        $createdAt = trim((string) $request->query('created_at', ''));
+        if ($createdAt !== '') {
+            $query->whereDate('booking_requests.created_at', '=', $createdAt);
         }
 
         // Search
@@ -64,7 +147,49 @@ class BookingApprovalController extends Controller
             });
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(20);
+        // Multi-sort
+        $sorts = $request->query('sort', []);
+        $dirs = $request->query('dir', []);
+        $sorts = is_array($sorts) ? $sorts : [$sorts];
+        $dirs = is_array($dirs) ? $dirs : [$dirs];
+
+        $sortMap = [
+            'request_number' => 'booking_requests.request_number',
+            'po_number' => 'booking_requests.po_number',
+            'supplier_name' => 'booking_requests.supplier_name',
+            'requested_by' => 'u_requester.full_name',
+            'coa' => DB::raw("CASE WHEN booking_requests.coa_path IS NULL OR booking_requests.coa_path = '' THEN 0 ELSE 1 END"),
+            'planned_start' => 'booking_requests.planned_start',
+            'converted_ticket' => 's_converted.ticket_number',
+            'gate' => 'g_planned.name',
+            'direction' => 'booking_requests.direction',
+            'status' => 'booking_requests.status',
+            'created_at' => 'booking_requests.created_at',
+        ];
+
+        $applied = 0;
+        foreach (array_values($sorts) as $i => $s) {
+            $key = trim((string) $s);
+            if ($key === '' || !array_key_exists($key, $sortMap)) {
+                continue;
+            }
+            $dir = strtolower(trim((string) ($dirs[$i] ?? 'desc')));
+            if (!in_array($dir, ['asc', 'desc'], true)) {
+                $dir = 'desc';
+            }
+            $col = $sortMap[$key];
+            if ($col instanceof \Illuminate\Database\Query\Expression) {
+                $query->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()) . ' ' . strtoupper($dir));
+            } else {
+                $query->orderBy($col, $dir);
+            }
+            $applied++;
+        }
+        if ($applied === 0) {
+            $query->orderBy('booking_requests.created_at', 'desc');
+        }
+
+        $bookings = $query->paginate(20);
 
         // Get counts for tabs
         $counts = [
@@ -78,7 +203,7 @@ class BookingApprovalController extends Controller
         }
         $warehouses = $warehousesQ->get();
 
-        return view('admin.bookings.index', compact('bookings', 'counts', 'warehouses', 'status'));
+        return view('admin.bookings.index', compact('bookings', 'counts', 'warehouses', 'status', 'sorts', 'dirs'));
     }
 
     /**
@@ -213,7 +338,7 @@ class BookingApprovalController extends Controller
                     'converted_slot_id' => $slot->id,
                 ]);
 
-                Log::info('Booking request updated to approved', ['booking_id' => $id]);
+                Log::info('Booking request updated to approved', ['booking_id' => $bookingRequest->id]);
 
                 return $slot;
             });
@@ -354,6 +479,9 @@ class BookingApprovalController extends Controller
             'approval_notes' => $request->notes,
         ]);
 
+        $plannedStartAt = $plannedStart instanceof \DateTimeInterface
+            ? $plannedStart
+            : Carbon::parse((string) $plannedStart);
         \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
 
         return $this->approve($request, $id);

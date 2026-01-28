@@ -17,7 +17,7 @@
     </div>
 
     <div class="st-card">
-        <form method="POST" action="{{ route('slots.update', ['slotId' => $slot->id]) }}">
+        <form method="POST" action="{{ route('slots.update', ['slotId' => $slot->id]) }}" enctype="multipart/form-data">
             @csrf
 
             @if ($errors->any())
@@ -90,15 +90,6 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="st-form-field" style="display:none;">
-                    <label class="st-label">Warehouse</label>
-                    <select name="warehouse_id" id="warehouse_id" class="st-select">
-                        <option value="">Choose Warehouse...</option>
-                        @foreach ($warehouses as $wh)
-                            <option value="{{ $wh->id }}" {{ old('warehouse_id', $slot->warehouse_id ?? '') === (string) $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
                 <div class="st-form-field">
                     <label class="st-label">Planned Gate <span class="st-text--danger-dark">*</span></label>
                     <select name="planned_gate_id" id="planned_gate_id" class="st-select{{ $errors->has('planned_gate_id') ? ' st-input--invalid' : '' }}" required>
@@ -120,9 +111,6 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
                 <div class="st-form-field">
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
                     <input type="hidden" name="planned_start" id="planned_start_input" value="{{ old('planned_start', $slot->planned_start ?? '') }}">
@@ -134,6 +122,19 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
+            </div>
+
+            <div class="st-form-field" style="display:none;">
+                <label class="st-label">Warehouse</label>
+                <select name="warehouse_id" id="warehouse_id" class="st-select">
+                    <option value="">Choose Warehouse...</option>
+                    @foreach ($warehouses as $wh)
+                        <option value="{{ $wh->id }}" {{ old('warehouse_id', $slot->warehouse_id ?? '') === (string) $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
                 <div class="st-form-field">
                     <label class="st-label">Planned Duration <span class="st-text--optional">(Optional)</span></label>
                     <div style="display:flex;gap:4px;">
@@ -144,19 +145,6 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="st-form-field">
-                    <label class="st-label">Risk & Schedule</label>
-                    <div style="display:flex;gap:4px;align-items:start;">
-                        <div style="flex:1;">
-                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Not Calculated.</div>
-                            <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
-                        </div>
-                        <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>View Schedule</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                 <div class="st-form-field">
                     <label class="st-label">Vehicle Number <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="vehicle_number_snap" class="st-input{{ $errors->has('vehicle_number_snap') ? ' st-input--invalid' : '' }}" value="{{ old('vehicle_number_snap', $slot->vehicle_number_snap ?? '') }}" placeholder="e.g., B 1234 ABC">
@@ -171,6 +159,9 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
                 <div class="st-form-field">
                     <label class="st-label">Driver Number <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="driver_number" class="st-input{{ $errors->has('driver_number') ? ' st-input--invalid' : '' }}" value="{{ old('driver_number', $slot->driver_number ?? '') }}" placeholder="e.g., 08xxxxxxxxxx">
@@ -178,21 +169,35 @@
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
-            </div>
-
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                 <div class="st-form-field">
-                    <label class="st-label">Notes <span class="st-text--optional">(optional)</span></label>
-                    <input type="text" name="notes" class="st-input{{ $errors->has('notes') ? ' st-input--invalid' : '' }}" value="{{ old('notes', $slot->notes ?? '') }}" placeholder="Any special notes...">
-                    @error('notes')
+                    <label class="st-label">COA (PDF) <span class="st-text--danger-dark">*</span></label>
+                    <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" {{ empty($slot->coa_path ?? '') ? 'required' : '' }}>
+                    @error('coa_pdf')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <!-- Empty field for balance -->
+                    <div style="display:grid;grid-template-columns:1fr 160px;gap:16px;align-items:end;">
+                        <div>
+                            <label class="st-label">Risk &amp; Schedule</label>
+                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Not Calculated.</div>
+                            <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
+                        </div>
+                        <div>
+                            <label class="st-label">View Schedule</label>
+                            <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>View Schedule</button>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr;gap:16px;">
                 <div class="st-form-field">
-                    <!-- Empty field for balance -->
+                    <label class="st-label">Notes <span class="st-text--optional">(optional)</span></label>
+                    <input type="text" name="notes" class="st-input{{ $errors->has('notes') ? ' st-input--invalid' : '' }}" value="{{ old('notes', $slot->late_reason ?? '') }}" placeholder="Any special notes...">
+                    @error('notes')
+                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 

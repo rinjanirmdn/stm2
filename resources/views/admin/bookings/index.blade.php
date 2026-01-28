@@ -23,27 +23,25 @@
                 </div>
 
                 <!-- Filter Section (Right) -->
-                <form method="GET" action="{{ route('bookings.index') }}" style="flex: 1;">
-                    <div class="st-form-row" style="gap:2px;align-items:center;justify-content:flex-end;">
-                        <div class="st-form-field" style="max-width:140px;">
+                <div style="flex: 1;">
+                    <div class="st-form-row" style="gap:8px;align-items:flex-end;justify-content:flex-end;">
+                        <div class="st-form-field" style="max-width:220px;">
                             <label class="st-label" style="font-size:12px;">Search</label>
-                            <input type="text" name="search" class="st-input" style="font-size:12px;padding:2px 4px;height:24px;" placeholder="Request No, PO..." value="{{ request('search') }}">
+                            <input type="text" name="search" form="booking-filter-form" class="st-input" style="font-size:12px;padding:2px 4px;height:24px;" placeholder="Request No, PO..." value="{{ request('search') }}">
                         </div>
-                        <div class="st-form-field" style="max-width:80px;">
-                            <label class="st-label" style="font-size:12px;">From</label>
-                            <input type="text" name="date_from" class="st-input" style="font-size:12px;padding:2px 4px;height:24px;" value="{{ request('date_from') }}" id="date_from_filter" placeholder="Select Date">
+                        <div class="st-form-field" style="max-width:240px;">
+                            <label class="st-label" style="font-size:12px;">Date Range</label>
+                            <input type="text" id="date_range_filter" class="st-input" style="font-size:12px;padding:2px 4px;height:24px;" placeholder="Select Date Range" data-st-range-init="1" autocomplete="off" readonly>
+                            <input type="hidden" name="date_from" id="date_from_filter" form="booking-filter-form" value="{{ request('date_from') }}">
+                            <input type="hidden" name="date_to" id="date_to_filter" form="booking-filter-form" value="{{ request('date_to') }}">
                         </div>
-                        <div class="st-form-field" style="max-width:80px;">
-                            <label class="st-label" style="font-size:12px;">To</label>
-                            <input type="text" name="date_to" class="st-input" style="font-size:12px;padding:2px 4px;height:24px;" value="{{ request('date_to') }}" id="date_to_filter" placeholder="Select Date">
-                        </div>
-                        <div class="st-form-field" style="min-width:40px;flex:0 0 auto;display:flex;justify-content:flex-end;gap:2px;">
-                            @if(request()->hasAny(['date_from', 'date_to', 'search']))
-                            <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:2px 6px;height:24px;">Reset</a>
+                        <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                            @if(request()->hasAny(['date_from', 'date_to', 'search', 'request_number', 'po_number', 'supplier_name', 'requested_by', 'coa', 'planned_start', 'converted_ticket', 'gate', 'direction', 'status_filter', 'created_at']))
+                            <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:2px 10px;height:24px;">Reset</a>
                             @endif
                         </div>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -67,17 +65,196 @@
                             <thead>
                                 <tr>
                                     <th style="width:60px;">#</th>
-                                    <th>Request</th>
-                                    <th>PO</th>
-                                    <th>Supplier</th>
-                                    <th>Requested By</th>
-                                    <th>COA</th>
-                                    <th>Scheduled</th>
-                                    <th>Converted Ticket</th>
-                                    <th>Gate</th>
-                                    <th>Direction</th>
-                                    <th>Status</th>
-                                    <th>Requested At</th>
+                                    <th>
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Request</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="request_number" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="request_number" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="request_number" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Request Filter</div>
+                                                <input type="text" name="request_number" form="booking-filter-form" class="st-input" placeholder="Search Request..." value="{{ request('request_number') }}">
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="request_number" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">PO</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po_number" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po_number" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="po_number" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">PO Filter</div>
+                                                <input type="text" name="po_number" form="booking-filter-form" class="st-input" placeholder="Search PO..." value="{{ request('po_number') }}">
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="po_number" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Supplier</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="supplier_name" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="supplier_name" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="supplier_name" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:10000;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Supplier Filter</div>
+                                                <input type="text" name="supplier_name" form="booking-filter-form" class="st-input" placeholder="Search Supplier..." value="{{ request('supplier_name') }}">
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="supplier_name" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Requested By</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="requested_by" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="requested_by" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="requested_by" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Requested By Filter</div>
+                                                <input type="text" name="requested_by" form="booking-filter-form" class="st-input" placeholder="Search name..." value="{{ request('requested_by') }}">
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="requested_by" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th style="width:80px;">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">COA</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="coa" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="coa" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="coa" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">COA Filter</div>
+                                                <select name="coa" form="booking-filter-form" class="st-select">
+                                                    <option value="">All</option>
+                                                    <option value="1" {{ request('coa') === '1' ? 'selected' : '' }}>Has COA</option>
+                                                    <option value="0" {{ request('coa') === '0' ? 'selected' : '' }}>No COA</option>
+                                                </select>
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="coa" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Scheduled</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="planned_start" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_start" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="planned_start" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Scheduled Filter</div>
+                                                <input type="date" name="planned_start" form="booking-filter-form" class="st-input" value="{{ request('planned_start') }}">
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="planned_start" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Converted Ticket</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="converted_ticket" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="converted_ticket" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="converted_ticket" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Ticket Filter</div>
+                                                <input type="text" name="converted_ticket" form="booking-filter-form" class="st-input" placeholder="Search Ticket..." value="{{ request('converted_ticket') }}">
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="converted_ticket" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Gate</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="gate" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="gate" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="gate" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Gate Filter</div>
+                                                <input type="text" name="gate" form="booking-filter-form" class="st-input" placeholder="Search Gate..." value="{{ request('gate') }}">
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="gate" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th style="width:95px;">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Direction</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="direction" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Direction Filter</div>
+                                                <select name="direction" form="booking-filter-form" class="st-select">
+                                                    <option value="">All</option>
+                                                    <option value="inbound" {{ request('direction') === 'inbound' ? 'selected' : '' }}>Inbound</option>
+                                                    <option value="outbound" {{ request('direction') === 'outbound' ? 'selected' : '' }}>Outbound</option>
+                                                </select>
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="direction" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th style="width:120px;">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Status</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status_filter" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="status_filter" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Status Filter</div>
+                                                <select name="status_filter" form="booking-filter-form" class="st-select">
+                                                    <option value="">All</option>
+                                                    <option value="pending" {{ request('status_filter') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                                    <option value="approved" {{ request('status_filter') === 'approved' ? 'selected' : '' }}>Approved</option>
+                                                    <option value="rejected" {{ request('status_filter') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                                    <option value="cancelled" {{ request('status_filter') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                                </select>
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="status_filter" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th style="width:150px;">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Requested At</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="created_at" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel" data-filter-panel="created_at" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
+                                                <div style="font-weight:600;margin-bottom:6px;">Requested At Filter</div>
+                                                <input type="date" name="created_at" form="booking-filter-form" class="st-input" value="{{ request('created_at') }}">
+                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
+                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="created_at" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -322,6 +499,7 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    var rangeInput = document.getElementById('date_range_filter');
     var dateFrom = document.getElementById('date_from_filter');
     var dateTo = document.getElementById('date_to_filter');
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
@@ -429,14 +607,149 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    initFilterDatepicker(dateFrom);
-    initFilterDatepicker(dateTo);
+    function applyDaterangepickerTooltips(picker) {
+        if (!picker || !picker.container) return;
+        const container = picker.container;
+        window.jQuery(container).find('td.is-holiday').each(function() {
+            const cell = window.jQuery(this);
+            const dataTitle = cell.attr('data-title') || '';
+            const match = dataTitle.match(/^r(\d+)c(\d+)$/);
+            if (!match) return;
+            const r = parseInt(match[1], 10);
+            const c = parseInt(match[2], 10);
+            const calEl = cell.closest('.drp-calendar');
+            const isLeft = calEl.hasClass('left');
+            const cal = isLeft ? picker.leftCalendar : picker.rightCalendar;
+            if (!cal || !Array.isArray(cal.calendar) || !cal.calendar[r] || !cal.calendar[r][c]) return;
+            const m = cal.calendar[r][c];
+            const ds = (m && typeof m.format === 'function') ? m.format('YYYY-MM-DD') : '';
+            const title = ds && holidayData[ds] ? holidayData[ds] : '';
+            if (!title) return;
+            cell.attr('data-st-tooltip', title);
+            cell.find('span').attr('data-st-tooltip', title);
+            cell.removeAttr('title');
+            cell.find('span').removeAttr('title');
+        });
+    }
+
+    function bindDaterangepickerHover(picker) {
+        if (!picker || !picker.container) return;
+        const dp = window.jQuery(picker.container);
+        let hideTimer = null;
+        let tooltip = document.getElementById('st-datepicker-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'st-datepicker-tooltip';
+            tooltip.className = 'st-datepicker-tooltip';
+            document.body.appendChild(tooltip);
+        }
+
+        dp.off('mouseenter.st-tooltip mousemove.st-tooltip mouseleave.st-tooltip', 'td.is-holiday');
+        dp.on('mouseenter.st-tooltip', 'td.is-holiday', function(event) {
+            const text = window.jQuery(this).attr('data-st-tooltip') || '';
+            if (!text) return;
+            if (hideTimer) {
+                clearTimeout(hideTimer);
+                hideTimer = null;
+            }
+            tooltip.textContent = text;
+            tooltip.classList.add('st-datepicker-tooltip--visible');
+            tooltip.style.left = `${event.clientX + 12}px`;
+            tooltip.style.top = `${event.clientY + 12}px`;
+        });
+        dp.on('mousemove.st-tooltip', 'td.is-holiday', function(event) {
+            tooltip.style.left = `${event.clientX + 12}px`;
+            tooltip.style.top = `${event.clientY + 12}px`;
+        });
+        dp.on('mouseleave.st-tooltip', 'td.is-holiday', function() {
+            hideTimer = setTimeout(function() {
+                tooltip.classList.remove('st-datepicker-tooltip--visible');
+            }, 300);
+        });
+    }
+
+    function initRangePicker() {
+        if (!rangeInput || !dateFrom || !dateTo) return;
+
+        var startVal = dateFrom.value || '';
+        var endVal = dateTo.value || '';
+        if (startVal && endVal) {
+            rangeInput.value = startVal + ' - ' + endVal;
+        } else if (startVal) {
+            rangeInput.value = startVal + ' - ' + startVal;
+        }
+
+        if (window.jQuery && typeof window.jQuery.fn.daterangepicker !== 'undefined' && typeof window.moment !== 'undefined') {
+            var startDate = startVal ? window.moment(startVal) : window.moment();
+            var endDate = endVal ? window.moment(endVal) : startDate;
+
+            window.jQuery(rangeInput)
+                .daterangepicker({
+                    startDate: startDate,
+                    endDate: endDate,
+                    autoUpdateInput: true,
+                    locale: { format: 'YYYY-MM-DD' },
+                    isCustomDate: function(date) {
+                        var ds = date.format('YYYY-MM-DD');
+                        if (holidayData[ds]) return 'is-holiday';
+                        return '';
+                    }
+                }, function(start, end) {
+                    var startStr = start.format('YYYY-MM-DD');
+                    var endStr = end.format('YYYY-MM-DD');
+                    dateFrom.value = startStr;
+                    dateTo.value = endStr;
+                    rangeInput.value = startStr + ' - ' + endStr;
+                    var form = document.getElementById('booking-filter-form');
+                    if (form) form.submit();
+                })
+                .on('show.daterangepicker', function() {
+                    var picker = window.jQuery(rangeInput).data('daterangepicker');
+                    if (!picker) return;
+                    setTimeout(function() {
+                        applyDaterangepickerTooltips(picker);
+                        bindDaterangepickerHover(picker);
+                    }, 0);
+                })
+                .on('showCalendar.daterangepicker', function() {
+                    var picker = window.jQuery(rangeInput).data('daterangepicker');
+                    if (!picker) return;
+                    setTimeout(function() {
+                        applyDaterangepickerTooltips(picker);
+                        bindDaterangepickerHover(picker);
+                    }, 0);
+                });
+
+            var picker = window.jQuery(rangeInput).data('daterangepicker');
+            if (picker) {
+                setTimeout(function() {
+                    applyDaterangepickerTooltips(picker);
+                    bindDaterangepickerHover(picker);
+                }, 0);
+            }
+
+            return;
+        }
+
+        if (window.jQuery && window.jQuery.fn.datepicker) {
+            initFilterDatepicker(rangeInput);
+            window.jQuery(rangeInput).datepicker('option', 'onSelect', function(dateText) {
+                dateFrom.value = dateText;
+                dateTo.value = dateText;
+                rangeInput.value = dateText + ' - ' + dateText;
+                var form = document.getElementById('booking-filter-form');
+                if (form) form.submit();
+            });
+        }
+    }
+
+    initRangePicker();
 
     // Auto-submit form on input change
     const bookingFilterForm = document.getElementById('booking-filter-form');
     if (bookingFilterForm) {
         // Auto-submit on input with debounce for text inputs
-        const textInputs = bookingFilterForm.querySelectorAll('input[type="text"]');
+        const textInputs = bookingFilterForm.querySelectorAll('input[type="text"][name="search"]');
         textInputs.forEach(function(input) {
             let timeout;
             input.addEventListener('input', function() {

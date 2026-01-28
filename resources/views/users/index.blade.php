@@ -103,6 +103,7 @@
                                                 <option value="admin" {{ ($role ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
                                                 <option value="section_head" {{ ($role ?? '') === 'section_head' ? 'selected' : '' }}>Section Head</option>
                                                 <option value="operator" {{ ($role ?? '') === 'operator' ? 'selected' : '' }}>Operator</option>
+                                                <option value="vendor" {{ ($role ?? '') === 'vendor' ? 'selected' : '' }}>Vendor</option>
                                             </select>
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="role">Clear</button>

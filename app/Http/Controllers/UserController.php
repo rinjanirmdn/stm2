@@ -61,7 +61,7 @@ class UserController extends Controller
         $sort = $sorts[0] ?? '';
         $dir = $dirs[0] ?? 'desc';
 
-        $allowedRoles = ['admin', 'section_head', 'operator'];
+        $allowedRoles = ['admin', 'section_head', 'operator', 'vendor'];
 
         $usersQ = DB::table('users')
             ->leftJoin($modelHasRolesTable . ' as mhr', function ($join) {
@@ -267,7 +267,7 @@ class UserController extends Controller
             'nik' => ['required', 'string', 'max:50', 'unique:users,nik,' . $userId],
             'full_name' => ['required', 'string', 'max:100'],
             'role' => ['required', 'in:admin,section_head,operator,vendor'],
-            'vendor_code' => ['nullable', 'string', 'max:20', Rule::requiredIf(fn () => (string) $request->input('role') === 'vendor')],
+            'vendor_code' => ['nullable', 'string', 'max:20', \Illuminate\Validation\Rule::requiredIf(fn () => (string) $request->input('role') === 'vendor')],
             'is_active' => ['nullable'],
             'password' => ['nullable', 'string', 'min:6'],
             'password_confirm' => ['nullable', 'same:password'],

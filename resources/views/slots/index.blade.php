@@ -81,7 +81,7 @@
     <section class="st-row" style="margin:0;padding:0;">
         <div class="st-col-12" style="display:flex;flex-direction:column;">
             <div class="st-card tw-card tw-card--table" style="margin:0;">
-                <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1">
+                <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1" autocomplete="off">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
                     $dirsArr = isset($dirs) && is_array($dirs) ? $dirs : [];
@@ -234,8 +234,8 @@
                                         <div class="st-filter-panel" data-filter-panel="planned_start" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">ETA Range</div>
                                             <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' - '.$date_to) : '' }}" readonly style="cursor:pointer;" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
-                                            <input type="hidden" name="date_from" form="slot-filter-form" value="{{ $date_from ?? '' }}">
-                                            <input type="hidden" name="date_to" form="slot-filter-form" value="{{ $date_to ?? '' }}">
+                                            <input type="hidden" name="date_from" form="slot-filter-form" value="{{ $date_from ?? '' }}" autocomplete="off">
+                                            <input type="hidden" name="date_to" form="slot-filter-form" value="{{ $date_to ?? '' }}" autocomplete="off">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="planned_start">Clear</button>
                                             </div>
@@ -260,8 +260,8 @@
                                         <div class="st-filter-panel" data-filter-panel="arrival_presence" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
                                             <div style="font-weight:600;margin-bottom:6px;">Arrival Date Filter</div>
                                             <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' - '.$arrival_to) : '' }}" readonly style="cursor:pointer;" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
-                                            <input type="hidden" name="arrival_from" form="slot-filter-form" value="{{ $arrival_from ?? '' }}">
-                                            <input type="hidden" name="arrival_to" form="slot-filter-form" value="{{ $arrival_to ?? '' }}">
+                                            <input type="hidden" name="arrival_from" form="slot-filter-form" value="{{ $arrival_from ?? '' }}" autocomplete="off">
+                                            <input type="hidden" name="arrival_to" form="slot-filter-form" value="{{ $arrival_to ?? '' }}" autocomplete="off">
                                             <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                 <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="arrival_presence">Clear</button>
                                             </div>
@@ -1033,6 +1033,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         document.querySelectorAll('.st-filter-trigger').forEach(function(btn) {
             btn.classList.remove('st-filter-trigger--active');
+            btn.classList.remove('is-filtered');
         });
 
         // Check each filter field for active values
@@ -1092,6 +1093,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var activeFilterBtn = document.querySelector('.st-filter-trigger[data-filter="' + filterName + '"]');
             if (activeFilterBtn) {
                 activeFilterBtn.classList.add('st-filter-trigger--active');
+                activeFilterBtn.classList.add('is-filtered');
             }
         });
     }
@@ -1153,6 +1155,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Ensure form is synced with URL parameters on load (clears browser-restored values for hidden inputs)
+    syncFormFromUrl();
+
     setupDropdownFilter('status', 260);
     setupDropdownFilter('direction', 220);
     setupDropdownFilter('late', 220);
@@ -1180,21 +1185,24 @@ document.addEventListener('DOMContentLoaded', function () {
             plannedStartRangeInput.value = initial;
         }
 
-        window.jQuery(plannedStartRangeInput).daterangepicker({
-            startDate: fromVal ? moment(fromVal) : moment(),
-            endDate: toVal ? moment(toVal) : moment(),
-            autoUpdateInput: true,
-            locale: {
-                format: 'YYYY-MM-DD'
-            }
-        }, function(start, end) {
-            var startStr = start.format('YYYY-MM-DD');
-            var endStr = end.format('YYYY-MM-DD');
-            if (fromInput) fromInput.value = startStr;
-            if (toInput) toInput.value = endStr;
-            plannedStartRangeInput.value = startStr + ' - ' + endStr;
-            document.getElementById('slot-filter-form').submit();
-        });
+        window.jQuery(plannedStartRangeInput)
+            .daterangepicker({
+                startDate: fromVal ? moment(fromVal) : moment(),
+                endDate: toVal ? moment(toVal) : moment(),
+                autoUpdateInput: false,
+                locale: {
+                    format: 'YYYY-MM-DD'
+                }
+            })
+            .off('apply.daterangepicker.stm2')
+            .on('apply.daterangepicker.stm2', function (ev, picker) {
+                var startStr = picker && picker.startDate ? picker.startDate.format('YYYY-MM-DD') : '';
+                var endStr = picker && picker.endDate ? picker.endDate.format('YYYY-MM-DD') : '';
+                if (fromInput) fromInput.value = startStr;
+                if (toInput) toInput.value = endStr;
+                plannedStartRangeInput.value = (startStr && endStr) ? (startStr + ' - ' + endStr) : (startStr || '');
+                document.getElementById('slot-filter-form').submit();
+            });
     }
 
     // Initialize true range picker for arrival date
@@ -1209,21 +1217,24 @@ document.addEventListener('DOMContentLoaded', function () {
             arrivalDateRangeInput.value = arrivalInitial;
         }
 
-        window.jQuery(arrivalDateRangeInput).daterangepicker({
-            startDate: arrivalFromVal ? moment(arrivalFromVal) : moment(),
-            endDate: arrivalToVal ? moment(arrivalToVal) : moment(),
-            autoUpdateInput: true,
-            locale: {
-                format: 'YYYY-MM-DD'
-            }
-        }, function(start, end) {
-            var startStr = start.format('YYYY-MM-DD');
-            var endStr = end.format('YYYY-MM-DD');
-            if (arrivalFromInput) arrivalFromInput.value = startStr;
-            if (arrivalToInput) arrivalToInput.value = endStr;
-            arrivalDateRangeInput.value = startStr + ' - ' + endStr;
-            document.getElementById('slot-filter-form').submit();
-        });
+        window.jQuery(arrivalDateRangeInput)
+            .daterangepicker({
+                startDate: arrivalFromVal ? moment(arrivalFromVal) : moment(),
+                endDate: arrivalToVal ? moment(arrivalToVal) : moment(),
+                autoUpdateInput: false,
+                locale: {
+                    format: 'YYYY-MM-DD'
+                }
+            })
+            .off('apply.daterangepicker.stm2')
+            .on('apply.daterangepicker.stm2', function (ev, picker) {
+                var startStr = picker && picker.startDate ? picker.startDate.format('YYYY-MM-DD') : '';
+                var endStr = picker && picker.endDate ? picker.endDate.format('YYYY-MM-DD') : '';
+                if (arrivalFromInput) arrivalFromInput.value = startStr;
+                if (arrivalToInput) arrivalToInput.value = endStr;
+                arrivalDateRangeInput.value = (startStr && endStr) ? (startStr + ' - ' + endStr) : (startStr || '');
+                document.getElementById('slot-filter-form').submit();
+            });
     }
 
     // Filter gates based on warehouse selection
