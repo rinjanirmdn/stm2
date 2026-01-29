@@ -377,11 +377,28 @@ function initVendorBookingCreate(config) {
         plannedTime.addEventListener('keydown', function (event) { event.preventDefault(); });
         plannedTime.addEventListener('paste', function (event) { event.preventDefault(); });
 
+        function ensureTimepickerOkEnabled() {
+            const wrapper = document.querySelector('.mdtp__wrapper');
+            if (!wrapper) return;
+            const buttons = wrapper.querySelectorAll('button');
+            buttons.forEach((btn) => {
+                if (btn.textContent.trim().toLowerCase() === 'ok') {
+                    btn.disabled = false;
+                    btn.removeAttribute('disabled');
+                    btn.style.pointerEvents = 'auto';
+                }
+            });
+        }
+
         window.mdtimepicker('#planned-time', {
             format: 'hh:mm',
             is24hour: true,
             theme: 'cyan',
             hourPadding: true
+        });
+
+        plannedTime.addEventListener('click', function () {
+            setTimeout(ensureTimepickerOkEnabled, 0);
         });
 
         plannedTime.addEventListener('change', function () {
