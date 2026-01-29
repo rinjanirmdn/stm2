@@ -81,33 +81,6 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="vb-table__label">Direction</td>
-                    <td>
-                        <span class="vendor-badge vendor-badge--{{ $booking->direction === 'inbound' ? 'info' : 'warning' }}">
-                            <i class="fas fa-{{ $booking->direction === 'inbound' ? 'arrow-down' : 'arrow-up' }}"></i>
-                            {{ ucfirst($booking->direction) }}
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="vb-table__label">Warehouse</td>
-                    <td>
-                        @php
-                            $whCode = $booking->convertedSlot?->warehouse?->wh_code ?? null;
-                            $whName = $booking->convertedSlot?->warehouse?->wh_name ?? ($booking->convertedSlot?->warehouse?->name ?? null);
-                        @endphp
-                        @if(!empty($whCode) || !empty($whName))
-                            {{ trim(($whCode ? ($whCode . ' - ') : '') . ($whName ?? '')) }}
-                        @else
-                            -
-                        @endif
-                    </td>
-                </tr>
-                <tr>
-                    <td class="vb-table__label">Gate</td>
-                    <td>{{ $booking->convertedSlot?->plannedGate?->gate_number ?? ($booking->convertedSlot?->plannedGate?->name ?? 'To be assigned') }}</td>
-                </tr>
-                <tr>
                     <td class="vb-table__label">COA</td>
                     <td>
                         @if(!empty($booking->coa_path))
@@ -171,10 +144,6 @@
                     </td>
                 </tr>
                 @endif
-                <tr>
-                    <td class="vb-table__label">Duration</td>
-                    <td>{{ $booking->planned_duration }} Minutes</td>
-                </tr>
                 <tr>
                     <td class="vb-table__label">Requested At</td>
                     <td>{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>

@@ -46,12 +46,6 @@
                         {{ $booking->original_planned_start?->format('H:i') ?? '-' }}
                     </td>
                 </tr>
-                <tr>
-                    <td class="vc-card__label vc-card__label--danger">Gate</td>
-                    <td class="vc-card__value">
-                        {{ $booking->originalPlannedGate?->name ?? 'Auto-assign' }}
-                    </td>
-                </tr>
             </table>
         </div>
 
@@ -77,18 +71,6 @@
                     <td class="vc-card__label vc-card__label--success">Time</td>
                     <td class="vc-card__value vc-card__value--strong">
                         {{ $booking->planned_start?->format('H:i') ?? '-' }}
-                    </td>
-                </tr>
-                <tr>
-                    <td class="vc-card__label vc-card__label--success">Duration</td>
-                    <td class="vc-card__value vc-card__value--strong">
-                        {{ $booking->planned_duration }} Min
-                    </td>
-                </tr>
-                <tr>
-                    <td class="vc-card__label vc-card__label--success">Gate</td>
-                    <td class="vc-card__value vc-card__value--strong">
-                        {{ $booking->plannedGate?->name ?? 'TBD' }}
                     </td>
                 </tr>
             </table>
@@ -183,21 +165,6 @@
                        min="30" max="480" step="10" value="{{ $booking->planned_duration }}">
             </div>
             
-            <div class="vendor-form-group">
-                <label class="vendor-form-label">Gate <span class="vendor-required">*</span></label>
-                <select name="planned_gate_id" class="vendor-form-select" required>
-                    <option value="">Select Gate...</option>
-                    @foreach ($gates as $gate)
-                        @php
-                            $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
-                        @endphp
-                        <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('planned_gate_id') === (string)$gate->id ? 'selected' : '' }}>
-                            {{ $gateLabel }}
-                        </option>
-                    @endforeach
-                </select>
-                <input type="hidden" name="warehouse_id" value="">
-            </div>
         </div>
         
         <div class="vendor-form-group vc-form__notes">
@@ -219,29 +186,6 @@
 </div>
 
 <script>
-    // Gate and warehouse sync
-    function syncWarehouseFromGate(select) {
-        const warehouseHidden = select.parentElement.querySelector('input[name="warehouse_id"]');
-        if (!warehouseHidden) return;
-        const selected = select.options[select.selectedIndex];
-        if (!selected) return;
-        warehouseHidden.value = selected.getAttribute('data-warehouse-id') || '';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const gateSelects = document.querySelectorAll('select[name="planned_gate_id"]');
-        gateSelects.forEach(select => {
-            // Initial sync if gate is pre-selected
-            if (select.value) {
-                syncWarehouseFromGate(select);
-            }
-            // Add change listener
-            select.addEventListener('change', function() {
-                syncWarehouseFromGate(this);
-            });
-        });
-    });
-
     document.addEventListener('DOMContentLoaded', function () {
         if (window.location && window.location.hash === '#propose') {
             var el = document.getElementById('propose-form');

@@ -97,17 +97,6 @@
                 <i class="fas fa-calendar mb-row__icon"></i>
                 {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}
             </span>
-            <span class="mb-row__gate">
-                <i class="fas fa-door-open mb-row__icon"></i>
-                {{ $booking->convertedSlot?->plannedGate?->name ?? '-' }}
-            </span>
-            <span class="mb-row__direction">
-                @if($booking->direction === 'inbound')
-                    <i class="fas fa-arrow-down mb-row__direction-icon--in"></i> In
-                @else
-                    <i class="fas fa-arrow-up mb-row__direction-icon--out"></i> Out
-                @endif
-            </span>
             <span class="mb-row__status mb-row__status--{{ $statusClass }}">{{ $statusLabel }}</span>
             <span class="mb-row__status mb-row__status--{{ $arrivalColor }} mb-row__status--arrival">
                 <i class="fas fa-clock mb-row__status-icon"></i>{{ $arrivalStatus }}

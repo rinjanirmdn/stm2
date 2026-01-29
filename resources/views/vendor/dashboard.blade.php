@@ -58,11 +58,7 @@
             <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vd-booking-row vd-booking-row--link">
                 <span class="vd-booking-row__ticket vendor-text--title">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</span>
                 <span class="vd-booking-row__time">
-                    <span class="vendor-text--muted">{{ $booking->planned_start->format('d M') }} · {{ $booking->planned_start->format('H:i') }}
-                    @if($booking->convertedSlot?->plannedGate)
-                        · Gate {{ $booking->convertedSlot->plannedGate->gate_number }}
-                    @endif
-                    </span>
+                    <span class="vendor-text--muted">{{ $booking->planned_start->format('d M') }} · {{ $booking->planned_start->format('H:i') }}</span>
                     <div class="vendor-text--small-muted">
                         PO: {{ $booking->po_number ?? '-' }}
                         @if($booking->status === 'cancelled' && !empty($booking->approval_notes))

@@ -10,7 +10,8 @@ export default defineConfig({
                 'resources/css/vendor.css',
                 'resources/js/app.js',
                 'resources/js/main.js',
-                'resources/js/gate-status.js'
+                'resources/js/gate-status.js',
+                'resources/js/vendor.js'
             ],
             refresh: true,
         }),
