@@ -196,22 +196,6 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th>
-                                    <div class="st-colhead">
-                                        <span class="st-colhead__label">SJ</span>
-                                        <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="sj_complete_number" title="Sort">⇅</button>
-                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="sj" title="Filter">⏷</button>
-                                        </span>
-                                        <div class="st-filter-panel" data-filter-panel="sj" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">SJ Filter</div>
-                                            <input type="text" name="sj_number" form="unplanned-filter-form" class="st-input" placeholder="Search SJ..." value="{{ request('sj_number') }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="sj">Clear</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </th>
                                 <th>Actions</th>
                     </tr>
                 </thead>
@@ -276,7 +260,6 @@
                                     -
                                 @endif
                             </td>
-                            <td>{{ !empty($slot->sj_complete_number) ? $slot->sj_complete_number : '-' }}</td>
                             <td>
                                 <div class="tw-actionbar">
                                     @if (($slot->status ?? '') === 'waiting')

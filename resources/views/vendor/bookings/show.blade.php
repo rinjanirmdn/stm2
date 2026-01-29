@@ -2,6 +2,8 @@
 
 @section('title', 'Booking Detail - Vendor Portal')
 
+@section('page_class', 'vendor-page--layout vendor-page--bookings-show')
+
 @section('content')
 <div class="vendor-card">
     <div class="vendor-card__header">
@@ -28,7 +30,7 @@
         <i class="fas fa-times-circle"></i>
         <div>
             <strong>Cancelled</strong> - {{ $booking->approval_notes ?? 'Your booking was cancelled.' }}
-            <div style="margin-top: 0.5rem;">
+            <div class="vb-alert__action">
                 <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
                     <i class="fas fa-redo"></i>
                     Create New Booking
@@ -44,21 +46,21 @@
     @endif
 
     <!-- Booking Details -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 1.5rem;">
+    <div class="vb-detail-grid">
         <div>
-            <h3 style="margin-bottom: 1rem; color: #374151; font-size: 1rem; font-weight: 600;">
+            <h3 class="vb-section-title">
                 <i class="fas fa-info-circle"></i>
                 Booking Information
             </h3>
 
-            <table style="width: 100%;">
+            <table class="vb-table">
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b; width: 40%;">Ticket Number</td>
-                    <td style="padding: 0.5rem 0; font-weight: 600;">{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
+                    <td class="vb-table__label">Ticket Number</td>
+                    <td class="vb-table__value--strong">{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Status</td>
-                    <td style="padding: 0.5rem 0;">
+                    <td class="vb-table__label">Status</td>
+                    <td>
                         @php
                             $badgeColor = match($booking->status) {
                                 'pending' => 'warning',
@@ -79,35 +81,8 @@
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Direction</td>
-                    <td style="padding: 0.5rem 0;">
-                        <span class="vendor-badge vendor-badge--{{ $booking->direction === 'inbound' ? 'info' : 'warning' }}">
-                            <i class="fas fa-{{ $booking->direction === 'inbound' ? 'arrow-down' : 'arrow-up' }}"></i>
-                            {{ ucfirst($booking->direction) }}
-                        </span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Warehouse</td>
-                    <td style="padding: 0.5rem 0;">
-                        @php
-                            $whCode = $booking->convertedSlot?->warehouse?->wh_code ?? null;
-                            $whName = $booking->convertedSlot?->warehouse?->wh_name ?? ($booking->convertedSlot?->warehouse?->name ?? null);
-                        @endphp
-                        @if(!empty($whCode) || !empty($whName))
-                            {{ trim(($whCode ? ($whCode . ' - ') : '') . ($whName ?? '')) }}
-                        @else
-                            -
-                        @endif
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Gate</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->convertedSlot?->plannedGate?->gate_number ?? ($booking->convertedSlot?->plannedGate?->name ?? 'To be assigned') }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">COA</td>
-                    <td style="padding: 0.5rem 0;">
+                    <td class="vb-table__label">COA</td>
+                    <td>
                         @if(!empty($booking->coa_path))
                             <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
                         @else
@@ -116,45 +91,35 @@
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Surat Jalan</td>
-                    <td style="padding: 0.5rem 0;">
-                        @if(!empty($booking->surat_jalan_path))
-                            <a href="{{ asset('storage/' . $booking->surat_jalan_path) }}" target="_blank" rel="noopener">View / Download</a>
-                        @else
-                            -
-                        @endif
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">PO Number</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->po_number ?? '-' }}</td>
+                    <td class="vb-table__label">PO Number</td>
+                    <td>{{ $booking->po_number ?? '-' }}</td>
                 </tr>
             </table>
         </div>
 
         <div>
-            <h3 style="margin-bottom: 1rem; color: #374151; font-size: 1rem; font-weight: 600;">
+            <h3 class="vb-section-title">
                 <i class="fas fa-clock"></i>
                 Schedule
             </h3>
 
-            <table style="width: 100%;">
+            <table class="vb-table">
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b; width: 40%;">Scheduled Date</td>
-                    <td style="padding: 0.5rem 0; font-weight: 600;">{{ $booking->planned_start?->format('d M Y') ?? '-' }}</td>
+                    <td class="vb-table__label">Scheduled Date</td>
+                    <td class="vb-table__value--strong">{{ $booking->planned_start?->format('d M Y') ?? '-' }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Scheduled Time</td>
-                    <td style="padding: 0.5rem 0; font-weight: 600;">{{ $booking->planned_start?->format('H:i') ?? '-' }}</td>
+                    <td class="vb-table__label">Scheduled Time</td>
+                    <td class="vb-table__value--strong">{{ $booking->planned_start?->format('H:i') ?? '-' }}</td>
                 </tr>
                 @if($booking->actual_arrival)
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Actual Arrival</td>
-                    <td style="padding: 0.5rem 0; font-weight: 600;">{{ $booking->actual_arrival->format('H:i') }}</td>
+                    <td class="vb-table__label">Actual Arrival</td>
+                    <td class="vb-table__value--strong">{{ $booking->actual_arrival->format('H:i') }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Arrival Status</td>
-                    <td style="padding: 0.5rem 0;">
+                    <td class="vb-table__label">Arrival Status</td>
+                    <td>
                         @php
                             $arrivalDiff = $booking->actual_arrival->diffInMinutes($booking->planned_start, false);
                             if($arrivalDiff > 15) {
@@ -172,7 +137,7 @@
                             <i class="fas fa-clock"></i> {{ $arrivalStatus }}
                         </span>
                         @if($arrivalDiff !== 0)
-                        <span style="font-size: 12px; color: #64748b; margin-left: 8px;">
+                        <span class="vb-arrival-meta">
                             ({{ abs($arrivalDiff) }} min {{ $arrivalDiff > 0 ? 'after' : 'before' }} scheduled)
                         </span>
                         @endif
@@ -180,62 +145,58 @@
                 </tr>
                 @endif
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Duration</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->planned_duration }} Minutes</td>
-                </tr>
-                <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Requested At</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>
+                    <td class="vb-table__label">Requested At</td>
+                    <td>{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>
                 </tr>
                 @if($booking->approved_at)
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Processed At</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->approved_at->format('d M Y H:i') }}</td>
+                    <td class="vb-table__label">Processed At</td>
+                    <td>{{ $booking->approved_at->format('d M Y H:i') }}</td>
                 </tr>
                 @endif
             </table>
         </div>
 
         <div>
-            <h3 style="margin-bottom: 1rem; color: #374151; font-size: 1rem; font-weight: 600;">
+            <h3 class="vb-section-title">
                 <i class="fas fa-truck"></i>
                 Vehicle Information
             </h3>
 
-            <table style="width: 100%;">
+            <table class="vb-table">
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b; width: 40%;">Truck Type</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->truck_type ?? '-' }}</td>
+                    <td class="vb-table__label">Truck Type</td>
+                    <td>{{ $booking->truck_type ?? '-' }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Vehicle Number</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->vehicle_number ?? '-' }}</td>
+                    <td class="vb-table__label">Vehicle Number</td>
+                    <td>{{ $booking->vehicle_number ?? '-' }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Driver Number</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->driver_number ?? '-' }}</td>
+                    <td class="vb-table__label">Driver Number</td>
+                    <td>{{ $booking->driver_number ?? '-' }}</td>
                 </tr>
             </table>
         </div>
 
         @if($booking->approval_notes || $booking->approver)
         <div>
-            <h3 style="margin-bottom: 1rem; color: #374151; font-size: 1rem; font-weight: 600;">
+            <h3 class="vb-section-title">
                 <i class="fas fa-user-check"></i>
                 Approval Info
             </h3>
 
-            <table style="width: 100%;">
+            <table class="vb-table">
                 @if($booking->approver)
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b; width: 40%;">Processed By</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->approver->full_name }}</td>
+                    <td class="vb-table__label">Processed By</td>
+                    <td>{{ $booking->approver->full_name }}</td>
                 </tr>
                 @endif
                 @if($booking->approval_notes)
                 <tr>
-                    <td style="padding: 0.5rem 0; color: #64748b;">Notes</td>
-                    <td style="padding: 0.5rem 0;">{{ $booking->approval_notes }}</td>
+                    <td class="vb-table__label">Notes</td>
+                    <td>{{ $booking->approval_notes }}</td>
                 </tr>
                 @endif
             </table>
@@ -245,10 +206,8 @@
 
     <!-- Actions -->
     @if(in_array($booking->status, ['pending', 'approved']))
-    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
-
-
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <div class="vb-actions">
+        <div class="vb-actions__row">
             @if(!empty($booking->convertedSlot?->ticket_number))
             <a href="{{ route('vendor.bookings.ticket', $booking->convertedSlot->id) }}" class="vendor-btn vendor-btn--secondary" target="_blank">
                 <i class="fas fa-print"></i>
@@ -258,7 +217,7 @@
 
             @if($booking->status === 'pending')
                 <form method="POST" action="{{ route('vendor.bookings.cancel', $booking->id) }}"
-                      onsubmit="return confirm('Are you sure you want to cancel this booking?');" style="display: inline;">
+                      onsubmit="return confirm('Are you sure you want to cancel this booking?');" class="vendor-inline-form">
                     @csrf
                     <input type="hidden" name="reason" value="Cancelled by vendor">
                     <button type="submit" class="vendor-btn vendor-btn--danger">

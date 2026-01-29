@@ -1040,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var activeFilters = [];
 
         // Text input filters
-        var textFilters = ['truck', 'mat_doc', 'vendor', 'po_number', 'sj_number'];
+        var textFilters = ['truck', 'mat_doc', 'vendor', 'po_number'];
         textFilters.forEach(function(filterName) {
             var input = filterForm.querySelector('input[name="' + filterName + '"]');
             if (input && input.value && input.value.trim() !== '') {

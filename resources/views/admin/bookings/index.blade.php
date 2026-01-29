@@ -36,7 +36,7 @@
                             <input type="hidden" name="date_to" id="date_to_filter" form="booking-filter-form" value="{{ request('date_to') }}">
                         </div>
                         <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
-                            @if(request()->hasAny(['date_from', 'date_to', 'search', 'request_number', 'po_number', 'supplier_name', 'requested_by', 'coa', 'planned_start', 'converted_ticket', 'gate', 'direction', 'status_filter', 'created_at']))
+                            @if(request()->hasAny(['date_from', 'date_to', 'search', 'request_number', 'po_number', 'supplier_name', 'coa', 'planned_start', 'converted_ticket', 'gate', 'direction', 'status_filter', 'created_at']))
                             <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:2px 10px;height:24px;">Reset</a>
                             @endif
                         </div>
@@ -109,22 +109,6 @@
                                                 <input type="text" name="supplier_name" form="booking-filter-form" class="st-input" placeholder="Search Supplier..." value="{{ request('supplier_name') }}">
                                                 <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
                                                     <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="supplier_name" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </th>
-                                    <th>
-                                        <div class="st-colhead">
-                                            <span class="st-colhead__label">Requested By</span>
-                                            <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="requested_by" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="requested_by" title="Filter">⏷</button>
-                                            </span>
-                                            <div class="st-filter-panel" data-filter-panel="requested_by" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Requested By Filter</div>
-                                                <input type="text" name="requested_by" form="booking-filter-form" class="st-input" placeholder="Search name..." value="{{ request('requested_by') }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="requested_by" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -270,7 +254,6 @@
                                     </td>
                                     <td>{{ $booking->po_number ?? '-' }}</td>
                                     <td>{{ $booking->supplier_name ?? '-' }}</td>
-                                    <td>{{ $booking->requester?->full_name ?? '-' }}</td>
                                     <td>
                                         @if(!empty($booking->coa_path))
                                             <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: underline;">View</a>

@@ -10,7 +10,6 @@ class SlotDTO
     public ?string $ticketNumber = null;
     public ?string $poNumber = null;
     public ?string $matDoc = null;
-    public ?string $sjNumber = null;
     public ?string $truckNumber = null;
     public ?string $truckType = null;
     public ?string $direction = null;
@@ -89,7 +88,6 @@ class SlotDTO
             'ticket_number' => $this->ticketNumber,
             'po_number' => $this->poNumber,
             'mat_doc' => $this->matDoc,
-            'sj_number' => $this->sjNumber,
             'truck_number' => $this->truckNumber,
             'truck_type' => $this->truckType,
             'direction' => $this->direction,

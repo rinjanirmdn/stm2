@@ -34,8 +34,6 @@
                     <div style="position:relative;">
                         <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po" style="display:none;"></div>
-                        <div id="po_preview" style="margin-top:8px;"></div>
-                        <div id="po_items_group" style="display:none;margin-top:10px;"></div>
                     </div>
                     @error('po_number')
                         <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
@@ -74,6 +72,13 @@
                 </div>
             </div>
 
+            <div class="st-form-row" style="margin-bottom:12px;">
+                <div class="st-form-field" style="width:100%;">
+                    <div id="po_preview" style="margin-top:8px;"></div>
+                    <div id="po_items_group" style="display:none;margin-top:10px;"></div>
+                </div>
+            </div>
+
             <div class="st-form-row" style="margin-bottom:12px;display:none;">
                 <div class="st-form-field">
                     <label class="st-label">Warehouse</label>
@@ -101,10 +106,6 @@
                 <div class="st-form-field">
                     <label class="st-label">MAT DOC <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc') }}">
-                </div>
-                <div class="st-form-field">
-                    <label class="st-label">SJ Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
-                    <input type="text" name="sj_number" class="st-input" value="{{ old('sj_number') }}">
                 </div>
             </div>
 
@@ -217,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }).then(function (res) { return res.json(); });
     }
 
-    function clearPoSuggestions() {
+    function closePoSuggestions() {
         if (!poSuggestions) return;
         poSuggestions.style.display = 'none';
         poSuggestions.innerHTML = '';
@@ -226,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderPoSuggestions(items) {
         if (!poSuggestions) return;
         if (!items || !items.length) {
-            clearPoSuggestions();
+            closePoSuggestions();
             return;
         }
 
@@ -245,21 +246,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setPoPreview(po) {
-        if (poPreview) {
-            if (!po) {
-                poPreview.textContent = '';
-            } else {
-                var items = Array.isArray(po.items) ? po.items : [];
-                poPreview.innerHTML = ''
-                    + '<div class="po-preview__box">'
-                    + '<div class="po-preview__title">' + (po.po_number || '') + '</div>'
-                    + '<div class="po-preview__info">Vendor: ' + (po.vendor_name || '-') + '</div>'
-                    + '<div class="po-preview__info">Plant: ' + (po.plant || '-') + '</div>'
-                    + '<div class="po-preview__info">Doc Date: ' + (po.doc_date || '-') + '</div>'
-                    + '<div class="po-preview__items">Items: ' + items.length + '</div>'
-                    + '</div>';
-            }
+        if (!poPreview) return;
+        if (poItemsGroup) {
+            poItemsGroup.style.display = 'none';
+            poItemsGroup.innerHTML = '';
         }
+        if (!po) {
+            poPreview.textContent = 'No PO/DO Data Yet.';
+            return;
+        }
+
+        var items = Array.isArray(po.items) ? po.items : [];
+        poPreview.innerHTML = ''
+            + '<div class="po-preview__box">'
+            + '<div class="po-preview__title">' + (po.po_number || '') + '</div>'
+            + '<div class="po-preview__info">Vendor: ' + (po.vendor_name || '-') + '</div>'
+            + '<div class="po-preview__info">Plant: ' + (po.plant || '-') + '</div>'
+            + '<div class="po-preview__info">Doc Date: ' + (po.doc_date || '-') + '</div>'
+            + '<div class="po-preview__items">Items: ' + items.length + '</div>'
+            + '</div>';
 
         if (!poItemsGroup) return;
         poItemsGroup.style.display = 'none';
@@ -343,36 +348,57 @@ document.addEventListener('DOMContentLoaded', function () {
                 poInput.value = q;
             }
 
+            setPoPreview(null);
+
             if (poDebounceTimer) clearTimeout(poDebounceTimer);
             poDebounceTimer = setTimeout(function () {
                 getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
                     .then(function (data) {
                         if (!data || !data.success) {
-                            clearPoSuggestions();
+                            closePoSuggestions();
                             return;
                         }
                         renderPoSuggestions(data.data || []);
                     })
                     .catch(function () {
-                        clearPoSuggestions();
+                        closePoSuggestions();
                     });
             }, 250);
         });
 
         poInput.addEventListener('focus', function () {
             var q = (poInput.value || '').trim();
+            if (q.length < 3) return;
             getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
                 .then(function (data) {
                     if (!data || !data.success) {
-                        clearPoSuggestions();
+                        closePoSuggestions();
                         return;
                     }
                     renderPoSuggestions(data.data || []);
                 })
                 .catch(function () {
-                    clearPoSuggestions();
+                    closePoSuggestions();
                 });
         });
+
+        function autoFetchDetail() {
+            var val = (poInput.value || '').trim();
+            if (val.length >= 5) {
+                setTimeout(function () {
+                    fetchPoDetail(val, function (data) {
+                        if (data.success && data.data) {
+                            setPoPreview(data.data);
+                            if (data.data.direction && directionSelect) {
+                                directionSelect.value = data.data.direction;
+                            }
+                        }
+                    });
+                }, 200);
+            }
+        }
+        poInput.addEventListener('change', autoFetchDetail);
+        poInput.addEventListener('blur', autoFetchDetail);
     }
 
     if (poSuggestions) {
@@ -381,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!item) return;
             var po = item.getAttribute('data-po');
             if (poInput) poInput.value = po;
-            clearPoSuggestions();
+            closePoSuggestions();
             fetchPoDetail(po, function (data) {
                 if (data.success && data.data) {
                     setPoPreview(data.data);

@@ -24,10 +24,22 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
             // Use HolidayHelper instead of database table
             try {
-                $holidays = \Illuminate\Support\Facades\Cache::remember('public_holidays', 86400, function () {
-                    $year = now()->year;
-                    $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
-                    return collect($holidayData)->pluck('name', 'date')->toArray();
+                $holidays = \Illuminate\Support\Facades\Cache::remember('public_holidays_v2', 86400, function () {
+                    $years = [now()->year, now()->year + 1];
+                    $holidayMap = [];
+
+                    foreach ($years as $year) {
+                        $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
+                        foreach ($holidayData as $holiday) {
+                            $date = $holiday['date'] ?? null;
+                            if (!$date) {
+                                continue;
+                            }
+                            $holidayMap[$date] = $holiday['name'] ?? 'Holiday';
+                        }
+                    }
+
+                    return $holidayMap;
                 });
                 $view->with('holidays', $holidays);
             } catch (\Exception $e) {

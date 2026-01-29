@@ -127,6 +127,23 @@ function debounce(func, wait) {
 })();
 
 document.addEventListener('DOMContentLoaded', function () {
+    var stHolidayData = (typeof window.getIndonesiaHolidays === 'function')
+        ? window.getIndonesiaHolidays()
+        : {};
+
+    function stToIsoDate(date) {
+        var year = date.getFullYear();
+        var month = String(date.getMonth() + 1).padStart(2, '0');
+        var day = String(date.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+    }
+
+    function stGetHolidayName(date) {
+        if (!date) return '';
+        var ds = stToIsoDate(date);
+        return stHolidayData && stHolidayData[ds] ? stHolidayData[ds] : '';
+    }
+
     var app = document.querySelector('.st-app');
     var brand = document.querySelector('.st-sidebar__brand');
     var canInitSidebar = !!app && !!brand;
@@ -375,7 +392,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 } catch (e) { }
 
                 window.jQuery(input).datepicker({
-                    dateFormat: 'yy-mm-dd'
+                    dateFormat: 'yy-mm-dd',
+                    beforeShowDay: function (date) {
+                        var holidayName = stGetHolidayName(date);
+                        if (holidayName) {
+                            return [false, 'is-holiday', holidayName];
+                        }
+                        return [true, '', ''];
+                    }
                 });
             });
             return true;
@@ -395,7 +419,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     enableTime: false,
                     dateFormat: 'Y-m-d',
                     allowInput: true,
-                    disableMobile: true
+                    disableMobile: true,
+                    disable: [
+                        function (date) {
+                            return !!stGetHolidayName(date);
+                        }
+                    ],
+                    onDayCreate: function (_, __, fp, dayElem) {
+                        if (!dayElem || !dayElem.dateObj) return;
+                        var holidayName = stGetHolidayName(dayElem.dateObj);
+                        if (holidayName) {
+                            dayElem.classList.add('is-holiday');
+                            dayElem.setAttribute('title', holidayName);
+                        }
+                    }
                 });
             });
             return true;
@@ -733,10 +770,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 defaultMinute: defaultMinute,
                 disable: [
                     function (date) {
-                        // Disable Sundays (Day 0)
-                        return date.getDay() === 0;
+                        return date.getDay() === 0 || !!stGetHolidayName(date);
                     }
                 ],
+                onDayCreate: function (_, __, fp, dayElem) {
+                    if (!dayElem || !dayElem.dateObj) return;
+                    var holidayName = stGetHolidayName(dayElem.dateObj);
+                    if (holidayName) {
+                        dayElem.classList.add('is-holiday');
+                        dayElem.setAttribute('title', holidayName);
+                    }
+                },
                 onReady: function (selectedDates, dateStr, instance) {
                     if (!instance || !instance.calendarContainer || instance.calendarContainer._stBound) {
                         return;

@@ -122,10 +122,6 @@
                     <label class="st-label">MAT DOC <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
                     <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc', $slot->mat_doc ?? '') }}">
                 </div>
-                <div class="st-form-field">
-                    <label class="st-label">SJ Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
-                    <input type="text" name="sj_number" class="st-input" value="{{ old('sj_number', $slot->sj_complete_number ?? '') }}">
-                </div>
             </div>
 
             <div class="st-form-row" style="margin-bottom:12px;">

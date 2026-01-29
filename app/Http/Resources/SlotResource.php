@@ -19,8 +19,6 @@ class SlotResource extends JsonResource
             'ticket_number' => $this->ticket_number,
             'po_number' => $this->po_number,
             'mat_doc' => $this->mat_doc,
-            'sj_start_number' => $this->sj_start_number,
-            'sj_complete_number' => $this->sj_complete_number,
             'truck_type' => $this->truck_type,
             'direction' => $this->direction,
 

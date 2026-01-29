@@ -118,7 +118,7 @@
                 <div class="st-form-group">
                     <label class="st-label">Duration (minutes) <span class="st-required">*</span></label>
                     <input type="number" name="planned_duration" class="st-input" required
-                           min="30" max="480" step="30"
+                           min="30" max="480" step="1"
                            value="{{ old('planned_duration', $booking->planned_duration) }}"
                            id="planned_duration">
                     @error('planned_duration')

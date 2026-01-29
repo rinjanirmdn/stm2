@@ -31,10 +31,7 @@ class Slot extends Model
     protected $fillable = [
         'ticket_number',
         'mat_doc',
-        'sj_start_number',
-        'sj_complete_number',
         'coa_path',
-        'surat_jalan_path',
         'truck_type',
         'vehicle_number_snap',
         'driver_name',

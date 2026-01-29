@@ -3,67 +3,106 @@
 namespace App\Helpers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class HolidayHelper
 {
     /**
-     * Indonesian national holidays data (only official national holidays)
+     * Indonesian national holidays data sourced from Google Calendar ICS.
      */
     private static function getIndonesianHolidays(int $year): array
     {
-        $holidays = [];
+        $allHolidays = self::getGoogleCalendarHolidays();
 
-        // Official Indonesian National Holidays
-        $nationalHolidays = [
-            '01-01' => 'Tahun Baru',
-            '05-01' => 'Hari Buruh Internasional',
-            '06-01' => 'Hari Lahir Pancasila',
-            '08-17' => 'Hari Kemerdekaan Republik Indonesia',
-            '12-25' => 'Hari Raya Natal',
-        ];
-
-        foreach ($nationalHolidays as $date => $name) {
-            $holidays[$year . '-' . $date] = $name;
+        if (!$allHolidays) {
+            return [];
         }
 
-        // Religious holidays (official national holidays)
-        $religiousHolidays = self::getReligiousHolidays($year);
-        $holidays = array_merge($holidays, $religiousHolidays);
+        $filtered = [];
+        foreach ($allHolidays as $date => $name) {
+            if (str_starts_with($date, (string) $year)) {
+                $filtered[$date] = $name;
+            }
+        }
 
-        return $holidays;
+        return $filtered;
     }
 
-    /**
-     * Get official religious holidays (national holidays)
-     */
-    private static function getReligiousHolidays(int $year): array
+    private static function getGoogleCalendarHolidays(): array
     {
-        // Simplified religious holidays - for production use proper calculation
-        return [
-            // Islamic holidays (official national holidays)
-            self::formatDate($year, 3, 11) => 'Hari Raya Idul Fitri (perkiraan)',
-            self::formatDate($year, 3, 12) => 'Hari Raya Idul Fitri (perkiraan)',
-            self::formatDate($year, 6, 18) => 'Hari Raya Idul Adha (perkiraan)',
-            self::formatDate($year, 6, 19) => 'Hari Raya Idul Adha (perkiraan)',
+        return Cache::remember('indonesia_holidays_ics', 86400, function () {
+            try {
+                $response = Http::timeout(15)->get('https://calendar.google.com/calendar/ical/en.indonesian%23holiday%40group.v.calendar.google.com/public/basic.ics');
 
-            // Hindu holiday (official national holiday)
-            self::formatDate($year, 3, 11) => 'Hari Raya Nyepi (perkiraan)',
+                if (!$response->ok()) {
+                    return [];
+                }
 
-            // Buddhist holiday (official national holiday)
-            self::formatDate($year, 5, 22) => 'Hari Raya Waisak (perkiraan)',
+                $ics = (string) $response->body();
+                if ($ics === '') {
+                    return [];
+                }
 
-            // Christian holiday (official national holiday)
-            self::formatDate($year, 3, 29) => 'Wafat Isa Al Masih (perkiraan)',
-            self::formatDate($year, 8, 15) => 'Kenaikan Isa Al Masih (perkiraan)',
-        ];
-    }
+                $lines = preg_split("/\r\n|\n|\r/", $ics);
+                if (!$lines) {
+                    return [];
+                }
 
-    /**
-     * Format date string
-     */
-    private static function formatDate(int $year, int $month, int $day): string
-    {
-        return sprintf('%04d-%02d-%02d', $year, $month, $day);
+                $unfolded = [];
+                foreach ($lines as $line) {
+                    if ($line === '') {
+                        $unfolded[] = $line;
+                        continue;
+                    }
+
+                    if (isset($unfolded[count($unfolded) - 1]) && str_starts_with($line, ' ')) {
+                        $unfolded[count($unfolded) - 1] .= ltrim($line);
+                    } else {
+                        $unfolded[] = $line;
+                    }
+                }
+
+                $holidays = [];
+                $currentDate = null;
+                $currentName = null;
+
+                foreach ($unfolded as $line) {
+                    if ($line === 'BEGIN:VEVENT') {
+                        $currentDate = null;
+                        $currentName = null;
+                        continue;
+                    }
+
+                    if ($line === 'END:VEVENT') {
+                        if ($currentDate && $currentName) {
+                            $holidays[$currentDate] = $currentName;
+                        }
+                        $currentDate = null;
+                        $currentName = null;
+                        continue;
+                    }
+
+                    if (str_starts_with($line, 'DTSTART')) {
+                        $parts = explode(':', $line, 2);
+                        $value = $parts[1] ?? '';
+                        if (preg_match('/^(\d{4})(\d{2})(\d{2})/', $value, $matches)) {
+                            $currentDate = sprintf('%04d-%02d-%02d', (int) $matches[1], (int) $matches[2], (int) $matches[3]);
+                        }
+                        continue;
+                    }
+
+                    if (str_starts_with($line, 'SUMMARY:')) {
+                        $currentName = trim(substr($line, 8));
+                        continue;
+                    }
+                }
+
+                return $holidays;
+            } catch (\Throwable $e) {
+                return [];
+            }
+        });
     }
 
     /**
