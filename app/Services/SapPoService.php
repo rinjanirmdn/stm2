@@ -61,6 +61,29 @@ class SapPoService
         $sapClient = trim((string) config('services.sap_po.sap_client', '210'));
         $verifySsl = (bool) config('services.sap_po.verify_ssl', false);
 
+        if ($baseUrl === '') {
+            $out = [];
+            foreach ($this->dummyPurchaseOrders as $po) {
+                $poNumber = (string) ($po['po_number'] ?? '');
+                if ($poNumber === '' || stripos($poNumber, $query) === false) {
+                    continue;
+                }
+                $out[] = [
+                    'po_number' => $poNumber,
+                    'vendor_name' => (string) ($po['vendor_name'] ?? ''),
+                    'plant' => (string) ($po['plant'] ?? ''),
+                    'doc_date' => (string) ($po['doc_date'] ?? ''),
+                    'warehouse_name' => (string) ($po['warehouse_name'] ?? ''),
+                    'direction' => null,
+                    'source' => 'dummy',
+                ];
+                if (count($out) >= $limit) {
+                    break;
+                }
+            }
+            return $out;
+        }
+
         // NOTE:
         // This SAP Gateway endpoint rejects $filter/$top and only allows limited query options.
         // We fetch pages without server-side filtering and apply filtering client-side.

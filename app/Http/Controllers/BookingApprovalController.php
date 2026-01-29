@@ -326,7 +326,14 @@ class BookingApprovalController extends Controller
                     ]);
                 }
 
-                $this->bookingService->approveBooking($slot, Auth::user(), $request->notes);
+                $approvalAction = (string) $request->input('approval_action', Slot::APPROVAL_APPROVED);
+                $this->bookingService->approveBooking(
+                    $slot,
+                    Auth::user(),
+                    $request->notes,
+                    (int) $bookingRequest->id,
+                    $approvalAction
+                );
 
                 Log::info('Booking service approve completed', ['slot_id' => $slot->id]);
 
@@ -484,6 +491,7 @@ class BookingApprovalController extends Controller
             : Carbon::parse((string) $plannedStart);
         \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
 
+        $request->merge(['approval_action' => Slot::APPROVAL_RESCHEDULED]);
         return $this->approve($request, $id);
     }
 

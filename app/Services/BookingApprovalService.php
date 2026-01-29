@@ -122,7 +122,13 @@ class BookingApprovalService
     /**
      * Approve a booking request
      */
-    public function approveBooking(Slot $slot, User $admin, ?string $notes = null): Slot
+    public function approveBooking(
+        Slot $slot,
+        User $admin,
+        ?string $notes = null,
+        ?int $bookingRequestId = null,
+        ?string $approvalAction = null
+    ): Slot
     {
         return DB::transaction(function () use ($slot, $admin, $notes) {
             $oldStatus = $slot->status;
@@ -137,11 +143,13 @@ class BookingApprovalService
                 );
             }
 
+            $action = $approvalAction ?: Slot::APPROVAL_APPROVED;
+
             $slot->update([
                 'ticket_number' => $ticketNumber,
                 'status' => Slot::STATUS_SCHEDULED,
                 'approved_by' => $admin->id,
-                'approval_action' => Slot::APPROVAL_APPROVED,
+                'approval_action' => $action,
                 'approval_notes' => $notes,
                 'approved_at' => now(),
             ]);
@@ -156,26 +164,30 @@ class BookingApprovalService
                 $notes
             );
 
-            // Log activity
-            try {
-                ActivityLog::create([
-                    'type' => 'booking_approved',
-                    'description' => "Approved booking request for PO: {$slot->po_number}",
-                    'po_number' => $slot->po_number,
-                    'mat_doc' => $slot->mat_doc ?? null,
-                    'slot_id' => $slot->id,
-                    'user_id' => $admin->id,
-                ]);
-            } catch (\Throwable $e) {
-                Log::error('Failed to log activity for booking approval: ' . $e->getMessage(), [
-                    'slot_id' => $slot->id,
-                    'po_number' => $slot->po_number,
-                    'admin_id' => $admin->id,
-                ]);
-            }
+            $slotId = (int) $slot->id;
+            $poNumber = (string) ($slot->po_number ?? '');
+            $matDoc = $slot->mat_doc ?? null;
+            $adminId = (int) $admin->id;
+            DB::afterCommit(function () use ($slot, $slotId, $poNumber, $matDoc, $adminId, $bookingRequestId, $action) {
+                try {
+                    ActivityLog::create([
+                        'type' => 'booking_approved',
+                        'description' => "Approved booking request for PO: {$poNumber}",
+                        'po_number' => $poNumber !== '' ? $poNumber : null,
+                        'mat_doc' => $matDoc,
+                        'slot_id' => $slotId,
+                        'user_id' => $adminId,
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to log activity for booking approval: ' . $e->getMessage(), [
+                        'slot_id' => $slotId,
+                        'po_number' => $poNumber,
+                        'admin_id' => $adminId,
+                    ]);
+                }
 
-            // Notify vendor
-            $this->notifyVendorApproved($slot);
+                $this->notifyVendorApproved($slot, $bookingRequestId, $action === Slot::APPROVAL_RESCHEDULED);
+            });
 
             return $slot->fresh();
         });
@@ -529,12 +541,24 @@ class BookingApprovalService
     /**
      * Notify vendor about approved booking
      */
-    protected function notifyVendorApproved(Slot $slot): void
+    protected function notifyVendorApproved(Slot $slot, ?int $bookingRequestId = null, bool $isRescheduled = false): void
     {
         try {
             $vendor = $slot->requester;
             if ($vendor) {
-                $vendor->notify(new BookingApproved($slot));
+                $targetId = $bookingRequestId ?: $slot->id;
+                $actionUrl = route('vendor.bookings.show', $targetId, false);
+                $alreadyNotified = $vendor->notifications()
+                    ->where('type', BookingApproved::class)
+                    ->where(function ($q) use ($slot, $actionUrl) {
+                        $q->where('data->slot_id', $slot->id)
+                            ->orWhere('data->action_url', $actionUrl);
+                    })
+                    ->exists();
+                if ($alreadyNotified) {
+                    return;
+                }
+                $vendor->notify(new BookingApproved($slot, $targetId, $isRescheduled));
             }
         } catch (\Throwable $e) {
             Log::warning('Failed to send approval notification: ' . $e->getMessage());
