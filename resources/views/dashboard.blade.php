@@ -4,6 +4,27 @@
 @section('page_title', 'Dashboard')
 
 @section('content')
+    <style>
+        html, body { overflow: hidden; }
+        .st-main { height: 100vh; min-height: 100vh; overflow: hidden; }
+        .st-content { overflow: hidden; min-height: 0; padding: 10px 12px 0 !important; }
+        .st-footer { flex: 0 0 auto; }
+    </style>
+    <div class="st-dashboard-slideshow" data-autoplay-ms="10000" data-active-index="0">
+        <div class="st-dashboard-slideshow__nav" aria-label="Dashboard slides">
+            <button type="button" class="st-dashboard-slideshow__btn" data-slide-prev aria-label="Previous slide">‹</button>
+            <div class="st-dashboard-slideshow__dots" role="tablist" aria-label="Dashboard slide selector">
+                <button type="button" class="st-dashboard-slideshow__dot" data-slide-dot="0" aria-label="Slide 1" aria-current="true"></button>
+                <button type="button" class="st-dashboard-slideshow__dot" data-slide-dot="1" aria-label="Slide 2" aria-current="false"></button>
+                <button type="button" class="st-dashboard-slideshow__dot" data-slide-dot="2" aria-label="Slide 3" aria-current="false"></button>
+                <button type="button" class="st-dashboard-slideshow__dot" data-slide-dot="3" aria-label="Slide 4" aria-current="false"></button>
+                <button type="button" class="st-dashboard-slideshow__dot" data-slide-dot="4" aria-label="Slide 5" aria-current="false"></button>
+            </div>
+            <button type="button" class="st-dashboard-slideshow__btn" data-slide-next aria-label="Next slide">›</button>
+        </div>
+        <div class="st-dashboard-slideshow__viewport">
+        <div class="st-dashboard-slideshow__track">
+        <div class="st-dashboard-slide is-active" data-slide-index="0">
     <section class="st-row">
         <div class="st-col-12">
             <div class="st-card" id="analytics-tabs-card">
@@ -29,7 +50,7 @@
                         </form>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(7, minmax(120px, 1fr));gap:8px;">
+                <div style="display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));gap:6px;">
                     <div class="st-mini-card st-mini-card--with-info">
                         <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Pending" title="Booking requests awaiting approval before entering the official schedule.">
                             <i class="fa-solid fa-info"></i>
@@ -97,22 +118,16 @@
 
                 <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
                     <div>
-                        <br>
                         <h2 class="st-card__title">Analytics</h2>
                         <div class="st-card__subtitle">Performance & Bottleneck Summary</div>
                     </div>
-                    <div class="st-tabbar" role="tablist" aria-label="Analytics tabs">
-                        <button type="button" class="st-btn st-btn--sm st-tab-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" data-tab="overview" aria-selected="true">Overview</button>
-                        <button type="button" class="st-btn st-btn--ghost st-btn--sm st-tab-btn" data-tab="kpi" aria-selected="false">KPI</button>
-                    </div>
                 </div>
 
-                <div class="st-tab-panel" data-tab-panel="overview" style="display:block;">
-                    <div class="st-chart-grid">
+                <div class="st-chart-grid">
                         <div class="st-chart-col-8">
                             <div class="st-chart-card">
                                 <div class="st-chart-card__title" id="chart_trend_title">Completed Trend</div>
-                                <div class="st-chart-wrap">
+                                <div class="st-chart-wrap st-chart-wrap--sm">
                                     <canvas id="chart_trend"></canvas>
                                 </div>
                                 <div class="st-chart-axis-legend st-text--small st-text--muted">
@@ -130,223 +145,254 @@
                         </div>
                         <div class="st-chart-col-4">
                             <div class="st-chart-card">
-                                <div class="st-chart-card__title">Direction</div>
-                                <div style="display:flex;flex-direction:column;gap:8px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                                    <div class="st-chart-card__title" style="margin:0;">Direction</div>
+                                    <select id="direction_gate" class="st-select" style="max-width:140px;min-width:120px;">
+                                        <option value="all">All Gates</option>
+                                        <option value="A">Gate A</option>
+                                        <option value="B">Gate B</option>
+                                        <option value="C">Gate C</option>
+                                    </select>
+                                </div>
+                                <div class="st-direction-stack">
                                     <div class="st-chart-wrap st-chart-wrap--direction">
                                         <canvas id="chart_direction"></canvas>
                                     </div>
                                     <div class="st-metric-row" style="grid-template-columns:1fr 1fr 1fr;">
                                         <div class="st-mini-card">
                                             <div class="st-text--small st-text--muted">Inbound</div>
-                                            <div id="direction_inbound_value" style="font-size:16px;font-weight:700;">0</div>
+                                            <div id="direction_inbound_value" class="st-direction-metric">0</div>
                                         </div>
                                         <div class="st-mini-card">
                                             <div class="st-text--small st-text--muted">Outbound</div>
-                                            <div id="direction_outbound_value" style="font-size:16px;font-weight:700;">0</div>
+                                            <div id="direction_outbound_value" class="st-direction-metric">0</div>
                                         </div>
                                         <div class="st-mini-card">
                                             <div class="st-text--small st-text--muted">Total</div>
-                                            <div id="direction_total_value" style="font-size:16px;font-weight:700;">0</div>
+                                            <div id="direction_total_value" class="st-direction-metric">0</div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="st-chart-col-5">
-                            <div class="st-chart-card" style="height:100%;">
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                    <div class="st-chart-card__title" style="margin:0;white-space:nowrap;">Bottleneck (Avg Waiting)</div>
-                                    <select id="bottleneck_dir" class="st-select" style="max-width:100px;font-size:11px;height:28px;">
-                                        <option value="all">All</option>
-                                        <option value="inbound">Inbound</option>
-                                        <option value="outbound">Outbound</option>
-                                    </select>
-                                </div>
-                                <div style="display:grid; grid-template-columns: 1fr auto; gap:16px; align-items: center;">
-                                    <div class="st-chart-wrap" style="height:160px;">
-                                        <canvas id="chart_bottleneck"></canvas>
-                                    </div>
-                                    <div style="display:flex; flex-direction:column; gap:8px; border-left:1px solid #f1f5f9; padding-left:16px; min-width:100px;">
-                                        <div class="st-chart-card__title" style="font-size:10px; margin-bottom:4px; text-transform:uppercase; color:#94a3b8;">Top Wait</div>
-                                        <div class="st-mini-card" style="padding:6px;">
-                                            <div class="st-text--small st-text--muted" style="font-size:8px;">Location</div>
-                                            <div id="bottleneck_top_label" style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">-</div>
-                                        </div>
-                                        <div class="st-mini-card" style="padding:6px;">
-                                            <div class="st-text--small st-text--muted" style="font-size:8px;">Avg Wait</div>
-                                            <div id="bottleneck_top_avg" style="font-size:13px; font-weight:700;">0</div>
-                                        </div>
-                                        <div class="st-mini-card" style="padding:6px;">
-                                            <div class="st-text--small st-text--muted" style="font-size:8px;">Qty</div>
-                                            <div id="bottleneck_top_slots" style="font-size:13px; font-weight:700;">0</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="st-text--small st-text--muted" style="margin-top:8px; font-size:10px;">Top 20, Threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} Min</div>
-                            </div>
-                        </div>
-
-                        <div class="st-chart-col-7">
-                            <div class="st-chart-card" style="height:100%;">
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                                    <div class="st-chart-card__title" style="margin:0;">Performance by Truck Type</div>
-                                    <select id="lead_proc_unit" class="st-select" style="max-width:90px;font-size:10px;height:24px;padding:2px 4px;">
-                                        <option value="minute">Minutes</option>
-                                        <option value="hour">Hours</option>
-                                    </select>
-                                </div>
-                                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
-                                        @foreach($avgTimesByTruckType ?? [] as $t)
-                                        @php
-                                            $truckType = (string) data_get($t, 'truck_type', '-');
-                                            $totalCount = (int) data_get($t, 'total_count', 0);
-                                            $avgLeadMinutesByTruck = (float) data_get($t, 'avg_lead_minutes', 0);
-                                            $avgProcessMinutesByTruck = (float) data_get($t, 'avg_process_minutes', 0);
-                                        @endphp
-                                        <div style="padding:4px; border:1px solid #f1f5f9; background:#fff; border-radius:8px; display:flex; flex-direction:column; justify-content:space-between; min-width:0;">
-                                            <div style="font-weight:700; color:#1e293b; font-size:10px; margin-bottom:4px; border-bottom:1px solid #f8fafc; padding-bottom:3px; display:flex; justify-content:space-between; align-items:center; gap:4px;">
-                                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;" title="{{ $truckType }}">{{ $truckType }}</span>
-                                                <span style="font-size:9px; color:#94a3b8; font-weight:400; flex-shrink:0;">{{ $totalCount }}</span>
-                                            </div>
-                                            <div style="display:flex; flex-direction:column; gap:4px;">
-                                                <div style="background:#f0f9ff; padding:3px 4px; border-radius:4px;">
-                                                    <div style="font-size:7px; color:#0369a1; text-transform:uppercase; font-weight:600; line-height:1;">Avg Lead Time</div>
-                                                    <div class="lead-avg-truck" data-minutes="{{ $avgLeadMinutesByTruck }}" style="font-weight:800; color:#0369a1; font-size:11px;">
-                                                        @if($totalCount > 0)
-                                                            {{ number_format($avgLeadMinutesByTruck, 1) }}<span style="font-size:8px;">m</span>
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                                <div style="background:#f5f3ff; padding:3px 4px; border-radius:4px;">
-                                                    <div style="font-size:7px; color:#5b21b6; text-transform:uppercase; font-weight:600; line-height:1;">Avg Process Time</div>
-                                                    <div class="proc-avg-truck" data-minutes="{{ $avgProcessMinutesByTruck }}" style="font-weight:800; color:#5b21b6; font-size:11px;">
-                                                        @if($totalCount > 0)
-                                                            {{ number_format($avgProcessMinutesByTruck, 1) }}<span style="font-size:8px;">m</span>
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                                <div id="lead_proc_empty" style="display:none;"></div>
-                                <div id="lead_avg_value" style="display:none;" data-minutes="{{ $avgLeadMinutes }}"></div>
-                                <div id="proc_avg_value" style="display:none;" data-minutes="{{ $avgProcessMinutes }}"></div>
-                            </div>
-                        </div>
-
-
-                    </div>
-                </div>
-
-                <div class="st-tab-panel" data-tab-panel="kpi" style="display:none;">
-                    <div class="st-chart-grid">
-                        <div class="st-chart-col-4">
-                            <div class="st-chart-card">
-                                <div class="st-flex-between-center st-flex-wrap st-gap-2">
-                                    <div class="st-chart-card__title st-mb-0">On Time vs Late</div>
-                                    <select id="on_time_dir" class="st-select st-w-160">
-                                        <option value="all">All Direction</option>
-                                        <option value="inbound">Inbound (Blue)</option>
-                                        <option value="outbound">Outbound (Orange)</option>
-                                    </select>
-                                </div>
-                                <div class="st-chart-wrap st-chart-wrap--sm" style="margin-top:38px;">
-                                    <canvas id="chart_on_time"></canvas>
-                                </div>
-                                <div class="st-metric-row" style="margin-top:10px;">
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">On Time</div><div id="on_time_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Late</div><div id="late_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="on_time_total" style="font-size:18px;font-weight:800;">0</div></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="st-chart-col-4">
-                            <div class="st-chart-card">
-                                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
-                                    <div class="st-chart-card__title" style="margin:0;">Target Achievement</div>
-                                    <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;">
-                                        <select id="target_dir" class="st-select" style="max-width:160px;min-width:140px;flex:1 1 140px;">
-                                            <option value="all">All Direction</option>
-                                            <option value="inbound">Inbound</option>
-                                            <option value="outbound">Outbound</option>
-                                        </select>
-                                        <select id="target_wh" class="st-select" style="max-width:160px;min-width:140px;flex:1 1 140px;">
-                                            <option value="all">All WH</option>
-                                            @foreach (($kpiWarehouses ?? []) as $whCode)
-                                                <option value="{{ $whCode }}">{{ $whCode }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="st-chart-wrap st-chart-wrap--sm st-mt-2">
-                                    <canvas id="chart_target_achievement"></canvas>
-                                </div>
-                                <div class="st-metric-row" style="margin-top:10px;">
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Achieve</div><div id="target_achieve_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Not Achieve</div><div id="target_not_achieve_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="target_total_eval" style="font-size:18px;font-weight:800;">0</div></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="st-chart-col-4">
-                            <div class="st-chart-card">
-                                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-                                    <div class="st-chart-card__title" style="margin:0;">Completion Rate</div>
-
-                                    <select id="completion_dir" class="st-select" style="max-width:160px;">
-                                            <option value="all">All Direction</option>
-                                            <option value="inbound">Inbound</option>
-                                            <option value="outbound">Outbound</option>
-                                    </select>
-                                </div>
-                                <div style="display:flex;justify-content:flex-end;">
-                                    <select id="completion_wh" class="st-select" style="max-width:160px;">
-                                            <option value="all">All WH</option>
-                                            @foreach (($completionWarehouses ?? []) as $whCode)
-                                                <option value="{{ $whCode }}">{{ $whCode }}</option>
-                                            @endforeach
-                                    </select>
-                                </div>
-                                <div class="st-chart-wrap st-chart-wrap--sm" style="margin-top:8px;">
-                                    <canvas id="chart_completion_rate"></canvas>
-                                </div>
-                                <div class="st-metric-row" style="margin-top:10px;">
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Rate</div><div id="completion_rate_value" style="font-size:18px;font-weight:800;">0%</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Completed</div><div id="completion_completed_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                    <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="completion_total_value" style="font-size:18px;font-weight:800;">0</div></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
             </div>
         </div>
     </section>
 
-    @php
-        $totalEval = (int)($achieveRange ?? 0) + (int)($notAchieveRange ?? 0);
-        $achPct = $totalEval > 0 ? (int) round(((int)($achieveRange ?? 0) / $totalEval) * 100) : 0;
-        $notAchPct = $totalEval > 0 ? (int) round(((int)($notAchieveRange ?? 0) / $totalEval) * 100) : 0;
-    @endphp
+        </div>
+        <div class="st-dashboard-slide" data-slide-index="1">
+            <section class="st-row" style="margin-top:8px;">
+                <div class="st-col-12">
+                    <div class="st-card" style="padding:12px;">
+                        <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+                            <div>
+                                <h2 class="st-card__title">Analytics</h2>
+                                <div class="st-card__subtitle">Bottleneck & Performance</div>
+                            </div>
+                        </div>
 
+                        <div class="st-chart-grid">
+                            <div class="st-chart-col-6">
+                                <div class="st-chart-card" style="height:100%;display:flex;flex-direction:column;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                        <div class="st-chart-card__title" style="margin:0;white-space:nowrap;">Bottleneck (Avg Waiting)</div>
+                                        <select id="bottleneck_dir" class="st-select" style="max-width:100px;font-size:11px;height:28px;">
+                                            <option value="all">All</option>
+                                            <option value="inbound">Inbound</option>
+                                            <option value="outbound">Outbound</option>
+                                        </select>
+                                    </div>
+                                    <div class="st-chart-wrap" style="flex:1 1 auto;min-height:0;">
+                                        <canvas id="chart_bottleneck"></canvas>
+                                    </div>
+                                    <div class="st-metric-row" style="margin-top:10px;grid-template-columns:1.4fr 1fr 0.7fr;">
+                                        <div class="st-mini-card" style="padding:10px;">
+                                            <div class="st-text--small st-text--muted" style="font-size:10px;">Top Wait Location</div>
+                                            <div id="bottleneck_top_label" style="font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">-</div>
+                                        </div>
+                                        <div class="st-mini-card" style="padding:10px;">
+                                            <div class="st-text--small st-text--muted" style="font-size:10px;">Avg Wait</div>
+                                            <div id="bottleneck_top_avg" style="font-size:15px; font-weight:800;">0</div>
+                                        </div>
+                                        <div class="st-mini-card" style="padding:10px;">
+                                            <div class="st-text--small st-text--muted" style="font-size:10px;">Qty</div>
+                                            <div id="bottleneck_top_slots" style="font-size:15px; font-weight:800;">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="st-text--small st-text--muted" style="margin-top:8px; font-size:10px;">Top 20, Threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} Min</div>
+                                </div>
+                            </div>
 
+                            <div class="st-chart-col-6">
+                                <div class="st-chart-card" style="height:100%;display:flex;flex-direction:column;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                        <div class="st-chart-card__title" style="margin:0;">Performance by Truck Type</div>
+                                        <select id="lead_proc_unit" class="st-select" style="max-width:90px;font-size:10px;height:24px;padding:2px 4px;">
+                                            <option value="minute">Minutes</option>
+                                            <option value="hour">Hours</option>
+                                        </select>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; flex:1 1 auto; min-height:0; grid-auto-rows: 1fr;">
+                                            @foreach($avgTimesByTruckType ?? [] as $t)
+                                            @php
+                                                $truckType = (string) data_get($t, 'truck_type', '-');
+                                                $totalCount = (int) data_get($t, 'total_count', 0);
+                                                $avgLeadMinutesByTruck = (float) data_get($t, 'avg_lead_minutes', 0);
+                                                $avgProcessMinutesByTruck = (float) data_get($t, 'avg_process_minutes', 0);
+                                            @endphp
+                                            <div style="padding:10px; border:1px solid #f1f5f9; background:#fff; border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; min-width:0;">
+                                                <div style="font-weight:800; color:#1e293b; font-size:12px; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px; display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                                                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;" title="{{ $truckType }}">{{ $truckType }}</span>
+                                                    <span style="font-size:11px; color:#64748b; font-weight:700; flex-shrink:0;">{{ $totalCount }}</span>
+                                                </div>
+                                                <div style="display:flex; flex-direction:column; gap:8px;">
+                                                    <div style="background:#f0f9ff; padding:8px 10px; border-radius:10px;">
+                                                        <div style="font-size:10px; color:#0369a1; text-transform:uppercase; font-weight:800; line-height:1;">Avg Lead Time</div>
+                                                        <div class="lead-avg-truck" data-minutes="{{ $avgLeadMinutesByTruck }}" style="font-weight:900; color:#0369a1; font-size:16px;">
+                                                            @if($totalCount > 0)
+                                                                {{ number_format($avgLeadMinutesByTruck, 1) }}<span style="font-size:11px;">m</span>
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                    <div style="background:#f5f3ff; padding:8px 10px; border-radius:10px;">
+                                                        <div style="font-size:10px; color:#5b21b6; text-transform:uppercase; font-weight:800; line-height:1;">Avg Process Time</div>
+                                                        <div class="proc-avg-truck" data-minutes="{{ $avgProcessMinutesByTruck }}" style="font-weight:900; color:#5b21b6; font-size:16px;">
+                                                            @if($totalCount > 0)
+                                                                {{ number_format($avgProcessMinutesByTruck, 1) }}<span style="font-size:11px;">m</span>
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <div id="lead_proc_empty" style="display:none;"></div>
+                                    <div id="lead_avg_value" style="display:none;" data-minutes="{{ $avgLeadMinutes }}"></div>
+                                    <div id="proc_avg_value" style="display:none;" data-minutes="{{ $avgProcessMinutes }}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
+        </div>
+        <div class="st-dashboard-slide" data-slide-index="2">
+            <section class="st-row" style="margin-top:8px;">
+                <div class="st-col-12">
+                    <div class="st-card" style="padding:12px;">
+                        <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+                            <div>
+                                <h2 class="st-card__title">KPI</h2>
+                                <div class="st-card__subtitle">On Time, Target Achievement, Completion Rate</div>
+                            </div>
+                        </div>
 
+                        <div class="st-chart-grid">
+                            <div class="st-chart-col-4">
+                                <div class="st-chart-card">
+                                    <div class="st-flex-between-center st-flex-wrap st-gap-2">
+                                        <div class="st-chart-card__title st-mb-0">On Time vs Late</div>
+                                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                                            <select id="on_time_dir" class="st-select st-w-160">
+                                            <option value="all">All Direction</option>
+                                            <option value="inbound">Inbound (Blue)</option>
+                                            <option value="outbound">Outbound (Orange)</option>
+                                        </select>
+                                            <select id="on_time_wh" class="st-select" style="max-width:160px;min-width:140px;">
+                                                <option value="all">All Gates</option>
+                                                <option value="A">Gate A</option>
+                                                <option value="B">Gate B</option>
+                                                <option value="C">Gate C</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="st-chart-wrap st-chart-wrap--sm" style="margin-top:38px;">
+                                        <canvas id="chart_on_time"></canvas>
+                                    </div>
+                                    <div class="st-metric-row" style="margin-top:10px;">
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">On Time</div><div id="on_time_value" style="font-size:18px;font-weight:800;">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Late</div><div id="late_value" style="font-size:18px;font-weight:800;">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="on_time_total" style="font-size:18px;font-weight:800;">0</div></div>
+                                    </div>
+                                </div>
+                            </div>
 
+                            <div class="st-chart-col-4">
+                                <div class="st-chart-card">
+                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+                                        <div class="st-chart-card__title" style="margin:0;">Target Achievement</div>
+                                        <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;">
+                                            <select id="target_dir" class="st-select" style="max-width:160px;min-width:140px;flex:1 1 140px;">
+                                                <option value="all">All Direction</option>
+                                                <option value="inbound">Inbound</option>
+                                                <option value="outbound">Outbound</option>
+                                            </select>
+                                            <select id="target_wh" class="st-select" style="max-width:160px;min-width:140px;flex:1 1 140px;">
+                                                <option value="all">All Gates</option>
+                                                <option value="A">Gate A</option>
+                                                <option value="B">Gate B</option>
+                                                <option value="C">Gate C</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="st-chart-wrap st-chart-wrap--sm st-mt-2">
+                                        <canvas id="chart_target_achievement"></canvas>
+                                    </div>
+                                    <div class="st-metric-row" style="margin-top:10px;">
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Achieve</div><div id="target_achieve_value" style="font-size:18px;font-weight:800;">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Not Achieve</div><div id="target_not_achieve_value" style="font-size:18px;font-weight:800;">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="target_total_eval" style="font-size:18px;font-weight:800;">0</div></div>
+                                    </div>
+                                </div>
+                            </div>
 
+                            <div class="st-chart-col-4">
+                                <div class="st-chart-card">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                                        <div class="st-chart-card__title" style="margin:0;">Completion Rate</div>
 
-    <section class="st-row" style="margin-top:8px;">
-        <div class="st-col-12">
-            <div class="st-card" style="padding:12px;">
+                                        <select id="completion_dir" class="st-select" style="max-width:160px;">
+                                                <option value="all">All Direction</option>
+                                                <option value="inbound">Inbound</option>
+                                                <option value="outbound">Outbound</option>
+                                        </select>
+                                    </div>
+                                    <div style="display:flex;justify-content:flex-end;">
+                                        <select id="completion_wh" class="st-select" style="max-width:160px;">
+                                                <option value="all">All Gates</option>
+                                                <option value="A">Gate A</option>
+                                                <option value="B">Gate B</option>
+                                                <option value="C">Gate C</option>
+                                        </select>
+                                    </div>
+                                    <div class="st-chart-wrap st-chart-wrap--sm" style="margin-top:8px;">
+                                        <canvas id="chart_completion_rate"></canvas>
+                                    </div>
+                                    <div class="st-metric-row" style="margin-top:10px;">
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Rate</div><div id="completion_rate_value" style="font-size:18px;font-weight:800;">0%</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Completed</div><div id="completion_completed_value" style="font-size:18px;font-weight:800;">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="completion_total_value" style="font-size:18px;font-weight:800;">0</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+        <div class="st-dashboard-slide" data-slide-index="3">
+
+    <section class="st-row" style="margin-top:8px; height:100%; display:flex; flex-direction:column;">
+        <div class="st-col-12" style="height:100%; display:flex; flex-direction:column;">
+            <div class="st-card" style="padding:12px;display:flex;flex-direction:column;height:100%;">
                 <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
                     <div>
                         <h2 class="st-card__title">24h Timeline</h2>
@@ -354,7 +400,7 @@
                         <div class="st-text--small st-text--muted">Slot Availability (Real-time Visual)</div>
                     </div>
                     <div style="display:flex;justify-content:flex-end;flex:1;align-items:flex-end;">
-                    <form method="GET" class="st-form-row" style="gap:4px;align-items:flex-end;margin-left:auto;">
+                    <form method="GET" class="st-form-row st-timeline-filters" style="gap:4px;align-items:flex-end;margin-left:auto;">
                         <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
                         <input type="hidden" name="range_end" value="{{ $range_end ?? $today }}">
                         <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
@@ -382,7 +428,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                        <div class="st-form-field st-timeline-filters__actions" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
                             <a href="{{ route('dashboard', ['range_start' => $range_start ?? $today, 'range_end' => $range_end ?? $today, 'activity_date' => $activity_date ?? $today, 'activity_warehouse' => $activity_warehouse ?? 0, 'activity_user' => $activity_user ?? 0]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
                         </div>
                     </form>
@@ -398,11 +444,11 @@
                     $timelineHours = range(7, 23);
                 @endphp
 
-                    <div style="margin-top: 8px; width: 100%;">
+                    <div style="margin-top: 8px; width: 100%; flex:1 1 auto; min-height:0; display:flex; flex-direction:column;">
                         <div
                             class="st-timeline"
                             id="dashboard-timeline"
-                            style="min-width: 0;"
+                            style="min-width: 0; flex:1 1 auto; min-height:0; display:flex; flex-direction:column;"
                             data-date="{{ $timelineDate }}"
                             data-start-hour="{{ (int) $timelineStartHour }}"
                             data-route-view="{{ route('slots.show', ['slotId' => 0], false) }}"
@@ -428,7 +474,7 @@
                                 </div>
                             </div>
 
-                            <div class="st-timeline__body">
+                            <div class="st-timeline__body" style="flex:1 1 auto; min-height:0;">
                                 @foreach (($gateCards ?? []) as $g)
                                     @php
                                         $gateId = (int)($g['gate_id'] ?? 0);
@@ -540,6 +586,17 @@
                         </div>
                     </div>
 
+            </div>
+        </div>
+    </section>
+
+        </div>
+        <div class="st-dashboard-slide" data-slide-index="4">
+
+    <section class="st-row" style="margin-top:8px;">
+        <div class="st-col-12">
+            <div class="st-card" style="padding:12px;">
+
                 @php
                     $processStatusCounts = [
                         'pending' => 0,
@@ -645,7 +702,7 @@
                     </div>
 
                     <div class="st-dashboard-schedule-table-col">
-                        <div class="st-flex-between-center st-flex-wrap st-gap-2">
+                        <div class="st-flex-between-center st-flex-wrap st-gap-2 st-dashboard-schedule-head">
                             <div>
                                 <h3 class="st-card__title">Schedule</h3>
                                 <div class="st-card__subtitle">Trucks, ETA, Gates, Status, and Estimated Finish</div>
@@ -773,100 +830,11 @@
         </div>
     </section>
 
-    <section class="st-row" style="margin-top:8px;">
-        <div class="st-col-12">
-            <div class="st-card" style="padding:12px;">
-                <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
-                    <div>
-                        <h2 class="st-card__title">Activity Logs</h2>
-                        <div class="st-card__subtitle">Status Changes and Events by Date, Warehouse, and User</div>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;flex:1;align-items:flex-end;">
-                    <form method="GET" id="activity-filter-form" class="st-form-row" style="margin-top:4px;gap:4px;align-items:flex-end;margin-left:auto;">
-                        <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
-                        <input type="hidden" name="range_end" value="{{ $range_end ?? $today }}">
-                        <div class="st-form-field">
-                            <label class="st-label">Date</label>
-                            <input type="text" name="activity_date" class="st-input flatpickr-date" value="{{ $activity_date ?? $today }}" placeholder="YYYY-MM-DD">
-                        </div>
-                        <div class="st-form-field">
-                            <label class="st-label">Warehouse</label>
-                            <select name="activity_warehouse" class="st-select">
-                                <option value="0">All</option>
-                                @foreach (($activityWarehouses ?? []) as $w)
-                                    <option value="{{ (int) data_get($w, 'id', 0) }}" {{ (int)($activity_warehouse ?? 0) === (int) data_get($w, 'id', 0) ? 'selected' : '' }}>{{ (string) data_get($w, 'name', '-') }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="st-form-field">
-                            <label class="st-label">User</label>
-                            <select name="activity_user" class="st-select">
-                                <option value="0">All</option>
-                                @foreach (($activityUsers ?? []) as $u)
-                                    <option value="{{ (int) data_get($u, 'id', 0) }}" {{ (int)($activity_user ?? 0) === (int) data_get($u, 'id', 0) ? 'selected' : '' }}>{{ (string) data_get($u, 'nik', '-') }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
-                        </div>
-                    </form>
-                    </div>
-                </div>
-
-                <div class="st-table-wrapper" style="max-height:280px;">
-                    <table class="st-table">
-                        <thead>
-                            <tr>
-                                <th style="width:140px;">Time</th>
-                                <th style="width:180px;">Warehouse</th>
-                                <th style="width:140px;">User</th>
-                                <th>Activity</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @forelse (($recentActivities ?? []) as $act)
-                            <tr>
-                                <td>{{ data_get($act, 'created_at', '') }}</td>
-                                <td>{{ data_get($act, 'warehouse_name', '-') }}</td>
-                                <td>{{ data_get($act, 'nik', '-') }}</td>
-                                <td>
-                                    @php
-                                        $activityType = (string) data_get($act, 'activity_type', '');
-                                        $activityLabel = ucwords(str_replace('_',' ', $activityType));
-                                        $isLateArrival = ($activityType === 'late_arrival');
-
-                                        // Fix capitalization and gate letters in description
-                                        $description = data_get($act, 'description', '');
-                                        $description = preg_replace_callback('/\bGate\s+([a-z])/', function($matches) {
-                                            return 'Gate ' . strtoupper($matches[1]);
-                                        }, $description);
-                                        $description = preg_replace_callback('/\b([a-z])\w+/', function($matches) {
-                                            $word = $matches[0];
-                                            $conjunctions = ['and', 'or', 'but', 'for', 'nor', 'on', 'at', 'to', 'from', 'with', 'in'];
-                                            if (in_array(strtolower($word), $conjunctions)) {
-                                                return strtolower($word);
-                                            }
-                                            return ucfirst($word);
-                                        }, $description);
-                                    @endphp
-                                    <strong style="{{ $isLateArrival ? 'color: #dc2626;' : '' }}">{{ $activityLabel }}</strong>
-                                    - {{ $description }}
-                                    @if (!empty(data_get($act, 'truck_number')))
-                                        (PO {{ data_get($act, 'truck_number') }})
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="4" style="padding:12px;">No Activities for Selected Filter.</td></tr>
-                        @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
-    </section>
+        </div>
+        </div>
 
-    <div class="st-timeline-modal" id="timeline-modal" aria-hidden="true">
+        <div class="st-timeline-modal" id="timeline-modal" aria-hidden="true">
         <div class="st-timeline-modal__backdrop" data-modal-close></div>
         <div class="st-timeline-modal__panel" role="dialog" aria-modal="true" aria-label="Slot details">
             <div class="st-timeline-modal__header">
@@ -919,6 +887,8 @@
     }
 }
 </style>
+
+    </div>
 @endsection
 
 @push('scripts')
@@ -1000,18 +970,315 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initAnalyticsRangePicker();
 
+    function initDashboardSlideshow() {
+        var root = document.querySelector('.st-dashboard-slideshow');
+        if (!root) return null;
+        var track = root.querySelector('.st-dashboard-slideshow__track');
+        var viewport = root.querySelector('.st-dashboard-slideshow__viewport');
+        if (!track) return null;
+        var slides = Array.prototype.slice.call(root.querySelectorAll('.st-dashboard-slide'));
+        if (!slides.length) return null;
+        var dots = Array.prototype.slice.call(root.querySelectorAll('[data-slide-dot]'));
+
+        var autoplayMs = parseInt(root.getAttribute('data-autoplay-ms') || '0', 10);
+        if (isNaN(autoplayMs) || autoplayMs < 0) autoplayMs = 0;
+
+        var activeIndex = parseInt(root.getAttribute('data-active-index') || '0', 10);
+        if (isNaN(activeIndex) || activeIndex < 0) activeIndex = 0;
+        if (activeIndex > slides.length - 1) activeIndex = slides.length - 1;
+
+        var timer = null;
+        var isPaused = false;
+
+        var isWrapping = false;
+
+        var fitTimer = null;
+        var isFitting = false;
+
+        var resizeObs = null;
+        function observeActiveSlide() {
+            try {
+                if (resizeObs) resizeObs.disconnect();
+            } catch (e) {}
+
+            if (!window.ResizeObserver) return;
+            var s = slides[activeIndex];
+            if (!s) return;
+
+            try {
+                resizeObs = new ResizeObserver(function () {
+                    if (isFitting) return;
+                    scheduleFit();
+                });
+                resizeObs.observe(s);
+            } catch (e) {
+                resizeObs = null;
+            }
+        }
+        function fitActiveSlide() {
+            if (!viewport) return;
+            try {
+                viewport.style.transform = 'none';
+                viewport.style.width = '100%';
+                viewport.style.height = '100%';
+            } catch (e) {}
+
+            var activeSlide = slides[activeIndex];
+            if (!activeSlide) return;
+
+            var prevHeight = activeSlide.style.height;
+            var prevOverflow = activeSlide.style.overflow;
+            try {
+                // Temporarily measure natural content size (without clipping constraints)
+                activeSlide.style.height = 'auto';
+                activeSlide.style.overflow = 'visible';
+            } catch (e) {}
+
+            var availableH = viewport.clientHeight || 0;
+            var availableW = viewport.clientWidth || 0;
+            var contentH = activeSlide.scrollHeight || 0;
+            var contentW = activeSlide.scrollWidth || 0;
+
+            try {
+                activeSlide.style.height = prevHeight;
+                activeSlide.style.overflow = prevOverflow;
+            } catch (e) {}
+
+            if (!availableH || !availableW || !contentH || !contentW) return;
+
+            // If it already fits, keep the UI at normal size.
+            if (contentH <= availableH && contentW <= availableW) {
+                try {
+                    viewport.style.transform = 'none';
+                    viewport.style.width = '100%';
+                    viewport.style.height = '100%';
+                } catch (e) {}
+                return;
+            }
+
+            var scaleH = availableH / contentH;
+            var scaleW = availableW / contentW;
+            var scale = Math.min(scaleH, scaleW);
+            if (!isFinite(scale) || scale <= 0) scale = 1;
+            // Clamp: never scale above 1 (prevents clipping). Allow downscales
+            // so everything fits without scrollbars.
+            scale = Math.max(0.10, Math.min(1, scale));
+
+            viewport.style.transformOrigin = 'top left';
+            viewport.style.transform = 'scale(' + String(scale) + ')';
+            viewport.style.width = (availableW / scale) + 'px';
+            viewport.style.height = (availableH / scale) + 'px';
+        }
+
+        function scheduleFit() {
+            if (fitTimer) clearTimeout(fitTimer);
+            fitTimer = setTimeout(function () {
+                var raf = window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); };
+                raf(function () {
+                    isFitting = true;
+                    fitActiveSlide();
+                    setTimeout(function () {
+                        fitActiveSlide();
+                    }, 220);
+                    setTimeout(function () {
+                        fitActiveSlide();
+                    }, 700);
+                    setTimeout(function () {
+                        fitActiveSlide();
+                    }, 1500);
+                    setTimeout(function () {
+                        isFitting = false;
+                    }, 1600);
+                });
+            }, 0);
+        }
+
+        function apply() {
+            track.style.transform = 'translateX(' + String(activeIndex * -100) + '%)';
+            slides.forEach(function (s, i) {
+                s.classList.toggle('is-active', i === activeIndex);
+            });
+            dots.forEach(function (d) {
+                var idx = parseInt(d.getAttribute('data-slide-dot') || '0', 10);
+                var isActive = idx === activeIndex;
+                d.classList.toggle('is-active', isActive);
+                d.setAttribute('aria-current', isActive ? 'true' : 'false');
+            });
+
+            observeActiveSlide();
+            scheduleFit();
+        }
+
+        function wrapTo(nextIndex, opts) {
+            if (isWrapping) return;
+            var n = parseInt(nextIndex, 10);
+            if (isNaN(n)) return;
+            if (n < 0) n = 0;
+            if (n > slides.length - 1) n = slides.length - 1;
+
+            isWrapping = true;
+            root.classList.add('is-wrapping');
+            clearTimer();
+
+            setTimeout(function () {
+                try {
+                    track.style.transition = 'none';
+                } catch (e) {}
+
+                activeIndex = n;
+                root.setAttribute('data-active-index', String(activeIndex));
+                apply();
+
+                try {
+                    track.offsetHeight;
+                    track.style.transition = '';
+                } catch (e) {}
+
+                root.classList.remove('is-wrapping');
+                isWrapping = false;
+
+                if (opts && opts.userAction) {
+                    scheduleNext();
+                }
+            }, 180);
+        }
+
+        function clearTimer() {
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+        }
+
+        function scheduleNext() {
+            clearTimer();
+            if (!autoplayMs) return;
+            if (isPaused) return;
+            timer = setTimeout(function () {
+                if (activeIndex === slides.length - 1) {
+                    wrapTo(0, { userAction: false });
+                } else {
+                    setIndex(activeIndex + 1, { userAction: false });
+                }
+                scheduleNext();
+            }, autoplayMs);
+        }
+
+        function pauseAutoplay() {
+            isPaused = true;
+            clearTimer();
+        }
+
+        function resumeAutoplay() {
+            isPaused = false;
+            scheduleNext();
+        }
+
+        function setIndex(nextIndex, opts) {
+            var n = parseInt(nextIndex, 10);
+            if (isNaN(n)) return;
+            if (n < 0) n = 0;
+            if (n > slides.length - 1) n = slides.length - 1;
+            if (n === activeIndex) return;
+
+            activeIndex = n;
+            root.setAttribute('data-active-index', String(activeIndex));
+            apply();
+            if (opts && opts.userAction) {
+                scheduleNext();
+            }
+        }
+
+        var btnPrev = root.querySelector('[data-slide-prev]');
+        var btnNext = root.querySelector('[data-slide-next]');
+        if (btnPrev) {
+            btnPrev.addEventListener('click', function () {
+                if (activeIndex === 0) {
+                    wrapTo(slides.length - 1, { userAction: true });
+                } else {
+                    setIndex(activeIndex - 1, { userAction: true });
+                }
+            });
+        }
+        if (btnNext) {
+            btnNext.addEventListener('click', function () {
+                if (activeIndex === slides.length - 1) {
+                    wrapTo(0, { userAction: true });
+                } else {
+                    setIndex(activeIndex + 1, { userAction: true });
+                }
+            });
+        }
+        dots.forEach(function (d) {
+            d.addEventListener('click', function () {
+                setIndex(d.getAttribute('data-slide-dot') || '0', { userAction: true });
+            });
+        });
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                clearTimer();
+            } else {
+                scheduleNext();
+            }
+        });
+
+        var nav = root.querySelector('.st-dashboard-slideshow__nav');
+        if (viewport) {
+            viewport.addEventListener('mouseenter', pauseAutoplay);
+            viewport.addEventListener('mouseleave', resumeAutoplay);
+        }
+        if (nav) {
+            nav.addEventListener('mouseenter', pauseAutoplay);
+            nav.addEventListener('mouseleave', resumeAutoplay);
+        }
+
+        window.addEventListener('resize', function () {
+            scheduleFit();
+        });
+
+        window.addEventListener('load', function () {
+            scheduleFit();
+        });
+
+        if (window.ResizeObserver) {
+            var resizeObserver = new ResizeObserver(function () {
+                if (isFitting) return;
+                scheduleFit();
+            });
+            resizeObserver.observe(viewport);
+        }
+
+        if (window.visualViewport) {
+            try {
+                window.visualViewport.addEventListener('resize', scheduleFit);
+                window.visualViewport.addEventListener('scroll', scheduleFit);
+            } catch (e) {}
+        }
+
+        apply();
+        observeActiveSlide();
+        scheduleNext();
+
+        return {
+            setIndex: setIndex,
+            getIndex: function () { return activeIndex; },
+            fit: scheduleFit
+        };
+    }
+
+    var dashboardSlideshow = initDashboardSlideshow();
+
     // Scroll to timeline section if URL contains filter parameters
     if (window.location.search.includes('schedule_date') ||
         window.location.search.includes('timeline_gate') ||
         window.location.search.includes('schedule_from') ||
         window.location.search.includes('schedule_to')) {
-
-        var timelineSection = document.querySelector('#dashboard-timeline');
-        if (timelineSection) {
-            setTimeout(function() {
-                timelineSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
+        setTimeout(function() {
+            if (dashboardSlideshow && typeof dashboardSlideshow.setIndex === 'function') {
+                dashboardSlideshow.setIndex(3, { userAction: false });
+            }
+        }, 100);
     }
 
     // Handle form submission to add scroll behavior
@@ -1026,12 +1293,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Check if we need to scroll after page load
     if (sessionStorage.getItem('scrollToTimeline') === 'true') {
         sessionStorage.removeItem('scrollToTimeline');
-        var timelineSection = document.querySelector('#dashboard-timeline');
-        if (timelineSection) {
-            setTimeout(function() {
-                timelineSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300);
-        }
+        setTimeout(function() {
+            if (dashboardSlideshow && typeof dashboardSlideshow.setIndex === 'function') {
+                dashboardSlideshow.setIndex(3, { userAction: false });
+            }
+        }, 300);
     }
 
     try {
@@ -1284,6 +1550,18 @@ document.addEventListener('DOMContentLoaded', function () {
     if (timeline) {
         scheduleLayoutTimeline();
         window.addEventListener('resize', scheduleLayoutTimeline);
+        if (window.ResizeObserver) {
+            var resizeObserver = new ResizeObserver(function () {
+                scheduleLayoutTimeline();
+            });
+            resizeObserver.observe(timeline);
+        }
+        if (window.visualViewport) {
+            try {
+                window.visualViewport.addEventListener('resize', scheduleLayoutTimeline);
+                window.visualViewport.addEventListener('scroll', scheduleLayoutTimeline);
+            } catch (e) {}
+        }
     }
 
     function ensureHoverCard() {
@@ -1560,6 +1838,9 @@ document.addEventListener('DOMContentLoaded', function () {
 <script type="application/json" id="dashboard_target_dir">{!! json_encode($targetDir ?? []) !!}</script>
 <script type="application/json" id="dashboard_on_time_wh_data">{!! json_encode($onTimeWarehouseData ?? []) !!}</script>
 <script type="application/json" id="dashboard_target_wh_data">{!! json_encode($targetWarehouseData ?? []) !!}</script>
+<script type="application/json" id="dashboard_on_time_gate_data">{!! json_encode($onTimeGateData ?? []) !!}</script>
+<script type="application/json" id="dashboard_target_gate_data">{!! json_encode($targetGateData ?? []) !!}</script>
+<script type="application/json" id="dashboard_completion_gate_data">{!! json_encode($completionGateData ?? []) !!}</script>
 <script type="application/json" id="dashboard_target_segment_labels">{!! json_encode($targetSegmentLabels ?? []) !!}</script>
 <script type="application/json" id="dashboard_target_segment_achieve">{!! json_encode($targetSegmentAchieve ?? []) !!}</script>
 <script type="application/json" id="dashboard_target_segment_not_achieve">{!! json_encode($targetSegmentNotAchieve ?? []) !!}</script>
@@ -1579,6 +1860,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'completion_completed' => (int) ($completionCompletedSlots ?? 0),
     'completion_total' => (int) ($completionTotalSlots ?? 0),
 ]) !!}</script>
+<script type="application/json" id="dashboard_direction_by_gate">{!! json_encode($directionByGate ?? []) !!}</script>
 <script type="application/json" id="indonesia_holidays">{!! json_encode($holidays ?? []) !!}</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -1597,53 +1879,53 @@ document.addEventListener('DOMContentLoaded', function () {
     var tabButtons = document.querySelectorAll('#analytics-tabs-card .st-tab-btn');
     var tabPanels = document.querySelectorAll('#analytics-tabs-card .st-tab-panel');
 
-    function setTab(tab) {
-        tabButtons.forEach(function (b) {
-            var isActive = b.getAttribute('data-tab') === tab;
-            if (isActive) {
-                b.style.background = 'var(--primary)';
-                b.style.color = '#ffffff';
-                b.style.borderColor = 'var(--primary)';
-            } else {
-                b.style.background = 'transparent';
-                b.style.color = 'var(--primary)';
-                b.style.borderColor = 'var(--primary)';
+    if (tabButtons && tabButtons.length && tabPanels && tabPanels.length) {
+        function setTab(tab) {
+            tabButtons.forEach(function (b) {
+                var isActive = b.getAttribute('data-tab') === tab;
+                if (isActive) {
+                    b.style.background = 'var(--primary)';
+                    b.style.color = '#ffffff';
+                    b.style.borderColor = 'var(--primary)';
+                } else {
+                    b.style.background = 'transparent';
+                    b.style.color = 'var(--primary)';
+                    b.style.borderColor = 'var(--primary)';
+                }
+                b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+            tabPanels.forEach(function (p) {
+                var isActive = p.getAttribute('data-tab-panel') === tab;
+                p.style.display = isActive ? 'block' : 'none';
+            });
+
+            // Resize charts when switching tabs
+            try {
+                if (typeof trendChart !== 'undefined' && trendChart && trendChart.resize) trendChart.resize();
+                if (typeof directionChart !== 'undefined' && directionChart && directionChart.resize) directionChart.resize();
+                if (typeof onTimeChart !== 'undefined' && onTimeChart && onTimeChart.resize) onTimeChart.resize();
+                if (typeof targetChart !== 'undefined' && targetChart && targetChart.resize) targetChart.resize();
+                if (typeof completionChart !== 'undefined' && completionChart && completionChart.resize) completionChart.resize();
+                if (typeof bottleneckChart !== 'undefined' && bottleneckChart && bottleneckChart.resize) bottleneckChart.resize();
+
+                // Force a redraw so datalabels appear immediately (some browsers only paint after interaction)
+                if (typeof trendChart !== 'undefined' && trendChart && trendChart.update) trendChart.update();
+                if (typeof directionChart !== 'undefined' && directionChart && directionChart.update) directionChart.update();
+                if (typeof onTimeChart !== 'undefined' && onTimeChart && onTimeChart.update) onTimeChart.update();
+                if (typeof targetChart !== 'undefined' && targetChart && targetChart.update) targetChart.update();
+                if (typeof completionChart !== 'undefined' && completionChart && completionChart.update) completionChart.update();
+                if (typeof bottleneckChart !== 'undefined' && bottleneckChart && bottleneckChart.update) bottleneckChart.update();
+            } catch (e) {
+                // ignore
             }
-            b.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        });
-        tabPanels.forEach(function (p) {
-            var isActive = p.getAttribute('data-tab-panel') === tab;
-            p.style.display = isActive ? 'block' : 'none';
-        });
-
-        // Resize charts when switching tabs
-        try {
-            if (typeof trendChart !== 'undefined' && trendChart && trendChart.resize) trendChart.resize();
-            if (typeof directionChart !== 'undefined' && directionChart && directionChart.resize) directionChart.resize();
-            if (typeof onTimeChart !== 'undefined' && onTimeChart && onTimeChart.resize) onTimeChart.resize();
-            if (typeof targetChart !== 'undefined' && targetChart && targetChart.resize) targetChart.resize();
-            if (typeof completionChart !== 'undefined' && completionChart && completionChart.resize) completionChart.resize();
-            if (typeof bottleneckChart !== 'undefined' && bottleneckChart && bottleneckChart.resize) bottleneckChart.resize();
-
-            // Force a redraw so datalabels appear immediately (some browsers only paint after interaction)
-            if (typeof trendChart !== 'undefined' && trendChart && trendChart.update) trendChart.update();
-            if (typeof directionChart !== 'undefined' && directionChart && directionChart.update) directionChart.update();
-            if (typeof onTimeChart !== 'undefined' && onTimeChart && onTimeChart.update) onTimeChart.update();
-            if (typeof targetChart !== 'undefined' && targetChart && targetChart.update) targetChart.update();
-            if (typeof completionChart !== 'undefined' && completionChart && completionChart.update) completionChart.update();
-            if (typeof bottleneckChart !== 'undefined' && bottleneckChart && bottleneckChart.update) bottleneckChart.update();
-        } catch (e) {
-            // ignore
         }
-    }
 
-    tabButtons.forEach(function (b) {
-        b.addEventListener('click', function () {
-            setTab(b.getAttribute('data-tab'));
+        tabButtons.forEach(function (b) {
+            b.addEventListener('click', function () {
+                setTab(b.getAttribute('data-tab'));
+            });
         });
-    });
 
-    if (tabButtons && tabButtons.length) {
         setTab('overview');
     }
 
@@ -1950,6 +2232,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var numbers = readJsonFromEl('dashboard_numbers') || {};
     var inbound = parseInt(numbers.inbound || 0, 10);
     var outbound = parseInt(numbers.outbound || 0);
+    var baseInbound = inbound;
+    var baseOutbound = outbound;
 
     // Update chart title with month name
     if (trendDays && trendDays.length > 0) {
@@ -1983,6 +2267,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var targetDir = readJsonFromEl('dashboard_target_dir') || {};
     var onTimeWarehouseData = readJsonFromEl('dashboard_on_time_wh_data') || [];
     var targetWarehouseData = readJsonFromEl('dashboard_target_wh_data') || [];
+
+    var onTimeGateData = readJsonFromEl('dashboard_on_time_gate_data') || [];
+    var targetGateData = readJsonFromEl('dashboard_target_gate_data') || [];
+    var completionGateData = readJsonFromEl('dashboard_completion_gate_data') || [];
+
+    var directionByGate = readJsonFromEl('dashboard_direction_by_gate') || {};
 
     var targetLabels = readJsonFromEl('dashboard_target_segment_labels') || [];
     var targetAch = readJsonFromEl('dashboard_target_segment_achieve') || [];
@@ -2415,6 +2705,104 @@ document.addEventListener('DOMContentLoaded', function () {
     var scheduleData = @json($schedule ?? []);
     var processStatusData = @json($processStatusCounts ?? []);
 
+    function normalizeGateKeyForDirection(row) {
+        var raw = '';
+        if (row && row.gate_label !== undefined && row.gate_label !== null) raw = row.gate_label;
+        else if (row && row.gate_number !== undefined && row.gate_number !== null) raw = row.gate_number;
+        else if (row && row.gate !== undefined && row.gate !== null) raw = row.gate;
+
+        // If numeric, map 1/2/3 -> A/B/C
+        if (typeof raw === 'number') {
+            if (raw === 1) return 'A';
+            if (raw === 2) return 'B';
+            if (raw === 3) return 'C';
+        }
+
+        var s = String(raw || '').trim().toUpperCase();
+        if (!s) return '';
+
+        // Accept only explicit gate patterns OR pure single-token inputs.
+        // Examples supported:
+        // - "Gate A", "Warehouse 1 - Gate A", "G1", "G 2", "Gate-3"
+        // - "A" / "B" / "C" / "1" / "2" / "3"
+        var m = null;
+
+        // Pure token
+        m = s.match(/^\s*([ABC123])\s*$/);
+
+        // Gate patterns
+        if (!m) m = s.match(/\bGATE\b[^A-Z0-9]*([ABC123])\b/);
+        if (!m) m = s.match(/\bG\b\s*([ABC123])\b/);
+        if (!m) m = s.match(/\bG\s*([ABC123])\b/);
+
+        if (!m || !m[1]) return '';
+
+        var k = String(m[1] || '').toUpperCase();
+        if (k === '1') return 'A';
+        if (k === '2') return 'B';
+        if (k === '3') return 'C';
+        if (k === 'A' || k === 'B' || k === 'C') return k;
+        return '';
+    }
+
+    function normalizeDirectionKey(raw) {
+        var s = String(raw || '').trim().toLowerCase();
+        if (!s) return '';
+        if (s.indexOf('in') === 0) return 'inbound';
+        if (s.indexOf('out') === 0) return 'outbound';
+        if (s === 'i') return 'inbound';
+        if (s === 'o') return 'outbound';
+        return '';
+    }
+
+    function calcDirectionCountsByGate(gateKey) {
+        var gk = String(gateKey || 'all').toUpperCase();
+
+        // All Gates = overall totals for the selected analytics range.
+        if (!gk || gk === 'ALL') {
+            return { inbound: baseInbound, outbound: baseOutbound };
+        }
+
+        // Gate A/B/C uses backend aggregation (range-based, accurate).
+        try {
+            var row = directionByGate ? directionByGate[gk] : null;
+            if (row) {
+                return {
+                    inbound: parseInt(row.inbound || 0, 10) || 0,
+                    outbound: parseInt(row.outbound || 0, 10) || 0
+                };
+            }
+        } catch (e) {}
+
+        return { inbound: 0, outbound: 0 };
+    }
+
+    function applyDirectionFilter(gateKey) {
+        var res = calcDirectionCountsByGate(gateKey);
+        var inV = parseInt(res.inbound || 0, 10) || 0;
+        var outV = parseInt(res.outbound || 0, 10) || 0;
+
+        if (inboundEl) inboundEl.textContent = inV.toLocaleString();
+        if (outboundEl) outboundEl.textContent = outV.toLocaleString();
+        if (totalEl) totalEl.textContent = (inV + outV).toLocaleString();
+
+        setChartMessage(directionCanvas, (inV + outV) <= 0 ? 'No Inbound/Outbound data in this range.' : '');
+        if (directionChart) {
+            try {
+                directionChart.data.datasets[0].data = [inV, outV];
+                directionChart.update();
+            } catch (e) {}
+        }
+    }
+
+    var directionGateSel = document.getElementById('direction_gate');
+    if (directionGateSel) {
+        directionGateSel.addEventListener('change', function () {
+            applyDirectionFilter(directionGateSel.value || 'all');
+        });
+        applyDirectionFilter(directionGateSel.value || 'all');
+    }
+
     function calcProcessStatus(dir) {
         var counts = {
             pending: 0,
@@ -2723,7 +3111,7 @@ document.addEventListener('DOMContentLoaded', function () {
             animation: { duration: 800, easing: 'easeOutQuart' },
             interaction: { mode: 'index', intersect: false },
             layout: {
-                padding: { top: 34, right: 14, left: 10, bottom: 8 }
+                padding: { top: 18, right: 12, left: 8, bottom: 0 }
             },
             plugins: {
                 legend: getLegendOptions(false),
@@ -2764,17 +3152,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 'bar'));
 
     function calcCompletion(dir, wh) {
+        var d = String(dir || 'all');
+        var g = String(wh || 'all').toUpperCase();
+
         var total = 0;
         var completed = 0;
 
-        (completionData || []).forEach(function (r) {
-            var rDir = (r && r.direction) ? String(r.direction) : '';
-            var rWh = (r && r.warehouse_code) ? String(r.warehouse_code) : '';
-            if (dir && dir !== 'all' && rDir !== dir) return;
-            if (wh && wh !== 'all' && rWh !== wh) return;
-            total += parseInt(r.total || 0, 10);
-            completed += parseInt(r.completed || 0, 10);
-        });
+        if (completionGateData && completionGateData.length) {
+            (completionGateData || []).forEach(function (r) {
+                var rDir = (r && r.direction) ? String(r.direction) : '';
+                var rGate = (r && r.gate_key) ? String(r.gate_key).toUpperCase() : '';
+                if (g && g !== 'ALL' && rGate !== g) return;
+                if (d && d !== 'all' && rDir !== d) return;
+                total += parseInt(r.total || 0, 10);
+                completed += parseInt(r.completed || 0, 10);
+            });
+        } else {
+            (completionData || []).forEach(function (r) {
+                var rDir2 = (r && r.direction) ? String(r.direction) : '';
+                if (d && d !== 'all' && rDir2 !== d) return;
+                total += parseInt(r.total || 0, 10);
+                completed += parseInt(r.completed || 0, 10);
+            });
+        }
 
         var rate = total > 0 ? Math.round((completed / total) * 100) : 0;
         return { total: total, completed: completed, rate: rate };
@@ -2880,13 +3280,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function calcOnTime(dir, wh) {
+        var d = String(dir || 'all');
+        var g = String(wh || 'all').toUpperCase();
+
+        if (!g || g === 'ALL') {
+            var src = (d === 'inbound' || d === 'outbound') ? (onTimeDir[d] || {}) : (onTimeDir.all || {});
+            var onV0 = parseInt(src.on_time || 0, 10) || 0;
+            var lateV0 = parseInt(src.late || 0, 10) || 0;
+            return { on_time: onV0, late: lateV0, total: onV0 + lateV0 };
+        }
+
         var onV = 0;
         var lateV = 0;
-        (onTimeWarehouseData || []).forEach(function (r) {
+        (onTimeGateData || []).forEach(function (r) {
             var rDir = (r && r.direction) ? String(r.direction) : '';
-            var rWh = (r && r.warehouse_code) ? String(r.warehouse_code) : '';
-            if (dir && dir !== 'all' && rDir !== dir) return;
-            if (wh && wh !== 'all' && rWh !== wh) return;
+            var rGate = (r && r.gate_key) ? String(r.gate_key).toUpperCase() : '';
+            if (rGate !== g) return;
+            if (d && d !== 'all' && rDir !== d) return;
             onV += parseInt(r.on_time || 0, 10);
             lateV += parseInt(r.late || 0, 10);
         });
@@ -2911,13 +3321,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function calcTarget(dir, wh) {
+        var d = String(dir || 'all');
+        var g = String(wh || 'all').toUpperCase();
+
+        if (!g || g === 'ALL') {
+            var src = (d === 'inbound' || d === 'outbound') ? (targetDir[d] || {}) : (targetDir.all || {});
+            var a0 = parseInt(src.achieve || 0, 10) || 0;
+            var n0 = parseInt(src.not_achieve || 0, 10) || 0;
+            return { achieve: a0, not_achieve: n0, total: a0 + n0 };
+        }
+
         var a = 0;
         var n = 0;
-        (targetWarehouseData || []).forEach(function (r) {
+        (targetGateData || []).forEach(function (r) {
             var rDir = (r && r.direction) ? String(r.direction) : '';
-            var rWh = (r && r.warehouse_code) ? String(r.warehouse_code) : '';
-            if (dir && dir !== 'all' && rDir !== dir) return;
-            if (wh && wh !== 'all' && rWh !== wh) return;
+            var rGate = (r && r.gate_key) ? String(r.gate_key).toUpperCase() : '';
+            if (rGate !== g) return;
+            if (d && d !== 'all' && rDir !== d) return;
             a += parseInt(r.achieve || 0, 10);
             n += parseInt(r.not_achieve || 0, 10);
         });

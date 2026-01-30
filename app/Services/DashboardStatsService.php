@@ -10,6 +10,270 @@ class DashboardStatsService
         private readonly SlotService $slotService
     ) {}
 
+    public function getDirectionByGate(string $start, string $end): array
+    {
+        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
+
+        $rows = DB::table('slots as s')
+            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('gates as g', function ($join) {
+                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    ->on('s.warehouse_id', '=', 'g.warehouse_id');
+            })
+            ->whereBetween($rangeDate, [$start, $end])
+            ->where('s.status', '!=', 'cancelled')
+            ->select([
+                'w.wh_code as warehouse_code',
+                'g.gate_number',
+                's.direction',
+                DB::raw('COUNT(*) as slot_count'),
+            ])
+            ->groupBy(['w.wh_code', 'g.gate_number', 's.direction'])
+            ->get();
+
+        $out = [
+            'A' => ['inbound' => 0, 'outbound' => 0],
+            'B' => ['inbound' => 0, 'outbound' => 0],
+            'C' => ['inbound' => 0, 'outbound' => 0],
+        ];
+
+        foreach ($rows as $r) {
+            $gateNo = (string) ($r->gate_number ?? '');
+            $dir = (string) ($r->direction ?? '');
+            if ($dir !== 'inbound' && $dir !== 'outbound') {
+                continue;
+            }
+
+            $raw = strtoupper(trim($gateNo));
+            $raw = preg_replace('/\s+/', '', $raw);
+            $raw = preg_replace('/^GATE/', '', $raw);
+            $raw = preg_replace('/^G/', '', $raw);
+
+            $letter = '';
+            if ($raw === '1') {
+                $letter = 'A';
+            } elseif ($raw === '2') {
+                $letter = 'B';
+            } elseif ($raw === '3') {
+                $letter = 'C';
+            } elseif (in_array($raw, ['A', 'B', 'C'], true)) {
+                $letter = $raw;
+            }
+
+            if ($letter === '') {
+                continue;
+            }
+
+            if (!isset($out[$letter])) {
+                continue;
+            }
+
+            $out[$letter][$dir] += (int) ($r->slot_count ?? 0);
+        }
+
+        return $out;
+    }
+
+    public function getOnTimeGateStats(string $start, string $end): array
+    {
+        $rangeDate = DB::raw('DATE(s.planned_start)');
+
+        $rows = DB::table('slots as s')
+            ->leftJoin('gates as g', function ($join) {
+                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    ->on('s.warehouse_id', '=', 'g.warehouse_id');
+            })
+            ->where('s.status', 'completed')
+            ->whereBetween($rangeDate, [$start, $end])
+            ->groupBy(['s.direction', 'g.gate_number'])
+            ->select([
+                's.direction',
+                'g.gate_number',
+                DB::raw("SUM(CASE WHEN s.is_late = true THEN 0 ELSE 1 END) AS on_time"),
+                DB::raw("SUM(CASE WHEN s.is_late = true THEN 1 ELSE 0 END) AS late"),
+            ])
+            ->get();
+
+        $gates = [];
+        $data = [];
+
+        foreach ($rows as $r) {
+            $dir = (string) ($r->direction ?? '');
+            $gateNo = (string) ($r->gate_number ?? '');
+
+            $raw = strtoupper(trim($gateNo));
+            $raw = preg_replace('/\s+/', '', $raw);
+            $raw = preg_replace('/^GATE/', '', $raw);
+            $raw = preg_replace('/^G/', '', $raw);
+
+            $gateKey = '';
+            if ($raw === '1') {
+                $gateKey = 'A';
+            } elseif ($raw === '2') {
+                $gateKey = 'B';
+            } elseif ($raw === '3') {
+                $gateKey = 'C';
+            } elseif (in_array($raw, ['A', 'B', 'C'], true)) {
+                $gateKey = $raw;
+            }
+
+            if ($gateKey === '' || ($dir !== 'inbound' && $dir !== 'outbound')) {
+                continue;
+            }
+
+            if (!in_array($gateKey, $gates, true)) {
+                $gates[] = $gateKey;
+            }
+
+            $data[] = [
+                'direction' => $dir,
+                'gate_key' => $gateKey,
+                'on_time' => (int) ($r->on_time ?? 0),
+                'late' => (int) ($r->late ?? 0),
+            ];
+        }
+
+        return [
+            'gates' => $gates,
+            'data' => $data,
+        ];
+    }
+
+    public function getTargetAchievementGateStats(string $start, string $end): array
+    {
+        $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
+        $rangeDate = DB::raw('DATE(s.planned_start)');
+
+        $rows = DB::table('slots as s')
+            ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
+            ->leftJoin('gates as g', function ($join) {
+                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    ->on('s.warehouse_id', '=', 'g.warehouse_id');
+            })
+            ->where('s.status', 'completed')
+            ->whereNotNull('td.target_duration_minutes')
+            ->whereNotNull('s.actual_finish')
+            ->whereNotNull('s.actual_start')
+            ->whereBetween($rangeDate, [$start, $end])
+            ->groupBy(['s.direction', 'g.gate_number'])
+            ->select([
+                's.direction',
+                'g.gate_number',
+                DB::raw("SUM(CASE WHEN {$exprActual} <= td.target_duration_minutes + 15 THEN 1 ELSE 0 END) AS achieve_count"),
+                DB::raw("SUM(CASE WHEN {$exprActual} > td.target_duration_minutes + 15 THEN 1 ELSE 0 END) AS not_achieve_count"),
+            ])
+            ->get();
+
+        $gates = [];
+        $data = [];
+
+        foreach ($rows as $r) {
+            $dir = (string) ($r->direction ?? '');
+            $gateNo = (string) ($r->gate_number ?? '');
+
+            $raw = strtoupper(trim($gateNo));
+            $raw = preg_replace('/\s+/', '', $raw);
+            $raw = preg_replace('/^GATE/', '', $raw);
+            $raw = preg_replace('/^G/', '', $raw);
+
+            $gateKey = '';
+            if ($raw === '1') {
+                $gateKey = 'A';
+            } elseif ($raw === '2') {
+                $gateKey = 'B';
+            } elseif ($raw === '3') {
+                $gateKey = 'C';
+            } elseif (in_array($raw, ['A', 'B', 'C'], true)) {
+                $gateKey = $raw;
+            }
+
+            if ($gateKey === '' || ($dir !== 'inbound' && $dir !== 'outbound')) {
+                continue;
+            }
+
+            if (!in_array($gateKey, $gates, true)) {
+                $gates[] = $gateKey;
+            }
+
+            $data[] = [
+                'direction' => $dir,
+                'gate_key' => $gateKey,
+                'achieve' => (int) ($r->achieve_count ?? 0),
+                'not_achieve' => (int) ($r->not_achieve_count ?? 0),
+            ];
+        }
+
+        return [
+            'gates' => $gates,
+            'data' => $data,
+        ];
+    }
+
+    public function getCompletionGateStats(string $start, string $end): array
+    {
+        $rangeDate = DB::raw('DATE(s.planned_start)');
+
+        $rows = DB::table('slots as s')
+            ->leftJoin('gates as g', function ($join) {
+                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    ->on('s.warehouse_id', '=', 'g.warehouse_id');
+            })
+            ->whereBetween($rangeDate, [$start, $end])
+            ->where('s.status', '!=', 'cancelled')
+            ->groupBy(['s.direction', 'g.gate_number'])
+            ->select([
+                's.direction',
+                'g.gate_number',
+                DB::raw('COUNT(*) AS total_slots'),
+                DB::raw("SUM(CASE WHEN s.status = 'completed' THEN 1 ELSE 0 END) AS completed_slots"),
+            ])
+            ->get();
+
+        $gates = [];
+        $data = [];
+
+        foreach ($rows as $r) {
+            $dir = (string) ($r->direction ?? '');
+            $gateNo = (string) ($r->gate_number ?? '');
+
+            $raw = strtoupper(trim($gateNo));
+            $raw = preg_replace('/\s+/', '', $raw);
+            $raw = preg_replace('/^GATE/', '', $raw);
+            $raw = preg_replace('/^G/', '', $raw);
+
+            $gateKey = '';
+            if ($raw === '1') {
+                $gateKey = 'A';
+            } elseif ($raw === '2') {
+                $gateKey = 'B';
+            } elseif ($raw === '3') {
+                $gateKey = 'C';
+            } elseif (in_array($raw, ['A', 'B', 'C'], true)) {
+                $gateKey = $raw;
+            }
+
+            if ($gateKey === '' || ($dir !== 'inbound' && $dir !== 'outbound')) {
+                continue;
+            }
+
+            if (!in_array($gateKey, $gates, true)) {
+                $gates[] = $gateKey;
+            }
+
+            $data[] = [
+                'direction' => $dir,
+                'gate_key' => $gateKey,
+                'total' => (int) ($r->total_slots ?? 0),
+                'completed' => (int) ($r->completed_slots ?? 0),
+            ];
+        }
+
+        return [
+            'gates' => $gates,
+            'data' => $data,
+        ];
+    }
+
     /**
      * Get range statistics for dashboard
      * Optimized: Single query instead of 10 separate queries

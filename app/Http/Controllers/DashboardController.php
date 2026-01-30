@@ -40,8 +40,15 @@ class DashboardController extends Controller
             }
 
             // Fallback (jaga-jaga Spatie load role dengan nama lain)
-            if (Auth::user() && Auth::user()->hasRole(['Vendor', 'vendor'])) {
-                return redirect()->route('vendor.dashboard');
+            $u = Auth::user();
+            if ($u && is_callable([$u, 'hasRole'])) {
+                try {
+                    if ((bool) call_user_func([$u, 'hasRole'], ['Vendor', 'vendor'])) {
+                        return redirect()->route('vendor.dashboard');
+                    }
+                } catch (\Throwable $e) {
+                    // ignore
+                }
             }
         }
 
@@ -60,6 +67,10 @@ class DashboardController extends Controller
 
         // Get statistics data
         $rangeStats = $this->statsService->getRangeStats($rangeStart, $rangeEnd);
+        $directionByGate = $this->statsService->getDirectionByGate($rangeStart, $rangeEnd);
+        $onTimeGateStats = $this->statsService->getOnTimeGateStats($rangeStart, $rangeEnd);
+        $targetGateStats = $this->statsService->getTargetAchievementGateStats($rangeStart, $rangeEnd);
+        $completionGateStats = $this->statsService->getCompletionGateStats($rangeStart, $rangeEnd);
         $onTimeStats = $this->statsService->getOnTimeStats($rangeStart, $rangeEnd);
         $onTimeWarehouseStats = $this->statsService->getOnTimeWarehouseStats($rangeStart, $rangeEnd);
         $targetStats = $this->statsService->getTargetAchievementStats($rangeStart, $rangeEnd);
@@ -148,6 +159,11 @@ class DashboardController extends Controller
             'today' => $today,
             'range_start' => $rangeStart,
             'range_end' => $rangeEnd,
+
+            'directionByGate' => $directionByGate,
+            'onTimeGateData' => $onTimeGateStats['data'] ?? [],
+            'targetGateData' => $targetGateStats['data'] ?? [],
+            'completionGateData' => $completionGateStats['data'] ?? [],
 
             // Range statistics
             'totalRange' => $rangeStats['total'],
