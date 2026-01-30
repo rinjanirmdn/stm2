@@ -640,10 +640,32 @@ body {
 }
 
 /* Collapsed sidebar state (desktop) */
+.st-app--sidebar-collapsed {
+    --st-sidebar-width: 72px;
+}
+
 .st-app--sidebar-collapsed .st-sidebar {
     width: var(--st-sidebar-width);
     flex: 0 0 var(--st-sidebar-width);
     padding: 12px 6px;
+}
+
+.st-app--sidebar-collapsed .st-sidebar__brand {
+    padding: 6px;
+    height: 44px;
+}
+
+.st-app--sidebar-collapsed .st-sidebar__brand-main {
+    justify-content: center;
+    gap: 0;
+}
+
+.st-app--sidebar-collapsed .st-sidebar__logo--full {
+    display: none;
+}
+
+.st-app--sidebar-collapsed .st-sidebar__logo--icon {
+    display: block;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__brand-main .st-sidebar__title {
@@ -782,6 +804,10 @@ body {
     flex-basis: 220px;
 }
 
+.st-app--sidebar-collapsed .st-sidebar:hover ~ .st-main {
+    margin-left: 220px;
+}
+
 .st-app--sidebar-collapsed .st-sidebar:hover .st-sidebar__nav {
     align-items: stretch;
 }
@@ -824,6 +850,7 @@ body {
     display: flex;
     flex-direction: column;
     margin-left: var(--st-sidebar-width);
+    transition: margin-left 0.25s ease;
 }
 
 .st-topbar {
