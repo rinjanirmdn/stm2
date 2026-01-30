@@ -2,14 +2,9 @@
 
 @section('title', 'Dashboard - Slot Time Management')
 @section('page_title', 'Dashboard')
+@section('body_class', 'st-app--dashboard')
 
 @section('content')
-    <style>
-        html, body { overflow: hidden; }
-        .st-main { height: 100vh; min-height: 100vh; overflow: hidden; }
-        .st-content { overflow: hidden; min-height: 0; padding: 10px 12px 0 !important; }
-        .st-footer { flex: 0 0 auto; }
-    </style>
     <div class="st-dashboard-slideshow" data-autoplay-ms="10000" data-active-index="0">
         <div class="st-dashboard-slideshow__nav" aria-label="Dashboard slides">
             <button type="button" class="st-dashboard-slideshow__btn" data-slide-prev aria-label="Previous slide">‹</button>
@@ -28,36 +23,36 @@
     <section class="st-row">
         <div class="st-col-12">
             <div class="st-card" id="analytics-tabs-card">
-                <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+                <div class="st-card__header st-dashboard-card-header">
                     <div>
                         <h2 class="st-card__title">Analytics Range</h2>
                         <div class="st-card__subtitle">Date Range for Analytics (Overview / KPI / Bottleneck)</div>
                     </div>
-                    <div style="display:flex;justify-content:flex-end;flex:1;align-items:flex-end;">
-                        <form method="GET" class="st-form-row" style="gap:4px;align-items:flex-end;margin-left:auto;">
+                    <div class="st-dashboard-card-actions">
+                        <form method="GET" class="st-form-row st-dashboard-range-form">
                             <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
                             <input type="hidden" name="activity_warehouse" value="{{ $activity_warehouse ?? 0 }}">
                             <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
                             <input type="hidden" id="range_start" name="range_start" value="{{ $range_start }}">
                             <input type="hidden" id="range_end" name="range_end" value="{{ $range_end }}">
-                            <div class="st-form-field" style="min-width:260px;">
+                            <div class="st-form-field st-dashboard-range-field">
                                 <label class="st-label">Range</label>
                                 <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ $range_start ?? $today }}" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
                             </div>
-                            <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
-                                <a href="{{ route('dashboard', ['range_start' => \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'), 'range_end' => $today]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                            <div class="st-form-field st-dashboard-range-reset">
+                                <a href="{{ route('dashboard', ['range_start' => \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'), 'range_end' => $today]) }}" class="st-btn st-btn--outline-primary">Reset</a>
                             </div>
                         </form>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));gap:6px;">
+                <div class="st-dashboard-mini-grid">
                     <div class="st-mini-card st-mini-card--with-info">
                         <button type="button" class="st-tooltip st-mini-card__info" aria-label="Info: Pending" title="Booking requests awaiting approval before entering the official schedule.">
                             <i class="fa-solid fa-info"></i>
                         </button>
                         <div class="st-text--small st-text--muted">Pending</div>
                         <div class="st-mini-card__value-row">
-                            <div style="font-size:26px;font-weight:700;">{{ $pendingRange ?? 0 }}</div>
+                            <div class="st-dashboard-mini-value">{{ $pendingRange ?? 0 }}</div>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
@@ -66,7 +61,7 @@
                         </button>
                         <div class="st-text--small st-text--muted">Scheduled</div>
                         <div class="st-mini-card__value-row">
-                            <div style="font-size:26px;font-weight:700;">{{ $scheduledRange ?? 0 }}</div>
+                            <div class="st-dashboard-mini-value">{{ $scheduledRange ?? 0 }}</div>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
@@ -75,7 +70,7 @@
                         </button>
                         <div class="st-text--small st-text--muted">Waiting</div>
                         <div class="st-mini-card__value-row">
-                            <div style="font-size:26px;font-weight:700;">{{ $waitingRange ?? 0 }}</div>
+                            <div class="st-dashboard-mini-value">{{ $waitingRange ?? 0 }}</div>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
@@ -84,7 +79,7 @@
                         </button>
                         <div class="st-text--small st-text--muted">In Progress</div>
                         <div class="st-mini-card__value-row">
-                            <div style="font-size:26px;font-weight:700;">{{ $activeRange ?? 0 }}</div>
+                            <div class="st-dashboard-mini-value">{{ $activeRange ?? 0 }}</div>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
@@ -93,7 +88,7 @@
                         </button>
                         <div class="st-text--small st-text--muted">Completed</div>
                         <div class="st-mini-card__value-row">
-                            <div style="font-size:26px;font-weight:700;">{{ $completedStatusRange ?? 0 }}</div>
+                            <div class="st-dashboard-mini-value">{{ $completedStatusRange ?? 0 }}</div>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
@@ -102,7 +97,7 @@
                         </button>
                         <div class="st-text--small st-text--muted">Cancel</div>
                         <div class="st-mini-card__value-row">
-                            <div style="font-size:26px;font-weight:700;">{{ $cancelledRange ?? 0 }}</div>
+                            <div class="st-dashboard-mini-value">{{ $cancelledRange ?? 0 }}</div>
                         </div>
                     </div>
                     <div class="st-mini-card st-mini-card--with-info">
@@ -111,12 +106,12 @@
                         </button>
                         <div class="st-text--small st-text--muted">Total</div>
                         <div class="st-mini-card__value-row">
-                            <div style="font-size:26px;font-weight:700;">{{ ((int)($pendingRange ?? 0) + (int)($scheduledRange ?? 0) + (int)($waitingRange ?? 0) + (int)($activeRange ?? 0) + (int)($completedStatusRange ?? 0) + (int)($cancelledRange ?? 0)) }}</div>
+                            <div class="st-dashboard-mini-value">{{ ((int)($pendingRange ?? 0) + (int)($scheduledRange ?? 0) + (int)($waitingRange ?? 0) + (int)($activeRange ?? 0) + (int)($completedStatusRange ?? 0) + (int)($cancelledRange ?? 0)) }}</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+                <div class="st-card__header st-dashboard-card-header">
                     <div>
                         <h2 class="st-card__title">Analytics</h2>
                         <div class="st-card__subtitle">Performance & Bottleneck Summary</div>
@@ -145,9 +140,9 @@
                         </div>
                         <div class="st-chart-col-4">
                             <div class="st-chart-card">
-                                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-                                    <div class="st-chart-card__title" style="margin:0;">Direction</div>
-                                    <select id="direction_gate" class="st-select" style="max-width:140px;min-width:120px;">
+                                <div class="st-dashboard-chart-header">
+                                    <div class="st-chart-card__title st-mb-0">Direction</div>
+                                    <select id="direction_gate" class="st-select st-select--dashboard-compact">
                                         <option value="all">All Gates</option>
                                         <option value="A">Gate A</option>
                                         <option value="B">Gate B</option>
@@ -158,7 +153,7 @@
                                     <div class="st-chart-wrap st-chart-wrap--direction">
                                         <canvas id="chart_direction"></canvas>
                                     </div>
-                                    <div class="st-metric-row" style="grid-template-columns:1fr 1fr 1fr;">
+                                    <div class="st-metric-row st-metric-row--thirds">
                                         <div class="st-mini-card">
                                             <div class="st-text--small st-text--muted">Inbound</div>
                                             <div id="direction_inbound_value" class="st-direction-metric">0</div>
@@ -183,58 +178,58 @@
 
         </div>
         <div class="st-dashboard-slide" data-slide-index="1">
-            <section class="st-row" style="margin-top:8px;height:100%;display:flex;flex-direction:column;">
-                <div class="st-col-12" style="height:100%;display:flex;flex-direction:column;">
-                    <div class="st-card" style="padding:12px;height:100%;display:flex;flex-direction:column;">
-                        <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+            <section class="st-row st-dashboard-section-full">
+                <div class="st-col-12 st-dashboard-col-full">
+                    <div class="st-card st-dashboard-card-fill">
+                        <div class="st-card__header st-dashboard-card-header">
                             <div>
                                 <h2 class="st-card__title">Analytics</h2>
                                 <div class="st-card__subtitle">Bottleneck & Performance</div>
                             </div>
                         </div>
 
-                        <div class="st-chart-grid" style="flex:1 1 auto;min-height:0;align-content:start;">
+                        <div class="st-chart-grid st-dashboard-chart-grid-start">
                             <div class="st-chart-col-6">
-                                <div class="st-chart-card" style="height:100%;display:flex;flex-direction:column;overflow:hidden;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                        <div class="st-chart-card__title" style="margin:0;white-space:nowrap;">Bottleneck (Avg Waiting)</div>
-                                        <select id="bottleneck_dir" class="st-select" style="max-width:100px;font-size:11px;height:28px;">
+                                <div class="st-chart-card st-dashboard-chart-card-fill">
+                                    <div class="st-dashboard-chart-header-row">
+                                        <div class="st-chart-card__title st-dashboard-chart-title-nowrap">Bottleneck (Avg Waiting)</div>
+                                        <select id="bottleneck_dir" class="st-select st-select--dashboard-compact-sm">
                                             <option value="all">All</option>
                                             <option value="inbound">Inbound</option>
                                             <option value="outbound">Outbound</option>
                                         </select>
                                     </div>
-                                    <div class="st-chart-wrap" style="flex:1 1 auto;min-height:0;">
+                                    <div class="st-chart-wrap st-dashboard-chart-wrap-fill">
                                         <canvas id="chart_bottleneck"></canvas>
                                     </div>
-                                    <div class="st-metric-row" style="margin-top:10px;grid-template-columns:1.4fr 1fr 0.7fr;">
-                                        <div class="st-mini-card" style="padding:10px;">
-                                            <div class="st-text--small st-text--muted" style="font-size:10px;">Top Wait Location</div>
-                                            <div id="bottleneck_top_label" style="font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">-</div>
+                                    <div class="st-metric-row st-metric-row--bottleneck st-metric-row--mt">
+                                        <div class="st-mini-card st-mini-card--dashboard">
+                                            <div class="st-text--small st-text--muted st-text--xs">Top Wait Location</div>
+                                            <div id="bottleneck_top_label" class="st-dashboard-metric-md st-truncate">-</div>
                                         </div>
-                                        <div class="st-mini-card" style="padding:10px;">
-                                            <div class="st-text--small st-text--muted" style="font-size:10px;">Avg Wait</div>
-                                            <div id="bottleneck_top_avg" style="font-size:15px; font-weight:800;">0</div>
+                                        <div class="st-mini-card st-mini-card--dashboard">
+                                            <div class="st-text--small st-text--muted st-text--xs">Avg Wait</div>
+                                            <div id="bottleneck_top_avg" class="st-dashboard-metric-md">0</div>
                                         </div>
-                                        <div class="st-mini-card" style="padding:10px;">
-                                            <div class="st-text--small st-text--muted" style="font-size:10px;">Qty</div>
-                                            <div id="bottleneck_top_slots" style="font-size:15px; font-weight:800;">0</div>
+                                        <div class="st-mini-card st-mini-card--dashboard">
+                                            <div class="st-text--small st-text--muted st-text--xs">Qty</div>
+                                            <div id="bottleneck_top_slots" class="st-dashboard-metric-md">0</div>
                                         </div>
                                     </div>
-                                    <div class="st-text--small st-text--muted" style="margin-top:8px; font-size:10px;">Top 20, Threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} Min</div>
+                                    <div class="st-text--small st-text--muted st-dashboard-footnote">Top 20, Threshold {{ (int)($bottleneckThresholdMinutes ?? 30) }} Min</div>
                                 </div>
                             </div>
 
                             <div class="st-chart-col-6">
-                                <div class="st-chart-card" style="height:100%;display:flex;flex-direction:column;overflow:hidden;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                                        <div class="st-chart-card__title" style="margin:0;">Performance by Truck Type</div>
-                                        <select id="lead_proc_unit" class="st-select" style="max-width:90px;font-size:10px;height:24px;padding:2px 4px;">
+                                <div class="st-chart-card st-dashboard-chart-card-fill">
+                                    <div class="st-dashboard-chart-header-row st-dashboard-chart-header-row--lg">
+                                        <div class="st-chart-card__title st-mb-0">Performance by Truck Type</div>
+                                        <select id="lead_proc_unit" class="st-select st-select--dashboard-xs">
                                             <option value="minute">Minutes</option>
                                             <option value="hour">Hours</option>
                                         </select>
                                     </div>
-                                    <div style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:8px; flex:1 1 auto; min-height:0; grid-auto-rows: minmax(0, 1fr); align-content:stretch;">
+                                    <div class="st-dashboard-truck-grid">
                                             @foreach($avgTimesByTruckType ?? [] as $t)
                                             @php
                                                 $truckType = (string) data_get($t, 'truck_type', '-');
@@ -245,27 +240,27 @@
                                                 $avgLeadMinutesByTruck = (float) data_get($t, 'avg_lead_minutes', 0);
                                                 $avgProcessMinutesByTruck = (float) data_get($t, 'avg_process_minutes', 0);
                                             @endphp
-                                            <div style="padding:8px; border:1px solid #f1f5f9; background:#fff; border-radius:10px; display:flex; flex-direction:column; justify-content:space-between; min-width:0;">
-                                                <div style="font-weight:800; color:#1e293b; font-size:11px; margin-bottom:6px; border-bottom:1px solid #f1f5f9; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center; gap:6px;">
-                                                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;" title="{{ $truckType }}">{{ $truckLabel }}</span>
-                                                    <span style="font-size:10px; color:#64748b; font-weight:700; flex-shrink:0;">{{ $totalCount }}</span>
+                                            <div class="st-dashboard-truck-card">
+                                                <div class="st-dashboard-truck-card-header">
+                                                    <span class="st-truncate" title="{{ $truckType }}">{{ $truckLabel }}</span>
+                                                    <span class="st-dashboard-truck-count">{{ $totalCount }}</span>
                                                 </div>
-                                                <div style="display:flex; flex-direction:column; gap:8px; flex:1 1 auto; min-height:0;">
-                                                    <div style="background:#f0f9ff; padding:10px 10px; border-radius:10px; flex:1 1 auto; display:flex; flex-direction:column; justify-content:center;">
-                                                        <div style="font-size:10px; color:#0369a1; text-transform:uppercase; font-weight:800; line-height:1;">Avg Lead Time</div>
-                                                        <div class="lead-avg-truck" data-minutes="{{ $avgLeadMinutesByTruck }}" style="font-weight:900; color:#0369a1; font-size:15px;">
+                                                <div class="st-dashboard-truck-body">
+                                                    <div class="st-dashboard-truck-box st-dashboard-truck-box--lead">
+                                                        <div class="st-dashboard-truck-label st-dashboard-truck-label--lead">Avg Lead Time</div>
+                                                        <div class="lead-avg-truck st-dashboard-truck-value st-dashboard-truck-value--lead" data-minutes="{{ $avgLeadMinutesByTruck }}">
                                                             @if($totalCount > 0)
-                                                                {{ number_format($avgLeadMinutesByTruck, 1) }}<span style="font-size:10px;">m</span>
+                                                                {{ number_format($avgLeadMinutesByTruck, 1) }}<span class="st-dashboard-truck-unit">m</span>
                                                             @else
                                                                 -
                                                             @endif
                                                         </div>
                                                     </div>
-                                                    <div style="background:#f5f3ff; padding:10px 10px; border-radius:10px; flex:1 1 auto; display:flex; flex-direction:column; justify-content:center;">
-                                                        <div style="font-size:10px; color:#5b21b6; text-transform:uppercase; font-weight:800; line-height:1;">Avg Process Time</div>
-                                                        <div class="proc-avg-truck" data-minutes="{{ $avgProcessMinutesByTruck }}" style="font-weight:900; color:#5b21b6; font-size:15px;">
+                                                    <div class="st-dashboard-truck-box st-dashboard-truck-box--proc">
+                                                        <div class="st-dashboard-truck-label st-dashboard-truck-label--proc">Avg Process Time</div>
+                                                        <div class="proc-avg-truck st-dashboard-truck-value st-dashboard-truck-value--proc" data-minutes="{{ $avgProcessMinutesByTruck }}">
                                                             @if($totalCount > 0)
-                                                                {{ number_format($avgProcessMinutesByTruck, 1) }}<span style="font-size:10px;">m</span>
+                                                                {{ number_format($avgProcessMinutesByTruck, 1) }}<span class="st-dashboard-truck-unit">m</span>
                                                             @else
                                                                 -
                                                             @endif
@@ -275,9 +270,9 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    <div id="lead_proc_empty" style="display:none;"></div>
-                                    <div id="lead_avg_value" style="display:none;" data-minutes="{{ $avgLeadMinutes }}"></div>
-                                    <div id="proc_avg_value" style="display:none;" data-minutes="{{ $avgProcessMinutes }}"></div>
+                                    <div id="lead_proc_empty" class="st-hidden"></div>
+                                    <div id="lead_avg_value" class="st-hidden" data-minutes="{{ $avgLeadMinutes }}"></div>
+                                    <div id="proc_avg_value" class="st-hidden" data-minutes="{{ $avgProcessMinutes }}"></div>
                                 </div>
                             </div>
                         </div>
@@ -287,21 +282,21 @@
 
         </div>
         <div class="st-dashboard-slide" data-slide-index="2">
-            <section class="st-row" style="margin-top:8px;">
+            <section class="st-row st-dashboard-section-gap">
                 <div class="st-col-12">
-                    <div class="st-card" style="padding:12px;">
-                        <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+                    <div class="st-card st-dashboard-card-padded">
+                        <div class="st-card__header st-dashboard-card-header">
                             <div>
                                 <h2 class="st-card__title">KPI</h2>
                                 <div class="st-card__subtitle">On Time, Target Achievement, Completion Rate</div>
                             </div>
-                            <div style="margin-left:auto;display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:nowrap;">
-                                <select id="kpi_dir_filter" class="st-select" style="max-width:160px;min-width:140px;">
+                            <div class="st-dashboard-filter-row">
+                                <select id="kpi_dir_filter" class="st-select st-select--dashboard-wide">
                                     <option value="all">All Direction</option>
                                     <option value="inbound">Inbound</option>
                                     <option value="outbound">Outbound</option>
                                 </select>
-                                <select id="kpi_gate_filter" class="st-select" style="max-width:160px;min-width:140px;">
+                                <select id="kpi_gate_filter" class="st-select st-select--dashboard-wide">
                                     <option value="all">All Gates</option>
                                     <option value="A">Gate A</option>
                                     <option value="B">Gate B</option>
@@ -316,45 +311,45 @@
                                     <div class="st-flex-between-center st-flex-wrap st-gap-2">
                                         <div class="st-chart-card__title st-mb-0">On Time vs Late</div>
                                     </div>
-                                    <div class="st-chart-wrap st-chart-wrap--sm" style="margin-top:38px;">
+                                    <div class="st-chart-wrap st-chart-wrap--sm st-dashboard-chart-wrap-offset">
                                         <canvas id="chart_on_time"></canvas>
                                     </div>
-                                    <div class="st-metric-row" style="margin-top:10px;">
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">On Time</div><div id="on_time_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Late</div><div id="late_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="on_time_total" style="font-size:18px;font-weight:800;">0</div></div>
+                                    <div class="st-metric-row st-metric-row--mt">
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">On Time</div><div id="on_time_value" class="st-dashboard-metric-xl">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Late</div><div id="late_value" class="st-dashboard-metric-xl">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="on_time_total" class="st-dashboard-metric-xl">0</div></div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="st-chart-col-4">
                                 <div class="st-chart-card">
-                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
-                                        <div class="st-chart-card__title" style="margin:0;">Target Achievement</div>
+                                    <div class="st-dashboard-chart-header-top">
+                                        <div class="st-chart-card__title st-mb-0">Target Achievement</div>
                                     </div>
                                     <div class="st-chart-wrap st-chart-wrap--sm st-mt-2">
                                         <canvas id="chart_target_achievement"></canvas>
                                     </div>
-                                    <div class="st-metric-row" style="margin-top:10px;">
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Achieve</div><div id="target_achieve_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Not Achieve</div><div id="target_not_achieve_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="target_total_eval" style="font-size:18px;font-weight:800;">0</div></div>
+                                    <div class="st-metric-row st-metric-row--mt">
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Achieve</div><div id="target_achieve_value" class="st-dashboard-metric-xl">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Not Achieve</div><div id="target_not_achieve_value" class="st-dashboard-metric-xl">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="target_total_eval" class="st-dashboard-metric-xl">0</div></div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="st-chart-col-4">
                                 <div class="st-chart-card">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-                                        <div class="st-chart-card__title" style="margin:0;">Completion Rate</div>
+                                    <div class="st-dashboard-chart-header">
+                                        <div class="st-chart-card__title st-mb-0">Completion Rate</div>
                                     </div>
-                                    <div class="st-chart-wrap st-chart-wrap--sm" style="margin-top:8px;">
+                                    <div class="st-chart-wrap st-chart-wrap--sm st-dashboard-chart-wrap-gap-sm">
                                         <canvas id="chart_completion_rate"></canvas>
                                     </div>
-                                    <div class="st-metric-row" style="margin-top:10px;">
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Rate</div><div id="completion_rate_value" style="font-size:18px;font-weight:800;">0%</div></div>
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Completed</div><div id="completion_completed_value" style="font-size:18px;font-weight:800;">0</div></div>
-                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="completion_total_value" style="font-size:18px;font-weight:800;">0</div></div>
+                                    <div class="st-metric-row st-metric-row--mt">
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Rate</div><div id="completion_rate_value" class="st-dashboard-metric-xl">0%</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Completed</div><div id="completion_completed_value" class="st-dashboard-metric-xl">0</div></div>
+                                        <div class="st-mini-card"><div class="st-text--small st-text--muted">Total</div><div id="completion_total_value" class="st-dashboard-metric-xl">0</div></div>
                                     </div>
                                 </div>
                             </div>
@@ -366,17 +361,17 @@
         </div>
         <div class="st-dashboard-slide" data-slide-index="3">
 
-    <section class="st-row" style="margin-top:8px; height:100%; display:flex; flex-direction:column;">
-        <div class="st-col-12" style="height:100%; display:flex; flex-direction:column;">
-            <div class="st-card" style="padding:12px;display:flex;flex-direction:column;height:100%;">
-                <div class="st-card__header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+    <section class="st-row st-dashboard-section-full">
+        <div class="st-col-12 st-dashboard-col-full">
+            <div class="st-card st-dashboard-card-fill">
+                <div class="st-card__header st-dashboard-card-header">
                     <div>
                         <h2 class="st-card__title">24h Timeline</h2>
 
                         <div class="st-text--small st-text--muted">Slot Availability (Real-time Visual)</div>
                     </div>
-                    <div style="display:flex;justify-content:flex-end;flex:1;align-items:flex-end;">
-                    <form method="GET" class="st-form-row st-timeline-filters" style="gap:4px;align-items:flex-end;margin-left:auto;">
+                    <div class="st-dashboard-card-actions">
+                    <form method="GET" class="st-form-row st-timeline-filters st-dashboard-filter-form">
                         <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
                         <input type="hidden" name="range_end" value="{{ $range_end ?? $today }}">
                         <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
@@ -404,8 +399,8 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="st-form-field st-timeline-filters__actions" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
-                            <a href="{{ route('dashboard', ['range_start' => $range_start ?? $today, 'range_end' => $range_end ?? $today, 'activity_date' => $activity_date ?? $today, 'activity_warehouse' => $activity_warehouse ?? 0, 'activity_user' => $activity_user ?? 0]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                        <div class="st-form-field st-timeline-filters__actions st-dashboard-range-reset">
+                            <a href="{{ route('dashboard', ['range_start' => $range_start ?? $today, 'range_end' => $range_end ?? $today, 'activity_date' => $activity_date ?? $today, 'activity_warehouse' => $activity_warehouse ?? 0, 'activity_user' => $activity_user ?? 0]) }}" class="st-btn st-btn--outline-primary">Reset</a>
                         </div>
                     </form>
                 </div>
@@ -420,11 +415,10 @@
                     $timelineHours = range(7, 23);
                 @endphp
 
-                        <div style="margin-top: 8px; width: 100%; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:center; padding-bottom:8px;">
+                        <div class="st-dashboard-timeline-wrap">
                         <div
-                            class="st-timeline"
+                            class="st-timeline st-dashboard-timeline"
                             id="dashboard-timeline"
-                            style="min-width: 0; flex:1 1 auto; min-height:0; display:flex; flex-direction:column;"
                             data-date="{{ $timelineDate }}"
                             data-start-hour="{{ (int) $timelineStartHour }}"
                             data-route-view="{{ route('slots.show', ['slotId' => 0], false) }}"
@@ -434,10 +428,10 @@
                             data-route-cancel="{{ route('slots.cancel', ['slotId' => 0], false) }}"
                         >
                             <div class="st-timeline__header">
-                                <div class="st-timeline__header-left" style="flex-direction:column;align-items:flex-start;justify-content:center;line-height:1.2;">
+                                <div class="st-timeline__header-left st-dashboard-timeline-header-left">
                                     <div>Gate</div>
                                 </div>
-                                <div style="padding:10px 0;font-size:11px;font-weight:700;color:#374151;border-right:1px solid #e5e7eb;position:sticky;left:70px;background:#ffffff;z-index:20;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;">
+                                <div class="st-dashboard-timeline-lane-head">
                                     Lane
                                 </div>
                                 <div class="st-timeline__header-grid">
@@ -450,7 +444,7 @@
                                 </div>
                             </div>
 
-                            <div class="st-timeline__body" style="flex:1 1 auto; min-height:0;">
+                            <div class="st-timeline__body st-dashboard-timeline-body">
                                 @foreach (($gateCards ?? []) as $g)
                                     @php
                                         $gateId = (int)($g['gate_id'] ?? 0);
@@ -465,12 +459,12 @@
                                     @endphp
                                     <div class="st-timeline__row">
                                         <div class="st-timeline__row-left">
-                                            <div style="font-size:11px;font-weight:600;">{{ $gateTitle }}</div>
-                                            <div class="st-text--small st-text--muted" style="font-size:9px;">{{ $g['status_label'] ?? 'Idle' }}</div>
+                                            <div class="st-dashboard-timeline-gate-title">{{ $gateTitle }}</div>
+                                            <div class="st-text--small st-text--muted st-dashboard-timeline-gate-status">{{ $g['status_label'] ?? 'Idle' }}</div>
                                         </div>
-                                        <div style="border-right:1px solid #e5e7eb;position:sticky;left:70px;background:#ffffff;z-index:20;display:flex;flex-direction:column;font-size:9px;color:#6b7280;font-weight:600;">
-                                            <div style="flex:1;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;border-bottom:1px dashed #f3f4f6;">Planned</div>
-                                            <div style="flex:1;display:flex;align-items:center;justify-content:flex-start;padding-left:8px;">Actual</div>
+                                        <div class="st-dashboard-timeline-lane-labels">
+                                            <div class="st-dashboard-timeline-lane-label st-dashboard-timeline-lane-label--planned">Planned</div>
+                                            <div class="st-dashboard-timeline-lane-label">Actual</div>
                                         </div>
                                         <div class="st-timeline__row-lanes" data-timeline-gate-id="{{ $gateId }}">
                                             <div class="st-timeline__lane st-timeline__lane--planned">
@@ -551,10 +545,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="st-timeline-meta" style="margin-top:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <div class="st-timeline-meta st-dashboard-timeline-meta">
 
                         <!-- Status Legend -->
-                        <div class="st-timeline-legend" aria-label="Timeline color legend" style="margin-top:0;">
+                        <div class="st-timeline-legend st-dashboard-timeline-legend" aria-label="Timeline color legend">
                             <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--scheduled"></span> Scheduled</span>
                             <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--waiting"></span> Waiting</span>
                             <span class="st-timeline-legend__item"><span class="st-timeline-legend__dot st-timeline-legend__dot--in_progress"></span> In Progress</span>
@@ -569,9 +563,9 @@
         </div>
         <div class="st-dashboard-slide" data-slide-index="4">
 
-    <section class="st-row" style="margin-top:8px;">
+    <section class="st-row st-dashboard-section-gap">
         <div class="st-col-12">
-            <div class="st-card" style="padding:12px;">
+            <div class="st-card st-dashboard-card-padded">
 
                 @php
                     $processStatusCounts = [
@@ -683,7 +677,7 @@
                                 <h3 class="st-card__title">Schedule</h3>
                                 <div class="st-card__subtitle">Trucks, ETA, Gates, Status, and Estimated Finish</div>
                             </div>
-                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                            <div class="st-dashboard-schedule-actions">
                                 @can('slots.create')
                                 <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
                                     <i class="fa-solid fa-plus st-mr-1"></i> Create Slot
@@ -760,7 +754,7 @@
                                 <td>{{ $row['est_finish'] ?? '-' }}</td>
                                 <td>
                                     <div class="st-action-dropdown">
-                                        <button type="button" class="st-btn st-btn--ghost st-action-trigger" style="padding:4px 8px;font-size:16px;line-height:1;border:none;color:#6b7280;">
+                                        <button type="button" class="st-btn st-btn--ghost st-action-trigger st-action-trigger--compact">
                                             &#x22ee;
                                         </button>
                                         <div class="st-action-menu">
@@ -788,7 +782,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" style="padding:12px;">No Schedule for Selected Filter</td></tr>
+                            <tr><td colspan="8" class="st-table-empty">No Schedule for Selected Filter</td></tr>
                         @endforelse
                         </tbody>
                             </table>
@@ -809,54 +803,44 @@
         <div class="st-timeline-modal__panel" role="dialog" aria-modal="true" aria-label="Slot details">
             <div class="st-timeline-modal__header">
                 <div>
-                    <div id="timeline-modal-title" style="font-size:14px;font-weight:700;">Slot</div>
+                    <div id="timeline-modal-title" class="st-timeline-modal__title">Slot</div>
                     <div id="timeline-modal-subtitle" class="st-text--small st-text--muted">-</div>
                 </div>
                 <button type="button" class="st-btn st-btn--ghost st-btn--sm" data-modal-close>Close</button>
             </div>
             <div class="st-timeline-modal__body">
-                <div class="st-mini-card" style="margin-bottom:10px;">
+                <div class="st-mini-card st-timeline-modal__status">
                     <div class="st-text--small st-text--muted">Status</div>
-                    <div id="timeline-modal-status" style="font-size:18px;font-weight:700;">-</div>
+                    <div id="timeline-modal-status" class="st-timeline-modal__status-value">-</div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div class="st-timeline-modal__grid">
                     <div>
                         <div class="st-text--small st-text--muted">Vendor</div>
-                        <div id="timeline-modal-vendor" style="font-size:13px;font-weight:600;">-</div>
+                        <div id="timeline-modal-vendor" class="st-timeline-modal__value">-</div>
                     </div>
                     <div>
                         <div class="st-text--small st-text--muted">Gate</div>
-                        <div id="timeline-modal-gate" style="font-size:13px;font-weight:600;">-</div>
+                        <div id="timeline-modal-gate" class="st-timeline-modal__value">-</div>
                     </div>
                     <div>
                         <div class="st-text--small st-text--muted">ETA</div>
-                        <div id="timeline-modal-eta" style="font-size:13px;font-weight:600;">-</div>
+                        <div id="timeline-modal-eta" class="st-timeline-modal__value">-</div>
                     </div>
                     <div>
                         <div class="st-text--small st-text--muted">Est. Finish</div>
-                        <div id="timeline-modal-finish" style="font-size:13px;font-weight:600;">-</div>
+                        <div id="timeline-modal-finish" class="st-timeline-modal__value">-</div>
                     </div>
                 </div>
             </div>
-            <div class="st-timeline-modal__footer" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-                <a href="#" id="timeline-modal-view" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm">View</a>
-                <a href="#" id="timeline-modal-arrival" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Arrival</a>
-                <a href="#" id="timeline-modal-start" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Start</a>
-                <a href="#" id="timeline-modal-complete" class="st-btn st-btn--primary st-btn--sm" style="display:none;">Complete</a>
-                <a href="#" id="timeline-modal-cancel" class="st-btn st-btn--sm st-btn--danger" data-confirm="Are you sure you want to cancel this slot?" style="display:none;">Cancel</a>
+            <div class="st-timeline-modal__footer st-timeline-modal__footer-actions">
+                <a href="#" id="timeline-modal-view" class="st-btn st-btn--outline-primary st-btn--sm">View</a>
+                <a href="#" id="timeline-modal-arrival" class="st-btn st-btn--primary st-btn--sm st-hidden">Arrival</a>
+                <a href="#" id="timeline-modal-start" class="st-btn st-btn--primary st-btn--sm st-hidden">Start</a>
+                <a href="#" id="timeline-modal-complete" class="st-btn st-btn--primary st-btn--sm st-hidden">Complete</a>
+                <a href="#" id="timeline-modal-cancel" class="st-btn st-btn--sm st-btn--danger st-hidden" data-confirm="Are you sure you want to cancel this slot?">Cancel</a>
             </div>
         </div>
     </div>
-<style>
-@media (min-width: 769px) {
-    .st-timeline-modal__panel {
-        left: 50% !important;
-        top: 50% !important;
-        right: auto !important;
-        transform: translate(-50%, -50%);
-    }
-}
-</style>
 
     </div>
 @endsection
@@ -1799,25 +1783,25 @@ document.addEventListener('DOMContentLoaded', function () {
                     let newContent = '';
                     if (lane === 'schedule') {
                         newContent = `
-                            <dl class="timeline-tooltip-grid" style="font-size:13px;color:#111827;">
-                                <dt style="color:#111827;">PO:</dt> <dd style="color:#111827;">${escHtml(po)}</dd>
-                                <dt style="color:#111827;">PT:</dt> <dd style="color:#111827;">${escHtml(vendorLabel)}</dd>
-                                <dt style="color:#111827;">Direction:</dt> <dd style="color:#111827;">${escHtml(direction)}</dd>
-                                <dt style="color:#111827;">Priority:</dt> <dd style="color:#111827;">${escHtml(priority)}</dd>
-                                ${performance ? `<dt style="color:#111827;">KPI:</dt> <dd style="color:#111827;">${escHtml(performance)}</dd>` : ''}
+                            <dl class="timeline-tooltip-grid">
+                                <dt>PO:</dt> <dd>${escHtml(po)}</dd>
+                                <dt>PT:</dt> <dd>${escHtml(vendorLabel)}</dd>
+                                <dt>Direction:</dt> <dd>${escHtml(direction)}</dd>
+                                <dt>Priority:</dt> <dd>${escHtml(priority)}</dd>
+                                ${performance ? `<dt>KPI:</dt> <dd>${escHtml(performance)}</dd>` : ''}
                             </dl>
                         `;
                     } else {
                         newContent = `
-                            <dl class="timeline-tooltip-grid" style="font-size:13px;color:#111827;">
-                                <dt style="color:#111827;">PO:</dt> <dd style="color:#111827;">${escHtml(po)}</dd>
-                                <dt style="color:#111827;">PT:</dt> <dd style="color:#111827;">${escHtml(vendorLabel)}</dd>
-                                <dt style="color:#111827;">Direction:</dt> <dd style="color:#111827;">${escHtml(direction)}</dd>
-                                <dt style="color:#111827;">Status:</dt> <dd style="color:#111827;">${escHtml(status)}</dd>
-                                <dt style="color:#111827;">Arrival:</dt> <dd style="color:#111827;">${escHtml(arrival)}</dd>
-                                <dt style="color:#111827;">Start:</dt> <dd style="color:#111827;">${escHtml(start)}</dd>
-                                <dt style="color:#111827;">End:</dt> <dd style="color:#111827;">${escHtml(end)}</dd>
-                                ${performance ? `<dt style="color:#111827;">KPI:</dt> <dd style="color:#111827;">${escHtml(performance)}</dd>` : ''}
+                            <dl class="timeline-tooltip-grid">
+                                <dt>PO:</dt> <dd>${escHtml(po)}</dd>
+                                <dt>PT:</dt> <dd>${escHtml(vendorLabel)}</dd>
+                                <dt>Direction:</dt> <dd>${escHtml(direction)}</dd>
+                                <dt>Status:</dt> <dd>${escHtml(status)}</dd>
+                                <dt>Arrival:</dt> <dd>${escHtml(arrival)}</dd>
+                                <dt>Start:</dt> <dd>${escHtml(start)}</dd>
+                                <dt>End:</dt> <dd>${escHtml(end)}</dd>
+                                ${performance ? `<dt>KPI:</dt> <dd>${escHtml(performance)}</dd>` : ''}
                             </dl>
                         `;
                     }

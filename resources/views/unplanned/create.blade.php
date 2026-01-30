@@ -8,7 +8,7 @@
         $urlPoSearch = route('slots.ajax.po_search');
         $urlPoDetailTemplate = route('slots.ajax.po_detail', ['poNumber' => '__PO__']);
     @endphp
-    <div class="st-card" style="font-size:12px;">
+    <div class="st-card st-text--sm">
         <form method="POST" action="{{ route('unplanned.store') }}" enctype="multipart/form-data">
             @csrf
 
@@ -16,9 +16,9 @@
                 <div class="st-alert st-alert--error">
                     <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <div class="st-alert__text">
-                        <div style="font-weight:600;margin-bottom:2px;">Validation Error</div>
-                        <div style="font-size:12px;">
-                            <ul style="margin:0;padding-left:16px;">
+                        <div class="st-font-semibold st-mb-2">Validation Error</div>
+                        <div class="st-text--sm">
+                            <ul class="st-list">
                                 @foreach ($errors->all() as $msg)
                                     <li>{{ $msg }}</li>
                                 @endforeach
@@ -28,18 +28,18 @@
                 </div>
             @endif
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">PO/DO Number <span style="color:#dc2626;">*</span></label>
-                    <div style="position:relative;">
+                    <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
+                    <div class="st-relative">
                         <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
-                        <div id="po_suggestions" class="st-suggestions st-suggestions--po" style="display:none;"></div>
+                        <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
                     @error('po_number')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                     @error('po_items')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
@@ -50,11 +50,11 @@
                         <option value="outbound" @if (old('direction') === 'outbound') selected @endif>Outbound</option>
                     </select>
                     @error('direction')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Gate (Actual) <span style="color:#dc2626;">*</span></label>
+                    <label class="st-label">Gate (Actual) <span class="st-text--danger-dark">*</span></label>
                     <select name="actual_gate_id" id="unplanned-gate" class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}" required>
                         <option value="">Choose Gate...</option>
                         @foreach ($gates as $gate)
@@ -67,19 +67,19 @@
                         @endforeach
                     </select>
                     @error('actual_gate_id')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
-                <div class="st-form-field" style="width:100%;">
-                    <div id="po_preview" style="margin-top:8px;"></div>
-                    <div id="po_items_group" style="display:none;margin-top:10px;"></div>
+            <div class="st-form-row st-form-field--mb-12">
+                <div class="st-form-field st-w-full">
+                    <div id="po_preview" class="st-mt-8"></div>
+                    <div id="po_items_group" class="st-hidden st-mt-10"></div>
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;display:none;">
+            <div class="st-form-row st-form-field--mb-12 st-hidden">
                 <div class="st-form-field">
                     <label class="st-label">Warehouse</label>
                     <select name="warehouse_id" id="unplanned-warehouse" class="st-select">
@@ -91,27 +91,27 @@
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Arrival Time <span style="color:#dc2626;">*</span></label>
+                    <label class="st-label">Arrival Time <span class="st-text--danger-dark">*</span></label>
                     <input type="hidden" name="actual_arrival" id="actual_arrival_input" value="{{ old('actual_arrival') }}">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div class="st-grid st-grid-cols-2 st-gap-8">
                         <input type="text" id="actual_arrival_date_input" class="st-input" placeholder="Select Date" autocomplete="off">
                         <input type="text" id="actual_arrival_time_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly>
                     </div>
                     @error('actual_arrival')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">MAT DOC <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <label class="st-label">MAT DOC <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc') }}">
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Truck Type <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <label class="st-label">Truck Type <span class="st-text--optional">(Optional)</span></label>
                     <select name="truck_type" class="st-select">
                         <option value="">-</option>
                         @foreach ($truckTypes as $tt => $label)
@@ -120,47 +120,47 @@
                     </select>
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Vehicle Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <label class="st-label">Vehicle Number <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="vehicle_number_snap" class="st-input" value="{{ old('vehicle_number_snap') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Driver Name <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <label class="st-label">Driver Name <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="driver_name" class="st-input" value="{{ old('driver_name') }}">
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Driver Number <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <label class="st-label">Driver Number <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="driver_number" class="st-input" value="{{ old('driver_number') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">COA (PDF) <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <label class="st-label">COA (PDF) <span class="st-text--optional">(Optional)</span></label>
                     <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
                     @error('coa_pdf')
-                        <div style="font-size:11px;color:#b91c1c;margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <label class="st-label">Notes <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="notes" class="st-input" value="{{ old('notes') }}">
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
-                <div class="st-form-field" style="width:100%;">
-                    <label class="st-label" style="font-weight:600;">Queue Status</label>
-                    <div style="display:flex;gap:12px;align-items:center;">
+            <div class="st-form-row st-form-field--mb-12">
+                <div class="st-form-field st-w-full">
+                    <label class="st-label st-font-semibold">Queue Status</label>
+                    <div class="st-flex st-gap-12 st-align-center">
                         <span class="st-badge st-badge--secondary">Waiting</span>
-                        <span class="st-text-muted" style="font-size:12px;">Set to Waiting</span>
+                        <span class="st-text--sm st-text--muted">Set to Waiting</span>
                     </div>
                     <input type="hidden" name="set_waiting" value="1">
                 </div>
             </div>
 
-            <div style="margin-top:4px;display:flex;gap:8px;">
+            <div class="st-form-actions st-mt-4">
                 <button type="submit" class="st-btn">Save</button>
-                <a href="{{ route('unplanned.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
+                <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
             </div>
         </form>
     </div>
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
             div.setAttribute('data-po', it.po_number || '');
             div.innerHTML = '<div class="po-item__title">' + (it.po_number || '') + '</div>'
                 + '<div class="po-item__sub">' + (it.vendor_name || '') + (it.plant ? (' • ' + it.plant) : '') + '</div>';
-            div.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;';
+            div.classList.add('st-suggestion-item--compact');
             poSuggestions.appendChild(div);
         });
         poSuggestions.style.display = 'block';
@@ -275,16 +275,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var items = po.items;
         var html = '';
-        html += '<div style="font-weight:600;margin-bottom:6px;">PO Items & Quantity for This Unplanned (Optional)</div>';
-        html += '<div class="st-table-wrapper" style="margin-top:6px;">';
-        html += '<table class="st-table" style="font-size:12px;">';
+        html += '<div class="st-font-semibold st-mb-6">PO Items & Quantity for This Unplanned (Optional)</div>';
+        html += '<div class="st-table-wrapper st-table-wrapper--mt-6">';
+        html += '<table class="st-table st-table--sm">';
         html += '<thead><tr>'
-            + '<th style="width:70px;">Item</th>'
+            + '<th class="st-table-col-70">Item</th>'
             + '<th>Material</th>'
-            + '<th style="width:120px;text-align:right;">Qty PO</th>'
-            + '<th style="width:120px;text-align:right;">Booked</th>'
-            + '<th style="width:120px;text-align:right;">Remaining</th>'
-            + '<th style="width:160px;">Qty This Unplanned</th>'
+            + '<th class="st-table-col-120 st-text-right">Qty PO</th>'
+            + '<th class="st-table-col-120 st-text-right">Booked</th>'
+            + '<th class="st-table-col-120 st-text-right">Remaining</th>'
+            + '<th class="st-table-col-160">Qty This Unplanned</th>'
             + '</tr></thead><tbody>';
 
         items.forEach(function (it) {
@@ -308,17 +308,17 @@ document.addEventListener('DOMContentLoaded', function () {
             html += '<tr>';
             html += '<td><strong>' + itemNo + '</strong></td>';
             html += '<td>' + mat + (desc ? (' - ' + desc) : '') + '</td>';
-            html += '<td style="text-align:right;">' + qtyPo + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td style="text-align:right;">' + qtyBooked + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td style="text-align:right;"><strong>' + remaining + '</strong>' + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td class="st-text-right">' + qtyPo + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td class="st-text-right">' + qtyBooked + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td class="st-text-right"><strong>' + remaining + '</strong>' + (uom ? (' ' + uom) : '') + '</td>';
             html += '<td>';
-            html += '<input type="number" step="0.001" min="0" name="po_items[' + itemNo + '][qty]" class="st-input" style="max-width:140px;" value="' + (oldQty || '') + '" placeholder="0">';
+            html += '<input type="number" step="0.001" min="0" name="po_items[' + itemNo + '][qty]" class="st-input st-input--maxw-140" value="' + (oldQty || '') + '" placeholder="0">';
             html += '</td>';
             html += '</tr>';
         });
 
         html += '</tbody></table></div>';
-        html += '<div class="st-text--small st-text--muted" style="margin-top:6px;">Opsional: isi qty jika ingin tercatat sebagai pengiriman untuk PO ini.</div>';
+        html += '<div class="st-text--small st-text--muted st-mt-6">Opsional: isi qty jika ingin tercatat sebagai pengiriman untuk PO ini.</div>';
 
         poItemsGroup.innerHTML = html;
         poItemsGroup.style.display = 'block';

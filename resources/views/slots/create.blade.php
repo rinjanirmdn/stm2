@@ -12,9 +12,9 @@
                 <div class="st-alert st-alert--error">
                     <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <div class="st-alert__text">
-                        <div style="font-weight:600;margin-bottom:2px;">Validation Error</div>
-                        <div style="font-size:12px;">
-                            <ul style="margin:0;padding-left:16px;">
+                        <div class="st-font-semibold st-mb-2">Validation Error</div>
+                        <div class="st-text--sm">
+                            <ul class="st-list">
                                 @foreach ($errors->all() as $msg)
                                     <li>{{ $msg }}</li>
                                 @endforeach
@@ -24,18 +24,18 @@
                 </div>
             @endif
 
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+            <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3">
                 <div class="st-form-field">
                     <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
-                    <div style="position:relative;">
+                    <div class="st-form-field--relative">
                         <input type="text" id="po_number" autocomplete="off" name="po_number" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
-                        <div id="po_suggestions" class="st-suggestions st-suggestions--po" style="display:none;"></div>
+                        <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
                     @error('po_number')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                     @error('po_items')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
@@ -46,7 +46,7 @@
                         <option value="outbound" {{ old('direction') === 'outbound' ? 'selected' : '' }}>Outbound</option>
                     </select>
                     @error('direction')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
@@ -58,20 +58,20 @@
                         @endforeach
                     </select>
                     @error('truck_type')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
-                <div class="st-form-field" style="width:100%;">
-                    <div id="po_preview" style="margin-top:8px;"></div>
-                    <div id="po_items_group" style="display:none;margin-top:10px;"></div>
+            <div class="st-form-row st-form-field--mb-12">
+                <div class="st-form-field st-form-field--full">
+                    <div id="po_preview" class="st-mt-2"></div>
+                    <div id="po_items_group" class="st-hidden st-mt-10"></div>
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-                <div class="st-form-field" style="position:relative;">
+            <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3">
+                <div class="st-form-field st-form-field--relative">
                     <label class="st-label">Vendor <span class="st-text--optional">(Optional)</span></label>
                     @php
                         $oldVendorName = '';
@@ -88,16 +88,15 @@
                     <input
                         type="text"
                         id="vendor_search"
-                        class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }}"
+                        class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }} st-input--mb-4"
                         placeholder="Choose Direction First..."
-                        style="margin-bottom:4px;"
                         autocomplete="off"
                         {{ old('direction') ? '' : 'disabled' }}
                         value="{{ $oldVendorName }}"
                     >
-                    <div id="vendor_suggestions" class="st-suggestions st-suggestions--vendor" style="display:none;"></div>
+                    <div id="vendor_suggestions" class="st-suggestions st-suggestions--vendor st-hidden"></div>
 
-                    <select name="vendor_id" id="vendor_id" style="display:none;">
+                    <select name="vendor_id" id="vendor_id" class="st-hidden">
                         <option value="">- Optional -</option>
                         @foreach ($vendors as $vendor)
                             <option
@@ -111,7 +110,7 @@
                         @endforeach
                     </select>
                     @error('vendor_id')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
@@ -131,95 +130,95 @@
                             </option>
                         @endforeach
                     </select>
-                    <div id="gate_recommendation" class="st-text--small st-text--muted" style="margin-top:2px;"></div>
+                    <div id="gate_recommendation" class="st-text--small st-text--muted st-mt-1"></div>
                     @error('planned_gate_id')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
                     <input type="hidden" name="planned_start" id="planned_start_input" value="{{ old('planned_start') }}">
-                    <div style="display:flex;gap:8px;">
+                    <div class="st-flex st-gap-8">
                         <input type="text" id="planned_start_date_input" class="st-input" placeholder="Select Date" autocomplete="off">
                         <input type="text" id="planned_start_time_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly>
                     </div>
                     @error('planned_start')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
+            <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3 st-form-row--align-end">
                 <div class="st-form-field">
                     <label class="st-label">Planned Duration</label>
-                    <div style="display:flex;gap:4px;">
-                        <input type="number" name="planned_duration" class="st-input{{ $errors->has('planned_duration') ? ' st-input--invalid' : '' }}" value="{{ old('planned_duration', '') }}" min="1" style="flex:1;" id="planned_duration_input">
-                        <span class="st-text--small st-text--muted" style="align-self:center;white-space:nowrap;">Min</span>
+                    <div class="st-flex st-gap-4">
+                        <input type="number" name="planned_duration" class="st-input{{ $errors->has('planned_duration') ? ' st-input--invalid' : '' }} st-flex-1" value="{{ old('planned_duration', '') }}" min="1" id="planned_duration_input">
+                        <span class="st-text--small st-text--muted st-align-self-center st-nowrap">Min</span>
                     </div>
                     @error('planned_duration')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                     @error('duration_unit')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Vehicle Number <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="vehicle_number_snap" class="st-input{{ $errors->has('vehicle_number_snap') ? ' st-input--invalid' : '' }}" value="{{ old('vehicle_number_snap') }}" placeholder="e.g., B 1234 ABC">
                     @error('vehicle_number_snap')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Driver Name <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="driver_name" class="st-input{{ $errors->has('driver_name') ? ' st-input--invalid' : '' }}" value="{{ old('driver_name') }}" placeholder="e.g., Budi">
                     @error('driver_name')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:end;">
+            <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3 st-form-row--align-end">
                 <div class="st-form-field">
                     <label class="st-label">Driver Number <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="driver_number" class="st-input{{ $errors->has('driver_number') ? ' st-input--invalid' : '' }}" value="{{ old('driver_number') }}" placeholder="e.g., 08xxxxxxxxxx">
                     @error('driver_number')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">COA (PDF) <span class="st-text--danger-dark">*</span></label>
                     <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
                     @error('coa_pdf')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <div style="display:grid;grid-template-columns:1fr 160px;gap:16px;align-items:end;">
+                    <div class="st-form-row--grid-risk">
                         <div>
                             <label class="st-label">Risk &amp; Schedule</label>
-                            <div id="risk_preview" class="st-text--muted" style="font-size:11px;">Risk Not Calculated.</div>
-                            <div id="time_warning" class="st-text--small st-text--danger" style="margin-top:2px;"></div>
+                            <div id="risk_preview" class="st-text--muted st-text--xs">Risk Not Calculated.</div>
+                            <div id="time_warning" class="st-text--small st-text--danger st-mt-1"></div>
                         </div>
                         <div>
                             <label class="st-label">View Schedule</label>
-                            <button type="button" id="btn_schedule_preview" class="st-btn" style="padding:4px 8px;font-size:11px;white-space:nowrap;" {{ old('warehouse_id') ? '' : 'disabled' }}>View Schedule</button>
+                            <button type="button" id="btn_schedule_preview" class="st-btn st-btn--xs st-nowrap" {{ old('warehouse_id') ? '' : 'disabled' }}>View Schedule</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;display:grid;grid-template-columns:1fr;gap:16px;">
+            <div class="st-form-row st-form-field--mb-12 st-form-row--grid-1">
                 <div class="st-form-field">
                     <label class="st-label">Notes <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="notes" class="st-input{{ $errors->has('notes') ? ' st-input--invalid' : '' }}" value="{{ old('notes') }}" placeholder="Any special notes...">
                     @error('notes')
-                        <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
 
-            <div class="st-form-field" style="display:none;">
+            <div class="st-form-field st-form-field--hidden">
                 <label class="st-label">Warehouse</label>
                 <select name="warehouse_id" id="warehouse_id" class="st-select">
                     <option value="">Choose...</option>
@@ -229,23 +228,23 @@
                 </select>
             </div>
 
-            <div style="margin-top:4px;display:flex;gap:8px;">
+            <div class="st-form-actions st-mt-4">
                 <button type="submit" class="st-btn" id="save_button">Save</button>
-                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
+                <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
             </div>
         </form>
     </div>
 
     <div id="schedule_modal" class="st-modal">
-        <div class="st-modal__content" style="width:600px;max-width:95vw;">
+        <div class="st-modal__content st-modal__content--schedule">
             <div class="st-modal__header">
                 <h3 class="st-modal__title">Schedule Preview</h3>
-                <button type="button" id="schedule_modal_close" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm">Close</button>
+                <button type="button" id="schedule_modal_close" class="st-btn st-btn--sm st-modal__close">Close</button>
             </div>
             <div class="st-modal__body">
                 <div id="schedule_modal_info" class="st-modal__info"></div>
-                <div style="overflow-x:auto;">
-                    <table class="st-table" style="font-size:12px;">
+                <div class="st-modal__table-wrap">
+                    <table class="st-table st-table--sm">
                         <thead>
                             <tr>
                                 <th>Time</th>
@@ -486,17 +485,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         var html = '';
-        html += '<div style="font-weight:600;margin-bottom:6px;">PO Items & Quantity for This Slot <span class="st-text--danger-dark">*</span></div>';
-        html += '<div class="st-table-wrapper" style="margin-top:6px;">';
-        html += '<table class="st-table" style="font-size:12px;">';
+        html += '<div class="st-font-semibold st-mb-2">PO Items & Quantity for This Slot <span class="st-text--danger-dark">*</span></div>';
+        html += '<div class="st-table-wrapper st-table-wrapper--mt-6">';
+        html += '<table class="st-table st-table--compact">';
         html += '<thead><tr>'
-            + '<th style="width:70px;" title="PO line item number.">Item</th>'
+            + '<th class="st-table-col-70" title="PO line item number.">Item</th>'
             + '<th title="Material code and description.">Material</th>'
-            + '<th style="width:110px;text-align:right;" title="Total quantity ordered in the PO.">Qty PO</th>'
-            + '<th style="width:110px;text-align:right;" title="Total quantity already received in SAP (GR)."><span>GR Total</span></th>'
-            + '<th style="width:110px;text-align:right;" title="Total quantity already booked in previous slots.">Booked</th>'
-            + '<th style="width:110px;text-align:right;" title="Remaining quantity available to book.">Remaining</th>'
-            + '<th style="width:160px;" title="Quantity to book for this slot.">Qty This Slot</th>'
+            + '<th class="st-table-col-110 st-text-right" title="Total quantity ordered in the PO.">Qty PO</th>'
+            + '<th class="st-table-col-110 st-text-right" title="Total quantity already received in SAP (GR)."><span>GR Total</span></th>'
+            + '<th class="st-table-col-110 st-text-right" title="Total quantity already booked in previous slots.">Booked</th>'
+            + '<th class="st-table-col-110 st-text-right" title="Remaining quantity available to book.">Remaining</th>'
+            + '<th class="st-table-col-160" title="Quantity to book for this slot.">Qty This Slot</th>'
             + '</tr></thead><tbody>';
 
         items.forEach(function (it) {
@@ -525,18 +524,18 @@ document.addEventListener('DOMContentLoaded', function () {
             html += '<tr>';
             html += '<td><strong>' + itemNo + '</strong></td>';
             html += '<td>' + mat + (desc ? (' - ' + desc) : '') + '</td>';
-            html += '<td style="text-align:right;">' + qtyPo + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td style="text-align:right;">' + qtyGr + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td style="text-align:right;">' + qtyBooked + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td style="text-align:right;"><strong>' + remaining + '</strong>' + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td class="st-text-right">' + qtyPo + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td class="st-text-right">' + qtyGr + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td class="st-text-right">' + qtyBooked + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td class="st-text-right"><strong>' + remaining + '</strong>' + (uom ? (' ' + uom) : '') + '</td>';
             html += '<td>';
-            html += '<input type="number" step="1" min="0" name="po_items[' + itemNo + '][qty]" class="st-input" style="max-width:140px;" value="' + (oldQty || '') + '" placeholder="0">';
+            html += '<input type="number" step="1" min="0" name="po_items[' + itemNo + '][qty]" class="st-input st-input--w-140" value="' + (oldQty || '') + '" placeholder="0">';
             html += '</td>';
             html += '</tr>';
         });
 
         html += '</tbody></table></div>';
-        html += '<div class="st-text--small st-text--muted" style="margin-top:6px;">Input quantity for this slot delivery. Remaining qty remains available for the next slot.</div>';
+        html += '<div class="st-text--small st-text--muted st-note">Input quantity for this slot delivery. Remaining qty remains available for the next slot.</div>';
 
         poItemsGroup.innerHTML = html;
         poItemsGroup.style.display = 'block';
@@ -613,11 +612,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     data.data.forEach(function (item) {
                         var safeName = (item.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                         var safeCode = (item.code || '');
-                        var sourceBadge = (item.source === 'sap') ? '<span class="st-badge st-badge--info" style="font-size:9px;margin-left:4px;">SAP</span>' : '';
+                        var sourceBadge = (item.source === 'sap') ? '<span class="st-badge st-badge--info st-badge--xs">SAP</span>' : '';
 
                         html += '<div class="vendor-suggestion-item" data-id="' + item.id + '" data-name="' + safeName + '" data-code="' + safeCode + '">'
                              + '<div>' + safeName + sourceBadge + '</div>'
-                             + '<div style="font-size:10px;color:#6b7280;">' + safeCode + '</div>'
+                             + '<div class="st-suggestion-code">' + safeCode + '</div>'
                              + '</div>';
                     });
 
@@ -1014,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', function () {
             dateStr = new Date().toISOString().slice(0, 10);
         }
 
-        scheduleModalBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:10px;" class="st-text--muted">Loading...</td></tr>';
+        scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">Loading...</td></tr>';
         if (scheduleModalInfo) {
             scheduleModalInfo.textContent = 'Warehouse ID ' + whId + (gateId ? (', Gate ID ' + gateId) : '') + ' | Date ' + dateStr;
         }
@@ -1027,14 +1026,14 @@ document.addEventListener('DOMContentLoaded', function () {
         postJson(urlSchedulePreview, fd)
             .then(function (data) {
                 if (!data || !data.success) {
-                    scheduleModalBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:10px;" class="st-text--danger">Gagal memuat jadwal</td></tr>';
+                    scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--danger st-modal__message">Gagal memuat jadwal</td></tr>';
                     scheduleModalInfo.textContent = '';
                     return;
                 }
 
                 var items = data.items || [];
                 if (items.length === 0) {
-                    scheduleModalBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:10px;" class="st-text--muted">Tidak ada slot scheduled / in progress pada tanggal ini.</td></tr>';
+                    scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">Tidak ada slot scheduled / in progress pada tanggal ini.</td></tr>';
                     return;
                 }
 
@@ -1046,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     var status = (item.status || '').replace('_', ' ');
                     var safeStatus = status.charAt(0).toUpperCase() + status.slice(1);
 
-                    html += '<tr class="schedule-row" data-start="' + (item.planned_start || '') + '" style="cursor:pointer;">';
+                    html += '<tr class="schedule-row st-row-clickable" data-start="' + (item.planned_start || '') + '">';
                     html += '<td>' + (idx + 1) + '</td>';
                     html += '<td>' + start + '</td>';
                     html += '<td>' + (finish || '-') + '</td>';
@@ -1058,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 scheduleModalBody.innerHTML = html;
             })
             .catch(function () {
-                scheduleModalBody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:10px;" class="st-text--danger">Gagal memuat jadwal</td></tr>';
+                scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--danger st-modal__message">Gagal memuat jadwal</td></tr>';
             });
 
         scheduleModal.style.display = 'flex';

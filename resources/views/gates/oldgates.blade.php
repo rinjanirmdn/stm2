@@ -40,23 +40,23 @@
             <div class="st-gate-legend__title">STATUS LEGEND</div>
 
             <div class="st-gate-legend__item">
-                <span class="st-status-dot" style="background-color: #e2e8f0;"></span>
+                <span class="st-status-dot st-status-dot--prebooking"></span>
                 <span>Pre-Booking</span>
             </div>
             <div class="st-gate-legend__item">
-                <span class="st-status-dot" style="background-color: #1e40af;"></span>
+                <span class="st-status-dot st-status-dot--confirmed"></span>
                 <span>Confirmed</span>
             </div>
             <div class="st-gate-legend__item">
-                <span class="st-status-dot" style="background-color: #7c3aed;"></span>
+                <span class="st-status-dot st-status-dot--inprogress"></span>
                 <span>In Progress</span>
             </div>
             <div class="st-gate-legend__item">
-                <span class="st-status-dot" style="background-color: #15803d;"></span>
+                <span class="st-status-dot st-status-dot--completed"></span>
                 <span>Completed</span>
             </div>
             <div class="st-gate-legend__item">
-                <span class="st-status-dot" style="background-color: #dc2626;"></span>
+                <span class="st-status-dot st-status-dot--rejected"></span>
                 <span>Reject / Cancel</span>
             </div>
         </div>
@@ -106,7 +106,7 @@
             <!-- Timeline Body -->
             <div class="st-gate-grid-body">
                 <!-- Current Time Indicator Line (example position) -->
-                <div class="st-current-time-line" style="top: 320px;">
+                <div class="st-current-time-line st-top-320">
                     <span class="st-time-badge">09:15</span>
                 </div>
 
@@ -130,7 +130,7 @@
                 <!-- Gate A Column -->
                 <div class="st-gate-column">
                     <!-- Example Card: Confirmed -->
-                    <div class="st-booking-card st-status-confirmed" style="top: 60px; height: 90px;">
+                    <div class="st-booking-card st-status-confirmed st-top-60 st-h-90">
                         <div class="st-card-header">
                             <span class="st-ticket-no">A26A0027</span>
                             <span class="st-category">Logistics</span>
@@ -143,7 +143,7 @@
                     </div>
 
                     <!-- Example Card: In Progress -->
-                    <div class="st-booking-card st-status-inprogress" style="top: 180px; height: 120px;">
+                    <div class="st-booking-card st-status-inprogress st-top-180 st-h-120">
                         <div class="st-card-header">
                             <span class="st-ticket-no">A26A0029</span>
                             <span class="st-category">Supplier</span>
@@ -155,7 +155,7 @@
                 <!-- Gate B Column -->
                 <div class="st-gate-column">
                     <!-- Example Card: Pre-Booking / Pending -->
-                    <div class="st-booking-card st-status-prebooking" style="top: 120px; height: 60px;">
+                    <div class="st-booking-card st-status-prebooking st-top-120 st-h-60">
                         <div class="st-card-header">
                             <span class="st-ticket-no">REQ-001</span>
                             <span class="st-category">Ad-hoc</span>
@@ -169,7 +169,7 @@
                     </div>
 
                     <!-- Empty State / Confirm Button -->
-                    <div class="st-empty-slot" style="top: 250px; height: 60px;">
+                    <div class="st-empty-slot st-top-250 st-h-60">
                         <button class="st-btn-dashed">
                             <i class="fas fa-plus"></i> Confirm Slot
                         </button>

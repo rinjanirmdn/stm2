@@ -494,6 +494,30 @@
     align-items: start;
 }
 
+.vendor-flex {
+    display: flex;
+}
+
+.vendor-flex-col {
+    flex-direction: column;
+}
+
+.vendor-gap-8 {
+    gap: 0.5rem;
+}
+
+.vendor-mt-16 {
+    margin-top: 1rem;
+}
+
+.vendor-border {
+    border: 1px solid #e5e7eb;
+}
+
+.vendor-rounded-12 {
+    border-radius: 12px;
+}
+
 .notification-item:hover {
     background: #f8fafc;
 }

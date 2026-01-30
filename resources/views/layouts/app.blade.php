@@ -48,7 +48,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-date-range-picker@0.21.1/dist/daterangepicker.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
-<body class="st-app">
+<body class="st-app @yield('body_class')">
     <!-- Mobile sidebar overlay -->
     <div class="st-sidebar__overlay" id="mobile-menu-overlay"></div>
 
@@ -129,16 +129,16 @@
         </nav>
     </aside>
 
-    <div class="st-main" style="display:flex;flex-direction:column;min-height:100vh;">
-        <header class="st-topbar" style="flex:0 0 auto;">
-            <div style="display: flex; align-items: center; gap: 12px; justify-content: space-between; width: 100%;">
-                <div style="display: flex; align-items: center; gap: 12px;">
+    <div class="st-main st-main-layout">
+        <header class="st-topbar st-topbar--fixed">
+            <div class="st-topbar__inner">
+                <div class="st-topbar__left">
                     <!-- Desktop sidebar toggle -->
                     <button class="st-sidebar__toggle" id="desktop-menu-toggle" aria-label="Toggle sidebar">
                         <i class="fas fa-bars"></i>
                     </button>
                     <!-- Hamburger menu for mobile -->
-                    <button class="st-sidebar__toggle" id="mobile-menu-toggle" aria-label="Toggle menu" style="display: none;">
+                    <button class="st-sidebar__toggle st-sidebar__toggle--mobile" id="mobile-menu-toggle" aria-label="Toggle menu">
                         <span></span>
                     </button>
                     <h1 class="st-topbar__title">{{ $pageTitle ?? trim($__env->yieldContent('page_title')) ?: 'Dashboard' }}</h1>
@@ -169,7 +169,7 @@
                                 <div class="st-notification-list">
                                     @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
                                         <a href="{{ $notification->data['action_url'] ?? '#' }}" class="st-notification-item {{ $notification->read_at ? '' : 'st-notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
-                                            <div class="st-notification-icon" style="background: {{ $notification->data['color'] === 'red' ? '#fee2e2' : ($notification->data['color'] === 'green' ? '#dcfce7' : '#dbeafe') }}; color: {{ $notification->data['color'] === 'red' ? '#991b1b' : ($notification->data['color'] === 'green' ? '#166534' : '#1e40af') }}">
+                                            <div class="st-notification-icon st-notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
                                                 <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
                                             </div>
                                             <div class="st-notification-content">
@@ -180,8 +180,8 @@
                                         </a>
                                     @empty
                                         <div class="st-notification-empty">
-                                            <i class="fas fa-bell-slash" style="font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
-                                            <p style="margin:0;font-size:0.875rem;">No notifications yet</p>
+                                            <i class="fas fa-bell-slash st-notification-empty__icon"></i>
+                                            <p class="st-notification-empty__text">No notifications yet</p>
                                         </div>
                                     @endforelse
                                 </div>
@@ -191,9 +191,9 @@
                         <a href="{{ route('profile') }}" class="st-icon-button" title="Profile">
                             <span class="st-icon-glyph">👤</span>
                         </a>
-                        <form method="POST" action="{{ route('logout') }}" style="display:inline;">
+                        <form method="POST" action="{{ route('logout') }}" class="st-inline-form">
                             @csrf
-                            <button type="submit" class="st-icon-button" title="Logout" style="border:0;background:transparent;cursor:pointer;">
+                            <button type="submit" class="st-icon-button st-icon-button--ghost" title="Logout">
                                 <span class="st-icon-glyph">⮕</span>
                             </button>
                         </form>
@@ -202,7 +202,7 @@
             </div>
         </header>
 
-        <main class="st-content" style="flex:1;display:flex;flex-direction:column;">
+        <main class="st-content st-content--layout">
             @if (session('success'))
                 <div class="st-alert st-alert--success">
                     <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
@@ -218,31 +218,31 @@
             @endif
 
             @can('bookings.index')
-            <div id="st-reminder-banner" style="display:none; margin-bottom: 16px; border: 1px solid #f59e0b; background: #fffbeb; color: #92400e; border-radius: 12px; padding: 12px 16px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:10px; font-weight:600;">
+            <div id="st-reminder-banner" class="st-reminder-banner">
+                <div class="st-reminder-banner__row">
+                    <div class="st-reminder-banner__label">
                         <i class="fas fa-bell" aria-hidden="true"></i>
                         <span>Reminder: Pending bookings nearing schedule</span>
                     </div>
-                    <span id="st-reminder-count" style="font-size:12px; font-weight:700; padding:4px 8px; border-radius:999px; background:#fde68a; color:#92400e;">0</span>
+                    <span id="st-reminder-count" class="st-reminder-banner__count">0</span>
                 </div>
-                <div id="st-reminder-list" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;"></div>
+                <div id="st-reminder-list" class="st-reminder-banner__list"></div>
             </div>
-            <div id="st-reminder-toast" style="display:none; position: fixed; right: 24px; top: 96px; z-index: 1200; min-width: 280px; max-width: 360px; background: #92400e; color: #fffbeb; border-radius: 12px; padding: 12px 14px; box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);">
-                <div style="display:flex; align-items:flex-start; gap:10px;">
-                    <i class="fas fa-bell" style="margin-top:2px;"></i>
-                    <div style="flex:1;">
-                        <div style="font-weight:700; margin-bottom:4px;">Reminder Approvals</div>
-                        <div id="st-reminder-toast-text" style="font-size:12px; line-height:1.4;"></div>
+            <div id="st-reminder-toast" class="st-reminder-toast">
+                <div class="st-toast__row">
+                    <i class="fas fa-bell st-toast__icon"></i>
+                    <div class="st-toast__content">
+                        <div class="st-toast__title">Reminder Approvals</div>
+                        <div id="st-reminder-toast-text" class="st-toast__text"></div>
                     </div>
                 </div>
             </div>
-            <div id="st-notification-toast" style="display:none; position: fixed; right: 24px; top: 180px; z-index: 1200; min-width: 280px; max-width: 360px; background: #1e40af; color: #eff6ff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);">
-                <div style="display:flex; align-items:flex-start; gap:10px;">
-                    <i class="fas fa-bell" style="margin-top:2px;"></i>
-                    <div style="flex:1;">
-                        <div style="font-weight:700; margin-bottom:4px;">New Notification</div>
-                        <div id="st-notification-toast-text" style="font-size:12px; line-height:1.4;"></div>
+            <div id="st-notification-toast" class="st-notification-toast">
+                <div class="st-toast__row">
+                    <i class="fas fa-bell st-toast__icon"></i>
+                    <div class="st-toast__content">
+                        <div class="st-toast__title">New Notification</div>
+                        <div id="st-notification-toast-text" class="st-toast__text"></div>
                     </div>
                 </div>
             </div>
@@ -439,9 +439,9 @@ if (stClearBtn) {
                 var countdown = minutes !== null ? (' (' + minutes + ' min)') : '';
                 var timeText = item.planned_start ? ('Planned: ' + item.planned_start) : 'Planned: -';
                 return (
-                    '<a href="' + item.show_url + '" style="display:flex; justify-content:space-between; gap:12px; padding:8px 12px; border-radius:10px; background:#fef3c7; color:#92400e; text-decoration:none;">
-                    <span style="font-weight:600;">' + label + supplier + '</span>' +
-                    '<span style="font-size:12px;">' + timeText + countdown + '</span>' +
+                    '<a href="' + item.show_url + '" class="st-reminder-item">' +
+                    '<span class="st-reminder-item__label">' + label + supplier + '</span>' +
+                    '<span class="st-reminder-item__time">' + timeText + countdown + '</span>' +
                     '</a>'
                 );
             }).join('');
@@ -708,7 +708,7 @@ function clearAllNotifications() {
     }).then(function () {
         var list = document.querySelector('.st-notification-list');
         if (list) {
-            list.innerHTML = '<div class="st-notification-empty"><i class="fas fa-bell-slash" style="font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.5;"></i><p style="margin:0;font-size:0.875rem;">No notifications yet</p></div>';
+            list.innerHTML = '<div class="st-notification-empty"><i class="fas fa-bell-slash st-notification-empty__icon"></i><p class="st-notification-empty__text">No notifications yet</p></div>';
         }
         var badge = document.querySelector('.st-notification-badge');
         if (badge) badge.remove();

@@ -156,31 +156,31 @@
                         <img
                             src="data:image/png;base64,{{ $barcodePng }}"
                             alt="Barcode"
-                            style="width: 180px; height: 46px; display: block; margin: 0 auto;"
+                            class="st-barcode-img"
                         />
-                        <div style="text-align: center; margin-top: 5px; font-size: 10px;">{{ $slot->ticket_number ?? '' }}</div>
+                        <div class="st-barcode-ticket">{{ $slot->ticket_number ?? '' }}</div>
                     @elseif(!empty($barcodeHtml))
                         <div class="barcode-wrap">
-                            <div class="barcode-html" style="margin: 0 auto;">
+                            <div class="barcode-html st-barcode-center">
                                 {!! $barcodeHtml !!}
                             </div>
                         </div>
-                        <div style="text-align: center; margin-top: 5px; font-size: 10px;">{{ $slot->ticket_number ?? '' }}</div>
+                        <div class="st-barcode-ticket">{{ $slot->ticket_number ?? '' }}</div>
                     @elseif(!empty($barcodeSvg))
                         <div class="barcode-wrap">
-                            <div style="margin: 0 auto;">
+                            <div class="st-barcode-center">
                                 {!! $barcodeSvg !!}
                             </div>
                         </div>
-                        <div style="text-align: center; margin-top: 5px; font-size: 10px;">{{ $slot->ticket_number ?? '' }}</div>
+                        <div class="st-barcode-ticket">{{ $slot->ticket_number ?? '' }}</div>
                     @else
-                        <div style="text-align: center; color: #999; font-size: 10px;">No Ticket Number</div>
+                        <div class="st-barcode-ticket st-text--muted-light">No Ticket Number</div>
                     @endif
                 </div>
                 <div class="barcode-note">Scan This Ticket Number with a Barcode Scanner.</div>
             </div>
 
-            <div class="footer" style="text-align: center; position: absolute; bottom: 0; width: 100%;">
+            <div class="footer st-footer-barcode">
                Generated: {{ now()->format('Y-m-d H:i:s') }}
             </div>
         </div>

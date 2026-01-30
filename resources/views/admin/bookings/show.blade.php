@@ -270,8 +270,8 @@
             @csrf
             <div class="st-custom-modal-body">
                 <p>Are you sure you want to approve booking <strong id="modalTicketNumber"></strong>?</p>
-                <div class="st-form-group" style="margin-top: 15px;">
-                    <label class="st-label" style="font-weight: 600; display: block; margin-bottom: 5px;">Gate <span class="st-required">*</span></label>
+                <div class="st-form-group st-form-group--mt-15">
+                    <label class="st-label st-label--strong">Gate <span class="st-required">*</span></label>
                     @php
                         $allGates = $gates->flatten(1);
                         $currentGateId = old('planned_gate_id', $booking->planned_gate_id ?? '');

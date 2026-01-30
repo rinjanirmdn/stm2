@@ -6,27 +6,27 @@
 @section('content')
     <section class="st-row">
         <div class="st-col-12">
-            <div class="st-card" style="padding:16px;max-width:760px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <div class="st-card st-card--narrow">
+                <div class="st-card-header-row">
                     <div>
-                        <h2 class="st-card__title" style="margin:0 0 6px 0;">Add User</h2>
+                        <h2 class="st-card__title st-card-title-tight">Add User</h2>
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('users.store') }}" style="margin-top:14px;">
+                <form method="POST" action="{{ route('users.store') }}" class="st-form-block">
                     @csrf
 
-                    <div class="st-form-field" style="margin-bottom:10px;">
+                    <div class="st-form-field st-form-field--mb">
                         <label class="st-label">NIK/Username</label>
                         <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik') }}" required>
                     </div>
 
-                    <div class="st-form-field" style="margin-bottom:10px;">
+                    <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Full Name</label>
                         <input type="text" name="full_name" class="st-input" maxlength="100" value="{{ old('full_name') }}" required>
                     </div>
 
-                    <div class="st-form-field" style="margin-bottom:10px;">
+                    <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Role</label>
                         <select name="role" class="st-select" required id="role">
                             <option value="operator" {{ old('role', 'operator') === 'operator' ? 'selected' : '' }}>Operator</option>
@@ -36,40 +36,40 @@
                         </select>
                     </div>
 
-                    <div class="st-form-field" style="margin-bottom:10px; display:none;" id="vendor_code_field">
+                    <div class="st-form-field st-form-field--mb st-form-field--hidden" id="vendor_code_field">
                         <label class="st-label">Vendor Code (SAP)</label>
                         <input type="text" name="vendor_code" class="st-input" maxlength="20" value="{{ old('vendor_code') }}" placeholder="e.g. 1100000263">
-                        <div style="font-size:12px;color:#6b7280;margin-top:4px;">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
+                        <div class="st-form-note">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
                     </div>
 
-                    <div class="st-form-field" style="margin-bottom:10px;">
+                    <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Password</label>
-                        <div style="position:relative;">
-                            <input type="password" name="password" id="password" class="st-input" style="padding-right:40px;" required>
-                            <button type="button" class="btn-toggle-password" data-target="password" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;padding:4px;">
+                        <div class="st-input-wrap">
+                            <input type="password" name="password" id="password" class="st-input st-input--pr-40" required>
+                            <button type="button" class="btn-toggle-password st-btn-toggle-password" data-target="password">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
                     </div>
 
-                    <div class="st-form-field" style="margin-bottom:10px;">
+                    <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Confirm Password</label>
-                        <div style="position:relative;">
-                            <input type="password" name="password_confirmation" id="password_confirmation" class="st-input" style="padding-right:40px;" required>
-                            <button type="button" class="btn-toggle-password" data-target="password_confirmation" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;padding:4px;">
+                        <div class="st-input-wrap">
+                            <input type="password" name="password_confirmation" id="password_confirmation" class="st-input st-input--pr-40" required>
+                            <button type="button" class="btn-toggle-password st-btn-toggle-password" data-target="password_confirmation">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
                     </div>
 
-                    <label style="display:flex;gap:8px;align-items:center;margin:12px 0 14px 0;">
+                    <label class="st-checkbox-row">
                         <input type="checkbox" name="is_active" value="1" {{ old('is_active', '1') ? 'checked' : '' }}>
-                        <span style="font-size:13px;color:#374151;">Active</span>
+                        <span class="st-checkbox-label">Active</span>
                     </label>
 
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <div class="st-form-actions">
                         <button type="submit" class="st-btn st-btn--primary">Save</button>
-                        <a href="{{ route('users.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
+                        <a href="{{ route('users.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
                     </div>
                 </form>
             </div>

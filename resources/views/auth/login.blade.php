@@ -7,24 +7,24 @@
     @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/js/app.js'])
 </head>
 <body>
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
-        <div class="st-card" style="width:100%;max-width:420px;padding:18px;">
-            <div style="display:flex;justify-content:center;margin-bottom:1px;min-height:70px;align-items:center;">
-                <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" style="height:70px;object-fit:contain;max-width:100%;">
+    <div class="st-minh-screen st-flex st-items-center st-justify-center st-p-20">
+        <div class="st-card st-w-full st-maxw-420 st-p-18">
+            <div class="st-flex st-justify-center st-items-center st-mb-1 st-minh-70">
+                <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" class="st-h-70 st-object-contain st-w-full">
             </div>
 
-            <div style="text-align:center;margin-bottom:5px;">
-                <div style="font-size:16px;font-weight:700;">Sign in</div>
-                <div style="font-size:12px;color:#6b7280;">Please sign in to continue</div>
+            <div class="st-text-center st-mb-1">
+                <div class="st-text-16 st-font-bold">Sign in</div>
+                <div class="st-text--sm st-text--muted">Please sign in to continue</div>
             </div>
 
             @if ($errors->any())
-                <div class="st-alert st-alert--error" style="margin-bottom:1px;">
+                <div class="st-alert st-alert--error st-mb-1">
                     <span class="st-alert__text">{{ $errors->first() }}</span>
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login.store') }}" style="display:flex;flex-direction:column;gap:10px;">
+            <form method="POST" action="{{ route('login.store') }}" class="st-flex st-flex-col st-gap-10">
                 @csrf
 
                 <div class="st-form-field">
@@ -37,10 +37,10 @@
                     <input type="password" class="st-input" id="password" name="password" required>
                 </div>
 
-                <button type="submit" class="st-btn" style="width:100%;justify-content:center;">Sign in</button>
+                <button type="submit" class="st-btn st-w-full st-justify-center">Sign in</button>
             </form>
 
-            <div style="margin-top:12px;text-align:center;font-size:12px;color:#6b7280;">&copy; {{ date('Y') }} Slot Time Management</div>
+            <div class="st-mt-12 st-text-center st-text--sm st-text--muted">&copy; {{ date('Y') }} Slot Time Management</div>
         </div>
     </div>
 </body>

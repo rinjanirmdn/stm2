@@ -13,22 +13,22 @@
         $conflictLines = session('conflict_lines');
     @endphp
 
-    <div class="st-card" style="margin-bottom:12px;">
-        <div style="font-size:12px;color:#6b7280;">Slot #{{ $slot->id }}</div>
-        <div style="font-weight:600;">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+    <div class="st-card st-mb-12">
+        <div class="st-text--sm st-text--muted">Slot #{{ $slot->id }}</div>
+        <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
+        <div class="st-text--sm st-text--muted st-mt-4">
             Estimated Process Duration: {{ (int) $plannedDurationMinutes }} Minutes
         </div>
     </div>
 
     @if (is_array($conflictLines) && count($conflictLines) > 0)
-        <div class="st-alert st-alert--error" style="margin-bottom:12px;">
+        <div class="st-alert st-alert--error st-mb-12">
             <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
             <div class="st-alert__text">
-                <div style="font-weight:600;margin-bottom:2px;">Lane Conflict</div>
-                <div style="font-size:12px;color:#111827;">
-                    <div style="margin-bottom:6px;">Conflicting Active Slots:</div>
-                    <ul style="margin:0;padding-left:16px;">
+                <div class="st-font-semibold st-mb-2">Lane Conflict</div>
+                <div class="st-text--sm st-text--dark">
+                    <div class="st-mb-6">Conflicting Active Slots:</div>
+                    <ul class="st-list">
                         @foreach ($conflictLines as $line)
                             <li>{{ $line }}</li>
                         @endforeach
@@ -42,9 +42,9 @@
         <form method="POST" action="{{ route('slots.start.store', ['slotId' => $slot->id]) }}">
             @csrf
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Actual Gate <span style="color:#dc2626;">*</span></label>
+                    <label class="st-label">Actual Gate <span class="st-text--danger-dark">*</span></label>
                     <select name="actual_gate_id" class="st-select" required>
                         <option value="">Choose Gate...</option>
                         @php
@@ -106,16 +106,16 @@
                     </select>
 
                     @if ($recommendedGateId)
-                        <div style="font-size:12px;color:#6b7280;margin-top:6px;">
+                        <div class="st-text--sm st-text--muted st-mt-6">
                             Rekomendasi: {{ $recommendedGateId }}
                         </div>
                     @endif
                 </div>
             </div>
 
-            <div style="display:flex;gap:8px;">
+            <div class="st-form-actions">
                 <button type="submit" class="st-btn">Start Slot</button>
-                <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
+                <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
             </div>
         </form>
     </div>

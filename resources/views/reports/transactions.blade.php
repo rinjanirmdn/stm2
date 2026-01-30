@@ -4,10 +4,10 @@
 @section('page_title', 'Transactions')
 
 @section('content')
-    <div class="st-card" style="margin-bottom:12px;">
-        <div style="padding:12px;">
-            <div class="st-form-row" style="align-items:flex-end;">
-                <div class="st-form-field" style="flex:1;min-width:260px;position:relative;">
+    <div class="st-card st-mb-12">
+        <div class="st-p-12">
+            <div class="st-form-row st-items-end">
+                <div class="st-form-field st-flex-1 st-minw-260 st-relative">
                     <label class="st-label">Search</label>
                     <input
                         type="text"
@@ -17,27 +17,26 @@
                         placeholder="PO, Ticket, MAT DOC, Vendor, Etc"
                         value="{{ $q ?? '' }}"
                     >
-                    <div id="transaction-search-suggestions" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:30;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;max-height:220px;overflow:auto;min-width:260px;"></div>
+                    <div id="transaction-search-suggestions" class="st-suggestions st-suggestions--transactions st-hidden"></div>
                 </div>
-                <div class="st-form-field" style="max-width:250px;position:relative;">
+                <div class="st-form-field st-maxw-250 st-relative">
                     <label class="st-label">Date Range</label>
-                    <div style="display:flex;gap:6px;">
+                    <div class="st-flex st-gap-6">
                         <input
                             type="text"
                             id="date_range"
-                            class="st-input"
                             placeholder="Select Date Range"
                             readonly
-                            style="cursor:pointer;flex:1;"
+                            class="st-input st-input--cursor st-flex-1"
                         >
-                        <button type="button" id="clear-date-range" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm" title="Reset all filters" style="padding:6px 12px;">
+                        <button type="button" id="clear-date-range" class="st-btn st-btn--outline-primary st-btn--pad-md" title="Reset all filters">
                             Reset
                         </button>
                     </div>
                     <input type="hidden" name="date_from" id="date_from" form="transactions-filter-form" value="{{ $date_from ?? '' }}">
                     <input type="hidden" name="date_to" id="date_to" form="transactions-filter-form" value="{{ $date_to ?? '' }}">
                 </div>
-                <div class="st-form-field" style="max-width:120px;">
+                <div class="st-form-field st-maxw-120">
                     <label class="st-label">Show</label>
                     <select name="page_size" form="transactions-filter-form" class="st-select">
                         @foreach ($pageSizeAllowed as $ps)
@@ -45,16 +44,16 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="st-form-field" style="flex:0 0 auto;">
+                <div class="st-form-field st-flex-0">
                     <a id="transactions-excel-link" href="{{ route('reports.transactions', array_merge(request()->query(), ['page_size' => 'all', 'export' => 'excel'])) }}" class="st-btn st-btn--primary">Excel</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <section class="st-row" style="flex:1;">
-        <div class="st-col-12" style="flex:1;display:flex;flex-direction:column;">
-            <div class="st-card" style="margin-bottom:0;flex:1;display:flex;flex-direction:column;">
+    <section class="st-row st-flex-1">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1">
                 <form method="GET" id="transactions-filter-form" data-multi-sort="1" action="{{ route('reports.transactions') }}">
                     @php
                         $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -65,35 +64,35 @@
                         <input type="hidden" name="sort[]" value="{{ $s }}">
                         <input type="hidden" name="dir[]" value="{{ $d }}">
                     @endforeach
-                    <div class="st-table-wrapper" style="min-height: 400px;">
+                    <div class="st-table-wrapper st-table-wrapper--minh-400">
                         <table class="st-table">
                             <thead>
                                 <tr>
-                                    <th style="width:40px;">#</th>
-                                    <th style="width:90px;">
-                                        <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                    <th class="st-table-col-40">#</th>
+                                    <th class="st-table-col-90">
+                                        <div class="st-filter-header st-filter-header--inline-compact">
                                             <span>Type</span>
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="type" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger" data-filter="type" title="Filter Type" style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;">
-                                                <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="type" title="Filter Type">
+                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
                                             </button>
-                                            <div class="st-filter-panel" data-filter-panel="type" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Type Filter</div>
-                                                <select name="slot_type[]" class="st-select st-filter-type-select" style="width:100%;height:34px;">
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="type">
+                                                <div class="st-font-semibold st-mb-6">Type Filter</div>
+                                                <select name="slot_type[]" class="st-select st-filter-type-select st-select--panel">
                                                     <option value="">(All)</option>
                                                     <option value="planned" {{ in_array('planned', $slotTypeFilter ?? [], true) ? 'selected' : '' }}>Planned</option>
                                                     <option value="unplanned" {{ in_array('unplanned', $slotTypeFilter ?? [], true) ? 'selected' : '' }}>Unplanned</option>
                                                 </select>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="type">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="type">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="type" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Type</div>
-                                                <button type="button" class="st-sort-option" data-sort="type" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="type">
+                                                <div class="st-font-semibold st-mb-6">Sort Type</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="type" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="type" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="type" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
@@ -106,19 +105,19 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" data-type="text" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="po" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">PO Filter</div>
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="po">
+                                                <div class="st-font-semibold st-mb-6">PO Filter</div>
                                                 <input type="text" name="po" class="st-input" placeholder="Search PO..." value="{{ $po ?? '' }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="po">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="po">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="po" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort PO</div>
-                                                <button type="button" class="st-sort-option" data-sort="po" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="po">
+                                                <div class="st-font-semibold st-mb-6">Sort PO</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="po" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="po" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="po" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
@@ -131,19 +130,19 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="ticket" data-type="text" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="ticket" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="ticket" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Ticket Filter</div>
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="ticket">
+                                                <div class="st-font-semibold st-mb-6">Ticket Filter</div>
                                                 <input type="text" name="ticket" class="st-input" placeholder="Search Ticket..." value="{{ $ticket ?? '' }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="ticket">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="ticket">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="ticket" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Ticket</div>
-                                                <button type="button" class="st-sort-option" data-sort="ticket" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="ticket">
+                                                <div class="st-font-semibold st-mb-6">Sort Ticket</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="ticket" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="ticket" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="ticket" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
@@ -156,103 +155,103 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" data-type="text" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="mat_doc" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">MAT DOC Filter</div>
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="mat_doc">
+                                                <div class="st-font-semibold st-mb-6">MAT DOC Filter</div>
                                                 <input type="text" name="mat_doc" class="st-input" placeholder="Search MAT DOC..." value="{{ $mat_doc ?? '' }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="mat_doc">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="mat_doc" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort MAT DOC</div>
-                                                <button type="button" class="st-sort-option" data-sort="mat_doc" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="mat_doc">
+                                                <div class="st-font-semibold st-mb-6">Sort MAT DOC</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="mat_doc" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="mat_doc" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="mat_doc" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                        <div class="st-filter-header st-filter-header--inline-compact">
                                             <span>Vendor</span>
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="vendor" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger" data-filter="vendor" title="Filter Vendor" style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;">
-                                                <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="vendor" title="Filter Vendor">
+                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
                                             </button>
-                                            <div class="st-filter-panel" data-filter-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="vendor">
+                                                <div class="st-font-semibold st-mb-6">Vendor Filter</div>
                                                 <input type="text" name="vendor" class="st-input" placeholder="Search Vendor..." value="{{ $vendor ?? '' }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="vendor">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="vendor">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Vendor</div>
-                                                <button type="button" class="st-sort-option" data-sort="vendor" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="vendor">
+                                                <div class="st-font-semibold st-mb-6">Sort Vendor</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="vendor" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="vendor" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="vendor" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                        <div class="st-filter-header st-filter-header--inline-compact">
                                             <span>Warehouse</span>
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger" data-filter="warehouse" title="Filter Warehouse" style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;">
-                                                <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="warehouse" title="Filter Warehouse">
+                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
                                             </button>
-                                            <div class="st-filter-panel" data-filter-panel="warehouse" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Warehouse Filter</div>
-                                                <select name="warehouse_id[]" class="st-select st-filter-warehouse-select" style="width:100%;height:34px;">
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-260" data-filter-panel="warehouse">
+                                                <div class="st-font-semibold st-mb-6">Warehouse Filter</div>
+                                                <select name="warehouse_id[]" class="st-select st-filter-warehouse-select st-select--panel">
                                                     <option value="">(All)</option>
                                                     @foreach ($warehouses as $wh)
                                                         <option value="{{ $wh->id }}" {{ in_array((string) $wh->id, array_map('strval', $warehouseFilter ?? []), true) ? 'selected' : '' }}>{{ $wh->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="warehouse">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="warehouse">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="warehouse" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Warehouse</div>
-                                                <button type="button" class="st-sort-option" data-sort="warehouse" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="warehouse">
+                                                <div class="st-font-semibold st-mb-6">Sort Warehouse</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="warehouse" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="warehouse" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="warehouse" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                        <div class="st-filter-header st-filter-header--inline-compact">
                                             <span>Direction</span>
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger" data-filter="direction" title="Filter Direction" style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;">
-                                                <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="direction" title="Filter Direction">
+                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
                                             </button>
-                                            <div class="st-filter-panel" data-filter-panel="direction" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Direction Filter</div>
-                                                <select name="direction[]" class="st-select st-filter-direction-select" style="width:100%;height:34px;">
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="direction">
+                                                <div class="st-font-semibold st-mb-6">Direction Filter</div>
+                                                <select name="direction[]" class="st-select st-filter-direction-select st-select--panel">
                                                     <option value="">(All)</option>
                                                     <option value="inbound" {{ in_array('inbound', $directionFilter ?? [], true) ? 'selected' : '' }}>Inbound</option>
                                                     <option value="outbound" {{ in_array('outbound', $directionFilter ?? [], true) ? 'selected' : '' }}>Outbound</option>
                                                 </select>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="direction">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="direction">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="direction" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Direction</div>
-                                                <button type="button" class="st-sort-option" data-sort="direction" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="direction">
+                                                <div class="st-font-semibold st-mb-6">Sort Direction</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="direction" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="direction" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="direction" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
@@ -265,21 +264,21 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="arrival" data-type="date" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="arrival_presence" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="arrival_presence" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:260px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Arrival Date</div>
-                                                <input type="text" name="arrival_date_range" id="arrival_date_range" class="st-input" placeholder="Select Arrival Date Range" readonly style="cursor:pointer;width:100%;">
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-260 st-maxh-220" data-filter-panel="arrival_presence">
+                                                <div class="st-font-semibold st-mb-6">Arrival Date</div>
+                                                <input type="text" name="arrival_date_range" id="arrival_date_range" class="st-input st-input--cursor" placeholder="Select Arrival Date Range" readonly>
                                                 <input type="hidden" name="arrival_date_from" id="arrival_date_from" value="{{ $arrival_date_from ?? '' }}">
                                                 <input type="hidden" name="arrival_date_to" id="arrival_date_to" value="{{ $arrival_date_to ?? '' }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="arrival_presence">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="arrival_presence">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="arrival" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Arrival</div>
-                                                <button type="button" class="st-sort-option" data-sort="arrival" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="arrival">
+                                                <div class="st-font-semibold st-mb-6">Sort Arrival</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="arrival" data-dir="desc">
                                                     Newest
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="arrival" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="arrival" data-dir="asc">
                                                     Oldest
                                                 </button>
                                             </div>
@@ -292,86 +291,86 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="lead_time" data-type="duration" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="lead_time" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="lead_time" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Lead Time (min)</div>
-                                                <div style="display:flex;flex-direction:column;gap:8px;">
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-260" data-filter-panel="lead_time">
+                                                <div class="st-font-semibold st-mb-6">Lead Time (min)</div>
+                                                <div class="st-flex st-flex-col st-gap-8">
                                                     <div>
-                                                        <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Min</div>
+                                                        <div class="st-text--xs-11 st-font-semibold st-mb-4">Min</div>
                                                         <input type="number" name="lead_time_min" class="st-input" placeholder="0" value="{{ $lead_time_min ?? '' }}">
                                                     </div>
                                                     <div>
-                                                        <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Max</div>
+                                                        <div class="st-text--xs-11 st-font-semibold st-mb-4">Max</div>
                                                         <input type="number" name="lead_time_max" class="st-input" placeholder="999" value="{{ $lead_time_max ?? '' }}">
                                                     </div>
                                                 </div>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="lead_time">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="lead_time">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="lead_time" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Lead Time</div>
-                                                <button type="button" class="st-sort-option" data-sort="lead_time" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="lead_time">
+                                                <div class="st-font-semibold st-mb-6">Sort Lead Time</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="lead_time" data-dir="asc">
                                                     Fastest
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="lead_time" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="lead_time" data-dir="desc">
                                                     Slowest
                                                 </button>
                                             </div>
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                        <div class="st-filter-header st-filter-header--inline-compact">
                                             <span>Target Status</span>
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="target_status" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger" data-filter="target_status" title="Filter Target Status" style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;">
-                                                <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="target_status" title="Filter Target Status">
+                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
                                             </button>
-                                            <div class="st-filter-panel" data-filter-panel="target_status" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Target Status Filter</div>
-                                                <select name="target_status[]" class="st-select st-filter-target-status-select" style="width:100%;height:34px;">
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="target_status">
+                                                <div class="st-font-semibold st-mb-6">Target Status Filter</div>
+                                                <select name="target_status[]" class="st-select st-filter-target-status-select st-select--panel">
                                                     <option value="">(All)</option>
                                                     <option value="achieve" {{ in_array('achieve', $targetStatusFilter ?? [], true) ? 'selected' : '' }}>Achieve</option>
                                                     <option value="not_achieve" {{ in_array('not_achieve', $targetStatusFilter ?? [], true) ? 'selected' : '' }}>Not Achieve</option>
                                                 </select>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="target_status">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="target_status">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="target_status" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Target Status</div>
-                                                <button type="button" class="st-sort-option" data-sort="target_status" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="target_status">
+                                                <div class="st-font-semibold st-mb-6">Sort Target Status</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="target_status" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="target_status" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="target_status" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                        <div class="st-filter-header st-filter-header--inline-compact">
                                             <span>ARRIVAL STATUS</span>
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" data-type="number" title="Sort">⇅</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger" data-filter="late" title="Filter Late" style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;">
-                                                <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="late" title="Filter Late">
+                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
                                             </button>
-                                            <div class="st-filter-panel" data-filter-panel="late" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Late Filter</div>
-                                                <select name="late[]" class="st-select st-filter-late-select" style="width:100%;height:34px;">
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="late">
+                                                <div class="st-font-semibold st-mb-6">Late Filter</div>
+                                                <select name="late[]" class="st-select st-filter-late-select st-select--panel">
                                                     <option value="">(All)</option>
                                                     <option value="on_time" {{ in_array('on_time', $lateFilter ?? [], true) ? 'selected' : '' }}>On Time</option>
                                                     <option value="late" {{ in_array('late', $lateFilter ?? [], true) ? 'selected' : '' }}>Late</option>
                                                 </select>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="late">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="late">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="late" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort Late</div>
-                                                <button type="button" class="st-sort-option" data-sort="late" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="late">
+                                                <div class="st-font-semibold st-mb-6">Sort Late</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="late" data-dir="asc">
                                                     Terkecil
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="late" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="late" data-dir="desc">
                                                     Terbesar
                                                 </button>
                                             </div>
@@ -384,19 +383,19 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="user" data-type="text" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="user" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="user" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">User Filter</div>
+                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="user">
+                                                <div class="st-font-semibold st-mb-6">User Filter</div>
                                                 <input type="text" name="user" class="st-input" placeholder="Search User..." value="{{ $user ?? '' }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="user">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="user">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel" data-sort-panel="user" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Sort User</div>
-                                                <button type="button" class="st-sort-option" data-sort="user" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="user">
+                                                <div class="st-font-semibold st-mb-6">Sort User</div>
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="user" data-dir="asc">
                                                     A-Z
                                                 </button>
-                                                <button type="button" class="st-sort-option" data-sort="user" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="user" data-dir="desc">
                                                     Z-A
                                                 </button>
                                             </div>
@@ -515,7 +514,7 @@
                                                 @if ($ltHours >= 1)
                                                     ({{ rtrim(rtrim(number_format($ltHours, 2), '0'), '.') }} Hours)
                                                 @endif
-                                                <div style="font-size:10px;color:#6b7280;margin-top:2px;line-height:1.3;">
+                                                <div class="st-text--xs-10 st-text--muted st-mt-1 st-leading-13">
                                                     @if ($waitingMinutes !== null)
                                                         <div>Waiting: {{ (int) $waitingMinutes }} Min</div>
                                                     @endif
@@ -558,7 +557,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="13" style="text-align:center;color:#6b7280;padding:16px 8px;">No Transactions Found</td>
+                                        <td colspan="13" class="st-text-center st-text--muted st-table-empty--roomy">No Transactions Found</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -820,17 +819,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data && data.length > 0) {
                         var html = '';
                         data.forEach(function (item) {
-                            html += '<div style="padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;" onclick="selectSuggestion(\'' + String(item.text || '').replace(/'/g, "\\'") + '\')">' + (item.highlighted || item.text || '') + '</div>';
+                            html += '<div class="st-suggestion-item--compact" onclick="selectSuggestion(\'' + String(item.text || '').replace(/'/g, "\\'") + '\')">' + (item.highlighted || item.text || '') + '</div>';
                         });
                         suggestionBox.innerHTML = html;
                         suggestionBox.style.display = 'block';
                     } else {
-                        suggestionBox.innerHTML = '<div style="padding:6px 8px;color:#6b7280;">No suggestions for "' + trimmed.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '"</div>';
+                        suggestionBox.innerHTML = '<div class="st-suggestion-empty">No suggestions for "' + trimmed.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '"</div>';
                         suggestionBox.style.display = 'block';
                     }
                 })
                 .catch(function () {
-                    suggestionBox.innerHTML = '<div style="padding:6px 8px;color:#6b7280;">Error loading suggestions</div>';
+                    suggestionBox.innerHTML = '<div class="st-suggestion-empty">Error loading suggestions</div>';
                     suggestionBox.style.display = 'block';
                 });
         });

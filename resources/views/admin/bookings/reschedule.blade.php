@@ -78,7 +78,7 @@
                 </h3>
 
                 <div class="admin-form-group">
-                    <label class="admin-form-label">Gate <span style="color: #ef4444;">*</span></label>
+                    <label class="admin-form-label">Gate <span class="st-text-danger">*</span></label>
                     <select name="planned_gate_id" id="gate_select" class="admin-form-select" required>
                         <option value="">Select Gate...</option>
                         @foreach ($gates as $gate)
@@ -126,7 +126,7 @@
                     @enderror
                 </div>
 
-                <div class="st-form-group" style="margin-top: 1.5rem;">
+                <div class="st-form-group st-mt-24">
                     <label class="st-label">Notes for Vendor</label>
                     <textarea name="notes" class="st-textarea" rows="3"
                               placeholder="Explain Why You're Rescheduling This Booking...">{{ old('notes') }}</textarea>
@@ -384,14 +384,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (data.available !== false) {
                     availabilityResult.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-success, #10b981);">
+                        <div class="st-flex st-items-center st-gap-8 st-text-success">
                             <i class="fas fa-check-circle"></i>
                             <span>Time Slot Is Available</span>
                         </div>
                     `;
                 } else {
                     availabilityResult.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--st-danger, #ef4444);">
+                        <div class="st-flex st-items-center st-gap-8 st-text-danger">
                             <i class="fas fa-times-circle"></i>
                             <span>${data.reason || 'Time Slot Is Not Available'}</span>
                         </div>
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        calendarPreview.innerHTML = '<p style="text-align: center; color: var(--st-text-muted); padding: 2rem;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
+        calendarPreview.innerHTML = '<p class="st-text-center st-text--muted st-p-20"><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
 
         fetch(`/bookings/ajax/calendar?warehouse_id=${warehouseId}&date=${date}`)
             .then(response => response.json())
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                calendarPreview.innerHTML = '<p style="text-align: center; color: var(--st-danger); padding: 2rem;">Failed to load</p>';
+                calendarPreview.innerHTML = '<p class="st-text-center st-text-danger st-p-20">Failed to load</p>';
             });
     }
 
@@ -432,16 +432,16 @@ document.addEventListener('DOMContentLoaded', function() {
             hours.push(h.toString().padStart(2, '0') + ':00');
         }
 
-        let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
-        html += '<thead><tr><th style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: var(--st-surface-alt, #f8fafc);">Time</th>';
+        let html = '<div class="st-cal-preview__wrap"><table class="st-cal-preview__table">';
+        html += '<thead><tr><th>Time</th>';
 
         gates.forEach(g => {
-            html += `<th style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: var(--st-surface-alt, #f8fafc); min-width: 120px;">${g.gate.name}</th>`;
+            html += `<th>${g.gate.name}</th>`;
         });
         html += '</tr></thead><tbody>';
 
         hours.forEach(hour => {
-            html += `<tr><td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); font-weight: 500;">${hour}</td>`;
+            html += `<tr><td class="st-font-semibold">${hour}</td>`;
 
             gates.forEach(g => {
                 const slot = g.slots.find(s => s.start_time === hour);
@@ -452,17 +452,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     const isCurrentBooking = slot.id === {{ $booking->id }};
                     const bgColor = isCurrentBooking ? '#fef3c7' : (isPending ? '#fce7f3' : '#dcfce7');
 
-                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: ${bgColor}; vertical-align: top;">
-                        <div style="font-weight: 500;">${slot.start_time} - ${slot.end_time}</div>
-                        <div style="font-size: 0.75rem; opacity: 0.7;">${slot.vendor_name}</div>
-                        ${isCurrentBooking ? '<div style="font-size: 0.7rem; color: #92400e; font-weight: 600;">Current</div>' : ''}
+                    const stateClass = isPending ? 'st-cal-preview__pending' : 'st-cal-preview__occupied';
+                    const currentBadge = isCurrentBooking ? '<div class="st-cal-preview__current">Current</div>' : '';
+                    html += `<td class="${stateClass}">
+                        <div class="st-font-semibold">${slot.start_time} - ${slot.end_time}</div>
+                        <div class="st-text--sm st-text--muted">${slot.vendor_name}</div>
+                        ${currentBadge}
                     </td>`;
                 } else if (!occupiedSlot) {
-                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb); background: #f0fdf4; text-align: center; color: #16a34a;">
-                        <i class="fas fa-check" style="opacity: 0.5;"></i>
+                    html += `<td class="st-cal-preview__slot">
+                        <i class="fas fa-check st-cal-preview__slot-icon"></i>
                     </td>`;
                 } else {
-                    html += `<td style="padding: 0.5rem; border: 1px solid var(--st-border, #e5e7eb);"></td>`;
+                    html += `<td></td>`;
                 }
             });
             html += '</tr>';

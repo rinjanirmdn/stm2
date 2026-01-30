@@ -16,7 +16,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="st-grid st-grid--4" style="margin-bottom: 24px;">
+    <div class="st-grid st-grid--4 st-mb-24">
         <div class="st-stat-card">
             <div class="st-stat-card__value" id="total-gates">0</div>
             <div class="st-stat-card__label">Total Gates</div>

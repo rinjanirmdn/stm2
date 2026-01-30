@@ -4,22 +4,21 @@
 @section('page_title', 'Activity Logs')
 
 @section('content')
-    <div class="st-card" style="margin-bottom:12px;">
-        <form method="GET" class="st-form-row" style="margin-top:4px;align-items:flex-end;">
-            <div class="st-form-field" style="max-width:250px;position:relative;">
+    <div class="st-card st-mb-12">
+        <form method="GET" class="st-form-row st-mt-4 st-items-end">
+            <div class="st-form-field st-maxw-250 st-relative">
                 <label class="st-label">Date Range</label>
                 <input
                     type="text"
                     id="date_range"
-                    class="st-input"
                     placeholder="Select Date Range"
                     readonly
-                    style="cursor:pointer;"
+                    class="st-input st-input--cursor"
                 >
                 <input type="hidden" name="date_from" id="date_from" value="{{ $date_from ?? '' }}">
                 <input type="hidden" name="date_to" id="date_to" value="{{ $date_to ?? '' }}">
             </div>
-            <div class="st-form-row" style="gap:4px;align-items:flex-end;">
+            <div class="st-form-row st-form-row--gap-4 st-items-end">
                 <div class="st-form-field">
                     <label class="st-label">Type</label>
                     <select name="type" class="st-select">
@@ -29,21 +28,21 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="st-form-field" style="max-width:220px;">
+                <div class="st-form-field st-maxw-220">
                     <label class="st-label">Search</label>
                     <input type="text" name="q" class="st-input" placeholder="MAT DOC / PO / Text" value="{{ $q ?? '' }}">
                 </div>
-                <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
-                    <a href="{{ route('logs.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
+                    <a href="{{ route('logs.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                 </div>
             </div>
         </form>
     </div>
 
-    <section class="st-row" style="flex:1;">
-        <div class="st-col-12" style="flex:1;display:flex;flex-direction:column;">
-            <div class="st-card" style="margin-bottom:0;flex:1;display:flex;flex-direction:column;">
-                <div class="st-table-wrapper" style="min-height: 400px;">
+    <section class="st-row st-flex-1">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1">
+                <div class="st-table-wrapper st-table-wrapper--minh-400">
                     <form method="GET" id="logs-filter-form" data-multi-sort="1" action="{{ route('logs.index') }}">
                         <input type="hidden" name="q" value="{{ $q ?? '' }}">
                         <input type="hidden" name="type" value="{{ $type ?? '' }}">
@@ -61,7 +60,7 @@
                         <table class="st-table">
                             <thead>
                                 <tr>
-                                    <th style="width:190px;">
+                                    <th class="st-table-col-190">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Time</span>
                                             <span class="st-colhead__icons">
@@ -69,7 +68,7 @@
                                             </span>
                                         </div>
                                     </th>
-                                    <th style="width:180px;">
+                                    <th class="st-table-col-180">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Type</span>
                                             <span class="st-colhead__icons">
@@ -85,7 +84,7 @@
                                             </span>
                                         </div>
                                     </th>
-                                    <th style="width:150px;">
+                                    <th class="st-table-col-150">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">MAT DOC</span>
                                             <span class="st-colhead__icons">
@@ -93,7 +92,7 @@
                                             </span>
                                         </div>
                                     </th>
-                                    <th style="width:150px;">
+                                    <th class="st-table-col-150">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">PO</span>
                                             <span class="st-colhead__icons">
@@ -101,7 +100,7 @@
                                             </span>
                                         </div>
                                     </th>
-                                    <th style="width:160px;">
+                                    <th class="st-table-col-160">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">User</span>
                                             <span class="st-colhead__icons">
@@ -170,7 +169,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align:center;color:#6b7280;padding:16px 8px;">No Logs Found</td>
+                                <td colspan="6" class="st-text-center st-text--muted st-table-empty--roomy">No Logs Found</td>
                             </tr>
                         @endforelse
                         </tbody>

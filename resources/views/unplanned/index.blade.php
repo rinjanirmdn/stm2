@@ -4,12 +4,12 @@
 @section('page_title', 'Unplanned Transactions')
 
 @section('content')
-    <div class="st-card" style="margin-bottom:12px;">
-        <div style="padding:12px;">
-            <div class="st-form-row" style="gap:4px;align-items:flex-end;">
-                <div class="st-form-field" style="max-width:260px;">
+    <div class="st-card st-mb-12">
+        <div class="st-p-12">
+            <div class="st-form-row st-form-row--gap-4 st-items-end">
+                <div class="st-form-field st-maxw-260">
                     <label class="st-label">Search</label>
-                    <div style="position:relative;">
+                    <div class="st-relative">
                         <input
                             type="text"
                             name="q"
@@ -20,7 +20,7 @@
                         >
                     </div>
                 </div>
-                <div class="st-form-field" style="max-width:120px;">
+                <div class="st-form-field st-maxw-120">
                     <label class="st-label">Show</label>
                     <select name="page_size" form="unplanned-filter-form" class="st-select">
                         @foreach (['10','25','50','100','all'] as $ps)
@@ -28,8 +28,8 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;gap:8px;">
-                    <a href="{{ route('unplanned.index') }}?sort=reset" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end st-gap-8">
+                    <a href="{{ route('unplanned.index') }}?sort=reset" class="st-btn st-btn--outline-primary">Reset</a>
                     @can('unplanned.create')
                     <a href="{{ route('unplanned.create') }}" class="st-btn st-btn--primary">Create Unplanned</a>
                     @endcan
@@ -38,9 +38,9 @@
         </div>
     </div>
 
-    <section class="st-row" style="flex:1;">
-        <div class="st-col-12" style="flex:1;display:flex;flex-direction:column;">
-            <div class="st-card" style="margin-bottom:0;flex:1;display:flex;flex-direction:column;">
+    <section class="st-row st-flex-1">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1">
                 <form method="GET" id="unplanned-filter-form" data-multi-sort="1" action="{{ route('unplanned.index') }}">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -51,11 +51,11 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper" style="min-height: 400px;">
+                <div class="st-table-wrapper st-table-wrapper--minh-400">
                     <table class="st-table">
                         <thead>
                             <tr>
-                                <th style="width:40px;">#</th>
+                                <th class="st-table-col-40">#</th>
                                 <th>
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">PO/DO</span>
@@ -63,11 +63,11 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po_number" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="po" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">PO/DO Filter</div>
+                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="po">
+                                            <div class="st-font-semibold st-mb-6">PO/DO Filter</div>
                                             <input type="text" name="po_number" form="unplanned-filter-form" class="st-input" placeholder="Search PO/DO..." value="{{ request('po_number') }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="po">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="po">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -79,11 +79,11 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="mat_doc" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">MAT DOC Filter</div>
+                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="mat_doc">
+                                            <div class="st-font-semibold st-mb-6">MAT DOC Filter</div>
                                             <input type="text" name="mat_doc" form="unplanned-filter-form" class="st-input" placeholder="Search MAT DOC..." value="{{ request('mat_doc') }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="mat_doc">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -95,11 +95,11 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="vendor_name" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="vendor" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
+                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="vendor">
+                                            <div class="st-font-semibold st-mb-6">Vendor Filter</div>
                                             <input type="text" name="vendor" form="unplanned-filter-form" class="st-input" placeholder="Search Vendor..." value="{{ request('vendor') }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="vendor">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="vendor">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -111,21 +111,21 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse_name" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="whgate" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="whgate" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Warehouse / Gate Filter</div>
-                                            <div style="display:flex;gap:8px;align-items:flex-start;">
-                                                <div style="flex:1;min-width:140px;">
-                                                    <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Warehouse</div>
-                                                    <select name="warehouse" form="unplanned-filter-form" class="st-select" style="width:100%;">
+                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="whgate">
+                                            <div class="st-font-semibold st-mb-6">Warehouse / Gate Filter</div>
+                                            <div class="st-flex st-gap-8 st-items-start">
+                                                <div class="st-flex-1 st-minw-140">
+                                                    <div class="st-text--xs-11 st-font-semibold st-mb-4">Warehouse</div>
+                                                    <select name="warehouse" form="unplanned-filter-form" class="st-select st-select--panel">
                                                         <option value="">(All)</option>
                                                         @foreach($warehouses as $wh)
                                                             <option value="{{ $wh->name }}" {{ request('warehouse') === $wh->name ? 'selected' : '' }}>{{ $wh->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
-                                                <div style="flex:1;min-width:80px;">
-                                                    <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Gate</div>
-                                                    <select name="gate" form="unplanned-filter-form" class="st-select" style="width:100%;">
+                                                <div class="st-flex-1 st-minw-80">
+                                                    <div class="st-text--xs-11 st-font-semibold st-mb-4">Gate</div>
+                                                    <select name="gate" form="unplanned-filter-form" class="st-select st-select--panel">
                                                         <option value="">(All)</option>
                                                         @foreach($gates as $gate)
                                                             <option value="{{ $gate }}" {{ request('gate') === $gate ? 'selected' : '' }}>{{ $gate }}</option>
@@ -133,8 +133,8 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="whgate">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="whgate">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -146,15 +146,15 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="direction" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:160px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Direction</div>
-                                            <select name="direction" form="unplanned-filter-form" class="st-select" style="width:100%;height:34px;">
+                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-160" data-filter-panel="direction">
+                                            <div class="st-font-semibold st-mb-6">Direction</div>
+                                            <select name="direction" form="unplanned-filter-form" class="st-select st-select--panel">
                                                 <option value="" {{ !in_array(request('direction'), ['inbound', 'outbound']) ? 'selected' : '' }}>(All)</option>
                                                 <option value="inbound" {{ request('direction') === 'inbound' ? 'selected' : '' }}>Inbound</option>
                                                 <option value="outbound" {{ request('direction') === 'outbound' ? 'selected' : '' }}>Outbound</option>
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="direction">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="direction">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -165,15 +165,15 @@
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="status" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:180px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Status</div>
-                                            <select name="status" form="unplanned-filter-form" class="st-select" style="width:100%;height:34px;">
+                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-180" data-filter-panel="status">
+                                            <div class="st-font-semibold st-mb-6">Status</div>
+                                            <select name="status" form="unplanned-filter-form" class="st-select st-select--panel">
                                                 <option value="" {{ !in_array(request('status'), ['waiting', 'completed']) ? 'selected' : '' }}>(All)</option>
                                                 <option value="waiting" {{ request('status') === 'waiting' ? 'selected' : '' }}>Waiting</option>
                                                 <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="status">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="status">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -185,13 +185,13 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="arrival_time" data-type="date" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="arrival" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="arrival" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Arrival Range</div>
-                                            <input type="text" id="unplanned_arrival_range" name="arrival_range" form="unplanned-filter-form" class="st-input" placeholder="Select Date Range" value="{{ (request('arrival_from') && request('arrival_to')) ? (request('arrival_from').' to '.request('arrival_to')) : ((request('arrival_from') || request('arrival_to')) ? (request('arrival_from') ?: request('arrival_to')) : '') }}" readonly style="cursor:pointer;">
+                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-280 st-maxh-260" data-filter-panel="arrival">
+                                            <div class="st-font-semibold st-mb-6">Arrival Range</div>
+                                            <input type="text" id="unplanned_arrival_range" name="arrival_range" form="unplanned-filter-form" class="st-input st-input--cursor" placeholder="Select Date Range" value="{{ (request('arrival_from') && request('arrival_to')) ? (request('arrival_from').' to '.request('arrival_to')) : ((request('arrival_from') || request('arrival_to')) ? (request('arrival_from') ?: request('arrival_to')) : '') }}" readonly>
                                             <input type="hidden" name="arrival_from" form="unplanned-filter-form" value="{{ request('arrival_from') }}">
                                             <input type="hidden" name="arrival_to" form="unplanned-filter-form" value="{{ request('arrival_to') }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="arrival">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="arrival">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -202,7 +202,7 @@
                 <tbody>
                 @if ($unplannedSlots->isEmpty())
                     <tr>
-                        <td colspan="10" style="text-align:center;color:#6b7280;padding:12px 8px;">No Unplanned Transactions Found</td>
+                        <td colspan="10" class="st-text-center st-text--muted st-table-empty--compact">No Unplanned Transactions Found</td>
                     </tr>
                 @else
                     @foreach ($unplannedSlots as $idx => $slot)

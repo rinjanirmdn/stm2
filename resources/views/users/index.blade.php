@@ -4,16 +4,16 @@
 @section('page_title', 'Users')
 
 @section('content')
-    <div class="st-card" style="margin-bottom:12px;">
+    <div class="st-card st-mb-12">
         <form method="GET" action="{{ route('users.index') }}">
-            <div style="padding:12px;">
-                <div class="st-form-row" style="gap:4px;align-items:flex-end;">
-                    <div class="st-form-field" style="max-width:200px;">
+            <div class="st-p-12">
+                <div class="st-form-row st-gap-4 st-align-end">
+                    <div class="st-form-field st-maxw-200">
                         <label class="st-label">Search</label>
                         <input type="text" name="q" class="st-input" placeholder="NIK/Username or name" value="{{ $q ?? '' }}">
                     </div>
-                    <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;gap:8px;">
-                        <a href="{{ route('users.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                    <div class="st-form-field st-minw-80 st-flex st-flex-0 st-justify-end st-gap-8">
+                        <a href="{{ route('users.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                         <a href="{{ route('users.create') }}" class="st-btn st-btn--primary">Add User</a>
                     </div>
                 </div>
@@ -21,9 +21,9 @@
         </form>
     </div>
 
-    <section class="st-row" style="flex:1;">
-        <div class="st-col-12" style="flex:1;display:flex;flex-direction:column;">
-            <div class="st-card" style="margin-bottom:0;flex:1;display:flex;flex-direction:column;position:relative;">
+    <section class="st-row st-flex-1">
+        <div class="st-col-12 st-flex st-flex-1 st-flex-col">
+            <div class="st-card st-card--fill">
                 <form method="GET" id="user-filter-form" data-multi-sort="1" action="{{ route('users.index') }}">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -34,31 +34,31 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper" style="min-height: 400px;">
+                <div class="st-table-wrapper st-minh-400">
                     <table class="st-table">
                         <thead>
                             <tr>
-                                <th style="width:60px;">#</th>
-                                <th style="width:180px;">
+                                <th class="st-w-60">#</th>
+                                <th class="st-w-180">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">NIK/Username</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="nik" data-type="text" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="nik" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="nik" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">NIK/Username Filter</div>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="nik">
+                                            <div class="st-panel__title">NIK/Username Filter</div>
                                             <input type="text" name="nik" form="user-filter-form" class="st-input" placeholder="Search NIK/Username..." value="{{ $nik ?? '' }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="nik">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="nik">Clear</button>
                                             </div>
                                         </div>
-                                        <div class="st-sort-panel" data-sort-panel="nik" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Sort NIK/Username</div>
-                                            <button type="button" class="st-sort-option" data-sort="nik" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                        <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="nik">
+                                            <div class="st-panel__title">Sort NIK/Username</div>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="nik" data-dir="asc">
                                                 A-Z
                                             </button>
-                                            <button type="button" class="st-sort-option" data-sort="nik" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="nik" data-dir="desc">
                                                 Z-A
                                             </button>
                                         </div>
@@ -71,33 +71,33 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="full_name" data-type="text" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="full_name" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="full_name" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Full Name Filter</div>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="full_name">
+                                            <div class="st-panel__title">Full Name Filter</div>
                                             <input type="text" name="full_name" form="user-filter-form" class="st-input" placeholder="Search name..." value="{{ $full_name ?? '' }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="full_name">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="full_name">Clear</button>
                                             </div>
                                         </div>
-                                        <div class="st-sort-panel" data-sort-panel="full_name" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Sort Full Name</div>
-                                            <button type="button" class="st-sort-option" data-sort="full_name" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                        <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="full_name">
+                                            <div class="st-panel__title">Sort Full Name</div>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="full_name" data-dir="asc">
                                                 A-Z
                                             </button>
-                                            <button type="button" class="st-sort-option" data-sort="full_name" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="full_name" data-dir="desc">
                                                 Z-A
                                             </button>
                                         </div>
                                     </div>
                                 </th>
-                                <th style="width:140px;">
+                                <th class="st-w-140">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Role</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="role" data-type="text" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="role" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="role" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Role Filter</div>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="role">
+                                            <div class="st-panel__title">Role Filter</div>
                                             <select name="role" form="user-filter-form" class="st-select">
                                                 <option value="">All Roles</option>
                                                 <option value="admin" {{ ($role ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
@@ -105,68 +105,68 @@
                                                 <option value="operator" {{ ($role ?? '') === 'operator' ? 'selected' : '' }}>Operator</option>
                                                 <option value="vendor" {{ ($role ?? '') === 'vendor' ? 'selected' : '' }}>Vendor</option>
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="role">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="role">Clear</button>
                                             </div>
                                         </div>
-                                        <div class="st-sort-panel" data-sort-panel="role" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Sort Role</div>
-                                            <button type="button" class="st-sort-option" data-sort="role" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                        <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="role">
+                                            <div class="st-panel__title">Sort Role</div>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="role" data-dir="asc">
                                                 A-Z
                                             </button>
-                                            <button type="button" class="st-sort-option" data-sort="role" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="role" data-dir="desc">
                                                 Z-A
                                             </button>
                                         </div>
                                     </div>
                                 </th>
-                                <th style="width:120px;">
+                                <th class="st-w-120">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Status</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="is_active" data-type="text" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="is_active" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="is_active" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Status Filter</div>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="is_active">
+                                            <div class="st-panel__title">Status Filter</div>
                                             <select name="is_active" form="user-filter-form" class="st-select">
                                                 <option value="">All Status</option>
                                                 <option value="1" {{ ($is_active ?? '') === '1' ? 'selected' : '' }}>Active</option>
                                                 <option value="0" {{ ($is_active ?? '') === '0' ? 'selected' : '' }}>Inactive</option>
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="is_active">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="is_active">Clear</button>
                                             </div>
                                         </div>
-                                        <div class="st-sort-panel" data-sort-panel="is_active" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Sort Status</div>
-                                            <button type="button" class="st-sort-option" data-sort="is_active" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                        <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="is_active">
+                                            <div class="st-panel__title">Sort Status</div>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="is_active" data-dir="asc">
                                                 A-Z
                                             </button>
-                                            <button type="button" class="st-sort-option" data-sort="is_active" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="is_active" data-dir="desc">
                                                 Z-A
                                             </button>
                                         </div>
                                     </div>
                                 </th>
-                                <th style="width:190px;">
+                                <th class="st-w-190">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Created</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" data-type="date" title="Sort">⇅</button>
                                         </span>
-                                        <div class="st-sort-panel" data-sort-panel="created_at" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:20;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Sort Created</div>
-                                            <button type="button" class="st-sort-option" data-sort="created_at" data-dir="desc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;margin-bottom:2px;">
+                                        <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="created_at">
+                                            <div class="st-panel__title">Sort Created</div>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="created_at" data-dir="desc">
                                                 Newest
                                             </button>
-                                            <button type="button" class="st-sort-option" data-sort="created_at" data-dir="asc" style="display:block;width:100%;text-align:left;padding:6px 8px;border:none;background:none;cursor:pointer;border-radius:4px;">
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="created_at" data-dir="asc">
                                                 Oldest
                                             </button>
                                         </div>
                                     </div>
                                 </th>
-                                <th style="width:260px;">Actions</th>
+                                <th class="st-w-260">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -183,7 +183,7 @@
                             @endphp
                             <tr>
                                 <td>{{ $loop->index + 1 }}</td>
-                                <td style="font-weight:600;">{{ $u->nik ?? '-' }}</td>
+                                <td class="st-font-semibold">{{ $u->nik ?? '-' }}</td>
                                 <td>{{ $u->full_name ?? '-' }}</td>
                                 <td>
                                     <span class="st-badge st-badge--{{ $roleVal }}">{{ $roleText }}</span>
@@ -217,28 +217,28 @@
                                         </a>
 
                                         @if (! $isCurrentUser)
-                                            <form method="POST" action="{{ route('users.toggle', ['userId' => $u->id]) }}" style="display:inline;">
+                                            <form method="POST" action="{{ route('users.toggle', ['userId' => $u->id]) }}" class="st-inline-form">
                                                 @csrf
                                                 <button type="submit" class="tw-action {{ $isActive ? 'tw-action--danger' : 'tw-action--primary' }}" data-tooltip="{{ $toggleLabel }}" aria-label="{{ $toggleLabel }}" onclick="return confirm('{{ $toggleConfirmMsg }}');">
                                                     <i class="fa-solid {{ $isActive ? 'fa-ban' : 'fa-check' }}"></i>
                                                 </button>
                                             </form>
 
-                                            <form method="POST" action="{{ route('users.delete', ['userId' => $u->id]) }}" style="display:inline;">
+                                            <form method="POST" action="{{ route('users.delete', ['userId' => $u->id]) }}" class="st-inline-form">
                                                 @csrf
                                                 <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('{{ $deleteConfirmMsg }}');">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </button>
                                             </form>
                                         @else
-                                            <span style="font-size:12px;color:#6b7280;">(current)</span>
+                                            <span class="st-text--muted st-text--sm">(current)</span>
                                         @endif
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" style="text-align:center;color:#6b7280;padding:16px 8px;">No users found</td>
+                                <td colspan="7" class="st-table-empty st-text-center st-text--muted st-py-16">No users found</td>
                             </tr>
                         @endforelse
                         </tbody>

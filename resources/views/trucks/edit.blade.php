@@ -6,29 +6,29 @@
 @section('content')
     <section class="st-row">
         <div class="st-col-12">
-            <div class="st-card" style="padding:16px;max-width:760px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <div class="st-card st-p-16 st-maxw-760">
+                <div class="st-flex st-justify-between st-align-center st-gap-10">
                     <div>
-                        <h2 class="st-card__title" style="margin:0 0 6px 0;">Edit Truck</h2>
+                        <h2 class="st-card__title st-mb-6">Edit Truck</h2>
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('trucks.update', ['truckTypeDurationId' => $row->id]) }}" style="margin-top:14px;">
+                <form method="POST" action="{{ route('trucks.update', ['truckTypeDurationId' => $row->id]) }}" class="st-mt-14">
                     @csrf
 
-                    <div class="st-form-field" style="margin-bottom:10px;">
+                    <div class="st-form-field st-mb-10">
                         <label class="st-label">Truck Type</label>
                         <input type="text" name="truck_type" class="st-input" maxlength="100" value="{{ old('truck_type', (string) ($row->truck_type ?? '')) }}" required>
                     </div>
 
-                    <div class="st-form-field" style="margin-bottom:14px;">
+                    <div class="st-form-field st-mb-14">
                         <label class="st-label">Duration (minutes)</label>
                         <input type="number" name="target_duration_minutes" class="st-input" min="1" max="1440" value="{{ old('target_duration_minutes', (int) ($row->target_duration_minutes ?? 0)) }}" required>
                     </div>
 
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <div class="st-flex st-gap-8 st-flex-wrap">
                         <button type="submit" class="st-btn st-btn--primary">Save</button>
-                        <a href="{{ route('trucks.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
+                        <a href="{{ route('trucks.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
                     </div>
                 </form>
             </div>

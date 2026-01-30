@@ -5,20 +5,20 @@
 
 @section('content')
     <!-- Custom Reject Booking Dialog -->
-    <div id="customConfirmDialog" class="st-dialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="st-card" style="width: 100%; max-width: 500px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-            <div class="st-card__header" style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
-                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937;">Cancel Booking</h3>
+    <div id="customConfirmDialog" class="st-dialog st-dialog--overlay st-hidden">
+        <div class="st-card st-dialog__card">
+            <div class="st-card__header st-dialog__header">
+                <h3 class="st-dialog__title">Cancel Booking</h3>
             </div>
-            <div class="st-card__body" style="padding: 20px;">
+            <div class="st-card__body st-dialog__body">
                 <form id="cancel-booking-form" method="POST" action="">
                     @csrf
-                    <p id="rejectConfirmationText" style="margin: 0 0 20px 0; color: #4b5563; line-height: 1.5; font-size: 14px;">
-                        Are you sure you want to cancel booking <span id="slotNumber" style="font-weight: 600;"></span>?
+                    <p id="rejectConfirmationText" class="st-dialog__text">
+                        Are you sure you want to cancel booking <span id="slotNumber" class="st-font-semibold"></span>?
                     </p>
 
-                    <div class="st-form-field" style="margin-bottom: 20px;">
-                        <label for="rejectReason" class="st-label" style="display: block; margin-bottom: 6px; font-size: 13px; color: #4b5563; font-weight: 500;">
+                    <div class="st-form-field st-dialog__field">
+                        <label for="rejectReason" class="st-label st-dialog__label">
                             Reason for Cancellation
                         </label>
                         <textarea
@@ -31,11 +31,11 @@
                         ></textarea>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 8px;">
-                        <button id="confirmRejectYes" type="submit" class="st-btn st-btn--danger" style="flex: 1; max-width: 220px;">
+                    <div class="st-dialog__actions">
+                        <button id="confirmRejectYes" type="submit" class="st-btn st-btn--danger st-dialog__btn">
                             CANCEL BOOKING
                         </button>
-                        <button id="confirmRejectNo" type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" style="flex: 1; max-width: 220px;">
+                        <button id="confirmRejectNo" type="button" class="st-btn st-btn--outline-primary st-dialog__btn">
                             BACK
                         </button>
                     </div>
@@ -44,19 +44,19 @@
         </div>
     </div>
 
-    <section class="st-row" style="margin:0;padding:0 0 2px 0;">
-        <div class="st-col-12" style="display:flex;flex-direction:column;">
-            <div class="st-card tw-card tw-card--table" style="margin:0;">
+    <section class="st-row st-section-compact">
+        <div class="st-col-12 st-flex st-flex-col">
+            <div class="st-card tw-card tw-card--table st-card--flush">
                 <div class="tw-card__body">
-                    <div class="st-form-row" style="gap:4px;align-items:flex-end;">
-                        <div class="st-form-field" style="max-width:260px;">
+                    <div class="st-form-row st-gap-4 st-align-end">
+                        <div class="st-form-field st-maxw-260">
                             <label class="st-label">Search</label>
-                            <div style="position:relative;">
+                            <div class="st-input-wrap">
                                 <input type="text" name="q" form="slot-filter-form" class="st-input" placeholder="Truck, MAT DOC, Vendor, Etc" value="{{ $search }}">
-                                <div id="slot-search-suggestions" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:30;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;max-height:220px;overflow:auto;min-width:260px;"></div>
+                                <div id="slot-search-suggestions" class="st-suggestions st-hidden"></div>
                             </div>
                         </div>
-                        <div class="st-form-field" style="max-width:120px;">
+                        <div class="st-form-field st-maxw-120">
                             <label class="st-label">Show</label>
                             <select name="page_size" form="slot-filter-form" class="st-select">
                                 @foreach (['10','25','50','100','all'] as $ps)
@@ -64,8 +64,8 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;gap:8px;">
-                            <a href="{{ route('slots.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Reset</a>
+                        <div class="st-form-field st-minw-80 st-flex st-flex-0 st-justify-end st-gap-8">
+                            <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                             @unless(optional(auth()->user())->hasRole('Operator'))
                             @can('slots.create')
                             <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary">Create Slot</a>
@@ -78,9 +78,9 @@
         </div>
     </section>
 
-    <section class="st-row" style="margin:0;padding:0;">
-        <div class="st-col-12" style="display:flex;flex-direction:column;">
-            <div class="st-card tw-card tw-card--table" style="margin:0;">
+    <section class="st-row st-section-compact st-section-compact--tight">
+        <div class="st-col-12 st-flex st-flex-col">
+            <div class="st-card tw-card tw-card--table st-card--flush">
                 <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1" autocomplete="off">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -91,11 +91,11 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper" style="min-height: 400px; padding: 16px;">
+                <div class="st-table-wrapper st-minh-400 st-p-16">
                     <table class="st-table">
                         <thead>
                             <tr>
-                                <th style="width:40px;">#</th>
+                                <th class="st-w-40">#</th>
                                 <th>
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">PO</span>
@@ -103,11 +103,11 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="truck" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="truck" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">PO Filter</div>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="truck">
+                                            <div class="st-panel__title">PO Filter</div>
                                             <input type="text" name="truck" form="slot-filter-form" class="st-input" placeholder="Search PO..." value="{{ $truck ?? '' }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="truck">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="truck">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -119,11 +119,11 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="mat_doc" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">MAT DOC Filter</div>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="mat_doc">
+                                            <div class="st-panel__title">MAT DOC Filter</div>
                                             <input type="text" name="mat_doc" form="slot-filter-form" class="st-input" placeholder="Search MAT DOC..." value="{{ $mat_doc ?? '' }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="mat_doc">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -135,17 +135,17 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="vendor" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="vendor" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="vendor" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Vendor Filter</div>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="vendor">
+                                            <div class="st-panel__title">Vendor Filter</div>
                                             <input type="text" name="vendor" form="slot-filter-form" class="st-input" placeholder="Search Vendor..." value="{{ $vendor ?? '' }}">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="vendor">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="vendor">Clear</button>
                                             </div>
                                         </div>
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                    <div class="st-filter-header st-filter-header--inline">
                                         <span>Warehouse / Gate</span>
                                         <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse" title="Sort">⇅</button>
                                         <button
@@ -153,16 +153,15 @@
                                             class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
                                             data-filter="whgate"
                                             title="Filter Warehouse / Gate"
-                                            style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;"
                                         >
-                                            <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <span>&#x25BC;</span>
                                         </button>
-                                        <div class="st-filter-panel" data-filter-panel="whgate" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:260px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Warehouse / Gate Filter</div>
-                                            <div style="display:flex;gap:8px;align-items:flex-start;">
-                                                <div style="flex:1;min-width:140px;">
-                                                    <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Warehouse</div>
-                                                    <select name="warehouse_id[]" form="slot-filter-form" class="st-select st-filter-warehouse-select" style="width:100%;height:34px;">
+                                        <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="whgate">
+                                            <div class="st-panel__title">Warehouse / Gate Filter</div>
+                                            <div class="st-panel__cols">
+                                                <div class="st-panel__col st-minw-140">
+                                                    <div class="st-panel__label">Warehouse</div>
+                                                    <select name="warehouse_id[]" form="slot-filter-form" class="st-select st-filter-warehouse-select st-select--panel">
                                                         <option value="">(All)</option>
                                                         @foreach ($warehouses as $wh)
                                                             <option value="{{ $wh->id }}" {{ in_array((string)$wh->id, array_map('strval', $warehouseFilter), true) ? 'selected' : '' }}>
@@ -171,9 +170,9 @@
                                                         @endforeach
                                                     </select>
                                                 </div>
-                                                <div style="flex:1;min-width:100px;">
-                                                    <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Gate</div>
-                                                    <select name="gate[]" form="slot-filter-form" class="st-select st-filter-gate-select" style="width:100%;height:34px;">
+                                                <div class="st-panel__col st-minw-100">
+                                                    <div class="st-panel__label">Gate</div>
+                                                    <select name="gate[]" form="slot-filter-form" class="st-select st-filter-gate-select st-select--panel">
                                                         <option value="">(All)</option>
                                                         @php $seenGates = []; @endphp
                                                         @foreach ($gates as $g)
@@ -192,14 +191,14 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="whgate">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="whgate">Clear</button>
                                             </div>
                                         </div>
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                    <div class="st-filter-header st-filter-header--inline">
                                         <span>Direction</span>
                                         <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">⇅</button>
                                         <button
@@ -207,19 +206,18 @@
                                             class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
                                             data-filter="direction"
                                             title="Filter Direction"
-                                            style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;"
                                         >
-                                            <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <span>&#x25BC;</span>
                                         </button>
-                                        <div class="st-filter-panel" data-filter-panel="direction" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Direction Filter</div>
-                                            <select name="direction[]" form="slot-filter-form" class="st-select st-filter-direction-select" style="width:100%;height:34px;">
+                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="direction">
+                                            <div class="st-panel__title">Direction Filter</div>
+                                            <select name="direction[]" form="slot-filter-form" class="st-select st-filter-direction-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 <option value="inbound" {{ in_array('inbound', $directionFilter, true) ? 'selected' : '' }}>Inbound</option>
                                                 <option value="outbound" {{ in_array('outbound', $directionFilter, true) ? 'selected' : '' }}>Outbound</option>
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="direction">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="direction">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -231,13 +229,13 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="planned_start" data-type="date" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_start" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="planned_start" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">ETA Range</div>
-                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' - '.$date_to) : '' }}" readonly style="cursor:pointer;" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
+                                        <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="planned_start">
+                                            <div class="st-panel__title">ETA Range</div>
+                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input st-input--pointer" placeholder="Select Date Range" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' - '.$date_to) : '' }}" readonly data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
                                             <input type="hidden" name="date_from" form="slot-filter-form" value="{{ $date_from ?? '' }}" autocomplete="off">
                                             <input type="hidden" name="date_to" form="slot-filter-form" value="{{ $date_to ?? '' }}" autocomplete="off">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="planned_start">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="planned_start">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -257,13 +255,13 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="arrival" data-type="date" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="arrival_presence" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="arrival_presence" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:280px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Arrival Date Filter</div>
-                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input" placeholder="Select Date Range" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' - '.$arrival_to) : '' }}" readonly style="cursor:pointer;" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
+                                        <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="arrival_presence">
+                                            <div class="st-panel__title">Arrival Date Filter</div>
+                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input st-input--pointer" placeholder="Select Date Range" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' - '.$arrival_to) : '' }}" readonly data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
                                             <input type="hidden" name="arrival_from" form="slot-filter-form" value="{{ $arrival_from ?? '' }}" autocomplete="off">
                                             <input type="hidden" name="arrival_to" form="slot-filter-form" value="{{ $arrival_to ?? '' }}" autocomplete="off">
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="arrival_presence">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="arrival_presence">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -275,20 +273,20 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="lead_time" data-type="duration" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="lead_time" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="lead_time" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Lead Time (Min)</div>
-                                            <div style="display:flex;flex-direction:column;gap:8px;">
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="lead_time">
+                                            <div class="st-panel__title">Lead Time (Min)</div>
+                                            <div class="st-panel__stack">
                                                 <div>
-                                                    <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Min</div>
+                                                    <div class="st-panel__label">Min</div>
                                                     <input type="number" name="lead_time_min" form="slot-filter-form" class="st-input" placeholder="0" value="{{ $lead_time_min ?? '' }}">
                                                 </div>
                                                 <div>
-                                                    <div style="font-size:11px;font-weight:600;margin-bottom:4px;">Max</div>
+                                                    <div class="st-panel__label">Max</div>
                                                     <input type="number" name="lead_time_max" form="slot-filter-form" class="st-input" placeholder="999" value="{{ $lead_time_max ?? '' }}">
                                                 </div>
                                             </div>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="lead_time">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="lead_time">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -300,21 +298,21 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="target_status" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="target_status" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel" data-filter-panel="target_status" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:240px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Target Status Filter</div>
-                                            <select name="target_status[]" form="slot-filter-form" class="st-select" style="width:100%;height:34px;">
+                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="target_status">
+                                            <div class="st-panel__title">Target Status Filter</div>
+                                            <select name="target_status[]" form="slot-filter-form" class="st-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 <option value="achieve" {{ in_array('achieve', $targetStatusFilter ?? [], true) ? 'selected' : '' }}>Achieve</option>
                                                 <option value="not_achieve" {{ in_array('not_achieve', $targetStatusFilter ?? [], true) ? 'selected' : '' }}>Not Achieve</option>
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="target_status">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="target_status">Clear</button>
                                             </div>
                                         </div>
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                    <div class="st-filter-header st-filter-header--inline">
                                         <span>Arrival Status</span>
                                         <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" title="Sort">⇅</button>
                                         <button
@@ -322,25 +320,24 @@
                                             class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
                                             data-filter="late"
                                             title="Filter Late"
-                                            style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;"
                                         >
-                                            <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <span>&#x25BC;</span>
                                         </button>
-                                        <div class="st-filter-panel" data-filter-panel="late" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Late Filter</div>
-                                            <select name="late[]" form="slot-filter-form" class="st-select st-filter-late-select" style="width:100%;height:34px;">
+                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="late">
+                                            <div class="st-panel__title">Late Filter</div>
+                                            <select name="late[]" form="slot-filter-form" class="st-select st-filter-late-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 <option value="on_time" {{ in_array('on_time', $lateFilter, true) ? 'selected' : '' }}>On Time</option>
                                                 <option value="late" {{ in_array('late', $lateFilter, true) ? 'selected' : '' }}>Late</option>
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="late">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="late">Clear</button>
                                             </div>
                                         </div>
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                    <div class="st-filter-header st-filter-header--inline">
                                         <span>Status</span>
                                         <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" title="Sort">⇅</button>
                                         <button
@@ -348,26 +345,25 @@
                                             class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
                                             data-filter="status"
                                             title="Filter Status"
-                                            style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;"
                                         >
-                                            <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <span>&#x25BC;</span>
                                         </button>
-                                        <div class="st-filter-panel" data-filter-panel="status" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:260px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Status Filter</div>
-                                            <select name="status[]" form="slot-filter-form" class="st-select st-filter-status-select" style="width:100%;height:34px;">
+                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="status">
+                                            <div class="st-panel__title">Status Filter</div>
+                                            <select name="status[]" form="slot-filter-form" class="st-select st-filter-status-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 @foreach (['scheduled','waiting','in_progress','completed','cancelled'] as $st)
                                                     <option value="{{ $st }}" {{ in_array($st, $statusFilter, true) ? 'selected' : '' }}>{{ ucwords(str_replace('_',' ', $st)) }}</option>
                                                 @endforeach
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="status">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="status">Clear</button>
                                             </div>
                                         </div>
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header" style="display:inline-flex;align-items:center;gap:4px;position:relative;">
+                                    <div class="st-filter-header st-filter-header--inline">
                                         <span>Blocking</span>
                                         <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="blocking" title="Sort">⇅</button>
                                         <button
@@ -375,20 +371,19 @@
                                             class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
                                             data-filter="blocking"
                                             title="Filter Blocking"
-                                            style="padding:1px 6px;min-width:18px;height:18px;background:#f3f4f6;border-color:#d1d5db;color:#4b5563;border-radius:999px;"
                                         >
-                                            <span style="font-size:9px;line-height:1;">&#x25BC;</span>
+                                            <span>&#x25BC;</span>
                                         </button>
-                                        <div class="st-filter-panel" data-filter-panel="blocking" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                            <div style="font-weight:600;margin-bottom:6px;">Blocking Filter</div>
-                                            <select name="blocking[]" form="slot-filter-form" class="st-select st-filter-blocking-select" style="width:100%;height:34px;">
+                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="blocking">
+                                            <div class="st-panel__title">Blocking Filter</div>
+                                            <select name="blocking[]" form="slot-filter-form" class="st-select st-filter-blocking-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 <option value="low" {{ in_array('low', $blockingFilter ?? [], true) ? 'selected' : '' }}>Low</option>
                                                 <option value="medium" {{ in_array('medium', $blockingFilter ?? [], true) ? 'selected' : '' }}>Medium</option>
                                                 <option value="high" {{ in_array('high', $blockingFilter ?? [], true) ? 'selected' : '' }}>High</option>
                                             </select>
-                                            <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                <button type="button" class="st-btn st-btn--sm" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-filter-clear" data-filter="blocking">Clear</button>
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="blocking">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -515,13 +510,13 @@
                                 ];
                                 $badgeClass = $badgeMap[$status] ?? 'bg-secondary';
                             @endphp
-                            <tr style="height: 48px;">
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $rowNumber }}</td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $row->truck_number }}</td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $row->mat_doc ?? '-' }}</td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $row->vendor_name ?? '-' }}</td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $whGateLabel }}</td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
+                            <tr class="st-table-row">
+                                <td class="st-table-cell">{{ $rowNumber }}</td>
+                                <td class="st-table-cell">{{ $row->truck_number }}</td>
+                                <td class="st-table-cell">{{ $row->mat_doc ?? '-' }}</td>
+                                <td class="st-table-cell">{{ $row->vendor_name ?? '-' }}</td>
+                                <td class="st-table-cell">{{ $whGateLabel }}</td>
+                                <td class="st-table-cell">
                                     @php $dir = strtolower($row->direction ?? ''); @endphp
                                     @if($dir === 'inbound')
                                         <span class="st-badge-modern st-badge-modern--inbound">
@@ -535,22 +530,22 @@
                                         {{ strtoupper($row->direction ?? '') }}
                                     @endif
                                 </td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $fmt($row->planned_start ?? null) }}</td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">{{ !empty($row->arrival_time) ? $fmt($row->arrival_time) : '-' }}</td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
+                                <td class="st-table-cell">{{ $fmt($row->planned_start ?? null) }}</td>
+                                <td class="st-table-cell">{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</td>
+                                <td class="st-table-cell">{{ !empty($row->arrival_time) ? $fmt($row->arrival_time) : '-' }}</td>
+                                <td class="st-table-cell">
                                     @if ($leadTimeMinutes !== null)
                                         @php
                                             $m = (int) $leadTimeMinutes;
                                             $h = $m / 60;
                                         @endphp
-                                        <div style="line-height: 1.2;">
+                                        <div class="st-leadtime">
                                             {{ $m }} Min
                                             @if ($h >= 1)
-                                                <div style="font-size: 10px; color: #6b7280;">({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }}h)</div>
+                                                <div class="st-leadtime-sub">({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }}h)</div>
                                             @endif
                                             @if ($waitingMinutes !== null || $processMinutes !== null)
-                                                <div style="font-size: 9px; color: #9ca3af; margin-top: 1px;">
+                                                <div class="st-leadtime-meta">
                                                     @if ($waitingMinutes !== null)
                                                         W:{{ (int) $waitingMinutes }}m
                                                     @endif
@@ -565,7 +560,7 @@
                                         -
                                     @endif
                                 </td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
+                                <td class="st-table-cell">
                                     @if ($status === 'completed' && (empty($row->actual_start) || empty($row->actual_finish)))
                                         <span class="badge bg-status-changes">Data Error</span>
                                     @elseif ($plannedDurationMinutes === null || $plannedDurationMinutes <= 0 || $leadTimeMinutes === null)
@@ -578,7 +573,7 @@
                                         -
                                     @endif
                                 </td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
+                                <td class="st-table-cell">
                                     @if ($lateDisplay === 'late')
                                         <span class="st-table__status-badge st-status-late">Late</span>
                                     @elseif ($lateDisplay === 'on_time')
@@ -587,15 +582,15 @@
                                         -
                                     @endif
                                 </td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
+                                <td class="st-table-cell">
                                     <span class="badge {{ $badgeClass }}">{{ ucwords(str_replace('_',' ', $status)) }}</span>
                                 </td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
+                                <td class="st-table-cell">
                                     <span class="st-table__status-badge {{ $blockingClass }}">{{ $blockingLabel }}</span>
                                 </td>
-                                <td style="vertical-align: middle; border-bottom: 1px solid #e5e7eb;">
+                                <td class="st-table-cell">
                                     <div class="st-action-dropdown">
-                                        <button type="button" class="st-btn st-btn--ghost st-action-trigger" style="padding:4px 8px;font-size:16px;line-height:1;border:none;color:#6b7280;">
+                                        <button type="button" class="st-btn st-btn--ghost st-action-trigger st-action-trigger--compact">
                                             &#x22ee;
                                         </button>
                                         <div class="st-action-menu">
@@ -640,7 +635,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="15" style="text-align:center;color:#6b7280;padding:16px 8px;">No Slots Found</td>
+                                <td colspan="15" class="st-table-empty st-text-center st-text--muted st-py-16">No Slots Found</td>
                             </tr>
                         @endforelse
                         </tbody>
@@ -1350,7 +1345,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         data.forEach(function (item) {
                             var t = (item && item.text) ? item.text : '';
                             var h = (item && item.highlighted) ? item.highlighted : t;
-                            html += '<div style="padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;" onclick="selectSuggestion(\'' + String(t).replace(/'/g, "\\'") + '\')">' + h + '</div>';
+                            html += '<div class="st-suggestion-item" onclick="selectSuggestion(\'' + String(t).replace(/'/g, "\\'") + '\')">' + h + '</div>';
                         });
                         suggestionBox.innerHTML = html;
                         suggestionBox.style.display = 'block';

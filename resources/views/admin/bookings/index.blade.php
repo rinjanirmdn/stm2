@@ -5,39 +5,39 @@
 
 @section('content')
     <!-- Combined Filter and Stats Card -->
-    <div class="st-card" style="margin-bottom:2px;font-size:12px;">
-        <div style="padding:2px;">
-            <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between;">
+    <div class="st-card st-mb-2 st-text-12">
+        <div class="st-p-2">
+            <div class="st-flex st-gap-8 st-align-center st-justify-between">
                 <!-- Stats Tabs Section (Left) -->
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                <div class="st-flex st-gap-8 st-flex-wrap st-align-center">
                     <a href="{{ route('bookings.index', ['status' => 'pending']) }}"
-                       class="st-stat-tab {{ $status === 'pending' ? 'st-stat-tab--active' : '' }}" style="font-size:12px;padding:4px 8px;">
-                        <span class="st-stat-tab__count" style="font-size:12px;">{{ $counts['pending'] ?? 0 }}</span>
-                        <span class="st-stat-tab__label" style="font-size:12px;">Pending</span>
+                       class="st-stat-tab {{ $status === 'pending' ? 'st-stat-tab--active' : '' }} st-text-12 st-px-8 st-py-4">
+                        <span class="st-stat-tab__count st-text-12">{{ $counts['pending'] ?? 0 }}</span>
+                        <span class="st-stat-tab__label st-text-12">Pending</span>
                     </a>
                     <a href="{{ route('bookings.index', ['status' => 'approved']) }}"
-                       class="st-stat-tab {{ $status === 'approved' ? 'st-stat-tab--active' : '' }}" style="font-size:12px;padding:4px 8px;">
-                        <span class="st-stat-tab__count" style="font-size:12px;">{{ $counts['approved'] ?? 0 }}</span>
-                        <span class="st-stat-tab__label" style="font-size:12px;">Approved</span>
+                       class="st-stat-tab {{ $status === 'approved' ? 'st-stat-tab--active' : '' }} st-text-12 st-px-8 st-py-4">
+                        <span class="st-stat-tab__count st-text-12">{{ $counts['approved'] ?? 0 }}</span>
+                        <span class="st-stat-tab__label st-text-12">Approved</span>
                     </a>
                 </div>
 
                 <!-- Filter Section (Right) -->
-                <div style="flex: 1;">
-                    <div class="st-form-row" style="gap:8px;align-items:flex-end;justify-content:flex-end;">
-                        <div class="st-form-field" style="max-width:220px;">
-                            <label class="st-label" style="font-size:12px;">Search</label>
-                            <input type="text" name="search" form="booking-filter-form" class="st-input" style="font-size:12px;padding:2px 4px;height:24px;" placeholder="Request No, PO..." value="{{ request('search') }}">
+                <div class="st-flex-1">
+                    <div class="st-form-row st-gap-8 st-items-end st-justify-end">
+                        <div class="st-form-field st-maxw-220">
+                            <label class="st-label st-text-12">Search</label>
+                            <input type="text" name="search" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Request No, PO..." value="{{ request('search') }}">
                         </div>
-                        <div class="st-form-field" style="max-width:240px;">
-                            <label class="st-label" style="font-size:12px;">Date Range</label>
-                            <input type="text" id="date_range_filter" class="st-input" style="font-size:12px;padding:2px 4px;height:24px;" placeholder="Select Date Range" data-st-range-init="1" autocomplete="off" readonly>
+                        <div class="st-form-field st-maxw-240">
+                            <label class="st-label st-text-12">Date Range</label>
+                            <input type="text" id="date_range_filter" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Select Date Range" data-st-range-init="1" autocomplete="off" readonly>
                             <input type="hidden" name="date_from" id="date_from_filter" form="booking-filter-form" value="{{ request('date_from') }}">
                             <input type="hidden" name="date_to" id="date_to_filter" form="booking-filter-form" value="{{ request('date_to') }}">
                         </div>
-                        <div class="st-form-field" style="min-width:80px;flex:0 0 auto;display:flex;justify-content:flex-end;">
+                        <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
                             @if(request()->hasAny(['date_from', 'date_to', 'search', 'request_number', 'po_number', 'supplier_name', 'coa', 'planned_start', 'converted_ticket', 'gate', 'direction', 'status_filter', 'created_at']))
-                            <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:2px 10px;height:24px;">Reset</a>
+                            <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn st-btn--outline-primary st-text-12 st-py-2 st-px-10 st-h-24">Reset</a>
                             @endif
                         </div>
                     </div>
@@ -46,9 +46,9 @@
         </div>
     </div>
 
-    <section class="st-row" style="flex:1;">
-        <div class="st-col-12" style="flex:1;display:flex;flex-direction:column;">
-            <div class="st-card" style="margin-bottom:0;flex:1;display:flex;flex-direction:column;position:relative;">
+    <section class="st-row st-flex-1">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-relative st-flex-1">
                 <form method="GET" id="booking-filter-form" data-multi-sort="1" action="{{ route('bookings.index') }}">
                     <input type="hidden" name="status" value="{{ $status }}">
                     @php
@@ -60,11 +60,11 @@
                         <input type="hidden" name="sort[]" value="{{ $s }}">
                         <input type="hidden" name="dir[]" value="{{ $d }}">
                     @endforeach
-                    <div class="st-table-wrapper" style="min-height: 400px;">
+                    <div class="st-table-wrapper st-table-wrapper--minh-400">
                         <table class="st-table">
                             <thead>
                                 <tr>
-                                    <th style="width:60px;">#</th>
+                                    <th class="st-table-col-60">#</th>
                                     <th>
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Request</span>
@@ -72,11 +72,11 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="request_number" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="request_number" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="request_number" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Request Filter</div>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="request_number">
+                                                <div class="st-font-semibold st-mb-6">Request Filter</div>
                                                 <input type="text" name="request_number" form="booking-filter-form" class="st-input" placeholder="Search Request..." value="{{ request('request_number') }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="request_number" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="request_number">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -88,11 +88,11 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po_number" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po_number" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="po_number" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">PO Filter</div>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="po_number">
+                                                <div class="st-font-semibold st-mb-6">PO Filter</div>
                                                 <input type="text" name="po_number" form="booking-filter-form" class="st-input" placeholder="Search PO..." value="{{ request('po_number') }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="po_number" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="po_number">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -104,11 +104,11 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="supplier_name" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="supplier_name" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="supplier_name" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:10000;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Supplier Filter</div>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="supplier_name">
+                                                <div class="st-font-semibold st-mb-6">Supplier Filter</div>
                                                 <input type="text" name="supplier_name" form="booking-filter-form" class="st-input" placeholder="Search Supplier..." value="{{ request('supplier_name') }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="supplier_name" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="supplier_name">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -120,15 +120,15 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="coa" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="coa" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="coa" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">COA Filter</div>
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="coa">
+                                                <div class="st-font-semibold st-mb-6">COA Filter</div>
                                                 <select name="coa" form="booking-filter-form" class="st-select">
                                                     <option value="">All</option>
                                                     <option value="1" {{ request('coa') === '1' ? 'selected' : '' }}>Has COA</option>
                                                     <option value="0" {{ request('coa') === '0' ? 'selected' : '' }}>No COA</option>
                                                 </select>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="coa" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="coa">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -140,11 +140,11 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="planned_start" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_start" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="planned_start" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Scheduled Filter</div>
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="planned_start">
+                                                <div class="st-font-semibold st-mb-6">Scheduled Filter</div>
                                                 <input type="date" name="planned_start" form="booking-filter-form" class="st-input" value="{{ request('planned_start') }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="planned_start" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="planned_start">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -156,11 +156,11 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="converted_ticket" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="converted_ticket" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="converted_ticket" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Ticket Filter</div>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="converted_ticket">
+                                                <div class="st-font-semibold st-mb-6">Ticket Filter</div>
                                                 <input type="text" name="converted_ticket" form="booking-filter-form" class="st-input" placeholder="Search Ticket..." value="{{ request('converted_ticket') }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="converted_ticket" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="converted_ticket">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -172,11 +172,11 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="gate" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="gate" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="gate" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:240px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Gate Filter</div>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="gate">
+                                                <div class="st-font-semibold st-mb-6">Gate Filter</div>
                                                 <input type="text" name="gate" form="booking-filter-form" class="st-input" placeholder="Search Gate..." value="{{ request('gate') }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="gate" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="gate">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -188,15 +188,15 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="direction" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:200px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Direction Filter</div>
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="direction">
+                                                <div class="st-font-semibold st-mb-6">Direction Filter</div>
                                                 <select name="direction" form="booking-filter-form" class="st-select">
                                                     <option value="">All</option>
                                                     <option value="inbound" {{ request('direction') === 'inbound' ? 'selected' : '' }}>Inbound</option>
                                                     <option value="outbound" {{ request('direction') === 'outbound' ? 'selected' : '' }}>Outbound</option>
                                                 </select>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="direction" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="direction">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -208,8 +208,8 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status_filter" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="status_filter" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Status Filter</div>
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="status_filter">
+                                                <div class="st-font-semibold st-mb-6">Status Filter</div>
                                                 <select name="status_filter" form="booking-filter-form" class="st-select">
                                                     <option value="">All</option>
                                                     <option value="pending" {{ request('status_filter') === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -217,8 +217,8 @@
                                                     <option value="rejected" {{ request('status_filter') === 'rejected' ? 'selected' : '' }}>Rejected</option>
                                                     <option value="cancelled" {{ request('status_filter') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                                                 </select>
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="status_filter" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="status_filter">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -230,11 +230,11 @@
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="created_at" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel" data-filter-panel="created_at" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;z-index:9999;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:8px;min-width:220px;max-height:220px;box-shadow:0 8px 16px rgba(15,23,42,0.12);font-size:12px;">
-                                                <div style="font-weight:600;margin-bottom:6px;">Requested At Filter</div>
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="created_at">
+                                                <div class="st-font-semibold st-mb-6">Requested At Filter</div>
                                                 <input type="date" name="created_at" form="booking-filter-form" class="st-input" value="{{ request('created_at') }}">
-                                                <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:8px;">
-                                                    <button type="button" class="st-btn st-btn--sm st-filter-clear" data-filter="created_at" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Clear</button>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="created_at">Clear</button>
                                                 </div>
                                             </div>
                                         </div>

@@ -4,10 +4,10 @@
 @section('page_title', 'Trucks')
 
 @section('content')
-    <div class="st-card" style="margin-bottom:12px;">
-        <div style="padding:12px;">
-            <div class="st-form-row" style="align-items:flex-end;">
-                <div class="st-form-field" style="max-width:120px;">
+    <div class="st-card st-mb-12">
+        <div class="st-p-12">
+            <div class="st-form-row st-items-end">
+                <div class="st-form-field st-maxw-120">
                     <label class="st-label">Show</label>
                     <select id="truck-page-size" class="st-select">
                         @foreach ($pageSizeAllowed as $ps)
@@ -15,7 +15,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="st-form-field" style="flex:1;min-width:220px;position:relative;">
+                <div class="st-form-field st-flex-1 st-minw-220 st-relative">
                     <label class="st-label">Search</label>
                     <input
                         type="text"
@@ -25,25 +25,25 @@
                         autocomplete="off"
                     >
                 </div>
-                <div class="st-form-field" style="flex:0 0 auto;">
+                <div class="st-form-field st-flex-0">
                     <button type="button" id="btn-add-truck" class="st-btn st-btn--primary">Add Truck</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <section class="st-row" style="flex:1;">
-        <div class="st-col-12" style="flex:1;display:flex;flex-direction:column;">
-            <div class="st-card" style="margin-bottom:0;flex:1;display:flex;flex-direction:column;">
-                <div class="st-table-wrapper" style="min-height: 400px;">
+    <section class="st-row st-flex-1">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1">
+                <div class="st-table-wrapper st-table-wrapper--minh-400">
                     <table class="st-table">
                         <thead>
                             <tr>
-                                <th style="width:60px;">#</th>
+                                <th class="st-table-col-60">#</th>
                                 <th>Truck Type</th>
-                                <th style="width:180px;">Duration (minutes)</th>
-                                <th style="width:190px;">Created</th>
-                                <th style="width:170px;">Actions</th>
+                                <th class="st-table-col-180">Duration (minutes)</th>
+                                <th class="st-table-col-190">Created</th>
+                                <th class="st-table-col-170">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="truck-table-body">
@@ -60,7 +60,7 @@
 
                         @if (count($rows) === 0)
                             <tr class="truck-empty-row">
-                                <td colspan="5" style="text-align:center;color:#6b7280;padding:16px 8px;">No trucks found</td>
+                                <td colspan="5" class="st-text-center st-text--muted st-table-empty--roomy">No trucks found</td>
                             </tr>
                         @else
                             @foreach ($rows as $row)
@@ -77,7 +77,7 @@
                                             <button type="button" class="tw-action btn-edit-truck" data-id="{{ $row->id }}" data-truck-type="{{ $row->truck_type }}" data-duration="{{ $row->target_duration_minutes }}" data-tooltip="Edit" aria-label="Edit">
                                                 <i class="fa-solid fa-pencil"></i>
                                             </button>
-                                            <form method="POST" action="{{ route('trucks.delete', ['truckTypeDurationId' => $row->id]) }}" style="display:inline;">
+                                            <form method="POST" action="{{ route('trucks.delete', ['truckTypeDurationId' => $row->id]) }}" class="st-inline-form">
                                                 @csrf
                                                 <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('Delete this truck type?');">
                                                     <i class="fa-solid fa-trash"></i>
@@ -95,29 +95,29 @@
         </div>
     </section>
     <!-- Modal Add/Edit Truck -->
-    <div id="truck-modal" class="st-modal" style="display:none;">
-        <div class="st-modal__content" style="width:400px;max-width:95vw;">
+    <div id="truck-modal" class="st-modal st-modal--hidden">
+        <div class="st-modal__content st-modal__content--sm">
             <div class="st-modal__header">
                 <h3 class="st-modal__title" id="truck-modal-title">Add Truck</h3>
-                <button type="button" id="truck-modal-close" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary); st-btn--sm">&times;</button>
+                <button type="button" id="truck-modal-close" class="st-btn st-btn--outline-primary st-btn--sm">&times;</button>
             </div>
             <div class="st-modal__body">
                 <form id="truck-form" method="POST" action="{{ route('trucks.store') }}">
                     @csrf
                     <input type="hidden" id="truck-id" name="truck_id" value="">
 
-                    <div class="st-form-field" style="margin-bottom:12px;">
+                    <div class="st-form-field st-mb-12">
                         <label class="st-label">Truck Type <span class="st-text--danger-dark">*</span></label>
                         <input type="text" id="truck-type-input" name="truck_type" class="st-input" maxlength="100" required>
                     </div>
 
-                    <div class="st-form-field" style="margin-bottom:16px;">
+                    <div class="st-form-field st-mb-16">
                         <label class="st-label">Duration (minutes) <span class="st-text--danger-dark">*</span></label>
                         <input type="number" id="truck-duration-input" name="target_duration_minutes" class="st-input" min="0" max="1440" required>
                     </div>
 
-                    <div style="display:flex;gap:8px;justify-content:flex-end;">
-                        <button type="button" id="truck-modal-cancel" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</button>
+                    <div class="st-flex st-gap-8 st-justify-end">
+                        <button type="button" id="truck-modal-cancel" class="st-btn st-btn--outline-primary">Cancel</button>
                         <button type="submit" class="st-btn st-btn--primary">Save</button>
                     </div>
                 </form>

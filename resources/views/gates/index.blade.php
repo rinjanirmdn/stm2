@@ -49,9 +49,9 @@
 
         <!-- Bookings Legend -->
         <div>
-            <div class="st-flex-between" style="margin-bottom:10px;">
-                <div style="font-weight:600; font-size:12px; color: #4b5563;">Bookings for: <span id="selected_date_display">{{ \Carbon\Carbon::parse($paramDate)->format('d.m.Y') }}</span></div>
-                <div class="st-dock-count" style="font-size:12px;">{{ $daySlots->count() }}</div>
+            <div class="st-flex-between st-mb-10">
+                <div class="st-font-semibold st-text--sm st-text--slate-600">Bookings for: <span id="selected_date_display">{{ \Carbon\Carbon::parse($paramDate)->format('d.m.Y') }}</span></div>
+                <div class="st-dock-count st-text--sm">{{ $daySlots->count() }}</div>
             </div>
             @php
                 $scheduledSlots = $daySlots->where('status', \App\Models\Slot::STATUS_SCHEDULED);
@@ -73,7 +73,7 @@
                     <div class="st-dock-legend-list">
                         @foreach($scheduledSlots as $ss)
                         <div class="st-dock-legend-card">
-                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                            <div class="st-dock-legend-card-header st-justify-between st-w-full">
                                 <span class="st-dock-legend-card-ticket">{{ $ss->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
                                     <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $ss->id }})" title="View on grid">
@@ -100,7 +100,7 @@
                     <div class="st-dock-legend-list">
                         @foreach($waitingSlots as $ws)
                         <div class="st-dock-legend-card">
-                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                            <div class="st-dock-legend-card-header st-justify-between st-w-full">
                                 <span class="st-dock-legend-card-ticket">{{ $ws->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
                                     <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $ws->id }})" title="View on grid">
@@ -127,7 +127,7 @@
                     <div class="st-dock-legend-list">
                         @foreach($inProgressSlots as $is)
                         <div class="st-dock-legend-card">
-                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                            <div class="st-dock-legend-card-header st-justify-between st-w-full">
                                 <span class="st-dock-legend-card-ticket">{{ $is->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
                                     <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $is->id }})" title="View on grid">
@@ -154,7 +154,7 @@
                     <div class="st-dock-legend-list">
                         @foreach($completedSlots as $cs)
                         <div class="st-dock-legend-card">
-                            <div class="st-dock-legend-card-header" style="justify-content: space-between; width: 100%;">
+                            <div class="st-dock-legend-card-header st-justify-between st-w-full">
                                 <span class="st-dock-legend-card-ticket">{{ $cs->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
                                     <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $cs->id }})" title="View on grid">
@@ -180,7 +180,7 @@
                 <input type="text" id="gate_search_input" placeholder="Search for a Booking (Ticket or Vendor)">
             </div>
 
-            <div style="display:flex;gap:12px;align-items:center;">
+            <div class="st-flex st-gap-12 st-align-center">
                 <button class="st-btn st-btn--primary st-btn--sm" onclick="window.location.href='{{ route('slots.create') }}'">
                     Create Slots
                 </button>
@@ -190,10 +190,10 @@
         <!-- Scheduler Grid -->
         <div class="st-dock-scheduler">
             <!-- Grid Header -->
-            <div class="st-dock-grid-header" style="grid-template-columns: 60px repeat({{ $gates->count() }}, 1fr);">
+            <div class="st-dock-grid-header">
                 <!-- Time Label Corner -->
-                <div class="st-dock-col-header" style="justify-content:center;">
-                    <i class="fa-regular fa-clock" style="color:#9ca3af;"></i>
+                <div class="st-dock-col-header st-justify-center">
+                    <i class="fa-regular fa-clock st-text--gray-400"></i>
                 </div>
                 <!-- Gate Columns -->
                 @foreach($gates as $g)
@@ -219,7 +219,7 @@
             </div>
 
             <!-- Grid Body (Scrollable) -->
-            <div class="st-dock-grid-body" style="grid-template-columns: 60px repeat({{ $gates->count() }}, 1fr);">
+            <div class="st-dock-grid-body">
                 <!-- Time Column (07:00 - 23:00) -->
                 <div class="st-dock-time-col">
                     @for($h = 7; $h <= 23; $h++)
@@ -333,28 +333,16 @@
 
                             $h = $duration;
 
-                            // Base styles
-                            $cardStyle = "top:{$minutesFrom7}px; height:{$duration}px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;";
-
+                            $paddingClass = 'st-dock-card--normal';
                             if ($h < 35) {
-                                // Micro View (Very short duration)
-                                $cardStyle .= "padding: 1px 4px;";
-                                $titleSize = "9px";
-                                $vendorSize = "8px";
-                                $statusSize = "8px";
+                                $paddingClass = 'st-dock-card--micro';
                             } elseif ($h < 60) {
-                                // Compact View
-                                $cardStyle .= "padding: 3px 6px;";
-                                $titleSize = "10px";
-                                $vendorSize = "9px";
-                                $statusSize = "9px";
-                            } else {
-                                // Normal View
-                                $cardStyle .= "padding: 6px 8px;";
-                                $titleSize = "12px";
-                                $vendorSize = "10px";
-                                $statusSize = "10px";
+                                $paddingClass = 'st-dock-card--compact';
                             }
+
+                            $titleClass = $h < 35 ? 'st-text-9' : ($h < 60 ? 'st-text-10' : 'st-text-12');
+                            $vendorClass = $h < 35 ? 'st-text-8' : ($h < 60 ? 'st-text-9' : 'st-text-10');
+                            $statusClass = $h < 35 ? 'st-text-8' : ($h < 60 ? 'st-text-9' : 'st-text-10');
                         @endphp
 
                         @php
@@ -364,79 +352,80 @@
                         @endphp
 
                         <!-- Slot Card -->
-                        <div id="slot-{{ $slot->id }}" class="st-dock-card {{ $bgClass }}"
-                             style="{{ $cardStyle }}"
+                        <div id="slot-{{ $slot->id }}" class="st-dock-card {{ $bgClass }} {{ $paddingClass }}"
+                             data-top="{{ $minutesFrom7 }}"
+                             data-height="{{ $duration }}"
                              ondblclick="window.location.href='{{ $targetRoute }}'"
                              title="{{ $slot->ticket_number }} ({{ $slot->status }}) - {{ $slot->vendor->name ?? '' }}">
 
                             <!-- Header: Ticket & Time -->
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; line-height:1.1;">
-                                <div style="font-weight:700; font-size:{{ $titleSize }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            <div class="st-dock-card__header">
+                                <div class="st-dock-card__title {{ $titleClass }}">
                                     {{ $slot->ticket_number ?? '-' }}
                                 </div>
-                                    <div style="font-size:{{ $vendorSize }}; opacity:0.8; margin-left:4px; white-space:nowrap;">
-                                        {{ $timeLabel }}
-                                    </div>
+                                <div class="st-dock-card__time {{ $vendorClass }}">
+                                    {{ $timeLabel }}
+                                </div>
                             </div>
 
                             <!-- Body: Vendor (Hide if too small) -->
                             @if($h >= 35)
-                            <div style="font-size:{{ $vendorSize }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0.9; margin-top: auto; margin-bottom: auto;">
+                            <div class="st-dock-card__vendor {{ $vendorClass }} st-mt-auto st-mb-auto">
                                 {{ $slot->vendor->name ?? '-' }}
 
                                 @php
                                     $activeStatuses = ['scheduled', 'arrived', 'waiting', 'in_progress', 'completed'];
                                 @endphp
                                 @if($slot->original_planned_start && !empty($slot->approval_notes) && $h >= 60 && in_array($slot->status, $activeStatuses))
-                                <div style="font-size: 9px; font-style: italic; opacity: 0.8; margin-top: 1px; color: #fff; font-weight: 400; display: flex; align-items: center; gap: 4px;">
-                                    <i class="fas fa-sticky-note" style="font-size: 8px;"></i>
-                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $slot->approval_notes }}</span>
+                                <div class="st-dock-approval-note">
+                                    <i class="fas fa-sticky-note st-dock-approval-note__icon"></i>
+                                    <span class="st-truncate">{{ $slot->approval_notes }}</span>
                                 </div>
                                 @endif
                             </div>
                             @endif
 
                             <!-- Footer: Status & Actions -->
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1px;">
-                                <div class="st-dock-card-cat" style="font-size:{{ $statusSize }}; font-style:normal; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; line-height:1; opacity: 0.7;">
+                            <div class="st-dock-card__footer">
+                                <div class="st-dock-card-cat st-dock-card-cat--tight {{ $statusClass }}">
                                     {{ $slot->status_label ?? $slot->status }}
                                     @if($slot->original_planned_start)
-                                        <span style="font-size: 0.8em; margin-left: 4px; opacity: 0.8;">(RESCHEDULED)</span>
+                                        <span class="st-dock-card-cat__note">(RESCHEDULED)</span>
                                     @endif
                                 </div>
 
                                 <!-- Dynamic Status Icons -->
                                 @if($slot->status === 'scheduled')
-                                    <div style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(255,255,255,0.9); border-radius:50%; margin-left:4px; cursor:pointer;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.arrival', $slot->id) }}'" title="Click to mark arrival">
-                                        <i class="fas fa-sign-in-alt" style="font-size:10px; color:#166534;"></i>
+                                    <div class="st-dock-icon-circle st-dock-icon-circle--green" onclick="event.stopPropagation(); window.location.href='{{ route('slots.arrival', $slot->id) }}'" title="Click to mark arrival">
+                                        <i class="fas fa-sign-in-alt st-text-10"></i>
                                     </div>
                                 @elseif($slot->status === 'waiting')
-                                    <div style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(255,255,255,0.9); border-radius:50%; margin-left:4px; cursor:pointer;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.start', $slot->id) }}'" title="Click to start">
-                                        <i class="fas fa-play" style="font-size:10px; color:#ea580c;"></i>
+                                    <div class="st-dock-icon-circle st-dock-icon-circle--orange" onclick="event.stopPropagation(); window.location.href='{{ route('slots.start', $slot->id) }}'" title="Click to start">
+                                        <i class="fas fa-play st-text-10"></i>
                                     </div>
                                 @elseif($slot->status === 'in_progress')
-                                    <div style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(255,255,255,0.9); border-radius:50%; margin-left:4px; cursor:pointer;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.complete', $slot->id) }}'" title="Click to complete">
-                                        <i class="fas fa-check" style="font-size:10px; color:#0891b2;"></i>
+                                    <div class="st-dock-icon-circle st-dock-icon-circle--teal" onclick="event.stopPropagation(); window.location.href='{{ route('slots.complete', $slot->id) }}'" title="Click to complete">
+                                        <i class="fas fa-check st-text-10"></i>
                                     </div>
                                 @endif
 
                                 @if($slot->status === 'pending_approval')
-                                    <div style="display:flex; gap:3px; transform: scale(0.85); transform-origin: right center;">
-                                        <button type="button" class="st-dock-action-btn" style="background:#fff; color:#166534; box-shadow:0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openApproveModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Confirm Booking">
+                                    <div class="st-dock-action-group">
+                                        <button type="button" class="st-dock-action-btn st-dock-action-btn--approve" onclick="event.stopPropagation(); openApproveModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Confirm Booking">
                                             <i class="fas fa-check"></i>
                                         </button>
-                                        <a href="{{ route('bookings.reschedule', $slot->id) }}" class="st-dock-action-btn" style="background:#fff; color:#ea580c; box-shadow:0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation();" title="Reschedule">
+                                        <a href="{{ route('bookings.reschedule', $slot->id) }}" class="st-dock-action-btn st-dock-action-btn--reschedule" onclick="event.stopPropagation();" title="Reschedule">
                                             <i class="fas fa-calendar-alt"></i>
                                         </a>
-                                        <button type="button" class="st-dock-action-btn" style="background:#fff; color:#dc2626; box-shadow:0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openRejectModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Reject Booking">
+                                        <button type="button" class="st-dock-action-btn st-dock-action-btn--reject" onclick="event.stopPropagation(); openRejectModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Reject Booking">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
                                 @elseif(in_array($slot->status, ['pending']))
                                     @if($h >= 40)
-                                    <button class="st-dock-btn-confirm" style="font-size:9px; padding:1px 6px; height:auto; min-height:16px;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">Act</button>
+                                    <button class="st-dock-btn-confirm st-dock-btn-confirm--sm" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">Act</button>
                                     @else
-                                    <button class="st-dock-btn-confirm" style="font-size:8px; padding:0px 4px; height:14px; min-height:0;" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">!</button>
+                                    <button class="st-dock-btn-confirm st-dock-btn-confirm--xs" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">!</button>
                                     @endif
                                 @endif
                             </div>
@@ -457,7 +446,7 @@
                 @endphp
 
                 @if($showLine)
-                    <div class="st-dock-time-line" style="top:{{ $currentPx }}px;" title="Current Time: {{ $now->format('H:i') }}"></div>
+                    <div class="st-dock-time-line" data-top="{{ $currentPx }}" title="Current Time: {{ $now->format('H:i') }}"></div>
                 @endif
             </div>
         </div>
@@ -478,8 +467,8 @@
                 <p>Are you sure you want to approve booking <strong id="modalTicketNumber"></strong>?</p>
             </div>
             <div class="st-custom-modal-footer">
-                <button type="submit" class="st-btn st-btn--primary" style="background-color: #166534; border-color: #166534;">Yes, Approve</button>
-                <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" onclick="closeApproveModal()">Cancel</button>
+                <button type="submit" class="st-btn st-btn--primary st-btn--approve">Yes, Approve</button>
+                <button type="button" class="st-btn st-btn--outline-primary" onclick="closeApproveModal()">Cancel</button>
             </div>
         </form>
     </div>
@@ -497,14 +486,14 @@
             @csrf
             <div class="st-custom-modal-body">
                 <p>Are you sure you want to reject booking <strong id="reject-ticket"></strong>?</p>
-                <div class="st-form-group" style="margin-top: 15px;">
-                    <label class="st-label" style="font-weight: 600; display: block; margin-bottom: 5px;">Reason for Rejection <span class="st-required">*</span></label>
-                    <textarea name="reason" class="st-textarea" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit;" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
+                <div class="st-form-group st-form-group--mt-15">
+                    <label class="st-label st-label--strong">Reason for Rejection <span class="st-required">*</span></label>
+                    <textarea name="reason" class="st-textarea st-textarea--md" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
                 </div>
             </div>
             <div class="st-custom-modal-footer">
-                <button type="submit" class="st-btn st-btn--primary" style="background-color: #dc2626; border-color: #dc2626; color: #fff;">Reject Booking</button>
-                <button type="button" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);" onclick="closeRejectModal()">Cancel</button>
+                <button type="submit" class="st-btn st-btn--primary st-btn--reject">Reject Booking</button>
+                <button type="button" class="st-btn st-btn--outline-primary" onclick="closeRejectModal()">Cancel</button>
             </div>
         </form>
     </div>
@@ -609,9 +598,32 @@ document.addEventListener('DOMContentLoaded', function () {
         t.addEventListener('change', function() {
             const col = this.closest('.st-dock-col-header');
             const idx = Array.from(col.parentNode.children).indexOf(col);
-            // In a real app, this would toggle visibility or status of the column
-            console.log('Toggled gate column index:', idx);
+            if (idx >= 0) {
+                const body = document.querySelector('.st-dock-grid-body');
+                const gateCols = body ? body.querySelectorAll('.st-dock-gate-col') : [];
+                if (gateCols[idx - 1]) {
+                    gateCols[idx - 1].classList.toggle('st-hidden', !this.checked);
+                }
+            }
         });
+    });
+
+    document.querySelectorAll('.st-dock-card').forEach(function(card) {
+        var top = card.dataset.top;
+        var height = card.dataset.height;
+        if (top) {
+            card.style.top = top + 'px';
+        }
+        if (height) {
+            card.style.height = height + 'px';
+        }
+    });
+
+    document.querySelectorAll('.st-dock-time-line[data-top]').forEach(function(line) {
+        var top = line.dataset.top;
+        if (top) {
+            line.style.top = top + 'px';
+        }
     });
 });
 

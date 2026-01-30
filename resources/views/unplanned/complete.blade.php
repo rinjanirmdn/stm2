@@ -4,25 +4,25 @@
 @section('page_title', 'Complete Slot')
 
 @section('content')
-    <div class="st-card" style="margin-bottom:12px;">
-        <div style="font-size:12px;color:#6b7280;">Slot #{{ $slot->id }}</div>
-        <div style="font-weight:600;">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
+    <div class="st-card st-mb-12">
+        <div class="st-text--sm st-text--muted">Slot #{{ $slot->id }}</div>
+        <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
     </div>
 
     <div class="st-card">
         <form method="POST" action="{{ route('unplanned.complete.store', ['slotId' => $slot->id]) }}">
             @csrf
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Material Document <span style="color:#dc2626;">*</span></label>
+                    <label class="st-label">Material Document <span class="st-text--danger-dark">*</span></label>
                     <input type="text" name="mat_doc" class="st-input" required value="{{ old('mat_doc') }}">
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
-                <div class="st-form-field" style="position:relative;">
-                    <label class="st-label">Truck Type <span style="color:#dc2626;">*</span></label>
+            <div class="st-form-row st-form-field--mb-12">
+                <div class="st-form-field st-form-field--relative">
+                    <label class="st-label">Truck Type <span class="st-text--danger-dark">*</span></label>
                     <select name="truck_type" class="st-select" required>
                         <option value="">Select Truck Type</option>
                         @foreach($truckTypes as $type)
@@ -31,32 +31,32 @@
                     </select>
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Vehicle Number <span style="color:#dc2626;">*</span></label>
+                    <label class="st-label">Vehicle Number <span class="st-text--danger-dark">*</span></label>
                     <input type="text" name="vehicle_number" class="st-input" required value="{{ old('vehicle_number') }}">
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Driver Name <span style="font-weight:400;color:#6b7280;">(optional)</span></label>
+                    <label class="st-label">Driver Name <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="driver_name" class="st-input" value="{{ old('driver_name') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Driver Number <span style="color:#dc2626;">*</span></label>
+                    <label class="st-label">Driver Number <span class="st-text--danger-dark">*</span></label>
                     <input type="text" name="driver_number" class="st-input" required value="{{ old('driver_number') }}">
                 </div>
             </div>
 
-            <div class="st-form-row" style="margin-bottom:12px;">
+            <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Notes <span style="font-weight:400;color:#6b7280;">(Optional)</span></label>
+                    <label class="st-label">Notes <span class="st-text--optional">(Optional)</span></label>
                     <textarea name="notes" class="st-textarea" rows="3">{{ old('notes') }}</textarea>
                 </div>
             </div>
 
-            <div style="display:flex;gap:8px;">
+            <div class="st-form-actions">
                 <button type="submit" class="st-btn">Complete Slot</button>
-                <a href="{{ route('unplanned.index') }}" class="st-btn" style="background:transparent;color:var(--primary);border:1px solid var(--primary);">Cancel</a>
+                <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
             </div>
         </form>
     </div>
