@@ -124,8 +124,9 @@ class VendorBookingController extends Controller
             }
             $itemNo = trim((string) ($it['item_no'] ?? ''));
             $qtyPo = $this->toFloatQty($it['qty'] ?? null);
+            $qtyGr = $this->toFloatQty($it['qty_gr_total'] ?? null);
             $booked = $itemNo !== '' ? (float) ($bookedByItem[$itemNo] ?? 0) : 0.0;
-            $remaining = $qtyPo - $booked;
+            $remaining = $qtyPo - $qtyGr - $booked;
             if ($remaining < 0) {
                 $remaining = 0.0;
             }
