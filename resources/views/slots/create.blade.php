@@ -30,8 +30,6 @@
                     <div style="position:relative;">
                         <input type="text" id="po_number" autocomplete="off" name="po_number" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po" style="display:none;"></div>
-                        <div id="po_preview" style="margin-top:8px;"></div>
-                        <div id="po_items_group" style="display:none;margin-top:10px;"></div>
                     </div>
                     @error('po_number')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
@@ -62,6 +60,13 @@
                     @error('truck_type')
                         <div class="st-text--small st-text--danger" style="margin-top:2px;">{{ $message }}</div>
                     @enderror
+                </div>
+            </div>
+
+            <div class="st-form-row" style="margin-bottom:12px;">
+                <div class="st-form-field" style="width:100%;">
+                    <div id="po_preview" style="margin-top:8px;"></div>
+                    <div id="po_items_group" style="display:none;margin-top:10px;"></div>
                 </div>
             </div>
 
@@ -382,6 +387,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return fetch(url, {
             method: 'GET',
             headers: {
+                'X-CSRF-TOKEN': csrfToken(),
                 'Accept': 'application/json'
             }
         }).then(function (res) { return res.json(); });
@@ -443,6 +449,14 @@ document.addEventListener('DOMContentLoaded', function () {
         poSuggestions.style.display = 'block';
     }
 
+    function formatQty(value) {
+        var num = Number(value);
+        if (!isFinite(num)) {
+            return '0';
+        }
+        return String(num).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+    }
+
     function setPoPreview(po) {
         if (!poPreview) return;
         if (poItemsGroup) {
@@ -476,12 +490,13 @@ document.addEventListener('DOMContentLoaded', function () {
         html += '<div class="st-table-wrapper" style="margin-top:6px;">';
         html += '<table class="st-table" style="font-size:12px;">';
         html += '<thead><tr>'
-            + '<th style="width:70px;">Item</th>'
-            + '<th>Material</th>'
-            + '<th style="width:120px;text-align:right;">Qty PO</th>'
-            + '<th style="width:120px;text-align:right;">Booked</th>'
-            + '<th style="width:120px;text-align:right;">Remaining</th>'
-            + '<th style="width:160px;">Qty This Slot</th>'
+            + '<th style="width:70px;" title="PO line item number.">Item</th>'
+            + '<th title="Material code and description.">Material</th>'
+            + '<th style="width:110px;text-align:right;" title="Total quantity ordered in the PO.">Qty PO</th>'
+            + '<th style="width:110px;text-align:right;" title="Total quantity already received in SAP (GR)."><span>GR Total</span></th>'
+            + '<th style="width:110px;text-align:right;" title="Total quantity already booked in previous slots.">Booked</th>'
+            + '<th style="width:110px;text-align:right;" title="Remaining quantity available to book.">Remaining</th>'
+            + '<th style="width:160px;" title="Quantity to book for this slot.">Qty This Slot</th>'
             + '</tr></thead><tbody>';
 
         items.forEach(function (it) {
@@ -491,9 +506,14 @@ document.addEventListener('DOMContentLoaded', function () {
             var mat = String(it.material || '').trim();
             var desc = String(it.description || '').trim();
             var uom = String(it.uom || '').trim();
-            var qtyPo = (it.qty !== undefined && it.qty !== null) ? String(it.qty) : '-';
-            var qtyBooked = (it.qty_booked !== undefined && it.qty_booked !== null) ? String(it.qty_booked) : '0';
-            var remaining = (it.remaining_qty !== undefined && it.remaining_qty !== null) ? String(it.remaining_qty) : '-';
+            var qtyPo = (it.qty !== undefined && it.qty !== null) ? formatQty(it.qty) : '-';
+            var qtyGr = (it.qty_gr_total !== undefined && it.qty_gr_total !== null) ? formatQty(it.qty_gr_total) : '0';
+            var qtyBooked = (it.qty_booked !== undefined && it.qty_booked !== null) ? formatQty(it.qty_booked) : '0';
+            var remainingValue = (it.remaining_qty !== undefined && it.remaining_qty !== null) ? Number(it.remaining_qty) : NaN;
+            if (!isFinite(remainingValue)) {
+                remainingValue = NaN;
+            }
+            var remaining = isFinite(remainingValue) ? formatQty(Math.max(remainingValue, 0)) : '-';
 
             var oldQty = '';
             try {
@@ -506,10 +526,11 @@ document.addEventListener('DOMContentLoaded', function () {
             html += '<td><strong>' + itemNo + '</strong></td>';
             html += '<td>' + mat + (desc ? (' - ' + desc) : '') + '</td>';
             html += '<td style="text-align:right;">' + qtyPo + (uom ? (' ' + uom) : '') + '</td>';
+            html += '<td style="text-align:right;">' + qtyGr + (uom ? (' ' + uom) : '') + '</td>';
             html += '<td style="text-align:right;">' + qtyBooked + (uom ? (' ' + uom) : '') + '</td>';
             html += '<td style="text-align:right;"><strong>' + remaining + '</strong>' + (uom ? (' ' + uom) : '') + '</td>';
             html += '<td>';
-            html += '<input type="number" step="0.001" min="0" name="po_items[' + itemNo + '][qty]" class="st-input" style="max-width:140px;" value="' + (oldQty || '') + '" placeholder="0">';
+            html += '<input type="number" step="1" min="0" name="po_items[' + itemNo + '][qty]" class="st-input" style="max-width:140px;" value="' + (oldQty || '') + '" placeholder="0">';
             html += '</td>';
             html += '</tr>';
         });
@@ -521,76 +542,23 @@ document.addEventListener('DOMContentLoaded', function () {
         poItemsGroup.style.display = 'block';
     }
 
-    function fetchPoDetail(poNumber) {
-        console.log('fetchPoDetail called with:', poNumber);
+    function fetchPoDetail(poNumber, callback) {
         if (!poNumber) {
-            setPoPreview(null);
+            callback({ success: false });
             return;
         }
 
         var url = String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber));
-        console.log('Fetching PO detail from:', url);
-
         getJson(url)
             .then(function (data) {
-                console.log('PO Detail API Response:', data);
-                if (!data || !data.success) {
-                    console.warn('PO Detail failed or not found');
-                    setPoPreview(null);
-                    return;
-                }
-
-                console.log('PO Data:', data.data);
-                setPoPreview(data.data);
-
-                // Autofill Vendor Name
-                if (data.data && data.data.vendor_name) {
-                    var vendorSearchInput = document.getElementById('vendor_search');
-                    console.log('Vendor search input:', vendorSearchInput);
-                    console.log('Setting vendor name to:', data.data.vendor_name);
-                    if (vendorSearchInput) {
-                        vendorSearchInput.value = data.data.vendor_name;
-                        vendorSearchInput.disabled = false;
-                        console.log('Vendor name set successfully');
-                    }
-                }
-
-                // Autofill Direction
-                if (data.data && directionSelect) {
-                    var vtype = (data.data.vendor_type || '').toLowerCase();
-                    var newDir = '';
-
-                    console.log('Vendor type:', vtype);
-                    console.log('Direction from API:', data.data.direction);
-
-                    // Use direction from backend if available
-                    if (data.data.direction) {
-                        newDir = data.data.direction;
-                    } else if (vtype === 'supplier') {
-                        newDir = 'inbound';
-                    } else if (vtype === 'customer') {
-                        newDir = 'outbound';
-                    }
-
-                    console.log('New direction:', newDir);
-
-                    if (newDir) {
-                        directionSelect.value = newDir;
-                        console.log('Direction set to:', directionSelect.value);
-                        // Trigger change event to update UI states
-                        try {
-                            directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log('Direction change event dispatched');
-                        } catch (e) {
-                            console.error('Failed to dispatch change event:', e);
-                        }
-                        onDirectionChanged();
-                    }
+                if (data && data.success && data.data) {
+                    callback({ success: true, data: data.data });
+                } else {
+                    callback({ success: false });
                 }
             })
-            .catch(function (err) {
-                console.error('Error fetching PO detail:', err);
-                setPoPreview(null);
+            .catch(function () {
+                callback({ success: false });
             });
     }
 
@@ -1249,9 +1217,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (val.length >= 5) {
                 // Delay slightly to avoid conflict with suggestion click
                 setTimeout(function() {
-                    // Check if we already have data loaded?
-                    // Actually fetchPoDetail handles re-fetching safely.
-                    fetchPoDetail(val);
+                    fetchPoDetail(val, function (data) {
+                        if (data.success && data.data) {
+                            setPoPreview(data.data);
+                            if (data.data.direction && directionSelect) {
+                                directionSelect.value = data.data.direction;
+                                try {
+                                    directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                } catch (e) {}
+                                onDirectionChanged();
+                            }
+                        }
+                    });
                 }, 200);
             }
         }
@@ -1266,7 +1243,18 @@ document.addEventListener('DOMContentLoaded', function () {
             var poNumber = item.getAttribute('data-po') || '';
             poInput.value = poNumber;
             closePoSuggestions();
-            fetchPoDetail(poNumber);
+            fetchPoDetail(poNumber, function (data) {
+                if (data.success && data.data) {
+                    setPoPreview(data.data);
+                    if (data.data.direction && directionSelect) {
+                        directionSelect.value = data.data.direction;
+                        try {
+                            directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        } catch (e) {}
+                        onDirectionChanged();
+                    }
+                }
+            });
         });
     }
 

@@ -108,25 +108,38 @@ function initVendorBookingCreate(config) {
             return;
         }
 
+        const formatQty = (value) => {
+            const num = Number(value);
+            if (!Number.isFinite(num)) {
+                return '0';
+            }
+            return num.toString().replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+        };
+
         poItemsBody.innerHTML = items.map((item, idx) => {
-            const remaining = (parseFloat(item.qty_po) || 0) - (parseFloat(item.qty_gr_total) || 0);
+            const qtyPo = parseFloat(item.qty) || 0;
+            const qtyGr = parseFloat(item.qty_gr_total) || 0;
+            const remaining = typeof item.remaining_qty === 'number'
+                ? item.remaining_qty
+                : (parseFloat(item.remaining_qty) || (qtyPo - qtyGr));
+            const remainingValue = Number(remaining) > 0 ? Number(remaining) : 0;
             return `
                 <tr>
                     <td>${item.item_no || (idx + 1)}</td>
                     <td>${item.material_name || item.description || '-'}</td>
-                    <td>${item.qty_po || 0} ${item.unit_po || ''}</td>
-                    <td>${item.qty_gr_total || 0}</td>
-                    <td>${remaining.toFixed(2)}</td>
+                    <td>${formatQty(qtyPo)} ${item.uom || ''}</td>
+                    <td>${formatQty(qtyGr)}</td>
+                    <td>${formatQty(remainingValue)}</td>
                     <td>
                         <input type="hidden" name="po_items[${idx}][item_no]" value="${item.item_no || ''}">
                         <input type="hidden" name="po_items[${idx}][material_code]" value="${item.material_code || ''}">
                         <input type="hidden" name="po_items[${idx}][material_name]" value="${item.material_name || item.description || ''}">
                         <input type="number"
                                name="po_items[${idx}][qty]"
-                               value="${remaining > 0 ? remaining.toFixed(2) : 0}"
+                               value="${remainingValue > 0 ? formatQty(remainingValue) : 0}"
                                min="0"
-                               max="${remaining}"
-                               step="0.001">
+                               max="${remainingValue}"
+                               step="1">
                     </td>
                 </tr>
             `;
