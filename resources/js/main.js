@@ -867,6 +867,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!input || input.getAttribute('data-st-flatpickr-time') === '1') {
                 return;
             }
+            if (input.getAttribute('data-st-timepicker') === 'md') {
+                return;
+            }
             input.setAttribute('data-st-flatpickr-time', '1');
 
             try {
