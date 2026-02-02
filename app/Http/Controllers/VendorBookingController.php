@@ -321,13 +321,13 @@ class VendorBookingController extends Controller
 
         // Data for Create Booking Form (Single Page Experience)
         $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('warehouses', 'is_active')) {
+        if (Schema::hasColumn('md_warehouse', 'is_active')) {
             $warehousesQ->where('is_active', true);
         }
         $warehouses = $warehousesQ->get();
 
         $gatesQ = Gate::query();
-        if (Schema::hasColumn('gates', 'is_active')) {
+        if (Schema::hasColumn('md_gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
         $gates = $gatesQ->get()->groupBy('warehouse_id');
@@ -395,7 +395,7 @@ class VendorBookingController extends Controller
 
         // Get all gates for gate-only selection
         $gatesQ = Gate::query();
-        if (Schema::hasColumn('gates', 'is_active')) {
+        if (Schema::hasColumn('md_gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
         $gates = $gatesQ->with('warehouse')->get();
@@ -734,7 +734,7 @@ class VendorBookingController extends Controller
     {
         // Get all active gates for display
         $gatesQ = Gate::query();
-        if (Schema::hasColumn('gates', 'is_active')) {
+        if (Schema::hasColumn('md_gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
         $gates = $gatesQ->with('warehouse')->get();
@@ -956,7 +956,7 @@ class VendorBookingController extends Controller
 
         // Get all active gates
         $gatesQ = Gate::query();
-        if (Schema::hasColumn('gates', 'is_active')) {
+        if (Schema::hasColumn('md_gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
         $gates = $gatesQ

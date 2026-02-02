@@ -207,7 +207,7 @@ class BookingApprovalService
         }
 
         $gatesQ = Gate::where('warehouse_id', $warehouseId);
-        if (Schema::hasColumn('gates', 'is_active')) {
+        if (Schema::hasColumn('md_gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
         $candidateGates = $gatesQ->orderBy('gate_number')->get();
