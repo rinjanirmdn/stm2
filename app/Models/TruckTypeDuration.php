@@ -9,7 +9,7 @@ class TruckTypeDuration extends Model
 {
     use HasFactory;
 
-    protected $table = 'truck_type_durations'; // Explicitly define table name
+    protected $table = 'md_truck'; // Explicitly define table name
 
     protected $fillable = [
         'truck_type',

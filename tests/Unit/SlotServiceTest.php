@@ -40,13 +40,13 @@ class SlotServiceTest extends TestCase
     public function it_can_check_lane_overlap()
     {
         // Create test data
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH1',
             'is_active' => 1,
         ]);
 
-        $gate1 = DB::table('gates')->insertGetId([
+        $gate1 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G1',
             'name' => 'Gate G1',
@@ -54,7 +54,7 @@ class SlotServiceTest extends TestCase
             'is_active' => 1,
         ]);
 
-        $gate2 = DB::table('gates')->insertGetId([
+        $gate2 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G2',
             'name' => 'Gate G2',
@@ -97,13 +97,13 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_calculate_blocking_risk_for_wh1()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH1',
             'is_active' => 1,
         ]);
 
-        $gate = DB::table('gates')->insertGetId([
+        $gate = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G1',
             'name' => 'Gate G1',
@@ -135,13 +135,13 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_calculate_blocking_risk_for_wh2()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse 2',
             'code' => 'WH2',
             'is_active' => 1,
         ]);
 
-        $gate1 = DB::table('gates')->insertGetId([
+        $gate1 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G1',
             'name' => 'Gate G1',
@@ -149,7 +149,7 @@ class SlotServiceTest extends TestCase
             'is_active' => 1,
         ]);
 
-        $gate2 = DB::table('gates')->insertGetId([
+        $gate2 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G2',
             'name' => 'Gate G2',
@@ -176,13 +176,13 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_get_next_available_time()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH1',
             'is_active' => 1,
         ]);
 
-        $gate = DB::table('gates')->insertGetId([
+        $gate = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G1',
             'name' => 'Gate G1',
@@ -224,13 +224,13 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_calculate_optimal_gate()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH1',
             'is_active' => 1,
         ]);
 
-        $gate1 = DB::table('gates')->insertGetId([
+        $gate1 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G1',
             'name' => 'Gate G1',
@@ -238,7 +238,7 @@ class SlotServiceTest extends TestCase
             'is_active' => 1,
         ]);
 
-        $gate2 = DB::table('gates')->insertGetId([
+        $gate2 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G2',
             'name' => 'Gate G2',
@@ -266,13 +266,13 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_log_activity()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH1',
             'is_active' => 1,
         ]);
 
-        $user = DB::table('users')->insertGetId([
+        $user = DB::table('md_users')->insertGetId([
             'name' => 'Test User',
             'email' => 'test@example.com',
             'username' => 'testuser',
@@ -319,14 +319,14 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_validate_wh2_bc_planned_window()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH2',
             'is_active' => 1,
         ]);
 
         // Create gate 1 (maps to letter B for WH2)
-        $gate1 = DB::table('gates')->insertGetId([
+        $gate1 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => '1',
             'name' => 'Gate 1',
@@ -335,7 +335,7 @@ class SlotServiceTest extends TestCase
         ]);
 
         // Create gate 2 (maps to letter C for WH2)
-        $gate2 = DB::table('gates')->insertGetId([
+        $gate2 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => '2',
             'name' => 'Gate 2',
@@ -372,13 +372,13 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_get_gate_lane_group()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH1',
             'is_active' => 1,
         ]);
 
-        $gate = DB::table('gates')->insertGetId([
+        $gate = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G1',
             'name' => 'Gate G1',
@@ -393,13 +393,13 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_get_gate_ids_by_lane_group()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH1',
             'is_active' => 1,
         ]);
 
-        $gate1 = DB::table('gates')->insertGetId([
+        $gate1 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G1',
             'name' => 'Gate G1',
@@ -407,7 +407,7 @@ class SlotServiceTest extends TestCase
             'is_active' => 1,
         ]);
 
-        $gate2 = DB::table('gates')->insertGetId([
+        $gate2 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G2',
             'name' => 'Gate G2',
@@ -415,7 +415,7 @@ class SlotServiceTest extends TestCase
             'is_active' => 1,
         ]);
 
-        $gate3 = DB::table('gates')->insertGetId([
+        $gate3 = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G3',
             'name' => 'Gate G3',
@@ -432,13 +432,13 @@ class SlotServiceTest extends TestCase
     /** @test */
     public function it_can_get_gate_meta_by_id()
     {
-        $warehouse = DB::table('warehouses')->insertGetId([
+        $warehouse = DB::table('md_warehouse')->insertGetId([
             'name' => 'Test Warehouse',
             'code' => 'WH1',
             'is_active' => 1,
         ]);
 
-        $gate = DB::table('gates')->insertGetId([
+        $gate = DB::table('md_gates')->insertGetId([
             'warehouse_id' => $warehouse,
             'gate_number' => 'G1',
             'name' => 'Gate G1',

@@ -13,6 +13,8 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
 
+    protected $table = 'md_users';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -43,7 +45,19 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    // Accessor and Mutator for 'name' to map to 'full_name'
+    public function getNameAttribute()
+    {
+        return $this->attributes['full_name'] ?? null;
+    }
+
+    public function setNameAttribute($value)
+    {
+        $this->attributes['full_name'] = $value;
     }
 
     /**

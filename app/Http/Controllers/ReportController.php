@@ -28,7 +28,7 @@ class ReportController extends Controller
         $like = '%' . $q . '%';
 
         $rows = DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->where('s.status', 'completed')
             ->where(function ($sub) use ($like) {
                 $sub->where('s.po_number', 'like', $like)
@@ -284,14 +284,14 @@ class ReportController extends Controller
 
         $warehouseValues = array_values(array_filter($warehouseFilter, fn ($v) => (string) $v !== ''));
 
-        $warehouses = DB::table('warehouses')
+        $warehouses = DB::table('md_warehouse')
             ->select(['id', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
 
         $rowsQ = DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', function ($join) {
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', function ($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('g.warehouse_id', '=', 's.warehouse_id');
             })
@@ -335,8 +335,8 @@ class ReportController extends Controller
             ];
         })->all();
 
-        $gatesQ = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gatesQ = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->select([
                 'g.id',
                 'g.warehouse_id',
@@ -367,8 +367,8 @@ class ReportController extends Controller
 
     public function toggleGate(Request $request, int $gateId)
     {
-        $gate = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gate = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.id', $gateId)
             ->select([
                 'g.id',
@@ -389,7 +389,7 @@ class ReportController extends Controller
 
         $old = (int) ($gate->is_active ?? 0);
         $new = $old === 1 ? 0 : 1;
-        DB::table('gates')->where('id', $gateId)->update(['is_active' => $new]);
+        DB::table('md_gates')->where('id', $gateId)->update(['is_active' => $new]);
 
         $slotService = app(SlotService::class);
         $label = $slotService->getGateDisplayName((string) ($gate->warehouse_code ?? ''), (string) ($gate->gate_number ?? ''));

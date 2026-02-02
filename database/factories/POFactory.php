@@ -24,7 +24,7 @@ class POFactory extends Factory
             'truck_type' => $this->faker->randomElement(['Container 20ft', 'Container 40ft', 'Tronton', 'CDE', 'CDD']),
             'vendor_id' => DB::table('vendors')->inRandomOrder()->first()->id,
             'direction' => $this->faker->randomElement(['inbound', 'outbound']),
-            'warehouse_id' => DB::table('warehouses')->inRandomOrder()->first()->id,
+            'warehouse_id' => DB::table('md_warehouse')->inRandomOrder()->first()->id,
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),

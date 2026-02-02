@@ -118,12 +118,12 @@ class SlotFilterService
                 'g.gate_number',
                 'td.target_duration_minutes',
             ])
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', function($join) {
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', function($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                      ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
-            ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
+            ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->whereRaw("COALESCE(s.slot_type, 'planned') <> 'unplanned'");
     }
 
@@ -347,9 +347,9 @@ class SlotFilterService
         // Cache filter options for 30 minutes to reduce database queries
         return Cache::remember('slot_filter_options', now()->addMinutes(30), function () {
             return [
-                'warehouses' => DB::table('warehouses')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
-                'gates' => DB::table('gates as g')
-                    ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+                'warehouses' => DB::table('md_warehouse')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
+                'gates' => DB::table('md_gates as g')
+                    ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
                     ->select(['g.gate_number', 'g.warehouse_id', 'w.wh_code as warehouse_code'])
                     ->orderBy('w.wh_code')
                     ->orderBy('g.gate_number')

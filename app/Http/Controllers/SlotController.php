@@ -92,7 +92,7 @@ class SlotController extends Controller
         $like = '%' . $q . '%';
 
         $rows = DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->where(function ($sub) use ($like) {
                 $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.mat_doc', 'like', $like)
@@ -198,13 +198,13 @@ class SlotController extends Controller
     private function loadSlotDetailRow(int $slotId): ?object
     {
         return DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('users as ru', 's.requested_by', '=', 'ru.id')
-            ->leftJoin('gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('gates as ag', 's.actual_gate_id', '=', 'ag.id')
-            ->leftJoin('warehouses as wpg', 'pg.warehouse_id', '=', 'wpg.id')
-            ->leftJoin('warehouses as wag', 'ag.warehouse_id', '=', 'wag.id')
-            ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_users as ru', 's.requested_by', '=', 'ru.id')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
+            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
+            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id')
+            ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->where('s.id', $slotId)
             ->select([
                 's.*',
@@ -348,12 +348,12 @@ class SlotController extends Controller
 
     public function create()
     {
-        $warehouses = DB::table('warehouses')
+        $warehouses = DB::table('md_warehouse')
             ->select(['id', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
-        $gates = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gates = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
@@ -361,7 +361,7 @@ class SlotController extends Controller
             ->get();
 
         $truckTypes = $this->getTruckTypeOptions();
-        $truckTypeDurations = DB::table('truck_type_durations')
+        $truckTypeDurations = DB::table('md_truck')
             ->orderBy('truck_type')
             ->pluck('target_duration_minutes', 'truck_type')
             ->all();
@@ -385,7 +385,7 @@ class SlotController extends Controller
             'po_items.*.qty' => 'nullable|numeric|min:0',
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
-            'planned_gate_id' => 'required|integer|exists:gates,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
             'vehicle_number_snap' => 'nullable|string|max:50',
@@ -415,7 +415,7 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Gate is required');
         }
 
-        $gateRow = DB::table('gates')
+        $gateRow = DB::table('md_gates')
             ->where('id', $plannedGateId)
             ->where('is_active', true)
             ->select(['id', 'warehouse_id'])
@@ -617,15 +617,15 @@ class SlotController extends Controller
             return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled planned slots can be edited');
         }
 
-        $warehouses = DB::table('warehouses')
+        $warehouses = DB::table('md_warehouse')
             ->select(['id', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
 
         $vendors = [];
 
-        $gates = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gates = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
@@ -633,7 +633,7 @@ class SlotController extends Controller
             ->get();
 
         $truckTypes = $this->getTruckTypeOptions();
-        $truckTypeDurations = DB::table('truck_type_durations')
+        $truckTypeDurations = DB::table('md_truck')
             ->orderBy('truck_type')
             ->pluck('target_duration_minutes', 'truck_type')
             ->all();
@@ -664,7 +664,7 @@ class SlotController extends Controller
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
             'vendor_id' => 'nullable|integer|exists:business_partner,id',
-            'planned_gate_id' => 'required|integer|exists:gates,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
             'vehicle_number_snap' => 'nullable|string|max:50',
@@ -695,7 +695,7 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Gate is required');
         }
 
-        $gateRow = DB::table('gates')
+        $gateRow = DB::table('md_gates')
             ->where('id', $plannedGateId)
             ->where('is_active', true)
             ->select(['id', 'warehouse_id'])
@@ -710,7 +710,7 @@ class SlotController extends Controller
         }
 
         if ($plannedGateId !== null) {
-            $gate = DB::table('gates')->where('id', $plannedGateId)->where('is_active', true)->select(['warehouse_id'])->first();
+            $gate = DB::table('md_gates')->where('id', $plannedGateId)->where('is_active', true)->select(['warehouse_id'])->first();
             if (! $gate || (int) ($gate->warehouse_id ?? 0) !== $warehouseId) {
                 return back()->withInput()->with('error', 'Selected gate does not belong to chosen warehouse or is inactive');
             }
@@ -976,7 +976,7 @@ class SlotController extends Controller
         }
 
         $logs = DB::table('activity_logs as al')
-            ->leftJoin('users as u', 'al.created_by', '=', 'u.id')
+            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id')
             ->where('al.slot_id', $slotId)
             ->orderBy('al.created_at', 'desc')
             ->select([
@@ -1040,9 +1040,9 @@ class SlotController extends Controller
 
         // Build query
         $query = DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', 's.actual_gate_id', '=', 'g.id')
-            ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', 's.actual_gate_id', '=', 'g.id')
+            ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'unplanned'")
             ->select([
                 's.*',
@@ -1162,11 +1162,11 @@ class SlotController extends Controller
         }
 
         // Get warehouses and gates for filter dropdowns
-        $warehouses = DB::table('warehouses')
+        $warehouses = DB::table('md_warehouse')
             ->select(['id', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
-        $gates = DB::table('gates')
+        $gates = DB::table('md_gates')
             ->where('is_active', true)
             ->orderBy('gate_number')
             ->pluck('gate_number')
@@ -1194,12 +1194,12 @@ class SlotController extends Controller
 
     public function unplannedCreate()
     {
-        $warehouses = DB::table('warehouses')
+        $warehouses = DB::table('md_warehouse')
             ->select(['id', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
-        $gates = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gates = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
@@ -1218,7 +1218,7 @@ class SlotController extends Controller
             'po_items.*.qty' => 'nullable|numeric|min:0',
             'coa_pdf' => 'required|file|mimes:pdf|max:5120',
             'driver_name' => 'nullable|string|max:50',
-            'actual_gate_id' => 'required|integer|exists:gates,id',
+            'actual_gate_id' => 'required|integer|exists:md_gates,id',
         ]);
 
         $poNumber = trim((string) $request->input('po_number', ''));
@@ -1230,7 +1230,7 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Gate is required');
         }
 
-        $gateRow = DB::table('gates')
+        $gateRow = DB::table('md_gates')
             ->where('id', $actualGateId)
             ->where('is_active', true)
             ->select(['id', 'warehouse_id'])
@@ -1390,7 +1390,7 @@ class SlotController extends Controller
             return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only unplanned transactions can be edited here');
         }
 
-        $warehouses = DB::table('warehouses')
+        $warehouses = DB::table('md_warehouse')
             ->select(['id', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
@@ -1408,8 +1408,8 @@ class SlotController extends Controller
         }
         $vendors = $vendorsQ->get();
 
-        $gates = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gates = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
@@ -1442,7 +1442,7 @@ class SlotController extends Controller
             'po_number' => 'required|string|max:12',
             'direction' => 'required|in:inbound,outbound',
             'vendor_id' => 'nullable|integer|exists:business_partner,id',
-            'actual_gate_id' => 'required|integer|exists:gates,id',
+            'actual_gate_id' => 'required|integer|exists:md_gates,id',
             'arrival_time' => 'required|string',
         ]);
 
@@ -1456,7 +1456,7 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Gate is required');
         }
 
-        $gateRow = DB::table('gates')
+        $gateRow = DB::table('md_gates')
             ->where('id', $actualGateId)
             ->where('is_active', true)
             ->select(['id', 'warehouse_id'])
@@ -1633,8 +1633,8 @@ class SlotController extends Controller
             }
         }
 
-        $gates = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gates = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
@@ -1749,7 +1749,7 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Actual gate is required');
         }
 
-        $gateRow = DB::table('gates')->where('id', $actualGateId)->where('is_active', true)->select(['id', 'warehouse_id'])->first();
+        $gateRow = DB::table('md_gates')->where('id', $actualGateId)->where('is_active', true)->select(['id', 'warehouse_id'])->first();
         if (! $gateRow) {
             return back()->withInput()->with('error', 'Selected gate is not active');
         }
@@ -2191,8 +2191,8 @@ class SlotController extends Controller
         $startStr = $startDt->format('Y-m-d H:i:s');
         $endStr = $endDt->format('Y-m-d H:i:s');
 
-        $gates = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gates = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.warehouse_id', $warehouseId)
             ->where('g.is_active', true)
             ->orderBy('g.gate_number')
@@ -2307,8 +2307,8 @@ class SlotController extends Controller
         }
 
         $q = DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', 's.planned_gate_id', '=', 'g.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', 's.planned_gate_id', '=', 'g.id')
             ->where('s.warehouse_id', $warehouseId)
             ->whereRaw('DATE(s.planned_start) = ?', [$date])
             ->whereIn('s.status', ['scheduled', 'waiting', 'in_progress'])

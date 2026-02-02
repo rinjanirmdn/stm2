@@ -141,7 +141,7 @@ class SlotService
      */
     public function calculateOptimalGate(int $warehouseId, string $direction): ?int
     {
-        $gates = DB::table('gates')
+        $gates = DB::table('md_gates')
             ->where('warehouse_id', $warehouseId)
             ->where('is_active', true)
             ->orderBy('gate_number')
@@ -301,8 +301,8 @@ class SlotService
 
     public function getGateMetaById(int $gateId): ?array
     {
-        $row = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $row = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.id', $gateId)
             ->select(['g.gate_number', 'w.wh_code as warehouse_code'])
             ->first();
@@ -338,8 +338,8 @@ class SlotService
             return [];
         }
 
-        $rows = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $rows = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', 1)
             ->select(['g.id', 'g.gate_number', 'w.wh_code as warehouse_code'])
             ->get();
@@ -363,8 +363,8 @@ class SlotService
             return null;
         }
 
-        $rows = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $rows = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('w.wh_code', $warehouseCode)
             ->where('g.is_active', 1)
             ->select(['g.id', 'g.gate_number'])
@@ -466,8 +466,8 @@ class SlotService
         $groupLetter = 'T';
 
         if ($gateId) {
-            $row = DB::table('gates as g')
-                ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+            $row = DB::table('md_gates as g')
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
                 ->where('g.id', $gateId)
                 ->select(['g.gate_number', 'w.wh_code as warehouse_code'])
                 ->first();
@@ -500,7 +500,7 @@ class SlotService
         }
 
         if ($groupLetter === 'T') {
-            $row = DB::table('warehouses')->where('id', $warehouseId)->select(['wh_code'])->first();
+            $row = DB::table('md_warehouse')->where('id', $warehouseId)->select(['wh_code'])->first();
             if ($row) {
                 $whCode = (string) ($row->wh_code ?? '');
                 if ($whCode === 'WH1') {
@@ -774,14 +774,14 @@ class SlotService
         }
 
         $warehouseCode = null;
-        $row = DB::table('warehouses')->where('id', $warehouseId)->select(['wh_code'])->first();
+        $row = DB::table('md_warehouse')->where('id', $warehouseId)->select(['wh_code'])->first();
         if ($row) {
             $warehouseCode = $row->wh_code ?? null;
         }
 
         $overlapWH1 = 0;
         if ($warehouseCode === 'WH2') {
-            $wh1 = DB::table('warehouses')->where('wh_code', 'WH1')->select(['id'])->first();
+            $wh1 = DB::table('md_warehouse')->where('wh_code', 'WH1')->select(['id'])->first();
             if ($wh1) {
                 $overlapWH1 = (int) DB::table('slots as s')
                     ->where('warehouse_id', (int) $wh1->id)

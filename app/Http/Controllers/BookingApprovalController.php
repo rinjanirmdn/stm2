@@ -32,9 +32,9 @@ class BookingApprovalController extends Controller
     {
         $query = BookingRequest::query()
             ->with(['requester', 'approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate'])
-            ->leftJoin('users as u_requester', 'booking_requests.requested_by', '=', 'u_requester.id')
+            ->leftJoin('md_users as u_requester', 'booking_requests.requested_by', '=', 'u_requester.id')
             ->leftJoin('slots as s_converted', 'booking_requests.converted_slot_id', '=', 's_converted.id')
-            ->leftJoin('gates as g_planned', 's_converted.planned_gate_id', '=', 'g_planned.id')
+            ->leftJoin('md_gates as g_planned', 's_converted.planned_gate_id', '=', 'g_planned.id')
             ->select('booking_requests.*');
 
         // Default to pending approval
@@ -270,7 +270,7 @@ class BookingApprovalController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string|max:500',
-            'planned_gate_id' => 'required|integer|exists:gates,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id',
         ]);
 
         $bookingRequest = BookingRequest::where('id', $id)
@@ -460,7 +460,7 @@ class BookingApprovalController extends Controller
             'planned_date' => 'required|date|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'planned_duration' => 'required|integer|min:30|max:480',
-            'planned_gate_id' => 'required|integer|exists:gates,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -524,7 +524,7 @@ class BookingApprovalController extends Controller
     public function calendarData(Request $request)
     {
         $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
+            'warehouse_id' => 'required|exists:md_warehouse,id',
             'date' => 'required|date',
         ]);
 

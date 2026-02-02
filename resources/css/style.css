@@ -112,13 +112,14 @@
 }
 
 .st-dashboard-range-form {
-    gap: 4px;
+    gap: 0px;
     align-items: flex-end;
     margin-left: auto;
 }
 
 .st-dashboard-range-field {
     min-width: 260px;
+    margin-right: -8px;
 }
 
 .st-suggestion-item {
@@ -151,10 +152,11 @@
 }
 
 .st-dashboard-range-reset {
-    min-width: 80px;
+    min-width: 10px;
     flex: 0 0 auto;
     display: flex;
     justify-content: flex-end;
+    margin-left: -110px;
 }
 
 .st-dashboard-mini-grid {
@@ -873,12 +875,20 @@
     height: auto;
 }
 
+.st-w-auto {
+    width: auto;
+}
+
 .st-w-200 {
     width: 200px;
 }
 
 .st-w-260 {
     width: 260px;
+}
+
+.st-maxw-240 {
+    max-width: 150px;
 }
 
 .st-font-semibold {
@@ -1725,7 +1735,7 @@
 }
 
 .st-select--dashboard-xs {
-    max-width: 90px;
+    max-width: 130px;
     font-size: 10px;
     height: 24px;
     padding: 2px 4px;
@@ -4048,21 +4058,44 @@ table.st-table thead th:not(:has(.st-colhead)):not(:has(.st-filter-header)) {
     min-width: 180px;
 }
 
+.st-dashboard-filter-form {
+    gap: 4px;
+    align-items: flex-end;
+    margin-left: auto;
+    flex-wrap: nowrap;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+}
+
+/* 24h Timeline filters: force compact widths */
+.st-dashboard-filter-form.st-timeline-filters .st-form-field {
+    flex: 0 1 110px;
+    min-width: 90px;
+}
+
+.st-dashboard-filter-form.st-timeline-filters .st-timeline-filters__actions {
+    min-width: 52px;
+    display: flex;
+    align-items: flex-end;
+    margin-left: 0;
+}
+
 .st-timeline-filters {
     flex-wrap: nowrap;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     min-width: 0;
+    gap: 1px;
 }
 
 .st-timeline-filters .st-form-field {
-    flex: 0 0 auto;
-    min-width: 160px;
+    flex: 0 1 110px;
+    min-width: 90px;
 }
 
 .st-timeline-filters .st-timeline-filters__actions {
-    min-width: 80px;
+    min-width: 56px;
 }
 
 @media (max-width: 640px) {

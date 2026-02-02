@@ -65,7 +65,7 @@ class LogController extends Controller
         $dir = $dirs[0] ?? 'desc';
 
         $logsQ = DB::table('activity_logs as al')
-            ->leftJoin('users as u', 'al.created_by', '=', 'u.id')
+            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id')
             ->leftJoin('slots as s', 'al.slot_id', '=', 's.id')
             ->select([
                 'al.id',

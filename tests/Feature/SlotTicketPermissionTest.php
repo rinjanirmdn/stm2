@@ -27,8 +27,8 @@ class SlotTicketPermissionTest extends TestCase
         ]);
 
         // Ensure seeded users have Spatie model_has_roles rows (some tests don't go through login flow)
-        if (DB::table('users')->whereNotNull('role_id')->exists()) {
-            $users = DB::table('users')->select(['id', 'role_id'])->whereNotNull('role_id')->get();
+        if (DB::table('md_users')->whereNotNull('role_id')->exists()) {
+            $users = DB::table('md_users')->select(['id', 'role_id'])->whereNotNull('role_id')->get();
             foreach ($users as $u) {
                 $exists = DB::table('model_has_roles')
                     ->where('role_id', (int) $u->role_id)

@@ -31,16 +31,16 @@ return new class extends Migration
             $roleNameCol = $this->getRoleNameColumn();
             $permNameCol = $this->getPermNameColumn();
 
-            $roleId = DB::table('roles')->where($roleNameCol, 'Section Head')->value('id');
+            $roleId = DB::table('md_roles')->where($roleNameCol, 'Section Head')->value('id');
             if (! $roleId) {
-                $roleId = DB::table('roles')->where($roleNameCol, 'section_head')->value('id');
+                $roleId = DB::table('md_roles')->where($roleNameCol, 'section_head')->value('id');
             }
 
             if (! $roleId) {
                 return;
             }
 
-            $permissionIds = DB::table('permissions')
+            $permissionIds = DB::table('md_permissions')
                 ->where(function ($query) use ($permNameCol) {
                     $query
                         ->where($permNameCol, 'like', 'users.%')

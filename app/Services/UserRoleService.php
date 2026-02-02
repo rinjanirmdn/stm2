@@ -55,7 +55,7 @@ class UserRoleService
     public function getUserRoles(int $userId): \Illuminate\Support\Collection
     {
         return DB::table('model_has_roles as mhr')
-            ->join('roles as r', 'mhr.role_id', '=', 'r.id')
+            ->join('md_roles as r', 'mhr.role_id', '=', 'r.id')
             ->where('mhr.model_type', 'App\\Models\\User')
             ->where('mhr.model_id', $userId)
             ->select(['r.id', 'r.roles_name', 'r.roles_guard_name'])
@@ -67,7 +67,7 @@ class UserRoleService
      */
     private function getRoleIdByName(string $role): ?int
     {
-        $roleRecord = DB::table('roles')
+        $roleRecord = DB::table('md_roles')
             ->where('roles_name', $role)
             ->first();
 
@@ -96,7 +96,7 @@ class UserRoleService
      */
     public function getAllRoles(): \Illuminate\Support\Collection
     {
-        return DB::table('roles')
+        return DB::table('md_roles')
             ->select(['id', 'roles_name', 'roles_guard_name'])
             ->orderBy('roles_name')
             ->get();
@@ -113,7 +113,7 @@ class UserRoleService
         }
 
         return DB::table('model_has_roles as mhr')
-            ->join('users as u', 'mhr.model_id', '=', 'u.id')
+            ->join('md_users as u', 'mhr.model_id', '=', 'u.id')
             ->where('mhr.model_type', 'App\\Models\\User')
             ->where('mhr.role_id', $roleId)
             ->select(['u.id', 'u.nik', 'u.email', 'u.is_active'])
@@ -188,8 +188,8 @@ class UserRoleService
 
         // Count other active admins
         $otherAdmins = DB::table('model_has_roles as mhr')
-            ->join('users as u', 'mhr.model_id', '=', 'u.id')
-            ->join('roles as r', 'mhr.role_id', '=', 'r.id')
+            ->join('md_users as u', 'mhr.model_id', '=', 'u.id')
+            ->join('md_roles as r', 'mhr.role_id', '=', 'r.id')
             ->where('mhr.model_type', 'App\\Models\\User')
             ->where('r.roles_name', 'admin')
             ->where('u.is_active', 1)
@@ -208,8 +208,8 @@ class UserRoleService
         $permissions = [];
 
         foreach ($roles as $role) {
-            $rolePermissions = DB::table('role_has_permissions as rhp')
-                ->join('permissions as p', 'rhp.permission_id', '=', 'p.id')
+            $rolePermissions = DB::table('md_role_has_permissions as rhp')
+                ->join('md_permissions as p', 'rhp.permission_id', '=', 'p.id')
                 ->where('rhp.role_id', $role->id)
                 ->pluck('p.perm_name')
                 ->toArray();
@@ -235,7 +235,7 @@ class UserRoleService
     public function getRoleAssignmentHistory(int $userId, int $limit = 10): \Illuminate\Support\Collection
     {
         return DB::table('activity_logs as al')
-            ->leftJoin('users as u', 'al.created_by', '=', 'u.id')
+            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id')
             ->where('al.subject_type', 'App\\Models\\User')
             ->where('al.subject_id', $userId)
             ->whereIn('al.activity_type', ['role_assigned', 'role_removed'])

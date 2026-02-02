@@ -7,13 +7,13 @@
     @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/js/app.js'])
 </head>
 <body>
-    <div class="st-minh-screen st-flex st-items-center st-justify-center st-p-20">
+    <div class="st-minh-screen st-flex st-items-center st-justify-center">
         <div class="st-card st-w-full st-maxw-420 st-p-18">
-            <div class="st-flex st-justify-center st-items-center st-mb-1 st-minh-70">
-                <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" class="st-h-70 st-object-contain st-w-full">
+            <div class="st-flex st-justify-center st-items-center st-mb-15 st-minh-70">
+                <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" class="st-h-auto st-w-auto st-maxw-240 st-object-contain">
             </div>
 
-            <div class="st-text-center st-mb-1">
+            <div class="st-text-center">
                 <div class="st-text-16 st-font-bold">Sign in</div>
                 <div class="st-text--sm st-text--muted">Please sign in to continue</div>
             </div>

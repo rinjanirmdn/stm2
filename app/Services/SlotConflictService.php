@@ -73,8 +73,8 @@ class SlotConflictService
         }
 
         $rows = DB::table('slots as s')
-            ->leftJoin('gates as g', 's.actual_gate_id', '=', 'g.id')
-            ->leftJoin('warehouses as w2', 'g.warehouse_id', '=', 'w2.id')
+            ->leftJoin('md_gates as g', 's.actual_gate_id', '=', 'g.id')
+            ->leftJoin('md_warehouse as w2', 'g.warehouse_id', '=', 'w2.id')
             ->whereIn('s.id', $slotIds)
             ->select([
                 's.id',
@@ -214,8 +214,8 @@ class SlotConflictService
      */
     public function getAlternativeGates(int $warehouseId, int $excludeGateId = 0): array
     {
-        $availableGates = DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $availableGates = DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.warehouse_id', $warehouseId)
             ->where('g.is_active', 1)
             ->where('g.id', '<>', $excludeGateId)

@@ -23,13 +23,13 @@ class SlotObsoleteTest extends TestCase
     private function setupTestWarehousesAndGates(): void
     {
         // Create warehouses
-        DB::table('warehouses')->insert([
+        DB::table('md_warehouse')->insert([
             ['id' => 1, 'name' => 'Warehouse 1', 'code' => 'WH1', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 2, 'name' => 'Warehouse 2', 'code' => 'WH2', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // Create gates
-        DB::table('gates')->insert([
+        DB::table('md_gates')->insert([
             ['id' => 1, 'warehouse_id' => 2, 'gate_number' => 'B', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['id' => 2, 'warehouse_id' => 2, 'gate_number' => 'C', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
         ]);

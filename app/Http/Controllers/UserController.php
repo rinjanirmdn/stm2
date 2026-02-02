@@ -63,33 +63,33 @@ class UserController extends Controller
 
         $allowedRoles = ['admin', 'section_head', 'operator', 'vendor'];
 
-        $usersQ = DB::table('users')
+        $usersQ = DB::table('md_users')
             ->leftJoin($modelHasRolesTable . ' as mhr', function ($join) {
                 $join
-                    ->on('mhr.model_id', '=', 'users.id')
+                    ->on('mhr.model_id', '=', 'md_users.id')
                     ->where('mhr.model_type', '=', 'App\\Models\\User');
             })
             ->leftJoin($rolesTable . ' as r_spatie', 'r_spatie.id', '=', 'mhr.role_id')
-            ->leftJoin($rolesTable . ' as r_user', 'r_user.id', '=', 'users.role_id')
+            ->leftJoin($rolesTable . ' as r_user', 'r_user.id', '=', 'md_users.role_id')
             ->select([
-                'users.id',
-                'users.email',
-                'users.name',
-                // 'users.role',
-                // 'users.role_id',
+                'md_users.id',
+                'md_users.nik',
+                'md_users.full_name',
+                'md_users.role',
+                'md_users.role_id',
                 DB::raw('COALESCE(r_user.roles_name, r_spatie.roles_name) as role_name'),
-                // 'users.is_active',
-                'users.created_at',
-                'users.updated_at',
+                'md_users.is_active',
+                'md_users.created_at',
+                'md_users.updated_at',
             ]);
 
         // Apply individual column filters
-        if ($email !== '') {
-            $usersQ->where('users.email', 'like', '%' . $email . '%');
+        if ($nik !== '') {
+            $usersQ->where('md_users.nik', 'like', '%' . $nik . '%');
         }
 
-        if ($name !== '') {
-            $usersQ->where('users.name', 'like', '%' . $name . '%');
+        if ($full_name !== '') {
+            $usersQ->where('md_users.full_name', 'like', '%' . $full_name . '%');
         }
 
         if ($role !== '' && in_array($role, $allowedRoles, true)) {
@@ -103,7 +103,7 @@ class UserController extends Controller
         }
 
         if ($is_active !== '') {
-            $usersQ->where('users.is_active', $is_active === '1' ? 1 : 0);
+            $usersQ->where('md_users.is_active', $is_active === '1' ? 1 : 0);
         }
 
         // Legacy search filter (q parameter)
@@ -111,22 +111,22 @@ class UserController extends Controller
             $like = '%' . $q . '%';
             $usersQ->where(function ($sub) use ($like) {
                 $sub
-                    ->where('users.email', 'like', $like)
-                    ->orWhere('users.name', 'like', $like);
+                    ->where('md_users.nik', 'like', $like)
+                    ->orWhere('md_users.full_name', 'like', $like);
             });
         }
 
         // Legacy query param: status=active|inactive.
         if ($status === 'active') {
-            $usersQ->where('users.is_active', 1);
+            $usersQ->where('md_users.is_active', 1);
         } elseif ($status === 'inactive') {
-            $usersQ->where('users.is_active', 0);
+            $usersQ->where('md_users.is_active', 0);
         } elseif ($active === '1') {
             // Backward compat if any existing link still uses active=1/0.
-            $usersQ->where('users.is_active', 1);
+            $usersQ->where('md_users.is_active', 1);
             $status = 'active';
         } elseif ($active === '0') {
-            $usersQ->where('users.is_active', 0);
+            $usersQ->where('md_users.is_active', 0);
             $status = 'inactive';
         } else {
             $status = '';
@@ -139,14 +139,14 @@ class UserController extends Controller
                 if ($s === 'role') {
                     $usersQ->orderByRaw('COALESCE(r_user.roles_name, r_spatie.roles_name) ' . $d);
                 } else {
-                    $usersQ->orderBy('users.' . $s, $d);
+                    $usersQ->orderBy('md_users.' . $s, $d);
                 }
             }
-            $usersQ->orderByDesc('users.created_at')->orderByDesc('users.id');
+            $usersQ->orderByDesc('md_users.created_at')->orderByDesc('md_users.id');
         } else {
             $usersQ
-                ->orderByDesc('users.created_at')
-                ->orderByDesc('users.id');
+                ->orderByDesc('md_users.created_at')
+                ->orderByDesc('md_users.id');
         }
 
         $users = $usersQ->get();
@@ -197,10 +197,11 @@ class UserController extends Controller
         }
 
         // Create user (role_id is used, role column uses enum so we skip it)
-        $userId = DB::table('users')->insertGetId([
-            'email' => $email,
-            'name' => $name,
-            // 'role_id' => $roleId, // Column removed
+        $userId = DB::table('md_users')->insertGetId([
+            'nik' => $nik,
+            'username' => $nik,
+            'full_name' => $fullName,
+            'role_id' => $roleId,
             'vendor_code' => $role === 'vendor' ? $vendorCode : null,
             // 'is_active' => $isActive ? 1 : 0, // Column removed
             'password' => Hash::make($password),
@@ -220,25 +221,24 @@ class UserController extends Controller
     {
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
-        $user = DB::table('users')
+        $user = DB::table('md_users')
             ->leftJoin($modelHasRolesTable . ' as mhr', function ($join) {
                 $join
-                    ->on('mhr.model_id', '=', 'users.id')
+                    ->on('mhr.model_id', '=', 'md_users.id')
                     ->where('mhr.model_type', '=', 'App\\Models\\User');
             })
             ->leftJoin($rolesTable . ' as r_spatie', 'r_spatie.id', '=', 'mhr.role_id')
-            ->leftJoin($rolesTable . ' as r_user', 'r_user.id', '=', 'users.role_id')
-            ->where('users.id', $userId)
+            ->leftJoin($rolesTable . ' as r_user', 'r_user.id', '=', 'md_users.role_id')
+            ->where('md_users.id', $userId)
             ->selectRaw("
-                users.id,
-                users.email,
-                users.name,
-                users.vendor_code,
-                -- users.role,
-                -- users.role_id,
+                md_users.id,
+                md_users.nik,
+                md_users.full_name,
+                md_users.role,
+                md_users.role_id,
                 COALESCE(r_user.roles_name, r_spatie.roles_name) as role_name,
-                LOWER(REPLACE(COALESCE(r_user.roles_name, r_spatie.roles_name), ' ', '_')) as role_slug
-                -- users.is_active
+                LOWER(REPLACE(COALESCE(r_user.roles_name, r_spatie.roles_name), ' ', '_')) as role_slug,
+                md_users.is_active
             ")
             ->first();
 
@@ -256,7 +256,7 @@ class UserController extends Controller
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
 
-        $user = DB::table('users')
+        $user = DB::table('md_users')
             ->where('id', $userId)
             ->select(['id'])
             ->first();
@@ -266,8 +266,8 @@ class UserController extends Controller
         }
 
         $v = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $userId],
+            'nik' => ['required', 'string', 'max:50', 'unique:md_users,nik,' . $userId],
+            'full_name' => ['required', 'string', 'max:100'],
             'role' => ['required', 'in:admin,section_head,operator,vendor'],
             'vendor_code' => ['nullable', 'string', 'max:20', \Illuminate\Validation\Rule::requiredIf(fn () => (string) $request->input('role') === 'vendor')],
             'password' => ['nullable', 'string', 'min:6'],
@@ -302,7 +302,7 @@ class UserController extends Controller
             $update['password'] = Hash::make($password);
         }
 
-        DB::table('users')->where('id', $userId)->update($update);
+        DB::table('md_users')->where('id', $userId)->update($update);
 
         // Update role using service
         if ($newRoleId) {
@@ -315,12 +315,33 @@ class UserController extends Controller
 
     public function toggle(Request $request, int $userId)
     {
-        return redirect()->route('users.index')->with('error', 'Feature unavailable (Database mismatch)');
+        $user = DB::table('md_users')->where('id', $userId)->select(['id', 'is_active'])->first();
+        if (!$user) {
+            return redirect()->route('users.index')->with('error', 'User not found');
+        }
+
+        $currentUserId = $request->user()->id ?? 0;
+        $currentActive = !empty($user->is_active);
+
+        // Check if user is trying to deactivate themselves
+        if ($user->id === $currentUserId && $currentActive) {
+            return redirect()->route('users.index')->with('error', 'You cannot deactivate your own account.');
+        }
+
+        // Check if user can be deactivated (not last admin)
+        if ($currentActive && !$this->roleService->canDeactivateUser($userId)) {
+            return redirect()->route('users.index')->with('error', 'Cannot deactivate the last admin user.');
+        }
+
+        $newActive = $currentActive ? 0 : 1;
+        DB::table('md_users')->where('id', $userId)->update(['is_active' => $newActive]);
+
+        return redirect()->route('users.index')->with('success', 'User status updated');
     }
 
     public function destroy(Request $request, int $userId)
     {
-        $user = DB::table('users')->where('id', $userId)->select(['id'])->first(); // Removed role
+        $user = DB::table('md_users')->where('id', $userId)->select(['id', 'role'])->first();
         if (!$user) {
             return redirect()->route('users.index')->with('error', 'User not found');
         }
@@ -330,12 +351,18 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'You cannot delete your own account.');
         }
 
-        // Check if user can be deleted (not last admin)
-        if (!$this->roleService->canDeactivateUser($userId)) {
-             return redirect()->route('users.index')->with('error', 'Cannot delete the last admin user.');
+        // Check if user is admin and if it's the last admin
+        if (($user->role ?? '') === 'admin') {
+            $remainingAdmins = DB::table('md_users')
+                ->where('role', 'admin')
+                ->where('id', '<>', $userId)
+                ->count();
+            if ($remainingAdmins === 0) {
+                return redirect()->route('users.index')->with('error', 'You cannot delete the last admin user.');
+            }
         }
 
-        DB::table('users')->where('id', $userId)->delete();
+        DB::table('md_users')->where('id', $userId)->delete();
         return redirect()->route('users.index')->with('success', 'User deleted permanently');
     }
 }

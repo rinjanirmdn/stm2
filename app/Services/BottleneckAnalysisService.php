@@ -20,8 +20,8 @@ class BottleneckAnalysisService
             $waitExpr = "GREATEST({$diffExpr}, 0)";
 
             $bottle = DB::table('slots as s')
-                ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-                ->leftJoin('gates as g', function ($join) {
+                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+                ->leftJoin('md_gates as g', function ($join) {
                     $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
@@ -115,8 +115,8 @@ class BottleneckAnalysisService
      */
     public function getGateUtilization(string $date): array
     {
-        $gates = DB::table('gates as g')
-            ->leftJoin('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gates = DB::table('md_gates as g')
+            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.is_active', true)
             ->select([
                 'g.id',
@@ -168,7 +168,7 @@ class BottleneckAnalysisService
         try {
             // Get total and completed slots
             $slotStats = DB::table('slots as s')
-                ->join('gates as g', function ($join) {
+                ->join('md_gates as g', function ($join) {
                     $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
@@ -193,7 +193,7 @@ class BottleneckAnalysisService
             // Get average wait time
             $diffExpr = $this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_start');
             $avgWait = DB::table('slots as s')
-                ->join('gates as g', function ($join) {
+                ->join('md_gates as g', function ($join) {
                     $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
@@ -212,7 +212,7 @@ class BottleneckAnalysisService
                 $hourExpr = 'HOUR(COALESCE(s.actual_start, s.planned_start))';
             }
             $peakHour = DB::table('slots as s')
-                ->join('gates as g', function ($join) {
+                ->join('md_gates as g', function ($join) {
                     $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
@@ -287,8 +287,8 @@ class BottleneckAnalysisService
         try {
             $diffExpr = $this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_start');
             $critical = DB::table('slots as s')
-                ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-                ->leftJoin('gates as g', function ($join) {
+                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+                ->leftJoin('md_gates as g', function ($join) {
                     $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
