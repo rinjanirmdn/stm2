@@ -25,7 +25,7 @@ class TruckTypeDurationStoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                'unique:truck_type_durations,truck_type'
+                'unique:md_truck,truck_type'
             ],
             'target_duration_minutes' => [
                 'required',

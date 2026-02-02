@@ -204,17 +204,18 @@ class BookingApprovalController extends Controller
         ];
 
         $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('warehouses', 'is_active')) {
+        if (Schema::hasColumn('md_warehouse', 'is_active')) {
             $warehousesQ->where('is_active', true);
         }
         $warehouses = $warehousesQ->get();
 
         $gateOptions = Gate::query()
-            ->join('warehouses as w', 'gates.warehouse_id', '=', 'w.id')
-            ->when(Schema::hasColumn('gates', 'is_active'), fn ($q) => $q->where('gates.is_active', true))
+            ->from('md_gates', 'g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->when(Schema::hasColumn('md_gates', 'is_active'), fn ($q) => $q->where('g.is_active', true))
             ->orderBy('w.wh_code')
-            ->orderBy('gates.gate_number')
-            ->get(['gates.id', 'gates.gate_number', 'w.wh_code'])
+            ->orderBy('g.gate_number')
+            ->get(['g.id', 'g.gate_number', 'w.wh_code'])
             ->map(function ($g) {
                 $whCode = (string) ($g->wh_code ?? '');
                 $gateNo = (string) ($g->gate_number ?? '');
@@ -245,13 +246,13 @@ class BookingApprovalController extends Controller
         ])->findOrFail($id);
 
         $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('warehouses', 'is_active')) {
+        if (Schema::hasColumn('md_warehouse', 'is_active')) {
             $warehousesQ->where('is_active', true);
         }
         $warehouses = $warehousesQ->get();
 
         $gatesQ = Gate::query();
-        if (Schema::hasColumn('gates', 'is_active')) {
+        if (Schema::hasColumn('md_gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
         $gates = $gatesQ
@@ -442,7 +443,7 @@ class BookingApprovalController extends Controller
 
         // Get all gates for gate-only selection
         $gatesQ = Gate::query();
-        if (Schema::hasColumn('gates', 'is_active')) {
+        if (Schema::hasColumn('md_gates', 'is_active')) {
             $gatesQ->where('is_active', true);
         }
         $gates = $gatesQ->with('warehouse')->get();
