@@ -17,22 +17,23 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">NIK/Username</label>
-                        <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik', $editUser->nik) }}" required>
+                        <label class="st-label">Email</label>
+                        <input type="email" name="email" class="st-input" maxlength="255" value="{{ old('email', $editUser->email) }}" required>
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">Full Name</label>
-                        <input type="text" name="full_name" class="st-input" maxlength="100" value="{{ old('full_name', $editUser->full_name) }}" required>
+                        <label class="st-label">Name</label>
+                        <input type="text" name="name" class="st-input" maxlength="255" value="{{ old('name', $editUser->name) }}" required>
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Role</label>
                         <select name="role" class="st-select" required id="role">
-                            <option value="operator" {{ old('role', $editUser->role) === 'operator' ? 'selected' : '' }}>Operator</option>
-                            <option value="section_head" {{ old('role', $editUser->role) === 'section_head' ? 'selected' : '' }}>Section Head</option>
-                            <option value="admin" {{ old('role', $editUser->role) === 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="vendor" {{ old('role', $editUser->role) === 'vendor' ? 'selected' : '' }}>Vendor</option>
+                            @php $currentRole = $editUser->role_slug ?? 'operator'; @endphp
+                            <option value="operator" {{ old('role', $currentRole) === 'operator' ? 'selected' : '' }}>Operator</option>
+                            <option value="section_head" {{ old('role', $currentRole) === 'section_head' ? 'selected' : '' }}>Section Head</option>
+                            <option value="admin" {{ old('role', $currentRole) === 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="vendor" {{ old('role', $currentRole) === 'vendor' ? 'selected' : '' }}>Vendor</option>
                         </select>
                     </div>
 
@@ -41,11 +42,6 @@
                         <input type="text" name="vendor_code" class="st-input" maxlength="20" value="{{ old('vendor_code', $editUser->vendor_code ?? '') }}" placeholder="e.g. 1100000263">
                         <div class="st-form-note">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
                     </div>
-
-                    <label class="st-checkbox-row">
-                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', (int)$editUser->is_active === 1 ? '1' : '') ? 'checked' : '' }}>
-                        <span class="st-checkbox-label">Active</span>
-                    </label>
 
                     <div class="st-divider"></div>
 

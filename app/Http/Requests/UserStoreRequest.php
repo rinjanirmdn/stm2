@@ -21,13 +21,14 @@ class UserStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nik' => [
+            'email' => [
                 'required',
                 'string',
-                'max:50',
-                'unique:users,nik'
+                'email',
+                'max:255',
+                'unique:users,email'
             ],
-            'full_name' => [
+            'name' => [
                 'required',
                 'string',
                 'max:255'
@@ -47,11 +48,9 @@ class UserStoreRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
+                // 'exists:vendors,vendor_code', // Validasi ke tabel vendors (Tabel vendors tidak ada)
                 Rule::requiredIf(fn () => (string) $this->input('role') === 'vendor'),
             ],
-            'is_active' => [
-                'boolean'
-            ]
         ];
     }
 
@@ -61,11 +60,10 @@ class UserStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nik.required' => 'NIK is required.',
-            'nik.unique' => 'NIK already exists.',
-            'nik.max' => 'NIK maximum 50 characters.',
-            'full_name.required' => 'Full name is required.',
-            'full_name.max' => 'Full name maximum 255 characters.',
+            'name.required' => 'Full name is required.',
+            'name.max' => 'Full name maximum 255 characters.',
+            'email.required' => 'Email is required.',
+            'email.unique' => 'Email already exists.',
             'password.required' => 'Password is required.',
             'password.min' => 'Password minimum 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
@@ -73,7 +71,7 @@ class UserStoreRequest extends FormRequest
             'role.in' => 'Role must be admin, section_head, operator, or vendor.',
             'vendor_code.required' => 'Vendor Code (SAP) is required for vendor role.',
             'vendor_code.max' => 'Vendor Code (SAP) maximum 20 characters.',
-            'is_active.boolean' => 'Active status must be boolean.'
+            'vendor_code.exists' => 'Vendor Code not found in master data.',
         ];
     }
 }

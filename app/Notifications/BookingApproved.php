@@ -35,7 +35,7 @@ class BookingApproved extends Notification
 
         return (new MailMessage)
             ->subject($subjectPrefix . ' - ' . $this->slot->ticket_number)
-            ->greeting('Hello ' . $notifiable->full_name . ',')
+            ->greeting('Hello ' . $notifiable->name . ',')
             ->line($messageLine)
             ->line('**Ticket:** ' . $this->slot->ticket_number)
             ->line('**Scheduled Time:** ' . $plannedDate)

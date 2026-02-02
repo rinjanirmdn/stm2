@@ -28,7 +28,7 @@ class BookingRejected extends Notification
 
         return (new MailMessage)
             ->subject('Booking Rejected - ' . $this->slot->ticket_number)
-            ->greeting('Hello ' . $notifiable->full_name . ',')
+            ->greeting('Hello ' . $notifiable->name . ',')
             ->line('Unfortunately, your booking request has been rejected.')
             ->line('**Ticket:** ' . $this->slot->ticket_number)
             ->line('**Requested Time:** ' . $plannedDate)

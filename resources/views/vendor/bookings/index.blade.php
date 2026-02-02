@@ -39,12 +39,15 @@
                 <form method="GET" action="{{ route('vendor.bookings.index') }}" class="mb-search">
                     <input type="hidden" name="status" value="{{ $currentStatus }}">
                     <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO..." value="{{ request('search') }}">
-                    <div class="date-range-container mb-date-range">
-                        <input type="text" id="date-range" class="mb-search__input date-range-input" placeholder="Select date range" readonly>
-                        <i class="fas fa-calendar-alt date-range-icon"></i>
-                    </div>
-                    <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
-                    <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
+                    <div id="vendor_reportrange" class="mb-search__input date-range-input" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <i class="fas fa-calendar-alt date-range-icon"></i>&nbsp;
+                                    <span></span>
+                                </div>
+                                <i class="fa fa-caret-down"></i>
+                            </div>
+                            <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
+                            <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
                     <button type="submit" class="vendor-btn vendor-btn--primary vendor-btn--sm">
                         <i class="fas fa-search"></i> Search
                     </button>

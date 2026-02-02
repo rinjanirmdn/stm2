@@ -28,7 +28,7 @@ class BookingRequested extends Notification
 
         return (new MailMessage)
             ->subject('New Booking Request - ' . $this->slot->ticket_number)
-            ->greeting('Hello ' . $notifiable->full_name . ',')
+            ->greeting('Hello ' . $notifiable->name . ',')
             ->line('A new booking request has been submitted and requires your approval.')
             ->line('**Ticket:** ' . $this->slot->ticket_number)
             ->line('**Vendor:** ' . $vendorName)

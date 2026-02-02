@@ -87,8 +87,8 @@ class BookingApprovalController extends Controller
         $requestedBy = trim((string) $request->query('requested_by', ''));
         if ($requestedBy !== '') {
             $query->where(function ($q) use ($requestedBy) {
-                $q->where('u_requester.full_name', 'like', '%' . $requestedBy . '%')
-                    ->orWhere('u_requester.username', 'like', '%' . $requestedBy . '%');
+                $q->where('u_requester.name', 'like', '%' . $requestedBy . '%')
+                    ->orWhere('u_requester.email', 'like', '%' . $requestedBy . '%');
             });
         }
 

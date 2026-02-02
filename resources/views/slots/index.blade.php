@@ -231,9 +231,10 @@
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="planned_start">
                                             <div class="st-panel__title">ETA Range</div>
-                                            <input type="text" id="planned_start_range" name="planned_start_range" form="slot-filter-form" class="st-input st-input--pointer" placeholder="Select Date Range" value="{{ ($date_from ?? '') && ($date_to ?? '') ? ($date_from.' - '.$date_to) : '' }}" readonly data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
-                                            <input type="hidden" name="date_from" form="slot-filter-form" value="{{ $date_from ?? '' }}" autocomplete="off">
-                                            <input type="hidden" name="date_to" form="slot-filter-form" value="{{ $date_to ?? '' }}" autocomplete="off">
+                                            <div class="st-flex st-gap-8">
+                                                <input type="text" name="date_from" form="slot-filter-form" class="st-input" placeholder="From" value="{{ $date_from ?? '' }}" autocomplete="off" readonly>
+                                                <input type="text" name="date_to" form="slot-filter-form" class="st-input" placeholder="To" value="{{ $date_to ?? '' }}" autocomplete="off" readonly>
+                                            </div>
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="planned_start">Clear</button>
                                             </div>
@@ -257,9 +258,12 @@
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="arrival_presence">
                                             <div class="st-panel__title">Arrival Date Filter</div>
-                                            <input type="text" id="arrival_date_range" name="arrival_date_range" form="slot-filter-form" class="st-input st-input--pointer" placeholder="Select Date Range" value="{{ ($arrival_from ?? '') && ($arrival_to ?? '') ? ($arrival_from.' - '.$arrival_to) : '' }}" readonly data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
-                                            <input type="hidden" name="arrival_from" form="slot-filter-form" value="{{ $arrival_from ?? '' }}" autocomplete="off">
-                                            <input type="hidden" name="arrival_to" form="slot-filter-form" value="{{ $arrival_to ?? '' }}" autocomplete="off">
+                                            <div id="arrival_reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                                                <i class="fa fa-calendar"></i>&nbsp;
+                                                <span></span> <i class="fa fa-caret-down"></i>
+                                            </div>
+                                            <input type="hidden" name="arrival_from" id="arrival_from" form="slot-filter-form" value="{{ $arrival_from ?? '' }}">
+                                            <input type="hidden" name="arrival_to" id="arrival_to" form="slot-filter-form" value="{{ $arrival_to ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="arrival_presence">Clear</button>
                                             </div>
@@ -974,25 +978,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     try { i.value = ''; } catch (e) {}
                 });
 
-                // Special handling for date range filters - clear related hidden inputs
-                if (filterName === 'planned_start') {
-                    var dateFromInput = filterForm.querySelector('input[name="date_from"]');
-                    var dateToInput = filterForm.querySelector('input[name="date_to"]');
-                    var rangeInput = filterForm.querySelector('input[name="planned_start_range"]');
-                    if (dateFromInput) dateFromInput.value = '';
-                    if (dateToInput) dateToInput.value = '';
-                    if (rangeInput) rangeInput.value = '';
-                }
-
-                if (filterName === 'arrival_presence') {
-                    var arrivalFromInput = filterForm.querySelector('input[name="arrival_from"]');
-                    var arrivalToInput = filterForm.querySelector('input[name="arrival_to"]');
-                    var rangeInput = filterForm.querySelector('input[name="arrival_date_range"]');
-                    if (arrivalFromInput) arrivalFromInput.value = '';
-                    if (arrivalToInput) arrivalToInput.value = '';
-                    if (rangeInput) rangeInput.value = '';
-                }
-
                 ajaxReload(true);
             });
         }
@@ -1009,12 +994,16 @@ document.addEventListener('DOMContentLoaded', function () {
         Array.prototype.slice.call(inputs).forEach(function (i) {
             if (!i) return;
             if (i.type === 'hidden') return;
+            i.addEventListener('change', function () {
+                ajaxReload(true);
+            });
             i.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     ajaxReload(true);
                 }
             });
+            i.addEventListener('change', function () {
             i.addEventListener('change', function () {
                 ajaxReload(true);
             });
@@ -1167,70 +1156,6 @@ document.addEventListener('DOMContentLoaded', function () {
     setupDropdownFilter('target_status', 240);
     setupActiveFilters(); // Initialize active filter indicators
     setupSorting();
-
-    // Initialize true range picker for planned start
-    var plannedStartRangeInput = document.querySelector('input#planned_start_range');
-    if (plannedStartRangeInput && window.jQuery && typeof window.jQuery.fn.daterangepicker !== 'undefined') {
-        var fromInput = document.querySelector('input[name="date_from"]');
-        var toInput = document.querySelector('input[name="date_to"]');
-        var fromVal = fromInput ? fromInput.value : '';
-        var toVal = toInput ? toInput.value : '';
-        var initial = fromVal && toVal ? (fromVal + ' - ' + toVal) : (fromVal || '');
-        if (initial) {
-            plannedStartRangeInput.value = initial;
-        }
-
-        window.jQuery(plannedStartRangeInput)
-            .daterangepicker({
-                startDate: fromVal ? moment(fromVal) : moment(),
-                endDate: toVal ? moment(toVal) : moment(),
-                autoUpdateInput: false,
-                locale: {
-                    format: 'YYYY-MM-DD'
-                }
-            })
-            .off('apply.daterangepicker.stm2')
-            .on('apply.daterangepicker.stm2', function (ev, picker) {
-                var startStr = picker && picker.startDate ? picker.startDate.format('YYYY-MM-DD') : '';
-                var endStr = picker && picker.endDate ? picker.endDate.format('YYYY-MM-DD') : '';
-                if (fromInput) fromInput.value = startStr;
-                if (toInput) toInput.value = endStr;
-                plannedStartRangeInput.value = (startStr && endStr) ? (startStr + ' - ' + endStr) : (startStr || '');
-                document.getElementById('slot-filter-form').submit();
-            });
-    }
-
-    // Initialize true range picker for arrival date
-    var arrivalDateRangeInput = document.querySelector('input#arrival_date_range');
-    if (arrivalDateRangeInput && window.jQuery && typeof window.jQuery.fn.daterangepicker !== 'undefined') {
-        var arrivalFromInput = document.querySelector('input[name="arrival_from"]');
-        var arrivalToInput = document.querySelector('input[name="arrival_to"]');
-        var arrivalFromVal = arrivalFromInput ? arrivalFromInput.value : '';
-        var arrivalToVal = arrivalToInput ? arrivalToInput.value : '';
-        var arrivalInitial = arrivalFromVal && arrivalToVal ? (arrivalFromVal + ' - ' + arrivalToVal) : (arrivalFromVal || '');
-        if (arrivalInitial) {
-            arrivalDateRangeInput.value = arrivalInitial;
-        }
-
-        window.jQuery(arrivalDateRangeInput)
-            .daterangepicker({
-                startDate: arrivalFromVal ? moment(arrivalFromVal) : moment(),
-                endDate: arrivalToVal ? moment(arrivalToVal) : moment(),
-                autoUpdateInput: false,
-                locale: {
-                    format: 'YYYY-MM-DD'
-                }
-            })
-            .off('apply.daterangepicker.stm2')
-            .on('apply.daterangepicker.stm2', function (ev, picker) {
-                var startStr = picker && picker.startDate ? picker.startDate.format('YYYY-MM-DD') : '';
-                var endStr = picker && picker.endDate ? picker.endDate.format('YYYY-MM-DD') : '';
-                if (arrivalFromInput) arrivalFromInput.value = startStr;
-                if (arrivalToInput) arrivalToInput.value = endStr;
-                arrivalDateRangeInput.value = (startStr && endStr) ? (startStr + ' - ' + endStr) : (startStr || '');
-                document.getElementById('slot-filter-form').submit();
-            });
-    }
 
     // Filter gates based on warehouse selection
     function filterGateOptions() {

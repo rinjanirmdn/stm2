@@ -36,9 +36,10 @@
                         </div>
                         <div class="st-form-field st-maxw-240">
                             <label class="st-label st-text-12">Date Range</label>
-                            <input type="text" id="date_range_filter" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Select Date Range" autocomplete="off" readonly>
-                            <input type="hidden" name="date_from" id="date_from_filter" form="booking-filter-form" value="{{ request('date_from') }}">
-                            <input type="hidden" name="date_to" id="date_to_filter" form="booking-filter-form" value="{{ request('date_to') }}">
+                            <div class="st-flex st-gap-8">
+                                <input type="text" name="date_from" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="From" autocomplete="off" readonly value="{{ request('date_from') }}">
+                                <input type="text" name="date_to" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="To" autocomplete="off" readonly value="{{ request('date_to') }}">
+                            </div>
                         </div>
                         <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
                             @if(request()->hasAny(['date_from', 'date_to', 'search', 'request_number', 'po_number', 'supplier_name', 'planned_start', 'converted_ticket', 'planned_gate_id', 'direction', 'status_filter', 'created_at']))

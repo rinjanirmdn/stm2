@@ -147,7 +147,8 @@ class TransactionReportService
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 's.vendor_name',
-                'u.nik as created_by_nik',
+                'u.name as created_by_name',
+                'u.email as created_by_email',
                 'td.target_duration_minutes',
             ])
             ->whereIn('s.status', ['completed', 'cancelled']);
@@ -351,7 +352,7 @@ class TransactionReportService
             'arrival' => 's.arrival_time',
             'lead_time' => DB::raw($leadExpr),
             'late' => DB::raw("CASE WHEN (COALESCE(s.slot_type, 'planned') = 'planned' AND s.arrival_time IS NOT NULL) AND s.arrival_time > {$lateAddExpr} THEN 1 WHEN ((s.arrival_time IS NULL OR COALESCE(s.slot_type, 'planned') <> 'planned') AND COALESCE(s.is_late, false) = true) THEN 1 ELSE 0 END"),
-            'user' => 'u.nik',
+            'user' => 'u.name',
         ];
     }
 

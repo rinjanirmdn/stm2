@@ -215,6 +215,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 input.id = 'st-timepicker-' + index;
             }
 
+            try {
+                input.type = 'text';
+            } catch (e) { }
+            try {
+                input.setAttribute('autocomplete', 'off');
+            } catch (e) { }
+            try {
+                input.setAttribute('readonly', 'readonly');
+            } catch (e) { }
+
             input.addEventListener('keydown', function (event) { event.preventDefault(); });
             input.addEventListener('paste', function (event) { event.preventDefault(); });
 
@@ -317,6 +327,18 @@ document.addEventListener('DOMContentLoaded', function () {
             var form = stFindAssociatedForm(btn);
             var fields = stFindFieldsForFormKey(form, key);
 
+            if ((!fields || fields.length === 0) && form) {
+                if (key === 'planned_start') {
+                    fields = [];
+                    fields = fields.concat(stFindFieldsForFormKey(form, 'date_from'));
+                    fields = fields.concat(stFindFieldsForFormKey(form, 'date_to'));
+                } else if (key === 'arrival_presence') {
+                    fields = [];
+                    fields = fields.concat(stFindFieldsForFormKey(form, 'arrival_from'));
+                    fields = fields.concat(stFindFieldsForFormKey(form, 'arrival_to'));
+                }
+            }
+
             // If we can't find an associated form, try global lookup by name as a fallback
             if (!fields || fields.length === 0) {
                 try {
@@ -379,79 +401,105 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function initDatePickers() {
-        var dateInputs = document.querySelectorAll('input.flatpickr-date, input[type="date"], input[id$="_date_input"], input[id$="_date"]');
-        if (typeof window.flatpickr === 'function') {
-            Array.prototype.slice.call(dateInputs).forEach(function (input) {
-                if (!input || input.getAttribute('data-st-flatpickr-date') === '1' || input.getAttribute('data-st-datepicker') === '1' || input.id === 'analytics_range') {
-                    return;
-                }
-                input.setAttribute('data-st-flatpickr-date', '1');
-                try {
-                    input.type = 'text';
-                } catch (e) { }
+    function initPredefinedDateRange(containerSelector, startInputSelector, endInputSelector) {
+        var reportRange = window.jQuery(containerSelector);
+        if (reportRange.length) {
+            var start = window.moment();
+            var end = window.moment();
+            
+            // Check if we have initial values in hidden inputs
+            var hiddenStart = window.jQuery(startInputSelector).val();
+            var hiddenEnd = window.jQuery(endInputSelector).val();
+            if (hiddenStart && window.moment(hiddenStart, 'YYYY-MM-DD').isValid()) {
+                start = window.moment(hiddenStart, 'YYYY-MM-DD');
+            }
+            if (hiddenEnd && window.moment(hiddenEnd, 'YYYY-MM-DD').isValid()) {
+                end = window.moment(hiddenEnd, 'YYYY-MM-DD');
+            }
 
-                var minAttr = String(input.getAttribute('min') || '').trim();
-                var maxAttr = String(input.getAttribute('max') || '').trim();
-                var minDate = /^\d{4}-\d{2}-\d{2}$/.test(minAttr) ? minAttr : undefined;
-                var maxDate = /^\d{4}-\d{2}-\d{2}$/.test(maxAttr) ? maxAttr : undefined;
-
-                window.flatpickr(input, {
-                    enableTime: false,
-                    dateFormat: 'Y-m-d',
-                    allowInput: true,
-                    disableMobile: true,
-                    minDate: minDate,
-                    maxDate: maxDate,
-                    disable: [
-                        function (date) {
-                            return date.getDay() === 0 || !!stGetHolidayName(date);
-                        }
-                    ],
-                    onDayCreate: function (_, __, fp, dayElem) {
-                        if (!dayElem || !dayElem.dateObj) return;
-                        if (dayElem.dateObj.getDay && dayElem.dateObj.getDay() === 0) {
-                            dayElem.classList.add('is-sunday');
-                            dayElem.setAttribute('title', 'Sunday');
-                        }
-                        var holidayName = stGetHolidayName(dayElem.dateObj);
-                        if (holidayName) {
-                            dayElem.classList.add('is-holiday');
-                            dayElem.setAttribute('title', holidayName);
-                        }
+            function cb(start, end) {
+                var label = start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY');
+                window.jQuery(containerSelector + ' span').html(label);
+                window.jQuery(startInputSelector).val(start.format('YYYY-MM-DD'));
+                window.jQuery(endInputSelector).val(end.format('YYYY-MM-DD'));
+                
+                // Submit form if inside one
+                var form = reportRange.closest('form');
+                if (form.length) {
+                    // Check if we should auto-submit (default: yes for filters)
+                    if (reportRange.attr('data-auto-submit') !== 'false') {
+                        form.submit();
                     }
-                });
-            });
-            return true;
-        }
+                }
+            }
 
-        if (typeof window.jQuery !== 'undefined' && typeof window.jQuery.fn.datepicker === 'function') {
+            reportRange.daterangepicker({
+                startDate: start,
+                endDate: end,
+                ranges: {
+                   'Today': [window.moment(), window.moment()],
+                   'Yesterday': [window.moment().subtract(1, 'days'), window.moment().subtract(1, 'days')],
+                   'Last 7 Days': [window.moment().subtract(6, 'days'), window.moment()],
+                   'Last 30 Days': [window.moment().subtract(29, 'days'), window.moment()],
+                   'This Month': [window.moment().startOf('month'), window.moment().endOf('month')],
+                   'Last Month': [window.moment().subtract(1, 'month').startOf('month'), window.moment().subtract(1, 'month').endOf('month')]
+                }
+            }, cb);
+
+            cb(start, end);
+        }
+    }
+
+    function initDatePickers() {
+        // 1. Single Date Pickers
+        var dateInputs = document.querySelectorAll('input[type="date"], input[id$="_date_input"], input[id$="_date"], input[name$="_date"], input[name$="_from"], input[name$="_to"], input[name="date_from"], input[name="date_to"], input[name="range_start"], input[name="range_end"], input[name="planned_date"]');
+
+        if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.daterangepicker === 'function' && typeof window.moment === 'function') {
             Array.prototype.slice.call(dateInputs).forEach(function (input) {
-                if (!input || input.getAttribute('data-st-datepicker') === '1' || input.getAttribute('data-st-flatpickr-date') === '1' || input.id === 'analytics_range') {
+                // Skip if already initialized, hidden, or part of a range picker
+                if (!input || input.type === 'hidden' || input.getAttribute('data-st-datepicker') === '1' || input.id === 'range_start' || input.id === 'range_end') {
                     return;
                 }
                 input.setAttribute('data-st-datepicker', '1');
-                try {
-                    input.type = 'text';
-                } catch (e) { }
-
-                window.jQuery(input).datepicker({
-                    dateFormat: 'yy-mm-dd',
-                    beforeShowDay: function (date) {
-                        if (date && date.getDay && date.getDay() === 0) {
-                            return [false, 'is-sunday', 'Sunday'];
-                        }
-                        var holidayName = stGetHolidayName(date);
-                        if (holidayName) {
-                            return [false, 'is-holiday', holidayName];
-                        }
-                        return [true, '', ''];
-                    }
+                
+                // Force text type
+                try { input.type = 'text'; } catch (e) { }
+                
+                // Init single date picker
+                window.jQuery(input).daterangepicker({
+                    singleDatePicker: true,
+                    showDropdowns: true,
+                    autoApply: true,
+                    locale: {
+                        format: 'YYYY-MM-DD'
+                    },
+                    minYear: 1901,
+                    maxYear: parseInt(window.moment().format('YYYY'), 10) + 5
+                }, function(start, end, label) {
+                    // Trigger change event for other listeners
+                    input.value = start.format('YYYY-MM-DD');
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
                 });
             });
+
+            // 2. Predefined Range Pickers
+            // Dashboard
+            initPredefinedDateRange('#reportrange', '#range_start', '#range_end');
+            
+            // Slots - ETA Range
+            initPredefinedDateRange('#eta_reportrange', '#date_from', '#date_to');
+            
+            // Slots - Arrival Range
+            initPredefinedDateRange('#arrival_reportrange', '#arrival_from', '#arrival_to');
+            
+            // Reports - Transactions
+            initPredefinedDateRange('#transaction_reportrange', '#date_from', '#date_to');
+            
+            // Vendor Bookings
+            initPredefinedDateRange('#vendor_reportrange', '#date_from', '#date_to');
+            
             return true;
         }
-
         return false;
     }
 
@@ -518,82 +566,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 input.value = initialFrom + ' - ' + initialTo;
             } else if (initialFrom) {
                 input.value = initialFrom;
-            }
-
-            if (typeof window.flatpickr === 'function') {
-                input.setAttribute('data-st-flatpickr-range', '1');
-                try { input.type = 'text'; } catch (e) { }
-
-                var defaultDates = [];
-                if (initialFrom) defaultDates.push(initialFrom);
-                if (initialTo) defaultDates.push(initialTo);
-
-                function formatIso(d) {
-                    if (!d) return '';
-                    var year = d.getFullYear();
-                    var month = String(d.getMonth() + 1).padStart(2, '0');
-                    var day = String(d.getDate()).padStart(2, '0');
-                    return year + '-' + month + '-' + day;
-                }
-
-                function submitRangeForm() {
-                    try {
-                        if (typeof window.ajaxReload === 'function') {
-                            window.ajaxReload(true);
-                            return;
-                        }
-                    } catch (err) { }
-                    var form = input.form || (input.closest ? input.closest('form') : null);
-                    if (!form) return;
-                    try { form.submit(); } catch (err2) { window.location.reload(); }
-                }
-
-                window.flatpickr(input, {
-                    mode: 'range',
-                    enableTime: false,
-                    dateFormat: 'Y-m-d',
-                    allowInput: true,
-                    disableMobile: true,
-                    defaultDate: defaultDates.length ? defaultDates : undefined,
-                    disable: [
-                        function (date) {
-                            return date.getDay() === 0 || !!stGetHolidayName(date);
-                        }
-                    ],
-                    onDayCreate: function (_, __, fp, dayElem) {
-                        if (!dayElem || !dayElem.dateObj) return;
-                        if (dayElem.dateObj.getDay && dayElem.dateObj.getDay() === 0) {
-                            dayElem.classList.add('is-sunday');
-                            dayElem.setAttribute('title', 'Sunday');
-                        }
-                        var holidayName = stGetHolidayName(dayElem.dateObj);
-                        if (holidayName) {
-                            dayElem.classList.add('is-holiday');
-                            dayElem.setAttribute('title', holidayName);
-                        }
-                    },
-                    onChange: function (selectedDates) {
-                        var d1 = selectedDates && selectedDates[0] ? selectedDates[0] : null;
-                        var d2 = selectedDates && selectedDates[1] ? selectedDates[1] : null;
-                        var s1 = formatIso(d1);
-                        var s2 = formatIso(d2);
-                        if (from) from.value = s1;
-                        if (to) to.value = s2;
-                        if (s1 && s2) {
-                            input.value = s1 + ' - ' + s2;
-                        } else {
-                            input.value = s1 || '';
-                        }
-                    },
-                    onClose: function (selectedDates) {
-                        var d1 = selectedDates && selectedDates[0] ? selectedDates[0] : null;
-                        var d2 = selectedDates && selectedDates[1] ? selectedDates[1] : null;
-                        if (d1 && d2) {
-                            submitRangeForm();
-                        }
-                    }
-                });
-                return;
             }
 
             if (window.jQuery && window.jQuery.fn && window.jQuery.fn.dateRangePicker) {
@@ -783,135 +755,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initDateTimeLocalPickers() {
-        if (typeof window.flatpickr !== 'function') {
-            return;
-        }
-
-        var inputs = document.querySelectorAll('input[type="datetime-local"]');
-        Array.prototype.slice.call(inputs).forEach(function (input) {
-            if (!input || input.getAttribute('data-st-flatpickr') === '1') {
-                return;
-            }
-            input.setAttribute('data-st-flatpickr', '1');
-
-            try {
-                input.type = 'text';
-            } catch (e) { }
-
-            if (input && input.value && input.value.indexOf('T') !== -1) {
-                input.value = input.value.replace('T', ' ');
-            }
-
-            function scheduleFpClose(instance) {
-                if (!instance) return;
-                if (instance._stCloseTimer) {
-                    clearTimeout(instance._stCloseTimer);
-                }
-
-                if (instance._stInteracting) {
-                    return;
-                }
-
-                var val = (input.value || '').trim();
-                var isComplete = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}$/.test(val);
-                if (!isComplete) {
-                    return;
-                }
-
-                instance._stCloseTimer = setTimeout(function () {
-                    try { instance.close(); } catch (e) { }
-                    try { input.blur(); } catch (e) { }
-                }, 1500);
-            }
-
-            var minuteIncrement = parseInt(input.getAttribute('data-st-minute-increment') || '1', 10);
-            if (!minuteIncrement || minuteIncrement < 1) minuteIncrement = 1;
-            if (minuteIncrement > 30) minuteIncrement = 30;
-
-            var time24Attr = (input.getAttribute('data-st-time-24hr') || '').trim();
-            var time24hr = true;
-            if (time24Attr !== '') {
-                time24hr = !(time24Attr === '0' || time24Attr.toLowerCase() === 'false');
-            }
-
-            var defaultHour = parseInt(input.getAttribute('data-st-default-hour') || '', 10);
-            defaultHour = isFinite(defaultHour) ? defaultHour : undefined;
-            if (defaultHour !== undefined) {
-                defaultHour = Math.max(0, Math.min(23, defaultHour));
-            }
-
-            var defaultMinute = parseInt(input.getAttribute('data-st-default-minute') || '', 10);
-            defaultMinute = isFinite(defaultMinute) ? defaultMinute : undefined;
-            if (defaultMinute !== undefined) {
-                defaultMinute = Math.max(0, Math.min(59, defaultMinute));
-            }
-
-            var useAltInput = input.getAttribute('data-st-alt-input') === '1';
-            var altFormat = input.getAttribute('data-st-alt-format') || 'd M Y H:i';
-
-            window.flatpickr(input, {
-                enableTime: true,
-                time_24hr: time24hr,
-                allowInput: true,
-                disableMobile: true,
-                minuteIncrement: minuteIncrement,
-                dateFormat: 'Y-m-d H:i',
-                altInput: useAltInput,
-                altFormat: altFormat,
-                defaultHour: defaultHour,
-                defaultMinute: defaultMinute,
-                disable: [
-                    function (date) {
-                        return date.getDay() === 0 || !!stGetHolidayName(date);
-                    }
-                ],
-                onDayCreate: function (_, __, fp, dayElem) {
-                    if (!dayElem || !dayElem.dateObj) return;
-                    var holidayName = stGetHolidayName(dayElem.dateObj);
-                    if (holidayName) {
-                        dayElem.classList.add('is-holiday');
-                        dayElem.setAttribute('title', holidayName);
-                    }
-                },
-                onReady: function (selectedDates, dateStr, instance) {
-                    if (!instance || !instance.calendarContainer || instance.calendarContainer._stBound) {
-                        return;
-                    }
-                    instance.calendarContainer._stBound = true;
-
-                    function markInteracting(flag) {
-                        instance._stInteracting = !!flag;
-                        if (flag && instance._stCloseTimer) {
-                            clearTimeout(instance._stCloseTimer);
-                            instance._stCloseTimer = null;
-                        }
-                        if (!flag) {
-                            scheduleFpClose(instance);
-                        }
-                    }
-
-                    instance.calendarContainer.addEventListener('mousedown', function () { markInteracting(true); }, true);
-                    instance.calendarContainer.addEventListener('mouseup', function () { markInteracting(false); }, true);
-                    instance.calendarContainer.addEventListener('touchstart', function () { markInteracting(true); }, { capture: true, passive: true });
-                    instance.calendarContainer.addEventListener('touchend', function () { markInteracting(false); }, true);
-                },
-                onChange: function (selectedDates, dateStr, instance) {
-                    scheduleFpClose(instance);
-                },
-                onValueUpdate: function (selectedDates, dateStr, instance) {
-                    try {
-                        input.dispatchEvent(new Event('input', { bubbles: true }));
-                    } catch (e) { }
-                    scheduleFpClose(instance);
-                },
-                onClose: function (selectedDates, dateStr, instance) {
-                    if (instance && instance._stCloseTimer) {
-                        clearTimeout(instance._stCloseTimer);
-                        instance._stCloseTimer = null;
-                    }
-                }
-            });
-        });
+        return false;
     }
 
     function scheduleAutoClose(el, delay) {
@@ -950,48 +794,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function initTimePickers() {
-        if (typeof window.flatpickr !== 'function') {
-            return false;
-        }
-
-        var inputs = document.querySelectorAll('input[type="time"], input[name="schedule_from"], input[name="schedule_to"], input[name="time_from"], input[name="time_to"]');
-        Array.prototype.slice.call(inputs).forEach(function (input) {
-            if (!input || input.getAttribute('data-st-flatpickr-time') === '1') {
-                return;
-            }
-            if (input.getAttribute('data-st-timepicker') === 'md') {
-                return;
-            }
-            input.setAttribute('data-st-flatpickr-time', '1');
-
-            try {
-                input.type = 'text';
-            } catch (e) { }
-
-            window.flatpickr(input, {
-                enableTime: true,
-                time_24hr: true,
-                noCalendar: true,
-                dateFormat: 'H:i',
-                allowInput: true,
-                disableMobile: true,
-                onReady: function (selectedDates, dateStr, instance) {
-                    if (!instance || !instance.calendarContainer || instance.calendarContainer._stBound) {
-                        return;
-                    }
-                    instance.calendarContainer._stBound = true;
-
-                    function markInteracting(flag) {
-                        instance._stInteracting = !!flag;
-                    }
-
-                    instance.calendarContainer.addEventListener('mousedown', function () { markInteracting(true); }, true);
-                    instance.calendarContainer.addEventListener('mouseup', function () { markInteracting(false); }, true);
-                    instance.calendarContainer.addEventListener('touchstart', function () { markInteracting(true); }, { capture: true, passive: true });
-                    instance.calendarContainer.addEventListener('touchend', function () { markInteracting(false); }, true);
-                }
-            });
-        });
+        return initMdTimePickers();
     }
 
     function initTimePickersWhenReady() {
@@ -1011,8 +814,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 150);
     }
 
+    function initAutoSubmitDateRangeFields() {
+        document.addEventListener('change', function (e) {
+            var t = e.target;
+            if (!t || !t.getAttribute) return;
+            if (t.closest && t.closest('.st-filter-panel')) return;
+
+            var name = String(t.getAttribute('name') || '').trim();
+            if (!name) return;
+
+            var isRangeField =
+                name === 'date_from' || name === 'date_to' ||
+                name === 'range_start' || name === 'range_end' ||
+                name === 'arrival_from' || name === 'arrival_to' ||
+                name === 'planned_start_from' || name === 'planned_start_to' ||
+                name === 'arrival_date_from' || name === 'arrival_date_to';
+
+            if (!isRangeField) return;
+
+            var form = stFindAssociatedForm(t) || t.form;
+            if (!form) return;
+            try {
+                form.submit();
+            } catch (err) {
+                try { window.location.reload(); } catch (err2) { }
+            }
+        }, true);
+    }
+
     initDateTimeLocalPickers();
     initDatePickersWhenReady();
+    initAutoSubmitDateRangeFields();
     initTimePickersWhenReady();
     initDateRangePickerOpenersWhenReady();
     initRangePickersWhenReady();
@@ -1448,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var isDateLikeInput = tag === 'input' && (
             type === 'date' ||
             t.getAttribute('data-st-datepicker') === '1' ||
-            t.getAttribute('data-st-flatpickr-date') === '1'
+            t.getAttribute('data-st-mddatepicker') === '1'
         );
         if (!isSelect && !isDateLikeInput) return;
 

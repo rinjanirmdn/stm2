@@ -21,20 +21,17 @@
                 </div>
                 <div class="st-form-field st-maxw-250 st-relative">
                     <label class="st-label">Date Range</label>
-                    <div class="st-flex st-gap-6">
-                        <input
-                            type="text"
-                            id="date_range"
-                            placeholder="Select Date Range"
-                            readonly
-                            class="st-input st-input--cursor st-flex-1"
-                        >
-                        <button type="button" id="clear-date-range" class="st-btn st-btn--outline-primary st-btn--pad-md" title="Reset all filters">
-                            Reset
-                        </button>
+                    <div id="transaction_reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                        <i class="fa fa-calendar"></i>&nbsp;
+                        <span></span> <i class="fa fa-caret-down"></i>
                     </div>
                     <input type="hidden" name="date_from" id="date_from" form="transactions-filter-form" value="{{ $date_from ?? '' }}">
                     <input type="hidden" name="date_to" id="date_to" form="transactions-filter-form" value="{{ $date_to ?? '' }}">
+                </div>
+                <div class="st-form-field st-flex-0">
+                    <button type="button" id="clear-date-range" class="st-btn st-btn--outline-primary st-btn--pad-md" title="Reset all filters">
+                        Reset
+                    </button>
                 </div>
                 <div class="st-form-field st-maxw-120">
                     <label class="st-label">Show</label>
@@ -546,7 +543,7 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td>{{ $r->created_by_username ?? $r->created_by_nik ?? '-' }}</td>
+                                        <td>{{ $r->created_by_name ?? $r->created_by_email ?? '-' }}</td>
                                         <td>
                                             <div class="tw-actionbar">
                                                 <a href="{{ route('slots.show', ['slotId' => $r->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
@@ -568,9 +565,6 @@
         </div>
     </section>
 @endsection
-
-<!-- Flatpickr JS -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr?v=2.0"></script>
 
 @push('scripts')
 <script>

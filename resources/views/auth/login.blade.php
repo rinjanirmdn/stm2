@@ -28,8 +28,8 @@
                 @csrf
 
                 <div class="st-form-field">
-                    <label class="st-label" for="nik">NIK/Username</label>
-                    <input type="text" class="st-input" id="nik" name="nik" value="{{ old('nik') }}" required autofocus>
+                    <label class="st-label" for="email">Email</label>
+                    <input type="email" class="st-input" id="email" name="email" value="{{ old('email') }}" required autofocus>
                 </div>
 
                 <div class="st-form-field">

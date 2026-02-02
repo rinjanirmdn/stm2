@@ -116,7 +116,10 @@ class LogController extends Controller
             $logsQ->where('s.po_number', 'like', '%' . $fPo . '%');
         }
         if ($fUser !== '') {
-            $logsQ->where('u.nik', 'like', '%' . $fUser . '%');
+            $logsQ->where(function($q) use ($fUser) {
+                $q->where('u.name', 'like', '%' . $fUser . '%')
+                  ->orWhere('u.email', 'like', '%' . $fUser . '%');
+            });
         }
 
         if (count($sorts) > 0) {

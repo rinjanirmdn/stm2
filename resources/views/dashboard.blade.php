@@ -33,11 +33,14 @@
                             <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
                             <input type="hidden" name="activity_warehouse" value="{{ $activity_warehouse ?? 0 }}">
                             <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
-                            <input type="hidden" id="range_start" name="range_start" value="{{ $range_start }}">
-                            <input type="hidden" id="range_end" name="range_end" value="{{ $range_end }}">
                             <div class="st-form-field st-dashboard-range-field">
                                 <label class="st-label">Range</label>
-                                <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ $range_start ?? $today }}" autocomplete="off" readonly>
+                                <div id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                                    <i class="fa fa-calendar"></i>&nbsp;
+                                    <span></span> <i class="fa fa-caret-down"></i>
+                                </div>
+                                <input type="hidden" name="range_start" id="range_start" value="{{ $range_start ?? $today }}">
+                                <input type="hidden" name="range_end" id="range_end" value="{{ $range_end ?? $today }}">
                             </div>
                             <div class="st-form-field st-dashboard-range-reset">
                                 <a href="{{ route('dashboard', ['range_start' => \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'), 'range_end' => $today]) }}" class="st-btn st-btn--outline-primary">Reset</a>
@@ -379,7 +382,7 @@
                         <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
                         <div class="st-form-field">
                             <label class="st-label">Date</label>
-                            <input type="text" name="schedule_date" class="st-input flatpickr-date" value="{{ $schedule_date ?? $today }}" placeholder="YYYY-MM-DD">
+                            <input type="text" name="schedule_date" class="st-input" value="{{ $schedule_date ?? $today }}" placeholder="YYYY-MM-DD" autocomplete="off" readonly>
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">From (HH:MM)</label>
@@ -1432,9 +1435,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Initialize generic date inputs (exclude analytics_range)
-        document.querySelectorAll('.flatpickr-date, input[type="date"]').forEach(function (input) {
-            if (input.id === 'analytics_range') return; // Skip analytics_range
+        document.querySelectorAll('input[type="date"]').forEach(function (input) {
             initDatepicker(input, function(date) {
                 const ds = toIsoDate(date);
                 if (globalHolidayData[ds]) {

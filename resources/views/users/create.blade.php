@@ -17,13 +17,13 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">NIK/Username</label>
-                        <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik') }}" required>
+                        <label class="st-label">Email</label>
+                        <input type="email" name="email" class="st-input" maxlength="255" value="{{ old('email') }}" required>
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">Full Name</label>
-                        <input type="text" name="full_name" class="st-input" maxlength="100" value="{{ old('full_name') }}" required>
+                        <label class="st-label">Name</label>
+                        <input type="text" name="name" class="st-input" maxlength="100" value="{{ old('name') }}" required>
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
@@ -61,11 +61,6 @@
                             </button>
                         </div>
                     </div>
-
-                    <label class="st-checkbox-row">
-                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', '1') ? 'checked' : '' }}>
-                        <span class="st-checkbox-label">Active</span>
-                    </label>
 
                     <div class="st-form-actions">
                         <button type="submit" class="st-btn st-btn--primary">Save</button>

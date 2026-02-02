@@ -19,12 +19,9 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'nik',
-        'full_name',
+        'name',
         'email',
-        'role',
         'vendor_code',
-        'is_active',
         'password',
     ];
 
@@ -46,7 +43,6 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
-            'is_active' => 'boolean',
         ];
     }
 

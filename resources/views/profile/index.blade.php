@@ -9,16 +9,16 @@
     <div class="card">
         <div class="card-body">
             <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" class="form-control" value="{{ $user->username ?? '' }}" disabled>
+                <label class="form-label">Email</label>
+                <input type="text" class="form-control" value="{{ $user->email ?? '' }}" disabled>
             </div>
             <div class="mb-3">
-                <label class="form-label">Full Name</label>
-                <input type="text" class="form-control" value="{{ $user->full_name ?? '' }}" disabled>
+                <label class="form-label">Name</label>
+                <input type="text" class="form-control" value="{{ $user->name ?? '' }}" disabled>
             </div>
             <div class="mb-3">
                 <label class="form-label">Role</label>
-                <input type="text" class="form-control" value="{{ ucfirst($user->role ?? '') }}" disabled>
+                <input type="text" class="form-control" value="{{ ucfirst($user->getRoleNames()->first() ?? '') }}" disabled>
             </div>
             <a href="{{ route('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
         </div>

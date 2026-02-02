@@ -775,7 +775,7 @@ class DashboardStatsService
                 ->limit(50)
                 ->get(),
             'warehouses' => DB::table('warehouses')->select(['id', 'wh_name as name'])->orderBy('wh_name')->get(),
-            'users' => DB::table('users')->select(['id', 'nik'])->orderBy('nik')->get(),
+            'users' => DB::table('users')->select(['id', 'name', 'email'])->orderBy('name')->get(),
         ];
     }
 

@@ -165,7 +165,7 @@
                                 <td>{{ $formatDescription($row->description ?? '') }}</td>
                                 <td>{{ $row->slot_mat_doc ?? '-' }}</td>
                                 <td>{{ $row->slot_po_number ?? '-' }}</td>
-                                <td>{{ $row->created_by_nik ?? '-' }}</td>
+                                <td>{{ $row->created_by_name ?? $row->created_by_email ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr>

@@ -146,8 +146,8 @@
                 </div>
                 <div class="st-topbar__user">
                     <div class="st-topbar__user-info">
-                        <span class="st-topbar__user-name">{{ auth()->user()->full_name ?? 'User' }}</span>
-                        <span class="st-topbar__user-role">{{ auth()->user()?->getRoleNames()?->first() ?? auth()->user()->role ?? 'operator' }}</span>
+                        <span class="st-topbar__user-name">{{ auth()->user()->name ?? 'User' }}</span>
+                        <span class="st-topbar__user-role">{{ auth()->user()?->getRoleNames()?->first() ?? 'User' }}</span>
                     </div>
                     <div class="st-topbar__user-actions">
                         <!-- Notification Component -->
@@ -261,13 +261,10 @@
 </div>
 
 <!-- Defer semua external scripts untuk performa lebih baik -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
 <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-date-range-picker@0.21.1/dist/jquery.daterangepicker.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 @vite(['resources/js/main.js', 'resources/js/gate-status.js'])
 
 <!-- Optimasi performa: Lazy load non-critical scripts -->
