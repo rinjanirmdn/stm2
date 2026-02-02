@@ -713,8 +713,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.history.pushState(null, '', url);
                 }
             })
-            .catch(function () {
-                window.location.href = url;
+            .catch(function (err) {
+                console.error('AJAX reload failed:', err);
+                // window.location.href = url; // Disabled to prevent refresh loop
             })
             .finally(function () {
                 setLoading(false);

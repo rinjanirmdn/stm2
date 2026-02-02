@@ -1,4 +1,5 @@
 window.__stm2_main_loaded = (window.__stm2_main_loaded || 0) + 1;
+window.__stReloadGuard = (window.__stReloadGuard || 0);
 
 // Optimasi: Debounce untuk event yang sering dipanggil
 function debounce(func, wait) {
@@ -407,26 +408,29 @@ document.addEventListener('DOMContentLoaded', function () {
             var start = window.moment();
             var end = window.moment();
             
-            // Check if we have initial values in hidden inputs
             var hiddenStart = window.jQuery(startInputSelector).val();
             var hiddenEnd = window.jQuery(endInputSelector).val();
+            var hasInitial = false;
             if (hiddenStart && window.moment(hiddenStart, 'YYYY-MM-DD').isValid()) {
                 start = window.moment(hiddenStart, 'YYYY-MM-DD');
+                hasInitial = true;
             }
             if (hiddenEnd && window.moment(hiddenEnd, 'YYYY-MM-DD').isValid()) {
                 end = window.moment(hiddenEnd, 'YYYY-MM-DD');
+                hasInitial = true;
             }
 
-            function cb(start, end) {
+            function updateRange(start, end) {
                 var label = start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY');
                 window.jQuery(containerSelector + ' span').html(label);
                 window.jQuery(startInputSelector).val(start.format('YYYY-MM-DD'));
                 window.jQuery(endInputSelector).val(end.format('YYYY-MM-DD'));
-                
-                // Submit form if inside one
+            }
+
+            function cb(start, end) {
+                updateRange(start, end);
                 var form = reportRange.closest('form');
                 if (form.length) {
-                    // Check if we should auto-submit (default: yes for filters)
                     if (reportRange.attr('data-auto-submit') !== 'false') {
                         form.submit();
                     }
@@ -446,7 +450,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }, cb);
 
-            cb(start, end);
+            if (hasInitial) {
+                updateRange(start, end);
+            } else {
+                window.jQuery(containerSelector + ' span').html('Select range');
+            }
         }
     }
 
@@ -834,10 +842,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var form = stFindAssociatedForm(t) || t.form;
             if (!form) return;
-            try {
-                form.submit();
-            } catch (err) {
-                try { window.location.reload(); } catch (err2) { }
+
+            // Use shared submit handler to support AJAX if available
+            if (typeof stSubmitOrAjax === 'function') {
+                stSubmitOrAjax(form);
+            } else {
+                try {
+                    form.submit();
+                } catch (err) {
+                    console.error('Form submit failed:', err);
+                }
             }
         }, true);
     }
@@ -1086,7 +1100,8 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             form.submit();
         } catch (err) {
-            window.location.reload();
+            console.error('Form submit failed:', err);
+            // window.location.reload(); // Disabled to prevent refresh loop
         }
     }, true);
 
@@ -1161,7 +1176,8 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             form.submit();
         } catch (err) {
-            window.location.reload();
+            console.error('Form submit failed:', err);
+            // window.location.reload(); // Disabled to prevent refresh loop
         }
     }
 
@@ -1355,7 +1371,10 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             form.submit();
         } catch (err) {
-            window.location.reload();
+            if (!window.__stReloadGuard || (Date.now() - window.__stReloadGuard) > 5000) {
+                window.__stReloadGuard = Date.now();
+                window.location.href = window.location.href;
+            }
         }
     }, true);
 

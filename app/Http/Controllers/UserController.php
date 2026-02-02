@@ -138,6 +138,8 @@ class UserController extends Controller
                 $d = $dirs[$i] ?? 'asc';
                 if ($s === 'role') {
                     $usersQ->orderByRaw('COALESCE(r_user.roles_name, r_spatie.roles_name) ' . $d);
+                } elseif ($s === 'name') {
+                    $usersQ->orderBy('md_users.full_name', $d);
                 } else {
                     $usersQ->orderBy('md_users.' . $s, $d);
                 }
@@ -175,12 +177,12 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
+        $nik = trim($validated['nik']);
         $email = trim($validated['email']);
         $name = trim($validated['name']);
         $role = $validated['role'];
         $vendorCode = isset($validated['vendor_code']) ? trim((string) $validated['vendor_code']) : '';
         $password = $validated['password'];
-        // $isActive = $validated['is_active'] ?? false; // Removed
 
         // Convert role slug to proper name (admin -> Admin, section_head -> Section Head)
         $roleDisplayName = ucwords(str_replace('_', ' ', $role));
@@ -196,14 +198,16 @@ class UserController extends Controller
             return back()->withInput()->with('error', 'Invalid role: ' . $roleDisplayName);
         }
 
-        // Create user (role_id is used, role column uses enum so we skip it)
+        // Create user
         $userId = DB::table('md_users')->insertGetId([
             'nik' => $nik,
             'username' => $nik,
-            'full_name' => $fullName,
+            'email' => $email,
+            'full_name' => $name,
+            'role' => $role,
             'role_id' => $roleId,
             'vendor_code' => $role === 'vendor' ? $vendorCode : null,
-            // 'is_active' => $isActive ? 1 : 0, // Column removed
+            'is_active' => true,
             'password' => Hash::make($password),
             'created_at' => now(),
             'updated_at' => now(),
@@ -251,7 +255,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(Request $request, int $userId)
+    public function update(UserUpdateRequest $request, int $userId)
     {
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
@@ -265,37 +269,27 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'User not found');
         }
 
-        $v = Validator::make($request->all(), [
-            'nik' => ['required', 'string', 'max:50', 'unique:md_users,nik,' . $userId],
-            'full_name' => ['required', 'string', 'max:100'],
-            'role' => ['required', 'in:admin,section_head,operator,vendor'],
-            'vendor_code' => ['nullable', 'string', 'max:20', \Illuminate\Validation\Rule::requiredIf(fn () => (string) $request->input('role') === 'vendor')],
-            'password' => ['nullable', 'string', 'min:6'],
-            'password_confirm' => ['nullable', 'same:password'],
-        ]);
-
-        if ($v->fails()) {
-            return back()->withInput()->with('error', $v->errors()->first());
-        }
+        $validated = $request->validated();
 
         $currentUserId = $request->user()->id ?? 0;
         
-        // Cannot deactivate yourself logic removed since is_active is removed.
-        
         $update = [
-            'email' => trim($request->input('email')),
-            'name' => trim($request->input('name')),
-            'vendor_code' => $request->input('role') === 'vendor' ? trim((string) $request->input('vendor_code', '')) : null,
+            'nik' => trim($validated['nik']),
+            'username' => trim($validated['nik']),
+            'email' => trim($validated['email']),
+            'full_name' => trim($validated['name']),
+            'role' => $validated['role'],
+            'vendor_code' => $validated['role'] === 'vendor' ? trim((string) ($validated['vendor_code'] ?? '')) : null,
         ];
 
-        $newRole = $request->input('role');
+        $newRole = $validated['role'];
         $roleDisplayName = ucwords(str_replace('_', ' ', (string) $newRole));
         $allRoles = $this->roleService->getAllRoles();
         $roleRecord = $allRoles->first(function ($r) use ($roleDisplayName) {
             return strtolower((string) ($r->roles_name ?? '')) === strtolower($roleDisplayName);
         });
         $newRoleId = $roleRecord ? $roleRecord->id : null;
-        // $update['role_id'] = $newRoleId; // Removed
+        $update['role_id'] = $newRoleId;
 
         $password = trim($request->input('password', ''));
         if ($password !== '') {

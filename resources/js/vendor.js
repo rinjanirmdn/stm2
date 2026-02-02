@@ -647,7 +647,11 @@ function initVendorAvailability(config) {
         })
             .then(r => {
                 if (r.status === 401) {
-                    window.location.reload();
+                    console.warn('Session expired (401). Please log in again.');
+                    // if (!window.__stReloadGuard || (Date.now() - window.__stReloadGuard) > 5000) {
+                    //     window.__stReloadGuard = Date.now();
+                    //     window.location.href = window.location.href;
+                    // }
                     return;
                 }
                 if (!r.ok) {

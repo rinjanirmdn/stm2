@@ -13,10 +13,10 @@ class Gate extends Model
     protected $table = 'md_gates';
 
     protected $fillable = [
-        'warehouse_code',
+        'warehouse_id',
         'gate_number',
-        'name',
         'is_active',
+        'is_backup',
     ];
 
     protected $casts = [

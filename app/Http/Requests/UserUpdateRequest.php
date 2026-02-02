@@ -23,11 +23,17 @@ class UserUpdateRequest extends FormRequest
         $userId = $this->route('userId');
 
         return [
-            'email' => [
+            'nik' => [
                 'required',
                 'string',
                 'max:50',
                 Rule::unique('md_users', 'nik')->ignore($userId)
+            ],
+            'email' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('md_users', 'email')->ignore($userId)
             ],
             'name' => [
                 'required',

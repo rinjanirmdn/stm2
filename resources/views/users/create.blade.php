@@ -17,6 +17,11 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
+                        <label class="st-label">NIK</label>
+                        <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik') }}" required>
+                    </div>
+
+                    <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Email</label>
                         <input type="email" name="email" class="st-input" maxlength="255" value="{{ old('email') }}" required>
                     </div>

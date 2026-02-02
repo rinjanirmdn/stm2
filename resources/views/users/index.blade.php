@@ -180,12 +180,20 @@
                             @endphp
                             <tr>
                                 <td>{{ $loop->index + 1 }}</td>
-                                <td class="st-font-semibold">{{ $u->email ?? '-' }}</td>
-                                <td>{{ $u->name ?? '-' }}</td>
+                                <td class="st-font-semibold">{{ $u->nik ?? '-' }}</td>
+                                <td>{{ $u->email ?? '-' }}</td>
+                                <td>{{ $u->full_name ?? '-' }}</td>
+                                <td>{{ $u->vendor_code ?? '-' }}</td>
                                 <td>
                                     <span class="st-badge st-badge--{{ $roleVal }}">{{ $roleText }}</span>
                                 </td>
-                                {{-- Status column removed --}}
+                                <td>
+                                    @if($u->is_active)
+                                        <span class="st-badge st-badge--success">Active</span>
+                                    @else
+                                        <span class="st-badge st-badge--danger">Inactive</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @php
                                         $createdAt = $u->created_at ?? null;

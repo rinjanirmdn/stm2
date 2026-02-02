@@ -231,10 +231,12 @@
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="planned_start">
                                             <div class="st-panel__title">ETA Range</div>
-                                            <div class="st-flex st-gap-8">
-                                                <input type="text" name="date_from" form="slot-filter-form" class="st-input" placeholder="From" value="{{ $date_from ?? '' }}" autocomplete="off" readonly>
-                                                <input type="text" name="date_to" form="slot-filter-form" class="st-input" placeholder="To" value="{{ $date_to ?? '' }}" autocomplete="off" readonly>
+                                            <div id="eta_reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                                                <i class="fa fa-calendar"></i>&nbsp;
+                                                <span></span> <i class="fa fa-caret-down"></i>
                                             </div>
+                                            <input type="hidden" name="date_from" id="date_from" form="slot-filter-form" value="{{ $date_from ?? '' }}">
+                                            <input type="hidden" name="date_to" id="date_to" form="slot-filter-form" value="{{ $date_to ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="planned_start">Clear</button>
                                             </div>
@@ -867,8 +869,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.history.pushState(null, '', url);
                 }
             })
-            .catch(function () {
-                window.location.href = url;
+            .catch(function (err) {
+                console.error('AJAX reload failed:', err);
+                // window.location.href = url; // Disabled to prevent refresh loop
             })
             .finally(function () {
                 setLoading(false);
@@ -1004,10 +1007,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
             i.addEventListener('change', function () {
-            i.addEventListener('change', function () {
                 ajaxReload(true);
             });
-        });
     }
 
     function setupActiveFilters() {

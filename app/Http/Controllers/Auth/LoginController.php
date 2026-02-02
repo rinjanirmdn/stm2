@@ -31,9 +31,8 @@ class LoginController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
-        // Check active status removed as column does not exist
-        /*
-        if ($user && array_key_exists('is_active', $user->getAttributes()) && ! $user->is_active) {
+        
+        if ($user && $user->is_active === false) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -42,7 +41,6 @@ class LoginController extends Controller
                 ->withErrors(['email' => 'Akun Anda tidak aktif. Silakan hubungi administrator.'])
                 ->onlyInput('email');
         }
-        */
 
         if ($user) {
             try {
