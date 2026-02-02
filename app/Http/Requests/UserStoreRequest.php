@@ -25,7 +25,7 @@ class UserStoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                'unique:users,nik'
+                'unique:md_users,nik'
             ],
             'full_name' => [
                 'required',

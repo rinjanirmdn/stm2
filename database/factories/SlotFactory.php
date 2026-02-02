@@ -19,9 +19,9 @@ class SlotFactory extends Factory
     public function definition(): array
     {
         // Get random IDs from related tables
-        $warehouseId = DB::table('warehouses')->inRandomOrder()->first()->id;
+        $warehouseId = DB::table('md_warehouse')->inRandomOrder()->first()->id;
         $vendorId = DB::table('vendors')->inRandomOrder()->first()->id;
-        $gateId = DB::table('gates')->inRandomOrder()->first()->id;
+        $gateId = DB::table('md_gates')->inRandomOrder()->first()->id;
 
         return [
             'ticket_number' => 'TKT-' . date('Ymd') . '-' . $this->faker->unique()->numberBetween(1000, 9999),

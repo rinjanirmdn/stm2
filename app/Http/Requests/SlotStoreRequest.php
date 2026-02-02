@@ -59,12 +59,12 @@ class SlotStoreRequest extends FormRequest
             'warehouse_id' => [
                 'required',
                 'integer',
-                'exists:warehouses,id'
+                'exists:md_warehouse,id'
             ],
             'planned_gate_id' => [
                 'nullable',
                 'integer',
-                'exists:gates,id'
+                'exists:md_gates,id'
             ],
             'planned_start' => [
                 'required',

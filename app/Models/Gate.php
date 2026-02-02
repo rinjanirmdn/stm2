@@ -10,6 +10,8 @@ class Gate extends Model
 {
     use HasFactory;
 
+    protected $table = 'md_gates';
+
     protected $fillable = [
         'warehouse_code',
         'gate_number',

@@ -50,8 +50,8 @@ return new class extends Migration
             $finishDt->modify('+' . $durationMinutes . ' minutes');
             $plannedFinish = $finishDt->format('Y-m-d H:i:s');
 
-            $gatesQ = DB::table('gates')->where('warehouse_id', $warehouseId);
-            if (Schema::hasColumn('gates', 'is_active')) {
+            $gatesQ = DB::table('md_gates')->where('warehouse_id', $warehouseId);
+            if (Schema::hasColumn('md_gates', 'is_active')) {
                 $gatesQ->where('is_active', true);
             }
             $gates = $gatesQ->orderBy('gate_number')->select(['id'])->get();

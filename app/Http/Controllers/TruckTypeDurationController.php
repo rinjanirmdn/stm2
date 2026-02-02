@@ -14,7 +14,7 @@ class TruckTypeDurationController extends Controller
     {
         $pageSizeAllowed = ['10', '25', '50', 'all'];
 
-        $rows = DB::table('truck_type_durations')
+        $rows = DB::table('md_truck')
             ->select(['id', 'truck_type', 'target_duration_minutes', 'created_at'])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
@@ -39,10 +39,10 @@ class TruckTypeDurationController extends Controller
         $targetMinutes = $validated['target_duration_minutes'];
 
         // Get next ID manually to avoid PostgreSQL sequence issues
-        $maxId = DB::table('truck_type_durations')->max('id') ?? 0;
+        $maxId = DB::table('md_truck')->max('id') ?? 0;
         $nextId = $maxId + 1;
 
-        DB::table('truck_type_durations')->insert([
+        DB::table('md_truck')->insert([
             'id' => $nextId,
             'truck_type' => $truckType,
             'target_duration_minutes' => $targetMinutes,
@@ -53,7 +53,7 @@ class TruckTypeDurationController extends Controller
 
     public function edit(Request $request, int $truckTypeDurationId)
     {
-        $row = DB::table('truck_type_durations')->where('id', $truckTypeDurationId)->first();
+        $row = DB::table('md_truck')->where('id', $truckTypeDurationId)->first();
         if (! $row) {
             return redirect()->route('trucks.index')->with('error', 'Truck Type duration not found');
         }
@@ -65,7 +65,7 @@ class TruckTypeDurationController extends Controller
 
     public function update(TruckTypeDurationUpdateRequest $request, int $truckTypeDurationId)
     {
-        $row = DB::table('truck_type_durations')->where('id', $truckTypeDurationId)->first();
+        $row = DB::table('md_truck')->where('id', $truckTypeDurationId)->first();
         if (! $row) {
             return redirect()->route('trucks.index')->with('error', 'Truck Type duration not found');
         }
@@ -75,7 +75,7 @@ class TruckTypeDurationController extends Controller
         $truckType = trim($validated['truck_type']);
         $targetMinutes = $validated['target_duration_minutes'];
 
-        DB::table('truck_type_durations')->where('id', $truckTypeDurationId)->update([
+        DB::table('md_truck')->where('id', $truckTypeDurationId)->update([
             'truck_type' => $truckType,
             'target_duration_minutes' => $targetMinutes,
         ]);
@@ -85,12 +85,12 @@ class TruckTypeDurationController extends Controller
 
     public function destroy(Request $request, int $truckTypeDurationId)
     {
-        $row = DB::table('truck_type_durations')->where('id', $truckTypeDurationId)->first();
+        $row = DB::table('md_truck')->where('id', $truckTypeDurationId)->first();
         if (! $row) {
             return redirect()->route('trucks.index')->with('error', 'Truck Type duration not found');
         }
 
-        DB::table('truck_type_durations')->where('id', $truckTypeDurationId)->delete();
+        DB::table('md_truck')->where('id', $truckTypeDurationId)->delete();
         return redirect()->route('trucks.index')->with('success', 'Truck Type duration deleted successfully');
     }
 }

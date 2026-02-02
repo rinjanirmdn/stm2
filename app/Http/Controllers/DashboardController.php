@@ -30,9 +30,9 @@ class DashboardController extends Controller
         // FORCE CHECK: Direct DB query to bypass Permission Cache
         if (Auth::check()) {
             $isVendor = DB::table('model_has_roles')
-                ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+                ->join('md_roles', 'model_has_roles.role_id', '=', 'md_roles.id')
                 ->where('model_has_roles.model_id', Auth::id())
-                ->where(DB::raw('LOWER(roles.roles_name)'), 'vendor') // Fixed column name & Case insensitive
+                ->where(DB::raw('LOWER(md_roles.roles_name)'), 'vendor') // Fixed column name & Case insensitive
                 ->exists();
 
             if ($isVendor) {

@@ -46,7 +46,7 @@ class LoginController extends Controller
                 $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
                 $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
 
-                if (Schema::hasTable('users') && Schema::hasTable($rolesTable) && Schema::hasTable($modelHasRolesTable) && Schema::hasColumn('users', 'role_id')) {
+                if (Schema::hasTable('md_users') && Schema::hasTable($rolesTable) && Schema::hasTable($modelHasRolesTable) && Schema::hasColumn('md_users', 'role_id')) {
                     $roleId = (int) ($user->role_id ?? 0);
 
                     if ($roleId <= 0) {
@@ -58,7 +58,7 @@ class LoginController extends Controller
                                 ->value('id');
 
                             if ($roleId > 0) {
-                                DB::table('users')->where('id', (int) $user->id)->update(['role_id' => $roleId]);
+                                DB::table('md_users')->where('id', (int) $user->id)->update(['role_id' => $roleId]);
                                 $user->role_id = $roleId;
                             }
                         }

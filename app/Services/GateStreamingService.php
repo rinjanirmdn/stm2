@@ -18,8 +18,8 @@ class GateStreamingService
     {
         $endExpr = $this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)');
 
-        return DB::table('gates as g')
-            ->leftJoin('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        return DB::table('md_gates as g')
+            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->leftJoin('slots as s', function ($join) {
                 $join->on('g.id', '=', 's.planned_gate_id')
                      ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
@@ -138,8 +138,8 @@ class GateStreamingService
     {
         $plannedFinishExpr = $this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 60)');
 
-        $gate = DB::table('gates as g')
-            ->leftJoin('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        $gate = DB::table('md_gates as g')
+            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->leftJoin('slots as s', function ($join) {
                 $join->on('g.id', '=', 's.planned_gate_id')
                      ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])

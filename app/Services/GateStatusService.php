@@ -144,8 +144,8 @@ class GateStatusService
      */
     private function getActiveGates(): \Illuminate\Support\Collection
     {
-        return DB::table('gates as g')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+        return DB::table('md_gates as g')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
             ->select(['g.id', 'g.gate_number', 'g.is_backup', 'g.is_active', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code'])
@@ -293,8 +293,8 @@ class GateStatusService
 
             if (!empty($laneGateIds)) {
                 $stats = DB::table('slots as s')
-                    ->join('gates as g', function ($join) {
-                        $join->on(DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'), '=', 'g.id')
+                    ->join('md_gates as g', function ($join) {
+                        $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                             ->on('s.warehouse_id', '=', 'g.warehouse_id');
                     })
                     ->whereIn('g.id', $laneGateIds)

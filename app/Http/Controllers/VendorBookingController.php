@@ -466,7 +466,7 @@ class VendorBookingController extends Controller
             'po_number' => 'required|string', // Enforce here
             'po_items' => 'required|array',
             'po_items.*.qty' => 'nullable|numeric|min:0',
-            'planned_gate_id' => 'nullable|integer|exists:gates,id',
+            'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
             'planned_date' => 'required|date|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'nullable|string|max:50',
@@ -1012,12 +1012,12 @@ class VendorBookingController extends Controller
         $slotId = (int) $id;
 
         $slot = DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('gates as ag', 's.actual_gate_id', '=', 'ag.id')
-            ->leftJoin('warehouses as wpg', 'pg.warehouse_id', '=', 'wpg.id')
-            ->leftJoin('warehouses as wag', 'ag.warehouse_id', '=', 'wag.id')
-            ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
+            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
+            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id')
+            ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->where('s.id', $slotId)
             ->select([
                 's.*',

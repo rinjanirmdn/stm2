@@ -27,7 +27,7 @@ class UserUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('users', 'nik')->ignore($userId)
+                Rule::unique('md_users', 'nik')->ignore($userId)
             ],
             'full_name' => [
                 'required',

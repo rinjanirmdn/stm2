@@ -22,7 +22,7 @@ class TruckTypeDurationSeeder extends Seeder
         ];
 
         foreach ($truckTypes as $type) {
-            DB::table('truck_type_durations')->insert([
+            DB::table('md_truck')->insert([
                 'truck_type' => $type['truck_type'],
                 'target_duration_minutes' => $type['target_duration_minutes'],
                 'created_at' => now(),

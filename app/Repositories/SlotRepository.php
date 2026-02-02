@@ -48,12 +48,12 @@ class SlotRepository
     public function getSlotDetail(int $slotId): ?object
     {
         return DB::table('slots as s')
-            ->leftJoin('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g1', 's.planned_gate_id', '=', 'g1.id')
-            ->leftJoin('gates as g2', 's.actual_gate_id', '=', 'g2.id')
-            ->leftJoin('warehouses as w1', 'g1.warehouse_id', '=', 'w1.id')
-            ->leftJoin('warehouses as w2', 'g2.warehouse_id', '=', 'w2.id')
-            ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
+            ->leftJoin('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g1', 's.planned_gate_id', '=', 'g1.id')
+            ->leftJoin('md_gates as g2', 's.actual_gate_id', '=', 'g2.id')
+            ->leftJoin('md_warehouse as w1', 'g1.warehouse_id', '=', 'w1.id')
+            ->leftJoin('md_warehouse as w2', 'g2.warehouse_id', '=', 'w2.id')
+            ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->where('s.id', $slotId)
             ->select([
                 's.id',
@@ -103,9 +103,9 @@ class SlotRepository
     public function getSlotsWithFilters(array $filters = [], int $perPage = 50)
     {
         $query = DB::table('slots as s')
-            ->leftJoin('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', 's.planned_gate_id', '=', 'g.id')
-            ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
+            ->leftJoin('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', 's.planned_gate_id', '=', 'g.id')
+            ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'planned'")
             ->orderByDesc('s.planned_start')
             ->select([
@@ -149,9 +149,7 @@ class SlotRepository
             $search = '%' . $filters['search'] . '%';
             $query->where(function ($q) use ($search) {
                 $q->where('s.po_number', 'like', $search)
-                $q->where('s.po_number', 'like', $search)
                   ->orWhere('s.mat_doc', 'like', $search)
-                  ->orWhere('s.vendor_name', 'like', $search);
                   ->orWhere('s.vendor_name', 'like', $search);
             });
         }
@@ -202,8 +200,8 @@ class SlotRepository
     public function getUnplannedSlots(int $limit = 50)
     {
         return DB::table('slots as s')
-            ->leftJoin('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', 's.actual_gate_id', '=', 'g.id')
+            ->leftJoin('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', 's.actual_gate_id', '=', 'g.id')
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'unplanned'")
             ->orderByDesc(DB::raw('COALESCE(s.arrival_time, s.planned_start)'))
             ->select([
@@ -251,8 +249,8 @@ class SlotRepository
         $dateAddExpr = $this->getDateAddExpressionWithColumn('s.planned_start', 's.planned_duration');
 
         $query = DB::table('slots as s')
-            ->join('gates as g', 's.planned_gate_id', '=', 'g.id')
-            ->join('warehouses as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_gates as g', 's.planned_gate_id', '=', 'g.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('s.status', '!=', 'cancelled')
             ->whereRaw('(s.planned_start <= ? AND ? < ' . $dateAddExpr . ')', [$end, $start]);
 
@@ -338,7 +336,7 @@ class SlotRepository
     public function getStatistics(array $filters = []): array
     {
         $query = DB::table('slots as s')
-            ->leftJoin('warehouses as w', 's.warehouse_id', '=', 'w.id');
+            ->leftJoin('md_warehouse as w', 's.warehouse_id', '=', 'w.id');
 
         // Apply same filters as getSlotsWithFilters
         if (!empty($filters['warehouse'])) {

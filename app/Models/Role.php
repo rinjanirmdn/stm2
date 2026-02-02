@@ -7,7 +7,7 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 class Role extends SpatieRole
 {
-    protected $table = 'roles';
+    protected $table = 'md_roles';
 
     protected $fillable = [
         'roles_name',

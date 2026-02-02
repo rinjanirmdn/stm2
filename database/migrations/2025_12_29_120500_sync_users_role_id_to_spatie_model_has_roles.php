@@ -10,7 +10,7 @@ return new class extends Migration
         // Sync users.role_id (custom column) into Spatie pivot table model_has_roles
         // so Blade @can(...) and permission middleware work.
 
-        $users = DB::table('users')
+        $users = DB::table('md_users')
             ->select('id', 'role_id')
             ->whereNotNull('role_id')
             ->get();

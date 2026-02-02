@@ -10,8 +10,8 @@ class GateSeeder extends Seeder
     public function run(): void
     {
         // Get warehouse IDs
-        $wh1 = DB::table('warehouses')->where('code', 'WH1')->first();
-        $wh2 = DB::table('warehouses')->where('code', 'WH2')->first();
+        $wh1 = DB::table('md_warehouse')->where('code', 'WH1')->first();
+        $wh2 = DB::table('md_warehouse')->where('code', 'WH2')->first();
 
         $gates = [
             // WH1 Gates
@@ -23,7 +23,7 @@ class GateSeeder extends Seeder
         ];
 
         foreach ($gates as $gate) {
-            DB::table('gates')->insert([
+            DB::table('md_gates')->insert([
                 'warehouse_id' => $gate['warehouse_id'],
                 'gate_number' => $gate['gate_number'],
                 'name' => $gate['name'],

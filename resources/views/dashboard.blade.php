@@ -113,6 +113,7 @@
 
                 <div class="st-card__header st-dashboard-card-header">
                     <div>
+                        <br>
                         <h2 class="st-card__title">Analytics</h2>
                         <div class="st-card__subtitle">Performance & Bottleneck Summary</div>
                     </div>
@@ -224,7 +225,7 @@
                                 <div class="st-chart-card st-dashboard-chart-card-fill">
                                     <div class="st-dashboard-chart-header-row st-dashboard-chart-header-row--lg">
                                         <div class="st-chart-card__title st-mb-0">Performance by Truck Type</div>
-                                        <select id="lead_proc_unit" class="st-select st-select--dashboard-xs">
+                                        <select id="lead_proc_unit" class="st-select st-select--dashboard-compact-sm">
                                             <option value="minute">Minutes</option>
                                             <option value="hour">Hours</option>
                                         </select>

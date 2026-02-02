@@ -138,9 +138,9 @@ class TransactionReportService
     private function buildBaseTransactionQuery()
     {
         return DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('users as u', 's.created_by', '=', 'u.id')
-            ->leftJoin('truck_type_durations as td', 's.truck_type', '=', 'td.truck_type')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_users as u', 's.created_by', '=', 'u.id')
+            ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->select([
                 's.*',
                 's.po_number',
@@ -361,7 +361,7 @@ class TransactionReportService
     public function getFilterOptions(): array
     {
         return [
-            'warehouses' => DB::table('warehouses')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
+            'warehouses' => DB::table('md_warehouse')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
             'vendors' => collect(),
         ];
     }

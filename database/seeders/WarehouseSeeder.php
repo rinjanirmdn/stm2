@@ -16,7 +16,7 @@ class WarehouseSeeder extends Seeder
         ];
 
         foreach ($warehouses as $warehouse) {
-            DB::table('warehouses')->insert([
+            DB::table('md_warehouse')->insert([
                 'code' => $warehouse['code'],
                 'name' => $warehouse['name'],
                 'is_active' => $warehouse['is_active'],

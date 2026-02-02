@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         // Get existing permissions to avoid duplicates
-        $existingPermissions = DB::table('permissions')->pluck('name')->toArray();
+        $existingPermissions = DB::table('md_permissions')->pluck('name')->toArray();
 
         // Define all permissions for the system
         $allPermissions = [
@@ -130,11 +130,11 @@ return new class extends Migration
                 ];
             }
 
-            DB::table('permissions')->insert($insertData);
+            DB::table('md_permissions')->insert($insertData);
         }
 
         // Create additional roles if they don't exist
-        $existingRoles = DB::table('roles')->pluck('name')->toArray();
+        $existingRoles = DB::table('md_roles')->pluck('name')->toArray();
 
         $additionalRoles = [
             'Admin',
@@ -148,7 +148,7 @@ return new class extends Migration
             // Insert roles one by one to avoid duplicate key issues
             foreach ($rolesToInsert as $role) {
                 try {
-                    DB::table('roles')->insert([
+                    DB::table('md_roles')->insert([
                         'name' => $role,
                         'guard_name' => 'web',
                         'created_at' => now(),
@@ -246,11 +246,11 @@ return new class extends Migration
             'logout',
         ];
 
-        DB::table('permissions')->whereIn('name', $allPermissions)->delete();
+        DB::table('md_permissions')->whereIn('name', $allPermissions)->delete();
 
         // Remove additional roles (only if they exist)
         $additionalRoles = ['Admin', 'Viewer', 'Vendor'];
-        DB::table('roles')->whereIn('name', $additionalRoles)->delete();
+        DB::table('md_roles')->whereIn('name', $additionalRoles)->delete();
     }
 
     /**
@@ -259,14 +259,14 @@ return new class extends Migration
     private function assignPermissionsToRoles(): void
     {
         // Get role IDs
-        $superAdminRole = DB::table('roles')->where('name', 'Super Admin')->first();
-        $adminRole = DB::table('roles')->where('name', 'Admin')->first();
-        $operatorRole = DB::table('roles')->where('name', 'operator')->first(); // Use existing 'operator' role
-        $viewerRole = DB::table('roles')->where('name', 'Viewer')->first();
-        $vendorRole = DB::table('roles')->where('name', 'Vendor')->first();
+        $superAdminRole = DB::table('md_roles')->where('name', 'Super Admin')->first();
+        $adminRole = DB::table('md_roles')->where('name', 'Admin')->first();
+        $operatorRole = DB::table('md_roles')->where('name', 'operator')->first(); // Use existing 'operator' role
+        $viewerRole = DB::table('md_roles')->where('name', 'Viewer')->first();
+        $vendorRole = DB::table('md_roles')->where('name', 'Vendor')->first();
 
         // Get all permission IDs
-        $allPermissionIds = DB::table('permissions')->pluck('id')->toArray();
+        $allPermissionIds = DB::table('md_permissions')->pluck('id')->toArray();
 
         // Super Admin gets all permissions
         if ($superAdminRole) {
@@ -275,7 +275,7 @@ return new class extends Migration
 
         // Admin gets most permissions (except SAP health)
         if ($adminRole) {
-            $adminPermissions = DB::table('permissions')
+            $adminPermissions = DB::table('md_permissions')
                 ->where('name', '!=', 'sap.health')
                 ->pluck('id')
                 ->toArray();
@@ -284,7 +284,7 @@ return new class extends Migration
 
         // Operator gets slot operations only
         if ($operatorRole) {
-            $operatorPermissions = DB::table('permissions')
+            $operatorPermissions = DB::table('md_permissions')
                 ->whereIn('name', [
                     'dashboard.view',
                     'dashboard.range_filter',
@@ -322,7 +322,7 @@ return new class extends Migration
 
         // Viewer gets read-only permissions
         if ($viewerRole) {
-            $viewerPermissions = DB::table('permissions')
+            $viewerPermissions = DB::table('md_permissions')
                 ->whereIn('name', [
                     'dashboard.view',
                     'dashboard.range_filter',
@@ -343,7 +343,7 @@ return new class extends Migration
 
         // Vendor gets limited vendor-related permissions
         if ($vendorRole) {
-            $vendorPermissions = DB::table('permissions')
+            $vendorPermissions = DB::table('md_permissions')
                 ->whereIn('name', [
                     'dashboard.view',
                     'slots.index',

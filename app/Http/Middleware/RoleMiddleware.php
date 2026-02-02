@@ -21,13 +21,13 @@ class RoleMiddleware
         $roles = is_array($role)
             ? $role
             : explode('|', str_replace(',', '|', $role));
-            
+
         $allowedRoles = array_map('strtolower', $roles);
 
         // Get User Role via DB (Custom Implementation)
         $userRoleName = null;
         if ($user->role_id) {
-            $userRoleName = DB::table('roles')->where('id', $user->role_id)->value('roles_name');
+            $userRoleName = DB::table('md_roles')->where('id', $user->role_id)->value('roles_name');
         }
 
         // Check if user has role (Custom or Spatie)
@@ -37,7 +37,7 @@ class RoleMiddleware
         if ($userRoleName && in_array(strtolower($userRoleName), $allowedRoles)) {
             $hasRole = true;
         }
-        
+
         // 2. Fallback: Check using Spatie's built-in method (if available)
         if (!$hasRole && method_exists($user, 'hasRole')) {
             // Spatie checks are usually strict, but passing array handles generic checks

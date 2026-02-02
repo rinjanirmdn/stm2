@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\HolidayHelper;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ScheduleTimelineService
 {
@@ -241,8 +242,8 @@ class ScheduleTimelineService
 
         try {
             $scheduleStats = DB::table('slots as s')
-                ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-                ->leftJoin('gates as g', function ($join) {
+                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+                ->leftJoin('md_gates as g', function ($join) {
                     $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
@@ -295,8 +296,8 @@ class ScheduleTimelineService
         }
 
         $upcoming = DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', function ($join) {
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', function ($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
@@ -332,8 +333,8 @@ class ScheduleTimelineService
         $lateExpr = $this->slotService->getDateAddExpression('s.planned_start', 15);
 
         $delayed = DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', function ($join) {
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', function ($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
@@ -367,8 +368,8 @@ class ScheduleTimelineService
     private function buildScheduleQuery(string $date)
     {
         return DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', function ($join) {
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', function ($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
@@ -404,8 +405,8 @@ class ScheduleTimelineService
     private function buildTimelineQuery(string $date)
     {
         return DB::table('slots as s')
-            ->join('warehouses as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('gates as g', function ($join) {
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', function ($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
@@ -452,7 +453,7 @@ class ScheduleTimelineService
         foreach ($rows as $r) {
             // Debug: Log anomali data
             if (empty($r->id) || $r->id <= 0) {
-                \Log::warning('Anomali slot data found', [
+                Log::warning('Anomali slot data found', [
                     'id' => $r->id,
                     'status' => $r->status,
                     'po_number' => $r->po_number,
