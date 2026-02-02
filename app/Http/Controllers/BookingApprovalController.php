@@ -119,6 +119,11 @@ class BookingApprovalController extends Controller
             });
         }
 
+        $plannedGateId = (int) $request->query('planned_gate_id', 0);
+        if ($plannedGateId > 0) {
+            $query->where('s_converted.planned_gate_id', '=', $plannedGateId);
+        }
+
         $direction = trim((string) $request->query('direction', ''));
         if ($direction !== '') {
             $query->where('booking_requests.direction', '=', $direction);
@@ -193,6 +198,7 @@ class BookingApprovalController extends Controller
 
         // Get counts for tabs
         $counts = [
+            'all' => BookingRequest::count(),
             'pending' => BookingRequest::where('status', BookingRequest::STATUS_PENDING)->count(),
             'approved' => BookingRequest::where('status', BookingRequest::STATUS_APPROVED)->count(),
         ];
@@ -203,7 +209,24 @@ class BookingApprovalController extends Controller
         }
         $warehouses = $warehousesQ->get();
 
-        return view('admin.bookings.index', compact('bookings', 'counts', 'warehouses', 'status', 'sorts', 'dirs'));
+        $gateOptions = Gate::query()
+            ->join('warehouses as w', 'gates.warehouse_id', '=', 'w.id')
+            ->when(Schema::hasColumn('gates', 'is_active'), fn ($q) => $q->where('gates.is_active', true))
+            ->orderBy('w.wh_code')
+            ->orderBy('gates.gate_number')
+            ->get(['gates.id', 'gates.gate_number', 'w.wh_code'])
+            ->map(function ($g) {
+                $whCode = (string) ($g->wh_code ?? '');
+                $gateNo = (string) ($g->gate_number ?? '');
+                $display = $this->slotService->getGateDisplayName($whCode, $gateNo);
+                return [
+                    'id' => (int) ($g->id ?? 0),
+                    'label' => trim(($whCode !== '' ? ($whCode . ' - ') : '') . $display),
+                ];
+            })
+            ->values();
+
+        return view('admin.bookings.index', compact('bookings', 'counts', 'warehouses', 'status', 'sorts', 'dirs', 'gateOptions'));
     }
 
     /**

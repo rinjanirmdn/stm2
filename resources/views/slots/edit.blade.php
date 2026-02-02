@@ -114,7 +114,7 @@
                     <label class="st-label">ETA <span class="st-text--danger-dark">*</span></label>
                     <input type="hidden" name="planned_start" id="planned_start_input" value="{{ old('planned_start', $slot->planned_start ?? '') }}">
                     <div class="st-flex st-gap-8">
-                        <input type="text" id="planned_start_date_input" class="st-input" placeholder="Select Date" autocomplete="off" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>
+                        <input type="text" id="planned_start_date_input" class="st-input" placeholder="Select Date" autocomplete="off" min="{{ now()->format('Y-m-d') }}" {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>
                         <input type="text" id="planned_start_time_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly {{ old('warehouse_id', $slot->warehouse_id ?? '') ? '' : 'disabled' }}>
                     </div>
                     @error('planned_start')
@@ -314,38 +314,7 @@
         }
 
         function initEtaDatepicker() {
-            if (!plannedStartDateInput) return;
-            if (plannedStartDateInput.getAttribute('data-st-datepicker') === '1') return;
-            if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
-            plannedStartDateInput.setAttribute('data-st-datepicker', '1');
-
-            window.jQuery(plannedStartDateInput).datepicker({
-                dateFormat: 'yy-mm-dd',
-                minDate: 0,
-                beforeShowDay: function(date) {
-                    var ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-                    if (holidayData[ds]) {
-                        return [true, 'is-holiday', holidayData[ds]];
-                    }
-                    return [true, '', ''];
-                },
-                beforeShow: function(input, inst) {
-                    setTimeout(function() {
-                        applyDatepickerTooltips(inst);
-                        bindDatepickerHover(inst);
-                    }, 0);
-                },
-                onChangeMonthYear: function(year, month, inst) {
-                    setTimeout(function() {
-                        applyDatepickerTooltips(inst);
-                        bindDatepickerHover(inst);
-                    }, 0);
-                },
-                onSelect: function() {
-                    syncPlannedStart();
-                    window.jQuery(plannedStartDateInput).datepicker('hide');
-                }
-            });
+            return;
         }
 
         function initEtaTimepicker() {

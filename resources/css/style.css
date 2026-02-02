@@ -1,4 +1,4 @@
-﻿/* ===== WINDSURF: Master Semantic Color System (Warehouse Edition) ===== */
+/* ===== WINDSURF: Master Semantic Color System (Warehouse Edition) ===== */
 :root {
     /* --- BRANDING & BASE --- */
     --primary: #0284c7;
@@ -1323,6 +1323,21 @@
 }
 
 .st-panel {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    z-index: 20;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 8px;
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+    font-size: 12px;
+}
+
+.st-filter-panel {
     display: none;
     position: absolute;
     top: 100%;

@@ -381,9 +381,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function initDatePickers() {
         var dateInputs = document.querySelectorAll('input.flatpickr-date, input[type="date"], input[id$="_date_input"], input[id$="_date"]');
+        if (typeof window.flatpickr === 'function') {
+            Array.prototype.slice.call(dateInputs).forEach(function (input) {
+                if (!input || input.getAttribute('data-st-flatpickr-date') === '1' || input.getAttribute('data-st-datepicker') === '1' || input.id === 'analytics_range') {
+                    return;
+                }
+                input.setAttribute('data-st-flatpickr-date', '1');
+                try {
+                    input.type = 'text';
+                } catch (e) { }
+
+                var minAttr = String(input.getAttribute('min') || '').trim();
+                var maxAttr = String(input.getAttribute('max') || '').trim();
+                var minDate = /^\d{4}-\d{2}-\d{2}$/.test(minAttr) ? minAttr : undefined;
+                var maxDate = /^\d{4}-\d{2}-\d{2}$/.test(maxAttr) ? maxAttr : undefined;
+
+                window.flatpickr(input, {
+                    enableTime: false,
+                    dateFormat: 'Y-m-d',
+                    allowInput: true,
+                    disableMobile: true,
+                    minDate: minDate,
+                    maxDate: maxDate,
+                    disable: [
+                        function (date) {
+                            return date.getDay() === 0 || !!stGetHolidayName(date);
+                        }
+                    ],
+                    onDayCreate: function (_, __, fp, dayElem) {
+                        if (!dayElem || !dayElem.dateObj) return;
+                        if (dayElem.dateObj.getDay && dayElem.dateObj.getDay() === 0) {
+                            dayElem.classList.add('is-sunday');
+                            dayElem.setAttribute('title', 'Sunday');
+                        }
+                        var holidayName = stGetHolidayName(dayElem.dateObj);
+                        if (holidayName) {
+                            dayElem.classList.add('is-holiday');
+                            dayElem.setAttribute('title', holidayName);
+                        }
+                    }
+                });
+            });
+            return true;
+        }
+
         if (typeof window.jQuery !== 'undefined' && typeof window.jQuery.fn.datepicker === 'function') {
             Array.prototype.slice.call(dateInputs).forEach(function (input) {
-                if (!input || input.getAttribute('data-st-datepicker') === '1' || input.id === 'analytics_range') {
+                if (!input || input.getAttribute('data-st-datepicker') === '1' || input.getAttribute('data-st-flatpickr-date') === '1' || input.id === 'analytics_range') {
                     return;
                 }
                 input.setAttribute('data-st-datepicker', '1');
@@ -394,44 +438,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.jQuery(input).datepicker({
                     dateFormat: 'yy-mm-dd',
                     beforeShowDay: function (date) {
+                        if (date && date.getDay && date.getDay() === 0) {
+                            return [false, 'is-sunday', 'Sunday'];
+                        }
                         var holidayName = stGetHolidayName(date);
                         if (holidayName) {
                             return [false, 'is-holiday', holidayName];
                         }
                         return [true, '', ''];
-                    }
-                });
-            });
-            return true;
-        }
-
-        if (typeof window.flatpickr === 'function') {
-            Array.prototype.slice.call(dateInputs).forEach(function (input) {
-                if (!input || input.getAttribute('data-st-flatpickr-date') === '1' || input.id === 'analytics_range') {
-                    return;
-                }
-                input.setAttribute('data-st-flatpickr-date', '1');
-                try {
-                    input.type = 'text';
-                } catch (e) { }
-
-                window.flatpickr(input, {
-                    enableTime: false,
-                    dateFormat: 'Y-m-d',
-                    allowInput: true,
-                    disableMobile: true,
-                    disable: [
-                        function (date) {
-                            return !!stGetHolidayName(date);
-                        }
-                    ],
-                    onDayCreate: function (_, __, fp, dayElem) {
-                        if (!dayElem || !dayElem.dateObj) return;
-                        var holidayName = stGetHolidayName(dayElem.dateObj);
-                        if (holidayName) {
-                            dayElem.classList.add('is-holiday');
-                            dayElem.setAttribute('title', holidayName);
-                        }
                     }
                 });
             });
@@ -459,6 +473,12 @@ document.addEventListener('DOMContentLoaded', function () {
         var form = input ? (input.form || input.closest('form')) : null;
         if (!form) return { from: null, to: null };
 
+        var rangeStart = form.querySelector('input[name="range_start"], #range_start');
+        var rangeEnd = form.querySelector('input[name="range_end"], #range_end');
+        if (rangeStart && rangeEnd) {
+            return { from: rangeStart, to: rangeEnd };
+        }
+
         var name = String(input.getAttribute('name') || input.id || '').toLowerCase();
         var from = null;
         var to = null;
@@ -481,10 +501,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initRangePickers() {
-        if (!window.jQuery || !window.jQuery.fn) {
-            return false;
-        }
-
         var inputs = document.querySelectorAll('input[id$="_range"], input[name$="_range"], input[id*="date_range"], input[name*="date_range"]');
         Array.prototype.slice.call(inputs).forEach(function (input) {
             if (!input || input.getAttribute('data-st-range-init') === '1') {
@@ -499,12 +515,88 @@ document.addEventListener('DOMContentLoaded', function () {
             var initialFrom = from && from.value ? from.value : '';
             var initialTo = to && to.value ? to.value : '';
             if (initialFrom && initialTo) {
-                input.value = initialFrom + ' to ' + initialTo;
+                input.value = initialFrom + ' - ' + initialTo;
             } else if (initialFrom) {
                 input.value = initialFrom;
             }
 
-            if (window.jQuery.fn.dateRangePicker) {
+            if (typeof window.flatpickr === 'function') {
+                input.setAttribute('data-st-flatpickr-range', '1');
+                try { input.type = 'text'; } catch (e) { }
+
+                var defaultDates = [];
+                if (initialFrom) defaultDates.push(initialFrom);
+                if (initialTo) defaultDates.push(initialTo);
+
+                function formatIso(d) {
+                    if (!d) return '';
+                    var year = d.getFullYear();
+                    var month = String(d.getMonth() + 1).padStart(2, '0');
+                    var day = String(d.getDate()).padStart(2, '0');
+                    return year + '-' + month + '-' + day;
+                }
+
+                function submitRangeForm() {
+                    try {
+                        if (typeof window.ajaxReload === 'function') {
+                            window.ajaxReload(true);
+                            return;
+                        }
+                    } catch (err) { }
+                    var form = input.form || (input.closest ? input.closest('form') : null);
+                    if (!form) return;
+                    try { form.submit(); } catch (err2) { window.location.reload(); }
+                }
+
+                window.flatpickr(input, {
+                    mode: 'range',
+                    enableTime: false,
+                    dateFormat: 'Y-m-d',
+                    allowInput: true,
+                    disableMobile: true,
+                    defaultDate: defaultDates.length ? defaultDates : undefined,
+                    disable: [
+                        function (date) {
+                            return date.getDay() === 0 || !!stGetHolidayName(date);
+                        }
+                    ],
+                    onDayCreate: function (_, __, fp, dayElem) {
+                        if (!dayElem || !dayElem.dateObj) return;
+                        if (dayElem.dateObj.getDay && dayElem.dateObj.getDay() === 0) {
+                            dayElem.classList.add('is-sunday');
+                            dayElem.setAttribute('title', 'Sunday');
+                        }
+                        var holidayName = stGetHolidayName(dayElem.dateObj);
+                        if (holidayName) {
+                            dayElem.classList.add('is-holiday');
+                            dayElem.setAttribute('title', holidayName);
+                        }
+                    },
+                    onChange: function (selectedDates) {
+                        var d1 = selectedDates && selectedDates[0] ? selectedDates[0] : null;
+                        var d2 = selectedDates && selectedDates[1] ? selectedDates[1] : null;
+                        var s1 = formatIso(d1);
+                        var s2 = formatIso(d2);
+                        if (from) from.value = s1;
+                        if (to) to.value = s2;
+                        if (s1 && s2) {
+                            input.value = s1 + ' - ' + s2;
+                        } else {
+                            input.value = s1 || '';
+                        }
+                    },
+                    onClose: function (selectedDates) {
+                        var d1 = selectedDates && selectedDates[0] ? selectedDates[0] : null;
+                        var d2 = selectedDates && selectedDates[1] ? selectedDates[1] : null;
+                        if (d1 && d2) {
+                            submitRangeForm();
+                        }
+                    }
+                });
+                return;
+            }
+
+            if (window.jQuery && window.jQuery.fn && window.jQuery.fn.dateRangePicker) {
                 window.jQuery(input).dateRangePicker({
                     autoClose: true,
                     showShortcuts: false,
@@ -516,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (from) from.value = start;
                     if (to) to.value = end;
                     if (start && end) {
-                        input.value = start + ' to ' + end;
+                        input.value = start + ' - ' + end;
                     } else {
                         input.value = start || '';
                     }
@@ -524,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (window.jQuery.fn.datepicker) {
+            if (window.jQuery && window.jQuery.fn && window.jQuery.fn.datepicker) {
                 window.jQuery(input).datepicker({
                     dateFormat: 'yy-mm-dd',
                     onSelect: function (dateText) {
@@ -1350,8 +1442,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!t) return;
         var panel = t.closest ? t.closest('.st-filter-panel') : null;
         if (!panel) return;
-        // Only auto-apply selects; other inputs should apply on Enter
-        if ((t.tagName || '').toLowerCase() !== 'select') return;
+        var tag = (t.tagName || '').toLowerCase();
+        var type = String(t.type || '').toLowerCase();
+        var isSelect = tag === 'select';
+        var isDateLikeInput = tag === 'input' && (
+            type === 'date' ||
+            t.getAttribute('data-st-datepicker') === '1' ||
+            t.getAttribute('data-st-flatpickr-date') === '1'
+        );
+        if (!isSelect && !isDateLikeInput) return;
 
         var form = stGetFormForFilterAction(t);
         try { stSyncFilterIndicatorsFromForms(form || document); } catch (e) { }
@@ -1565,4 +1664,3 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 });
-

@@ -37,7 +37,7 @@
                             <input type="hidden" id="range_end" name="range_end" value="{{ $range_end }}">
                             <div class="st-form-field st-dashboard-range-field">
                                 <label class="st-label">Range</label>
-                                <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ $range_start ?? $today }}" data-st-datepicker="1" data-st-flatpickr-date="1" data-st-range-init="1" data-st-range-open="1" data-st-mdtimepicker="1" data-st-flatpickr-time="1">
+                                <input type="text" id="analytics_range" class="st-input" placeholder="Select Date Range" value="{{ $range_start ?? $today }}" autocomplete="off" readonly>
                             </div>
                             <div class="st-form-field st-dashboard-range-reset">
                                 <a href="{{ route('dashboard', ['range_start' => \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d'), 'range_end' => $today]) }}" class="st-btn st-btn--outline-primary">Reset</a>
@@ -868,6 +868,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
     function initAnalyticsRangePicker() {
+        return;
         var rangeInput = document.getElementById('analytics_range');
         if (!rangeInput || !window.jQuery) return;
         var holidayData = getHolidayMap();
@@ -1400,6 +1401,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function initDatepicker(el, beforeShowDay, onSelect) {
+            return;
             if (!el) return;
             if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
             if (el.getAttribute('data-st-datepicker') === '1') return;
