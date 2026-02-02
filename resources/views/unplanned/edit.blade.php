@@ -98,7 +98,7 @@
                     @endphp
                     <input type="hidden" name="arrival_time" id="arrival_time_input" value="{{ $arrivalValue }}">
                     <div class="st-flex st-gap-8">
-                        <input type="text" id="arrival_date_input" class="st-input" placeholder="Select Date" autocomplete="off">
+                        <input type="text" id="arrival_date_input" class="st-input" placeholder="Select Date" autocomplete="off" min="{{ now()->format('Y-m-d') }}">
                         <input type="text" id="arrival_time_only_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly>
                     </div>
                     @error('arrival_time')
@@ -249,38 +249,7 @@
         }
 
         function initArrivalDatepicker() {
-            if (!arrivalDateInput) return;
-            if (arrivalDateInput.getAttribute('data-st-datepicker') === '1') return;
-            if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
-            arrivalDateInput.setAttribute('data-st-datepicker', '1');
-
-            window.jQuery(arrivalDateInput).datepicker({
-                dateFormat: 'yy-mm-dd',
-                minDate: 0,
-                beforeShowDay: function(date) {
-                    var ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-                    if (holidayData[ds]) {
-                        return [true, 'is-holiday', holidayData[ds]];
-                    }
-                    return [true, '', ''];
-                },
-                beforeShow: function(input, inst) {
-                    setTimeout(function() {
-                        applyDatepickerTooltips(inst);
-                        bindDatepickerHover(inst);
-                    }, 0);
-                },
-                onChangeMonthYear: function(year, month, inst) {
-                    setTimeout(function() {
-                        applyDatepickerTooltips(inst);
-                        bindDatepickerHover(inst);
-                    }, 0);
-                },
-                onSelect: function() {
-                    syncArrivalValue();
-                    window.jQuery(arrivalDateInput).datepicker('hide');
-                }
-            });
+            return;
         }
 
         function initArrivalTimepicker() {

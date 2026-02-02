@@ -96,7 +96,7 @@
                     <label class="st-label">Arrival Time <span class="st-text--danger-dark">*</span></label>
                     <input type="hidden" name="actual_arrival" id="actual_arrival_input" value="{{ old('actual_arrival') }}">
                     <div class="st-grid st-grid-cols-2 st-gap-8">
-                        <input type="text" id="actual_arrival_date_input" class="st-input" placeholder="Select Date" autocomplete="off">
+                        <input type="text" id="actual_arrival_date_input" class="st-input" placeholder="Select Date" autocomplete="off" min="{{ now()->format('Y-m-d') }}">
                         <input type="text" id="actual_arrival_time_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly>
                     </div>
                     @error('actual_arrival')
@@ -505,40 +505,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initArrivalDatepicker() {
-        if (!arrivalDateInput) return;
-        if (arrivalDateInput.getAttribute('data-st-datepicker') === '1') return;
-        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
-        arrivalDateInput.setAttribute('data-st-datepicker', '1');
-
-        var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
-
-        window.jQuery(arrivalDateInput).datepicker({
-            dateFormat: 'yy-mm-dd',
-            minDate: 0,
-            beforeShowDay: function(date) {
-                var ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-                if (holidayData[ds]) {
-                    return [true, 'is-holiday', holidayData[ds]];
-                }
-                return [true, '', ''];
-            },
-            beforeShow: function(input, inst) {
-                setTimeout(function() {
-                    applyDatepickerTooltips(inst, holidayData);
-                    bindDatepickerHover(inst);
-                }, 0);
-            },
-            onChangeMonthYear: function(year, month, inst) {
-                setTimeout(function() {
-                    applyDatepickerTooltips(inst, holidayData);
-                    bindDatepickerHover(inst);
-                }, 0);
-            },
-            onSelect: function() {
-                syncArrivalValue();
-                window.jQuery(arrivalDateInput).datepicker('hide');
-            }
-        });
+        return;
     }
 
     function initArrivalTimepicker() {
