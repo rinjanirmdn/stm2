@@ -18,14 +18,28 @@ class LoginController extends Controller
     public function store(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials)) {
+        $login = $credentials['login'];
+        $password = $credentials['password'];
+        $fields = filter_var($login, FILTER_VALIDATE_EMAIL)
+            ? ['email', 'username', 'nik']
+            : ['username', 'nik', 'email'];
+
+        $authed = false;
+        foreach ($fields as $field) {
+            if (Auth::attempt([$field => $login, 'password' => $password])) {
+                $authed = true;
+                break;
+            }
+        }
+
+        if (! $authed) {
             return back()
-                ->withErrors(['email' => 'Email atau password salah'])
-                ->onlyInput('email');
+                ->withErrors(['login' => 'Email/NIK/username atau password salah'])
+                ->onlyInput('login');
         }
 
         $request->session()->regenerate();
@@ -38,8 +52,8 @@ class LoginController extends Controller
             $request->session()->regenerateToken();
 
             return back()
-                ->withErrors(['email' => 'Akun Anda tidak aktif. Silakan hubungi administrator.'])
-                ->onlyInput('email');
+                ->withErrors(['login' => 'Akun Anda tidak aktif. Silakan hubungi administrator.'])
+                ->onlyInput('login');
         }
 
         if ($user) {
