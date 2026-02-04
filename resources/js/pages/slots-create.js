@@ -180,6 +180,7 @@
     function setPoPreview(po) {
         if (!poPreview) return;
         if (poItemsGroup) {
+            poItemsGroup.classList.add('st-hidden');
             poItemsGroup.style.display = 'none';
             poItemsGroup.innerHTML = '';
         }
@@ -193,13 +194,13 @@
             + '<div class="po-preview__box">'
             + '<div class="po-preview__title">' + (po.po_number || '') + '</div>'
             + '<div class="po-preview__info">Vendor: ' + (po.vendor_name || '-') + '</div>'
-            + '<div class="po-preview__info">Plant: ' + (po.plant || '-') + '</div>'
             + '<div class="po-preview__info">Doc Date: ' + (po.doc_date || '-') + '</div>'
             + '<div class="po-preview__items">Items: ' + items.length + '</div>'
             + '</div>';
 
         if (!poItemsGroup) return;
         if (!items.length) {
+            poItemsGroup.classList.add('st-hidden');
             poItemsGroup.style.display = 'none';
             poItemsGroup.innerHTML = '';
             return;
@@ -259,6 +260,7 @@
         html += '<div class="st-text--small st-text--muted st-note">Input quantity for this slot delivery. Remaining qty remains available for the next slot.</div>';
 
         poItemsGroup.innerHTML = html;
+        poItemsGroup.classList.remove('st-hidden');
         poItemsGroup.style.display = 'block';
     }
 

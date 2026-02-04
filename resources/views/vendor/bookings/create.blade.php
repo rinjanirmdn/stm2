@@ -61,7 +61,7 @@
                         <!-- PO Items Table -->
                         <div id="po-items-container" class="cb-po-items-container">
                             <label class="cb-label">PO Items</label>
-                            <table class="cb-po-items-table">
+                            <table class="cb-po-items-table st-table st-table--sm">
                                 <thead>
                                     <tr>
                                         <th>Item</th>

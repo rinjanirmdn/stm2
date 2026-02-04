@@ -53,7 +53,7 @@
                 Booking Information
             </h3>
 
-            <table class="vb-table">
+            <table class="vb-table st-table st-table--sm">
                 <tr>
                     <td class="vb-table__label">Ticket Number</td>
                     <td class="vb-table__value--strong">{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
@@ -103,7 +103,7 @@
                 Schedule
             </h3>
 
-            <table class="vb-table">
+            <table class="vb-table st-table st-table--sm">
                 <tr>
                     <td class="vb-table__label">Scheduled Date</td>
                     <td class="vb-table__value--strong">{{ $booking->planned_start?->format('d M Y') ?? '-' }}</td>
@@ -163,7 +163,7 @@
                 Vehicle Information
             </h3>
 
-            <table class="vb-table">
+            <table class="vb-table st-table st-table--sm">
                 <tr>
                     <td class="vb-table__label">Truck Type</td>
                     <td>{{ $booking->truck_type ?? '-' }}</td>
@@ -186,7 +186,7 @@
                 Approval Info
             </h3>
 
-            <table class="vb-table">
+            <table class="vb-table st-table st-table--sm">
                 @if($booking->approver)
                 <tr>
                     <td class="vb-table__label">Processed By</td>

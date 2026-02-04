@@ -38,7 +38,7 @@
                     Vendor's Request
                 </h3>
 
-                <table class="st-detail-table">
+                <table class="st-detail-table st-table st-table--sm">
                     <tr>
                         <td>Supplier</td>
                         <td><strong>{{ $booking->supplier_name ?? '-' }}</strong></td>

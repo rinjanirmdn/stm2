@@ -85,7 +85,6 @@
             + '<div class="po-preview__box">'
             + '<div class="po-preview__title">' + (po.po_number || '') + '</div>'
             + '<div class="po-preview__info">Vendor: ' + (po.vendor_name || '-') + '</div>'
-            + '<div class="po-preview__info">Plant: ' + (po.plant || '-') + '</div>'
             + '<div class="po-preview__info">Doc Date: ' + (po.doc_date || '-') + '</div>'
             + '<div class="po-preview__items">Items: ' + items.length + '</div>'
             + '</div>';

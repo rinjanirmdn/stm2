@@ -1,4 +1,4 @@
-<table>
+<table class="st-table st-table--sm">
     <thead>
         <tr>
             <th>Type</th>
