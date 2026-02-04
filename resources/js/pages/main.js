@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (reportRange.length) {
             var start = window.moment();
             var end = window.moment();
-            
+
             var hiddenStart = window.jQuery(startInputSelector).val();
             var hiddenEnd = window.jQuery(endInputSelector).val();
             var hasInitial = false;
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             function updateRange(start, end) {
-                var label = start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY');
+                var label = start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD');
                 window.jQuery(containerSelector + ' span').html(label);
                 window.jQuery(startInputSelector).val(start.format('YYYY-MM-DD'));
                 window.jQuery(endInputSelector).val(end.format('YYYY-MM-DD'));
@@ -493,10 +493,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 input.setAttribute('data-st-datepicker', '1');
-                
+
                 // Force text type
                 try { input.type = 'text'; } catch (e) { }
-                
+
                 // Init single date picker
                 window.jQuery(input).daterangepicker({
                     singleDatePicker: true,
@@ -517,19 +517,19 @@ document.addEventListener('DOMContentLoaded', function () {
             // 2. Predefined Range Pickers
             // Dashboard
             initPredefinedDateRange('#reportrange', '#range_start', '#range_end');
-            
+
             // Slots - ETA Range
             initPredefinedDateRange('#eta_reportrange', '#date_from', '#date_to');
-            
+
             // Slots - Arrival Range
             initPredefinedDateRange('#arrival_reportrange', '#arrival_from', '#arrival_to');
-            
+
             // Reports - Transactions
             initPredefinedDateRange('#transaction_reportrange', '#date_from', '#date_to');
-            
+
             // Vendor Bookings
             initPredefinedDateRange('#vendor_reportrange', '#date_from', '#date_to');
-            
+
             return true;
         }
         return false;

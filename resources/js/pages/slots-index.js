@@ -364,6 +364,7 @@
             i.addEventListener('change', function () {
                 ajaxReload(true);
             });
+        });
     }
 
     function setupActiveFilters() {

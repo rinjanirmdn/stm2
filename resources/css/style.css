@@ -128,11 +128,14 @@
     gap: 0px;
     align-items: flex-end;
     margin-left: auto;
+    padding: 0;
 }
 
 .st-dashboard-range-field {
-    min-width: 260px;
-    margin-right: -8px;
+    width: 250px;
+    min-width: 250px !important;
+    flex: 0 0 380px;
+    margin-right: 0;
 }
 
 .st-suggestion-item {
@@ -165,11 +168,12 @@
 }
 
 .st-dashboard-range-reset {
-    min-width: 10px;
+    min-width: 0 !important;
+    width: auto;
     flex: 0 0 auto;
     display: flex;
     justify-content: flex-end;
-    margin-left: -110px;
+    margin-left: 0;
 }
 
 .st-dashboard-mini-grid {
@@ -8684,6 +8688,51 @@ table.st-table td form {
     background: #ffffff;
     border: 1px solid #d1d5db;
     transition: all 0.2s ease;
+}
+
+#reportrange,
+#transaction_reportrange {
+    width: 100%;
+    border-radius: 6px !important;
+    border: 1px solid #d1d5db !important;
+    padding: 6px 8px !important;
+    font-size: 13px;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: space-between;
+    line-height: 1.2;
+    box-sizing: border-box;
+    background: #ffffff !important;
+    white-space: nowrap;
+}
+
+#reportrange .fa-calendar,
+#transaction_reportrange .fa-calendar {
+    display: none;
+}
+
+#reportrange span,
+#transaction_reportrange span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    display: block;
+    flex: 1 1 auto;
+}
+
+#reportrange:hover,
+#transaction_reportrange:hover {
+    border-color: #9ca3af;
+}
+
+#reportrange:focus,
+#transaction_reportrange:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
 }
 
 .date-range-input:hover {

@@ -171,7 +171,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Gate change listener
-    const gateSelect = document.getElementById('gate_select');
     if (gateSelect) {
         gateSelect.addEventListener('change', function() {
             syncWarehouseFromGate();
