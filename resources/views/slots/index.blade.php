@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Slots - Slot Time Management')
 @section('page_title', 'Slots')

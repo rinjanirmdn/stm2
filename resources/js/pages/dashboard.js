@@ -197,6 +197,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         function fitActiveSlide() {
             if (!viewport) return;
+            if (root && root.classList && root.classList.contains('is-timeline-slide')) {
+                try {
+                    viewport.style.transform = 'none';
+                    viewport.style.width = '';
+                    viewport.style.height = '';
+                } catch (e) { }
+                return;
+            }
             try {
                 viewport.style.transform = 'none';
                 viewport.style.width = '100%';
@@ -236,6 +244,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+        // Avoid auto-scaling to prevent zoom-out/cropping issues.
+        return;
+
             var scaleH = availableH / contentH;
             var scaleW = availableW / contentW;
             var scale = Math.min(scaleH, scaleW);
@@ -246,8 +257,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             viewport.style.transformOrigin = 'top left';
             viewport.style.transform = 'scale(' + String(scale) + ')';
-            viewport.style.width = (availableW / scale) + 'px';
-            viewport.style.height = (availableH / scale) + 'px';
         }
 
         function scheduleFit() {
@@ -284,6 +293,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 d.classList.toggle('is-active', isActive);
                 d.setAttribute('aria-current', isActive ? 'true' : 'false');
             });
+            var activeSlide = slides[activeIndex];
+            var isTimeline = !!(activeSlide && activeSlide.querySelector('.st-dashboard-timeline'));
+            root.classList.toggle('is-timeline-slide', isTimeline);
 
             observeActiveSlide();
             scheduleFit();

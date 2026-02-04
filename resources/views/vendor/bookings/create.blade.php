@@ -30,9 +30,218 @@
                 @csrf
 
                 <div class="cb-form">
-                    @include('vendor.bookings.partials._po_selection')
-                    @include('vendor.bookings.partials._schedule_availability')
-                    @include('vendor.bookings.partials._vehicle_documents_notes')
+                    <!-- PO Selection Section -->
+                    <div class="cb-section cb-section--full">
+                        <h3 class="cb-section__title">
+                            <i class="fas fa-file-invoice"></i>
+                            PO/DO Selection
+                        </h3>
+
+                        <div class="cb-field">
+                            <label class="cb-label cb-label--required">PO/DO Number</label>
+                            <div class="cb-po-search">
+                                <input type="text"
+                                       id="po-search"
+                                       class="cb-input"
+                                       placeholder="Search PO/DO number..."
+                                       autocomplete="off"
+                                       value="{{ old('po_number') }}">
+                                <input type="hidden" name="po_number" id="po-number-hidden" value="{{ old('po_number') }}">
+                                <div class="cb-po-results" id="po-results"></div>
+                            </div>
+                            <div class="cb-loading" id="po-loading">
+                                <div class="cb-spinner"></div>
+                                <span>Searching...</span>
+                            </div>
+                            @error('po_number')
+                                <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- PO Items Table -->
+                        <div id="po-items-container" class="cb-po-items-container">
+                            <label class="cb-label">PO Items</label>
+                            <table class="cb-po-items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Material</th>
+                                        <th>PO Qty</th>
+                                        <th>GR Total</th>
+                                        <th>Remaining</th>
+                                        <th>Book Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="po-items-body"></tbody>
+                            </table>
+                            <div class="cb-hint">Enter quantities for items you want to book.</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 1: Schedule + Live Availability -->
+                    <div class="cb-row cb-row--sections">
+                        <!-- Schedule Section -->
+                        <div class="cb-section">
+                            <h3 class="cb-section__title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Schedule
+                            </h3>
+
+                            <div class="cb-field">
+                                <label class="cb-label cb-label--required">Date</label>
+                                <input type="text"
+                                       name="planned_date"
+                                       class="cb-input"
+                                       id="planned-date"
+                                       autocomplete="off"
+                                       readonly
+                                       value="{{ old('planned_date') }}"
+                                       required>
+                                <div class="cb-hint">Minimum 4 hours from now. No Sundays or holidays.</div>
+                                @error('planned_date')
+                                    <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="cb-field">
+                                <label class="cb-label cb-label--required">Time</label>
+                                <input type="text"
+                                       name="planned_time"
+                                       class="cb-input"
+                                       id="planned-time"
+                                       inputmode="none"
+                                       readonly
+                                       value="{{ old('planned_time', '08:00') }}"
+                                       required>
+                                <div class="cb-hint">Operating hours: 07:00 - 19:00</div>
+                                @error('planned_time')
+                                    <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <input type="hidden" name="planned_duration" id="planned-duration" value="{{ old('planned_duration', 60) }}">
+                            <input type="hidden" name="planned_start" id="planned-start" value="{{ old('planned_start') }}">
+                        </div>
+
+                        <!-- Mini Availability Section -->
+                        <div class="cb-section">
+                            <h3 class="cb-section__title">
+                                <i class="fas fa-clock"></i>
+                                Live Availability
+                            </h3>
+                            <div class="cb-availability-mini" id="mini-availability">
+                                <div class="cb-availability-mini__placeholder">Select date to see available hours</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Vehicle + Documents/Notes Stack -->
+                    <div class="cb-row cb-row--sections">
+                        <!-- Vehicle & Driver Section -->
+                        <div class="cb-section">
+                            <h3 class="cb-section__title">
+                                <i class="fas fa-truck"></i>
+                                Vehicle & Driver
+                            </h3>
+
+                            <div class="cb-field">
+                                <label class="cb-label cb-label--required">Truck Type</label>
+                                <select name="truck_type" class="cb-select" required>
+                                    <option value="">-- Select Truck Type --</option>
+                                    @foreach($truckTypes as $type)
+                                        <option value="{{ $type->truck_type }}" data-duration="{{ $type->target_duration_minutes }}" {{ old('truck_type') == $type->truck_type ? 'selected' : '' }}>
+                                            {{ $type->truck_type }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('truck_type')
+                                    <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="cb-field">
+                                <label class="cb-label">Vehicle Number</label>
+                                <input type="text"
+                                       name="vehicle_number"
+                                       class="cb-input"
+                                       placeholder="e.g., B 1234 ABC"
+                                       value="{{ old('vehicle_number') }}"
+                                       maxlength="50">
+                                @error('vehicle_number')
+                                    <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="cb-field">
+                                <label class="cb-label">Driver Name</label>
+                                <input type="text"
+                                       name="driver_name"
+                                       class="cb-input"
+                                       placeholder="Driver's full name"
+                                       value="{{ old('driver_name') }}"
+                                       maxlength="50">
+                                @error('driver_name')
+                                    <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="cb-field">
+                                <label class="cb-label">Driver Phone</label>
+                                <input type="text"
+                                       name="driver_number"
+                                       class="cb-input"
+                                       placeholder="e.g., 08123456789"
+                                       value="{{ old('driver_number') }}"
+                                       maxlength="50">
+                                @error('driver_number')
+                                    <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="cb-stack">
+                            <!-- Documents Section -->
+                            <div class="cb-section">
+                                <h3 class="cb-section__title">
+                                    <i class="fas fa-file-pdf"></i>
+                                    Documents
+                                </h3>
+
+                                <div class="cb-field">
+                                    <label class="cb-label cb-label--required">COA (Certificate of Analysis)</label>
+                                    <input type="file"
+                                           name="coa_pdf"
+                                           class="cb-file-input"
+                                           accept=".pdf"
+                                           required>
+                                    <div class="cb-hint">PDF only, max 10MB</div>
+                                    <div class="cb-hint cb-hint--error cb-file-error" id="coa-error" hidden>File too large. Max 10MB.</div>
+                                    @error('coa_pdf')
+                                        <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Notes Section -->
+                            <div class="cb-section">
+                                <h3 class="cb-section__title">
+                                    <i class="fas fa-sticky-note"></i>
+                                    Additional Notes
+                                </h3>
+
+                                <div class="cb-field">
+                                    <textarea name="notes"
+                                              class="cb-textarea"
+                                              placeholder="Any additional information..."
+                                              maxlength="500">{{ old('notes') }}</textarea>
+                                    <div class="cb-hint">Maximum 500 characters</div>
+                                    @error('notes')
+                                        <div class="cb-hint cb-hint--error">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="cb-actions">
