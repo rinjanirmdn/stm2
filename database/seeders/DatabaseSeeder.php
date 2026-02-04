@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             GateSeeder::class,
             VendorSeeder::class,
             TruckTypeDurationSeeder::class,
+            SlotSeeder::class,
         ]);
     }
 }

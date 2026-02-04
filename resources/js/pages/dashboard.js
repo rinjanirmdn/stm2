@@ -2615,11 +2615,75 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (timeline) {
+        // Dynamic hour visibility - show only hours with data (default 07-23)
+        function computeVisibleHours() {
+            var blocks = timeline.querySelectorAll('.st-timeline-block[data-left][data-width]');
+            var dataHours = new Set();
+            var defaultStart = 7;
+            var defaultEnd = 23;
+
+            blocks.forEach(function(el) {
+                var leftMin = parseInt(el.getAttribute('data-left') || '0', 10);
+                var widthMin = parseInt(el.getAttribute('data-width') || '1', 10);
+                if (isNaN(leftMin) || isNaN(widthMin)) return;
+
+                var startHour = Math.floor(leftMin / 60);
+                var endHour = Math.ceil((leftMin + widthMin) / 60);
+
+                for (var h = startHour; h < endHour; h++) {
+                    dataHours.add(h);
+                }
+            });
+
+            // If no data, use default hours
+            if (dataHours.size === 0) {
+                return { start: defaultStart, end: defaultEnd, count: defaultEnd - defaultStart + 1 };
+            }
+
+            // Get min/max from data, but ensure at least default range
+            var dataMin = Math.min(...dataHours);
+            var dataMax = Math.max(...dataHours);
+
+            // Use data range if it's within or extends default range
+            var start = Math.min(defaultStart, dataMin);
+            var end = Math.max(defaultEnd, dataMax);
+
+            // Ensure minimum 8-hour window for usability
+            if (end - start < 7) {
+                end = start + 7;
+            }
+
+            return { start: start, end: end, count: end - start + 1 };
+        }
+
+        function updateVisibleHours() {
+            var visible = computeVisibleHours();
+            var hourEls = timeline.querySelectorAll('.st-timeline__hour');
+            var startHourAttr = parseInt(timeline.getAttribute('data-start-hour') || '7', 10);
+
+            hourEls.forEach(function(el, idx) {
+                var hour = startHourAttr + idx;
+                if (hour >= visible.start && hour <= visible.end) {
+                    el.style.display = '';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+
+            // Update CSS variables for grid
+            timeline.style.setProperty('--st-visible-hours', String(visible.count));
+            timeline._stVisibleHours = visible;
+
+            return visible;
+        }
+
         function computeTimelineScale() {
             var grid = timeline.querySelector('.st-timeline__header-grid');
             if (!grid) return null;
-            var startHour = 7;
-            var endHour = 23;
+            // Use dynamic visible hours
+            var visible = timeline._stVisibleHours || updateVisibleHours();
+            var startHour = visible.start;
+            var endHour = visible.end;
             var startMins = startHour * 60;
             var endMins = (endHour + 1) * 60;
             var totalMins = Math.max(1, endMins - startMins);
@@ -2678,13 +2742,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         if (el.style.display === 'none') el.style.display = '';
 
-                        // Calculate grid column positions (17 columns for hours 7-23)
-                        var startCol = Math.floor(relLeft / 60) + 1; // +1 because grid columns start at 1
-                        var endCol = Math.ceil((relLeft + relWidth) / 60) + 1;
+                        // Calculate grid column positions based on visible hours
+                        var visible = timeline._stVisibleHours || { start: 7, end: 23, count: 17 };
+                        var startCol = Math.floor((relLeft / 60) - (visible.start - 7)) + 1;
+                        var endCol = Math.ceil(((relLeft + relWidth) / 60) - (visible.start - 7)) + 1;
 
-                        // Ensure columns are within bounds
-                        startCol = Math.max(1, Math.min(startCol, 17));
-                        endCol = Math.max(startCol, Math.min(endCol, 18));
+                        // Ensure columns are within visible bounds
+                        startCol = Math.max(1, Math.min(startCol, visible.count));
+                        endCol = Math.max(startCol, Math.min(endCol, visible.count + 1));
 
                         if (el._stStartCol !== startCol) {
                             el._stStartCol = startCol;
@@ -2701,6 +2766,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        // Initialize visible hours first, then apply positions
+        updateVisibleHours();
         applyTimelinePositions();
 
         if (!timeline._stResizeBound) {
