@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function initDatePickers() {
         // 1. Single Date Pickers
-        var dateInputs = document.querySelectorAll('input[type="date"], input[id$="_date_input"], input[id$="_date"], input[name$="_date"], input[name$="_from"], input[name$="_to"], input[name="date_from"], input[name="date_to"], input[name="range_start"], input[name="range_end"], input[name="planned_date"]');
+        var dateInputs = document.querySelectorAll('input[type="date"], input[id$="_date_input"], input[id$="_date"], input[name$="_date"], input[name="date_from"], input[name="date_to"], input[name="range_start"], input[name="range_end"], input[name="planned_date"], input[name="schedule_date"]');
 
         if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.daterangepicker === 'function' && typeof window.moment === 'function') {
             Array.prototype.slice.call(dateInputs).forEach(function (input) {

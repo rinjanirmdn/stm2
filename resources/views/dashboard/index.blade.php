@@ -35,7 +35,7 @@
                             <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
                             <div class="st-form-field st-dashboard-range-field">
                                 <label class="st-label">Range</label>
-                                <div id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                                <div id="reportrange" class="st-dashboard-range-picker">
                                     <i class="fa fa-calendar"></i>&nbsp;
                                     <span></span> <i class="fa fa-caret-down"></i>
                                 </div>
@@ -387,11 +387,11 @@
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">From (HH:MM)</label>
-                            <input type="text" name="time_from" class="st-input" data-st-timepicker="md" value="{{ $time_from ?? '00:00' }}" placeholder="00:00">
+                            <input type="time" name="time_from" class="st-input" value="{{ $time_from ?? '00:00' }}" placeholder="00:00" step="60">
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">To (HH:MM)</label>
-                            <input type="text" name="time_to" class="st-input" data-st-timepicker="md" value="{{ $time_to ?? '23:59' }}" placeholder="23:59">
+                            <input type="time" name="time_to" class="st-input" value="{{ $time_to ?? '23:59' }}" placeholder="23:59" step="60">
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">Gate (Timeline)</label>

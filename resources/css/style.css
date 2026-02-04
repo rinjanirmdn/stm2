@@ -125,7 +125,7 @@
 }
 
 .st-dashboard-range-form {
-    gap: 0px;
+    gap: 4px;
     align-items: flex-end;
     margin-left: auto;
     padding: 0;
@@ -137,6 +137,17 @@
     flex: 0 0 380px;
     margin-right: 0;
 }
+.st-dashboard-range-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.st-dashboard-range-picker span {
+    white-space: nowrap;
+}
+
 
 .st-suggestion-item {
     padding: 6px 8px;
@@ -1788,6 +1799,9 @@
     flex-direction: column;
     justify-content: center;
     padding-bottom: 8px;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
 }
 
 .st-dashboard-timeline {
@@ -6887,6 +6901,23 @@ table.st-table td form {
     opacity: 1;
     transform: scale(1);
 }
+.st-dashboard-slideshow.is-timeline-slide .st-dashboard-slideshow__viewport {
+    overflow-x: hidden;
+    overflow-y: visible;
+    height: auto;
+}
+
+.st-dashboard-slideshow.is-timeline-slide .st-dashboard-slideshow__track,
+.st-dashboard-slideshow.is-timeline-slide .st-dashboard-slide {
+    height: auto;
+    overflow: visible;
+}
+
+.st-dashboard-slideshow.is-timeline-slide .st-dashboard-section-full,
+.st-dashboard-slideshow.is-timeline-slide .st-dashboard-col-full,
+.st-dashboard-slideshow.is-timeline-slide .st-dashboard-card-fill {
+    height: auto;
+}
 
 .st-dashboard-slideshow.is-wrapping .st-dashboard-slide {
     transition: opacity 180ms ease, transform 180ms ease;
@@ -7137,8 +7168,9 @@ table.st-table td form {
 }
 
 .st-dashboard-slideshow .st-timeline-filters {
-    overflow-x: hidden;
+    overflow-x: visible;
     flex-wrap: wrap;
+    row-gap: 6px;
 }
 
 @media (max-width: 768px) {
@@ -9803,7 +9835,6 @@ table.st-table td form {
     text-decoration: underline;
 }
 
-
 /* === Gates Calendar (moved from gates/index.blade.php) === */
 .av-calendar__header {
     display: flex;
@@ -9880,3 +9911,79 @@ table.st-table td form {
     cursor: not-allowed !important;
     pointer-events: none;
 }
+
+/* === Admin Booking Tabs (moved from admin/bookings/index.blade.php) === */
+.st-stat-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--st-surface, #fff);
+    border: 2px solid var(--st-border, #e5e7eb);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.st-stat-tab:hover {
+    border-color: var(--st-primary, #3b82f6);
+    transform: translateY(-2px);
+}
+.st-stat-tab--active {
+    border-color: var(--st-primary, #3b82f6);
+    background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.05) 100%);
+}
+.st-stat-tab__count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--st-primary, #3b82f6);
+}
+.st-stat-tab__label {
+    font-size: 0.75rem;
+    color: var(--st-text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* === Reschedule Layout (moved from admin/bookings/reschedule.blade.php) === */
+.st-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin: 1.5rem 0;
+}
+.st-form-section {
+    background: var(--st-surface-alt, #f8fafc);
+    padding: 1.5rem;
+    border-radius: 12px;
+}
+.st-form-section__title {
+    margin: 0 0 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--st-text-primary, #1e293b);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.st-detail-table {
+    width: 100%;
+}
+.st-detail-table td {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--st-border, #e5e7eb);
+}
+.st-detail-table td:first-child {
+    color: var(--st-text-muted, #64748b);
+    width: 40%;
+}
+.st-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--st-border, #e5e7eb);
+}
+
+
+
