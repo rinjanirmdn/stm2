@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class SlotService
 {
@@ -192,16 +193,47 @@ class SlotService
             $activityType = 'status_change';
         }
 
-        return DB::table('activity_logs')->insert([
-            'type' => $activityType,
+        $payload = [
             'description' => $description,
-            'mat_doc' => null,
-            'po_number' => null,
-            'slot_id' => $slotId,
-            'user_id' => $createdBy,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        ];
+
+        if (Schema::hasColumn('activity_logs', 'created_at')) {
+            $payload['created_at'] = now();
+        }
+        if (Schema::hasColumn('activity_logs', 'updated_at')) {
+            $payload['updated_at'] = now();
+        }
+
+        if (Schema::hasColumn('activity_logs', 'mat_doc')) {
+            $payload['mat_doc'] = null;
+        }
+        if (Schema::hasColumn('activity_logs', 'po_number')) {
+            $payload['po_number'] = null;
+        }
+        if (Schema::hasColumn('activity_logs', 'slot_id')) {
+            $payload['slot_id'] = $slotId;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'activity_type')) {
+            $payload['activity_type'] = $activityType;
+        } else {
+            $payload['type'] = $activityType;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'created_by')) {
+            $payload['created_by'] = $createdBy;
+        } else {
+            $payload['user_id'] = $createdBy;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'old_value')) {
+            $payload['old_value'] = $oldValue;
+        }
+        if (Schema::hasColumn('activity_logs', 'new_value')) {
+            $payload['new_value'] = $newValue;
+        }
+
+        return DB::table('activity_logs')->insert($payload);
     }
 
     /**
