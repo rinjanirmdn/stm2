@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Activity Logs - Slot Time Management')
 @section('page_title', 'Activity Logs')
@@ -64,7 +64,7 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Time</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" data-type="date" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" data-type="date" title="Sort">â‡…</button>
                                             </span>
                                         </div>
                                     </th>
@@ -72,7 +72,7 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Type</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="activity_type" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="activity_type" data-type="text" title="Sort">â‡…</button>
                                             </span>
                                         </div>
                                     </th>
@@ -80,7 +80,7 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Description</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="description" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="description" data-type="text" title="Sort">â‡…</button>
                                             </span>
                                         </div>
                                     </th>
@@ -88,7 +88,7 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">MAT DOC</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" data-type="text" title="Sort">â‡…</button>
                                             </span>
                                         </div>
                                     </th>
@@ -96,7 +96,7 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">PO</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" data-type="text" title="Sort">â‡…</button>
                                             </span>
                                         </div>
                                     </th>
@@ -104,7 +104,7 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">User</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="user" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="user" data-type="text" title="Sort">â‡…</button>
                                             </span>
                                         </div>
                                     </th>
@@ -183,61 +183,7 @@
 
 <!-- Flatpickr JS - loaded globally in layout -->
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var dateRangeInput = document.getElementById('date_range');
-    var dateFromInput = document.getElementById('date_from');
-    var dateToInput = document.getElementById('date_to');
+@push('scripts')
+@vite(['resources/js/pages/logs-index.js'])
+@endpush
 
-    if (dateRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
-        var initial = dateFromInput && dateFromInput.value ? dateFromInput.value : '';
-        if (initial) {
-            dateRangeInput.value = initial;
-        }
-
-        window.jQuery(dateRangeInput).dateRangePicker({
-            autoClose: true,
-            singleDate: true,
-            showShortcuts: false,
-            singleMonth: true,
-            format: 'YYYY-MM-DD'
-        }).bind('datepicker-change', function(event, obj) {
-            var value = (obj && obj.value) ? obj.value : '';
-            if (dateFromInput) dateFromInput.value = value;
-            if (dateToInput) dateToInput.value = value;
-            dateRangeInput.value = value;
-        });
-    }
-
-    // Auto-submit form on input change
-    const logsFilterForm = document.getElementById('logs-filter-form');
-    if (logsFilterForm) {
-        // Auto-submit on select change
-        logsFilterForm.addEventListener('change', function(e) {
-            if (e.target.tagName === 'SELECT') {
-                logsFilterForm.submit();
-            }
-        });
-
-        // Auto-submit on input with debounce for text inputs
-        const textInputs = logsFilterForm.querySelectorAll('input[type="text"]');
-        textInputs.forEach(function(input) {
-            let timeout;
-            input.addEventListener('input', function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(function() {
-                    logsFilterForm.submit();
-                }, 500); // 500ms debounce
-            });
-
-            // Submit on Enter key
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    clearTimeout(timeout);
-                    logsFilterForm.submit();
-                }
-            });
-        });
-    }
-});
-</script>

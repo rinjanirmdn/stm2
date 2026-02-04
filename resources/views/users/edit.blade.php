@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Edit User - Slot Time Management')
 @section('page_title', 'Edit User')
@@ -71,21 +71,6 @@
 @endsection
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var roleSelect = document.getElementById('role');
-    var vendorField = document.getElementById('vendor_code_field');
-
-    function syncVendorField() {
-        if (!roleSelect || !vendorField) return;
-        var role = String(roleSelect.value || '');
-        vendorField.style.display = role === 'vendor' ? 'block' : 'none';
-    }
-
-    if (roleSelect) {
-        roleSelect.addEventListener('change', syncVendorField);
-        syncVendorField();
-    }
-});
-</script>
+@vite(['resources/js/pages/users-edit.js'])
 @endpush
+

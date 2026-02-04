@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
-    @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/css/vendor.css', 'resources/js/app.js', 'resources/js/vendor.js'])
+    @vite(['resources/css/style.css', 'resources/css/vendor.css', 'resources/js/app.js', 'resources/js/pages/vendor.js'])
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     @stack('styles')
@@ -144,206 +144,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-date-range-picker@0.21.1/dist/jquery.daterangepicker.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Notification Toggle
-            const notifBtn = document.getElementById('notification-btn');
-            const notifDropdown = document.getElementById('notification-dropdown');
-
-            if (notifBtn && notifDropdown) {
-                notifBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    notifDropdown.classList.toggle('show');
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!notifDropdown.contains(e.target) && !notifBtn.contains(e.target)) {
-                        notifDropdown.classList.remove('show');
-                    }
-                });
-            }
-        });
-
-        function updateNotificationBadge(deltaToRemove) {
-            var badge = document.getElementById('notification-count');
-            if (!badge) return;
-            var current = parseInt(badge.textContent || '0', 10);
-            if (!isFinite(current)) current = 0;
-            var next = Math.max(0, current - (deltaToRemove || 0));
-            if (next <= 0) {
-                badge.remove();
-                return;
-            }
-            badge.textContent = String(next);
-        }
-
-        function markAsRead(id) {
-            fetch('/notifications/' + id + '/read', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            }).then(function () {
-                var item = document.querySelector('[data-notification-id="' + id + '"]');
-                if (item && item.classList.contains('notification-item--unread')) {
-                    item.classList.remove('notification-item--unread');
-                    updateNotificationBadge(1);
-                }
-            });
-        }
-
-        function markAllAsRead() {
-            fetch('{{ route('notifications.markAllRead') }}', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            }).then(function () {
-                document.querySelectorAll('.notification-item--unread').forEach(function (item) {
-                    item.classList.remove('notification-item--unread');
-                });
-                var badge = document.getElementById('notification-count');
-                if (badge) badge.remove();
-            });
-        }
-
-        function clearAllNotifications() {
-            fetch('{{ route('notifications.clearAll') }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
-                }
-            }).then(function () {
-                var list = document.querySelector('.notification-list');
-                if (list) {
-                    list.innerHTML = '<div class="notification-empty"><i class="fas fa-bell-slash notification-empty__icon"></i><p>No notifications yet</p></div>';
-                }
-                var badge = document.getElementById('notification-count');
-                if (badge) badge.remove();
-            });
-        }
-
-        function markAsReadAndGo(e, id, url) {
-            try {
-                if (e && typeof e.preventDefault === 'function') {
-                    e.preventDefault();
-                }
-                function normalizeUrl(u) {
-                    try {
-                        var s = String(u || '');
-                        if (!s) return '#';
-                        if (s.indexOf('://') !== -1) {
-                            var parsed = new URL(s);
-                            return parsed.pathname + parsed.search + parsed.hash;
-                        }
-                        return s;
-                    } catch (ex) {
-                        return '#';
-                    }
-                }
-
-                var target = normalizeUrl(url);
-                markAsRead(id);
-                setTimeout(function () {
-                    window.location.href = target;
-                }, 80);
-                return false;
-            } catch (err) {
-                return true;
-            }
-        }
-
-        @php
-            $vendorLatestUrl = \Illuminate\Support\Facades\Route::has('notifications.latest')
-                ? route('notifications.latest')
-                : null;
-        @endphp
-        (function () {
-            var latestUrl = {!! $vendorLatestUrl ? json_encode($vendorLatestUrl) : 'null' !!};
-            var toast = document.getElementById('vendor-notification-toast');
-            var toastText = document.getElementById('vendor-notification-toast-text');
-            var toastTimer = null;
-            var storageKey = 'vendor_last_notification_id';
-
-            if (!latestUrl || !toast || !toastText) {
-                return;
-            }
-
-            function showNotification(notification) {
-                if (!notification) {
-                    return;
-                }
-                toastText.textContent = (notification.title || 'Notification') + ' - ' + (notification.message || '');
-                toast.style.display = 'block';
-
-                if (toastTimer) {
-                    clearTimeout(toastTimer);
-                }
-                toastTimer = setTimeout(function () {
-                    toast.style.display = 'none';
-                }, 3000);
-            }
-
-            function checkLatest() {
-                fetch(latestUrl, { headers: { 'Accept': 'application/json' } })
-                    .then(function (resp) { return resp.json(); })
-                    .then(function (data) {
-                        if (!data || !data.success || !data.notification) {
-                            return;
-                        }
-                        var lastId = localStorage.getItem(storageKey);
-                        if (!lastId) {
-                            localStorage.setItem(storageKey, data.notification.id);
-                            return;
-                        }
-                        if (lastId !== data.notification.id) {
-                            localStorage.setItem(storageKey, data.notification.id);
-                            showNotification(data.notification);
-                        }
-                    })
-                    .catch(function () {
-                        // ignore
-                    });
-            }
-
-            checkLatest();
-            setInterval(checkLatest, 60 * 1000);
-        })();
-
-        document.addEventListener('DOMContentLoaded', function () {
-            var markAllBtn = document.getElementById('notification-mark-all');
-            var clearBtn = document.getElementById('notification-clear');
-            if (markAllBtn) {
-                markAllBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    markAllAsRead();
-                });
-            }
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    clearAllNotifications();
-                });
-            }
-        });
-    </script>
+    @php
+        $stVendorLatestUrl = \Illuminate\Support\Facades\Route::has('notifications.latest')
+            ? route('notifications.latest')
+            : null;
+        $stVendorMarkAllUrl = \Illuminate\Support\Facades\Route::has('notifications.markAllRead')
+            ? route('notifications.markAllRead')
+            : null;
+        $stVendorClearUrl = \Illuminate\Support\Facades\Route::has('notifications.clearAll')
+            ? route('notifications.clearAll')
+            : null;
+    @endphp
+    <script type="application/json" id="st-vendor-config">{!! json_encode([
+        'latestUrl' => $stVendorLatestUrl,
+        'notifications' => [
+            'markAllUrl' => $stVendorMarkAllUrl,
+            'clearUrl' => $stVendorClearUrl,
+            'readBaseUrl' => '/notifications',
+        ],
+    ]) !!}</script>
     <script type="application/json" id="indonesia_holidays_global">{!! json_encode($holidays ?? []) !!}</script>
-    <script>
-        window.getIndonesiaHolidays = function() {
-            try {
-                return JSON.parse(document.getElementById('indonesia_holidays_global').textContent || '{}');
-            } catch(e) {
-                return {};
-            }
-        };
-    </script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     @stack('scripts')
 </body>
 </html>

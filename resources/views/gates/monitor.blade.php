@@ -73,40 +73,5 @@
 @endsection
 
 @push('scripts')
-@vite(['resources/js/gate-status.js'])
-<script>
-let autoRefresh = true;
-
-function toggleAutoRefresh() {
-    autoRefresh = !autoRefresh;
-    const statusEl = document.getElementById('refresh-status');
-    const btn = event.target.closest('button');
-
-    if (autoRefresh) {
-        statusEl.textContent = 'Auto Refresh ON';
-        btn.classList.remove('st-btn--danger');
-        btn.classList.add('st-btn--outline');
-        window.gateStatusMonitor.connect();
-    } else {
-        statusEl.textContent = 'Auto Refresh OFF';
-        btn.classList.remove('st-btn--outline');
-        btn.classList.add('st-btn--danger');
-        window.gateStatusMonitor.disconnect();
-    }
-}
-
-// Initial load
-document.addEventListener('DOMContentLoaded', () => {
-    // Load initial data
-    fetch('/api/gate-status')
-        .then(response => response.json())
-        .then(data => {
-            data.gates.forEach(gate => {
-                window.gateStatusMonitor.gateStatuses.set(gate.id, gate);
-                window.gateStatusMonitor.updateGateUI(gate);
-            });
-            window.gateStatusMonitor.updateSummaryStats();
-        });
-});
-</script>
+@vite(['resources/js/pages/gate-status.js', 'resources/js/pages/gates-monitor.js'])
 @endpush

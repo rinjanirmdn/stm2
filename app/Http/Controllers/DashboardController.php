@@ -121,6 +121,8 @@ class DashboardController extends Controller
         // Merge pending bookings with schedule data for chart
         $allScheduleData = array_merge($schedule, $pendingBookings);
 
+        $processStatusCounts = $this->buildProcessStatusCounts($scheduleDate, $scheduleFrom, $scheduleTo);
+
         // Debug: Log schedule data
         Log::info('Schedule data sent to view', [
             'schedule_count' => count($schedule),
@@ -154,7 +156,7 @@ class DashboardController extends Controller
             + (int) ($rangeStats['completed'] ?? 0)
             + (int) ($rangeStats['cancelled'] ?? 0);
 
-        return view('dashboard', [
+        return view('dashboard.index', [
             'pendingApprovals' => $pendingApprovals,
             'today' => $today,
             'range_start' => $rangeStart,
@@ -264,6 +266,7 @@ class DashboardController extends Controller
             'schedule' => $allScheduleData, // Includes pending from booking_requests
             'slots_only' => $schedule, // Pure slots data for chart
             'timelineBlocksByGate' => $timelineBlocks,
+            'processStatusCounts' => $processStatusCounts,
 
             // Activity data
             'activity_date' => $activityDate,
@@ -288,6 +291,59 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             return [];
         }
+    }
+
+    private function buildProcessStatusCounts(string $scheduleDate, string $scheduleFrom, string $scheduleTo): array
+    {
+        $counts = [
+            'pending' => 0,
+            'scheduled' => 0,
+            'waiting' => 0,
+            'in_progress' => 0,
+            'completed' => 0,
+            'cancelled' => 0,
+        ];
+
+        $dateFilter = $scheduleDate !== '' ? $scheduleDate : date('Y-m-d');
+
+        $slotStats = DB::table('slots')
+            ->where(function($q) use ($dateFilter) {
+                $q->whereDate('actual_start', $dateFilter)
+                    ->orWhereDate('planned_start', $dateFilter);
+            })
+            ->where(function($q) {
+                $q->whereNull('slot_type')
+                    ->orWhere('slot_type', '!=', 'unplanned');
+            })
+            ->whereNotIn('status', ['pending_approval', 'cancelled'])
+            ->selectRaw("
+                SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled,
+                SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) as waiting,
+                SUM(CASE WHEN status = 'arrived' THEN 1 ELSE 0 END) as arrived,
+                SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+            ")
+            ->first();
+
+        $counts['scheduled'] = (int) ($slotStats->scheduled ?? 0);
+        $counts['waiting'] = (int) (($slotStats->waiting ?? 0) + ($slotStats->arrived ?? 0));
+        $counts['in_progress'] = (int) ($slotStats->in_progress ?? 0);
+        $counts['completed'] = (int) ($slotStats->completed ?? 0);
+        $counts['cancelled'] = (int) ($slotStats->cancelled ?? 0);
+
+        $pendingCount = \App\Models\BookingRequest::query()
+            ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
+            ->when($scheduleFrom && $scheduleTo, function($q) use ($scheduleFrom, $scheduleTo) {
+                return $q->whereBetween('planned_start', [$scheduleFrom, $scheduleTo]);
+            }, function($q) use ($dateFilter) {
+                return $q->whereDate('planned_start', $dateFilter);
+            })
+            ->count();
+
+        $counts['pending'] += $pendingCount;
+
+        return $counts;
     }
 
     /**

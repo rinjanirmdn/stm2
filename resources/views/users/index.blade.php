@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Users - Slot Time Management')
 @section('page_title', 'Users')
@@ -43,8 +43,8 @@
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Email</span>
                                         <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="email" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="email" title="Filter">⏷</button>
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="email" data-type="text" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="email" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="email">
                                             <div class="st-panel__title">Email Filter</div>
@@ -68,8 +68,8 @@
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Name</span>
                                         <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="name" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="name" title="Filter">⏷</button>
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="name" data-type="text" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="name" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="name">
                                             <div class="st-panel__title">Name Filter</div>
@@ -93,8 +93,8 @@
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Role</span>
                                         <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="role" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="role" title="Filter">⏷</button>
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="role" data-type="text" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="role" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="role">
                                             <div class="st-panel__title">Role Filter</div>
@@ -124,8 +124,8 @@
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Status</span>
                                         <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="is_active" data-type="text" title="Sort">⇅</button>
-                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="is_active" title="Filter">⏷</button>
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="is_active" data-type="text" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="is_active" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="is_active">
                                             <div class="st-panel__title">Status Filter</div>
@@ -153,7 +153,7 @@
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Created</span>
                                         <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" data-type="date" title="Sort">⇅</button>
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" data-type="date" title="Sort">â‡…</button>
                                         </span>
                                         <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="created_at">
                                             <div class="st-panel__title">Sort Created</div>
@@ -243,38 +243,6 @@
 @endsection
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit form on input change
-    const userFilterForm = document.getElementById('user-filter-form');
-    if (userFilterForm) {
-        // Auto-submit on select change
-        userFilterForm.addEventListener('change', function(e) {
-            if (e.target.tagName === 'SELECT') {
-                userFilterForm.submit();
-            }
-        });
-
-        // Auto-submit on input with debounce for text inputs
-        const textInputs = userFilterForm.querySelectorAll('input[type="text"]');
-        textInputs.forEach(function(input) {
-            let timeout;
-            input.addEventListener('input', function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(function() {
-                    userFilterForm.submit();
-                }, 500); // 500ms debounce
-            });
-
-            // Submit on Enter key
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    clearTimeout(timeout);
-                    userFilterForm.submit();
-                }
-            });
-        });
-    }
-});
-</script>
+@vite(['resources/js/pages/users-index.js'])
 @endpush
+

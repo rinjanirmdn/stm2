@@ -1,4 +1,4 @@
-@extends('vendor.layouts.vendor')
+﻿@extends('vendor.layouts.vendor')
 
 @section('title', 'Gate Availability - Vendor Portal')
 
@@ -88,12 +88,11 @@
 @endsection
 
 @push('scripts')
-    <script>
-        window.vendorAvailabilityConfig = {
-            selectedDate: @json($selectedDate),
-            holidays: @json($holidays ?? []),
-            availableSlotsUrl: @json(route('vendor.ajax.available_slots')),
-            bookingCreateUrl: @json(route('vendor.bookings.create'))
-        };
-    </script>
+<script type="application/json" id="vendor_availability_config">{!! json_encode([
+    'selectedDate' => $selectedDate,
+    'holidays' => $holidays ?? [],
+    'availableSlotsUrl' => route('vendor.ajax.available_slots'),
+    'bookingCreateUrl' => route('vendor.bookings.create'),
+]) !!}</script>
 @endpush
+

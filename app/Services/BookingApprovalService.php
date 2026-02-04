@@ -33,7 +33,7 @@ class BookingApprovalService
      */
     public function createBookingRequest(array $data, User $vendor): Slot
     {
-        // Removed DB::transaction to debug persistence issue
+        // NOTE: Intentionally not wrapped in a transaction due to prior persistence issue.
         // Calculate planned finish
         $plannedFinish = $this->slotService->computePlannedFinish(
             $data['planned_start'],
@@ -89,22 +89,18 @@ class BookingApprovalService
         );
 
         // Log activity
-            try {
-                ActivityLog::create([
-                    'type' => 'booking_requested',
-                    'description' => "New booking request submitted for PO: {$slot->po_number}",
-                    'po_number' => $slot->po_number,
-                    'mat_doc' => $slot->mat_doc ?? null,
-                    'slot_id' => $slot->id,
-                    'user_id' => $vendor->id,
-                ]);
-            } catch (\Throwable $e) {
-                Log::error('Failed to log activity for booking request: ' . $e->getMessage(), [
-                    'slot_id' => $slot->id,
-                    'po_number' => $slot->po_number,
-                    'vendor_id' => $vendor->id,
-                ]);
-            }
+        $this->safeActivityLog('booking_requested', [
+            'type' => 'booking_requested',
+            'description' => "New booking request submitted for PO: {$slot->po_number}",
+            'po_number' => $slot->po_number,
+            'mat_doc' => $slot->mat_doc ?? null,
+            'slot_id' => $slot->id,
+            'user_id' => $vendor->id,
+        ], [
+            'slot_id' => $slot->id,
+            'po_number' => $slot->po_number,
+            'vendor_id' => $vendor->id,
+        ]);
 
         // Notify admins about new booking request
         $this->notifyAdminsNewBooking($slot);
@@ -169,22 +165,18 @@ class BookingApprovalService
             $matDoc = $slot->mat_doc ?? null;
             $adminId = (int) $admin->id;
             DB::afterCommit(function () use ($slot, $slotId, $poNumber, $matDoc, $adminId, $bookingRequestId, $action) {
-                try {
-                    ActivityLog::create([
-                        'type' => 'booking_approved',
-                        'description' => "Approved booking request for PO: {$poNumber}",
-                        'po_number' => $poNumber !== '' ? $poNumber : null,
-                        'mat_doc' => $matDoc,
-                        'slot_id' => $slotId,
-                        'user_id' => $adminId,
-                    ]);
-                } catch (\Throwable $e) {
-                    Log::error('Failed to log activity for booking approval: ' . $e->getMessage(), [
-                        'slot_id' => $slotId,
-                        'po_number' => $poNumber,
-                        'admin_id' => $adminId,
-                    ]);
-                }
+                $this->safeActivityLog('booking_approved', [
+                    'type' => 'booking_approved',
+                    'description' => "Approved booking request for PO: {$poNumber}",
+                    'po_number' => $poNumber !== '' ? $poNumber : null,
+                    'mat_doc' => $matDoc,
+                    'slot_id' => $slotId,
+                    'user_id' => $adminId,
+                ], [
+                    'slot_id' => $slotId,
+                    'po_number' => $poNumber,
+                    'admin_id' => $adminId,
+                ]);
 
                 $this->notifyVendorApproved($slot, $bookingRequestId, $action === Slot::APPROVAL_RESCHEDULED);
             });
@@ -271,23 +263,19 @@ class BookingApprovalService
             );
 
             // Log activity
-            try {
-                ActivityLog::create([
-                    'type' => 'booking_rejected',
-                    'description' => "Rejected booking request for PO: {$slot->po_number} - Reason: {$reason}",
-                    'po_number' => $slot->po_number,
-                    'mat_doc' => $slot->mat_doc ?? null,
-                    'slot_id' => $slot->id,
-                    'user_id' => $admin->id,
-                ]);
-            } catch (\Throwable $e) {
-                Log::error('Failed to log activity for booking rejection: ' . $e->getMessage(), [
-                    'slot_id' => $slot->id,
-                    'po_number' => $slot->po_number,
-                    'admin_id' => $admin->id,
-                    'reason' => $reason,
-                ]);
-            }
+            $this->safeActivityLog('booking_rejected', [
+                'type' => 'booking_rejected',
+                'description' => "Rejected booking request for PO: {$slot->po_number} - Reason: {$reason}",
+                'po_number' => $slot->po_number,
+                'mat_doc' => $slot->mat_doc ?? null,
+                'slot_id' => $slot->id,
+                'user_id' => $admin->id,
+            ], [
+                'slot_id' => $slot->id,
+                'po_number' => $slot->po_number,
+                'admin_id' => $admin->id,
+                'reason' => $reason,
+            ]);
 
             // Notify vendor
             $this->notifyVendorRejected($slot);
@@ -506,6 +494,15 @@ class BookingApprovalService
         }
 
         return $slots;
+    }
+
+    private function safeActivityLog(string $type, array $payload, array $context = []): void
+    {
+        try {
+            ActivityLog::create($payload);
+        } catch (\Throwable $e) {
+            Log::error('Failed to log activity: ' . $type . ' - ' . $e->getMessage(), $context);
+        }
     }
 
     /**

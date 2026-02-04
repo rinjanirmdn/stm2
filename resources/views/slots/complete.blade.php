@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Complete Slot - Slot Time Management')
 @section('page_title', 'Complete Slot')
@@ -58,9 +58,8 @@
 
     <script type="application/json" id="truck_types_json">{{ json_encode(array_values($truckTypes)) }}</script>
 
-    <!-- Debug info -->
-    <script>
-    console.log('Complete page - Truck types count:', {{ count($truckTypes) }});
-    console.log('Complete page - Using standard dropdown instead of autocomplete');
-    </script>
+    @push('scripts')
+@vite(['resources/js/pages/slots-complete.js'])
+@endpush
 @endsection
+

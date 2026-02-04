@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Slot Time Management</title>
-    @vite(['resources/css/app.css', 'resources/css/style.css', 'resources/js/app.js'])
+    @vite(['resources/css/style.css', 'resources/js/app.js'])
 </head>
 <body>
     <div class="st-minh-screen st-flex st-items-center st-justify-center">

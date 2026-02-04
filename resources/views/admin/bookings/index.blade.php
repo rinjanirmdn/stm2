@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Booking Requests')
 @section('page_title', 'Booking Requests')
@@ -76,8 +76,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Request</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="request_number" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="request_number" title="Filter">⏷</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="request_number" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="request_number" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="request_number">
                                                 <div class="st-font-semibold st-mb-6">Request Filter</div>
@@ -92,8 +92,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">PO</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po_number" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po_number" title="Filter">⏷</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po_number" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po_number" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="po_number">
                                                 <div class="st-font-semibold st-mb-6">PO Filter</div>
@@ -108,8 +108,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Supplier</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="supplier_name" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="supplier_name" title="Filter">⏷</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="supplier_name" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="supplier_name" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="supplier_name">
                                                 <div class="st-font-semibold st-mb-6">Supplier Filter</div>
@@ -124,7 +124,7 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">COA</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="coa" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="coa" title="Sort">â‡…</button>
                                             </span>
                                         </div>
                                     </th>
@@ -132,8 +132,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Scheduled</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="planned_start" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_start" title="Filter">⏷</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="planned_start" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_start" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="planned_start">
                                                 <div class="st-font-semibold st-mb-6">Scheduled Filter</div>
@@ -149,8 +149,8 @@
                                             <div class="st-colhead">
                                                 <span class="st-colhead__label">Ticket</span>
                                                 <span class="st-colhead__icons">
-                                                    <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="converted_ticket" title="Sort">⇅</button>
-                                                    <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="converted_ticket" title="Filter">⏷</button>
+                                                    <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="converted_ticket" title="Sort">â‡…</button>
+                                                    <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="converted_ticket" title="Filter">â·</button>
                                                 </span>
                                                 <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="converted_ticket">
                                                     <div class="st-font-semibold st-mb-6">Ticket Filter</div>
@@ -166,9 +166,9 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Gate</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="gate" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="gate" title="Sort">â‡…</button>
                                                 @if($showConvertedTicket)
-                                                    <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_gate_id" title="Filter">⏷</button>
+                                                    <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_gate_id" title="Filter">â·</button>
                                                 @endif
                                             </span>
                                             @if($showConvertedTicket)
@@ -193,8 +193,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Direction</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">⏷</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="direction">
                                                 <div class="st-font-semibold st-mb-6">Direction Filter</div>
@@ -213,8 +213,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Status</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status_filter" title="Filter">⏷</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status_filter" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="status_filter">
                                                 <div class="st-font-semibold st-mb-6">Status Filter</div>
@@ -235,8 +235,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Requested At</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="created_at" title="Filter">⏷</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="created_at" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="created_at">
                                                 <div class="st-font-semibold st-mb-6">Requested At Filter</div>
@@ -399,169 +399,12 @@
     </div>
 </div>
 
-<style>
-.st-stat-tab {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    background: var(--st-surface, #fff);
-    border: 2px solid var(--st-border, #e5e7eb);
-    border-radius: 12px;
-    text-decoration: none;
-    transition: all 0.2s ease;
-}
-
-.st-stat-tab:hover {
-    border-color: var(--st-primary, #3b82f6);
-    transform: translateY(-2px);
-}
-
-.st-stat-tab--active {
-    border-color: var(--st-primary, #3b82f6);
-    background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.05) 100%);
-}
-
-.st-stat-tab__count {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--st-primary, #3b82f6);
-}
-
-.st-stat-tab__label {
-    font-size: 0.75rem;
-    color: var(--st-text-muted, #64748b);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-/* Action Dropdown Styles */
-.st-action-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.st-action-menu {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    z-index: 1000;
-    min-width: 120px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    display: none;
-    padding: 4px 0;
-}
-
-.st-action-menu.show {
-    display: block;
-}
-
-.st-action-item {
-    display: block;
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 12px;
-    color: #374151;
-    text-decoration: none;
-    background: none;
-    border: none;
-    text-align: left;
-    cursor: pointer;
-    transition: background-color 0.15s ease-in-out;
-}
-
-.st-action-item:hover {
-    background-color: #f3f4f6;
-    color: #111827;
-}
-
-.st-action-item--danger {
-    color: #dc2626;
-}
-
-.st-action-item--danger:hover {
-    background-color: #fef2f2;
-    color: #b91c1c;
-}
-
-</style>
-
 @endsection
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const bookingFilterForm = document.getElementById('booking-filter-form');
-    if (bookingFilterForm) {
-        const searchInput = bookingFilterForm.querySelector('input[name="search"]');
-        if (searchInput) {
-            let timeout;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(function() {
-                    bookingFilterForm.submit();
-                }, 500);
-            });
-            searchInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    clearTimeout(timeout);
-                    bookingFilterForm.submit();
-                }
-            });
-        }
-    }
-});
-
-function openRejectModal(bookingId, ticketNumber) {
-    const modal = document.getElementById('reject-modal');
-    const ticketEl = document.getElementById('reject-ticket');
-    const formEl = document.getElementById('reject-form');
-    if (!modal || !ticketEl || !formEl) return;
-    ticketEl.textContent = ticketNumber;
-    formEl.action = "{{ url('/bookings') }}/" + bookingId + "/reject";
-    modal.classList.add('active');
-}
-
-function closeRejectModal() {
-    const modal = document.getElementById('reject-modal');
-    if (!modal) return;
-    modal.classList.remove('active');
-}
-
-document.addEventListener('click', function(e) {
-    const trigger = e.target.closest ? e.target.closest('.st-action-trigger') : null;
-    if (trigger) {
-        e.preventDefault();
-        e.stopPropagation();
-        const menu = trigger.nextElementSibling;
-        document.querySelectorAll('.st-action-menu.show').forEach(function(m) {
-            if (m !== menu) m.classList.remove('show');
-        });
-        if (menu) menu.classList.toggle('show');
-        return;
-    }
-    document.querySelectorAll('.st-action-menu.show').forEach(function(m) {
-        m.classList.remove('show');
-    });
-});
-
-function openApproveModal(id, ticket) {
-    const modal = document.getElementById('approveModal');
-    const ticketSpan = document.getElementById('modalTicketNumber');
-    const form = document.getElementById('approveForm');
-    if (!modal || !ticketSpan || !form) return;
-    ticketSpan.innerText = ticket;
-    form.action = "{{ url('/bookings') }}/" + id + "/approve";
-    modal.classList.add('active');
-}
-
-function closeApproveModal() {
-    const modal = document.getElementById('approveModal');
-    if (!modal) return;
-    modal.classList.remove('active');
-}
-</script>
+<script type="application/json" id="admin_bookings_index_config">{!! json_encode([
+    'bookingsBaseUrl' => url('/bookings'),
+]) !!}</script>
+@vite(['resources/js/pages/admin-bookings-index.js'])
 @endpush
+

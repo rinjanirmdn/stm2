@@ -1,4 +1,4 @@
-@extends('vendor.layouts.vendor')
+﻿@extends('vendor.layouts.vendor')
 
 @section('title', 'Create Booking - Vendor Portal')
 
@@ -50,12 +50,11 @@
 </div>
 
 @push('scripts')
-    <script>
-        window.vendorBookingCreateConfig = {
-            poSearchUrl: @json(route('vendor.ajax.po_search')),
-            poDetailUrl: @json(url('vendor/ajax/po')),
-            availableSlotsUrl: @json(route('vendor.ajax.available_slots'))
-        };
-    </script>
+<script type="application/json" id="vendor_booking_create_config">{!! json_encode([
+    'poSearchUrl' => route('vendor.ajax.po_search'),
+    'poDetailUrl' => url('vendor/ajax/po'),
+    'availableSlotsUrl' => route('vendor.ajax.available_slots'),
+]) !!}</script>
 @endpush
 @endsection
+

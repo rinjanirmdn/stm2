@@ -263,7 +263,32 @@ class ReportController extends Controller
     {
         $data = $this->buildGateStatusTableData($request);
 
-        return view('gates.index', $data);
+        $paramDate = (string) ($data['date_from'] ?? '');
+        if ($paramDate === '') {
+            $paramDate = date('Y-m-d');
+        }
+
+        $daySlots = Slot::query()
+            ->whereDate('planned_start', $paramDate)
+            ->whereNotIn('status', [Slot::STATUS_CANCELLED, Slot::STATUS_REJECTED])
+            ->where(function($q) {
+                $q->whereNull('slot_type')->orWhere('slot_type', 'planned');
+            })
+            ->get();
+
+        $scheduledSlots = $daySlots->where('status', Slot::STATUS_SCHEDULED);
+        $waitingSlots = $daySlots->where('status', Slot::STATUS_WAITING);
+        $inProgressSlots = $daySlots->where('status', Slot::STATUS_IN_PROGRESS);
+        $completedSlots = $daySlots->where('status', Slot::STATUS_COMPLETED);
+
+        return view('gates.index', array_merge($data, [
+            'paramDate' => $paramDate,
+            'daySlots' => $daySlots,
+            'scheduledSlots' => $scheduledSlots,
+            'waitingSlots' => $waitingSlots,
+            'inProgressSlots' => $inProgressSlots,
+            'completedSlots' => $completedSlots,
+        ]));
     }
 
     private function buildGateStatusTableData(Request $request): array

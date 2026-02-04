@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Booking Detail')
 
@@ -14,7 +14,7 @@
             </h2>
             <div class="booking-detail__subtitle">
                 <span>{{ $booking->supplier_name ?? '-' }}</span>
-                <span class="booking-detail__dot">•</span>
+                <span class="booking-detail__dot">â€¢</span>
                 <span>{{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}</span>
             </div>
         </div>
@@ -316,77 +316,10 @@
 })->toJson() !!}</script>
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var gateSel = document.getElementById('approval_planned_gate_id');
-    var warehouseHidden = document.getElementById('approval_warehouse_id');
-
-    // Gate and warehouse sync
-    function syncWarehouseFromGate() {
-        if (!gateSel || !warehouseHidden) return;
-        var selected = gateSel.options[gateSel.selectedIndex];
-        if (!selected) return;
-        warehouseHidden.value = selected.getAttribute('data-warehouse-id') || '';
-    }
-
-    // Gate change listener
-    if (gateSel) {
-        gateSel.addEventListener('change', function() {
-            syncWarehouseFromGate();
-        });
-        // Initial sync if gate is pre-selected
-        if (gateSel.value) {
-            syncWarehouseFromGate();
-        }
-    }
-});
-
-function openApproveModal(id, ticket) {
-    const modal = document.getElementById('approveModal');
-    const ticketSpan = document.getElementById('modalTicketNumber');
-    const form = document.getElementById('approveForm');
-    const gateSelect = document.getElementById('modal_planned_gate_id');
-    const warehouseHidden = document.getElementById('modal_warehouse_id');
-
-    ticketSpan.innerText = ticket;
-    form.action = "{{ url('/bookings') }}/" + id + "/approve";
-
-    // Gate and warehouse sync for modal
-    function syncModalWarehouseFromGate() {
-        if (!gateSelect || !warehouseHidden) return;
-        const selected = gateSelect.options[gateSelect.selectedIndex];
-        if (!selected) return;
-        warehouseHidden.value = selected.getAttribute('data-warehouse-id') || '';
-    }
-
-    // Gate change listener for modal
-    if (gateSelect) {
-        gateSelect.addEventListener('change', function() {
-            syncModalWarehouseFromGate();
-        });
-        // Initial sync if gate is pre-selected
-        if (gateSelect.value) {
-            syncModalWarehouseFromGate();
-        }
-    }
-
-    modal.classList.add('active');
-}
-
-function closeApproveModal() {
-    document.getElementById('approveModal').classList.remove('active');
-}
-
-function openRejectModal(id, ticket) {
-    const modal = document.getElementById('reject-modal');
-    document.getElementById('reject-ticket').innerText = ticket;
-    document.getElementById('reject-form').action = "{{ url('/bookings') }}/" + id + "/reject";
-    modal.classList.add('active');
-}
-
-function closeRejectModal() {
-    document.getElementById('reject-modal').classList.remove('active');
-}
-</script>
+<script type="application/json" id="admin_bookings_show_config">{!! json_encode([
+    'bookingsBaseUrl' => url('/bookings'),
+]) !!}</script>
+@vite(['resources/js/pages/admin-bookings-show.js'])
 @endpush
 @endsection
+
