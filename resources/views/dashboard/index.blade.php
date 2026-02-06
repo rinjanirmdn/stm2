@@ -659,7 +659,7 @@
                                 $badgeMap = [
                                     'scheduled' => 'bg-secondary',
                                     'waiting' => 'bg-waiting',
-                                    'arrived' => 'bg-info',
+                                    'arrived' => 'bg-waiting',
                                     'in_progress' => 'bg-in_progress',
                                     'completed' => 'bg-completed',
                                     'cancelled' => 'bg-danger',

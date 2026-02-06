@@ -160,7 +160,7 @@ class Slot extends Model
         }
         return match ($this->status) {
             self::STATUS_SCHEDULED => 'Scheduled',
-            self::STATUS_ARRIVED => 'Arrived',
+            self::STATUS_ARRIVED => 'Waiting',
             self::STATUS_WAITING => 'Waiting',
             self::STATUS_IN_PROGRESS => 'In Progress',
             self::STATUS_COMPLETED => 'Completed',
@@ -180,7 +180,7 @@ class Slot extends Model
         }
         return match ($this->status) {
             self::STATUS_SCHEDULED => 'secondary',
-            self::STATUS_ARRIVED => 'info',
+            self::STATUS_ARRIVED => 'warning',
             self::STATUS_WAITING => 'warning',
             self::STATUS_IN_PROGRESS => 'primary',
             self::STATUS_COMPLETED => 'success',

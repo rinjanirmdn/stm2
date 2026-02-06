@@ -113,9 +113,6 @@
                 <div class="subtitle">
                     {{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}
                 </div>
-                @php
-                    $gateLetter = isset($slot->ticket_number) && strlen($slot->ticket_number) > 0 ? substr($slot->ticket_number, 0, 1) : '-';
-                @endphp
             </div>
 
             <div class="ticket-number">
@@ -141,7 +138,7 @@
                 <tr>
                     <td class="label-col">Gate</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ $gateLetter }}</td>
+                    <td class="value-col">{{ $gateLetter ?? '-' }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">ETA</td>

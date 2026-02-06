@@ -38,10 +38,16 @@ class SlotSeeder extends Seeder
             $vendors = $vendorQuery->get();
         } else {
             $vendors = collect([
-                (object) ['id' => null, 'code' => 'V001', 'name' => 'PT. Fast Expedition', 'type' => 'supplier'],
-                (object) ['id' => null, 'code' => 'V002', 'name' => 'PT. Indonesia Logistics', 'type' => 'supplier'],
-                (object) ['id' => null, 'code' => 'V003', 'name' => 'PT. Advanced Transport', 'type' => 'supplier'],
-                (object) ['id' => null, 'code' => 'C001', 'name' => 'PT. Main Customer', 'type' => 'customer'],
+                (object) ['id' => null, 'code' => 'V001', 'name' => 'PT Master Label', 'type' => 'supplier'],
+                (object) ['id' => null, 'code' => 'V002', 'name' => 'PT. Serunigraf Jaya Sentosa', 'type' => 'supplier'],
+                (object) ['id' => null, 'code' => 'V003', 'name' => 'Thai Polyethylene Co. LTD', 'type' => 'supplier'],
+                (object) ['id' => null, 'code' => 'V004', 'name' => 'Wenzhou Beston Import and Export Co', 'type' => 'supplier'],
+                (object) ['id' => null, 'code' => 'C001', 'name' => 'PT. Ganesha Abaditama', 'type' => 'customer'],
+                (object) ['id' => null, 'code' => 'C002', 'name' => 'PT. Sentra Asia gemilang', 'type' => 'customer'],
+                (object) ['id' => null, 'code' => 'C003', 'name' => 'PT. Buana Intiprima Usaha', 'type' => 'customer'],
+                (object) ['id' => null, 'code' => 'C004', 'name' => 'PT. Itama Ranoraya Tbk', 'type' => 'customer'],
+                (object) ['id' => null, 'code' => 'C005', 'name' => 'PT. TOPLA FONDAMEN SUKSES', 'type' => 'customer'],
+                (object) ['id' => null, 'code' => 'C006', 'name' => 'PT. Itama Ranoraya Tbk', 'type' => 'customer'],
             ]);
         }
         $truckTypes = DB::table('md_truck')->get();
@@ -53,33 +59,18 @@ class SlotSeeder extends Seeder
 
         $slotColumns = array_flip(Schema::getColumnListing('slots'));
 
-        $year = (int) now()->format('Y');
-        $startDate = Carbon::create($year, 1, 1)->startOfDay();
-        $endDate = Carbon::create($year, 2, 1)->endOfMonth()->endOfDay();
+        $startDate = now()->subDays(29)->startOfDay();
+        $endDate = now()->endOfDay();
 
-        $holidayDates = [
-            sprintf('%04d-01-01', $year),
-            sprintf('%04d-02-17', $year),
-        ];
+        $holidayDates = [];
 
         if (Schema::hasTable('booking_requests') && Schema::hasColumn('booking_requests', 'converted_slot_id')) {
-            $slotIds = DB::table('slots')
-                ->whereDate('planned_start', '>=', $startDate->toDateString())
-                ->whereDate('planned_start', '<=', $endDate->toDateString())
-                ->pluck('id')
-                ->all();
-
-            if (!empty($slotIds)) {
-                DB::table('booking_requests')
-                    ->whereIn('converted_slot_id', $slotIds)
-                    ->update(['converted_slot_id' => null]);
-            }
+            DB::table('booking_requests')
+                ->whereNotNull('converted_slot_id')
+                ->update(['converted_slot_id' => null]);
         }
 
-        DB::table('slots')
-            ->whereDate('planned_start', '>=', $startDate->toDateString())
-            ->whereDate('planned_start', '<=', $endDate->toDateString())
-            ->delete();
+        DB::table('slots')->delete();
 
         mt_srand(20260204);
         $slotRows = [];
@@ -90,6 +81,8 @@ class SlotSeeder extends Seeder
                 continue;
             }
 
+            $isToday = $date->isSameDay(Carbon::today());
+
             $dateStr = $date->format('Y-m-d');
             if (in_array($dateStr, $holidayDates, true)) {
                 continue;
@@ -98,6 +91,13 @@ class SlotSeeder extends Seeder
             $dayIndex = (int) $date->format('z');
             $dayRoll = $dayIndex % 14;
             $dayOfMonth = (int) $date->format('j');
+            $progress = 0;
+            try {
+                $totalDays = max(1, $startDate->diffInDays($endDate));
+                $progress = min(1, max(0, $startDate->diffInDays($date) / $totalDays));
+            } catch (\Throwable $e) {
+                $progress = 0;
+            }
             $peakDays = [3, 7, 10, 14, 18, 21, 25, 28];
             $valleyDays = [2, 6, 13, 17, 24, 27];
 
@@ -122,14 +122,18 @@ class SlotSeeder extends Seeder
                 }
 
                 foreach ($warehouseGates as $gate) {
+                    $baseCount = $progress < 0.35 ? 1 : ($progress < 0.75 ? 2 : 4);
                     $slotCount = match ($volumeTier) {
-                        'peak' => mt_rand(7, 12),
-                        'high' => mt_rand(6, 10),
-                        'medium' => mt_rand(4, 8),
-                        'valley' => mt_rand(2, 4),
-                        'low' => mt_rand(1, 3),
-                        default => mt_rand(3, 6),
+                        'peak' => $baseCount + 2,
+                        'high' => $baseCount + 1,
+                        'medium' => $baseCount,
+                        'valley' => 1,
+                        'low' => 1,
+                        default => $baseCount,
                     };
+                    if ($isToday) {
+                        $slotCount = max($slotCount, 6);
+                    }
                     $currentTime = $date->copy()->setTime(7, 0);
 
                     for ($i = 0; $i < $slotCount; $i++) {
@@ -153,21 +157,43 @@ class SlotSeeder extends Seeder
                         $direction = $vendorType === 'customer' ? 'outbound' : 'inbound';
 
                         $statusRoll = mt_rand(1, 100);
+                        $statusRoll = max(1, $statusRoll - (int) round($progress * 55));
                         if ($volumeTier === 'peak' || $volumeTier === 'high') {
-                            $status = $statusRoll <= 55 ? 'completed'
-                                : ($statusRoll <= 70 ? 'in_progress'
-                                    : ($statusRoll <= 85 ? 'waiting'
-                                        : ($statusRoll <= 95 ? 'arrived' : 'scheduled')));
+                            $completedCap = (int) round(35 + ($progress * 70));
+                            $inProgressCap = min(89, $completedCap + 6);
+                            $waitingCap = min(92, $inProgressCap + 2);
+                            $arrivedCap = min(94, $waitingCap + 2);
+                            $status = $statusRoll <= $completedCap ? 'completed'
+                                : ($statusRoll <= $inProgressCap ? 'in_progress'
+                                    : ($statusRoll <= $waitingCap ? 'waiting'
+                                        : ($statusRoll <= $arrivedCap ? 'arrived' : 'scheduled')));
                         } elseif ($volumeTier === 'valley' || $volumeTier === 'low') {
-                            $status = $statusRoll <= 20 ? 'completed'
-                                : ($statusRoll <= 45 ? 'in_progress'
-                                    : ($statusRoll <= 65 ? 'waiting'
-                                        : ($statusRoll <= 85 ? 'arrived' : 'scheduled')));
+                            $completedCap = (int) round(25 + ($progress * 65));
+                            $inProgressCap = min(85, $completedCap + 6);
+                            $waitingCap = min(89, $inProgressCap + 2);
+                            $arrivedCap = min(92, $waitingCap + 2);
+                            $status = $statusRoll <= $completedCap ? 'completed'
+                                : ($statusRoll <= $inProgressCap ? 'in_progress'
+                                    : ($statusRoll <= $waitingCap ? 'waiting'
+                                        : ($statusRoll <= $arrivedCap ? 'arrived' : 'scheduled')));
                         } else {
-                            $status = $statusRoll <= 35 ? 'completed'
-                                : ($statusRoll <= 55 ? 'in_progress'
-                                    : ($statusRoll <= 75 ? 'waiting'
-                                        : ($statusRoll <= 90 ? 'arrived' : 'scheduled')));
+                            $completedCap = (int) round(30 + ($progress * 75));
+                            $inProgressCap = min(87, $completedCap + 6);
+                            $waitingCap = min(90, $inProgressCap + 2);
+                            $arrivedCap = min(93, $waitingCap + 2);
+                            $status = $statusRoll <= $completedCap ? 'completed'
+                                : ($statusRoll <= $inProgressCap ? 'in_progress'
+                                    : ($statusRoll <= $waitingCap ? 'waiting'
+                                        : ($statusRoll <= $arrivedCap ? 'arrived' : 'scheduled')));
+                        }
+
+                        if ($isToday) {
+                            $todayCycle = ['scheduled', 'waiting', 'in_progress', 'cancelled', 'completed', 'scheduled', 'waiting'];
+                            $status = $todayCycle[($i + (int) ($gate->id ?? 0)) % count($todayCycle)];
+                        }
+
+                        if ($status === 'arrived') {
+                            $status = 'waiting';
                         }
 
                         $arrivalTime = null;
@@ -175,15 +201,17 @@ class SlotSeeder extends Seeder
                         $actualFinish = null;
 
                         if (in_array($status, ['arrived', 'waiting', 'in_progress', 'completed'], true)) {
-                            $arrivalTime = $plannedStart->copy()->addMinutes(mt_rand(-10, 15));
+                            $arrivalTime = $plannedStart->copy()->addMinutes(mt_rand(-6, 4));
                         }
 
                         if (in_array($status, ['in_progress', 'completed'], true)) {
-                            $actualStart = ($arrivalTime ?? $plannedStart)->copy()->addMinutes(mt_rand(5, 25));
+                            $actualStart = ($arrivalTime ?? $plannedStart)->copy()->addMinutes(mt_rand(1, 6));
                         }
 
                         if ($status === 'completed') {
-                            $actualFinish = ($actualStart ?? $plannedStart)->copy()->addMinutes($duration + mt_rand(-10, 35));
+                            $isLateSeed = mt_rand(1, 100) <= 8;
+                            $finishSlack = $isLateSeed ? mt_rand(5, 18) : mt_rand(-35, -8);
+                            $actualFinish = ($actualStart ?? $plannedStart)->copy()->addMinutes($duration + $finishSlack);
                         }
 
                         $isLate = false;
@@ -192,6 +220,7 @@ class SlotSeeder extends Seeder
                         }
 
                         $ticketNumber = sprintf('T%s%04d', $date->format('ymd'), $ticketCounter++);
+                        $poNumber = $date->format('ymd') . str_pad((string) mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
 
                         $slotData = [
                             'ticket_number' => $ticketNumber,
@@ -204,7 +233,7 @@ class SlotSeeder extends Seeder
                             'driver_number' => 'DRV' . mt_rand(1000, 9999),
                             'direction' => $direction,
                             'po_id' => null,
-                            'po_number' => sprintf('PO%s%03d', $date->format('ymd'), mt_rand(1, 999)),
+                            'po_number' => $poNumber,
                             'warehouse_id' => $warehouse->id,
                             'vendor_id' => $vendor->id ?? null,
                             'vendor_code' => (string) ($vendor->code ?? $vendor->bp_code ?? null),
@@ -223,7 +252,7 @@ class SlotSeeder extends Seeder
                             'cancelled_reason' => null,
                             'cancelled_at' => null,
                             'moved_gate' => false,
-                            'blocking_risk' => mt_rand(0, 2),
+                            'blocking_risk' => mt_rand(1, 100) <= 85 ? 0 : (mt_rand(1, 100) <= 75 ? 1 : 2),
                             'created_by' => null,
                             'slot_type' => 'planned',
                             'created_at' => now(),

@@ -1589,6 +1589,17 @@ class SlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Slot not found');
         }
 
+        $gateNumber = (string) ($slot->actual_gate_number ?? '');
+        $gateWarehouse = (string) ($slot->actual_gate_warehouse_code ?? '');
+        if ($gateNumber === '') {
+            $gateNumber = (string) ($slot->planned_gate_number ?? '');
+            $gateWarehouse = (string) ($slot->planned_gate_warehouse_code ?? '');
+        }
+        if ($gateWarehouse === '') {
+            $gateWarehouse = (string) ($slot->warehouse_code ?? '');
+        }
+        $gateLetter = $this->slotService->getGateLetterByWarehouseAndNumber($gateWarehouse, $gateNumber);
+
         // Generate barcode
         $barcodeC = new \Milon\Barcode\DNS1D();
         $barcodeC->setStorPath(storage_path('app/public/'));
@@ -1599,6 +1610,7 @@ class SlotController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
             'slot' => $slot,
+            'gateLetter' => $gateLetter,
             'barcodePng' => $barcodePng,
             'barcodeHtml' => null,
             'barcodeSvg' => null,
