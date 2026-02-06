@@ -465,35 +465,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var dashboardSlideshow = initDashboardSlideshow();
 
-    // Scroll to timeline section if URL contains filter parameters
-    if (window.location.search.includes('schedule_date') ||
+    var urlParams = new URLSearchParams(window.location.search);
+    var activeSlide = (urlParams.get('active_slide') || '').toLowerCase();
+    var hasTimelineFilter = window.location.search.includes('timeline_date') ||
         window.location.search.includes('timeline_gate') ||
+        window.location.search.includes('timeline_from') ||
+        window.location.search.includes('timeline_to');
+    var hasScheduleFilter = window.location.search.includes('schedule_date') ||
         window.location.search.includes('schedule_from') ||
-        window.location.search.includes('schedule_to')) {
+        window.location.search.includes('schedule_to');
+
+    if (activeSlide || hasTimelineFilter || hasScheduleFilter) {
         setTimeout(function () {
             if (dashboardSlideshow && typeof dashboardSlideshow.setIndex === 'function') {
-                dashboardSlideshow.setIndex(3, { userAction: false });
+                var slideIndex = 3;
+                if (activeSlide === 'schedule') {
+                    slideIndex = 4;
+                } else if (activeSlide === 'timeline') {
+                    slideIndex = 3;
+                } else {
+                    slideIndex = hasScheduleFilter && !hasTimelineFilter ? 4 : 3;
+                }
+                dashboardSlideshow.setIndex(slideIndex, { userAction: false });
             }
         }, 100);
-    }
-
-    // Handle form submission to add scroll behavior
-    var filterForm = document.getElementById('schedule-filter-form');
-    if (filterForm) {
-        filterForm.addEventListener('submit', function () {
-            // Store scroll position in sessionStorage
-            sessionStorage.setItem('scrollToTimeline', 'true');
-        });
-    }
-
-    // Check if we need to scroll after page load
-    if (sessionStorage.getItem('scrollToTimeline') === 'true') {
-        sessionStorage.removeItem('scrollToTimeline');
-        setTimeout(function () {
-            if (dashboardSlideshow && typeof dashboardSlideshow.setIndex === 'function') {
-                dashboardSlideshow.setIndex(3, { userAction: false });
-            }
-        }, 300);
     }
 
     try {
@@ -568,7 +563,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function initDatepicker(el, beforeShowDay, onSelect) {
-            return;
             if (!el) return;
             if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
             if (el.getAttribute('data-st-datepicker') === '1') return;
@@ -607,6 +601,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     return [true, 'is-holiday', globalHolidayData[ds]];
                 }
                 return [true, '', ''];
+            }, function () {
+                var form = input.closest('form');
+                if (form) {
+                    form.submit();
+                }
             });
         });
 
@@ -655,6 +654,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Auto-submit on select change
         form.addEventListener('change', function (e) {
             if (e.target.tagName === 'SELECT') {
+                if ((e.target.name === 'schedule_range' || e.target.name === 'timeline_range') && e.target.value === '') {
+                    return;
+                }
                 form.submit();
             }
         });
@@ -679,6 +681,56 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
+
+    function initRangeSelect(selectId, fromName, toName, customClass) {
+        var rangeSelect = document.getElementById(selectId);
+        if (!rangeSelect) return;
+        var rangeForm = rangeSelect.closest('form');
+        var fromInput = rangeForm ? rangeForm.querySelector('input[name="' + fromName + '"]') : null;
+        var toInput = rangeForm ? rangeForm.querySelector('input[name="' + toName + '"]') : null;
+        var customFields = rangeForm ? rangeForm.querySelectorAll(customClass) : [];
+        var rangeMap = {
+            full: ['00:00', '23:59'],
+            shift1: ['07:00', '15:00'],
+            shift2: ['15:00', '23:00'],
+            shift3: ['23:00', '07:00']
+        };
+
+        function toggleCustomFields(show) {
+            customFields.forEach(function (el) {
+                if (show) {
+                    el.classList.remove('st-hidden');
+                } else {
+                    el.classList.add('st-hidden');
+                }
+                el.style.display = show ? '' : 'none';
+            });
+        }
+
+        if (rangeForm) {
+            rangeForm.dataset.range = rangeSelect.value || 'custom';
+        }
+        toggleCustomFields(rangeSelect.value === '');
+
+        rangeSelect.addEventListener('change', function () {
+            if (!rangeForm || !fromInput || !toInput) return;
+            if (this.value === '') {
+                rangeForm.dataset.range = 'custom';
+                toggleCustomFields(true);
+                return;
+            }
+            var preset = rangeMap[this.value];
+            if (!preset) return;
+            fromInput.value = preset[0];
+            toInput.value = preset[1];
+            rangeForm.dataset.range = this.value;
+            toggleCustomFields(false);
+            rangeForm.submit();
+        });
+    }
+
+    initRangeSelect('schedule_range', 'schedule_from', 'schedule_to', '.st-schedule-range-custom');
+    initRangeSelect('timeline_range', 'timeline_from', 'timeline_to', '.st-timeline-range-custom');
 
     var timeline = document.getElementById('dashboard-timeline');
     var infoContent = document.getElementById('timeline-info-content');
@@ -2799,62 +2851,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (timeline) {
-        // Dynamic hour visibility - show only hours with data (default 07-23)
-        function computeVisibleHours() {
-            var blocks = timeline.querySelectorAll('.st-timeline-block[data-left][data-width]');
-            var dataHours = new Set();
-            var defaultStart = 7;
-            var defaultEnd = 23;
-
-            blocks.forEach(function(el) {
-                var leftMin = parseInt(el.getAttribute('data-left') || '0', 10);
-                var widthMin = parseInt(el.getAttribute('data-width') || '1', 10);
-                if (isNaN(leftMin) || isNaN(widthMin)) return;
-
-                var startHour = Math.floor(leftMin / 60);
-                var endHour = Math.ceil((leftMin + widthMin) / 60);
-
-                for (var h = startHour; h < endHour; h++) {
-                    dataHours.add(h);
-                }
-            });
-
-            // If no data, use default hours
-            if (dataHours.size === 0) {
-                return { start: defaultStart, end: defaultEnd, count: defaultEnd - defaultStart + 1 };
-            }
-
-            // Get min/max from data, but ensure at least default range
-            var dataMin = Math.min(...dataHours);
-            var dataMax = Math.max(...dataHours);
-
-            // Clamp to default operating hours (07–23)
-            var start = Math.max(defaultStart, dataMin);
-            var end = Math.min(defaultEnd, dataMax);
-
-            // Ensure minimum 8-hour window for usability
-            if (end - start < 7) {
-                end = Math.min(defaultEnd, start + 7);
-            }
-
-            return { start: start, end: end, count: end - start + 1 };
-        }
-
         function updateVisibleHours() {
-            var visible = computeVisibleHours();
             var hourEls = timeline.querySelectorAll('.st-timeline__hour');
-            var startHourAttr = parseInt(timeline.getAttribute('data-start-hour') || '7', 10);
+            var startHourAttr = parseInt(timeline.getAttribute('data-start-hour') || '0', 10);
+            var count = hourEls.length || 0;
 
-            hourEls.forEach(function(el, idx) {
-                var hour = startHourAttr + idx;
-                if (hour >= visible.start && hour <= visible.end) {
-                    el.style.display = '';
-                } else {
-                    el.style.display = 'none';
-                }
+            hourEls.forEach(function(el) {
+                el.style.display = '';
             });
 
-            // Update CSS variables for grid
+            var visible = {
+                start: startHourAttr,
+                end: startHourAttr + Math.max(0, count - 1),
+                count: count
+            };
+
             timeline.style.setProperty('--st-visible-hours', String(visible.count));
             timeline._stVisibleHours = visible;
 
@@ -2867,10 +2878,8 @@ document.addEventListener('DOMContentLoaded', function () {
             // Use dynamic visible hours
             var visible = timeline._stVisibleHours || updateVisibleHours();
             var startHour = visible.start;
-            var endHour = visible.end;
             var startMins = startHour * 60;
-            var endMins = (endHour + 1) * 60;
-            var totalMins = Math.max(1, endMins - startMins);
+            var totalMins = Math.max(1, visible.count * 60);
             var gridWidth = grid.clientWidth || grid.offsetWidth || 1;
             var pxPerMin = gridWidth / Math.max(1, totalMins);
             var hourWidthPx = Math.round(pxPerMin * 60);
@@ -2927,9 +2936,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (el.style.display === 'none') el.style.display = '';
 
                         // Calculate grid column positions based on visible hours
-                        var visible = timeline._stVisibleHours || { start: 7, end: 23, count: 17 };
-                        var startCol = Math.floor((relLeft / 60) - (visible.start - 7)) + 1;
-                        var endCol = Math.ceil(((relLeft + relWidth) / 60) - (visible.start - 7)) + 1;
+                        var visible = timeline._stVisibleHours || { start: 0, end: 23, count: 24 };
+                        var startCol = Math.floor(relLeft / 60) + 1;
+                        var endCol = Math.ceil((relLeft + relWidth) / 60) + 1;
 
                         // Ensure columns are within visible bounds
                         startCol = Math.max(1, Math.min(startCol, visible.count));
