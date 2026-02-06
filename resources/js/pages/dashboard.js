@@ -2644,13 +2644,13 @@ document.addEventListener('DOMContentLoaded', function () {
             var dataMin = Math.min(...dataHours);
             var dataMax = Math.max(...dataHours);
 
-            // Use data range if it's within or extends default range
-            var start = Math.min(defaultStart, dataMin);
-            var end = Math.max(defaultEnd, dataMax);
+            // Clamp to default operating hours (07–23)
+            var start = Math.max(defaultStart, dataMin);
+            var end = Math.min(defaultEnd, dataMax);
 
             // Ensure minimum 8-hour window for usability
             if (end - start < 7) {
-                end = start + 7;
+                end = Math.min(defaultEnd, start + 7);
             }
 
             return { start: start, end: end, count: end - start + 1 };

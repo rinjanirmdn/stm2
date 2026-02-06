@@ -5476,11 +5476,12 @@ input[type="datetime-local"].form-control {
 .st-timeline__row {
     display: grid;
     grid-template-columns: 70px 60px 1fr;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
     min-width: auto;
     width: 100%;
     min-height: 120px;
     height: auto;
+    background: #f8fafc;
 }
 
 .st-timeline__row-left {
@@ -5497,8 +5498,8 @@ input[type="datetime-local"].form-control {
     width: 100%;
     display: grid;
     grid-template-rows: 1fr 1fr;
-    gap: 6px;
-    padding: 6px 0;
+    gap: 10px;
+    padding: 10px 0;
     height: 100%;
 }
 
@@ -5509,19 +5510,20 @@ input[type="datetime-local"].form-control {
     width: 100%;
     border-radius: 6px;
     display: block;
+    border: 1px solid rgba(148, 163, 184, 0.4);
     background-image: repeating-linear-gradient(to right,
-            rgba(148, 163, 184, 0.12) 0,
-            rgba(148, 163, 184, 0.12) 1px,
+            rgba(148, 163, 184, 0.3) 0,
+            rgba(148, 163, 184, 0.3) 1px,
             transparent 1px,
             transparent calc(100% / var(--st-visible-hours, 17)));
 }
 
 .st-timeline__lane--planned {
-    background-color: rgba(156, 163, 175, 0.06);
+    background-color: rgba(148, 163, 184, 0.12);
 }
 
 .st-timeline__lane--actual {
-    background-color: rgba(37, 99, 235, 0.04);
+    background-color: rgba(59, 130, 246, 0.1);
 }
 
 .st-timeline__row-grid {
@@ -5549,15 +5551,17 @@ input[type="datetime-local"].form-control {
     position: absolute;
     height: calc(100% - 8px);
     border-radius: 8px;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    overflow: hidden;
-    cursor: pointer;
+    border: 1px solid rgba(15, 23, 42, 0.18);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65) inset,
+        0 1px 0 rgba(15, 23, 42, 0.08);
     padding: 0 8px;
+    font-size: 11px;
+    font-weight: 600;
     display: flex;
+    cursor: pointer;
     align-items: center;
     justify-content: flex-start;
     z-index: 2;
-    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
     top: 4px;
     margin: 0;
 }
@@ -6849,6 +6853,13 @@ table.st-table td form {
     min-width: 0;
 }
 
+.st-dashboard-schedule-head .st-select {
+    height: 28px;
+    padding: 2px 6px;
+    font-size: 10px;
+    line-height: 1.2;
+}
+
 @media (max-width: 640px) {
     .st-dashboard-schedule-head {
         flex-wrap: wrap;
@@ -7078,6 +7089,7 @@ table.st-table td form {
     margin-right: 0;
     padding-right: 0;
     width: 100%;
+    height: 100%;
 }
 
 .st-dashboard-slideshow .st-dashboard-schedule-chart-col,
@@ -7091,6 +7103,9 @@ table.st-table td form {
 
 .st-dashboard-slideshow .st-dashboard-schedule-table-col {
     flex: 1 1 66%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .st-dashboard-slideshow .st-dashboard-schedule-table-wrap {
@@ -7223,7 +7238,9 @@ table.st-table td form {
 }
 
 .st-dashboard-slideshow .st-dashboard-schedule-table-wrap {
-    overflow: visible;
+    overflow: auto;
+    height: 100%;
+    max-height: none;
 }
 
 .st-dashboard-slideshow .st-dashboard-schedule-table-wrap .st-action-dropdown,
@@ -7282,6 +7299,7 @@ table.st-table td form {
     gap: 12px;
     flex-wrap: nowrap;
     align-items: stretch;
+    height: 100%;
     overflow: hidden;
     padding-bottom: 0;
     margin-right: 0;
@@ -7295,12 +7313,18 @@ table.st-table td form {
     min-width: 420px;
     flex: 0 0 440px;
     min-width: 0; /* Prevent overflow */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .st-dashboard-schedule-table-col {
     min-width: 400px; /* Reduced from 600px */
     flex: 1 1 auto;
     margin-right: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     padding-right: 0;
     max-width: none;
     min-width: 0; /* Prevent overflow */

@@ -21,6 +21,11 @@ class SlotSeeder extends Seeder
         if (Schema::hasColumn('md_gates', 'is_active')) {
             $gateQuery->where('is_active', true);
         }
+        if (Schema::hasColumn('md_gates', 'gate_number')) {
+            $gateQuery->whereIn('gate_number', ['A', 'B', 'C']);
+        } elseif (Schema::hasColumn('md_gates', 'name')) {
+            $gateQuery->whereIn('name', ['Gate A', 'Gate B', 'Gate C']);
+        }
         $gates = $gateQuery->get()->groupBy('warehouse_id');
 
         $vendorTable = null;

@@ -625,7 +625,7 @@
                             <div class="st-dashboard-schedule-actions">
                                 @can('slots.create')
                                 <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
-                                    <i class="fa-solid fa-plus st-mr-1"></i> Create Slot
+                                    Create Slot
                                 </a>
                                 @endcan
                             </div>
