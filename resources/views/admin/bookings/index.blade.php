@@ -193,7 +193,7 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Direction</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" data-type="text" title="Sort">â‡…</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="direction">
@@ -213,8 +213,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Status</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status_filter" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="status_filter">
                                                 <div class="st-font-semibold st-mb-6">Status Filter</div>
@@ -235,8 +235,8 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Requested At</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="created_at" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="requested_at" data-type="date" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="requested_at" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="created_at">
                                                 <div class="st-font-semibold st-mb-6">Requested At Filter</div>
@@ -277,12 +277,12 @@
                                                 <td>{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
                                             @endif
                                             <td>{{ $booking->convertedSlot?->plannedGate?->name ?? 'TBD' }}</td>
-                                            <td>
+                                            <td class="st-td-center">
                                                 <span class="st-badge st-badge--{{ $booking->direction }}">
                                                     {{ ucfirst($booking->direction) }}
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td class="st-td-center">
                                                 @php
                                                     $badgeColor = match($booking->status) {
                                                         'pending' => 'pending_approval',
@@ -301,8 +301,8 @@
                                                 @endphp
                                                 <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
                                             </td>
-                                            <td>{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>
-                                            <td>
+                                            <td class="st-td-center">{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>
+                                            <td class="st-td-center">
                                                 <div class="st-action-dropdown">
                                                     <button type="button" class="st-btn st-btn--ghost st-action-trigger" style="padding:4px 8px;font-size:16px;line-height:1;border:none;color:#6b7280;">
                                                         &#x22ee;
@@ -332,12 +332,7 @@
                                     @endforeach
                                 @else
                                     <tr>
-                                        <td colspan="{{ $showConvertedTicket ? 12 : 11 }}" class="st-text-center" style="padding: 3rem;">
-                                            <div class="st-empty-state">
-                                                <i class="fas fa-inbox" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-                                                <p style="color: #64748b; font-size: 1.125rem;">No Booking Requests Found.</p>
-                                            </div>
-                                        </td>
+                                        <td colspan="{{ $showConvertedTicket ? 12 : 11 }}" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Booking Requests Found.</td>
                                     </tr>
                                 @endif
                             </tbody>

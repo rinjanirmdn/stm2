@@ -2,6 +2,7 @@
 
 @section('title', 'Slots - Slot Time Management')
 @section('page_title', 'Slots')
+@section('body_class', 'st-page--slots')
 
 @section('content')
     <!-- Custom Reject Booking Dialog -->
@@ -44,11 +45,9 @@
         </div>
     </div>
 
-    <section class="st-row st-section-compact">
-        <div class="st-col-12 st-flex st-flex-col">
-            <div class="st-card tw-card tw-card--table st-card--flush">
-                <div class="tw-card__body">
-                    <div class="st-form-row st-gap-4 st-align-end">
+    <div class="st-card st-mb-12">
+        <div class="st-p-12">
+            <div class="st-form-row st-gap-4 st-align-end">
                         <div class="st-form-field st-maxw-260">
                             <label class="st-label">Search</label>
                             <div class="st-input-wrap">
@@ -72,15 +71,13 @@
                             @endcan
                             @endunless
                         </div>
-                    </div>
-                </div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <section class="st-row st-section-compact st-section-compact--tight">
-        <div class="st-col-12 st-flex st-flex-col">
-            <div class="st-card tw-card tw-card--table st-card--flush">
+    <section class="st-row st-flex-1">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1">
                 <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1" autocomplete="off">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -91,7 +88,7 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper st-minh-400 st-p-16">
+                <div class="st-table-wrapper st-table-wrapper--minh-400">
                     <table class="st-table">
                         <thead>
                             <tr>
@@ -522,7 +519,7 @@
                                 <td class="st-table-cell">{{ $row->mat_doc ?? '-' }}</td>
                                 <td class="st-table-cell">{{ $row->vendor_name ?? '-' }}</td>
                                 <td class="st-table-cell">{{ $whGateLabel }}</td>
-                                <td class="st-table-cell">
+                                <td class="st-table-cell st-td-center">
                                     @php $dir = strtolower($row->direction ?? ''); @endphp
                                     @if($dir === 'inbound')
                                         <span class="st-badge-modern st-badge-modern--inbound">
@@ -539,7 +536,7 @@
                                 <td class="st-table-cell">{{ $fmt($row->planned_start ?? null) }}</td>
                                 <td class="st-table-cell">{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</td>
                                 <td class="st-table-cell">{{ !empty($row->arrival_time) ? $fmt($row->arrival_time) : '-' }}</td>
-                                <td class="st-table-cell">
+                                <td class="st-table-cell st-td-center">
                                     @if ($leadTimeMinutes !== null)
                                         @php
                                             $m = (int) $leadTimeMinutes;
@@ -566,7 +563,7 @@
                                         -
                                     @endif
                                 </td>
-                                <td class="st-table-cell">
+                                <td class="st-table-cell st-td-center">
                                     @if ($status === 'completed' && (empty($row->actual_start) || empty($row->actual_finish)))
                                         <span class="badge bg-status-changes">Data Error</span>
                                     @elseif ($plannedDurationMinutes === null || $plannedDurationMinutes <= 0 || $leadTimeMinutes === null)
@@ -579,7 +576,7 @@
                                         -
                                     @endif
                                 </td>
-                                <td class="st-table-cell">
+                                <td class="st-table-cell st-td-center">
                                     @if ($lateDisplay === 'late')
                                         <span class="st-table__status-badge st-status-late">Late</span>
                                     @elseif ($lateDisplay === 'on_time')
@@ -588,13 +585,13 @@
                                         -
                                     @endif
                                 </td>
-                                <td class="st-table-cell">
+                                <td class="st-table-cell st-td-center">
                                     <span class="badge {{ $badgeClass }}">{{ ucwords(str_replace('_',' ', $status)) }}</span>
                                 </td>
-                                <td class="st-table-cell">
+                                <td class="st-table-cell st-td-center">
                                     <span class="st-table__status-badge {{ $blockingClass }}">{{ $blockingLabel }}</span>
                                 </td>
-                                <td class="st-table-cell">
+                                <td class="st-table-cell st-td-center">
                                     <div class="st-action-dropdown">
                                         <button type="button" class="st-btn st-btn--ghost st-action-trigger st-action-trigger--compact">
                                             &#x22ee;

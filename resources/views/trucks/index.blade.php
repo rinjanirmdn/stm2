@@ -41,9 +41,9 @@
                             <tr>
                                 <th class="st-table-col-60">#</th>
                                 <th>Truck Type</th>
-                                <th class="st-table-col-180">Duration (minutes)</th>
-                                <th class="st-table-col-190">Created</th>
-                                <th class="st-table-col-170">Actions</th>
+                                <th class="st-table-col-180 st-th-center">Duration (minutes)</th>
+                                <th class="st-table-col-190 st-th-center">Created</th>
+                                <th class="st-table-col-170 st-th-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="truck-table-body">
@@ -60,7 +60,7 @@
 
                         @if (count($rows) === 0)
                             <tr class="truck-empty-row">
-                                <td colspan="5" class="st-text-center st-text--muted st-table-empty--roomy">No trucks found</td>
+                                <td colspan="5" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No trucks found</td>
                             </tr>
                         @else
                             @foreach ($rows as $row)
@@ -70,9 +70,9 @@
                                 >
                                     <td>{{ $loop->index + 1 }}</td>
                                     <td>{{ $row->truck_type }}</td>
-                                    <td>{{ (int) $row->target_duration_minutes }}</td>
-                                    <td>{{ $fmt($row->created_at ?? null) }}</td>
-                                    <td>
+                                    <td class="st-td-center">{{ (int) $row->target_duration_minutes }}</td>
+                                    <td class="st-td-center">{{ $fmt($row->created_at ?? null) }}</td>
+                                    <td class="st-td-center">
                                         <div class="tw-actionbar">
                                             <button type="button" class="tw-action btn-edit-truck" data-id="{{ $row->id }}" data-truck-type="{{ $row->truck_type }}" data-duration="{{ $row->target_duration_minutes }}" data-tooltip="Edit" aria-label="Edit">
                                                 <i class="fa-solid fa-pencil"></i>

@@ -169,7 +169,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="st-text-center st-text--muted st-table-empty--roomy">No Logs Found</td>
+                                <td colspan="6" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Logs Found</td>
                             </tr>
                         @endforelse
                         </tbody>

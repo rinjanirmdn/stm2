@@ -31,9 +31,9 @@
     --late-arrival: #dc2626;
     /* Red - Urgent */
     --late-arrival-bg: #fef2f2;
-    --early-arrival: #16a34a;
+    --early-arrival: #15803d;
     /* Green - Proaktif/Bagus */
-    --early-arrival-bg: #f0fdf4;
+    --early-arrival-bg: #dcfce7;
     --waiting-time: #d97706;
     /* Amber - Antrean/Pending */
     --waiting-time-bg: #fffbeb;
@@ -72,8 +72,8 @@
     --supplier-bg: #fefce8;
 
     /* --- PERFORMANCE --- */
-    --achieve: #10b981;
-    --achieve-bg: #ecfdf5;
+    --achieve: var(--early-arrival);
+    --achieve-bg: var(--early-arrival-bg);
     --not-achieve: #e11d48;
     --not-achieve-bg: #fff1f2;
     --remaining: #6366f1;
@@ -1239,7 +1239,7 @@ body.st-app--dashboard {
 }
 
 .st-table-wrapper--minh-400 {
-    min-height: 400px;
+    min-height: 0;
 }
 
 .st-table--sm {
@@ -2248,6 +2248,7 @@ body {
     line-height: 1.1;
 }
 
+/* Header label centering (label-only): keep icons on the right, center text within remaining space */
 .st-colhead__label {
     padding: 0;
     margin: 0;
@@ -2255,11 +2256,41 @@ body {
     font-size: var(--st-font-table-head);
     font-weight: 600;
     line-height: 1.1;
+    flex: 1 1 auto;
+    text-align: center;
 }
 
 .st-colhead__icons {
     display: inline-flex;
     align-items: center;
+    flex: 0 0 auto;
+}
+
+table.st-table thead th .st-colhead__label {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+}
+
+table.st-table thead th .st-colhead__icons {
+    flex: 0 0 auto !important;
+    justify-content: flex-end;
+}
+
+table.st-table thead th .st-filter-header--inline > span:first-child,
+table.st-table thead th .st-filter-header--inline-compact > span:first-child {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+}
+
+.st-filter-header--inline,
+.st-filter-header--inline-compact {
+    width: 100%;
+}
+
+.st-filter-header--inline > span:first-child,
+.st-filter-header--inline-compact > span:first-child {
+    flex: 1 1 auto;
+    text-align: center;
 }
 
 .st-colhead__icon {
@@ -2267,8 +2298,6 @@ body {
     border: 0 !important;
     box-shadow: none !important;
 }
-
-
 
 .st-colhead__icon:focus,
 .st-colhead__icon:focus-visible {
@@ -3606,7 +3635,7 @@ body {
     min-width: 0;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 768px) {
 
     .st-chart-col-4,
     .st-chart-col-6,
@@ -3666,11 +3695,25 @@ body {
     flex-direction: column;
 }
 
+ .st-tab-panel[data-tab-panel="kpi"] .st-chart-col-4 .st-flex-between-center,
+ .st-tab-panel[data-tab-panel="kpi"] .st-chart-col-4 .st-dashboard-chart-header-top,
+ .st-tab-panel[data-tab-panel="kpi"] .st-chart-col-4 .st-dashboard-chart-header {
+     min-height: 28px;
+     display: flex;
+     align-items: center;
+ }
+
 .st-tab-panel[data-tab-panel="kpi"] .st-chart-col-4 .st-chart-wrap--sm {
     flex: 1;
     height: auto !important;
     min-height: clamp(220px, 28vw, 340px);
 }
+
+ .st-tab-panel[data-tab-panel="kpi"] .st-chart-col-4 .st-chart-wrap--sm,
+ .st-tab-panel[data-tab-panel="kpi"] .st-chart-col-4 .st-dashboard-chart-wrap-offset,
+ .st-tab-panel[data-tab-panel="kpi"] .st-chart-col-4 .st-dashboard-chart-wrap-gap-sm {
+     margin-top: 0 !important;
+ }
 
 /* Tinggi Analytics Range saat tab KPI aktif */
 .st-tab-panel[data-tab-panel="kpi"] {
@@ -3959,9 +4002,9 @@ table.st-table tbody td .st-btn--sm {
 }
 
 .st-alert--pending_approval {
-    background: #fbbf24 !important;
-    color: #ffffff !important;
-    border: 1px solid #f59e0b;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
 }
 
 /* ===== Tables ===== */
@@ -3973,19 +4016,62 @@ table.st-table tbody td .st-btn--sm {
     overflow-y: auto;
     border-radius: 6px;
     border: 1px solid #e5e7eb;
+    padding: 0;
+}
+
+@media (max-width: 768px) {
+    .st-table-wrapper {
+        max-height: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table.st-table {
+        min-width: 900px;
+    }
+}
+
+table.st-table th .st-colhead,
+table.st-table th .st-filter-header {
+    flex-wrap: nowrap;
+}
+
+table.st-table th .st-colhead__label,
+table.st-table th .st-filter-header > span:first-child {
+    white-space: nowrap;
+}
+
+table.st-table th .st-colhead__icons,
+table.st-table th .st-colhead__icon,
+table.st-table th .st-sort-trigger,
+table.st-table th .st-filter-trigger {
+    flex: 0 0 auto;
 }
 
 table.st-table {
     width: 100%;
     border-collapse: collapse;
     font-size: var(--st-font-table);
+    margin: 0;
 }
 
 table.st-table thead {
     position: sticky;
     top: 0;
     background: #f9fafb;
-    z-index: 1;
+    z-index: 6;
+}
+
+table.st-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f9fafb;
+    z-index: 7;
+    background-clip: padding-box;
+}
+
+table.st-table thead th .st-colhead,
+table.st-table thead th .st-filter-header {
+    background: inherit;
 }
 
 table.st-table th,
@@ -3994,6 +4080,40 @@ table.st-table td {
     border-bottom: 1px solid #e5e7eb;
     text-align: left;
     font-size: 11px;
+}
+
+.st-th-center {
+    text-align: inherit !important;
+}
+
+.st-th-center .st-colhead,
+.st-th-center .st-filter-header {
+    justify-content: inherit;
+}
+
+.st-th-center .st-colhead__label {
+    flex: 0 1 auto;
+    text-align: inherit;
+}
+
+.st-th-center .st-colhead__icons {
+    flex: 0 0 auto;
+}
+
+.st-th-center.st-filter-header--inline > span:first-child,
+.st-th-center .st-filter-header--inline > span:first-child,
+.st-th-center .st-filter-header--inline-compact > span:first-child {
+    flex: 0 1 auto;
+    text-align: inherit;
+}
+
+.st-td-center {
+    text-align: center !important;
+}
+
+.st-td-center .tw-actionbar,
+.st-td-center .st-action-dropdown {
+    justify-content: center;
 }
 
 table.st-table tbody tr:nth-child(odd) {
@@ -5172,9 +5292,9 @@ input[type="datetime-local"].form-control {
 }
 
 .st-badge--pending_approval {
-    background: #fbbf24 !important;
-    color: #ffffff !important;
-    border: 1px solid #f59e0b;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
 }
 
 /* Standard Semantic Badges to match Slot Model returns */
@@ -5719,63 +5839,63 @@ input[type="datetime-local"].form-control {
 }
 
 .st-timeline-block--available {
-    background: var(--early-arrival);
-    color: #ffffff;
-    border-color: var(--early-arrival);
+    background: var(--early-arrival-bg);
+    color: var(--early-arrival);
+    border-color: rgba(21, 128, 61, 0.25);
 }
 
 .st-timeline-block--planned {
-    background: var(--planned);
-    color: #ffffff;
-    border-color: rgba(29, 78, 216, 0.35);
+    background: var(--planned-bg);
+    color: var(--planned);
+    border-color: rgba(29, 78, 216, 0.20);
 }
 
 .st-timeline-block--booked {
-    background: var(--scheduled);
-    color: #ffffff;
-    border-color: rgba(8, 145, 178, 0.25);
+    background: var(--scheduled-bg);
+    color: #334155;
+    border-color: rgba(100, 116, 139, 0.25);
 }
 
 .st-timeline-block--blocked {
-    background: var(--standby);
-    color: #ffffff;
-    border-color: rgba(71, 85, 105, 0.30);
+    background: var(--standby-bg);
+    color: #334155;
+    border-color: rgba(71, 85, 105, 0.22);
 }
 
 .st-timeline-block--scheduled {
-    background: var(--scheduled);
-    color: #ffffff;
-    border-color: rgba(8, 145, 178, 0.35);
+    background: var(--scheduled-bg);
+    color: #334155;
+    border-color: rgba(100, 116, 139, 0.25);
 }
 
 .st-timeline-block--in_progress {
-    background: var(--in-progress);
-    color: #ffffff;
-    border-color: rgba(124, 58, 237, 0.40);
+    background: var(--in-progress-bg);
+    color: #6b21a8;
+    border-color: rgba(124, 58, 237, 0.22);
 }
 
 .st-timeline-block--arrived {
-    background: var(--waiting-time);
-    color: #ffffff;
-    border-color: rgba(217, 119, 6, 0.35);
+    background: var(--waiting-time-bg);
+    color: var(--waiting-time);
+    border-color: rgba(217, 119, 6, 0.22);
 }
 
 .st-timeline-block--waiting {
-    background: var(--waiting-time);
-    color: #ffffff;
-    border-color: rgba(217, 119, 6, 0.35);
+    background: var(--waiting-time-bg);
+    color: var(--waiting-time);
+    border-color: rgba(217, 119, 6, 0.22);
 }
 
 .st-timeline-block--completed {
-    background: var(--completed);
-    color: #ffffff;
-    border-color: rgba(21, 128, 61, 0.40);
+    background: var(--completed-bg);
+    color: var(--completed);
+    border-color: rgba(21, 128, 61, 0.15);
 }
 
 .st-timeline-block--cancelled {
-    background: var(--cancel);
-    color: #ffffff;
-    border-color: rgba(55, 65, 81, 0.45);
+    background: rgba(220, 38, 38, 0.15);
+    color: var(--cancel);
+    border-color: rgba(220, 38, 38, 0.15);
     opacity: 0.75;
 }
 
@@ -8442,98 +8562,38 @@ table.st-table td form {
 }
 
 /* Force Status Colors Solid */
-.st-dock-card.bg-dock-confirmed {
-    background-color: #1e3a8a !important;
-    color: #ffffff !important;
-}
-
-.st-dock-card.bg-dock-progress {
-    background-color: #7c3aed !important;
-    color: #ffffff !important;
-}
-
-.st-dock-card.bg-dock-completed {
-    background-color: #15803d !important;
-    color: #ffffff !important;
-}
-
-.st-dock-card.bg-dock-rejected {
-    background-color: #dc2626 !important;
-    color: #ffffff !important;
-}
-
-.st-dock-card.bg-dock-pre-booking {
-    background-color: #f3f4f6 !important;
-    color: #374151 !important;
-}
-
-.st-dock-card.bg-dock-waiting {
-    background-color: #f59e0b !important;
-    color: #ffffff !important;
-}
-
-.st-dock-card.bg-dock-scheduled {
-    background-color: #6b7280 !important;
-    color: #ffffff !important;
-}
+/* Disabled: use soft transparent dock badges instead */
 
 /* FORCE SOLID COLORS ANYWHERE */
-.bg-dock-confirmed {
-    background-color: #1e3a8a !important;
-    color: #ffffff !important;
-    border: none !important;
-}
+/* Disabled: use soft transparent dock badges instead */
 
-.bg-dock-progress {
-    background-color: #7c3aed !important;
-    color: #ffffff !important;
-    border: none !important;
-}
-
-.bg-dock-completed {
-    background-color: #15803d !important;
-    color: #ffffff !important;
-    border: none !important;
-}
-
-.bg-dock-rejected {
-    background-color: #dc2626 !important;
-    color: #ffffff !important;
-    border: none !important;
-}
-
-.bg-dock-waiting {
-    background-color: #f59e0b !important;
-    color: #ffffff !important;
-    border: none !important;
-}
-
-.bg-dock-scheduled {
-    background-color: #6b7280 !important;
-    color: #ffffff !important;
-    border: none !important;
-}
-
-/* FORCE SOLID COLORS FOR ALL BADGES */
+/* FORCE SOFT/TRANSPARENT COLORS FOR ALL BADGES */
 .bg-success,
 .bg-completed {
-    background-color: #15803d !important;
-    color: #ffffff !important;
-    border: none !important;
+    background-color: #dcfce7 !important;
+    color: #166534 !important;
+    border: 1px solid #bbf7d0 !important;
 }
 
 .bg-danger,
 .bg-cancelled,
 .bg-rejected {
-    background-color: #dc2626 !important;
-    color: #ffffff !important;
-    border: none !important;
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
 }
 
 .bg-warning,
 .bg-waiting {
-    background-color: #f59e0b !important;
-    color: #ffffff !important;
+    background-color: #ffedd5 !important;
+    color: #9a3412 !important;
+    border: 1px solid #fed7aa !important;
+}
+
+.bg-in_progress {
+    background-color: #ede9fe !important;
+    color: #6b21a8 !important;
+    border: 1px solid #ddd6fe !important;
 }
 
 /* Sidebar Legend Styles (to remove inline CSS) */
@@ -8641,31 +8701,11 @@ table.st-table td form {
     background-color: #15803d;
 }
 
-.bg-primary,
-.bg-in_progress {
-    background-color: #7c3aed !important;
-    color: #ffffff !important;
-    border: none !important;
-}
+/* Disabled: use soft transparent badges instead */
 
-.bg-info,
-.bg-confirmed {
-    background-color: #0ea5e9 !important;
-    color: #ffffff !important;
-    border: none !important;
-}
+/* Disabled: use soft transparent badges instead */
 
-.bg-secondary {
-    background-color: #6b7280 !important;
-    color: #ffffff !important;
-    border: none !important;
-}
-
-.bg-scheduled {
-    background-color: #6b7280 !important;
-    color: #ffffff !important;
-    border: none !important;
-}
+/* Disabled: use soft transparent badges instead */
 
 .bg-pending,
 .bg-pending_approval {

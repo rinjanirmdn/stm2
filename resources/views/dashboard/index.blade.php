@@ -315,7 +315,7 @@
                                     <div class="st-flex-between-center st-flex-wrap st-gap-2">
                                         <div class="st-chart-card__title st-mb-0">On Time vs Late</div>
                                     </div>
-                                    <div class="st-chart-wrap st-chart-wrap--sm st-dashboard-chart-wrap-offset">
+                                    <div class="st-chart-wrap st-chart-wrap--sm">
                                         <canvas id="chart_on_time"></canvas>
                                     </div>
                                     <div class="st-metric-row st-metric-row--mt">

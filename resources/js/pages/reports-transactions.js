@@ -208,7 +208,7 @@
 
     var searchInput = document.querySelector('input[name="q"]');
     var suggestionBox = document.getElementById('transaction-search-suggestions');
-    
+
 
     if (searchInput && suggestionBox) {
         function hideSuggestions() {
@@ -232,21 +232,28 @@
             ajaxReload(true);
         };
 
-        searchInput.addEventListener('keyup', function (e) {
+        var searchDebounceTimer = null;
+        function queueSearchReload() {
+            if (searchDebounceTimer) {
+                clearTimeout(searchDebounceTimer);
+            }
+            searchDebounceTimer = setTimeout(function () {
+                ajaxReload(true);
+            }, 500);
+        }
+
+        searchInput.addEventListener('input', function () {
             var value = searchInput.value || '';
             applyLocalFilter(value);
             var trimmed = value.trim();
 
-            if (e.key === 'Enter') {
+            if (trimmed.length === 0) {
                 hideSuggestions();
-                ajaxReload(true);
+                queueSearchReload();
                 return;
             }
 
-            if (trimmed.length === 0) {
-                hideSuggestions();
-                return;
-            }
+            queueSearchReload();
 
             fetch(suggestUrl + '?q=' + encodeURIComponent(trimmed), {
                 credentials: 'same-origin',

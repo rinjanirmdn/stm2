@@ -8,7 +8,6 @@ use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
 use App\Services\TimeCalculationService;
 use App\Services\SlotReceiptReconciliationService;
-use App\Exports\SlotsExport;
 use App\Models\Slot;
 use App\Models\SlotPoItem;
 use DateTime;
@@ -89,22 +88,38 @@ class SlotController extends Controller
             return response()->json([]);
         }
 
+        $tokens = preg_split('/\s+/', $q) ?: [];
+        $tokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $tokens), fn ($t) => $t !== ''));
+
+        $normalized = str_replace('-', ' ', $q);
+        $moreTokens = preg_split('/\s+/', $normalized) ?: [];
+        $moreTokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $moreTokens), fn ($t) => $t !== ''));
+
+        $allTokens = array_values(array_unique(array_merge($tokens, $moreTokens)));
+
+        // Keep original query for highlight ordering.
         $like = '%' . $q . '%';
 
-        $rows = DB::table('slots as s')
+        $rowsQ = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->where(function ($sub) use ($like) {
-                $sub->where('s.po_number', 'like', $like)
-                    ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('s.vendor_name', 'like', $like);
-            })
             ->where('s.status', '<>', 'completed')
             ->select([
                 's.po_number as truck_number',
                 's.mat_doc',
                 's.vendor_name',
                 'w.wh_name as warehouse_name',
-            ])
+            ]);
+
+        foreach ($allTokens as $tok) {
+            $tl = '%' . $tok . '%';
+            $rowsQ->where(function ($sub) use ($tl) {
+                $sub->where('s.po_number', 'like', $tl)
+                    ->orWhere('s.mat_doc', 'like', $tl)
+                    ->orWhere('s.vendor_name', 'like', $tl);
+            });
+        }
+
+        $rows = $rowsQ
             ->orderByRaw("CASE
                 WHEN s.po_number LIKE ? THEN 1
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 2
@@ -2362,14 +2377,4 @@ class SlotController extends Controller
         return response()->json(['success' => true, 'items' => $data]);
     }
 
-    public function export()
-    {
-        $slots = Slot::with(['warehouse', 'plannedGate', 'actualGate'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $filename = 'slots_export_' . date('Ymd_His') . '.xlsx';
-
-        return Excel::download(new SlotsExport($slots), $filename);
-    }
 }
