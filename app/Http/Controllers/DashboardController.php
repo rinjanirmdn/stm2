@@ -7,6 +7,7 @@ use App\Services\DashboardStatsService;
 use App\Services\BottleneckAnalysisService;
 use App\Services\GateStatusService;
 use App\Services\ScheduleTimelineService;
+use Carbon\Carbon;
 use DateInterval;
 use DatePeriod;
 use DateTime;
@@ -57,10 +58,42 @@ class DashboardController extends Controller
         // Validate and prepare date ranges
         [$rangeStart, $rangeEnd] = $this->validateAndPrepareDateRange($request, $today);
 
-        // Get request parameters
+        // Get request parameters (timeline filters)
+        $timelineDate = (string) $request->query('timeline_date', $today);
+        $timelineFrom = trim($request->query('timeline_from', ''));
+        $timelineTo = trim($request->query('timeline_to', ''));
+        if ($timelineFrom === '' && $timelineTo === '') {
+            $now = Carbon::now();
+            $currentTime = $now->format('H:i');
+            if ($currentTime >= '07:00' && $currentTime < '15:00') {
+                $timelineFrom = '07:00';
+                $timelineTo = '15:00';
+            } elseif ($currentTime >= '15:00' && $currentTime < '23:00') {
+                $timelineFrom = '15:00';
+                $timelineTo = '23:00';
+            } else {
+                $timelineFrom = '23:00';
+                $timelineTo = '07:00';
+            }
+        }
+        // Get request parameters (schedule slide filters)
         $scheduleDate = (string) $request->query('schedule_date', $today);
         $scheduleFrom = trim($request->query('schedule_from', ''));
         $scheduleTo = trim($request->query('schedule_to', ''));
+        if ($scheduleFrom === '' && $scheduleTo === '') {
+            $now = Carbon::now();
+            $currentTime = $now->format('H:i');
+            if ($currentTime >= '07:00' && $currentTime < '15:00') {
+                $scheduleFrom = '07:00';
+                $scheduleTo = '15:00';
+            } elseif ($currentTime >= '15:00' && $currentTime < '23:00') {
+                $scheduleFrom = '15:00';
+                $scheduleTo = '23:00';
+            } else {
+                $scheduleFrom = '23:00';
+                $scheduleTo = '07:00';
+            }
+        }
         $activityDate = (string) $request->query('activity_date', $today);
         $activityWarehouseId = (int) $request->query('activity_warehouse', 0);
         $activityUserId = (int) $request->query('activity_user', 0);
@@ -89,13 +122,21 @@ class DashboardController extends Controller
 
         // Get schedule and timeline data
         $schedule = $this->timelineService->getSchedule($scheduleDate, $scheduleFrom, $scheduleTo);
-        $timelineBlocks = $this->timelineService->getTimelineBlocks($scheduleDate);
+        $timelineBlocks = $this->timelineService->getTimelineBlocks($timelineDate);
 
         // Add pending bookings from booking_requests to schedule data for chart
+        $scheduleHasRange = $scheduleFrom !== '' && $scheduleTo !== '';
+        $scheduleDateObj = Carbon::parse($scheduleDate ?: $today);
+        $scheduleFromDt = $scheduleHasRange ? $scheduleDateObj->copy()->setTimeFromTimeString($scheduleFrom) : null;
+        $scheduleToDt = $scheduleHasRange ? $scheduleDateObj->copy()->setTimeFromTimeString($scheduleTo) : null;
+        if ($scheduleHasRange && $scheduleFromDt && $scheduleToDt && $scheduleFromDt->gt($scheduleToDt)) {
+            $scheduleToDt->addDay();
+        }
+
         $pendingBookings = \App\Models\BookingRequest::query()
             ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
-            ->when($scheduleFrom && $scheduleTo, function($q) use ($scheduleFrom, $scheduleTo) {
-                return $q->whereBetween('planned_start', [$scheduleFrom, $scheduleTo]);
+            ->when($scheduleHasRange && $scheduleFromDt && $scheduleToDt, function($q) use ($scheduleFromDt, $scheduleToDt) {
+                return $q->whereBetween('planned_start', [$scheduleFromDt, $scheduleToDt]);
             }, function($q) use ($scheduleDate) {
                 return $q->whereDate('planned_start', $scheduleDate);
             })
@@ -263,6 +304,9 @@ class DashboardController extends Controller
             'schedule_date' => $scheduleDate,
             'schedule_from' => $scheduleFrom,
             'schedule_to' => $scheduleTo,
+            'timeline_date' => $timelineDate,
+            'timeline_from' => $timelineFrom,
+            'timeline_to' => $timelineTo,
             'schedule' => $allScheduleData, // Includes pending from booking_requests
             'slots_only' => $schedule, // Pure slots data for chart
             'timelineBlocksByGate' => $timelineBlocks,
@@ -332,10 +376,18 @@ class DashboardController extends Controller
         $counts['completed'] = (int) ($slotStats->completed ?? 0);
         $counts['cancelled'] = (int) ($slotStats->cancelled ?? 0);
 
+        $scheduleHasRange = $scheduleFrom !== '' && $scheduleTo !== '';
+        $scheduleDateObj = Carbon::parse($dateFilter ?: date('Y-m-d'));
+        $scheduleFromDt = $scheduleHasRange ? $scheduleDateObj->copy()->setTimeFromTimeString($scheduleFrom) : null;
+        $scheduleToDt = $scheduleHasRange ? $scheduleDateObj->copy()->setTimeFromTimeString($scheduleTo) : null;
+        if ($scheduleHasRange && $scheduleFromDt && $scheduleToDt && $scheduleFromDt->gt($scheduleToDt)) {
+            $scheduleToDt->addDay();
+        }
+
         $pendingCount = \App\Models\BookingRequest::query()
             ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
-            ->when($scheduleFrom && $scheduleTo, function($q) use ($scheduleFrom, $scheduleTo) {
-                return $q->whereBetween('planned_start', [$scheduleFrom, $scheduleTo]);
+            ->when($scheduleHasRange && $scheduleFromDt && $scheduleToDt, function($q) use ($scheduleFromDt, $scheduleToDt) {
+                return $q->whereBetween('planned_start', [$scheduleFromDt, $scheduleToDt]);
             }, function($q) use ($dateFilter) {
                 return $q->whereDate('planned_start', $dateFilter);
             })

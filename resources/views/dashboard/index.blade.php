@@ -375,23 +375,51 @@
                         <div class="st-text--small st-text--muted">Slot Availability (Real-time Visual)</div>
                     </div>
                     <div class="st-dashboard-card-actions">
-                    <form method="GET" class="st-form-row st-timeline-filters st-dashboard-filter-form">
+                    @php
+                        $timeline_from = $timeline_from ?? '00:00';
+                        $timeline_to = $timeline_to ?? '23:59';
+                        $timelinePreset = '';
+                        if ($timeline_from === '00:00' && $timeline_to === '23:59') {
+                            $timelinePreset = 'full';
+                        } elseif ($timeline_from === '07:00' && $timeline_to === '15:00') {
+                            $timelinePreset = 'shift1';
+                        } elseif ($timeline_from === '15:00' && $timeline_to === '23:00') {
+                            $timelinePreset = 'shift2';
+                        } elseif ($timeline_from === '23:00' && $timeline_to === '07:00') {
+                            $timelinePreset = 'shift3';
+                        }
+                    @endphp
+                    <form method="GET" class="st-form-row st-timeline-filters st-dashboard-filter-form" data-range="{{ $timelinePreset === '' ? 'custom' : $timelinePreset }}">
                         <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
                         <input type="hidden" name="range_end" value="{{ $range_end ?? $today }}">
                         <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
                         <input type="hidden" name="activity_warehouse" value="{{ $activity_warehouse ?? 0 }}">
                         <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
+                        <input type="hidden" name="schedule_date" value="{{ $schedule_date ?? $today }}">
+                        <input type="hidden" name="schedule_from" value="{{ $schedule_from ?? '' }}">
+                        <input type="hidden" name="schedule_to" value="{{ $schedule_to ?? '' }}">
+                        <input type="hidden" name="active_slide" value="timeline">
                         <div class="st-form-field">
                             <label class="st-label">Date</label>
-                            <input type="text" name="schedule_date" class="st-input" value="{{ $schedule_date ?? $today }}" placeholder="YYYY-MM-DD" autocomplete="off" readonly>
+                            <input type="date" name="timeline_date" class="st-input" value="{{ $timeline_date ?? $today }}" placeholder="YYYY-MM-DD" autocomplete="off" onchange="this.form.submit()">
                         </div>
                         <div class="st-form-field">
+                            <label class="st-label">Range</label>
+                            <select name="timeline_range" id="timeline_range" class="st-select">
+                                <option value="" {{ $timelinePreset === '' ? 'selected' : '' }}>Custom</option>
+                                <option value="full" {{ $timelinePreset === 'full' ? 'selected' : '' }}>24 Hours</option>
+                                <option value="shift1" {{ $timelinePreset === 'shift1' ? 'selected' : '' }}>Shift 1 (07:00 - 15:00)</option>
+                                <option value="shift2" {{ $timelinePreset === 'shift2' ? 'selected' : '' }}>Shift 2 (15:00 - 23:00)</option>
+                                <option value="shift3" {{ $timelinePreset === 'shift3' ? 'selected' : '' }}>Shift 3 (23:00 - 07:00)</option>
+                            </select>
+                        </div>
+                        <div class="st-form-field st-timeline-range-custom {{ $timelinePreset === '' ? '' : 'st-hidden' }}" style="{{ $timelinePreset === '' ? '' : 'display:none' }}">
                             <label class="st-label">From (HH:MM)</label>
-                            <input type="time" name="time_from" class="st-input" value="{{ $time_from ?? '00:00' }}" placeholder="00:00" step="60">
+                            <input type="time" name="timeline_from" class="st-input" value="{{ $timeline_from }}" placeholder="00:00" step="60" onchange="this.form.submit()">
                         </div>
-                        <div class="st-form-field">
+                        <div class="st-form-field st-timeline-range-custom {{ $timelinePreset === '' ? '' : 'st-hidden' }}" style="{{ $timelinePreset === '' ? '' : 'display:none' }}">
                             <label class="st-label">To (HH:MM)</label>
-                            <input type="time" name="time_to" class="st-input" value="{{ $time_to ?? '23:59' }}" placeholder="23:59" step="60">
+                            <input type="time" name="timeline_to" class="st-input" value="{{ $timeline_to }}" placeholder="23:59" step="60" onchange="this.form.submit()">
                         </div>
                         <div class="st-form-field">
                             <label class="st-label">Gate (Timeline)</label>
@@ -399,7 +427,21 @@
                                 @php $timelineGateFilter = (int) request()->query('timeline_gate', 0); @endphp
                                 <option value="0">All</option>
                                 @foreach (($gateCards ?? []) as $g)
-                                    <option value="{{ (int)($g['gate_id'] ?? 0) }}" {{ $timelineGateFilter === (int)($g['gate_id'] ?? 0) ? 'selected' : '' }}>{{ $g['title'] ?? '-' }}</option>
+                                    @php
+                                        $gateLabel = strtoupper(trim((string)($g['gate_number'] ?? '')));
+                                        $warehouseCode = strtoupper(trim((string)($g['warehouse_code'] ?? '')));
+                                        if ($gateLabel !== '') {
+                                            $gateLabel = preg_replace('/^GATE\s*/i', '', $gateLabel);
+                                        }
+                                        if ($warehouseCode === 'WH1' && ($gateLabel === '1' || $gateLabel === 'A')) {
+                                            $gateLabel = 'A';
+                                        } elseif ($warehouseCode === 'WH2' && ($gateLabel === '2' || $gateLabel === 'B')) {
+                                            $gateLabel = 'B';
+                                        } elseif ($warehouseCode === 'WH2' && ($gateLabel === '3' || $gateLabel === 'C')) {
+                                            $gateLabel = 'C';
+                                        }
+                                    @endphp
+                                    <option value="{{ (int)($g['gate_id'] ?? 0) }}" {{ $timelineGateFilter === (int)($g['gate_id'] ?? 0) ? 'selected' : '' }}>{{ $gateLabel !== '' ? $gateLabel : '-' }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -413,10 +455,24 @@
 
 
                 @php
-                    $timelineDate = $schedule_date ?? $today;
+                    $timelineDate = $timeline_date ?? $today;
                     $timelineGateFilter2 = (int) request()->query('timeline_gate', 0);
-                    $timelineStartHour = 7;
-                    $timelineHours = range(7, 23);
+                    $fromStr = $timeline_from ?? '00:00';
+                    $toStr = $timeline_to ?? '23:59';
+                    $fromHour = (int) substr($fromStr, 0, 2);
+                    $fromMin = (int) substr($fromStr, 3, 2);
+                    $toHour = (int) substr($toStr, 0, 2);
+                    $toMin = (int) substr($toStr, 3, 2);
+                    $startMin = ($fromHour * 60) + $fromMin;
+                    $endMin = ($toHour * 60) + $toMin;
+                    if ($endMin <= $startMin) {
+                        $endMin += 1440;
+                    }
+                    $timelineHours = [];
+                    for ($m = $startMin; $m <= $endMin; $m += 60) {
+                        $timelineHours[] = ((int) floor($m / 60)) % 24;
+                    }
+                    $timelineStartHour = $timelineHours[0] ?? 0;
                 @endphp
 
                         <div class="st-dashboard-timeline-wrap">
@@ -624,11 +680,61 @@
                             </div>
                             <div class="st-dashboard-schedule-actions">
                                 @can('slots.create')
-                                <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
-                                    Create Slot
-                                </a>
+                                    <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary st-btn--sm">
+                                        <i class="fa-solid fa-plus st-mr-1"></i> Create Slot
+                                    </a>
                                 @endcan
                             </div>
+                        </div>
+                        <div class="st-dashboard-schedule-filters">
+                            @php
+                                $schedule_from = $schedule_from ?? '00:00';
+                                $schedule_to = $schedule_to ?? '23:59';
+                                $schedulePreset = '';
+                                if ($schedule_from === '00:00' && $schedule_to === '23:59') {
+                                    $schedulePreset = 'full';
+                                } elseif ($schedule_from === '07:00' && $schedule_to === '15:00') {
+                                    $schedulePreset = 'shift1';
+                                } elseif ($schedule_from === '15:00' && $schedule_to === '23:00') {
+                                    $schedulePreset = 'shift2';
+                                } elseif ($schedule_from === '23:00' && $schedule_to === '07:00') {
+                                    $schedulePreset = 'shift3';
+                                }
+                            @endphp
+                            <form method="GET" class="st-form-row st-dashboard-filter-form" data-range="{{ $schedulePreset === '' ? 'custom' : $schedulePreset }}">
+                                <input type="hidden" name="range_start" value="{{ $range_start ?? $today }}">
+                                <input type="hidden" name="range_end" value="{{ $range_end ?? $today }}">
+                                <input type="hidden" name="activity_date" value="{{ $activity_date ?? $today }}">
+                                <input type="hidden" name="activity_warehouse" value="{{ $activity_warehouse ?? 0 }}">
+                                <input type="hidden" name="activity_user" value="{{ $activity_user ?? 0 }}">
+                                <input type="hidden" name="timeline_date" value="{{ $timeline_date ?? $today }}">
+                                <input type="hidden" name="timeline_from" value="{{ $timeline_from ?? '' }}">
+                                <input type="hidden" name="timeline_to" value="{{ $timeline_to ?? '' }}">
+                                <input type="hidden" name="timeline_gate" value="{{ (int) request()->query('timeline_gate', 0) }}">
+                                <input type="hidden" name="active_slide" value="schedule">
+                                <div class="st-form-field">
+                                    <label class="st-label">Date</label>
+                                    <input type="date" name="schedule_date" class="st-input" value="{{ $schedule_date ?? $today }}" placeholder="YYYY-MM-DD" autocomplete="off" onchange="this.form.submit()">
+                                </div>
+                                <div class="st-form-field">
+                                    <label class="st-label">Range</label>
+                                    <select name="schedule_range" id="schedule_range" class="st-select">
+                                        <option value="" {{ $schedulePreset === '' ? 'selected' : '' }}>Custom</option>
+                                        <option value="full" {{ $schedulePreset === 'full' ? 'selected' : '' }}>24 Hours</option>
+                                        <option value="shift1" {{ $schedulePreset === 'shift1' ? 'selected' : '' }}>Shift 1 (07:00 - 15:00)</option>
+                                        <option value="shift2" {{ $schedulePreset === 'shift2' ? 'selected' : '' }}>Shift 2 (15:00 - 23:00)</option>
+                                        <option value="shift3" {{ $schedulePreset === 'shift3' ? 'selected' : '' }}>Shift 3 (23:00 - 07:00)</option>
+                                    </select>
+                                </div>
+                                <div class="st-form-field st-schedule-range-custom" style="{{ $schedulePreset === '' ? '' : 'display:none' }}">
+                                    <label class="st-label">From (HH:MM)</label>
+                                    <input type="time" name="schedule_from" class="st-input" value="{{ $schedule_from }}" placeholder="00:00" step="60" onchange="this.form.submit()">
+                                </div>
+                                <div class="st-form-field st-schedule-range-custom" style="{{ $schedulePreset === '' ? '' : 'display:none' }}">
+                                    <label class="st-label">To (HH:MM)</label>
+                                    <input type="time" name="schedule_to" class="st-input" value="{{ $schedule_to }}" placeholder="23:59" step="60" onchange="this.form.submit()">
+                                </div>
+                            </form>
                         </div>
 
                         <div class="st-table-wrapper st-dashboard-schedule-table-wrap">

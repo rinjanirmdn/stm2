@@ -230,9 +230,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
-        var inputs = document.querySelectorAll('input[type="time"], input[name="schedule_from"], input[name="schedule_to"], input[name="time_from"], input[name="time_to"], input[id$="_time_input"], input[id$="_time"]');
+        var inputs = document.querySelectorAll('input[type="time"], input[name="time_from"], input[name="time_to"], input[id$="_time_input"], input[id$="_time"]');
         Array.prototype.slice.call(inputs).forEach(function (input, index) {
-            if (!input || input.getAttribute('data-st-mdtimepicker') === '1') {
+            if (!input || input.type === 'hidden' || input.getAttribute('data-st-mdtimepicker') === '1') {
                 return;
             }
             input.setAttribute('data-st-mdtimepicker', '1');
