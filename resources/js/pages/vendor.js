@@ -46,8 +46,7 @@ function initVendorBookingCreate(config) {
     const poResults = document.getElementById('po-results');
     const poHidden = document.getElementById('po-number-hidden');
     const poLoading = document.getElementById('po-loading');
-    const poItemsContainer = document.getElementById('po-items-container');
-    const poItemsBody = document.getElementById('po-items-body');
+    const vendorNameInput = document.getElementById('vendor-name');
 
     const plannedDate = document.getElementById('planned-date');
     const plannedTime = document.getElementById('planned-time');
@@ -55,9 +54,6 @@ function initVendorBookingCreate(config) {
     const plannedStartInput = document.getElementById('planned-start');
     const truckTypeSelect = document.querySelector('select[name="truck_type"]');
     const miniAvailability = document.getElementById('mini-availability');
-    const coaInput = document.querySelector('input[name="coa_pdf"]');
-    const coaError = document.getElementById('coa-error');
-    const MAX_COA_BYTES = 10 * 1024 * 1024;
     const holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
     if (!poSearch || !plannedDate || !plannedTime) {
@@ -118,8 +114,10 @@ function initVendorBookingCreate(config) {
             .then(data => {
                 poLoading.classList.remove('show');
 
-                if (data.success && data.data.items) {
-                    renderPoItems(data.data.items);
+                if (data.success && data.data) {
+                    if (vendorNameInput) {
+                        vendorNameInput.value = data.data.vendor_name || '';
+                    }
                 }
             })
             .catch(err => {
@@ -127,52 +125,6 @@ function initVendorBookingCreate(config) {
                 console.error('Detail error:', err);
             });
     });
-
-    function renderPoItems(items) {
-        if (!items || items.length === 0) {
-            poItemsContainer.classList.remove('is-visible');
-            return;
-        }
-
-        const formatQty = (value) => {
-            const num = Number(value);
-            if (!Number.isFinite(num)) {
-                return '0';
-            }
-            return num.toString().replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
-        };
-
-        poItemsBody.innerHTML = items.map((item, idx) => {
-            const qtyPo = parseFloat(item.qty) || 0;
-            const qtyGr = parseFloat(item.qty_gr_total) || 0;
-            const remaining = typeof item.remaining_qty === 'number'
-                ? item.remaining_qty
-                : (parseFloat(item.remaining_qty) || (qtyPo - qtyGr));
-            const remainingValue = Number(remaining) > 0 ? Number(remaining) : 0;
-            return `
-                <tr>
-                    <td>${item.item_no || (idx + 1)}</td>
-                    <td>${item.material_name || item.description || '-'}</td>
-                    <td>${formatQty(qtyPo)} ${item.uom || ''}</td>
-                    <td>${formatQty(qtyGr)}</td>
-                    <td>${formatQty(remainingValue)}</td>
-                    <td>
-                        <input type="hidden" name="po_items[${idx}][item_no]" value="${item.item_no || ''}">
-                        <input type="hidden" name="po_items[${idx}][material_code]" value="${item.material_code || ''}">
-                        <input type="hidden" name="po_items[${idx}][material_name]" value="${item.material_name || item.description || ''}">
-                        <input type="number"
-                               name="po_items[${idx}][qty]"
-                               value="${remainingValue > 0 ? formatQty(remainingValue) : 0}"
-                               min="0"
-                               max="${remainingValue}"
-                               step="1">
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        poItemsContainer.classList.add('is-visible');
-    }
 
     document.addEventListener('click', function (e) {
         if (!poSearch.contains(e.target) && !poResults.contains(e.target)) {
@@ -272,9 +224,25 @@ function initVendorBookingCreate(config) {
 
     function syncPlannedStart() {
         if (!plannedStartInput) return;
-        const date = (plannedDate.value || '').trim();
+        const date = (plannedDate.dataset.isoValue || plannedDate.value || '').trim();
         const time = (plannedTime.value || '').trim();
         plannedStartInput.value = date && time ? date + ' ' + time : (date || '');
+    }
+
+    function toIsoDate(date) {
+        if (!date) return '';
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function toDisplayDate(date) {
+        if (!date) return '';
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
     }
 
     function initVendorDatepicker() {
@@ -364,8 +332,16 @@ function initVendorBookingCreate(config) {
             });
         }
 
+        if (plannedDate.value) {
+            const initial = new Date(plannedDate.value);
+            if (!isNaN(initial.getTime())) {
+                plannedDate.dataset.isoValue = toIsoDate(initial);
+                plannedDate.value = toDisplayDate(initial);
+            }
+        }
+
         window.jQuery(plannedDate).datepicker({
-            dateFormat: 'yy-mm-dd',
+            dateFormat: 'dd-mm-yy',
             minDate: 0,
             beforeShowDay: function (date) {
                 const ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
@@ -402,6 +378,11 @@ function initVendorBookingCreate(config) {
                 window.removeEventListener('resize', scheduleReposition);
             },
             onSelect: function () {
+                const picked = window.jQuery(plannedDate).datepicker('getDate');
+                if (picked) {
+                    plannedDate.dataset.isoValue = toIsoDate(picked);
+                    plannedDate.value = toDisplayDate(picked);
+                }
                 syncPlannedStart();
                 loadMiniAvailability();
             }

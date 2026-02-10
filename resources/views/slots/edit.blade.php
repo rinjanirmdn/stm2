@@ -169,13 +169,6 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">COA (PDF) <span class="st-text--danger-dark">*</span></label>
-                    <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" {{ empty($slot->coa_path ?? '') ? 'required' : '' }}>
-                    @error('coa_pdf')
-                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="st-form-field">
                     <div class="st-form-row--grid-risk">
                         <div>
                             <label class="st-label">Risk &amp; Schedule</label>

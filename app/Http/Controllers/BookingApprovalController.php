@@ -6,7 +6,6 @@ use App\Models\ActivityLog;
 use App\Models\Gate;
 use App\Models\BookingRequest;
 use App\Models\Slot;
-use App\Models\SlotPoItem;
 use App\Models\TruckTypeDuration;
 use App\Models\Warehouse;
 use App\Services\BookingApprovalService;
@@ -92,15 +91,6 @@ class BookingApprovalController extends Controller
             });
         }
 
-        $coa = trim((string) $request->query('coa', ''));
-        if ($coa === '1') {
-            $query->whereNotNull('booking_requests.coa_path')->where('booking_requests.coa_path', '<>', '');
-        } elseif ($coa === '0') {
-            $query->where(function ($q) {
-                $q->whereNull('booking_requests.coa_path')->orWhere('booking_requests.coa_path', '=', '');
-            });
-        }
-
         $plannedStart = trim((string) $request->query('planned_start', ''));
         if ($plannedStart !== '') {
             $query->whereDate('booking_requests.planned_start', '=', $plannedStart);
@@ -163,7 +153,6 @@ class BookingApprovalController extends Controller
             'po_number' => 'booking_requests.po_number',
             'supplier_name' => 'booking_requests.supplier_name',
             'requested_by' => 'u_requester.full_name',
-            'coa' => DB::raw("CASE WHEN booking_requests.coa_path IS NULL OR booking_requests.coa_path = '' THEN 0 ELSE 1 END"),
             'planned_start' => 'booking_requests.planned_start',
             'converted_ticket' => 's_converted.ticket_number',
             'gate' => 'g_planned.name',
@@ -236,7 +225,6 @@ class BookingApprovalController extends Controller
     public function show($id)
     {
         $booking = BookingRequest::with([
-            'items',
             'requester',
             'approver',
             'convertedSlot',
@@ -276,7 +264,7 @@ class BookingApprovalController extends Controller
 
         $bookingRequest = BookingRequest::where('id', $id)
             ->where('status', BookingRequest::STATUS_PENDING)
-            ->with(['items', 'requester'])
+            ->with(['requester'])
             ->firstOrFail();
 
         try {
@@ -330,7 +318,6 @@ class BookingApprovalController extends Controller
                     'driver_name' => $bookingRequest->driver_name,
                     'driver_number' => $bookingRequest->driver_number,
                     'late_reason' => $bookingRequest->notes,
-                    'coa_path' => $bookingRequest->coa_path,
                     'status' => Slot::STATUS_PENDING_APPROVAL,
                     'slot_type' => 'planned',
                     'created_by' => $bookingRequest->requested_by,
@@ -469,7 +456,7 @@ class BookingApprovalController extends Controller
 
         $bookingRequest = BookingRequest::where('id', $id)
             ->where('status', BookingRequest::STATUS_PENDING)
-            ->with(['items', 'requester'])
+            ->with(['requester'])
             ->firstOrFail();
 
         // Get warehouse from selected gate

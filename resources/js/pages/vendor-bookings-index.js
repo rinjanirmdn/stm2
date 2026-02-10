@@ -8,6 +8,21 @@
         return `${year}-${month}-${day}`;
     }
 
+    function toDisplayDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+    function dmyToIso(value) {
+        if (!value) return '';
+        const parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        const [d, m, y] = parts;
+        return `${y}-${m}-${d}`;
+    }
+
     function applyDatepickerTooltips(inst) {
         if (!inst || !inst.dpDiv) return;
         const dp = window.jQuery(inst.dpDiv);
@@ -75,7 +90,7 @@
         el.setAttribute('data-vendor-datepicker', '1');
 
         window.jQuery(el).datepicker({
-            dateFormat: 'yy-mm-dd',
+            dateFormat: 'dd-mm-yy',
             beforeShowDay: beforeShowDay,
             beforeShow: function(input, inst) {
                 setTimeout(function() {
@@ -106,7 +121,10 @@
         var dateTo = document.getElementById('date_to');
         var initial = dateFrom && dateFrom.value ? dateFrom.value : '';
         if (initial) {
-            dateRangeInput.value = initial;
+            const dt = new Date(initial);
+            if (!isNaN(dt.getTime())) {
+                dateRangeInput.value = toDisplayDate(dt);
+            }
         }
 
         window.jQuery(dateRangeInput).dateRangePicker({
@@ -114,11 +132,12 @@
             singleDate: true,
             showShortcuts: false,
             singleMonth: true,
-            format: 'YYYY-MM-DD'
+            format: 'DD-MM-YYYY'
         }).bind('datepicker-change', function(event, obj) {
             var value = (obj && obj.value) ? obj.value : '';
-            if (dateFrom) dateFrom.value = value;
-            if (dateTo) dateTo.value = value;
+            var iso = dmyToIso(value);
+            if (dateFrom) dateFrom.value = iso;
+            if (dateTo) dateTo.value = iso;
             dateRangeInput.value = value;
         });
     }

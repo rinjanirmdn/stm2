@@ -28,13 +28,11 @@
                 <div class="st-form-field">
                     <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
                     <div class="st-form-field--relative">
-                        <input type="text" id="po_number" autocomplete="off" name="po_number" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
+                        <input type="text" id="po_number" autocomplete="off" name="po_number" class="st-input st-input--pr-40{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
+                        <span class="st-input-loader" id="po_loading" aria-hidden="true"></span>
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
                     @error('po_number')
-                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
-                    @enderror
-                    @error('po_items')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
@@ -63,16 +61,9 @@
                 </div>
             </div>
 
-            <div class="st-form-row st-form-field--mb-12">
-                <div class="st-form-field st-form-field--full">
-                    <div id="po_preview" class="st-mt-2"></div>
-                    <div id="po_items_group" class="st-hidden st-mt-10"></div>
-                </div>
-            </div>
-
             <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3">
                 <div class="st-form-field st-form-field--relative">
-                    <label class="st-label">Vendor <span class="st-text--optional">(Optional)</span></label>
+                    <label class="st-label">Vendor Name</label>
                     @php
                         $oldVendorName = '';
                         $oldVendorId = old('vendor_id');
@@ -89,9 +80,10 @@
                         type="text"
                         id="vendor_search"
                         class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }} st-input--mb-4"
-                        placeholder="Choose Direction First..."
+                        placeholder="Vendor will auto-fill from PO"
                         autocomplete="off"
-                        {{ old('direction') ? '' : 'disabled' }}
+                        data-auto-fill="1"
+                        readonly
                         value="{{ $oldVendorName }}"
                     >
                     <div id="vendor_suggestions" class="st-suggestions st-suggestions--vendor st-hidden"></div>
@@ -187,13 +179,6 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">COA (PDF) <span class="st-text--danger-dark">*</span></label>
-                    <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf" required>
-                    @error('coa_pdf')
-                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="st-form-field">
                     <div class="st-form-row--grid-risk">
                         <div>
                             <label class="st-label">Risk &amp; Schedule</label>
@@ -263,7 +248,6 @@
     </div>
 
     <script type="application/json" id="truck_type_durations_json">{!! json_encode($truckTypeDurations ?? []) !!}</script>
-    <script type="application/json" id="old_po_items_json">{!! json_encode(old('po_items', [])) !!}</script>
     <script type="application/json" id="slot_routes_json">{!! json_encode([
         'check_risk' => route('slots.ajax.check_risk'),
         'check_slot_time' => route('slots.ajax.check_slot_time'),

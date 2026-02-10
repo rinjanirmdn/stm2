@@ -1,6 +1,20 @@
 document.addEventListener('DOMContentLoaded', function () {
     var filterForm = document.getElementById('unplanned-filter-form');
 
+    function toDisplayDate(value) {
+        if (!value) return '';
+        var parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        return parts[2] + '-' + parts[1] + '-' + parts[0];
+    }
+
+    function toIsoDate(value) {
+        if (!value) return '';
+        var parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        return parts[2].length === 4 ? parts[2] + '-' + parts[1] + '-' + parts[0] : value;
+    }
+
     // Initialize single-date range picker for arrival date
     var arrivalRangeInput = document.querySelector('input#unplanned_arrival_range');
     if (arrivalRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
@@ -8,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var toInput = document.querySelector('input[name="arrival_to"]');
         var initial = fromInput && fromInput.value ? fromInput.value : '';
         if (initial) {
-            arrivalRangeInput.value = initial;
+            arrivalRangeInput.value = toDisplayDate(initial);
         }
 
         window.jQuery(arrivalRangeInput).dateRangePicker({
@@ -16,11 +30,12 @@ document.addEventListener('DOMContentLoaded', function () {
             singleDate: true,
             showShortcuts: false,
             singleMonth: true,
-            format: 'YYYY-MM-DD'
+            format: 'DD-MM-YYYY'
         }).bind('datepicker-change', function (event, obj) {
             var value = (obj && obj.value) ? obj.value : '';
-            if (fromInput) fromInput.value = value;
-            if (toInput) toInput.value = value;
+            var iso = toIsoDate(value);
+            if (fromInput) fromInput.value = iso;
+            if (toInput) toInput.value = iso;
             arrivalRangeInput.value = value;
             setTimeout(function () {
                 if (filterForm) {

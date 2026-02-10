@@ -42,39 +42,26 @@
                             <div class="cb-po-search">
                                 <input type="text"
                                        id="po-search"
-                                       class="cb-input"
+                                       class="cb-input cb-input--pr-40"
                                        placeholder="Search PO/DO number..."
                                        autocomplete="off"
                                        value="{{ old('po_number') }}">
                                 <input type="hidden" name="po_number" id="po-number-hidden" value="{{ old('po_number') }}">
+                                <span class="cb-input-loader" id="po-loading" aria-hidden="true"></span>
                                 <div class="cb-po-results" id="po-results"></div>
-                            </div>
-                            <div class="cb-loading" id="po-loading">
-                                <div class="cb-spinner"></div>
-                                <span>Searching...</span>
                             </div>
                             @error('po_number')
                                 <div class="cb-hint cb-hint--error">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <!-- PO Items Table -->
-                        <div id="po-items-container" class="cb-po-items-container">
-                            <label class="cb-label">PO Items</label>
-                            <table class="cb-po-items-table st-table st-table--sm">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Material</th>
-                                        <th>PO Qty</th>
-                                        <th>GR Total</th>
-                                        <th>Remaining</th>
-                                        <th>Book Qty</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="po-items-body"></tbody>
-                            </table>
-                            <div class="cb-hint">Enter quantities for items you want to book.</div>
+                        <div class="cb-field">
+                            <label class="cb-label cb-label--required">Vendor Name</label>
+                            <input type="text"
+                                   id="vendor-name"
+                                   class="cb-input"
+                                   placeholder="Vendor will auto-fill from PO"
+                                   readonly>
                         </div>
                     </div>
 
@@ -200,28 +187,6 @@
                         </div>
 
                         <div class="cb-stack">
-                            <!-- Documents Section -->
-                            <div class="cb-section">
-                                <h3 class="cb-section__title">
-                                    <i class="fas fa-file-pdf"></i>
-                                    Documents
-                                </h3>
-
-                                <div class="cb-field">
-                                    <label class="cb-label cb-label--required">COA (Certificate of Analysis)</label>
-                                    <input type="file"
-                                           name="coa_pdf"
-                                           class="cb-file-input"
-                                           accept=".pdf"
-                                           required>
-                                    <div class="cb-hint">PDF only, max 10MB</div>
-                                    <div class="cb-hint cb-hint--error cb-file-error" id="coa-error" hidden>File too large. Max 10MB.</div>
-                                    @error('coa_pdf')
-                                        <div class="cb-hint cb-hint--error">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
                             <!-- Notes Section -->
                             <div class="cb-section">
                                 <h3 class="cb-section__title">

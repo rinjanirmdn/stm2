@@ -225,6 +225,20 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
+    function bindDateInputSubmitNormalizer() {
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (!form || !form.querySelectorAll) return;
+            var inputs = form.querySelectorAll('input[data-st-datepicker="1"]');
+            inputs.forEach(function (input) {
+                var iso = input.dataset ? input.dataset.isoValue : '';
+                if (iso) {
+                    input.value = iso;
+                }
+            });
+        });
+    }
+
     function initMdTimePickers() {
         if (typeof window.mdtimepicker !== 'function') {
             return false;
@@ -424,6 +438,60 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function toIsoDate(d) {
+        if (!d) return '';
+        var Y = d.getFullYear();
+        var M = ('0' + (d.getMonth() + 1)).slice(-2);
+        var D = ('0' + d.getDate()).slice(-2);
+        return Y + '-' + M + '-' + D;
+    }
+
+    function toDisplayDate(d) {
+        if (!d) return '';
+        var D = ('0' + d.getDate()).slice(-2);
+        var M = ('0' + (d.getMonth() + 1)).slice(-2);
+        var Y = d.getFullYear();
+        return D + '-' + M + '-' + Y;
+    }
+
+    function isoToDate(value) {
+        if (!value) return null;
+        var parts = String(value).split('-');
+        if (parts.length !== 3) return null;
+        var y = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10) - 1;
+        var d = parseInt(parts[2], 10);
+        if (!isFinite(y) || !isFinite(m) || !isFinite(d)) return null;
+        return new Date(y, m, d);
+    }
+
+    function normalizeDmyToIso(value) {
+        if (!value) return '';
+        var parts = String(value).split('-');
+        if (parts.length === 3) {
+            var d = parts[0];
+            var m = parts[1];
+            var y = parts[2];
+            if (y.length === 4) {
+                return y + '-' + m + '-' + d;
+            }
+        }
+        return value;
+    }
+
+    function setDisplayValue(input, isoValue) {
+        if (!input) return;
+        input.dataset.isoValue = isoValue || '';
+        if (isoValue) {
+            var parts = isoValue.split('-');
+            if (parts.length === 3) {
+                input.value = parts[2] + '-' + parts[1] + '-' + parts[0];
+                return;
+            }
+        }
+        input.value = isoValue || '';
+    }
+
     function initPredefinedDateRange(containerSelector, startInputSelector, endInputSelector) {
         var reportRange = window.jQuery(containerSelector);
         if (reportRange.length) {
@@ -443,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             function updateRange(start, end) {
-                var label = start.format('YYYY-MM-DD') + ' - ' + end.format('YYYY-MM-DD');
+                var label = start.format('DD-MM-YYYY') + ' - ' + end.format('DD-MM-YYYY');
                 window.jQuery(containerSelector + ' span').html(label);
                 window.jQuery(startInputSelector).val(start.format('YYYY-MM-DD'));
                 window.jQuery(endInputSelector).val(end.format('YYYY-MM-DD'));
@@ -495,19 +563,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Force text type
                 try { input.type = 'text'; } catch (e) { }
 
+                if (input.value) {
+                    setDisplayValue(input, input.value);
+                }
+
                 // Init single date picker
                 window.jQuery(input).daterangepicker({
                     singleDatePicker: true,
                     showDropdowns: true,
                     autoApply: true,
                     locale: {
-                        format: 'YYYY-MM-DD'
+                        format: 'DD-MM-YYYY'
                     },
                     minYear: 1901,
                     maxYear: parseInt(window.moment().format('YYYY'), 10) + 5
                 }, function(start, end, label) {
                     // Trigger change event for other listeners
-                    input.value = start.format('YYYY-MM-DD');
+                    var iso = start.format('YYYY-MM-DD');
+                    setDisplayValue(input, iso);
                     input.dispatchEvent(new Event('change', { bubbles: true }));
                 });
             });
@@ -599,9 +672,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var initialFrom = from && from.value ? from.value : '';
             var initialTo = to && to.value ? to.value : '';
             if (initialFrom && initialTo) {
-                input.value = initialFrom + ' - ' + initialTo;
+                var startDisplay = toDisplayDate(isoToDate(initialFrom));
+                var endDisplay = toDisplayDate(isoToDate(initialTo));
+                input.value = startDisplay + ' - ' + endDisplay;
             } else if (initialFrom) {
-                input.value = initialFrom;
+                input.value = toDisplayDate(isoToDate(initialFrom));
             }
 
             if (window.jQuery && window.jQuery.fn && window.jQuery.fn.dateRangePicker) {
@@ -609,16 +684,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     autoClose: true,
                     showShortcuts: false,
                     singleMonth: true,
-                    format: 'YYYY-MM-DD'
+                    format: 'DD-MM-YYYY'
                 }).bind('datepicker-change', function (event, obj) {
-                    var start = obj && obj.date1 ? window.jQuery.datepicker.formatDate('yy-mm-dd', obj.date1) : '';
-                    var end = obj && obj.date2 ? window.jQuery.datepicker.formatDate('yy-mm-dd', obj.date2) : '';
+                    var start = obj && obj.date1 ? toIsoDate(obj.date1) : '';
+                    var end = obj && obj.date2 ? toIsoDate(obj.date2) : '';
                     if (from) from.value = start;
                     if (to) to.value = end;
                     if (start && end) {
-                        input.value = start + ' - ' + end;
+                        input.value = toDisplayDate(obj.date1) + ' - ' + toDisplayDate(obj.date2);
                     } else {
-                        input.value = start || '';
+                        input.value = start ? toDisplayDate(obj.date1) : '';
                     }
                 });
                 return;
@@ -626,10 +701,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (window.jQuery && window.jQuery.fn && window.jQuery.fn.datepicker) {
                 window.jQuery(input).datepicker({
-                    dateFormat: 'yy-mm-dd',
+                    dateFormat: 'dd-mm-yy',
                     onSelect: function (dateText) {
-                        if (from) from.value = dateText;
-                        if (to) to.value = dateText;
+                        var iso = normalizeDmyToIso(dateText);
+                        if (from) from.value = iso;
+                        if (to) to.value = iso;
                         input.value = dateText;
                     }
                 });
@@ -889,6 +965,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initAutoSubmitDateRangeFields();
     initTimePickersWhenReady();
     initDateRangePickerOpenersWhenReady();
+    bindDateInputSubmitNormalizer();
     initRangePickersWhenReady();
 
     var stActiveSortPanel = null;

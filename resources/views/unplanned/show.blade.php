@@ -77,15 +77,6 @@
                         <div class="st-font-semibold">Ticket Number</div>
                         <div>{{ !empty($slot->ticket_number) ? $slot->ticket_number : '-' }}</div>
 
-                        <div class="st-font-semibold">COA</div>
-                        <div>
-                            @if(!empty($slot->coa_path))
-                                <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
-                            @else
-                                -
-                            @endif
-                        </div>
-
                         <div class="st-font-semibold">Vendor</div>
                         <div>{{ $slot->vendor_name ?? '-' }}</div>
 
