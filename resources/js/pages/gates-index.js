@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function () {
             var dateStr = toIsoDateLocal(date);
             var isToday = date.toDateString() === today.toDateString();
             var isSelected = paramDate ? dateStr === paramDate : false;
-            var isPast = date < todayMidnight;
             var isSunday = date.getDay() === 0;
             var isHoliday = holidayData[dateStr];
 
@@ -74,19 +73,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (isToday) dayDiv.classList.add('av-calendar__day--today');
             if (isSelected) dayDiv.classList.add('av-calendar__day--selected');
-            if (isPast) dayDiv.classList.add('av-calendar__day--disabled');
             if (isSunday) dayDiv.classList.add('av-calendar__day--sunday');
             if (isHoliday) dayDiv.classList.add('av-calendar__day--holiday');
 
-            if (!isPast && !isSunday && !isHoliday) {
-                dayDiv.addEventListener('click', function(ds) {
-                    return function() {
-                        document.getElementById('selected_date_display').innerText = new Date(ds).toLocaleDateString('en-GB').replace(/\//g, '.');
-                        var baseUrl = gatesIndexUrl || window.location.pathname;
-                        window.location.href = baseUrl + '?date_from=' + encodeURIComponent(ds);
-                    };
-                }(dateStr));
-            }
+            dayDiv.addEventListener('click', function(ds) {
+                return function() {
+                    document.getElementById('selected_date_display').innerText = new Date(ds).toLocaleDateString('en-GB').replace(/\//g, '.');
+                    var baseUrl = gatesIndexUrl || window.location.pathname;
+                    window.location.href = baseUrl + '?date_from=' + encodeURIComponent(ds);
+                };
+            }(dateStr));
 
             if (isSunday) {
                 dayDiv.setAttribute('data-tooltip', 'Sunday - Not available');
@@ -184,16 +180,18 @@ window.closeRejectModal = function () {
 // Search Logic: Trigger on Enter, Reset on Clear
 const searchInput = document.getElementById('gate_search_input');
 if (searchInput) {
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            performSearch(this.value);
+    let stGateSearchTimer = null;
+    function queueGateSearch(val) {
+        if (stGateSearchTimer) {
+            clearTimeout(stGateSearchTimer);
         }
-    });
+        stGateSearchTimer = setTimeout(function () {
+            performSearch(val);
+        }, 200);
+    }
 
     searchInput.addEventListener('input', function() {
-        if (this.value === '') {
-            performSearch('');
-        }
+        queueGateSearch(this.value);
     });
 }
 

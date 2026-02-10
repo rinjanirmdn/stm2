@@ -19,14 +19,6 @@
                     userFilterForm.submit();
                 }, 500); // 500ms debounce
             });
-
-            // Submit on Enter key
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    clearTimeout(timeout);
-                    userFilterForm.submit();
-                }
-            });
         });
     }
 });

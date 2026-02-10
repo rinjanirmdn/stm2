@@ -80,7 +80,7 @@ class ReportController extends Controller
         $seen = [];
 
         foreach ($rows as $row) {
-            $truck = trim((string) ($row->truck_number ?? ''));
+            $truck = trim((string) ($row->po_number ?? ''));
             $ticket = trim((string) ($row->ticket_number ?? ''));
             $matDoc = trim((string) ($row->mat_doc ?? ''));
             $vendor = trim((string) ($row->vendor_name ?? ''));

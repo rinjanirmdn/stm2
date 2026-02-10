@@ -135,15 +135,28 @@ class SlotFilterService
         $search = trim($request->query('q', ''));
 
         if ($search !== '') {
-            $like = '%' . $search . '%';
-            $query->where(function ($sub) use ($like) {
-                $sub->where('s.po_number', 'like', $like)
-                    ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('s.vendor_name', 'like', $like)
-                    ->orWhere('w.wh_name', 'like', $like)
-                    ->orWhere('s.direction', 'like', $like)
-                    ->orWhere('s.status', 'like', $like);
-            });
+            $tokens = preg_split('/\s+/', $search) ?: [];
+            $tokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $tokens), fn ($t) => $t !== ''));
+
+            // Common pattern from suggestions: "PO - Vendor".
+            // Treat '-' as a separator so users can search by either side.
+            $normalized = str_replace('-', ' ', $search);
+            $moreTokens = preg_split('/\s+/', $normalized) ?: [];
+            $moreTokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $moreTokens), fn ($t) => $t !== ''));
+
+            $allTokens = array_values(array_unique(array_merge($tokens, $moreTokens)));
+
+            foreach ($allTokens as $tok) {
+                $like = '%' . $tok . '%';
+                $query->where(function ($sub) use ($like) {
+                    $sub->where('s.po_number', 'like', $like)
+                        ->orWhere('s.mat_doc', 'like', $like)
+                        ->orWhere('s.vendor_name', 'like', $like)
+                        ->orWhere('w.wh_name', 'like', $like)
+                        ->orWhere('s.direction', 'like', $like)
+                        ->orWhere('s.status', 'like', $like);
+                });
+            }
         }
 
         // Specific field searches

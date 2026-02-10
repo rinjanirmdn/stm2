@@ -486,7 +486,7 @@
                                         <td>{{ $r->mat_doc ?? '' }}</td>
                                         <td>{{ $r->vendor_name ?? '-' }}</td>
                                         <td>{{ $r->warehouse_name ?? '-' }}</td>
-                                        <td>
+                                        <td class="st-td-center">
                                             @php $dir = strtolower($r->direction ?? ''); @endphp
                                             @if($dir === 'inbound')
                                                 <span class="st-badge-modern st-badge-modern--inbound">
@@ -501,7 +501,7 @@
                                             @endif
                                         </td>
                                         <td>{{ !empty($r->arrival_time) ? $fmt($r->arrival_time) : '-' }}</td>
-                                        <td>
+                                        <td class="st-td-center">
                                             @if ($leadTimeMinutes !== null)
                                                 @php
                                                     $ltMinutes = (int) $leadTimeMinutes;
@@ -523,7 +523,7 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="st-td-center">
                                             @if ($targetDurationMinutes === null || $leadTimeMinutes === null)
                                                 -
                                             @elseif ($targetStatus === 'achieve')
@@ -534,7 +534,7 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="st-td-center">
                                             @if ($lateDisplay === 'late')
                                                 <span class="st-table__status-badge st-status-late">Late</span>
                                             @elseif ($lateDisplay === 'on_time')
@@ -543,8 +543,8 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td>{{ $r->created_by_name ?? $r->created_by_email ?? '-' }}</td>
-                                        <td>
+                                        <td class="st-td-center">{{ $r->created_by_name ?? $r->created_by_email ?? '-' }}</td>
+                                        <td class="st-td-center">
                                             <div class="tw-actionbar">
                                                 <a href="{{ route('slots.show', ['slotId' => $r->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
                                                     <i class="fa-solid fa-eye"></i>
@@ -554,7 +554,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="13" class="st-text-center st-text--muted st-table-empty--roomy">No Transactions Found</td>
+                                        <td colspan="13" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Transactions Found</td>
                                     </tr>
                                 @endforelse
                             </tbody>

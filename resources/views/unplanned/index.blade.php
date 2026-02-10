@@ -202,7 +202,7 @@
                 <tbody>
                 @if ($unplannedSlots->isEmpty())
                     <tr>
-                        <td colspan="10" class="st-text-center st-text--muted st-table-empty--compact">No Unplanned Transactions Found</td>
+                        <td colspan="10" class="st-table-empty st-text-center st-text--muted st-table-empty--compact">No Unplanned Transactions Found</td>
                     </tr>
                 @else
                     @foreach ($unplannedSlots as $idx => $slot)
@@ -229,7 +229,7 @@
                             <td>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</td>
                             <td>{{ $slot->vendor_name ?? '-' }}</td>
                             <td>{{ $label !== '' ? $label : '-' }}</td>
-                            <td>
+                            <td class="st-td-center">
                                 @php $dir = strtolower($slot->direction ?? ''); @endphp
                                 @if($dir === 'inbound')
                                     <span class="st-badge-modern st-badge-modern--inbound">Inbound</span>
@@ -250,17 +250,17 @@
                                 ];
                                 $badgeClass = $badgeMap[$st] ?? 'bg-secondary';
                             @endphp
-                            <td>
+                            <td class="st-td-center">
                                 <span class="badge {{ $badgeClass }}">{{ $stLabel }}</span>
                             </td>
-                            <td>
+                            <td class="st-td-center">
                                 @if (!empty($slot->arrival_time))
                                     {{ \Carbon\Carbon::parse((string) $slot->arrival_time)->format('d M Y H:i') }}
                                 @else
                                     -
                                 @endif
                             </td>
-                            <td>
+                            <td class="st-td-center">
                                 <div class="tw-actionbar">
                                     @if (($slot->status ?? '') === 'waiting')
                                         <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="tw-action tw-action--primary" data-tooltip="Start" aria-label="Start">

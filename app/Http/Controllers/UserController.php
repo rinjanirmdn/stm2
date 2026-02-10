@@ -37,7 +37,7 @@ class UserController extends Controller
         $dirs = is_array($rawDir) ? $rawDir : [trim((string) $rawDir)];
 
         // Validate sort column
-        $allowedSorts = ['id', 'email', 'name', 'role', 'created_at'];
+        $allowedSorts = ['id', 'nik', 'email', 'name', 'role', 'created_at'];
 
         $sorts = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $sorts), fn ($v) => $v !== ''));
         $dirs = array_values(array_map(function ($v) {
@@ -272,7 +272,7 @@ class UserController extends Controller
         $validated = $request->validated();
 
         $currentUserId = $request->user()->id ?? 0;
-        
+
         $update = [
             'nik' => trim($validated['nik']),
             'username' => trim($validated['nik']),

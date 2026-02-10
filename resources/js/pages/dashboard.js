@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
+    'use strict';
+
+    console.log('[stm2-dashboard] bundle loaded: 2026-02-06T14:10+08:00');
+
     function getHolidayMap() {
         if (typeof window.getIndonesiaHolidays === 'function') {
             return window.getIndonesiaHolidays() || {};
@@ -1280,19 +1284,69 @@ document.addEventListener('DOMContentLoaded', function () {
                 var isDarkLocal = false;
                 try { isDarkLocal = (document.documentElement && document.documentElement.getAttribute('data-theme') === 'dark'); } catch (e) { }
 
-                function drawPill(text, x, y, customColor) {
+                var rootStyles = null;
+                try { rootStyles = window.getComputedStyle(document.documentElement); } catch (e) { }
+                function cssVar(name, fallback) {
+                    try {
+                        if (!rootStyles || !name) return fallback;
+                        var v = String(rootStyles.getPropertyValue(name) || '').trim();
+                        return v || fallback;
+                    } catch (e) {
+                        return fallback;
+                    }
+                }
+
+                function drawRoundedRect(x0, y0, w, h, r) {
+                    var rr = Math.max(0, Math.min(r || 0, Math.min(w, h) / 2));
+                    ctx.beginPath();
+                    ctx.moveTo(x0 + rr, y0);
+                    ctx.lineTo(x0 + w - rr, y0);
+                    ctx.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + rr);
+                    ctx.lineTo(x0 + w, y0 + h - rr);
+                    ctx.quadraticCurveTo(x0 + w, y0 + h, x0 + w - rr, y0 + h);
+                    ctx.lineTo(x0 + rr, y0 + h);
+                    ctx.quadraticCurveTo(x0, y0 + h, x0, y0 + h - rr);
+                    ctx.lineTo(x0, y0 + rr);
+                    ctx.quadraticCurveTo(x0, y0, x0 + rr, y0);
+                    ctx.closePath();
+                }
+
+                function drawPill(text, x, y, opts) {
                     if (!text) return;
-                    var fontSize = 10;
+                    var o = opts || {};
+                    var fontSize = typeof o.fontSize === 'number' ? o.fontSize : 10;
+                    var padX = typeof o.padX === 'number' ? o.padX : 6;
+                    var padY = typeof o.padY === 'number' ? o.padY : 3;
+                    var radius = typeof o.radius === 'number' ? o.radius : 7;
+
                     ctx.save();
-                    ctx.font = '800 ' + fontSize + 'px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+                    ctx.font = (o.fontWeight || '800') + ' ' + fontSize + 'px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    ctx.fillStyle = customColor || (isDarkLocal ? 'rgba(226,232,240,0.98)' : 'rgba(15,23,42,0.95)');
-                    // Add grey outline if customColor is used (assuming it's white for bars)
-                    if (customColor) {
-                        ctx.lineWidth = 2;
-                        ctx.strokeStyle = '#475569'; // Slate-600 grey
+                    var metrics = ctx.measureText(text);
+                    var tw = metrics && metrics.width ? metrics.width : (String(text).length * 7);
+                    var w = Math.ceil(tw + padX * 2);
+                    var h = Math.ceil(fontSize + padY * 2);
+                    var x0 = Math.round(x - w / 2);
+                    var y0 = Math.round(y - h / 2);
+
+                    if (o.bgColor) {
+                        ctx.fillStyle = o.bgColor;
+                        drawRoundedRect(x0, y0, w, h, radius);
+                        ctx.fill();
+                    }
+                    if (o.borderColor) {
+                        ctx.lineWidth = typeof o.borderWidth === 'number' ? o.borderWidth : 1;
+                        ctx.strokeStyle = o.borderColor;
+                        drawRoundedRect(x0, y0, w, h, radius);
+                        ctx.stroke();
+                    }
+
+                    ctx.fillStyle = o.textColor || (isDarkLocal ? 'rgba(226,232,240,0.98)' : 'rgba(15,23,42,0.95)');
+                    if (o.textStrokeColor) {
+                        ctx.lineWidth = typeof o.textStrokeWidth === 'number' ? o.textStrokeWidth : 2;
+                        ctx.strokeStyle = o.textStrokeColor;
                         ctx.strokeText(text, x, y);
                     }
                     ctx.fillText(text, x, y);
@@ -1312,8 +1366,16 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (!el || typeof el.x !== 'number') return;
                             var x = el.x;
                             var y = (typeof el.y === 'number' && typeof el.base === 'number') ? ((el.y + el.base) / 2) : el.y;
-                            // Make bar text white
-                            drawPill(String(v), x, y, '#ffffff');
+                            var textColor = stTheme && stTheme.text ? stTheme.text : (isDarkLocal ? 'rgba(226,232,240,0.95)' : 'rgba(15,23,42,0.92)');
+
+                            drawPill(String(v), x, y, {
+                                textColor: textColor,
+                                fontSize: 10,
+                                fontWeight: '800',
+                                padX: 0,
+                                padY: 0,
+                                radius: 0
+                            });
                         });
                     }
 
@@ -1337,22 +1399,55 @@ document.addEventListener('DOMContentLoaded', function () {
         if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
         if (h.length !== 6) return null;
         var n = parseInt(h, 16);
-        if (isNaN(n)) return null;
-        return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+        return {
+            r: (n >> 16) & 255,
+            g: (n >> 8) & 255,
+            b: n & 255
+        };
     }
 
     function mixRgb(a, b, t) {
-        var tt = Math.max(0, Math.min(1, parseFloat(t || 0)));
+        var tt = Math.max(0, Math.min(1, parseFloat(t)));
         return {
-            r: Math.round(a.r + (b.r - a.r) * tt),
-            g: Math.round(a.g + (b.g - a.g) * tt),
-            b: Math.round(a.b + (b.b - a.b) * tt)
+            r: Math.round((a.r * (1 - tt)) + (b.r * tt)),
+            g: Math.round((a.g * (1 - tt)) + (b.g * tt)),
+            b: Math.round((a.b * (1 - tt)) + (b.b * tt))
         };
     }
+
+    var trendCanvas = document.getElementById('chart_trend');
+    var directionCanvas = document.getElementById('chart_direction');
+    var onTimeCanvas = document.getElementById('chart_on_time');
+    var targetCanvas = document.getElementById('chart_target_achievement');
+    var completionCanvas = document.getElementById('chart_completion_rate');
+    var bottleneckCanvas = document.getElementById('chart_bottleneck');
+    var processStatusCanvas = document.getElementById('chart_process_status');
 
     function rgbToCss(c, alpha) {
         var a = (alpha === null || alpha === undefined) ? 1 : Math.max(0, Math.min(1, parseFloat(alpha)));
         return 'rgba(' + [c.r, c.g, c.b, a].join(',') + ')';
+    }
+
+    function parseCssColorToRgb(color) {
+        var s = String(color || '').trim();
+        if (!s) return null;
+        if (s[0] === '#') return hexToRgb(s);
+        var m = s.match(/^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)$/i);
+        if (!m) return null;
+        return {
+            r: Math.max(0, Math.min(255, parseFloat(m[1]))),
+            g: Math.max(0, Math.min(255, parseFloat(m[2]))),
+            b: Math.max(0, Math.min(255, parseFloat(m[3])))
+        };
+    }
+
+    function getRootCssVar(name, fallback) {
+        try {
+            var v = String(window.getComputedStyle(document.documentElement).getPropertyValue(name) || '').trim();
+            return v || fallback;
+        } catch (e) {
+            return fallback;
+        }
     }
 
     function lightenHex(hex, t) {
@@ -1425,7 +1520,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 align: 'top',
                 offset: 2,
                 clip: false,
-                color: stTheme.text,
                 font: { weight: '700', size: 11 },
                 formatter: function (value) {
                     if (value === null || value === undefined) return '';
@@ -1694,37 +1788,9 @@ document.addEventListener('DOMContentLoaded', function () {
             labels: trendDays,
             datasets: [
                 {
-                    type: 'bar',
-                    label: 'Inbound',
-                    data: trendInbound,
-                    stack: 'dir',
-                    backgroundColor: 'rgba(2, 132, 199, 0.85)', // Solid Primary Blue (Inbound)
-                    borderColor: 'rgba(2, 132, 199, 0.8)', // Stronger Outline
-                    borderWidth: 1, // Full outline
-                    borderRadius: { bottomLeft: 0, bottomRight: 0, topLeft: 0, topRight: 0 }, // Flat bottom aligned with X-axis
-                    borderSkipped: false, // Ensure rounded corners draw
-                    maxBarThickness: 20,
-                    order: 2,
-                    datalabels: { display: false }
-                },
-                {
-                    type: 'bar',
-                    label: 'Outbound',
-                    data: trendOutbound,
-                    stack: 'dir',
-                    backgroundColor: 'rgba(234, 88, 12, 0.85)', // Solid Orange (Outbound)
-                    borderColor: 'rgba(234, 88, 12, 0.8)', // Stronger Outline
-                    borderWidth: 1, // Full outline
-                    borderRadius: { topLeft: 100, topRight: 100, bottomLeft: 0, bottomRight: 0 }, // Top half capsule
-                    borderSkipped: false, // Ensure rounded corners draw
-                    maxBarThickness: 20,
-                    order: 2,
-                    datalabels: { display: false }
-                },
-                {
-                    type: 'line',
                     label: 'Completed',
                     data: trendCounts,
+                    type: 'line',
                     borderColor: '#238a1bff', // Dark Green
                     backgroundColor: function (context) {
                         var chart = context.chart;
@@ -1733,7 +1799,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (!chartArea) return null;
                         var gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
                         gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)'); // Fades to white-ish transparent
-                        gradient.addColorStop(1, 'rgba(21, 128, 61, 0.1)'); // Very light Green (10%)
+                        gradient.addColorStop(1, 'rgba(35, 138, 27, 0.15)'); // Original green tint
                         return gradient;
                     },
                     fill: true,
@@ -1768,6 +1834,120 @@ document.addEventListener('DOMContentLoaded', function () {
                             return n > 0 ? n.toLocaleString('id-ID') : '';
                         }
                     }
+                },
+                {
+                    label: 'Inbound',
+                    data: trendInbound,
+                    type: 'bar',
+                    backgroundColor: function (ctx) {
+                        var chart = ctx && ctx.chart ? ctx.chart : null;
+                        var baseStr = getRootCssVar('--inbound', '#0284c7');
+                        var baseRgb = parseCssColorToRgb(baseStr) || { r: 2, g: 132, b: 199 };
+                        if (!chart) return rgbToCss(baseRgb, 0.78);
+                        var meta = chart.getDatasetMeta(ctx.datasetIndex);
+                        var el = meta && meta.data ? meta.data[ctx.dataIndex] : null;
+                        var topY = el && typeof el.y === 'number' ? el.y : 0;
+                        var botY = el && typeof el.base === 'number' ? el.base : (chart.chartArea ? chart.chartArea.bottom : 0);
+                        var g = chart.ctx.createLinearGradient(0, topY, 0, botY);
+                        g.addColorStop(0, rgbToCss(baseRgb, 1.0));
+                        g.addColorStop(0.55, rgbToCss(baseRgb, 0.82));
+                        g.addColorStop(1, rgbToCss(baseRgb, 0.55));
+                        return g;
+                    },
+                    borderColor: function () {
+                        var baseStr = getRootCssVar('--inbound', '#0284c7');
+                        var baseRgb = parseCssColorToRgb(baseStr) || { r: 2, g: 132, b: 199 };
+                        return rgbToCss(baseRgb, 0.80);
+                    },
+                    borderWidth: 1,
+                    borderRadius: function (ctx) {
+                        try {
+                            var i = ctx && typeof ctx.dataIndex === 'number' ? ctx.dataIndex : -1;
+                            var vIn = parseInt((trendInbound || [])[i] || 0, 10) || 0;
+                            var vOut = parseInt((trendOutbound || [])[i] || 0, 10) || 0;
+                            var selfV = parseInt(ctx && ctx.raw || 0, 10) || 0;
+                            if (selfV <= 0) return 0;
+                            if (vIn > 0 && vOut <= 0) return { topLeft: 12, topRight: 12, bottomLeft: 12, bottomRight: 12 };
+                            return { bottomLeft: 12, bottomRight: 12, topLeft: 0, topRight: 0 };
+                        } catch (e) {
+                            return { bottomLeft: 12, bottomRight: 12, topLeft: 0, topRight: 0 };
+                        }
+                    },
+                    borderSkipped: false,
+                    order: 2,
+                    datalabels: {
+                        display: function (ctx) {
+                            var v = ctx && ctx.raw;
+                            var n = parseInt(v || 0, 10) || 0;
+                            return n > 0;
+                        },
+                        anchor: 'center',
+                        align: 'center',
+                        clip: true,
+                        color: stTheme.text,
+                        font: { weight: '800', size: 10 },
+                        formatter: function (v) {
+                            var n = parseInt(v || 0, 10) || 0;
+                            return n > 0 ? n.toLocaleString('id-ID') : '';
+                        }
+                    }
+                },
+                {
+                    label: 'Outbound',
+                    data: trendOutbound,
+                    type: 'bar',
+                    backgroundColor: function (ctx) {
+                        var chart = ctx && ctx.chart ? ctx.chart : null;
+                        var baseStr = getRootCssVar('--outbound', '#ea580c');
+                        var baseRgb = parseCssColorToRgb(baseStr) || { r: 234, g: 88, b: 12 };
+                        if (!chart) return rgbToCss(baseRgb, 0.78);
+                        var meta = chart.getDatasetMeta(ctx.datasetIndex);
+                        var el = meta && meta.data ? meta.data[ctx.dataIndex] : null;
+                        var topY = el && typeof el.y === 'number' ? el.y : 0;
+                        var botY = el && typeof el.base === 'number' ? el.base : (chart.chartArea ? chart.chartArea.bottom : 0);
+                        var g = chart.ctx.createLinearGradient(0, topY, 0, botY);
+                        g.addColorStop(0, rgbToCss(baseRgb, 1.0));
+                        g.addColorStop(0.55, rgbToCss(baseRgb, 0.82));
+                        g.addColorStop(1, rgbToCss(baseRgb, 0.55));
+                        return g;
+                    },
+                    borderColor: function () {
+                        var baseStr = getRootCssVar('--outbound', '#ea580c');
+                        var baseRgb = parseCssColorToRgb(baseStr) || { r: 234, g: 88, b: 12 };
+                        return rgbToCss(baseRgb, 0.80);
+                    },
+                    borderWidth: 1,
+                    borderRadius: function (ctx) {
+                        try {
+                            var i = ctx && typeof ctx.dataIndex === 'number' ? ctx.dataIndex : -1;
+                            var vIn = parseInt((trendInbound || [])[i] || 0, 10) || 0;
+                            var vOut = parseInt((trendOutbound || [])[i] || 0, 10) || 0;
+                            var selfV = parseInt(ctx && ctx.raw || 0, 10) || 0;
+                            if (selfV <= 0) return 0;
+                            if (vOut > 0 && vIn <= 0) return { topLeft: 12, topRight: 12, bottomLeft: 12, bottomRight: 12 };
+                            return { topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 };
+                        } catch (e) {
+                            return { topLeft: 12, topRight: 12, bottomLeft: 0, bottomRight: 0 };
+                        }
+                    },
+                    borderSkipped: false,
+                    order: 3,
+                    datalabels: {
+                        display: function (ctx) {
+                            var v = ctx && ctx.raw;
+                            var n = parseInt(v || 0, 10) || 0;
+                            return n > 0;
+                        },
+                        anchor: 'center',
+                        align: 'center',
+                        clip: true,
+                        color: stTheme.text,
+                        font: { weight: '800', size: 10 },
+                        formatter: function (v) {
+                            var n = parseInt(v || 0, 10) || 0;
+                            return n > 0 ? n.toLocaleString('id-ID') : '';
+                        }
+                    }
                 }
             ]
         },
@@ -1778,7 +1958,11 @@ document.addEventListener('DOMContentLoaded', function () {
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: getLegendOptions(false),
-                datalabels: { clamp: true, display: true },
+                datalabels: {
+                    clamp: true,
+                    display: true,
+                    font: { weight: '800', size: 10 }
+                },
                 tooltip: (function () {
                     var t = getTooltipOptions();
                     t.callbacks = t.callbacks || {};
@@ -1879,12 +2063,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: [inbound, outbound],
                 backgroundColor: function (ctx) {
                     var idx = ctx && typeof ctx.dataIndex === 'number' ? ctx.dataIndex : 0;
-                    var base = idx === 0 ? '#0284c7' : '#ea580c';
+                    var base = idx === 0 ? 'rgba(2, 132, 199, 0.75)' : 'rgba(234, 88, 12, 0.75)';
                     var chart = ctx && ctx.chart ? ctx.chart : null;
                     if (!chart || !chart.chartArea) return base;
                     var area = chart.chartArea;
                     var g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
-                    g.addColorStop(0, lightenHex(base, 0.25));
+                    g.addColorStop(0, lightenHex(base, 0.38));
                     g.addColorStop(1, base);
                     return g;
                 },
@@ -2176,12 +2360,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: [parseInt(numbers.on_time || 0, 10), parseInt(numbers.late || 0, 10)],
                 backgroundColor: function (ctx) {
                     var idx = ctx && typeof ctx.dataIndex === 'number' ? ctx.dataIndex : 0;
-                    var base = idx === 0 ? '#16a34a' : '#dc2626';
+                    var base = idx === 0 ? 'rgba(21, 128, 61, 0.78)' : 'rgba(220, 38, 38, 0.78)';
                     var chart = ctx && ctx.chart ? ctx.chart : null;
                     if (!chart || !chart.chartArea) return base;
                     var area = chart.chartArea;
                     var g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
-                    g.addColorStop(0, lightenHex(base, 0.22));
+                    g.addColorStop(0, lightenHex(base, 0.38));
                     g.addColorStop(1, base);
                     return g;
                 },
@@ -2213,12 +2397,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: [parseInt(numbers.achieve || 0, 10), parseInt(numbers.not_achieve || 0, 10)],
                 backgroundColor: function (ctx) {
                     var idx = ctx && typeof ctx.dataIndex === 'number' ? ctx.dataIndex : 0;
-                    var base = idx === 0 ? '#16a34a' : '#dc2626';
+                    var base = idx === 0 ? 'rgba(21, 128, 61, 0.78)' : 'rgba(220, 38, 38, 0.78)';
                     var chart = ctx && ctx.chart ? ctx.chart : null;
                     if (!chart || !chart.chartArea) return base;
                     var area = chart.chartArea;
                     var g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
-                    g.addColorStop(0, lightenHex(base, 0.22));
+                    g.addColorStop(0, lightenHex(base, 0.38));
                     g.addColorStop(1, base);
                     return g;
                 },

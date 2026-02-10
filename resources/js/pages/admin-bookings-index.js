@@ -39,12 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     bookingFilterForm.submit();
                 }, 500);
             });
-            searchInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    clearTimeout(timeout);
-                    bookingFilterForm.submit();
-                }
-            });
         }
     }
 });

@@ -41,6 +41,56 @@
                                 <th class="st-w-60">#</th>
                                 <th class="st-w-180">
                                     <div class="st-colhead">
+                                        <span class="st-colhead__label">NIK</span>
+                                        <span class="st-colhead__icons">
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="nik" data-type="text" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="nik" title="Filter">â·</button>
+                                        </span>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="nik">
+                                            <div class="st-panel__title">NIK Filter</div>
+                                            <input type="text" name="nik" form="user-filter-form" class="st-input" placeholder="Search NIK..." value="{{ $nik ?? '' }}">
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="nik">Clear</button>
+                                            </div>
+                                        </div>
+                                        <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="nik">
+                                            <div class="st-panel__title">Sort NIK</div>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="nik" data-dir="asc">
+                                                A-Z
+                                            </button>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="nik" data-dir="desc">
+                                                Z-A
+                                            </button>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="st-colhead">
+                                        <span class="st-colhead__label">Full Name</span>
+                                        <span class="st-colhead__icons">
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="name" data-type="text" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="full_name" title="Filter">â·</button>
+                                        </span>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="full_name">
+                                            <div class="st-panel__title">Full Name Filter</div>
+                                            <input type="text" name="full_name" form="user-filter-form" class="st-input" placeholder="Search name..." value="{{ $full_name ?? '' }}">
+                                            <div class="st-panel__actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="full_name">Clear</button>
+                                            </div>
+                                        </div>
+                                        <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="name">
+                                            <div class="st-panel__title">Sort Name</div>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="name" data-dir="asc">
+                                                A-Z
+                                            </button>
+                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="name" data-dir="desc">
+                                                Z-A
+                                            </button>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th class="st-w-180">
+                                    <div class="st-colhead">
                                         <span class="st-colhead__label">Email</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="email" data-type="text" title="Sort">â‡…</button>
@@ -64,32 +114,7 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th>
-                                    <div class="st-colhead">
-                                        <span class="st-colhead__label">Name</span>
-                                        <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="name" data-type="text" title="Sort">â‡…</button>
-                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="name" title="Filter">â·</button>
-                                        </span>
-                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="name">
-                                            <div class="st-panel__title">Name Filter</div>
-                                            <input type="text" name="name" form="user-filter-form" class="st-input" placeholder="Search name..." value="{{ $name ?? '' }}">
-                                            <div class="st-panel__actions">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="name">Clear</button>
-                                            </div>
-                                        </div>
-                                        <div class="st-sort-panel st-panel st-panel--medium" data-sort-panel="name">
-                                            <div class="st-panel__title">Sort Name</div>
-                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="name" data-dir="asc">
-                                                A-Z
-                                            </button>
-                                            <button type="button" class="st-sort-option st-sort-option--compact" data-sort="name" data-dir="desc">
-                                                Z-A
-                                            </button>
-                                        </div>
-                                    </div>
-                                </th>
-                                <th class="st-w-140">
+                                <th class="st-w-140 st-th-center">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Role</span>
                                         <span class="st-colhead__icons">
@@ -149,7 +174,7 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th class="st-w-190">
+                                <th class="st-w-190 st-th-center">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Created</span>
                                         <span class="st-colhead__icons">
@@ -166,7 +191,7 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th class="st-w-260">Actions</th>
+                                <th class="st-w-260 st-th-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -181,20 +206,19 @@
                             <tr>
                                 <td>{{ $loop->index + 1 }}</td>
                                 <td class="st-font-semibold">{{ $u->nik ?? '-' }}</td>
-                                <td>{{ $u->email ?? '-' }}</td>
                                 <td>{{ $u->full_name ?? '-' }}</td>
-                                <td>{{ $u->vendor_code ?? '-' }}</td>
-                                <td>
+                                <td>{{ $u->email ?? '-' }}</td>
+                                <td class="st-td-center">
                                     <span class="st-badge st-badge--{{ $roleVal }}">{{ $roleText }}</span>
                                 </td>
-                                <td>
+                                <td class="st-td-center">
                                     @if($u->is_active)
                                         <span class="st-badge st-badge--success">Active</span>
                                     @else
                                         <span class="st-badge st-badge--danger">Inactive</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="st-td-center">
                                     @php
                                         $createdAt = $u->created_at ?? null;
                                         if ($createdAt) {
@@ -209,7 +233,7 @@
                                         }
                                     @endphp
                                 </td>
-                                <td>
+                                <td class="st-td-center">
                                     <div class="tw-actionbar">
                                         <a href="{{ route('users.edit', ['userId' => $u->id]) }}" class="tw-action" data-tooltip="Edit" aria-label="Edit">
                                             <i class="fa-solid fa-pencil"></i>
@@ -230,7 +254,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="st-table-empty st-text-center st-text--muted st-py-16">No users found</td>
+                                <td colspan="8" class="st-table-empty st-text-center st-text--muted st-py-16">No users found</td>
                             </tr>
                         @endforelse
                         </tbody>

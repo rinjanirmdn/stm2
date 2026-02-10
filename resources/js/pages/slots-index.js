@@ -111,7 +111,7 @@
             var values = params.getAll(name);
             if (!values || values.length === 0) {
                 if (name === 'page_size') {
-                    el.value = 'all';
+                    el.value = '10';
                 } else {
                     el.value = '';
                 }
@@ -619,25 +619,33 @@
             suggestionBox.innerHTML = '';
         }
 
+        var searchDebounceTimer = null;
+        function queueSearchReload() {
+            if (searchDebounceTimer) {
+                clearTimeout(searchDebounceTimer);
+            }
+            searchDebounceTimer = setTimeout(function () {
+                ajaxReload(true);
+            }, 500);
+        }
+
         window.selectSuggestion = function (text) {
             searchInput.value = text;
             hideSuggestions();
             ajaxReload(true);
         };
 
-        searchInput.addEventListener('keyup', function (e) {
-            var value = (searchInput.value || '').trim();
-
-            if (e.key === 'Enter') {
-                hideSuggestions();
-                ajaxReload(true);
-                return;
-            }
+        searchInput.addEventListener('input', function () {
+            var raw = (searchInput.value || '');
+            var value = raw.trim();
 
             if (value.length === 0) {
                 hideSuggestions();
+                queueSearchReload();
                 return;
             }
+
+            queueSearchReload();
 
             fetch(suggestUrl + '?q=' + encodeURIComponent(value), {
                 credentials: 'same-origin',
