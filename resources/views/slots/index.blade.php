@@ -545,16 +545,15 @@
                                         <div class="st-leadtime">
                                             {{ $m }} Min
                                             @if ($h >= 1)
-                                                <div class="st-leadtime-sub">({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }}h)</div>
+                                                ({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }} Hours)
                                             @endif
                                             @if ($waitingMinutes !== null || $processMinutes !== null)
-                                                <div class="st-leadtime-meta">
+                                                <div class="st-text--xs-10 st-text--muted st-mt-1 st-leading-13">
                                                     @if ($waitingMinutes !== null)
-                                                        W:{{ (int) $waitingMinutes }}m
+                                                        <div>Waiting: {{ (int) $waitingMinutes }} Min</div>
                                                     @endif
                                                     @if ($processMinutes !== null)
-                                                        @if ($waitingMinutes !== null) | @endif
-                                                        P:{{ (int) $processMinutes }}m
+                                                        <div>Process: {{ (int) $processMinutes }} Min</div>
                                                     @endif
                                                 </div>
                                             @endif

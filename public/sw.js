@@ -1,6 +1,6 @@
-const CACHE_NAME = 'slot-tm-v2';
-const STATIC_CACHE = 'static-v2';
-const DYNAMIC_CACHE = 'dynamic-v2';
+const CACHE_NAME = 'slot-tm-v3';
+const STATIC_CACHE = 'static-v3';
+const DYNAMIC_CACHE = 'dynamic-v3';
 
 const STATIC_ASSETS = [
     '/',
@@ -67,6 +67,22 @@ self.addEventListener('fetch', event => {
                     return response;
                 })
                 .catch(() => caches.match(request).then(cached => cached || caches.match('/')))
+        );
+        return;
+    }
+
+    // Vite build assets (CSS/JS) - network first to prevent stale cached bundles
+    if (url.pathname.startsWith('/build/assets/')) {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    if (response && response.status === 200) {
+                        const responseClone = response.clone();
+                        caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, responseClone));
+                    }
+                    return response;
+                })
+                .catch(() => caches.match(request))
         );
         return;
     }

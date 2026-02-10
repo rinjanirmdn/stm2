@@ -911,9 +911,12 @@ class SlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Slot not found');
         }
 
-        $slotItems = SlotPoItem::where('slot_id', $slotId)
-            ->orderBy('item_no')
-            ->get();
+        $slotItems = collect();
+        if (Schema::hasTable('slot_po_items')) {
+            $slotItems = SlotPoItem::where('slot_id', $slotId)
+                ->orderBy('item_no')
+                ->get();
+        }
 
         $poNumber = trim((string) ($slot->po_number ?? ''));
         if ($poNumber !== '') {
@@ -959,6 +962,7 @@ class SlotController extends Controller
                 $ticket = $this->slotService->generateTicketNumber($warehouseId, $gateId);
                 DB::table('slots')->where('id', $slotId)->update([
                     'ticket_number' => $ticket,
+                    'updated_at' => now(),
                 ]);
                 $slot->ticket_number = $ticket;
             }
@@ -1549,11 +1553,16 @@ class SlotController extends Controller
             return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled slots can be arrived');
         }
 
+        $slotItems = collect();
+        if (Schema::hasTable('slot_po_items')) {
+            $slotItems = SlotPoItem::where('slot_id', $slotId)
+                ->orderBy('item_no')
+                ->get();
+        }
+
         return view('slots.arrival', [
             'slot' => $slot,
-            'slotItems' => SlotPoItem::where('slot_id', $slotId)
-                ->orderBy('item_no')
-                ->get(),
+            'slotItems' => $slotItems,
         ]);
     }
 

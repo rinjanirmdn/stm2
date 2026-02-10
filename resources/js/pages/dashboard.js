@@ -433,6 +433,34 @@ document.addEventListener('DOMContentLoaded', function () {
             scheduleFit();
         });
 
+        // Enter key to navigate to next slide
+        document.addEventListener('keydown', function (e) {
+            // Don't trigger if user is typing in an input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
+
+            if (e.key === 'Enter' && !e.repeat) {
+                if (activeIndex === slides.length - 1) {
+                    wrapTo(0, { userAction: true });
+                } else {
+                    setIndex(activeIndex + 1, { userAction: true });
+                }
+            } else if (e.key === 'ArrowRight' && !e.repeat) {
+                if (activeIndex === slides.length - 1) {
+                    wrapTo(0, { userAction: true });
+                } else {
+                    setIndex(activeIndex + 1, { userAction: true });
+                }
+            } else if (e.key === 'ArrowLeft' && !e.repeat) {
+                if (activeIndex === 0) {
+                    wrapTo(slides.length - 1, { userAction: true });
+                } else {
+                    setIndex(activeIndex - 1, { userAction: true });
+                }
+            }
+        });
+
         window.addEventListener('load', function () {
             scheduleFit();
         });

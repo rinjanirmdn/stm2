@@ -151,7 +151,7 @@ class TransactionReportService
                 'u.email as created_by_email',
                 'td.target_duration_minutes',
             ])
-            ->whereIn('s.status', ['completed', 'cancelled']);
+            ->where('s.status', 'completed');
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Models\PoItemGrCheckpoint;
 use App\Models\SlotPoItemReceipt;
 use App\Models\SlotPoItem;
 use App\Services\PoSearchService;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -24,6 +25,10 @@ class SlotReceiptReconciliationService
      */
     public function reconcileSlotCompletion(int $slotId): void
     {
+        if (!Schema::hasTable('slot_po_items')) {
+            return;
+        }
+
         DB::transaction(function () use ($slotId) {
             $slotPoItems = SlotPoItem::where('slot_id', $slotId)->get();
             if ($slotPoItems->isEmpty()) {

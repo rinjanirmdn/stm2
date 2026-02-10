@@ -20,9 +20,9 @@
         <div class="st-dashboard-slideshow__viewport">
         <div class="st-dashboard-slideshow__track">
         <div class="st-dashboard-slide is-active" data-slide-index="0">
-    <section class="st-row">
-        <div class="st-col-12">
-            <div class="st-card" id="analytics-tabs-card">
+    <section class="st-row st-dashboard-section-full">
+        <div class="st-col-12 st-dashboard-col-full">
+            <div class="st-card st-dashboard-card-fill" id="analytics-tabs-card">
                 <div class="st-card__header st-dashboard-card-header">
                     <div>
                         <h2 class="st-card__title">Analytics Range</h2>

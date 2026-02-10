@@ -89,7 +89,7 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th class="st-w-180">
+                                <th class="st-w-180 st-th-center">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Email</span>
                                         <span class="st-colhead__icons">
@@ -207,7 +207,7 @@
                                 <td>{{ $loop->index + 1 }}</td>
                                 <td class="st-font-semibold">{{ $u->nik ?? '-' }}</td>
                                 <td>{{ $u->full_name ?? '-' }}</td>
-                                <td>{{ $u->email ?? '-' }}</td>
+                                <td class="st-td-center">{{ $u->email ?? '-' }}</td>
                                 <td class="st-td-center">
                                     <span class="st-badge st-badge--{{ $roleVal }}">{{ $roleText }}</span>
                                 </td>

@@ -481,7 +481,7 @@
                                                 <span class="badge bg-planned">Planned</span>
                                             @endif
                                         </td>
-                                        <td>{{ $r->truck_number ?? '' }}</td>
+                                        <td>{{ $r->po_number ?? '' }}</td>
                                         <td>{{ $r->ticket_number ?? '' }}</td>
                                         <td>{{ $r->mat_doc ?? '' }}</td>
                                         <td>{{ $r->vendor_name ?? '-' }}</td>

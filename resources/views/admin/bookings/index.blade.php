@@ -4,49 +4,43 @@
 @section('page_title', 'Booking Requests')
 
 @section('content')
-    <!-- Combined Filter and Stats Card -->
+    <!-- Filter & Summary Row -->
     <div class="st-card st-mb-2 st-text-12">
         <div class="st-p-2">
-            <div class="st-flex st-gap-8 st-align-center st-justify-between">
-                <!-- Stats Tabs Section (Left) -->
-                <div class="st-flex st-gap-8 st-flex-wrap st-align-center">
-                    <a href="{{ route('bookings.index', ['status' => 'all']) }}"
-                       class="st-stat-tab {{ $status === 'all' ? 'st-stat-tab--active' : '' }} st-text-12 st-px-8 st-py-4">
-                        <span class="st-stat-tab__count st-text-12">{{ $counts['all'] ?? 0 }}</span>
-                        <span class="st-stat-tab__label st-text-12">All</span>
-                    </a>
-                    <a href="{{ route('bookings.index', ['status' => 'pending']) }}"
-                       class="st-stat-tab {{ $status === 'pending' ? 'st-stat-tab--active' : '' }} st-text-12 st-px-8 st-py-4">
-                        <span class="st-stat-tab__count st-text-12">{{ $counts['pending'] ?? 0 }}</span>
-                        <span class="st-stat-tab__label st-text-12">Pending</span>
-                    </a>
-                    <a href="{{ route('bookings.index', ['status' => 'approved']) }}"
-                       class="st-stat-tab {{ $status === 'approved' ? 'st-stat-tab--active' : '' }} st-text-12 st-px-8 st-py-4">
-                        <span class="st-stat-tab__count st-text-12">{{ $counts['approved'] ?? 0 }}</span>
-                        <span class="st-stat-tab__label st-text-12">Approved</span>
-                    </a>
-                </div>
-
-                <!-- Filter Section (Right) -->
-                <div class="st-flex-1">
-                    <div class="st-form-row st-gap-8 st-items-end st-justify-end">
-                        <div class="st-form-field st-maxw-220">
-                            <label class="st-label st-text-12">Search</label>
-                            <input type="text" name="search" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Request No, PO..." value="{{ request('search') }}">
+            <div class="st-form-row st-gap-8 st-items-end">
+                <div class="st-form-field st-flex-1">
+                    <label class="st-label st-text-12">Booking Summary</label>
+                    <div class="st-flex st-gap-10 st-w-full">
+                        <div class="st-booking-summary-pill st-booking-summary-pill--pending">
+                            <span class="st-booking-summary-pill__label">Pending</span>
+                            <span class="st-booking-summary-pill__value">{{ $counts['pending'] ?? 0 }}</span>
                         </div>
-                        <div class="st-form-field st-maxw-240">
-                            <label class="st-label st-text-12">Date Range</label>
-                            <div class="st-flex st-gap-8">
-                                <input type="text" name="date_from" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="From" autocomplete="off" readonly value="{{ request('date_from') }}">
-                                <input type="text" name="date_to" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="To" autocomplete="off" readonly value="{{ request('date_to') }}">
-                            </div>
+                        <div class="st-booking-summary-pill st-booking-summary-pill--approved">
+                            <span class="st-booking-summary-pill__label">Approved</span>
+                            <span class="st-booking-summary-pill__value">{{ $counts['approved'] ?? 0 }}</span>
                         </div>
-                        <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
-                            @if(request()->hasAny(['date_from', 'date_to', 'search', 'request_number', 'po_number', 'supplier_name', 'planned_start', 'converted_ticket', 'planned_gate_id', 'direction', 'status_filter', 'created_at']))
-                            <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn st-btn--outline-primary st-text-12 st-py-2 st-px-10 st-h-24">Reset</a>
-                            @endif
+                        <div class="st-booking-summary-pill st-booking-summary-pill--all">
+                            <span class="st-booking-summary-pill__label">All</span>
+                            <span class="st-booking-summary-pill__value">{{ $counts['all'] ?? 0 }}</span>
                         </div>
                     </div>
+                </div>
+                <div class="st-form-field st-maxw-220">
+                    <label class="st-label st-text-12">Search</label>
+                    <input type="text" name="search" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Request No, PO..." value="{{ request('search') }}">
+                </div>
+                <div class="st-form-field st-maxw-220 st-relative">
+                    <label class="st-label st-text-12">Date Range</label>
+                    <div id="booking_reportrange" class="st-dashboard-range-picker">
+                        <span>Select range</span>
+                    </div>
+                    <input type="hidden" name="date_from" id="date_from" form="booking-filter-form" value="{{ request('date_from') }}">
+                    <input type="hidden" name="date_to" id="date_to" form="booking-filter-form" value="{{ request('date_to') }}">
+                </div>
+                <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
+                    @if(request()->hasAny(['date_from', 'date_to', 'search', 'request_number', 'po_number', 'supplier_name', 'planned_start', 'converted_ticket', 'planned_gate_id', 'direction', 'status_filter', 'created_at']))
+                    <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn st-btn--outline-primary st-text-12 st-py-2 st-px-10 st-h-24">Reset</a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -120,7 +114,7 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th style="width:80px;">
+                                    <th class="st-table-col-90">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">COA</span>
                                             <span class="st-colhead__icons">
@@ -189,7 +183,7 @@
                                             @endif
                                         </div>
                                     </th>
-                                    <th style="width:95px;">
+                                    <th class="st-table-col-90">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Direction</span>
                                             <span class="st-colhead__icons">
@@ -209,7 +203,7 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th style="width:120px;">
+                                    <th class="st-table-col-120">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Status</span>
                                             <span class="st-colhead__icons">
@@ -231,7 +225,7 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th style="width:150px;">
+                                    <th class="st-table-col-150">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Requested At</span>
                                             <span class="st-colhead__icons">
@@ -264,7 +258,7 @@
                                             <td>{{ $booking->supplier_name ?? '-' }}</td>
                                             <td>
                                                 @if(!empty($booking->coa_path))
-                                                    <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: underline;">View</a>
+                                                    <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener" class="st-link st-link-underline">View</a>
                                                 @else
                                                     -
                                                 @endif
@@ -304,7 +298,7 @@
                                             <td class="st-td-center">{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>
                                             <td class="st-td-center">
                                                 <div class="st-action-dropdown">
-                                                    <button type="button" class="st-btn st-btn--ghost st-action-trigger" style="padding:4px 8px;font-size:16px;line-height:1;border:none;color:#6b7280;">
+                                                    <button type="button" class="st-btn st-btn--ghost st-action-trigger st-action-trigger--compact">
                                                         &#x22ee;
                                                     </button>
                                                     <div class="st-action-menu">
@@ -381,9 +375,9 @@
             @csrf
             <div class="st-custom-modal-body">
                 <p>Are you sure you want to reject booking <strong id="reject-ticket"></strong>?</p>
-                <div class="st-form-group" style="margin-top: 15px;">
-                    <label class="st-label" style="font-weight: 600; display: block; margin-bottom: 5px;">Reason for Rejection <span class="st-required">*</span></label>
-                    <textarea name="reason" class="st-textarea" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit;" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
+                <div class="st-form-field st-mt-4">
+                    <label class="st-label">Reason for Rejection <span class="st-required">*</span></label>
+                    <textarea name="reason" class="st-textarea" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
                 </div>
             </div>
             <div class="st-custom-modal-footer">

@@ -353,11 +353,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var fields = stFindFieldsForFormKey(form, key);
 
             if ((!fields || fields.length === 0) && form) {
-                if (key === 'planned_start') {
-                    fields = [];
-                    fields = fields.concat(stFindFieldsForFormKey(form, 'date_from'));
-                    fields = fields.concat(stFindFieldsForFormKey(form, 'date_to'));
-                } else if (key === 'arrival_presence') {
+                if (key === 'arrival_presence') {
                     fields = [];
                     fields = fields.concat(stFindFieldsForFormKey(form, 'arrival_from'));
                     fields = fields.concat(stFindFieldsForFormKey(form, 'arrival_to'));
@@ -402,7 +398,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         var n = String(el.getAttribute('name') || '');
                         var id = String(el.id || '');
                         var isRange = (n && /_range$/i.test(n)) || (id && /_range$/i.test(id)) || (n && n.toLowerCase().indexOf('date_range') !== -1);
-                        if (isRange && typeof getRangeFieldPair === 'function') {
+                        // For planned_start filter we only want to look at its own value,
+                        // not any inferred date range pair (date_from/date_to)
+                        if (isRange && key !== 'planned_start' && typeof getRangeFieldPair === 'function') {
                             var pair = getRangeFieldPair(el);
                             var fromVal = pair && pair.from ? String(pair.from.value || '').trim() : '';
                             var toVal = pair && pair.to ? String(pair.to.value || '').trim() : '';
@@ -527,8 +525,14 @@ document.addEventListener('DOMContentLoaded', function () {
             // Reports - Transactions
             initPredefinedDateRange('#transaction_reportrange', '#date_from', '#date_to');
 
+            // Activity Logs
+            initPredefinedDateRange('#logs_reportrange', '#date_from', '#date_to');
+
             // Vendor Bookings
             initPredefinedDateRange('#vendor_reportrange', '#date_from', '#date_to');
+
+            // Admin Booking Requests
+            initPredefinedDateRange('#booking_reportrange', '#date_from', '#date_to');
 
             return true;
         }

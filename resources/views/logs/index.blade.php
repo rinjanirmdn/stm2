@@ -8,13 +8,9 @@
         <form method="GET" class="st-form-row st-mt-4 st-items-end">
             <div class="st-form-field st-maxw-250 st-relative">
                 <label class="st-label">Date Range</label>
-                <input
-                    type="text"
-                    id="date_range"
-                    placeholder="Select Date Range"
-                    readonly
-                    class="st-input st-input--cursor"
-                >
+                <div id="logs_reportrange" class="st-dashboard-range-picker">
+                    <span>Select range</span>
+                </div>
                 <input type="hidden" name="date_from" id="date_from" value="{{ $date_from ?? '' }}">
                 <input type="hidden" name="date_to" id="date_to" value="{{ $date_to ?? '' }}">
             </div>
@@ -60,7 +56,7 @@
                         <table class="st-table">
                             <thead>
                                 <tr>
-                                    <th class="st-table-col-190">
+                                    <th class="st-table-col-190 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Time</span>
                                             <span class="st-colhead__icons">
@@ -68,7 +64,7 @@
                                             </span>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-180">
+                                    <th class="st-table-col-180 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Type</span>
                                             <span class="st-colhead__icons">
@@ -84,7 +80,7 @@
                                             </span>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-150">
+                                    <th class="st-table-col-150 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">MAT DOC</span>
                                             <span class="st-colhead__icons">
@@ -92,7 +88,7 @@
                                             </span>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-150">
+                                    <th class="st-table-col-150 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">PO</span>
                                             <span class="st-colhead__icons">
@@ -100,7 +96,7 @@
                                             </span>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-160">
+                                    <th class="st-table-col-160 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">User</span>
                                             <span class="st-colhead__icons">
@@ -137,14 +133,14 @@
                         @endphp
                         @forelse ($logs as $row)
                             <tr>
-                                <td>
+                                <td class="st-td-center">
                                     @if (!empty($row->created_at))
                                         {{ \Carbon\Carbon::parse((string) $row->created_at)->format('d M Y H:i') }}
                                     @else
                                         -
                                     @endif
                                 </td>
-                                <td>
+                                <td class="st-td-center">
                                     @php
                                         $t = (string) ($row->activity_type ?? '');
                                         $typeClass = 'st-activity-type--other';
@@ -163,9 +159,9 @@
                                     </span>
                                 </td>
                                 <td>{{ $formatDescription($row->description ?? '') }}</td>
-                                <td>{{ $row->slot_mat_doc ?? '-' }}</td>
-                                <td>{{ $row->slot_po_number ?? '-' }}</td>
-                                <td>{{ $row->created_by_name ?? $row->created_by_email ?? '-' }}</td>
+                                <td class="st-td-center">{{ $row->slot_mat_doc ?? '-' }}</td>
+                                <td class="st-td-center">{{ $row->slot_po_number ?? '-' }}</td>
+                                <td class="st-td-center">{{ $row->created_by_name ?? $row->created_by_email ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr>

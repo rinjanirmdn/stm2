@@ -40,6 +40,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 500);
             });
         }
+
+        // Ensure Scheduled filter indicator (planned_start) is in sync with actual URL
+        try {
+            const url = new URL(window.location.href);
+            const hasPlannedStartParam = url.searchParams.has('planned_start');
+            const plannedStartInput = bookingFilterForm.querySelector('input[name="planned_start"]');
+
+            if (plannedStartInput && !hasPlannedStartParam) {
+                // Force-clear any stale value kept by browser/history
+                plannedStartInput.value = '';
+
+                // Hard-disable Scheduled filter indicator on this page
+                var scheduledBtn = bookingFilterForm.querySelector('.st-filter-trigger[data-filter="planned_start"]');
+                if (scheduledBtn) {
+                    scheduledBtn.classList.remove('st-filter-trigger--active', 'is-filtered');
+                }
+
+                if (typeof window.stSyncFilterIndicatorsFromForms === 'function') {
+                    window.stSyncFilterIndicatorsFromForms(bookingFilterForm);
+                }
+            }
+        } catch (e) {
+            // ignore URL parsing errors
+        }
     }
 });
 

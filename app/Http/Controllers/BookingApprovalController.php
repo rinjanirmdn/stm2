@@ -338,16 +338,18 @@ class BookingApprovalController extends Controller
                     'requested_at' => $bookingRequest->created_at,
                 ]);
 
-                foreach ($bookingRequest->items as $it) {
-                    SlotPoItem::create([
-                        'slot_id' => $slot->id,
-                        'po_number' => $bookingRequest->po_number,
-                        'item_no' => $it->item_no,
-                        'material_code' => $it->material_code,
-                        'material_name' => $it->material_name,
-                        'uom' => $it->unit_po,
-                        'qty_booked' => (float) ($it->qty_requested ?? 0),
-                    ]);
+                if (\Illuminate\Support\Facades\Schema::hasTable('slot_po_items')) {
+                    foreach ($bookingRequest->items as $it) {
+                        SlotPoItem::create([
+                            'slot_id' => $slot->id,
+                            'po_number' => $bookingRequest->po_number,
+                            'item_no' => $it->item_no,
+                            'material_code' => $it->material_code,
+                            'material_name' => $it->material_name,
+                            'uom' => $it->unit_po,
+                            'qty_booked' => (float) ($it->qty_requested ?? 0),
+                        ]);
+                    }
                 }
 
                 $approvalAction = (string) $request->input('approval_action', Slot::APPROVAL_APPROVED);

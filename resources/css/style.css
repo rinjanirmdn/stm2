@@ -107,9 +107,11 @@ body.st-app--dashboard {
 }
 
 .st-app--dashboard .st-content {
-    overflow: hidden;
+    flex: 1 1 auto;
     min-height: 0;
-    height: calc(100% - 56px);
+    height: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 10px 12px 0 !important;
 }
 
@@ -151,12 +153,18 @@ body.st-app--dashboard {
     align-items: center;
     gap: 6px;
     white-space: nowrap;
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #ffffff;
 }
 
 .st-dashboard-range-picker span {
     white-space: nowrap;
 }
-
 
 .st-suggestion-item {
     padding: 6px 8px;
@@ -205,6 +213,15 @@ body.st-app--dashboard {
 .st-dashboard-mini-value {
     font-size: 26px;
     font-weight: 700;
+}
+
+/* Mini card value row - ensure values are visible */
+.st-mini-card__value-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 4px;
+    min-height: 30px;
 }
 
 .st-dashboard-chart-header {
@@ -1022,6 +1039,10 @@ body.st-app--dashboard {
     margin-left: 6px;
 }
 
+.st-ml-auto {
+    margin-left: auto;
+}
+
 .st-text-left {
     text-align: left;
 }
@@ -1246,7 +1267,7 @@ body.st-app--dashboard {
 }
 
 .st-table-wrapper--minh-400 {
-    min-height: 0;
+    min-height: 400px;
 }
 
 .st-table--sm {
@@ -1759,6 +1780,8 @@ body.st-app--dashboard {
 
 .st-table-empty {
     padding: 12px;
+    width: 100%;
+    text-align: center;
 }
 
 .st-select--dashboard-wide {
@@ -1787,6 +1810,11 @@ body.st-app--dashboard {
     min-height: 0;
     grid-auto-rows: minmax(0, 1fr);
     align-content: stretch;
+}
+
+/* Truck grid always 4 columns - no responsive change */
+.st-dashboard-truck-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
 
 .st-dashboard-truck-card {
@@ -2525,13 +2553,13 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 .st-sidebar {
     width: var(--st-sidebar-width);
     flex: 0 0 var(--st-sidebar-width);
-    background: #020617;
-    color: #e5e7eb;
+    background: #38bdf8;
+    color: #0f172a;
     display: flex;
     flex-direction: column;
     padding: 20px 16px;
-    border-right: 1px solid #1f2937;
-    box-shadow: 2px 0 8px rgba(15, 23, 42, 0.1);
+    border-right: 1px solid #7dd3fc;
+    box-shadow: 2px 0 8px rgba(56, 189, 248, 0.2);
     overflow-y: auto;
     position: fixed;
     top: 0;
@@ -2615,7 +2643,7 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     gap: 12px;
     padding: 10px 16px;
     margin-bottom: 0;
-    color: #e5e7eb;
+    color: #000000;
     text-decoration: none;
     border-radius: 8px;
     font-size: 14px;
@@ -2628,7 +2656,7 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 .st-sidebar__link i {
     width: 20px;
     text-align: center;
-    color: #9ca3af;
+    color: #000000;
     font-size: 18px;
     transition: color 0.2s ease;
     display: flex;
@@ -2637,12 +2665,13 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 }
 
 .st-sidebar__link:hover {
-    background: rgba(148, 163, 184, 0.12);
+    background: #0284c7;
+    color: #ffffff;
     transform: translateX(2px);
 }
 
 .st-sidebar__link:hover i {
-    color: #e5e7eb;
+    color: #ffffff;
 }
 
 .st-sidebar__link--active {
@@ -4101,8 +4130,12 @@ table.st-table td {
     font-size: 11px;
 }
 
+table.st-table td.st-table-empty {
+    text-align: center !important;
+}
+
 .st-th-center {
-    text-align: inherit !important;
+    text-align: center !important;
 }
 
 .st-th-center .st-colhead,
@@ -4127,6 +4160,10 @@ table.st-table td {
 }
 
 .st-td-center {
+    text-align: center !important;
+}
+
+table.st-table td.st-td-center {
     text-align: center !important;
 }
 
@@ -4387,6 +4424,85 @@ table.st-table thead th:not(:has(.st-colhead)):not(:has(.st-filter-header)) {
 
 .st-input--invalid {
     border-color: #dc2626;
+}
+
+.st-booking-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 10px;
+    min-height: 32px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-style: solid;
+    font-size: 12px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.st-booking-summary-pill__label {
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.st-booking-summary-pill__value {
+    font-weight: 600;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+.st-booking-summary-pill--pending {
+    border-color: #f59e0b;
+}
+
+.st-booking-summary-pill--approved {
+    border-color: #16a34a;
+}
+
+.st-booking-summary-pill--all {
+    border-color: #2563eb;
+}
+
+/* Responsive layout for Booking Requests header */
+@media (max-width: 992px) {
+    .st-form-row {
+        flex-wrap: wrap;
+    }
+
+    .st-form-row .st-form-field.st-flex-1 {
+        flex: 1 1 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .st-form-row .st-form-field.st-maxw-220 {
+        flex: 1 1 auto;
+        max-width: none;
+        min-width: 120px;
+    }
+
+    .st-form-row .st-booking-summary-pill {
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+
+    .st-dashboard-range-picker {
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .st-dashboard-range-picker span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
 }
 
 .st-field-error {
@@ -7226,6 +7342,37 @@ table.st-table td form {
     grid-auto-rows: auto;
 }
 
+/* Dashboard Slide: KPI (index 2) - force equal card heights */
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="2"] .st-chart-grid {
+     align-content: stretch;
+     grid-auto-rows: minmax(0, 1fr);
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="2"] .st-chart-grid > .st-chart-col-4 > .st-chart-card {
+     height: 100% !important;
+ }
+
+/* Override legacy fixed-height rule that only affects 3rd+ cards */
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="2"] .st-chart-grid > .st-chart-col-4:nth-child(n+3) .st-chart-card {
+     height: 100% !important;
+ }
+
+/* Dashboard Slide: Analytics (index 1) - make Bottleneck & Truck Performance equal height */
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="1"] .st-chart-grid {
+     align-content: stretch;
+     grid-auto-rows: minmax(0, 1fr);
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="1"] .st-chart-grid > [class^="st-chart-col-"] > .st-chart-card {
+     height: 100% !important;
+ }
+
+/* Keep truck grid scrollable within equal-height card */
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="1"] .st-dashboard-truck-grid {
+     overflow: auto;
+     min-height: 0;
+ }
+
 .st-dashboard-slideshow .st-chart-grid>[class^="st-chart-col-"] {
     min-height: 0;
 }
@@ -7320,6 +7467,19 @@ table.st-table td form {
     padding: 10px 12px;
 }
 
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] #analytics-tabs-card {
+     height: 100% !important;
+     display: flex;
+     flex-direction: column;
+     flex: 1;
+     min-height: 0;
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] #analytics-tabs-card > .st-chart-grid {
+     flex: 1 1 0 !important;
+     min-height: 0;
+ }
+
 .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] #analytics-tabs-card .st-card__header {
     margin-bottom: 6px;
 }
@@ -7343,24 +7503,42 @@ table.st-table td form {
 .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-col-8 .st-chart-wrap,
 .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-col-4 .st-chart-wrap--direction {
     flex: 1 1 auto !important;
-    height: clamp(260px, 26vw, 520px) !important;
-    min-height: clamp(260px, 26vw, 520px) !important;
+    height: auto !important;
+    min-height: clamp(220px, 28vw, 340px) !important;
+    max-height: 340px !important;
 }
 
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-col-8 .st-chart-card {
+     flex: 0 0 auto !important;
+     height: auto !important;
+     min-height: clamp(200px, 24vw, 320px) !important;
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] {
+     padding-bottom: 30px;
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-col-8 .st-chart-wrap--sm {
+     flex: 0 0 auto !important;
+     height: clamp(220px, 28vw, 340px) !important;
+     min-height: clamp(220px, 28vw, 340px) !important;
+     max-height: 340px !important;
+     overflow: hidden;
+ }
+
 .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-col-8 .st-chart-axis-legend {
-    margin-top: auto !important;
+    margin-top: 6px;
 }
 
 .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-direction-stack {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex: 1;
-    min-height: 0;
+    flex: 0 0 auto;
 }
 
 .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-direction-stack .st-metric-row {
-    margin-top: auto;
+    margin-top: 0;
 }
 
 .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-direction-stack .st-mini-card {
@@ -7376,24 +7554,69 @@ table.st-table td form {
     margin-top: 4px;
 }
 
-.st-dashboard-slideshow #analytics-tabs-card>.st-chart-grid {
+ /* Dashboard Slide: Overview (index 0) */
+  .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-grid {
+     align-content: stretch;
+     grid-auto-rows: minmax(0, 1fr);
+     gap: 12px;
+  }
+
+  .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-grid > [class^="st-chart-col-"] > .st-chart-card {
+     height: 100% !important;
+     min-height: 0 !important;
+  }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-col-4 .st-chart-wrap--direction {
+     flex: 0 0 auto !important;
+     height: clamp(180px, 20vw, 260px) !important;
+     min-height: clamp(180px, 20vw, 260px) !important;
+     max-height: 260px !important;
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-chart-col-4 .st-chart-card {
+     min-height: clamp(200px, 24vw, 320px);
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-direction-stack {
+     gap: 6px;
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-direction-stack .st-metric-row {
+     margin-top: 0;
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-dashboard-card-actions {
+     flex: 0 0 auto;
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-dashboard-range-form {
+     margin-left: 0;
+     width: auto;
+     flex: 0 0 auto;
+ }
+
+ .st-dashboard-slideshow .st-dashboard-slide[data-slide-index="0"] .st-dashboard-range-field {
+     flex: 0 0 auto;
+ }
+
+.st-dashboard-slideshow .st-dashboard-slide[data-slide-index="2"] #analytics-tabs-card>.st-chart-grid {
     flex: 1;
     min-height: 0;
     height: auto !important;
 }
 
-.st-dashboard-slideshow .st-chart-col-8 .st-chart-card {
+.st-dashboard-slideshow .st-dashboard-slide[data-slide-index="2"] .st-chart-col-8 .st-chart-card {
     height: 100% !important;
     min-height: 0 !important;
 }
 
-.st-dashboard-slideshow .st-chart-col-8 .st-chart-wrap {
+.st-dashboard-slideshow .st-dashboard-slide[data-slide-index="2"] .st-chart-col-8 .st-chart-wrap {
     height: clamp(260px, 26vw, 520px) !important;
     min-height: clamp(260px, 26vw, 520px) !important;
     max-height: none !important;
 }
 
-.st-dashboard-slideshow .st-chart-wrap--direction {
+.st-dashboard-slideshow .st-dashboard-slide[data-slide-index="2"] .st-chart-wrap--direction {
     height: clamp(260px, 26vw, 520px) !important;
 }
 
@@ -8782,6 +9005,568 @@ table.st-table td form {
 .st-chart-card {
     min-width: 0;
     word-wrap: break-word;
+}
+
+/* KPI CHARTS RESPONSIVE FIXES - Using original 12-column grid system */
+
+/* Chart columns - ensure they work with original st-chart-grid */
+.st-chart-col-4 {
+    min-width: 0;
+    grid-column: span 4;
+}
+
+/* KPI Card equal height fix */
+.st-chart-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.st-chart-card .st-chart-wrap {
+    flex: 1;
+    min-height: 200px;
+}
+
+.st-chart-card .st-metric-row {
+    flex-shrink: 0;
+}
+
+/* ===== CHART CONTAINER OVERFLOW FIXES ===== */
+
+/* Chart wrap - prevent overflow */
+.st-chart-wrap {
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ApexCharts legend - keep inside container */
+.st-chart-wrap .apexcharts-legend {
+    position: relative !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    top: auto !important;
+    right: auto !important;
+    padding: 4px 0 0 0 !important;
+    margin-top: 0 !important;
+}
+
+/* ApexCharts legend items - smaller size */
+.st-chart-wrap .apexcharts-legend-series {
+    margin: 0 6px !important;
+}
+
+.st-chart-wrap .apexcharts-legend-text {
+    font-size: 11px !important;
+}
+
+/* ApexCharts canvas sizing */
+.st-chart-wrap .apexcharts-canvas {
+    max-width: 100% !important;
+}
+
+.st-chart-wrap .apexcharts-svg {
+    max-width: 100% !important;
+}
+
+/* Chart container padding adjustments */
+.st-chart-card {
+    padding-bottom: 12px;
+}
+
+/* Mini cards container - keep inside */
+.st-metric-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+    padding: 0 4px;
+}
+
+/* ===== DASHBOARD SECTION HEIGHT FIXES ===== */
+
+/* Slide 1 - Analytics section fill to footer */
+[data-slide-index="0"] .st-dashboard-section-full {
+    min-height: calc(100vh - 180px);
+}
+
+[data-slide-index="0"] .st-card.st-dashboard-card-fill {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+}
+
+[data-slide-index="0"] .st-card.st-dashboard-card-fill .st-chart-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+[data-slide-index="0"] .st-chart-col-8,
+[data-slide-index="0"] .st-chart-col-4 {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+[data-slide-index="0"] .st-chart-col-8 .st-chart-card,
+[data-slide-index="0"] .st-chart-col-4 .st-chart-card {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* Chart Status mini card values - ensure visible */
+.st-dashboard-slide[data-slide-index="4"] .st-metric-value-lg {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    line-height: 1.5 !important;
+    display: block !important;
+    margin-top: 8px !important;
+}
+
+.st-dashboard-slide[data-slide-index="4"] .st-dashboard-schedule-chart-wrap {
+    max-height: 250px !important;
+}
+
+.st-dashboard-slide[data-slide-index="4"] .st-dashboard-schedule-chart-card {
+    min-height: 350px !important;
+    max-height: 400px !important;
+}
+
+.st-dashboard-slide[data-slide-index="4"] .st-dashboard-schedule-metric-row .st-mini-card {
+    padding: 12px 16px !important;
+    min-height: 70px !important;
+}
+
+.st-dashboard-slide[data-slide-index="4"] .st-dashboard-schedule-metric-row {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-rows: repeat(2, auto) !important;
+    gap: 12px !important;
+}
+
+.st-dashboard-slide[data-slide-index="4"] .st-dashboard-schedule-metrics-wrap {
+    margin-top: 20px !important;
+    min-height: 160px !important;
+    overflow: visible !important;
+}
+
+/* Dashboard sections - fill available space */
+.st-dashboard-analytics {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Chart grid - distribute space */
+.st-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+    flex: 1 1 auto;
+}
+
+/* Chart columns sizing */
+.st-chart-col-4 {
+    grid-column: span 4;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Individual chart card - fill height */
+.st-chart-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Chart wrapper - flexible height */
+.st-chart-card .st-chart-wrap {
+    flex: 1 1 auto;
+    min-height: 200px;
+}
+
+/* ===== COMPLETED TREND CHART FIXES ===== */
+
+/* Completed Trend chart card - flexbox layout */
+.st-chart-col-8 .st-chart-card {
+    min-height: 550px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Chart card title - fixed height */
+.st-chart-col-8 .st-chart-card__title {
+    flex: 0 0 auto;
+    height: 30px;
+    line-height: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Completed Trend chart wrap - fills remaining space with reduced height for mini cards */
+.st-chart-col-8 .st-chart-wrap.st-chart-wrap--sm {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    max-height: calc(100% - 90px);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Canvas sizing */
+.st-chart-col-8 .st-chart-wrap.st-chart-wrap--sm canvas {
+    width: 100% !important;
+    height: calc(100% - 25px) !important;
+}
+
+/* Completed Trend custom legend - smaller size */
+.st-chart-col-8 .st-chart-axis-legend {
+    position: absolute;
+    bottom: 0;
+    left: 50px;
+    right: auto;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    background: transparent;
+    border-top: none;
+    padding: 0;
+    margin: 0;
+    z-index: 5;
+}
+
+.st-chart-col-8 .st-chart-axis-legend__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.st-chart-col-8 .st-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+/* Canvas sizing - fit inside container */
+.st-chart-col-8 .st-chart-wrap canvas {
+    max-height: calc(100% - 35px) !important;
+    width: 100% !important;
+}
+
+/* ===== CHART HEIGHT AND LEGEND FIXES ===== */
+
+/* Dashboard analytics cards - taller to reach footer */
+.st-dashboard-analytics .st-card {
+    min-height: 600px;
+}
+
+/* Chart cards - fill section height with proper containment */
+.st-chart-card {
+    height: 100%;
+    min-height: 550px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Chart wrapper - strictly inside container, more space for legend at bottom */
+.st-chart-card .st-chart-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 80px;
+    overflow: hidden;
+}
+
+/* Mini cards row - fixed at bottom of card */
+.st-chart-card .st-metric-row {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 8px 12px;
+    margin: 0;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    box-sizing: border-box;
+    z-index: 5;
+}
+
+/* ApexCharts legend - strictly inside bottom of container */
+.st-chart-wrap .apexcharts-legend {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    padding: 2px 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e5e7eb !important;
+    text-align: center !important;
+    height: 28px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 5 !important;
+}
+
+/* ApexCharts legend items - smaller */
+.st-chart-wrap .apexcharts-legend-series {
+    margin: 0 6px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.st-chart-wrap .apexcharts-legend-marker {
+    width: 10px !important;
+    height: 10px !important;
+    margin-right: 4px !important;
+}
+
+.st-chart-wrap .apexcharts-legend-text {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+}
+
+/* Chart inner area - leave space for legend at bottom */
+.st-chart-wrap .apexcharts-inner {
+    padding-bottom: 28px !important;
+}
+
+/* ApexCharts - move legend position to bottom */
+.st-chart-wrap .apexcharts-legend.apx-legend-position-top {
+    top: auto !important;
+    bottom: 0 !important;
+}
+
+.st-chart-wrap .apexcharts-legend.apx-legend-position-bottom {
+    bottom: 0 !important;
+}
+
+/* ApexCharts tooltip */
+.st-chart-wrap .apexcharts-tooltip {
+    position: absolute !important;
+    z-index: 10 !important;
+}
+
+/* Chart canvas sizing - fit inside container */
+.st-chart-wrap .apexcharts-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.st-chart-wrap .apexcharts-svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+@media (max-width: 576px) {
+    .st-metric-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mini card - prevent overflow */
+.st-mini-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 8px 10px;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.st-mini-card .st-text--small {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.st-mini-card .st-dashboard-metric-xl {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* TIMELINE 24h RESPONSIVE FIXES */
+
+/* Timeline header layout */
+.st-dashboard-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.st-dashboard-card-header > div:first-child {
+    flex-shrink: 0;
+}
+
+/* Timeline filter form layout */
+.st-timeline-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-end;
+    justify-content: flex-end;
+    flex: 1 1 auto;
+    min-width: 300px;
+}
+
+@media (max-width: 992px) {
+    .st-dashboard-card-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .st-timeline-filters {
+        justify-content: flex-start;
+        min-width: 100%;
+    }
+}
+
+/* Timeline form fields */
+.st-timeline-filters .st-form-field {
+    flex: 0 1 auto;
+    min-width: 120px;
+    max-width: 180px;
+}
+
+.st-timeline-filters .st-form-field.st-timeline-range-custom {
+    flex: 0 1 auto;
+    min-width: 100px;
+    max-width: 140px;
+}
+
+.st-timeline-filters .st-timeline-filters__actions {
+    flex: 0 0 auto;
+    min-width: auto;
+}
+
+/* Reset button in timeline */
+.st-dashboard-range-reset {
+    margin-left: 0;
+}
+
+/* SIDEBAR RESPONSIVE FIXES */
+
+/* Mobile sidebar - hidden by default on small screens */
+@media (max-width: 768px) {
+    .st-app {
+        --st-sidebar-width: 0px;
+    }
+
+    .st-sidebar {
+        position: fixed;
+        top: 0;
+        left: -260px;
+        width: 260px;
+        height: 100vh;
+        z-index: 1000;
+        background: #020617;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 2px 0 20px rgba(15, 23, 42, 0.3);
+    }
+
+    .st-sidebar--mobile-open {
+        left: 0;
+    }
+
+    .st-sidebar__overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+
+    .st-sidebar__overlay--active {
+        display: block;
+    }
+
+    /* Main content margin fix - NO margin on mobile */
+    .st-main {
+        margin-left: 0 !important;
+    }
+
+    /* Topbar adjustment for mobile - no sidebar space needed */
+    .st-topbar {
+        padding-left: 12px;
+    }
+
+    /* Hamburger button visible on mobile */
+    .st-sidebar__toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-right: 12px;
+    }
+
+    .st-sidebar__toggle .fas.fa-bars {
+        color: #6b7280;
+        font-size: 18px;
+    }
+}
+
+/* Desktop sidebar - main content margin to avoid overlap */
+.st-main {
+    margin-left: var(--st-sidebar-width, 260px);
+}
+
+/* Desktop sidebar collapsed state - 72px margin */
+.st-app--sidebar-collapsed .st-main {
+    margin-left: 72px;
+}
+
+/* When collapsed sidebar is hovered and expands, increase margin */
+.st-app--sidebar-collapsed .st-sidebar:hover ~ .st-main,
+.st-app--sidebar-collapsed .st-sidebar--open ~ .st-main {
+    margin-left: 220px;
+}
+
+/* Desktop sidebar collapsed state */
+.st-app--sidebar-collapsed .st-sidebar {
+    width: 72px;
+}
+
+.st-app--sidebar-collapsed .st-sidebar__brand {
+    padding: 10px;
+}
+
+.st-app--sidebar-collapsed .st-sidebar__logo--full {
+    display: none;
+}
+
+.st-app--sidebar-collapsed .st-sidebar__logo--icon {
+    display: block;
 }
 
 /* Fix Time Picker Width to match compact input */
@@ -10233,4 +11018,279 @@ table.st-table td form {
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--st-border, #e5e7eb);
+}
+
+/* ============================================
+   GLOBAL RESPONSIVE STYLES - ALL PAGES
+   ============================================ */
+
+/* Base responsive container */
+.st-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+/* Ensure all images are responsive */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive form rows across all pages */
+@media (max-width: 1200px) {
+    .st-form-row {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .st-form-field {
+        min-width: 0;
+        flex: 1 1 calc(50% - 12px);
+        max-width: none;
+    }
+
+    .st-form-field.st-maxw-220,
+    .st-form-field.st-maxw-360 {
+        flex: 1 1 calc(50% - 12px);
+        max-width: none;
+    }
+
+    .st-form-field.st-minw-80 {
+        flex: 0 0 auto;
+    }
+}
+
+@media (max-width: 992px) {
+    /* All form rows become vertical */
+    .st-form-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .st-form-row.st-items-end {
+        align-items: stretch;
+    }
+
+    /* All form fields full width */
+    .st-form-field,
+    .st-form-field.st-flex-1,
+    .st-form-field.st-maxw-220,
+    .st-form-field.st-maxw-360 {
+        flex: 1 1 100%;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    /* Booking summary pills stay horizontal but smaller */
+    .st-form-field .st-flex.st-gap-10 {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .st-booking-summary-pill {
+        flex: 1 1 calc(33.333% - 8px);
+        min-width: 80px;
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Stack booking pills vertically on very small screens */
+    .st-form-field .st-flex.st-gap-10 {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .st-booking-summary-pill {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    /* Date range picker text truncation */
+    .st-dashboard-range-picker {
+        font-size: 11px;
+    }
+
+    .st-dashboard-range-picker span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
+
+    /* Inputs and buttons */
+    .st-input,
+    .st-select,
+    .st-dashboard-range-picker {
+        font-size: 14px; /* Prevent zoom on iOS */
+        padding: 8px 10px;
+    }
+
+    .st-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* Cards */
+    .st-card {
+        padding: 12px;
+    }
+
+    .st-p-2 {
+        padding: 12px;
+    }
+
+    /* Tables - horizontal scroll */
+    .st-table-wrap,
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .st-table {
+        min-width: 800px;
+        font-size: 11px;
+    }
+
+    .st-table th,
+    .st-table td {
+        padding: 8px 6px;
+        white-space: nowrap;
+    }
+
+    /* Timeline responsive */
+    .st-timeline {
+        font-size: 10px;
+    }
+
+    .st-timeline__header-left,
+    .st-timeline__row-left {
+        width: 100px;
+        font-size: 9px;
+    }
+
+    .st-timeline-block {
+        font-size: 9px;
+        padding: 0 4px;
+    }
+
+    /* Grid layouts */
+    .st-form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .booking-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Modals */
+    .st-modal__content {
+        width: 95%;
+        max-width: none;
+        margin: 10px;
+    }
+
+    .st-custom-modal-container {
+        width: 95%;
+        max-width: none;
+    }
+
+    /* Layout grids */
+    .cb-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* Filter panels */
+    .st-filter-panel,
+    .st-sort-panel {
+        min-width: 200px;
+        max-width: 90vw;
+    }
+
+    /* Action dropdowns */
+    .st-action-menu {
+        right: 0;
+        left: auto;
+        min-width: 140px;
+    }
+
+    /* Search and suggestions */
+    .st-suggestions {
+        min-width: 200px;
+        max-width: 90vw;
+    }
+
+    /* Hide some columns in tables on small screens */
+    .st-table .hide-mobile {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Extra small screens */
+    .st-container {
+        padding: 0 8px;
+    }
+
+    .st-page-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .st-page-header h1 {
+        font-size: 18px;
+    }
+
+    .st-tabs {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .st-tab {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    /* Flatpickr calendar */
+    .flatpickr-calendar {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+
+    .flatpickr-day {
+        width: 30px !important;
+        height: 28px !important;
+    }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .st-dashboard-range-picker,
+    .st-input,
+    .st-select {
+        border-width: 0.5px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .st-form-row {
+        flex-wrap: nowrap;
+    }
+
+    .st-form-field {
+        break-inside: avoid;
+    }
+
+    .st-table-wrap {
+        overflow: visible;
+    }
 }
