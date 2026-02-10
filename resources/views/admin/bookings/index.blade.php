@@ -120,14 +120,6 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th style="width:80px;">
-                                        <div class="st-colhead">
-                                            <span class="st-colhead__label">COA</span>
-                                            <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="coa" title="Sort">â‡…</button>
-                                            </span>
-                                        </div>
-                                    </th>
                                     <th>
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Scheduled</span>
@@ -262,13 +254,6 @@
                                             </td>
                                             <td>{{ $booking->po_number ?? '-' }}</td>
                                             <td>{{ $booking->supplier_name ?? '-' }}</td>
-                                            <td>
-                                                @if(!empty($booking->coa_path))
-                                                    <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener" style="color: #3b82f6; text-decoration: underline;">View</a>
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
                                             <td>
                                                 {{ $booking->planned_start?->format('d M Y') ?? '-' }}
                                                 <br><small class="st-text-muted">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>

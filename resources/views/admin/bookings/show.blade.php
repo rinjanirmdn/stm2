@@ -103,19 +103,6 @@
                         </div>
                     </div>
                     <div class="detail-item">
-                        <label class="detail-label">COA Document</label>
-                        <div class="detail-value">
-                            @if(!empty($booking->coa_path))
-                                <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" class="detail-link">
-                                    <i class="fas fa-file-pdf"></i>
-                                    View Document
-                                </a>
-                            @else
-                                <span class="detail-empty">No document</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="detail-item">
                         <label class="detail-label">Supplier</label>
                         <div class="detail-value">{{ $booking->supplier_name ?? '-' }}</div>
                     </div>
@@ -202,60 +189,6 @@
             </div>
         </div>
 
-        <!-- PO Items Card -->
-        <div class="detail-card detail-card--full">
-            <div class="detail-card__header">
-                <h3 class="detail-card__title">
-                    <i class="fas fa-file-invoice"></i>
-                    Purchase Order Items
-                </h3>
-                <div class="detail-card__meta">
-                    <strong>PO Number:</strong> {{ $booking->po_number ?? '-' }}
-                </div>
-            </div>
-            <div class="detail-card__body">
-                @if($booking->items && $booking->items->count() > 0)
-                    <div class="po-items-table">
-                        <table class="st-table">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Material</th>
-                                    <th class="text-right">Qty PO</th>
-                                    <th class="text-right">Qty GR Total</th>
-                                    <th class="text-right">Qty Requested</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($booking->items as $it)
-                                    @php
-                                        $itemNo = (string) ($it->item_no ?? '');
-                                        $mat = trim((string) ($it->material_code ?? ''));
-                                        $desc = trim((string) ($it->material_name ?? ''));
-                                        $uom = trim((string) ($it->unit_po ?? ''));
-                                        $qtyPo = $it->qty_po ?? null;
-                                        $qtyGrTotal = $it->qty_gr_total ?? null;
-                                        $qtyReq = $it->qty_requested ?? 0;
-                                    @endphp
-                                    <tr>
-                                        <td><strong>{{ $itemNo }}</strong></td>
-                                        <td>{{ $mat }}{{ $desc !== '' ? (' - ' . $desc) : '' }}</td>
-                                        <td class="text-right">{{ $qtyPo !== null ? $qtyPo : '-' }} {{ $uom }}</td>
-                                        <td class="text-right">{{ $qtyGrTotal !== null ? $qtyGrTotal : '-' }} {{ $uom }}</td>
-                                        <td class="text-right"><strong>{{ $qtyReq }}</strong> {{ $uom }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>No PO Item Details Available</p>
-                    </div>
-                @endif
-            </div>
-        </div>
     </div>
 
     <!-- Approve Modal -->

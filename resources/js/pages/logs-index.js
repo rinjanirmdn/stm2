@@ -3,10 +3,24 @@
     var dateFromInput = document.getElementById('date_from');
     var dateToInput = document.getElementById('date_to');
 
+    function toDisplayDate(value) {
+        if (!value) return '';
+        var parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        return parts[2] + '-' + parts[1] + '-' + parts[0];
+    }
+
+    function toIsoDate(value) {
+        if (!value) return '';
+        var parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        return parts[2].length === 4 ? parts[2] + '-' + parts[1] + '-' + parts[0] : value;
+    }
+
     if (dateRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
         var initial = dateFromInput && dateFromInput.value ? dateFromInput.value : '';
         if (initial) {
-            dateRangeInput.value = initial;
+            dateRangeInput.value = toDisplayDate(initial);
         }
 
         window.jQuery(dateRangeInput).dateRangePicker({
@@ -14,11 +28,12 @@
             singleDate: true,
             showShortcuts: false,
             singleMonth: true,
-            format: 'YYYY-MM-DD'
+            format: 'DD-MM-YYYY'
         }).bind('datepicker-change', function(event, obj) {
             var value = (obj && obj.value) ? obj.value : '';
-            if (dateFromInput) dateFromInput.value = value;
-            if (dateToInput) dateToInput.value = value;
+            var iso = toIsoDate(value);
+            if (dateFromInput) dateFromInput.value = iso;
+            if (dateToInput) dateToInput.value = iso;
             dateRangeInput.value = value;
         });
     }

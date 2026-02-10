@@ -24,6 +24,7 @@
                                 @endforeach
                             </ul>
                         </div>
+
                     </div>
                 </div>
             @endif
@@ -32,13 +33,11 @@
                 <div class="st-form-field">
                     <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
                     <div class="st-relative">
-                        <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
+                        <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off" class="st-input st-input--pr-40{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
+                        <span class="st-input-loader" id="po_loading" aria-hidden="true"></span>
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
                     @error('po_number')
-                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
-                    @enderror
-                    @error('po_items')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
@@ -73,9 +72,9 @@
             </div>
 
             <div class="st-form-row st-form-field--mb-12">
-                <div class="st-form-field st-w-full">
-                    <div id="po_preview" class="st-mt-8"></div>
-                    <div id="po_items_group" class="st-hidden st-mt-10"></div>
+                <div class="st-form-field">
+                    <label class="st-label">Vendor Name</label>
+                    <input type="text" id="vendor_name" class="st-input" placeholder="Vendor will auto-fill from PO" readonly>
                 </div>
             </div>
 
@@ -135,13 +134,6 @@
                     <input type="text" name="driver_number" class="st-input" value="{{ old('driver_number') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">COA (PDF) <span class="st-text--optional">(Optional)</span></label>
-                    <input type="file" name="coa_pdf" class="st-input{{ $errors->has('coa_pdf') ? ' st-input--invalid' : '' }}" accept="application/pdf">
-                    @error('coa_pdf')
-                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="st-form-field">
                     <label class="st-label">Notes <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="notes" class="st-input" value="{{ old('notes') }}">
                 </div>
@@ -165,7 +157,6 @@
         </form>
     </div>
 
-    <script type="application/json" id="old_po_items_json">{!! json_encode(old('po_items', [])) !!}</script>
     <script type="application/json" id="slot_routes_json">{!! json_encode([
         'po_search' => route('slots.ajax.po_search'),
         'po_detail_template' => route('slots.ajax.po_detail', ['poNumber' => '__PO__']),

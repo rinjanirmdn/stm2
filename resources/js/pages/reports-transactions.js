@@ -326,28 +326,25 @@
     var arrivalDateToInput = document.getElementById('arrival_date_to');
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
-    function formatDate(dObj) {
-        if (!dObj) return '';
-        var Y = dObj.getFullYear();
-        var M = ('0' + (dObj.getMonth() + 1)).slice(-2);
-        var D = ('0' + dObj.getDate()).slice(-2);
-        return Y + '-' + M + '-' + D;
-    }
-
-    // Helper to format date for display (d M Y)
     function formatDateDisplay(dateStr) {
         if (!dateStr) return '';
         try {
             var date = new Date(dateStr);
             if (isNaN(date.getTime())) return dateStr;
-            var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            var day = date.getDate();
-            var month = months[date.getMonth()];
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0');
             var year = date.getFullYear();
-            return day + " " + month + " " + year;
+            return day + "-" + month + "-" + year;
         } catch (e) {
             return dateStr;
         }
+    }
+
+    function dmyToIso(value) {
+        if (!value) return '';
+        var parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        return parts[2] + '-' + parts[1] + '-' + parts[0];
     }
 
     if (dateRangeInput && dateFromInput && dateToInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
@@ -361,12 +358,13 @@
             singleDate: true,
             showShortcuts: false,
             singleMonth: true,
-            format: 'YYYY-MM-DD'
+            format: 'DD-MM-YYYY'
         }).bind('datepicker-change', function(event, obj) {
             var value = (obj && obj.value) ? obj.value : '';
-            dateFromInput.value = value;
-            dateToInput.value = value;
-            dateRangeInput.value = formatDateDisplay(value);
+            var iso = dmyToIso(value);
+            dateFromInput.value = iso;
+            dateToInput.value = iso;
+            dateRangeInput.value = value;
             ajaxReload(true);
         });
     }
@@ -383,12 +381,13 @@
             singleDate: true,
             showShortcuts: false,
             singleMonth: true,
-            format: 'YYYY-MM-DD'
+            format: 'DD-MM-YYYY'
         }).bind('datepicker-change', function(event, obj) {
             var value = (obj && obj.value) ? obj.value : '';
-            arrivalDateFromInput.value = value;
-            arrivalDateToInput.value = value;
-            arrivalDateRangeInput.value = formatDateDisplay(value);
+            var iso = dmyToIso(value);
+            arrivalDateFromInput.value = iso;
+            arrivalDateToInput.value = iso;
+            arrivalDateRangeInput.value = value;
             ajaxReload(true);
         });
     }

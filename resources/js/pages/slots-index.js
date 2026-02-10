@@ -15,6 +15,20 @@
 
     // Initialize jQuery UI datepicker for date inputs
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+    function toDisplayDate(value) {
+        if (!value) return '';
+        var parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        return parts[2] + '-' + parts[1] + '-' + parts[0];
+    }
+
+    function toIsoDate(value) {
+        if (!value) return '';
+        var parts = String(value).split('-');
+        if (parts.length !== 3) return value;
+        return parts[2].length === 4 ? parts[2] + '-' + parts[1] + '-' + parts[0] : value;
+    }
+
     var dateInputs = document.querySelectorAll('input[type="date"][form="slot-filter-form"]');
     dateInputs.forEach(function(input) {
         if (!window.jQuery || !window.jQuery.fn.datepicker) return;
@@ -22,14 +36,24 @@
         input.setAttribute('data-st-datepicker', '1');
         try { input.type = 'text'; } catch (e) {}
 
+        if (input.value) {
+            input.dataset.isoValue = input.value;
+            input.value = toDisplayDate(input.value);
+        }
+
         window.jQuery(input).datepicker({
-            dateFormat: 'yy-mm-dd',
+            dateFormat: 'dd-mm-yy',
             beforeShowDay: function(date) {
                 var ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
                 if (holidayData[ds]) {
                     return [true, 'is-holiday', holidayData[ds]];
                 }
                 return [true, '', ''];
+            },
+            onSelect: function (dateText) {
+                var iso = toIsoDate(dateText);
+                input.dataset.isoValue = iso;
+                input.value = dateText;
             }
         });
     });

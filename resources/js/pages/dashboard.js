@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 endDate: endDate,
                 autoUpdateInput: true,
                 locale: {
-                    format: 'YYYY-MM-DD'
+                    format: 'DD-MM-YYYY'
                 },
                 isCustomDate: function (date) {
                     var ds = date ? date.format('YYYY-MM-DD') : '';
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var endStr = end.format('YYYY-MM-DD');
                 if (startEl) startEl.value = startStr;
                 if (endEl) endEl.value = endStr;
-                rangeInput.value = startStr + ' - ' + endStr;
+                rangeInput.value = start.format('DD-MM-YYYY') + ' - ' + end.format('DD-MM-YYYY');
                 if (startEl && startEl.form) startEl.form.submit();
             });
 
@@ -80,9 +80,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Set initial display value
             if (startVal && endVal) {
-                rangeInput.value = startVal + ' - ' + endVal;
+                rangeInput.value = window.moment(startVal).format('DD-MM-YYYY') + ' - ' + window.moment(endVal).format('DD-MM-YYYY');
             } else if (startVal) {
-                rangeInput.value = startVal + ' - ' + startVal;
+                rangeInput.value = window.moment(startVal).format('DD-MM-YYYY') + ' - ' + window.moment(startVal).format('DD-MM-YYYY');
             }
 
             return;
@@ -95,16 +95,23 @@ document.addEventListener('DOMContentLoaded', function () {
             var startVal = startEl ? startEl.value : '';
             var endVal = endEl ? endEl.value : '';
 
+            function toDisplayDate(value) {
+                if (!value) return '';
+                var parts = String(value).split('-');
+                if (parts.length !== 3) return value;
+                return parts[2] + '-' + parts[1] + '-' + parts[0];
+            }
+
             // Set initial display value
             if (startVal && endVal) {
-                rangeInput.value = startVal + ' - ' + endVal;
+                rangeInput.value = toDisplayDate(startVal) + ' - ' + toDisplayDate(endVal);
             } else if (startVal) {
-                rangeInput.value = startVal + ' - ' + startVal;
+                rangeInput.value = toDisplayDate(startVal) + ' - ' + toDisplayDate(startVal);
             }
 
             // Initialize datepicker for range selection
             window.jQuery(rangeInput).datepicker({
-                dateFormat: 'yy-mm-dd',
+                dateFormat: 'dd-mm-yy',
                 beforeShowDay: function (date) {
                     var ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
                     if (holidayData[ds]) {
@@ -117,9 +124,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     inst.dpDiv.addClass('ui-datepicker-range');
                 },
                 onSelect: function (dateText) {
+                    var parts = String(dateText).split('-');
+                    var iso = parts.length === 3 ? parts[2] + '-' + parts[1] + '-' + parts[0] : dateText;
                     // For simplicity, set both start and end to the same date
-                    if (startEl) startEl.value = dateText;
-                    if (endEl) endEl.value = dateText;
+                    if (startEl) startEl.value = iso;
+                    if (endEl) endEl.value = iso;
                     rangeInput.value = dateText + ' - ' + dateText;
                     if (startEl && startEl.form) startEl.form.submit();
                 }

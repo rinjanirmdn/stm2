@@ -235,20 +235,6 @@
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
-                            <div class="st-detail-label">COA</div>
-                            <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">
-                            @if(!empty($slot->coa_path))
-                                <a href="{{ asset('storage/' . $slot->coa_path) }}" target="_blank" rel="noopener" class="st-text--xs-10 st-text--primary st-link-underline st-cursor-pointer">
-                                    <i class="fa-solid fa-file-pdf st-mr-4"></i>View / Download
-                                </a>
-                            @else
-                                -
-                            @endif
-                            </div>
-                        </div>
-
-                        <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Vendor</div>
                             <div class="st-detail-colon">:</div>
                             <div class="st-detail-value">{{ $slot->vendor_name ?? '-' }}</div>

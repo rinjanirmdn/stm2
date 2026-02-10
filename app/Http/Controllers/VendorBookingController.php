@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Gate;
 use App\Models\BookingRequest;
-use App\Models\BookingRequestItem;
 use App\Models\Slot;
 use App\Models\TruckTypeDuration;
 use App\Models\User;
@@ -71,132 +70,6 @@ class VendorBookingController extends Controller
         }
 
         return (int) $query->count();
-    }
-
-    private function getBookedQtyByItemNo(string $poNumber): array
-    {
-        $poNumber = trim($poNumber);
-        if ($poNumber === '') {
-            return [];
-        }
-
-        if (!Schema::hasTable('slot_po_items')) {
-            return [];
-        }
-
-        try {
-            $rows = DB::table('slot_po_items as spi')
-                ->join('slots as s', 's.id', '=', 'spi.slot_id')
-                ->where('spi.po_number', $poNumber)
-                ->whereNotIn('s.status', [Slot::STATUS_CANCELLED])
-                ->groupBy('spi.item_no')
-                ->select([
-                    'spi.item_no',
-                    DB::raw('SUM(spi.qty_booked) as qty_booked'),
-                ])
-                ->get();
-        } catch (\Throwable $e) {
-            return [];
-        }
-
-        $out = [];
-        foreach ($rows as $r) {
-            $key = trim((string) ($r->item_no ?? ''));
-            if ($key === '') {
-                continue;
-            }
-            $out[$key] = (float) ($r->qty_booked ?? 0);
-        }
-
-        return $out;
-    }
-
-    private function withRemainingQty(array $po): array
-    {
-        $poNumber = trim((string) ($po['po_number'] ?? ''));
-        $bookedByItem = $poNumber !== '' ? $this->getBookedQtyByItemNo($poNumber) : [];
-
-        $items = is_array($po['items'] ?? null) ? $po['items'] : [];
-        $hasRemaining = false;
-        foreach ($items as $idx => $it) {
-            if (!is_array($it)) {
-                continue;
-            }
-            $itemNo = trim((string) ($it['item_no'] ?? ''));
-            $qtyPo = $this->toFloatQty($it['qty'] ?? null);
-            $qtyGr = $this->toFloatQty($it['qty_gr_total'] ?? null);
-            $booked = $itemNo !== '' ? (float) ($bookedByItem[$itemNo] ?? 0) : 0.0;
-            $remaining = $qtyPo - $qtyGr - $booked;
-            if ($remaining < 0) {
-                $remaining = 0.0;
-            }
-            if ($remaining > 0) {
-                $hasRemaining = true;
-            }
-            $it['qty_booked'] = $booked;
-            $it['remaining_qty'] = $remaining;
-            $items[$idx] = $it;
-        }
-
-        $po['items'] = $items;
-        $po['has_remaining'] = $hasRemaining;
-        return $po;
-    }
-
-    private function toFloatQty(mixed $value): float
-    {
-        if ($value === null) {
-            return 0.0;
-        }
-
-        if (is_int($value) || is_float($value)) {
-            return (float) $value;
-        }
-
-        $s = trim((string) $value);
-        if ($s === '') {
-            return 0.0;
-        }
-
-        // Handle formatted numbers like "2,000" or "2.000" or "2.000,50" (best effort)
-        $s = str_replace(' ', '', $s);
-
-        // Remove any non-number separators except dot/comma/minus
-        $s = preg_replace('/[^0-9,\.-]/', '', $s);
-
-        $hasDot = str_contains($s, '.');
-        $hasComma = str_contains($s, ',');
-
-        if ($hasDot && $hasComma) {
-            // Decide which is decimal separator by last occurrence
-            $lastDot = strrpos($s, '.');
-            $lastComma = strrpos($s, ',');
-            if ($lastComma !== false && $lastDot !== false && $lastComma > $lastDot) {
-                // "2.000,50" => thousand '.' and decimal ','
-                $s = str_replace('.', '', $s);
-                $s = str_replace(',', '.', $s);
-            } else {
-                // "2,000.50" => thousand ',' and decimal '.'
-                $s = str_replace(',', '', $s);
-            }
-        } elseif ($hasDot && !$hasComma) {
-            // "2.000" => thousand '.'
-            if (preg_match('/^\-?\d{1,3}(\.\d{3})+$/', $s)) {
-                $s = str_replace('.', '', $s);
-            }
-        } elseif ($hasComma && !$hasDot) {
-            // "2,000" => thousand ',' OR "2,5" => decimal ','
-            if (preg_match('/^\-?\d{1,3}(,\d{3})+$/', $s)) {
-                $s = str_replace(',', '', $s);
-            } else {
-                $s = str_replace(',', '.', $s);
-            }
-        }
-
-        // Keep digits, dot and minus only
-        $s = preg_replace('/[^0-9\.-]/', '', $s);
-
-        return (float) $s;
     }
 
     private function resolvePlannedDuration(?string $truckType): ?int
@@ -447,8 +320,6 @@ class VendorBookingController extends Controller
             return response()->json(['success' => false, 'message' => 'PO/DO is not assigned to your vendor']);
         }
 
-        $po = $this->withRemainingQty($po);
-
         return response()->json(['success' => true, 'data' => $po]);
     }
 
@@ -464,8 +335,6 @@ class VendorBookingController extends Controller
 
         $request->validate([
             'po_number' => 'required|string', // Enforce here
-            'po_items' => 'required|array',
-            'po_items.*.qty' => 'nullable|numeric|min:0',
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
             'planned_date' => 'required|date|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
@@ -474,7 +343,6 @@ class VendorBookingController extends Controller
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:500',
-            'coa_pdf' => 'required|file|mimes:pdf|max:10240',
         ]);
 
         // Auto-assign gate based on availability
@@ -540,20 +408,6 @@ class VendorBookingController extends Controller
             return back()->withInput()->with('error', 'Waktu ini sedang diblokir karena menunggu konfirmasi tim WH');
         }
 
-        // Ensure PO items selection has at least one qty
-        $selectedItems = $request->input('po_items', []);
-        $hasQty = false;
-        foreach ($selectedItems as $it) {
-            $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-            if ($qty > 0) {
-                $hasQty = true;
-                break;
-            }
-        }
-        if (!$hasQty) {
-            return back()->withInput()->with('error', 'Please input at least one PO item quantity for this booking.');
-        }
-
         // Resolve PO ID from PO Number
         // Since we validated 'required', we strictly process it.
         $poNumber = trim($request->po_number);
@@ -568,30 +422,7 @@ class VendorBookingController extends Controller
         if ($poVendorCode === '' || !$this->vendorCodesMatch($poVendorCode, $vendorCode)) {
             return back()->withInput()->with('error', 'PO/DO is not assigned to your vendor.');
         }
-        $poDetail = $this->withRemainingQty($poDetail);
         $direction = $this->resolveDirection($poDetail);
-
-        $remainingMap = [];
-        foreach (($poDetail['items'] ?? []) as $it) {
-            if (!is_array($it)) continue;
-            $itemNo = trim((string) ($it['item_no'] ?? ''));
-            if ($itemNo === '') continue;
-            $remainingMap[$itemNo] = (float) ($it['remaining_qty'] ?? 0);
-        }
-
-        foreach ($selectedItems as $itemNo => $it) {
-            $itemNo = trim((string) $itemNo);
-            if ($itemNo === '') continue;
-            $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-            if ($qty <= 0) continue;
-            $remain = (float) ($remainingMap[$itemNo] ?? 0);
-            if ($remain <= 0) {
-                return back()->withInput()->with('error', "Item {$itemNo} has no remaining quantity.");
-            }
-            if ($qty - $remain > 0.000001) {
-                return back()->withInput()->with('error', "Item {$itemNo} quantity exceeds remaining ({$remain}).");
-            }
-        }
 
         try {
             $notes = (string) $request->notes;
@@ -617,47 +448,6 @@ class VendorBookingController extends Controller
                 'status' => BookingRequest::STATUS_PENDING,
             ]);
 
-            // Store documents
-            $updates = [];
-            if ($request->hasFile('coa_pdf')) {
-                $coaFile = $request->file('coa_pdf');
-                $coaName = 'coa_' . $bookingRequest->id . '_' . time() . '.pdf';
-                $coaPath = $coaFile->storeAs('booking-documents/' . $bookingRequest->id, $coaName, 'public');
-                $updates['coa_path'] = $coaPath;
-            }
-            if (!empty($updates)) {
-                $bookingRequest->update($updates);
-            }
-
-            // Persist partial delivery per PO item
-            $itemsDetailMap = [];
-            foreach (($poDetail['items'] ?? []) as $it) {
-                if (!is_array($it)) continue;
-                $itemNo = trim((string) ($it['item_no'] ?? ''));
-                if ($itemNo === '') continue;
-                $itemsDetailMap[$itemNo] = $it;
-            }
-
-            foreach ($selectedItems as $itemNo => $it) {
-                $itemNo = trim((string) $itemNo);
-                if ($itemNo === '') continue;
-                $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-                if ($qty <= 0) continue;
-
-                $detailIt = $itemsDetailMap[$itemNo] ?? [];
-                BookingRequestItem::create([
-                    'booking_request_id' => $bookingRequest->id,
-                    'po_number' => $poNumber,
-                    'item_no' => $itemNo,
-                    'material_code' => $detailIt['material'] ?? null,
-                    'material_name' => $detailIt['description'] ?? null,
-                    'qty_po' => $detailIt['qty'] ?? null,
-                    'unit_po' => $detailIt['uom'] ?? null,
-                    'qty_gr_total' => $detailIt['qty_gr_total'] ?? null,
-                    'qty_requested' => $qty,
-                ]);
-            }
-
             Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
             $this->notifyAdminsBookingRequest($bookingRequest);
 
@@ -681,7 +471,7 @@ class VendorBookingController extends Controller
         // Find booking
         $booking = BookingRequest::where('id', $id)
             ->where('requested_by', $user->id)
-            ->with(['items', 'approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate', 'convertedSlot.actualGate'])
+            ->with(['approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate', 'convertedSlot.actualGate'])
             ->firstOrFail();
 
         return view('vendor.bookings.show', compact('booking'));

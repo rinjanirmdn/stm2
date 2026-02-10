@@ -66,35 +66,6 @@
                         <div><strong>Planned Start:</strong> {{ $slot->planned_start ?? '-' }}</div>
                         <div><strong>Planned Gate:</strong> {{ app(\App\Services\SlotService::class)->getGateDisplayName($slot->planned_gate_warehouse_code ?? '', $slot->planned_gate_number ?? '') }}</div>
                     </div>
-                    <div class="st-mt-10">
-                        <div class="st-font-semibold st-mb-6">Item & Qty (Slot)</div>
-                        @if (!empty($slotItems) && $slotItems->count() > 0)
-                            <div class="st-table-wrapper st-table-wrapper--mt-6">
-                                <table class="st-table st-table--sm">
-                                    <thead>
-                                        <tr>
-                                            <th class="st-table-col-70">Item</th>
-                                            <th>Material</th>
-                                            <th class="st-table-col-120 st-text-right">Qty</th>
-                                            <th class="st-table-col-90">UOM</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($slotItems as $item)
-                                            <tr>
-                                                <td><strong>{{ $item->item_no }}</strong></td>
-                                                <td>{{ $item->material_code ?? '-' }}{{ $item->material_name ? ' - ' . $item->material_name : '' }}</td>
-                                                <td class="st-text-right">{{ number_format((float) ($item->qty_booked ?? 0), 3) }}</td>
-                                                <td>{{ $item->uom ?? '-' }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <div class="st-text--small st-text--muted">No item details available for this slot.</div>
-                        @endif
-                    </div>
                 </div>
 
             <div class="st-form-actions">

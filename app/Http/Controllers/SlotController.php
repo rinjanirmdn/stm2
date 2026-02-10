@@ -7,10 +7,8 @@ use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
 use App\Services\TimeCalculationService;
-use App\Services\SlotReceiptReconciliationService;
 use App\Exports\SlotsExport;
 use App\Models\Slot;
-use App\Models\SlotPoItem;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,8 +30,7 @@ class SlotController extends Controller
         private readonly PoSearchService $poSearchService,
         private readonly SlotConflictService $conflictService,
         private readonly SlotFilterService $filterService,
-        private readonly TimeCalculationService $timeService,
-        private readonly SlotReceiptReconciliationService $receiptReconciliationService
+        private readonly TimeCalculationService $timeService
     ) {
     }
 
@@ -69,9 +66,6 @@ class SlotController extends Controller
             if (!$po) {
                 return response()->json(['success' => false, 'message' => 'PO/DO not found']);
             }
-
-            $po = $this->withRemainingQty($po);
-
             return response()->json(['success' => true, 'data' => $po]);
         } catch (\Throwable $e) {
             Log::warning('ajaxPoDetail failed', [
@@ -381,8 +375,6 @@ class SlotController extends Controller
     {
         $request->validate([
             'po_number' => 'required|string|max:12',
-            'po_items' => 'required|array',
-            'po_items.*.qty' => 'nullable|numeric|min:0',
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
             'planned_gate_id' => 'required|integer|exists:md_gates,id',
@@ -392,7 +384,6 @@ class SlotController extends Controller
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:500',
-            'coa_pdf' => 'required|file|mimes:pdf|max:5120',
         ]);
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
@@ -425,46 +416,10 @@ class SlotController extends Controller
         }
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
-        $selectedItems = (array) $request->input('po_items', []);
-        $hasQty = false;
-        foreach ($selectedItems as $it) {
-            $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-            if ($qty > 0) {
-                $hasQty = true;
-                break;
-            }
-        }
-        if (!$hasQty) {
-            return back()->withInput()->with('error', 'Please input at least one PO item quantity for this slot.');
-        }
-
         $poNumber = $truckNumber;
         $poDetail = $this->poSearchService->getPoDetail($poNumber);
         if (!$poDetail) {
             return back()->withInput()->with('error', 'PO/DO not found in SAP.');
-        }
-        $poDetail = $this->withRemainingQty($poDetail);
-
-        $remainingMap = [];
-        foreach (($poDetail['items'] ?? []) as $it) {
-            if (!is_array($it)) continue;
-            $itemNo = trim((string) ($it['item_no'] ?? ''));
-            if ($itemNo === '') continue;
-            $remainingMap[$itemNo] = (float) ($it['remaining_qty'] ?? 0);
-        }
-
-        foreach ($selectedItems as $itemNo => $it) {
-            $itemNo = trim((string) $itemNo);
-            if ($itemNo === '') continue;
-            $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-            if ($qty <= 0) continue;
-            $remain = (float) ($remainingMap[$itemNo] ?? 0);
-            if ($remain <= 0) {
-                return back()->withInput()->with('error', "Item {$itemNo} has no remaining quantity.");
-            }
-            if ($qty - $remain > 0.000001) {
-                return back()->withInput()->with('error', "Item {$itemNo} quantity exceeds remaining ({$remain}).");
-            }
         }
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
@@ -516,7 +471,7 @@ class SlotController extends Controller
         }
 
         $slotId = 0;
-        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $selectedItems, $poDetail) {
+        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $poDetail) {
             $now = date('Y-m-d H:i:s');
             $ticket = $this->slotService->generateTicketNumber($warehouseId, $plannedGateId);
             $slotId = (int) DB::table('slots')->insertGetId([
@@ -542,34 +497,6 @@ class SlotController extends Controller
                 'updated_at' => $now,
             ]);
 
-            if ($slotId > 0 && Schema::hasTable('slot_po_items')) {
-                $itemsDetailMap = [];
-                foreach (($poDetail['items'] ?? []) as $it) {
-                    if (!is_array($it)) continue;
-                    $itemNo = trim((string) ($it['item_no'] ?? ''));
-                    if ($itemNo === '') continue;
-                    $itemsDetailMap[$itemNo] = $it;
-                }
-
-                foreach ($selectedItems as $itemNo => $it) {
-                    $itemNo = trim((string) $itemNo);
-                    if ($itemNo === '') continue;
-                    $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-                    if ($qty <= 0) continue;
-
-                    $detailIt = $itemsDetailMap[$itemNo] ?? [];
-                    SlotPoItem::create([
-                        'slot_id' => $slotId,
-                        'po_number' => $truckNumber,
-                        'item_no' => $itemNo,
-                        'material_code' => $detailIt['material'] ?? null,
-                        'material_name' => $detailIt['description'] ?? null,
-                        'uom' => $detailIt['uom'] ?? null,
-                        'qty_booked' => $qty,
-                    ]);
-                }
-            }
-
             if ($slotId > 0) {
                 $this->slotService->logActivity($slotId, 'status_change', 'Slot Created');
             }
@@ -579,16 +506,6 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Failed to create slot');
         }
 
-        $updates = [];
-        if ($request->hasFile('coa_pdf')) {
-            $coaFile = $request->file('coa_pdf');
-            $coaName = 'coa_' . $slotId . '_' . time() . '.pdf';
-            $coaPath = $coaFile->storeAs('booking-documents/' . $slotId, $coaName, 'public');
-            $updates['coa_path'] = $coaPath;
-        }
-        if (!empty($updates)) {
-            DB::table('slots')->where('id', $slotId)->update($updates);
-        }
 
         // Calculate blocking risk immediately after creation (real-time accuracy)
         $blockingRisk = $this->slotService->calculateBlockingRisk(
@@ -671,12 +588,7 @@ class SlotController extends Controller
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:500',
-            'coa_pdf' => 'nullable|file|mimes:pdf|max:5120',
         ]);
-
-        if (! $request->hasFile('coa_pdf') && trim((string) ($slot->coa_path ?? '')) === '') {
-            return back()->withInput()->withErrors(['coa_pdf' => 'COA (PDF) is required.']);
-        }
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
         $direction = (string) $request->input('direction', '');
@@ -782,16 +694,6 @@ class SlotController extends Controller
             $this->slotService->logActivity($slotId, 'status_change', 'Slot Updated');
         });
 
-        if ($request->hasFile('coa_pdf')) {
-            $coaFile = $request->file('coa_pdf');
-            $coaName = 'coa_' . $slotId . '_' . time() . '.pdf';
-            $coaPath = $coaFile->storeAs('booking-documents/' . $slotId, $coaName, 'public');
-            DB::table('slots')->where('id', $slotId)->update([
-                'coa_path' => $coaPath,
-                'updated_at' => now(),
-            ]);
-        }
-
         // Calculate blocking risk immediately after update
         $blockingRisk = $this->slotService->calculateBlockingRisk(
             $warehouseId,
@@ -808,97 +710,12 @@ class SlotController extends Controller
         return redirect()->route('slots.index')->with('success', 'Slot updated successfully');
     }
 
-    private function toFloatQty($v): float
-    {
-        if ($v === null) return 0.0;
-        if (is_numeric($v)) return (float) $v;
-        $s = trim((string) $v);
-        if ($s === '') return 0.0;
-        $s = str_replace([' ', ','], ['', '.'], $s);
-        if (!is_numeric($s)) return 0.0;
-        return (float) $s;
-    }
-
-    private function getBookedQtyByItemNo(string $poNumber): array
-    {
-        $poNumber = trim($poNumber);
-        if ($poNumber === '') {
-            return [];
-        }
-
-        if (!Schema::hasTable('slot_po_items')) {
-            return [];
-        }
-
-        try {
-            $rows = DB::table('slot_po_items as spi')
-                ->join('slots as s', 's.id', '=', 'spi.slot_id')
-                ->where('spi.po_number', $poNumber)
-                ->whereNotIn('s.status', [Slot::STATUS_CANCELLED, Slot::STATUS_REJECTED])
-                ->groupBy('spi.item_no')
-                ->select([
-                    'spi.item_no',
-                    DB::raw('SUM(spi.qty_booked) as qty_booked'),
-                ])
-                ->get();
-        } catch (\Throwable $e) {
-            return [];
-        }
-
-        $out = [];
-        foreach ($rows as $r) {
-            $key = trim((string) ($r->item_no ?? ''));
-            if ($key === '') {
-                continue;
-            }
-            $out[$key] = (float) ($r->qty_booked ?? 0);
-        }
-
-        return $out;
-    }
-
-    private function withRemainingQty(array $po): array
-    {
-        $poNumber = trim((string) ($po['po_number'] ?? ''));
-        $bookedByItem = $poNumber !== '' ? $this->getBookedQtyByItemNo($poNumber) : [];
-
-        $items = is_array($po['items'] ?? null) ? $po['items'] : [];
-        $hasRemaining = false;
-        foreach ($items as $idx => $it) {
-            if (!is_array($it)) {
-                continue;
-            }
-            $itemNo = trim((string) ($it['item_no'] ?? ''));
-            $qtyPo = $this->toFloatQty($it['qty'] ?? null);
-            $qtyGr = $this->toFloatQty($it['qty_gr_total'] ?? null);
-            $booked = $itemNo !== '' ? (float) ($bookedByItem[$itemNo] ?? 0) : 0.0;
-            $remaining = $qtyPo - $qtyGr - $booked;
-            if ($remaining < 0) {
-                $remaining = 0.0;
-            }
-            if ($remaining > 0) {
-                $hasRemaining = true;
-            }
-            $it['qty_booked'] = $booked;
-            $it['remaining_qty'] = $remaining;
-            $items[$idx] = $it;
-        }
-
-        $po['items'] = $items;
-        $po['has_remaining'] = $hasRemaining;
-        return $po;
-    }
-
     public function show(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
             return redirect()->route('slots.index')->with('error', 'Slot not found');
         }
-
-        $slotItems = SlotPoItem::where('slot_id', $slotId)
-            ->orderBy('item_no')
-            ->get();
 
         $poNumber = trim((string) ($slot->po_number ?? ''));
         if ($poNumber !== '') {
@@ -1214,9 +1031,6 @@ class SlotController extends Controller
     public function unplannedStore(Request $request)
     {
         $request->validate([
-            'po_items' => 'nullable|array',
-            'po_items.*.qty' => 'nullable|numeric|min:0',
-            'coa_pdf' => 'required|file|mimes:pdf|max:5120',
             'driver_name' => 'nullable|string|max:50',
             'actual_gate_id' => 'required|integer|exists:md_gates,id',
         ]);
@@ -1267,45 +1081,9 @@ class SlotController extends Controller
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
 
-        $selectedItems = (array) $request->input('po_items', []);
-        $hasQty = false;
-        foreach ($selectedItems as $it) {
-            $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-            if ($qty > 0) {
-                $hasQty = true;
-                break;
-            }
-        }
-
-        $poDetail = null;
-        if ($hasQty) {
-            $poDetail = $this->poSearchService->getPoDetail($poNumber);
-            if (! $poDetail) {
-                return back()->withInput()->with('error', 'PO/DO not found in SAP.');
-            }
-            $poDetail = $this->withRemainingQty($poDetail);
-
-            $remainingMap = [];
-            foreach (($poDetail['items'] ?? []) as $it) {
-                if (!is_array($it)) continue;
-                $itemNo = trim((string) ($it['item_no'] ?? ''));
-                if ($itemNo === '') continue;
-                $remainingMap[$itemNo] = (float) ($it['remaining_qty'] ?? 0);
-            }
-
-            foreach ($selectedItems as $itemNo => $it) {
-                $itemNo = trim((string) $itemNo);
-                if ($itemNo === '') continue;
-                $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-                if ($qty <= 0) continue;
-                $remain = (float) ($remainingMap[$itemNo] ?? 0);
-                if ($remain <= 0) {
-                    return back()->withInput()->with('error', "Item {$itemNo} has no remaining quantity.");
-                }
-                if ($qty - $remain > 0.000001) {
-                    return back()->withInput()->with('error', "Item {$itemNo} quantity exceeds remaining ({$remain}).");
-                }
-            }
+        $poDetail = $this->poSearchService->getPoDetail($poNumber);
+        if (! $poDetail) {
+            return back()->withInput()->with('error', 'PO/DO not found in SAP.');
         }
 
         $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
@@ -1316,7 +1094,7 @@ class SlotController extends Controller
             $status = 'waiting';
         }
 
-        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $hasQty, $selectedItems, $poDetail) {
+        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $poDetail) {
             $slotId = (int) DB::table('slots')->insertGetId([
                 'po_number' => $poNumber,
                 'direction' => $direction,
@@ -1340,34 +1118,6 @@ class SlotController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
-            if ($slotId > 0 && $hasQty && Schema::hasTable('slot_po_items')) {
-                $itemsDetailMap = [];
-                foreach (($poDetail['items'] ?? []) as $it) {
-                    if (!is_array($it)) continue;
-                    $itemNo = trim((string) ($it['item_no'] ?? ''));
-                    if ($itemNo === '') continue;
-                    $itemsDetailMap[$itemNo] = $it;
-                }
-
-                foreach ($selectedItems as $itemNo => $it) {
-                    $itemNo = trim((string) $itemNo);
-                    if ($itemNo === '') continue;
-                    $qty = isset($it['qty']) ? (float) $it['qty'] : 0.0;
-                    if ($qty <= 0) continue;
-
-                    $detailIt = $itemsDetailMap[$itemNo] ?? [];
-                    SlotPoItem::create([
-                        'slot_id' => $slotId,
-                        'po_number' => $poNumber,
-                        'item_no' => $itemNo,
-                        'material_code' => $detailIt['material'] ?? null,
-                        'material_name' => $detailIt['description'] ?? null,
-                        'uom' => $detailIt['uom'] ?? null,
-                        'qty_booked' => $qty,
-                    ]);
-                }
-            }
 
             if ($slotId > 0) {
                 $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Recorded as ' . $status);
@@ -1536,9 +1286,6 @@ class SlotController extends Controller
 
         return view('slots.arrival', [
             'slot' => $slot,
-            'slotItems' => SlotPoItem::where('slot_id', $slotId)
-                ->orderBy('item_no')
-                ->get(),
         ]);
     }
 
@@ -1886,9 +1633,6 @@ class SlotController extends Controller
                 'driver_number' => $driverNumber,
                 'late_reason' => $notes !== '' ? $notes : null,
             ]);
-
-            // Reconcile receipts with SAP QtyGRTotal (including LIFO reversal handling)
-            $this->receiptReconciliationService->reconcileSlotCompletion($slotId);
 
             // Auto-cancel obsolete scheduled slots when a slot is completed
             if ($slotInfo && $slotInfo->actual_gate_id) {

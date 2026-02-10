@@ -29,7 +29,6 @@ class BookingRequest extends Model
         'driver_name',
         'driver_number',
         'notes',
-        'coa_path',
         'status',
         'approved_by',
         'approved_at',
@@ -57,10 +56,5 @@ class BookingRequest extends Model
     public function convertedSlot()
     {
         return $this->belongsTo(Slot::class, 'converted_slot_id');
-    }
-
-    public function items()
-    {
-        return $this->hasMany(BookingRequestItem::class, 'booking_request_id');
     }
 }

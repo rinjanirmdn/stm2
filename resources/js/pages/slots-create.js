@@ -3,12 +3,13 @@
     var truckTypeSelect = document.getElementById('truck_type');
     var poInput = document.getElementById('po_number');
     var poSuggestions = document.getElementById('po_suggestions');
-    var poPreview = document.getElementById('po_preview');
-    var poItemsGroup = document.getElementById('po_items_group');
+    var poLoading = document.getElementById('po_loading');
 
     var vendorSearch = document.getElementById('vendor_search');
+    var vendorNameInput = vendorSearch;
     var vendorSelect = document.getElementById('vendor_id');
     var vendorSuggestions = document.getElementById('vendor_suggestions');
+    var vendorSearchAutoFill = vendorSearch ? vendorSearch.getAttribute('data-auto-fill') === '1' : false;
 
     var warehouseSelect = document.getElementById('warehouse_id');
     var gateSelect = document.getElementById('planned_gate_id');
@@ -24,6 +25,15 @@
         truckTypeDurations = truckTypeDurationsEl ? JSON.parse(truckTypeDurationsEl.textContent || '{}') : {};
     } catch (e) {
         truckTypeDurations = {};
+    }
+
+    function setPoLoading(isLoading) {
+        if (!poLoading) return;
+        if (isLoading) {
+            poLoading.classList.add('show');
+        } else {
+            poLoading.classList.remove('show');
+        }
     }
 
     var riskPreview = document.getElementById('risk_preview');
@@ -78,14 +88,6 @@
     var urlPoSearch = slotRoutes.po_search || '';
     var urlPoDetailTemplate = slotRoutes.po_detail_template || '';
     var urlVendorSearch = slotRoutes.vendor_search || '';
-
-    var oldPoItems = {};
-    try {
-        var oldPoItemsEl = document.getElementById('old_po_items_json');
-        oldPoItems = oldPoItemsEl ? JSON.parse(oldPoItemsEl.textContent || '{}') : {};
-    } catch (e) {
-        oldPoItems = {};
-    }
 
     function csrfToken() {
         var el = document.querySelector('meta[name="csrf-token"]');
@@ -169,110 +171,16 @@
         poSuggestions.style.display = 'block';
     }
 
-    function formatQty(value) {
-        var num = Number(value);
-        if (!isFinite(num)) {
-            return '0';
-        }
-        return String(num).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
-    }
-
-    function setPoPreview(po) {
-        if (!poPreview) return;
-        if (poItemsGroup) {
-            poItemsGroup.classList.add('st-hidden');
-            poItemsGroup.style.display = 'none';
-            poItemsGroup.innerHTML = '';
-        }
-        if (!po) {
-            poPreview.textContent = 'No PO/DO Data Yet.';
-            return;
-        }
-
-        var items = Array.isArray(po.items) ? po.items : [];
-        poPreview.innerHTML = ''
-            + '<div class="po-preview__box">'
-            + '<div class="po-preview__title">' + (po.po_number || '') + '</div>'
-            + '<div class="po-preview__info">Vendor: ' + (po.vendor_name || '-') + '</div>'
-            + '<div class="po-preview__info">Doc Date: ' + (po.doc_date || '-') + '</div>'
-            + '<div class="po-preview__items">Items: ' + items.length + '</div>'
-            + '</div>';
-
-        if (!poItemsGroup) return;
-        if (!items.length) {
-            poItemsGroup.classList.add('st-hidden');
-            poItemsGroup.style.display = 'none';
-            poItemsGroup.innerHTML = '';
-            return;
-        }
-
-        var html = '';
-        html += '<div class="st-font-semibold st-mb-2">PO Items & Quantity for This Slot <span class="st-text--danger-dark">*</span></div>';
-        html += '<div class="st-table-wrapper st-table-wrapper--mt-6">';
-        html += '<table class="st-table st-table--compact">';
-        html += '<thead><tr>'
-            + '<th class="st-table-col-70" title="PO line item number.">Item</th>'
-            + '<th title="Material code and description.">Material</th>'
-            + '<th class="st-table-col-110 st-text-right" title="Total quantity ordered in the PO.">Qty PO</th>'
-            + '<th class="st-table-col-110 st-text-right" title="Total quantity already received in SAP (GR)."><span>GR Total</span></th>'
-            + '<th class="st-table-col-110 st-text-right" title="Total quantity already booked in previous slots.">Booked</th>'
-            + '<th class="st-table-col-110 st-text-right" title="Remaining quantity available to book.">Remaining</th>'
-            + '<th class="st-table-col-160" title="Quantity to book for this slot.">Qty This Slot</th>'
-            + '</tr></thead><tbody>';
-
-        items.forEach(function (it) {
-            if (!it) return;
-            var itemNo = String(it.item_no || '').trim();
-            if (!itemNo) return;
-            var mat = String(it.material || '').trim();
-            var desc = String(it.description || '').trim();
-            var uom = String(it.uom || '').trim();
-            var qtyPo = (it.qty !== undefined && it.qty !== null) ? formatQty(it.qty) : '-';
-            var qtyGr = (it.qty_gr_total !== undefined && it.qty_gr_total !== null) ? formatQty(it.qty_gr_total) : '0';
-            var qtyBooked = (it.qty_booked !== undefined && it.qty_booked !== null) ? formatQty(it.qty_booked) : '0';
-            var remainingValue = (it.remaining_qty !== undefined && it.remaining_qty !== null) ? Number(it.remaining_qty) : NaN;
-            if (!isFinite(remainingValue)) {
-                remainingValue = NaN;
-            }
-            var remaining = isFinite(remainingValue) ? formatQty(Math.max(remainingValue, 0)) : '-';
-
-            var oldQty = '';
-            try {
-                if (oldPoItems && oldPoItems[itemNo] && oldPoItems[itemNo].qty !== undefined && oldPoItems[itemNo].qty !== null) {
-                    oldQty = String(oldPoItems[itemNo].qty);
-                }
-            } catch (e) {}
-
-            html += '<tr>';
-            html += '<td><strong>' + itemNo + '</strong></td>';
-            html += '<td>' + mat + (desc ? (' - ' + desc) : '') + '</td>';
-            html += '<td class="st-text-right">' + qtyPo + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td class="st-text-right">' + qtyGr + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td class="st-text-right">' + qtyBooked + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td class="st-text-right"><strong>' + remaining + '</strong>' + (uom ? (' ' + uom) : '') + '</td>';
-            html += '<td>';
-            html += '<input type="number" step="1" min="0" name="po_items[' + itemNo + '][qty]" class="st-input st-input--w-140" value="' + (oldQty || '') + '" placeholder="0">';
-            html += '</td>';
-            html += '</tr>';
-        });
-
-        html += '</tbody></table></div>';
-        html += '<div class="st-text--small st-text--muted st-note">Input quantity for this slot delivery. Remaining qty remains available for the next slot.</div>';
-
-        poItemsGroup.innerHTML = html;
-        poItemsGroup.classList.remove('st-hidden');
-        poItemsGroup.style.display = 'block';
-    }
-
     function fetchPoDetail(poNumber, callback) {
         if (!poNumber) {
             callback({ success: false });
             return;
         }
-
+        setPoLoading(true);
         var url = String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber));
         getJson(url)
             .then(function (data) {
+                setPoLoading(false);
                 if (data && data.success && data.data) {
                     callback({ success: true, data: data.data });
                 } else {
@@ -280,6 +188,7 @@
                 }
             })
             .catch(function () {
+                setPoLoading(false);
                 callback({ success: false });
             });
     }
@@ -289,6 +198,7 @@
     }
 
     function filterVendors() {
+        if (vendorSearchAutoFill) return;
         if (!vendorSelect || !vendorSearch || !vendorSuggestions) return;
 
         var dir = directionSelect ? directionSelect.value : '';
@@ -353,6 +263,7 @@
     }
 
     function onDirectionChanged() {
+        if (vendorSearchAutoFill) return;
         var dir = directionSelect ? (directionSelect.value || '') : '';
         if (vendorSelect) vendorSelect.value = '';
         if (vendorSearch) vendorSearch.value = '';
@@ -758,11 +669,11 @@
             filterVendors();
         });
     }
-    if (vendorSearch) {
+    if (vendorSearch && !vendorSearchAutoFill) {
         vendorSearch.addEventListener('input', filterVendors);
         vendorSearch.addEventListener('focus', filterVendors);
     }
-    if (vendorSuggestions) {
+    if (vendorSuggestions && !vendorSearchAutoFill) {
         vendorSuggestions.addEventListener('click', function (e) {
             var target = e.target.closest('.vendor-suggestion-item');
             if (!target) return;
@@ -790,6 +701,7 @@
         });
     }
     document.addEventListener('click', function (e) {
+        if (vendorSearchAutoFill) return;
         if (vendorSearch && vendorSuggestions) {
             var inside = e.target === vendorSearch || e.target.closest('#vendor_suggestions');
             if (!inside) {
@@ -865,12 +777,15 @@
 
         poInput.addEventListener('input', function () {
             var q = (poInput.value || '').trim();
-            setPoPreview(null);
+            if (vendorNameInput) vendorNameInput.value = '';
+            if (vendorSearch) vendorSearch.value = '';
 
             if (poDebounceTimer) clearTimeout(poDebounceTimer);
             poDebounceTimer = setTimeout(function () {
+                setPoLoading(true);
                 getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
                     .then(function (data) {
+                        setPoLoading(false);
                         if (!data || !data.success) {
                             closePoSuggestions();
                             return;
@@ -878,6 +793,7 @@
                         renderPoSuggestions(data.data || []);
                     })
                     .catch(function () {
+                        setPoLoading(false);
                         closePoSuggestions();
                     });
             }, 250);
@@ -907,7 +823,12 @@
                 setTimeout(function() {
                     fetchPoDetail(val, function (data) {
                         if (data.success && data.data) {
-                            setPoPreview(data.data);
+                            if (vendorNameInput) {
+                                vendorNameInput.value = data.data.vendor_name || '';
+                            }
+                            if (vendorSearch) {
+                                vendorSearch.value = normalizeVendorText(data.data.vendor_name || '');
+                            }
                             if (data.data.direction && directionSelect) {
                                 directionSelect.value = data.data.direction;
                                 try {
@@ -933,7 +854,12 @@
             closePoSuggestions();
             fetchPoDetail(poNumber, function (data) {
                 if (data.success && data.data) {
-                    setPoPreview(data.data);
+                    if (vendorNameInput) {
+                        vendorNameInput.value = data.data.vendor_name || '';
+                    }
+                    if (vendorSearch) {
+                        vendorSearch.value = normalizeVendorText(data.data.vendor_name || '');
+                    }
                     if (data.data.direction && directionSelect) {
                         directionSelect.value = data.data.direction;
                         try {

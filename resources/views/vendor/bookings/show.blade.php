@@ -81,16 +81,6 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="vb-table__label">COA</td>
-                    <td>
-                        @if(!empty($booking->coa_path))
-                            <a href="{{ asset('storage/' . $booking->coa_path) }}" target="_blank" rel="noopener">View / Download</a>
-                        @else
-                            -
-                        @endif
-                    </td>
-                </tr>
-                <tr>
                     <td class="vb-table__label">PO Number</td>
                     <td>{{ $booking->po_number ?? '-' }}</td>
                 </tr>

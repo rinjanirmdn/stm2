@@ -1036,7 +1036,7 @@
     position: absolute;
     right: 12px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-65%);
     color: #64748b;
     pointer-events: none;
 }
@@ -1789,6 +1789,29 @@
 
 .vendor-page--bookings-create .cb-po-search {
     position: relative;
+}
+
+.vendor-page--bookings-create .cb-input--pr-40 {
+    padding-right: 40px;
+}
+
+.vendor-page--bookings-create .cb-input-loader {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #2563eb;
+    border-radius: 999px;
+    transform: translateY(-65%);
+    opacity: 0;
+    pointer-events: none;
+    animation: spin 0.8s linear infinite;
+}
+
+.vendor-page--bookings-create .cb-input-loader.show {
+    opacity: 1;
 }
 
 .vendor-page--bookings-create .cb-po-results {
