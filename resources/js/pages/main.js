@@ -835,11 +835,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Restore sidebar collapsed state, collapse by default on small screens
-    if (canInitSidebar) {
+    // Restore sidebar collapsed state, collapse by default on small desktop screens
+    // Mobile (<=768px) uses drawer pattern, not collapsed icon-only
+    if (canInitSidebar && window.innerWidth > 768) {
         try {
             var saved = window.localStorage ? localStorage.getItem('stSidebarCollapsed') : null;
-            if (saved === '1' || (!saved && window.innerWidth <= 1024)) {
+            if (saved === '1' || (!saved && window.innerWidth <= 1200)) {
                 app.classList.add('st-app--sidebar-collapsed');
             }
         } catch (e) {
@@ -1919,23 +1920,21 @@ document.addEventListener('DOMContentLoaded', function () {
         var body = document.body;
 
         function checkScreenSize() {
-            if (window.innerWidth <= 768) {
-                if (desktopToggle) desktopToggle.style.display = 'none';
-                if (mobileToggle) mobileToggle.style.display = 'flex';
-            } else {
-                if (desktopToggle) desktopToggle.style.display = 'flex';
-                if (mobileToggle) mobileToggle.style.display = 'none';
+            if (window.innerWidth > 768) {
+                // Clean up mobile sidebar state when resizing to desktop
+                if (sidebar) sidebar.classList.remove('st-sidebar--mobile-open');
+                if (overlay) overlay.classList.remove('st-sidebar__overlay--active');
+                document.body.style.overflow = '';
             }
         }
 
-        checkScreenSize();
         window.addEventListener('resize', checkScreenSize);
 
-        if (desktopToggle && body) {
+        if (desktopToggle) {
             desktopToggle.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
-                body.classList.toggle('st-app--sidebar-collapsed');
+                toggleSidebar();
             });
         }
 

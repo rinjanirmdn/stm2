@@ -67,13 +67,13 @@
                                 <tr>
                                     <th class="st-table-col-40">#</th>
                                     <th class="st-table-col-90">
-                                        <div class="st-filter-header st-filter-header--inline-compact">
-                                            <span>Type</span>
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="type" data-type="text" title="Sort">â‡…</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="type" title="Filter Type">
-                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
-                                            </button>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="type">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Type</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="type" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="type" title="Filter">â·</button>
+                                            </span>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="type">
                                                 <div class="st-font-semibold st-mb-6">Type Filter</div>
                                                 <select name="slot_type[]" class="st-select st-filter-type-select st-select--panel">
                                                     <option value="">(All)</option>
@@ -171,13 +171,13 @@
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header st-filter-header--inline-compact">
-                                            <span>Vendor</span>
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="vendor" data-type="text" title="Sort">â‡…</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="vendor" title="Filter Vendor">
-                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
-                                            </button>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="vendor">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Vendor</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="vendor" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="vendor" title="Filter">â·</button>
+                                            </span>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="vendor">
                                                 <div class="st-font-semibold st-mb-6">Vendor Filter</div>
                                                 <input type="text" name="vendor" class="st-input" placeholder="Search Vendor..." value="{{ $vendor ?? '' }}">
                                                 <div class="st-panel__actions">
@@ -196,13 +196,13 @@
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header st-filter-header--inline-compact">
-                                            <span>Warehouse</span>
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse" data-type="text" title="Sort">â‡…</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="warehouse" title="Filter Warehouse">
-                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
-                                            </button>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-260" data-filter-panel="warehouse">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Warehouse</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="warehouse" title="Filter">â·</button>
+                                            </span>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-260" data-filter-panel="warehouse">
                                                 <div class="st-font-semibold st-mb-6">Warehouse Filter</div>
                                                 <select name="warehouse_id[]" class="st-select st-filter-warehouse-select st-select--panel">
                                                     <option value="">(All)</option>
@@ -226,13 +226,13 @@
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header st-filter-header--inline-compact">
-                                            <span>Direction</span>
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" data-type="text" title="Sort">â‡…</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="direction" title="Filter Direction">
-                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
-                                            </button>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="direction">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Direction</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">â·</button>
+                                            </span>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="direction">
                                                 <div class="st-font-semibold st-mb-6">Direction Filter</div>
                                                 <select name="direction[]" class="st-select st-filter-direction-select st-select--panel">
                                                     <option value="">(All)</option>
@@ -316,13 +316,13 @@
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header st-filter-header--inline-compact">
-                                            <span>Target Status</span>
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="target_status" data-type="text" title="Sort">â‡…</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="target_status" title="Filter Target Status">
-                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
-                                            </button>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="target_status">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Target Status</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="target_status" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="target_status" title="Filter">â·</button>
+                                            </span>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="target_status">
                                                 <div class="st-font-semibold st-mb-6">Target Status Filter</div>
                                                 <select name="target_status[]" class="st-select st-filter-target-status-select st-select--panel">
                                                     <option value="">(All)</option>
@@ -345,13 +345,13 @@
                                         </div>
                                     </th>
                                     <th>
-                                        <div class="st-filter-header st-filter-header--inline-compact">
-                                            <span>ARRIVAL STATUS</span>
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" data-type="number" title="Sort">â‡…</button>
-                                            <button type="button" class="st-btn st-btn--sm st-btn--ghost st-filter-trigger st-filter-trigger--pill" data-filter="late" title="Filter Late">
-                                                <span class="st-text--xs-9 st-leading-1">&#x25BC;</span>
-                                            </button>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="late">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Arrival Status</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" data-type="number" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="late" title="Filter">â·</button>
+                                            </span>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="late">
                                                 <div class="st-font-semibold st-mb-6">Late Filter</div>
                                                 <select name="late[]" class="st-select st-filter-late-select st-select--panel">
                                                     <option value="">(All)</option>

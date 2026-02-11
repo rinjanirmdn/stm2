@@ -34,20 +34,20 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper st-minh-400">
+                <div class="st-table-wrapper st-table-wrapper--minh-400">
                     <table class="st-table">
                         <thead>
                             <tr>
-                                <th class="st-w-60">#</th>
-                                <th class="st-w-180">
+                                <th class="st-table-col-60">#</th>
+                                <th class="st-table-col-180">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">NIK</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="nik" data-type="text" title="Sort">â‡…</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="nik" title="Filter">â·</button>
                                         </span>
-                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="nik">
-                                            <div class="st-panel__title">NIK Filter</div>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="nik">
+                                            <div class="st-font-semibold st-mb-6">NIK Filter</div>
                                             <input type="text" name="nik" form="user-filter-form" class="st-input" placeholder="Search NIK..." value="{{ $nik ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="nik">Clear</button>
@@ -71,8 +71,8 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="name" data-type="text" title="Sort">â‡…</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="full_name" title="Filter">â·</button>
                                         </span>
-                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="full_name">
-                                            <div class="st-panel__title">Full Name Filter</div>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="full_name">
+                                            <div class="st-font-semibold st-mb-6">Full Name Filter</div>
                                             <input type="text" name="full_name" form="user-filter-form" class="st-input" placeholder="Search name..." value="{{ $full_name ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="full_name">Clear</button>
@@ -89,15 +89,15 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th class="st-w-180 st-th-center">
+                                <th class="st-table-col-180 st-th-center">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Email</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="email" data-type="text" title="Sort">â‡…</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="email" title="Filter">â·</button>
                                         </span>
-                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="email">
-                                            <div class="st-panel__title">Email Filter</div>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="email">
+                                            <div class="st-font-semibold st-mb-6">Email Filter</div>
                                             <input type="text" name="email" form="user-filter-form" class="st-input" placeholder="Search Email..." value="{{ $email ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="email">Clear</button>
@@ -114,15 +114,15 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th class="st-w-140 st-th-center">
+                                <th class="st-table-col-140 st-th-center">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Role</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="role" data-type="text" title="Sort">â‡…</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="role" title="Filter">â·</button>
                                         </span>
-                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="role">
-                                            <div class="st-panel__title">Role Filter</div>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="role">
+                                            <div class="st-font-semibold st-mb-6">Role Filter</div>
                                             <select name="role" form="user-filter-form" class="st-select">
                                                 <option value="">All Roles</option>
                                                 <option value="admin" {{ ($role ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
@@ -145,15 +145,15 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th class="st-w-120">
+                                <th class="st-table-col-120">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Status</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="is_active" data-type="text" title="Sort">â‡…</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="is_active" title="Filter">â·</button>
                                         </span>
-                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll" data-filter-panel="is_active">
-                                            <div class="st-panel__title">Status Filter</div>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="is_active">
+                                            <div class="st-font-semibold st-mb-6">Status Filter</div>
                                             <select name="is_active" form="user-filter-form" class="st-select">
                                                 <option value="">All Status</option>
                                                 <option value="1" {{ ($is_active ?? '') === '1' ? 'selected' : '' }}>Active</option>
@@ -174,7 +174,7 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th class="st-w-190 st-th-center">
+                                <th class="st-table-col-190 st-th-center">
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">Created</span>
                                         <span class="st-colhead__icons">
@@ -191,7 +191,7 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th class="st-w-260 st-th-center">Actions</th>
+                                <th class="st-table-col-260 st-th-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>

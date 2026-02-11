@@ -48,6 +48,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-date-range-picker@0.21.1/dist/daterangepicker.min.css">
+    @stack('styles')
 </head>
 <body class="st-app @yield('body_class')">
     <!-- Mobile sidebar overlay -->
@@ -78,9 +79,9 @@
 
             @can('gates.index')
             <a href="{{ route('gates.index') }}" title="Gates" class="st-sidebar__link{{ request()->routeIs('gates.*') ? ' st-sidebar__link--active' : '' }}">
-                    <i class="fas fa-door-open"></i>
-                    <span>Gates</span>
-                </a>
+                <i class="fas fa-door-open"></i>
+                <span>Gates</span>
+            </a>
             @endcan
 
             @can('bookings.index')
@@ -97,8 +98,6 @@
             </a>
             @endcan
 
-
-
             @can('reports.transactions')
             <a href="{{ route('reports.transactions') }}" title="Reports" class="st-sidebar__link{{ request()->routeIs('reports.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-chart-line"></i>
@@ -106,26 +105,25 @@
             </a>
             @endcan
 
-
             @can('trucks.index')
             <a href="{{ route('trucks.index') }}" title="Trucks" class="st-sidebar__link{{ request()->routeIs('trucks.*') ? ' st-sidebar__link--active' : '' }}">
-                    <i class="fas fa-truck-field"></i>
-                    <span>Trucks</span>
-                </a>
+                <i class="fas fa-truck-field"></i>
+                <span>Trucks</span>
+            </a>
             @endcan
 
             @can('users.index')
-                <a href="{{ route('users.index') }}" title="Users" class="st-sidebar__link{{ request()->routeIs('users.*') ? ' st-sidebar__link--active' : '' }}">
-                    <i class="fas fa-users"></i>
-                    <span>Users</span>
-                </a>
+            <a href="{{ route('users.index') }}" title="Users" class="st-sidebar__link{{ request()->routeIs('users.*') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
             @endcan
 
             @can('logs.index')
-                <a href="{{ route('logs.index') }}" title="Activity Logs" class="st-sidebar__link{{ request()->routeIs('logs.*') ? ' st-sidebar__link--active' : '' }}">
-                    <i class="fas fa-clock-rotate-left"></i>
-                    <span>Activity Logs</span>
-                </a>
+            <a href="{{ route('logs.index') }}" title="Activity Logs" class="st-sidebar__link{{ request()->routeIs('logs.*') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-clock-rotate-left"></i>
+                <span>Activity Logs</span>
+            </a>
             @endcan
         </nav>
     </aside>
@@ -139,8 +137,8 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <!-- Hamburger menu for mobile -->
-                    <button class="st-sidebar__toggle st-sidebar__toggle--mobile" id="mobile-menu-toggle" aria-label="Toggle menu">
-                        <span></span>
+                    <button class="st-sidebar__toggle--mobile" id="mobile-menu-toggle" aria-label="Toggle menu">
+                        <i class="fas fa-bars"></i>
                     </button>
                     <h1 class="st-topbar__title">{{ $pageTitle ?? trim($__env->yieldContent('page_title')) ?: 'Dashboard' }}</h1>
                 </div>
@@ -258,7 +256,6 @@
             </div>
         </footer>
     </div>
-</div>
 
 <!-- Defer semua external scripts untuk performa lebih baik -->
 <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>

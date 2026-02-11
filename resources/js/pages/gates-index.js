@@ -85,9 +85,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }(dateStr));
 
             if (isSunday) {
-                dayDiv.setAttribute('data-tooltip', 'Sunday - Not available');
+                dayDiv.setAttribute('data-tooltip', 'Sunday');
             } else if (isHoliday) {
-                dayDiv.setAttribute('data-tooltip', isHoliday + ' - Holiday');
+                dayDiv.setAttribute('data-tooltip', isHoliday);
             }
 
             container.appendChild(dayDiv);
@@ -110,6 +110,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     renderMiniCalendar();
+
+    // Legend collapsible toggle
+    document.querySelectorAll('.st-legend-toggle').forEach(function(toggle) {
+        toggle.addEventListener('click', function() {
+            var group = this.closest('.st-legend-group');
+            if (group) {
+                group.classList.toggle('st-legend-group--collapsed');
+            }
+        });
+    });
 
     // Interactive toggles demo
     const toggles = document.querySelectorAll('.st-dock-toggle input');
@@ -177,47 +187,69 @@ window.closeRejectModal = function () {
     document.getElementById('reject-modal').classList.remove('active');
 };
 
-// Search Logic: Trigger on Enter, Reset on Clear
-const searchInput = document.getElementById('gate_search_input');
-if (searchInput) {
-    let stGateSearchTimer = null;
-    function queueGateSearch(val) {
-        if (stGateSearchTimer) {
-            clearTimeout(stGateSearchTimer);
+// Shift Filter Logic
+var shiftFilter = document.getElementById('gate_shift_filter');
+if (shiftFilter) {
+    var shiftRanges = {
+        full:   { start: 0, end: 23 },
+        shift1: { start: 7, end: 14 },
+        shift2: { start: 15, end: 22 },
+        shift3: { start: 23, end: 6, wrap: true }
+    };
+
+    function isHourInRange(hour, range) {
+        if (range.wrap) {
+            return hour >= range.start || hour <= range.end;
         }
-        stGateSearchTimer = setTimeout(function () {
-            performSearch(val);
-        }, 200);
+        return hour >= range.start && hour <= range.end;
     }
 
-    searchInput.addEventListener('input', function() {
-        queueGateSearch(this.value);
-    });
-}
+    function applyShiftFilter(shift) {
+        var range = shiftRanges[shift] || shiftRanges.full;
+        var gridBody = document.querySelector('.st-dock-grid-body');
 
-function performSearch(query) {
-    query = query.toLowerCase().trim();
-    const cards = document.querySelectorAll('.st-dock-card');
+        // Show/hide slot cards based on their start hour
+        document.querySelectorAll('.st-dock-card').forEach(function(card) {
+            var topPx = parseInt(card.dataset.top, 10) || 0;
+            var cardHour = Math.floor(topPx / 60);
+            card.style.display = isHourInRange(cardHour, range) ? '' : 'none';
+        });
 
-    cards.forEach(card => {
-        // Find ticket number
-        const ticketElement = card.querySelector('div[style*="font-weight:700"]');
-        const ticket = ticketElement ? ticketElement.innerText.toLowerCase() : '';
+        // Show/hide current time line
+        document.querySelectorAll('.st-dock-time-line').forEach(function(line) {
+            var topPx = parseInt(line.dataset.top, 10) || 0;
+            var lineHour = Math.floor(topPx / 60);
+            line.style.display = isHourInRange(lineHour, range) ? '' : 'none';
+        });
 
-        // Find vendor name
-        const vendorElement = card.querySelector('div[style*="opacity:0.9"]');
-        const vendor = vendorElement ? vendorElement.innerText.toLowerCase() : '';
-
-        if (query === '' || ticket.includes(query) || vendor.includes(query)) {
-            card.style.opacity = '1';
-            card.style.pointerEvents = 'auto';
-            card.style.filter = 'none';
-        } else {
-            card.style.opacity = '0.1';
-            card.style.pointerEvents = 'none';
-            card.style.filter = 'grayscale(100%)';
+        // Scroll to the start of the shift range
+        if (gridBody) {
+            var scrollTarget = range.start * 60; // 60px per hour
+            gridBody.scrollTop = scrollTarget;
         }
+    }
+
+    shiftFilter.addEventListener('click', function(e) {
+        var btn = e.target.closest('.st-dock-shift-btn');
+        if (!btn) return;
+        var shift = btn.getAttribute('data-shift');
+
+        // Update active state
+        shiftFilter.querySelectorAll('.st-dock-shift-btn').forEach(function(b) {
+            b.classList.remove('st-dock-shift-btn--active');
+        });
+        btn.classList.add('st-dock-shift-btn--active');
+
+        applyShiftFilter(shift);
     });
+
+    // Default: scroll to current hour or 07:00 on load
+    var gridBody = document.querySelector('.st-dock-grid-body');
+    if (gridBody) {
+        var nowHour = new Date().getHours();
+        var scrollTo = (nowHour >= 7 ? nowHour : 7) * 60;
+        setTimeout(function() { gridBody.scrollTop = scrollTo; }, 100);
+    }
 }
 
 window.focusSlot = function (id) {

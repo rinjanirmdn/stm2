@@ -3,6 +3,10 @@
 @section('title', 'Gates Management - Slot Time Management')
 @section('page_title', 'Gates Management')
 
+@push('styles')
+    @vite(['resources/css/gates.css'])
+@endpush
+
 @section('content')
 <div class="st-dock-layout">
     <!-- Left Sidebar -->
@@ -38,50 +42,37 @@
                 <div class="st-dock-count st-text--sm">{{ $daySlots->count() }}</div>
             </div>
             <div class="st-dock-legend">
-                <!-- Scheduled -->
-                <div class="st-legend-group">
-                    <div class="st-legend-item st-legend-item--scheduled">
-                        <div class="st-dock-legend-indicator">
-                            <div class="st-dock-dot"></div>
-                            <span>Scheduled</span>
-                        </div>
-                        <span class="st-dock-count">{{ $scheduledSlots->count() }}</span>
-                    </div>
-                    @if($scheduledSlots->count() > 0)
-                    <div class="st-dock-legend-list">
-                        @foreach($scheduledSlots as $ss)
-                        <div class="st-dock-legend-card">
-                            <div class="st-dock-legend-card-header st-justify-between st-w-full">
-                                <span class="st-dock-legend-card-ticket">{{ $ss->ticket_number }}</span>
-                                <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $ss->id }})" title="View on grid">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
+                @php
+                    $legendGroups = [
+                        ['status' => 'scheduled', 'label' => 'Scheduled', 'slots' => $scheduledSlots],
+                        ['status' => 'waiting', 'label' => 'Waiting', 'slots' => $waitingSlots],
+                        ['status' => 'in_progress', 'label' => 'In Progress', 'slots' => $inProgressSlots],
+                        ['status' => 'completed', 'label' => 'Completed', 'slots' => $completedSlots],
+                    ];
+                @endphp
 
-                <!-- Waiting -->
-                <div class="st-legend-group">
-                    <div class="st-legend-item st-legend-item--waiting">
+                @foreach($legendGroups as $lg)
+                <div class="st-legend-group{{ $lg['slots']->count() > 0 ? ' st-legend-group--collapsed' : '' }}">
+                    <div class="st-legend-item st-legend-item--{{ $lg['status'] }} st-legend-toggle" role="button" tabindex="0">
                         <div class="st-dock-legend-indicator">
                             <div class="st-dock-dot"></div>
-                            <span>Waiting</span>
+                            <span>{{ $lg['label'] }}</span>
                         </div>
-                        <span class="st-dock-count">{{ $waitingSlots->count() }}</span>
+                        <div class="st-legend-right">
+                            <span class="st-dock-count">{{ $lg['slots']->count() }}</span>
+                            @if($lg['slots']->count() > 0)
+                            <i class="fas fa-chevron-down st-legend-chevron"></i>
+                            @endif
+                        </div>
                     </div>
-                    @if($waitingSlots->count() > 0)
+                    @if($lg['slots']->count() > 0)
                     <div class="st-dock-legend-list">
-                        @foreach($waitingSlots as $ws)
+                        @foreach($lg['slots'] as $sl)
                         <div class="st-dock-legend-card">
                             <div class="st-dock-legend-card-header st-justify-between st-w-full">
-                                <span class="st-dock-legend-card-ticket">{{ $ws->ticket_number }}</span>
+                                <span class="st-dock-legend-card-ticket">{{ $sl->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $ws->id }})" title="View on grid">
+                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $sl->id }})" title="View on grid">
                                         <i class="fas fa-eye"></i>
                                     </div>
                                 </div>
@@ -91,71 +82,20 @@
                     </div>
                     @endif
                 </div>
-
-                <!-- In Progress -->
-                <div class="st-legend-group">
-                    <div class="st-legend-item st-legend-item--in_progress">
-                        <div class="st-dock-legend-indicator">
-                            <div class="st-dock-dot"></div>
-                            <span>In Progress</span>
-                        </div>
-                        <span class="st-dock-count">{{ $inProgressSlots->count() }}</span>
-                    </div>
-                    @if($inProgressSlots->count() > 0)
-                    <div class="st-dock-legend-list">
-                        @foreach($inProgressSlots as $is)
-                        <div class="st-dock-legend-card">
-                            <div class="st-dock-legend-card-header st-justify-between st-w-full">
-                                <span class="st-dock-legend-card-ticket">{{ $is->ticket_number }}</span>
-                                <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $is->id }})" title="View on grid">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
-
-                <!-- Completed -->
-                <div class="st-legend-group">
-                    <div class="st-legend-item st-legend-item--completed">
-                        <div class="st-dock-legend-indicator">
-                            <div class="st-dock-dot"></div>
-                            <span>Completed</span>
-                        </div>
-                        <span class="st-dock-count">{{ $completedSlots->count() }}</span>
-                    </div>
-                    @if($completedSlots->count() > 0)
-                    <div class="st-dock-legend-list">
-                        @foreach($completedSlots as $cs)
-                        <div class="st-dock-legend-card">
-                            <div class="st-dock-legend-card-header st-justify-between st-w-full">
-                                <span class="st-dock-legend-card-ticket">{{ $cs->ticket_number }}</span>
-                                <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $cs->id }})" title="View on grid">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
+                @endforeach
             </div>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="st-dock-main">
-        <!-- Top Header: Search & Actions -->
+        <!-- Top Header: Shift Filter & Actions -->
         <header class="st-dock-topbar">
-            <div class="st-dock-search">
-                <i class="fa-solid fa-magnifying-glass st-dock-search-icon"></i>
-                <input type="text" id="gate_search_input" placeholder="Search for a Booking (Ticket or Vendor)">
+            <div class="st-dock-shift-filter" id="gate_shift_filter">
+                <button class="st-dock-shift-btn st-dock-shift-btn--active" data-shift="full">24h</button>
+                <button class="st-dock-shift-btn" data-shift="shift1">Shift 1 <span class="st-dock-shift-range">(07-15)</span></button>
+                <button class="st-dock-shift-btn" data-shift="shift2">Shift 2 <span class="st-dock-shift-range">(15-23)</span></button>
+                <button class="st-dock-shift-btn" data-shift="shift3">Shift 3 <span class="st-dock-shift-range">(23-07)</span></button>
             </div>
 
             <div class="st-flex st-gap-12 st-align-center">
@@ -198,10 +138,10 @@
 
             <!-- Grid Body (Scrollable) -->
             <div class="st-dock-grid-body">
-                <!-- Time Column (07:00 - 23:00) -->
+                <!-- Time Column (00:00 - 23:00) -->
                 <div class="st-dock-time-col">
-                    @for($h = 7; $h <= 23; $h++)
-                        <div class="st-dock-time-slot">
+                    @for($h = 0; $h <= 23; $h++)
+                        <div class="st-dock-time-slot" data-hour="{{ $h }}">
                             {{ sprintf('%02d:00', $h) }}
                         </div>
                     @endfor
@@ -278,10 +218,9 @@
                             // Re-sync duration variable for height
                             $duration = $durMinutes;
 
-                            // Calculate position relative to 07:00
+                            // Calculate position relative to 00:00
                             // 1 hour = 60px. 1 minute = 1 px.
-                            $minutesFrom7 = ($st->hour - 7) * 60 + $st->minute;
-                            if ($minutesFrom7 < 0) $minutesFrom7 = 0;
+                            $minutesFrom7 = $st->hour * 60 + $st->minute;
 
                             // Ensure layout doesn't break
                             // $duration is already set above

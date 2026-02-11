@@ -1,0 +1,53 @@
+/* ===== Slots Page Styles ===== */
+.tw-slots {
+    color: #0f172a;
+}
+
+.tw-slots .tw-card {
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.tw-slots .tw-card__body {
+    padding: 16px 20px;
+}
+
+.tw-slots .tw-card--table {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tw-slots .tw-table-wrap {
+    overflow: auto;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.tw-slots .tw-table {
+    width: 100%;
+    font-size: 14px;
+}
+
+.tw-slots .tw-table thead {
+    background: #f8fafc;
+}
+
+.tw-slots .tw-table th {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #475569;
+}
+
+.tw-slots .tw-table td {
+    padding: 8px 12px;
+    vertical-align: top;
+    color: #334155;
+    border-bottom: 1px solid #e5e7eb !important;
+}

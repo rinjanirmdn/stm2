@@ -33,14 +33,13 @@ class DashboardController extends Controller
             $isVendor = DB::table('model_has_roles')
                 ->join('md_roles', 'model_has_roles.role_id', '=', 'md_roles.id')
                 ->where('model_has_roles.model_id', Auth::id())
-                ->where(DB::raw('LOWER(md_roles.roles_name)'), 'vendor') // Fixed column name & Case insensitive
+                ->where(DB::raw('LOWER(md_roles.roles_name)'), 'vendor')
                 ->exists();
 
             if ($isVendor) {
                 return redirect()->route('vendor.dashboard');
             }
 
-            // Fallback (jaga-jaga Spatie load role dengan nama lain)
             $u = Auth::user();
             if ($u && is_callable([$u, 'hasRole'])) {
                 try {
@@ -53,6 +52,25 @@ class DashboardController extends Controller
             }
         }
 
+        $dashboardData = $this->buildDashboardData($request);
+
+        return view('dashboard.react', ['dashboardData' => $dashboardData]);
+    }
+
+    /**
+     * AJAX endpoint: return dashboard data as JSON (no page reload)
+     */
+    public function data(Request $request)
+    {
+        return response()->json($this->buildDashboardData($request));
+    }
+
+    /**
+     * Build all dashboard data from request parameters.
+     * Shared by both the page view (__invoke) and the AJAX endpoint (data).
+     */
+    private function buildDashboardData(Request $request): array
+    {
         $today = date('Y-m-d');
 
         // Validate and prepare date ranges
@@ -143,7 +161,7 @@ class DashboardController extends Controller
             ->get(['id', 'status', 'direction', 'planned_start', 'supplier_name', 'po_number', 'request_number'])
             ->map(function($booking) {
                 return [
-                    'id' => null, // Pending bookings don't have slot ID yet
+                    'id' => null,
                     'status' => $booking->status,
                     'direction' => $booking->direction,
                     'planned_start' => $booking->planned_start,
@@ -152,27 +170,25 @@ class DashboardController extends Controller
                     'request_number' => $booking->request_number,
                     'ticket_number' => $booking->request_number,
                     'vendor_name' => $booking->supplier_name,
-                    'warehouse_name' => null, // Not available in booking_requests
-                    'truck_type' => null, // Not available in booking_requests
-                    'is_pending_booking' => true, // Flag to identify pending bookings
+                    'warehouse_name' => null,
+                    'truck_type' => null,
+                    'is_pending_booking' => true,
                 ];
             })
             ->toArray();
 
         // Merge pending bookings with schedule data for chart
-        $allScheduleData = array_merge($schedule, $pendingBookings);
+        $scheduleSlots = [];
+        if (is_array($schedule)) {
+            foreach ($schedule as $key => $val) {
+                if (is_int($key) && is_array($val)) {
+                    $scheduleSlots[] = $val;
+                }
+            }
+        }
+        $allScheduleData = array_values(array_merge($scheduleSlots, $pendingBookings));
 
         $processStatusCounts = $this->buildProcessStatusCounts($scheduleDate, $scheduleFrom, $scheduleTo);
-
-        // Debug: Log schedule data
-        Log::info('Schedule data sent to view', [
-            'schedule_count' => count($schedule),
-            'pending_count' => count($pendingBookings),
-            'total_count' => count($allScheduleData),
-            'schedule_data' => $schedule,
-            'pending_data' => $pendingBookings,
-            'merged_data' => $allScheduleData
-        ]);
 
         // Get activity data
         $activityData = $this->statsService->getActivityStats($activityDate, $activityWarehouseId, $activityUserId);
@@ -197,18 +213,42 @@ class DashboardController extends Controller
             + (int) ($rangeStats['completed'] ?? 0)
             + (int) ($rangeStats['cancelled'] ?? 0);
 
-        return view('dashboard.index', [
+        $avgTimesByTruckTypeFormatted = (function() use ($avgTimesByTruckType) {
+            $master = [
+                'Container 40ft (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                'Container 40ft (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                'Container 20ft (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                'Container 20ft (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                'Wingbox (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                'Wingbox (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                'Fuso' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+                'CDD/CDE' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
+            ];
+            foreach ($avgTimesByTruckType as $item) {
+                if (isset($master[$item->truck_type])) {
+                    $master[$item->truck_type] = [
+                        'avg_lead_minutes' => $item->avg_lead_minutes,
+                        'avg_process_minutes' => $item->avg_process_minutes,
+                        'total_count' => (int)$item->total_count,
+                    ];
+                }
+            }
+            $result = [];
+            foreach ($master as $name => $data) {
+                $result[] = array_merge(['truck_type' => $name], $data);
+            }
+            return $result;
+        })();
+
+        return [
             'pendingApprovals' => $pendingApprovals,
             'today' => $today,
             'range_start' => $rangeStart,
             'range_end' => $rangeEnd,
-
             'directionByGate' => $directionByGate,
             'onTimeGateData' => $onTimeGateStats['data'] ?? [],
             'targetGateData' => $targetGateStats['data'] ?? [],
             'completionGateData' => $completionGateStats['data'] ?? [],
-
-            // Range statistics
             'totalRange' => $rangeStats['total'],
             'totalAllRange' => $totalAllRangeUi,
             'cancelledRange' => $rangeStats['cancelled'],
@@ -224,20 +264,14 @@ class DashboardController extends Controller
             'onTimeRange' => $onTimeStats['all']['on_time'],
             'achieveRange' => $targetStats['all']['achieve'],
             'notAchieveRange' => $targetStats['all']['not_achieve'],
-
-            // Trend data
             'trendDays' => $trendData['days'],
             'trendCounts' => $trendData['counts'],
             'trendInbound' => $trendData['inbound'] ?? [],
             'trendOutbound' => $trendData['outbound'] ?? [],
             'completedInRange' => $trendData['completed_total'],
             'avg7' => $trendData['avg_7_days'],
-
-            // Direction-based statistics
             'onTimeDir' => $onTimeStats,
             'targetDir' => $targetStats,
-
-            // Warehouse-based statistics (for WH dropdown)
             'onTimeWarehouseData' => $onTimeWarehouseStats['data'] ?? [],
             'targetWarehouseData' => $targetWarehouseStats['data'] ?? [],
             'kpiWarehouses' => array_values(array_unique(array_merge(
@@ -245,74 +279,34 @@ class DashboardController extends Controller
                 $targetWarehouseStats['warehouses'] ?? [],
                 $completionStats['warehouses'] ?? []
             ))),
-
             'completionRate' => $completionRate,
             'completionTotalSlots' => $rangeStats['total'],
             'completionCompletedSlots' => $trendData['completed_total'],
             'completionData' => $completionStats['data'],
             'completionWarehouses' => $completionStats['warehouses'],
-
-            // Target segment data
             'targetSegmentLabels' => $targetSegmentStats['labels'],
             'targetSegmentAchieve' => $targetSegmentStats['achieve'],
             'targetSegmentNotAchieve' => $targetSegmentStats['not_achieve'],
             'targetSegmentDirections' => $targetSegmentStats['directions'],
-
-            // Bottleneck analysis
             'bottleneckRows' => $bottleneckData['rows'],
             'bottleneckLabels' => $bottleneckData['labels'],
             'bottleneckValues' => $bottleneckData['values'],
             'bottleneckDirections' => $bottleneckData['directions'],
             'bottleneckThresholdMinutes' => $bottleneckData['threshold_minutes'],
-
-            // Average times
             'avgLeadMinutes' => $averageTimes['avg_lead_minutes'],
             'avgProcessMinutes' => $averageTimes['avg_process_minutes'],
-            'avgTimesByTruckType' => (function() use ($avgTimesByTruckType) {
-                $master = [
-                    'Container 40ft (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
-                    'Container 40ft (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
-                    'Container 20ft (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
-                    'Container 20ft (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
-                    'Wingbox (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
-                    'Wingbox (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
-                    'Fuso' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
-                    'CDD/CDE' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
-                ];
-
-                foreach ($avgTimesByTruckType as $item) {
-                    if (isset($master[$item->truck_type])) {
-                        $master[$item->truck_type] = [
-                            'avg_lead_minutes' => $item->avg_lead_minutes,
-                            'avg_process_minutes' => $item->avg_process_minutes,
-                            'total_count' => (int)$item->total_count,
-                        ];
-                    }
-                }
-
-                $result = [];
-                foreach ($master as $name => $data) {
-                    $result[] = (object) array_merge(['truck_type' => $name], $data);
-                }
-                return $result;
-            })(),
-
-            // Gate status
+            'avgTimesByTruckType' => $avgTimesByTruckTypeFormatted,
             'gateCards' => $gateCards,
-
-            // Schedule and timeline
             'schedule_date' => $scheduleDate,
             'schedule_from' => $scheduleFrom,
             'schedule_to' => $scheduleTo,
             'timeline_date' => $timelineDate,
             'timeline_from' => $timelineFrom,
             'timeline_to' => $timelineTo,
-            'schedule' => $allScheduleData, // Includes pending from booking_requests
-            'slots_only' => $schedule, // Pure slots data for chart
+            'schedule' => $allScheduleData,
+            'slots_only' => $scheduleSlots,
             'timelineBlocksByGate' => $timelineBlocks,
             'processStatusCounts' => $processStatusCounts,
-
-            // Activity data
             'activity_date' => $activityDate,
             'activity_warehouse' => $activityWarehouseId,
             'activity_user' => $activityUserId,
@@ -320,7 +314,7 @@ class DashboardController extends Controller
             'activityUsers' => $activityData['users'],
             'recentActivities' => $activityData['activities'],
             'holidays' => $this->getHolidaysForYear($today),
-        ]);
+        ];
     }
 
     /**
@@ -410,10 +404,11 @@ class DashboardController extends Controller
             try {
                 $dt = new DateTime($today);
                 $rangeStart = $dt->format('Y-m-01');
+                $rangeEnd = $dt->format('Y-m-t'); // Last day of current month (This Month)
             } catch (\Throwable $e) {
                 $rangeStart = $today;
+                $rangeEnd = $today;
             }
-            $rangeEnd = $today;
         } elseif ($rangeStart === '' && $rangeEnd !== '') {
             $rangeStart = $rangeEnd;
         } elseif ($rangeEnd === '' && $rangeStart !== '') {

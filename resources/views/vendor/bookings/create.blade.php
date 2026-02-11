@@ -4,6 +4,10 @@
 
 @section('page_class', 'vendor-page--layout vendor-page--bookings-create')
 
+@push('styles')
+    @vite(['resources/css/bookings.css'])
+@endpush
+
 @section('content')
 
 <div class="cb-container">

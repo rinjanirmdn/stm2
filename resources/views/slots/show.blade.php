@@ -3,11 +3,6 @@
 @section('title', 'View Slot - Slot Time Management')
 @section('page_title', 'Slot Detail')
 
-@php
-    // Clear any old flash messages to prevent confusion
-    session()->forget(['error', 'success', 'warning', 'info']);
-@endphp
-
 @section('content')
     @php
         $status = (string) ($slot->status ?? '');

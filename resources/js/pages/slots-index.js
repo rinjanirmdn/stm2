@@ -215,6 +215,7 @@
         });
     }
 
+    window.ajaxReload = ajaxReload;
     function ajaxReload(pushState) {
         if (isLoading) return;
 

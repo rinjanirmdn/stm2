@@ -4,6 +4,10 @@
 @section('page_title', 'Slots')
 @section('body_class', 'st-page--slots')
 
+@push('styles')
+    @vite(['resources/css/slots.css'])
+@endpush
+
 @section('content')
     <!-- Custom Reject Booking Dialog -->
     <div id="customConfirmDialog" class="st-dialog st-dialog--overlay st-hidden">
@@ -92,7 +96,7 @@
                     <table class="st-table">
                         <thead>
                             <tr>
-                                <th class="st-w-40">#</th>
+                                <th class="st-table-col-40">#</th>
                                 <th>
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">PO</span>
@@ -101,7 +105,7 @@
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="truck" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="truck">
-                                            <div class="st-panel__title">PO Filter</div>
+                                            <div class="st-font-semibold st-mb-6">PO Filter</div>
                                             <input type="text" name="truck" form="slot-filter-form" class="st-input" placeholder="Search PO..." value="{{ $truck ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="truck">Clear</button>
@@ -117,7 +121,7 @@
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="mat_doc">
-                                            <div class="st-panel__title">MAT DOC Filter</div>
+                                            <div class="st-font-semibold st-mb-6">MAT DOC Filter</div>
                                             <input type="text" name="mat_doc" form="slot-filter-form" class="st-input" placeholder="Search MAT DOC..." value="{{ $mat_doc ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
@@ -133,7 +137,7 @@
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="vendor" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="vendor">
-                                            <div class="st-panel__title">Vendor Filter</div>
+                                            <div class="st-font-semibold st-mb-6">Vendor Filter</div>
                                             <input type="text" name="vendor" form="slot-filter-form" class="st-input" placeholder="Search Vendor..." value="{{ $vendor ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="vendor">Clear</button>
@@ -142,22 +146,17 @@
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header st-filter-header--inline">
-                                        <span>Warehouse / Gate</span>
-                                        <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse" title="Sort">â‡…</button>
-                                        <button
-                                            type="button"
-                                            class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
-                                            data-filter="whgate"
-                                            title="Filter Warehouse / Gate"
-                                        >
-                                            <span>&#x25BC;</span>
-                                        </button>
-                                        <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="whgate">
-                                            <div class="st-panel__title">Warehouse / Gate Filter</div>
-                                            <div class="st-panel__cols">
-                                                <div class="st-panel__col st-minw-140">
-                                                    <div class="st-panel__label">Warehouse</div>
+                                    <div class="st-colhead">
+                                        <span class="st-colhead__label">Warehouse / Gate</span>
+                                        <span class="st-colhead__icons">
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="whgate" title="Filter">â·</button>
+                                        </span>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-280 st-maxh-220" data-filter-panel="whgate">
+                                            <div class="st-font-semibold st-mb-6">Warehouse / Gate Filter</div>
+                                            <div class="st-flex st-gap-8 st-items-start">
+                                                <div class="st-flex-1 st-minw-140">
+                                                    <div class="st-text--xs-11 st-font-semibold st-mb-4">Warehouse</div>
                                                     <select name="warehouse_id[]" form="slot-filter-form" class="st-select st-filter-warehouse-select st-select--panel">
                                                         <option value="">(All)</option>
                                                         @foreach ($warehouses as $wh)
@@ -167,8 +166,8 @@
                                                         @endforeach
                                                     </select>
                                                 </div>
-                                                <div class="st-panel__col st-minw-100">
-                                                    <div class="st-panel__label">Gate</div>
+                                                <div class="st-flex-1 st-minw-100">
+                                                    <div class="st-text--xs-11 st-font-semibold st-mb-4">Gate</div>
                                                     <select name="gate[]" form="slot-filter-form" class="st-select st-filter-gate-select st-select--panel">
                                                         <option value="">(All)</option>
                                                         @php $seenGates = []; @endphp
@@ -195,19 +194,14 @@
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header st-filter-header--inline">
-                                        <span>Direction</span>
-                                        <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">â‡…</button>
-                                        <button
-                                            type="button"
-                                            class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
-                                            data-filter="direction"
-                                            title="Filter Direction"
-                                        >
-                                            <span>&#x25BC;</span>
-                                        </button>
-                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="direction">
-                                            <div class="st-panel__title">Direction Filter</div>
+                                    <div class="st-colhead">
+                                        <span class="st-colhead__label">Direction</span>
+                                        <span class="st-colhead__icons">
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">â·</button>
+                                        </span>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="direction">
+                                            <div class="st-font-semibold st-mb-6">Direction Filter</div>
                                             <select name="direction[]" form="slot-filter-form" class="st-select st-filter-direction-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 <option value="inbound" {{ in_array('inbound', $directionFilter, true) ? 'selected' : '' }}>Inbound</option>
@@ -227,7 +221,7 @@
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_start" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="planned_start">
-                                            <div class="st-panel__title">ETA Range</div>
+                                            <div class="st-font-semibold st-mb-6">ETA Range</div>
                                             <div id="eta_reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
                                                 <i class="fa fa-calendar"></i>&nbsp;
                                                 <span></span> <i class="fa fa-caret-down"></i>
@@ -256,7 +250,7 @@
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="arrival_presence" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="arrival_presence">
-                                            <div class="st-panel__title">Arrival Date Filter</div>
+                                            <div class="st-font-semibold st-mb-6">Arrival Date Filter</div>
                                             <div id="arrival_reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
                                                 <i class="fa fa-calendar"></i>&nbsp;
                                                 <span></span> <i class="fa fa-caret-down"></i>
@@ -277,7 +271,7 @@
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="lead_time" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="lead_time">
-                                            <div class="st-panel__title">Lead Time (Min)</div>
+                                            <div class="st-font-semibold st-mb-6">Lead Time (Min)</div>
                                             <div class="st-panel__stack">
                                                 <div>
                                                     <div class="st-panel__label">Min</div>
@@ -302,7 +296,7 @@
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="target_status" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="target_status">
-                                            <div class="st-panel__title">Target Status Filter</div>
+                                            <div class="st-font-semibold st-mb-6">Target Status Filter</div>
                                             <select name="target_status[]" form="slot-filter-form" class="st-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 <option value="achieve" {{ in_array('achieve', $targetStatusFilter ?? [], true) ? 'selected' : '' }}>Achieve</option>
@@ -315,19 +309,14 @@
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header st-filter-header--inline">
-                                        <span>Arrival Status</span>
-                                        <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" title="Sort">â‡…</button>
-                                        <button
-                                            type="button"
-                                            class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
-                                            data-filter="late"
-                                            title="Filter Late"
-                                        >
-                                            <span>&#x25BC;</span>
-                                        </button>
-                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="late">
-                                            <div class="st-panel__title">Late Filter</div>
+                                    <div class="st-colhead">
+                                        <span class="st-colhead__label">Arrival Status</span>
+                                        <span class="st-colhead__icons">
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="late" title="Filter">â·</button>
+                                        </span>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="late">
+                                            <div class="st-font-semibold st-mb-6">Arrival Status Filter</div>
                                             <select name="late[]" form="slot-filter-form" class="st-select st-filter-late-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 <option value="on_time" {{ in_array('on_time', $lateFilter, true) ? 'selected' : '' }}>On Time</option>
@@ -340,22 +329,17 @@
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header st-filter-header--inline">
-                                        <span>Status</span>
-                                        <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" title="Sort">â‡…</button>
-                                        <button
-                                            type="button"
-                                            class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
-                                            data-filter="status"
-                                            title="Filter Status"
-                                        >
-                                            <span>&#x25BC;</span>
-                                        </button>
-                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="status">
-                                            <div class="st-panel__title">Status Filter</div>
+                                    <div class="st-colhead">
+                                        <span class="st-colhead__label">Status</span>
+                                        <span class="st-colhead__icons">
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status" title="Filter">â·</button>
+                                        </span>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="status">
+                                            <div class="st-font-semibold st-mb-6">Status Filter</div>
                                             <select name="status[]" form="slot-filter-form" class="st-select st-filter-status-select st-select--panel">
                                                 <option value="">(All)</option>
-                                                @foreach (['scheduled','waiting','in_progress','completed','cancelled'] as $st)
+                                                @foreach (['pending','scheduled','waiting','in_progress','completed','cancelled'] as $st)
                                                     <option value="{{ $st }}" {{ in_array($st, $statusFilter, true) ? 'selected' : '' }}>{{ ucwords(str_replace('_',' ', $st)) }}</option>
                                                 @endforeach
                                             </select>
@@ -366,19 +350,14 @@
                                     </div>
                                 </th>
                                 <th>
-                                    <div class="st-filter-header st-filter-header--inline">
-                                        <span>Blocking</span>
-                                        <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="blocking" title="Sort">â‡…</button>
-                                        <button
-                                            type="button"
-                                            class="st-btn st-btn--sm st-btn--ghost st-filter-trigger"
-                                            data-filter="blocking"
-                                            title="Filter Blocking"
-                                        >
-                                            <span>&#x25BC;</span>
-                                        </button>
-                                        <div class="st-filter-panel st-panel st-panel--medium st-panel--scroll st-panel--z9" data-filter-panel="blocking">
-                                            <div class="st-panel__title">Blocking Filter</div>
+                                    <div class="st-colhead">
+                                        <span class="st-colhead__label">Blocking</span>
+                                        <span class="st-colhead__icons">
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="blocking" title="Sort">â‡…</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="blocking" title="Filter">â·</button>
+                                        </span>
+                                        <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="blocking">
+                                            <div class="st-font-semibold st-mb-6">Blocking Filter</div>
                                             <select name="blocking[]" form="slot-filter-form" class="st-select st-filter-blocking-select st-select--panel">
                                                 <option value="">(All)</option>
                                                 <option value="low" {{ in_array('low', $blockingFilter ?? [], true) ? 'selected' : '' }}>Low</option>

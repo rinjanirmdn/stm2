@@ -1,0 +1,104 @@
+@import "tailwindcss";
+@source "../js/react";
+
+/* React Dashboard - scoped styles with responsive typography */
+#react-dashboard {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #1e293b;
+  line-height: 1.5;
+
+  /* Responsive font scale — scales with container via vi units */
+  --ds-title: clamp(13px, 1.1vi, 16px);
+  --ds-body: clamp(12px, 1.1vi, 16px);
+  --ds-small: clamp(10px, 0.85vi, 13px);
+  --ds-tiny: clamp(9px, 0.75vi, 12px);
+  --ds-chart-tick: clamp(9px, 0.7vi, 11px);
+  --ds-chart-label: clamp(8px, 0.6vi, 10px);
+  --ds-metric-value: clamp(15px, 1.4vi, 22px);
+  --ds-metric-label: clamp(10px, 0.8vi, 13px);
+  /* Responsive spacing */
+  --ds-gap: clamp(4px, 0.4vi, 8px);
+  --ds-pad: clamp(6px, 0.6vi, 12px);
+  font-size: var(--ds-body);
+
+  /* Fill available space */
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+#react-dashboard * {
+  box-sizing: border-box;
+}
+
+/* ALL grids: rows and children stretch to fill available space */
+#react-dashboard .grid {
+  align-content: stretch;
+  grid-auto-rows: 1fr;
+}
+
+/* Top-level grid children (cards) stretch vertically */
+#react-dashboard > * > * > .grid > * {
+  min-height: 0;
+}
+
+/* Nested grids (mini cards) — DON'T expand, stay compact at bottom */
+#react-dashboard .grid .grid {
+  align-content: start;
+  grid-auto-rows: auto;
+}
+
+/* Responsive gap for all grids */
+#react-dashboard .grid {
+  gap: var(--ds-gap);
+}
+
+/* All text inherits responsive body size */
+#react-dashboard button,
+#react-dashboard input,
+#react-dashboard select,
+#react-dashboard label {
+  font-size: var(--ds-body);
+}
+
+/* Override any inherited styles from parent layout */
+#react-dashboard h1,
+#react-dashboard h2,
+#react-dashboard h3,
+#react-dashboard h4,
+#react-dashboard h5,
+#react-dashboard h6 {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: inherit !important;
+  line-height: 1.3 !important;
+}
+
+#react-dashboard table {
+  border-collapse: collapse !important;
+}
+
+/* Recharts tooltip fix */
+.recharts-tooltip-wrapper {
+  z-index: 100 !important;
+}
+
+/* Scrollbar styling */
+#react-dashboard ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#react-dashboard ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+#react-dashboard ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+#react-dashboard ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

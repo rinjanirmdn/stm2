@@ -3,6 +3,10 @@
 @section('title', 'Booking Requests')
 @section('page_title', 'Booking Requests')
 
+@push('styles')
+    @vite(['resources/css/bookings.css'])
+@endpush
+
 @section('content')
     <!-- Filter & Summary Row -->
     <div class="st-card st-mb-2 st-text-12">

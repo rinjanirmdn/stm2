@@ -1,0 +1,811 @@
+/* ===== DOCK MANAGEMENT (GATE SCHEDULER) ===== */
+.st-dock-layout {
+    display: flex;
+    gap: 24px;
+    height: calc(100vh - 100px);
+    /* Adjust based on topbar */
+    overflow: hidden;
+    background-color: #f9fafb;
+    /* Light gray bg */
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+}
+
+/* Sidebar */
+.st-dock-sidebar {
+    width: 340px;
+    flex: 0 0 340px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+}
+
+.st-dock-header-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.st-dock-sidebar-calendar {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    background: #ffffff;
+    min-height: 280px;
+}
+
+.st-dock-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.st-legend-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.st-legend-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+
+.st-legend-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.st-legend-chevron {
+    font-size: 10px;
+    color: #9ca3af;
+    transition: transform 0.2s ease;
+}
+
+.st-legend-group--collapsed .st-legend-chevron {
+    transform: rotate(-90deg);
+}
+
+.st-legend-group--collapsed .st-dock-legend-list {
+    display: none;
+}
+
+.st-dock-legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.st-dock-legend-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.st-dock-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.st-dock-count {
+    font-weight: 600;
+    color: #111827;
+}
+
+.st-dock-legend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    padding-left: 18px;
+}
+
+.st-dock-legend-card {
+    background: #fdfdfd;
+    border: 1px solid #f1f3f5;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.st-dock-legend-card:hover {
+    border-color: #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.st-dock-legend-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.st-dock-legend-card-ticket {
+    font-size: 11px;
+    font-weight: 700;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.st-dock-legend-card-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.st-dock-legend-card-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    transition: all 0.15s;
+}
+
+.st-dock-legend-card-btn:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+    transform: translateY(-1px);
+}
+
+.st-dock-legend-card-btn--success:hover {
+    color: #166534;
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.st-dock-legend-card-btn--danger:hover {
+    color: #991b1b;
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.st-dock-legend-card-btn--warning:hover {
+    color: #9a3412;
+    border-color: #fed7aa;
+    background: #fff7ed;
+}
+
+.st-dock-legend-card-vendor {
+    font-size: 10px;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status Colors */
+.bg-dock-pre-booking {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+
+.dot-dock-pre-booking {
+    background-color: #e5e7eb;
+    border: 1px solid #d1d5db;
+}
+
+.bg-dock-confirmed {
+    background-color: #1e3a8a;
+    color: #ffffff;
+}
+
+.dot-dock-confirmed {
+    background-color: #1e3a8a;
+}
+
+.bg-dock-progress {
+    background-color: #7c3aed;
+    color: #ffffff;
+}
+
+.dot-dock-progress {
+    background-color: #7c3aed;
+}
+
+.bg-dock-completed {
+    background-color: #15803d;
+    color: #ffffff;
+}
+
+.dot-dock-completed {
+    background-color: #15803d;
+}
+
+.bg-dock-rejected {
+    background-color: #dc2626;
+    color: #ffffff;
+}
+
+.dot-dock-rejected {
+    background-color: #dc2626;
+}
+
+
+/* Main Content */
+.st-dock-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.st-dock-topbar {
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #ffffff;
+}
+
+.st-dock-shift-filter {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.st-dock-shift-btn {
+    padding: 6px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.st-dock-shift-btn:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #374151;
+}
+
+.st-dock-shift-btn--active {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+}
+
+.st-dock-shift-btn--active:hover {
+    background: #0369a1;
+    border-color: #0369a1;
+    color: #ffffff;
+}
+
+.st-dock-shift-range {
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+/* Grid Scheduler */
+.st-dock-scheduler {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.st-dock-grid-header {
+    display: grid;
+    /* Time col (60px) + dynamic gates */
+    grid-template-columns: 60px repeat(auto-fit, minmax(0, 1fr));
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+}
+
+.st-dock-col-header {
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    color: #374151;
+    border-left: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.st-dock-col-header:first-child {
+    border-left: none;
+}
+
+.st-dock-col-header--full-width {
+    grid-column: 1 / -1;
+}
+
+/* Toggle Switch */
+.st-dock-toggle {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 18px;
+}
+
+.st-dock-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.st-dock-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.st-dock-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.st-dock-toggle input:checked+.st-dock-toggle-slider {
+    background-color: var(--primary);
+}
+
+.st-dock-toggle input:checked+.st-dock-toggle-slider:before {
+    transform: translateX(14px);
+}
+
+/* Grid Body */
+.st-dock-grid-body {
+    display: grid;
+    grid-template-columns: 60px repeat(auto-fit, minmax(0, 1fr));
+    height: calc(100vh - 270px);
+    overflow-y: auto;
+    position: relative;
+    z-index: 1;
+}
+
+.st-dock-time-col {
+    border-right: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.st-dock-time-slot {
+    height: 100px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 12px;
+    padding-top: 8px;
+    position: relative;
+}
+
+.st-dock-gate-col {
+    border-right: 1px solid #e5e7eb;
+    position: relative;
+    background-size: 100% 100px;
+    background-image: linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+    background-position: 0 -1px;
+}
+
+/* Cards */
+.st-dock-card {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    transition: transform 0.1s;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.st-dock-card:hover {
+    transform: scale(1.02);
+    z-index: 20;
+}
+
+.st-dock-card-ticket {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.st-dock-card-time {
+    opacity: 0.9;
+    margin-bottom: 4px;
+    font-size: 11px;
+}
+
+.st-dock-card-cat {
+    opacity: 0.8;
+    font-style: italic;
+}
+
+.st-dock-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+}
+
+.st-dock-action-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 4px;
+    color: inherit;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.st-dock-action-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Confirmed/Action Buttons for Empty/Prebooking */
+.st-dock-btn-confirm {
+    background-color: #ffffff;
+    border: 1px solid #1e3a8a;
+    color: #1e3a8a;
+    border-radius: 12px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.bg-dock-pre-booking .st-dock-btn-confirm {
+    display: block;
+}
+
+/* Current Time Line */
+.st-dock-time-line {
+    position: absolute;
+    left: 60px;
+    /* Start after time col */
+    right: 0;
+    height: 2px;
+    background-color: #ef4444;
+    z-index: 50;
+    pointer-events: none;
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+}
+
+.st-dock-time-line::before {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    background-color: #ef4444;
+    border-radius: 50%;
+}
+
+/* Compact Mode Overrides */
+.st-dock-col-header {
+    padding: 8px;
+    font-size: 13px;
+}
+
+.st-dock-time-slot {
+    height: 60px;
+    font-size: 11px;
+    padding-top: 4px;
+}
+
+.st-dock-gate-col {
+    background-size: 100% 60px;
+}
+
+.st-dock-card {
+    left: 4px;
+    right: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+.st-dock-card-ticket {
+    font-size: 12px;
+    margin-bottom: 1px;
+}
+
+.st-dock-btn-confirm {
+    padding: 2px 8px;
+    font-size: 10px;
+}
+
+/* Toggle Row Fix */
+.st-dock-col-header {
+    flex-direction: row !important;
+    justify-content: center;
+    gap: 8px;
+    min-height: 30px;
+    padding: 4px;
+}
+
+/* 30 Minute Grid Lines */
+.st-dock-gate-col {
+    background-size: 100% 30px !important;
+}
+
+/* Modern Light Badge Styles for Dock Cards */
+.bg-dock-confirmed {
+    background-color: #eff6ff !important;
+    color: #1e40af !important;
+    border: 1px solid #dbeafe !important;
+}
+
+.bg-dock-progress {
+    background-color: #faf5ff !important;
+    color: #6b21a8 !important;
+    border: 1px solid #f3e8ff !important;
+}
+
+.bg-dock-completed {
+    background-color: #f0fdf4 !important;
+    color: #166534 !important;
+    border: 1px solid #dcfce7 !important;
+}
+
+.bg-dock-rejected {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fee2e2 !important;
+}
+
+.bg-dock-scheduled {
+    background-color: #f8fafc !important;
+    color: #334155 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* Sidebar Legend Styles (to remove inline CSS) */
+.st-legend-item {
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.st-dock-legend-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.st-dock-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.st-dock-count {
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.st-legend-item--pending_approval {
+    background-color: #fef3c7;
+    color: #92400e;
+    border-color: #fef3c7;
+}
+
+.st-legend-item--pending_approval .st-dock-dot {
+    background-color: #f59e0b;
+}
+
+.st-legend-item--awaiting_vendor {
+    background-color: #fefce8;
+    color: #854d0e;
+    border-color: #fef9c3;
+}
+
+.st-legend-item--awaiting_vendor .st-dock-dot {
+    background-color: #eab308;
+}
+
+.st-legend-item--rescheduled .st-dock-dot {
+    background-color: #a855f7;
+}
+
+.st-legend-item--scheduled {
+    background-color: #f8fafc;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+
+.st-legend-item--scheduled .st-dock-dot {
+    background-color: #64748b;
+}
+
+.st-legend-item--arrived {
+    background-color: #f0f9ff;
+    color: #0369a1;
+    border-color: #e0f2fe;
+}
+
+.st-legend-item--arrived .st-dock-dot {
+    background-color: #0ea5e9;
+}
+
+.st-legend-item--waiting {
+    background-color: #fffbeb;
+    color: #92400e;
+    border-color: #fef3c7;
+}
+
+.st-legend-item--waiting .st-dock-dot {
+    background-color: #d97706;
+}
+
+.st-legend-item--in_progress {
+    background-color: #f5f3ff;
+    color: #5b21b6;
+    border-color: #ede9fe;
+}
+
+.st-legend-item--in_progress .st-dock-dot {
+    background-color: #7c3aed;
+}
+
+.st-legend-item--completed {
+    background-color: #f0fdf4;
+    color: #166534;
+    border-color: #dcfce7;
+}
+
+.st-legend-item--completed .st-dock-dot {
+    background-color: #15803d;
+}
+
+/* === Gates Calendar === */
+.av-calendar__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.av-calendar__nav {
+    display: flex;
+    gap: 4px;
+}
+
+.av-calendar__nav-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: all 0.15s;
+}
+
+.av-calendar__nav-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.av-calendar__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+    font-size: 12px;
+}
+
+.av-calendar__day-header {
+    padding: 6px 0;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.av-calendar__day {
+    padding: 8px 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.av-calendar__day:hover {
+    background: #f1f5f9;
+}
+
+.av-calendar__day--today {
+    background: #dbeafe;
+    color: #1e40af;
+    font-weight: 600;
+}
+
+.av-calendar__day--selected {
+    background: #1e40af;
+    color: white;
+    font-weight: 600;
+}
+
+.av-calendar__day--disabled {
+    color: #d1d5db;
+    background: #f9fafb;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+.av-calendar__day--sunday {
+    color: #ef4444;
+    background: #fef2f2;
+    cursor: pointer;
+}
+
+.av-calendar__day--holiday {
+    color: #f59e0b;
+    background: #fffbeb;
+    cursor: pointer;
+}

@@ -4,6 +4,10 @@
 
 @section('page_title', 'Booking Detail')
 
+@push('styles')
+    @vite(['resources/css/bookings.css'])
+@endpush
+
 @section('content')
 <div class="st-card booking-detail">
     <div class="st-card__header booking-detail__header">

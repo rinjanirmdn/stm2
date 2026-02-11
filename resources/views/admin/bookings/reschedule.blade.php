@@ -3,6 +3,10 @@
 @section('title', 'Reschedule Booking')
 @section('page_title', 'Reschedule Booking')
 
+@push('styles')
+    @vite(['resources/css/bookings.css'])
+@endpush
+
 @section('content')
 <div class="st-card">
     <div class="st-card__header">
