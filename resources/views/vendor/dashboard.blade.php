@@ -9,7 +9,7 @@
 <!-- Status Strip (Clickable) -->
 @if(isset($stats))
 <div class="vd-container">
-    <!-- Status Cards - 7 Total (matching admin portal) -->
+    <!-- Status Cards -->
     <div class="vd-status-strip">
         <a href="{{ route('vendor.bookings.index', ['status' => 'pending']) }}" class="vd-status-item vd-status-item--pending">
             <div class="vd-status-item__count">{{ $stats['pending'] ?? 0 }}</div>
@@ -19,15 +19,15 @@
             <div class="vd-status-item__count">{{ $stats['scheduled'] ?? 0 }}</div>
             <div class="vd-status-item__label">Scheduled</div>
         </a>
-        <a href="{{ route('vendor.bookings.index', ['status' => 'waiting']) }}" class="vd-status-item vd-status-item--waiting">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--waiting">
             <div class="vd-status-item__count">{{ $stats['waiting'] ?? 0 }}</div>
             <div class="vd-status-item__label">Waiting</div>
         </a>
-        <a href="{{ route('vendor.bookings.index', ['status' => 'in_progress']) }}" class="vd-status-item vd-status-item--inprogress">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--inprogress">
             <div class="vd-status-item__count">{{ $stats['in_progress'] ?? 0 }}</div>
             <div class="vd-status-item__label">In Progress</div>
         </a>
-        <a href="{{ route('vendor.bookings.index', ['status' => 'completed']) }}" class="vd-status-item vd-status-item--completed">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--completed">
             <div class="vd-status-item__count">{{ $stats['completed'] ?? 0 }}</div>
             <div class="vd-status-item__label">Completed</div>
         </a>
@@ -52,29 +52,36 @@
                 </h3>
             </div>
             <div class="vd-chart-body">
+                @php
+                    $barMax = max(($stats['pending'] ?? 0), ($stats['scheduled'] ?? 0), ($stats['waiting'] ?? 0), ($stats['in_progress'] ?? 0), ($stats['completed'] ?? 0), ($stats['rejected'] ?? 0), ($stats['cancelled'] ?? 0), 1);
+                @endphp
                 <div class="vd-bar-chart" id="statusBarChart">
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['pending'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #f59e0b;">
+                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['pending'] ?? 0) / $barMax) * 100 }}%; --bar-color: #f59e0b;">
                         <div class="vd-bar-value">{{ $stats['pending'] ?? 0 }}</div>
                         <div class="vd-bar-label">PND</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['scheduled'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #64748b;">
+                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['scheduled'] ?? 0) / $barMax) * 100 }}%; --bar-color: #64748b;">
                         <div class="vd-bar-value">{{ $stats['scheduled'] ?? 0 }}</div>
                         <div class="vd-bar-label">SCH</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['waiting'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #f59e0b;">
+                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['waiting'] ?? 0) / $barMax) * 100 }}%; --bar-color: #f59e0b;">
                         <div class="vd-bar-value">{{ $stats['waiting'] ?? 0 }}</div>
                         <div class="vd-bar-label">WAIT</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['in_progress'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #3b82f6;">
+                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['in_progress'] ?? 0) / $barMax) * 100 }}%; --bar-color: #3b82f6;">
                         <div class="vd-bar-value">{{ $stats['in_progress'] ?? 0 }}</div>
                         <div class="vd-bar-label">IN PR</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['completed'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #10b981;">
+                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['completed'] ?? 0) / $barMax) * 100 }}%; --bar-color: #10b981;">
                         <div class="vd-bar-value">{{ $stats['completed'] ?? 0 }}</div>
-                        <div class="vd-bar-label">CMPLT</div>
+                        <div class="vd-bar-label">DONE</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['rejected'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #ef4444;">
+                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['rejected'] ?? 0) / $barMax) * 100 }}%; --bar-color: #ef4444;">
                         <div class="vd-bar-value">{{ $stats['rejected'] ?? 0 }}</div>
+                        <div class="vd-bar-label">REJ</div>
+                    </div>
+                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['cancelled'] ?? 0) / $barMax) * 100 }}%; --bar-color: #6b7280;">
+                        <div class="vd-bar-value">{{ $stats['cancelled'] ?? 0 }}</div>
                         <div class="vd-bar-label">CXL</div>
                     </div>
                 </div>
@@ -96,7 +103,7 @@
                     </div>
                     <div class="vd-performance-info">
                         <div class="vd-performance-label">On-Time Arrivals</div>
-                        <div class="vd-performance-value" id="onTimeArrivals">-</div>
+                        <div class="vd-performance-value">{{ $performance['on_time'] ?? '-' }}</div>
                     </div>
                 </div>
                 <div class="vd-performance-item">
@@ -105,7 +112,7 @@
                     </div>
                     <div class="vd-performance-info">
                         <div class="vd-performance-label">Late Arrivals</div>
-                        <div class="vd-performance-value" id="lateArrivals">-</div>
+                        <div class="vd-performance-value">{{ $performance['late'] ?? '-' }}</div>
                     </div>
                 </div>
                 <div class="vd-performance-item">
@@ -114,7 +121,7 @@
                     </div>
                     <div class="vd-performance-info">
                         <div class="vd-performance-label">Avg Waiting</div>
-                        <div class="vd-performance-value" id="avgWaiting">-</div>
+                        <div class="vd-performance-value">{{ $performance['avg_waiting'] !== null ? $performance['avg_waiting'] . 'm' : '-' }}</div>
                     </div>
                 </div>
                 <div class="vd-performance-item">
@@ -123,7 +130,7 @@
                     </div>
                     <div class="vd-performance-info">
                         <div class="vd-performance-label">Avg Process Time</div>
-                        <div class="vd-performance-value" id="avgProcess">-</div>
+                        <div class="vd-performance-value">{{ $performance['avg_process'] !== null ? $performance['avg_process'] . 'm' : '-' }}</div>
                     </div>
                 </div>
             </div>
@@ -141,23 +148,40 @@
             <div class="vd-recent-body">
                 @if($recentBookings->count() > 0)
                     @foreach($recentBookings->take(5) as $booking)
+                    @php
+                        // Show real slot status when booking has been converted to a slot
+                        $slot = $booking->convertedSlot;
+                        $displayStatus = $slot ? $slot->status : $booking->status;
+                        $displayLabel = match($displayStatus) {
+                            'pending' => 'Pending',
+                            'approved' => 'Approved',
+                            'scheduled' => 'Scheduled',
+                            'waiting' => 'Waiting',
+                            'in_progress' => 'In Progress',
+                            'completed' => 'Completed',
+                            'rejected' => 'Rejected',
+                            'cancelled' => 'Cancelled',
+                            default => ucfirst(str_replace('_', ' ', $displayStatus)),
+                        };
+                        $badgeColor = match($displayStatus) {
+                            'pending' => 'warning',
+                            'approved', 'scheduled' => 'success',
+                            'waiting' => 'warning',
+                            'in_progress' => 'info',
+                            'completed' => 'success',
+                            'rejected' => 'danger',
+                            'cancelled' => 'secondary',
+                            default => 'secondary',
+                        };
+                        $ticketLabel = $slot ? ($slot->ticket_number ?? $booking->request_number ?? 'REQ-' . $booking->id) : ($booking->request_number ?? 'REQ-' . $booking->id);
+                    @endphp
                     <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vd-recent-item">
                         <div class="vd-recent-main">
-                            <span class="vd-recent-ticket">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</span>
+                            <span class="vd-recent-ticket">{{ $ticketLabel }}</span>
                             <span class="vd-recent-time">{{ $booking->planned_start->format('d M H:i') }}</span>
                         </div>
                         <div class="vd-recent-meta">
-                            @php
-                                $badgeColor = match($booking->status) {
-                                    'pending' => 'warning',
-                                    'approved' => 'success',
-                                    'rejected' => 'danger',
-                                    'cancelled' => 'secondary',
-                                    'completed' => 'success',
-                                    default => 'secondary',
-                                };
-                            @endphp
-                            <span class="vendor-badge vendor-badge--{{ $badgeColor }} vd-badge--xs">{{ ucfirst($booking->status) }}</span>
+                            <span class="vendor-badge vendor-badge--{{ $badgeColor }} vd-badge--xs">{{ $displayLabel }}</span>
                         </div>
                     </a>
                     @endforeach
@@ -174,23 +198,5 @@
 @endif
 @endsection
 
-@push('scripts')
-<script>
-    // Load performance data via AJAX
-    document.addEventListener('DOMContentLoaded', function() {
-        fetch('/vendor/dashboard/performance')
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('onTimeArrivals').textContent = data.on_time ?? '-';
-                    document.getElementById('lateArrivals').textContent = data.late ?? '-';
-                    document.getElementById('avgWaiting').textContent = data.avg_waiting ? data.avg_waiting + 'm' : '-';
-                    document.getElementById('avgProcess').textContent = data.avg_process ? data.avg_process + 'm' : '-';
-                }
-            })
-            .catch(err => console.error('Failed to load performance data:', err));
-    });
-</script>
-@endpush
 
 

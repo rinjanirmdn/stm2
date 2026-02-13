@@ -167,51 +167,87 @@ class VendorBookingController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
-        $vendorCode = $user->vendor_code;
 
-        // Get booking statistics with all statuses
-        $baseQuery = BookingRequest::where('requested_by', $user->id);
+        // BookingRequest stats (only valid BR statuses: pending, approved, rejected, cancelled)
+        $brBase = BookingRequest::where('requested_by', $user->id);
+
+        // Slot stats (operational statuses live on slots table)
+        $slotBase = Slot::where('requested_by', $user->id);
 
         $stats = [
-            'pending' => (clone $baseQuery)->where('status', BookingRequest::STATUS_PENDING)->count(),
-            'scheduled' => (clone $baseQuery)->where('status', BookingRequest::STATUS_APPROVED)->count(),
-            'waiting' => (clone $baseQuery)->where('status', 'waiting')->count(),
-            'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
-            'completed' => (clone $baseQuery)->where('status', 'completed')->count(),
-            'rejected' => (clone $baseQuery)->where('status', BookingRequest::STATUS_REJECTED)->count(),
-            'total' => (clone $baseQuery)->count(),
-            'completed_this_month' => Slot::where('requested_by', $user->id)
-                ->where('status', Slot::STATUS_COMPLETED)
-                ->whereMonth('actual_finish', now()->month)
-                ->count(),
+            'pending'     => (clone $brBase)->where('status', BookingRequest::STATUS_PENDING)->count(),
+            'scheduled'   => (clone $slotBase)->where('status', Slot::STATUS_SCHEDULED)->count(),
+            'waiting'     => (clone $slotBase)->where('status', Slot::STATUS_WAITING)->count(),
+            'in_progress' => (clone $slotBase)->where('status', Slot::STATUS_IN_PROGRESS)->count(),
+            'completed'   => (clone $slotBase)->where('status', Slot::STATUS_COMPLETED)->count(),
+            'rejected'    => (clone $brBase)->where('status', BookingRequest::STATUS_REJECTED)->count(),
+            'cancelled'   => (clone $brBase)->where('status', BookingRequest::STATUS_CANCELLED)->count()
+                           + (clone $slotBase)->where('status', Slot::STATUS_CANCELLED)->count(),
+            'total'       => (clone $brBase)->count(),
         ];
 
-        // Get recent bookings
+        // Get recent bookings (show both pending BR and converted slots)
         $recentBookings = BookingRequest::where('requested_by', $user->id)
             ->with(['convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        $actionRequired = collect();
+        // Performance metrics
+        $performance = $this->computeVendorPerformance($user->id);
 
-        // Data for Create Booking Form (Single Page Experience)
-        $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('md_warehouse', 'is_active')) {
-            $warehousesQ->where('is_active', true);
+        return view('vendor.dashboard', compact('stats', 'recentBookings', 'performance'));
+    }
+
+    /**
+     * Compute vendor performance metrics from completed slots
+     */
+    private function computeVendorPerformance(int $userId): array
+    {
+        $completedSlots = Slot::where('requested_by', $userId)
+            ->where('status', Slot::STATUS_COMPLETED)
+            ->whereNotNull('actual_finish')
+            ->whereMonth('actual_finish', now()->month)
+            ->whereYear('actual_finish', now()->year)
+            ->get();
+
+        $onTime = 0;
+        $late = 0;
+        $totalWaiting = 0;
+        $totalProcess = 0;
+        $waitingCount = 0;
+        $processCount = 0;
+
+        foreach ($completedSlots as $slot) {
+            // On-time vs late: compare arrival_time to planned_start
+            if ($slot->arrival_time && $slot->planned_start) {
+                $diffMin = $slot->arrival_time->diffInMinutes($slot->planned_start, false);
+                if ($diffMin > 15) {
+                    $late++;
+                } else {
+                    $onTime++;
+                }
+            }
+
+            // Avg waiting: arrival_time to actual_start
+            if ($slot->arrival_time && $slot->actual_start) {
+                $totalWaiting += $slot->arrival_time->diffInMinutes($slot->actual_start);
+                $waitingCount++;
+            }
+
+            // Avg process: actual_start to actual_finish
+            if ($slot->actual_start && $slot->actual_finish) {
+                $totalProcess += $slot->actual_start->diffInMinutes($slot->actual_finish);
+                $processCount++;
+            }
         }
-        $warehouses = $warehousesQ->get();
 
-        $gatesQ = Gate::query();
-        if (Schema::hasColumn('md_gates', 'is_active')) {
-            $gatesQ->where('is_active', true);
-        }
-        $gates = $gatesQ->get()->groupBy('warehouse_id');
-        $truckTypes = TruckTypeDuration::select('truck_type')
-            ->distinct()
-            ->pluck('truck_type');
-
-        return view('vendor.dashboard', compact('stats', 'recentBookings', 'actionRequired', 'warehouses', 'gates', 'truckTypes'));
+        return [
+            'on_time'     => $onTime,
+            'late'        => $late,
+            'avg_waiting' => $waitingCount > 0 ? round($totalWaiting / $waitingCount) : null,
+            'avg_process' => $processCount > 0 ? round($totalProcess / $processCount) : null,
+        ];
     }
 
     /**
