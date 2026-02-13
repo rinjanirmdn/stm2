@@ -660,6 +660,7 @@ function TimelineSlide({ data, onFilter }) {
               </SelectInput>
             </div>
             <button onClick={applyTimeline} className="px-4 py-1.5 text-[13px] font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors shadow-sm">Apply</button>
+            <button onClick={()=>{setTlDate(today); setShift('shift1'); onFilter({ timeline_date:today, timeline_from:'07:00', timeline_to:'15:00' });}} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
           </div>
         </CardB>
       </Card>
@@ -875,6 +876,7 @@ function ScheduleSlide({ data, onFilter }) {
               </SelectInput>
             </div>
             <button onClick={applySchedule} className="px-4 py-1.5 text-[13px] font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors shadow-sm">Apply</button>
+            <button onClick={()=>{setSchDate(today); setSchShift('shift1'); onFilter({ schedule_date:today, schedule_from:'07:00', schedule_to:'15:00' });}} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
           </div>
         </CardB>
       </Card>
