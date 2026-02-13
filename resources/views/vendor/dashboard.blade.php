@@ -11,31 +11,35 @@
 <div class="vd-container">
     <!-- Status Cards -->
     <div class="vd-status-strip">
-        <a href="{{ route('vendor.bookings.index', ['status' => 'pending']) }}" class="vd-status-item vd-status-item--pending">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'pending']) }}" class="vd-status-item vd-status-item--pending" title="Booking requests awaiting approval.">
             <div class="vd-status-item__count">{{ $stats['pending'] ?? 0 }}</div>
             <div class="vd-status-item__label">Pending</div>
         </a>
-        <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}" class="vd-status-item vd-status-item--scheduled">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}" class="vd-status-item vd-status-item--scheduled" title="Slots scheduled, truck not arrived.">
             <div class="vd-status-item__count">{{ $stats['scheduled'] ?? 0 }}</div>
             <div class="vd-status-item__label">Scheduled</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--waiting">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--waiting" title="Truck arrived, waiting in queue.">
             <div class="vd-status-item__count">{{ $stats['waiting'] ?? 0 }}</div>
             <div class="vd-status-item__label">Waiting</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--inprogress">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--inprogress" title="Loading/Unloading in progress.">
             <div class="vd-status-item__count">{{ $stats['in_progress'] ?? 0 }}</div>
             <div class="vd-status-item__label">In Progress</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--completed">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--completed" title="Process finished.">
             <div class="vd-status-item__count">{{ $stats['completed'] ?? 0 }}</div>
             <div class="vd-status-item__label">Completed</div>
         </a>
-        <a href="{{ route('vendor.bookings.index', ['status' => 'rejected']) }}" class="vd-status-item vd-status-item--rejected">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'rejected']) }}" class="vd-status-item vd-status-item--rejected" title="Rejected requests.">
             <div class="vd-status-item__count">{{ $stats['rejected'] ?? 0 }}</div>
             <div class="vd-status-item__label">Rejected</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--total">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'cancelled']) }}" class="vd-status-item vd-status-item--cancelled" title="Cancelled slots/requests.">
+            <div class="vd-status-item__count">{{ $stats['cancelled'] ?? 0 }}</div>
+            <div class="vd-status-item__label">Cancelled</div>
+        </a>
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--total" title="Total slots in selected range.">
             <div class="vd-status-item__count">{{ $stats['total'] ?? 0 }}</div>
             <div class="vd-status-item__label">Total</div>
         </a>
@@ -50,41 +54,31 @@
                     <i class="fas fa-chart-bar"></i>
                     Status Overview
                 </h3>
+                <!-- Date Range Filter -->
+                <div class="vd-date-filter">
+                    <form method="GET" action="{{ route('vendor.dashboard') }}" class="vd-date-filter-form">
+                        <input type="hidden" name="range_start" id="vd-range-start" value="{{ request('range_start', now()->startOfMonth()->format('Y-m-d')) }}">
+                        <input type="hidden" name="range_end" id="vd-range-end" value="{{ request('range_end', now()->endOfMonth()->format('Y-m-d')) }}">
+                        <input type="hidden" name="date_range" id="vd-date-range" value="{{ request('date_range', 'this_month') }}">
+
+                        <button type="button" class="vd-range-picker" id="vd-range-picker">
+                            <i class="fas fa-calendar"></i>
+                            <span id="vd-range-picker-label"></span>
+                        </button>
+                        <button type="submit" class="vd-date-filter-btn">
+                            <i class="fas fa-filter"></i>
+                            Filter
+                        </button>
+                        <a href="{{ route('vendor.dashboard') }}" class="vd-date-reset-btn">
+                            <i class="fas fa-times"></i>
+                            Reset
+                        </a>
+                    </form>
+                </div>
             </div>
             <div class="vd-chart-body">
-                @php
-                    $barMax = max(($stats['pending'] ?? 0), ($stats['scheduled'] ?? 0), ($stats['waiting'] ?? 0), ($stats['in_progress'] ?? 0), ($stats['completed'] ?? 0), ($stats['rejected'] ?? 0), ($stats['cancelled'] ?? 0), 1);
-                @endphp
-                <div class="vd-bar-chart" id="statusBarChart">
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['pending'] ?? 0) / $barMax) * 100 }}%; --bar-color: var(--pending, #f59e0b);">
-                        <div class="vd-bar-value">{{ $stats['pending'] ?? 0 }}</div>
-                        <div class="vd-bar-label">PND</div>
-                    </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['scheduled'] ?? 0) / $barMax) * 100 }}%; --bar-color: var(--scheduled, #6b7280);">
-                        <div class="vd-bar-value">{{ $stats['scheduled'] ?? 0 }}</div>
-                        <div class="vd-bar-label">SCH</div>
-                    </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['waiting'] ?? 0) / $barMax) * 100 }}%; --bar-color: var(--waiting, #d97706);">
-                        <div class="vd-bar-value">{{ $stats['waiting'] ?? 0 }}</div>
-                        <div class="vd-bar-label">WAIT</div>
-                    </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['in_progress'] ?? 0) / $barMax) * 100 }}%; --bar-color: var(--in-progress, #0284c7);">
-                        <div class="vd-bar-value">{{ $stats['in_progress'] ?? 0 }}</div>
-                        <div class="vd-bar-label">IN PR</div>
-                    </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['completed'] ?? 0) / $barMax) * 100 }}%; --bar-color: var(--completed, #059669);">
-                        <div class="vd-bar-value">{{ $stats['completed'] ?? 0 }}</div>
-                        <div class="vd-bar-label">DONE</div>
-                    </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['rejected'] ?? 0) / $barMax) * 100 }}%; --bar-color: var(--cancelled, #dc2626);">
-                        <div class="vd-bar-value">{{ $stats['rejected'] ?? 0 }}</div>
-                        <div class="vd-bar-label">REJ</div>
-                    </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['cancelled'] ?? 0) / $barMax) * 100 }}%; --bar-color: var(--cancelled, #dc2626);">
-                        <div class="vd-bar-value">{{ $stats['cancelled'] ?? 0 }}</div>
-                        <div class="vd-bar-label">CXL</div>
-                    </div>
-                </div>
+                <script type="application/json" id="vendor-status-overview-data">{!! json_encode(['stats' => $stats]) !!}</script>
+                <div id="vendor-status-overview-react" class="w-full"></div>
             </div>
         </div>
 
@@ -92,45 +86,42 @@
         <div class="vd-performance-card">
             <div class="vd-chart-header">
                 <h3 class="vd-chart-title">
-                    <i class="fas fa-truck"></i>
                     Truck Performance
                 </h3>
             </div>
             <div class="vd-performance-body">
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--success">
-                        <i class="fas fa-check-circle"></i>
+                <div class="vd-performance-rows">
+                    <div class="vd-performance-row vd-performance-row--single" title="Late arrivals: average lateness (minutes) and total late count.">
+                        <div class="vd-performance-row__label">Late</div>
+                        <div class="vd-performance-row__vals">
+                            <div class="vd-performance-val" title="Average lateness (minutes) and total late count.">
+                                <span class="vd-performance-val__v">
+                                    {{ $performance['avg_late'] !== null ? $performance['avg_late'] . 'm' : '-' }} / {{ $performance['late'] ?? 0 }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">On-Time Arrivals</div>
-                        <div class="vd-performance-value">{{ $performance['on_time'] ?? '-' }}</div>
+
+                    <div class="vd-performance-row vd-performance-row--single" title="Waiting time: average minutes and number of samples.">
+                        <div class="vd-performance-row__label">Avg Waiting</div>
+                        <div class="vd-performance-row__vals">
+                            <div class="vd-performance-val" title="Average waiting time (minutes) and number of samples.">
+                                <span class="vd-performance-val__v">
+                                    {{ $performance['avg_waiting'] !== null ? $performance['avg_waiting'] . 'm' : '-' }} / {{ $performance['waiting_count'] ?? 0 }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--warning">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Late Arrivals</div>
-                        <div class="vd-performance-value">{{ $performance['late'] ?? '-' }}</div>
-                    </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--info">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Avg Waiting</div>
-                        <div class="vd-performance-value">{{ $performance['avg_waiting'] !== null ? $performance['avg_waiting'] . 'm' : '-' }}</div>
-                    </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--success">
-                        <i class="fas fa-tachometer-alt"></i>
-                    </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Avg Process Time</div>
-                        <div class="vd-performance-value">{{ $performance['avg_process'] !== null ? $performance['avg_process'] . 'm' : '-' }}</div>
+
+                    <div class="vd-performance-row vd-performance-row--single" title="Process time: average minutes and number of samples.">
+                        <div class="vd-performance-row__label">Avg Process</div>
+                        <div class="vd-performance-row__vals">
+                            <div class="vd-performance-val" title="Average process time (minutes) and number of samples.">
+                                <span class="vd-performance-val__v">
+                                    {{ $performance['avg_process'] !== null ? $performance['avg_process'] . 'm' : '-' }} / {{ $performance['process_count'] ?? 0 }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -170,7 +161,7 @@
                             'in_progress' => 'info',
                             'completed' => 'success',
                             'rejected' => 'danger',
-                            'cancelled' => 'secondary',
+                            'cancelled' => 'cancelled',
                             default => 'secondary',
                         };
                         $ticketLabel = $slot ? ($slot->ticket_number ?? $booking->request_number ?? 'REQ-' . $booking->id) : ($booking->request_number ?? 'REQ-' . $booking->id);
@@ -197,6 +188,10 @@
 </div>
 @endif
 @endsection
+
+@push('scripts')
+    @vite(['resources/js/vendor-dashboard.js', 'resources/js/react/vendor-status-overview.jsx'])
+@endpush
 
 
 

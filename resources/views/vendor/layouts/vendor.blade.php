@@ -60,6 +60,11 @@
         </nav>
 
         <div class="vendor-header__user">
+            <div class="vendor-header__user-info">
+                <span class="vendor-header__user-name">{{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}</span>
+                <span class="vendor-header__user-company">{{ auth()->user()->vendor_code ?? 'Vendor' }}</span>
+            </div>
+
             <!-- Notification Component -->
             <div class="vendor-notification">
                 <button type="button" class="vendor-nav-link vendor-notification__toggle" id="notification-btn">
@@ -99,10 +104,6 @@
                 </div>
             </div>
 
-            <div class="vendor-header__user-info">
-                <span class="vendor-header__user-name">{{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}</span>
-                <span class="vendor-header__user-company">{{ auth()->user()->vendor_code ?? 'Vendor' }}</span>
-            </div>
             <form method="POST" action="{{ route('logout') }}" class="vendor-inline-form">
                 @csrf
                 <button type="submit" class="vendor-btn vendor-btn--secondary vendor-btn--sm" title="Logout">

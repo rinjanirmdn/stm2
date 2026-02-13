@@ -25,6 +25,11 @@
                 <span class="mb-tab__count">{{ ($tabCounts['scheduled'] ?? 0) }}</span>
                 <span>Approved</span>
             </a>
+            <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page'), ['status' => 'cancelled'])) }}"
+               class="mb-tab mb-tab--cancelled {{ $currentStatus === 'cancelled' ? 'mb-tab--active' : '' }}">
+                <span class="mb-tab__count">{{ ($tabCounts['cancelled'] ?? 0) }}</span>
+                <span>Cancelled</span>
+            </a>
             <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page', 'status'), ['status' => ''])) }}"
                class="mb-tab mb-tab--all {{ $currentStatus === '' ? 'mb-tab--active' : '' }}">
                 <span class="mb-tab__count">{{ ($tabCounts['all'] ?? $bookings->total()) }}</span>
@@ -39,15 +44,15 @@
                 <form method="GET" action="{{ route('vendor.bookings.index') }}" class="mb-search">
                     <input type="hidden" name="status" value="{{ $currentStatus }}">
                     <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO..." value="{{ request('search') }}">
-                    <div id="vendor_reportrange" class="mb-search__input date-range-input" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-                                <div>
-                                    <i class="fas fa-calendar-alt date-range-icon"></i>&nbsp;
-                                    <span></span>
-                                </div>
-                                <i class="fa fa-caret-down"></i>
-                            </div>
-                            <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
-                            <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
+                    <div id="vendor_reportrange" class="mb-search__input date-range-input" data-auto-submit="false">
+                        <div class="date-range-input__left">
+                            <i class="fas fa-calendar-alt date-range-icon"></i>
+                            <span></span>
+                        </div>
+                        <i class="fa fa-caret-down"></i>
+                    </div>
+                    <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
+                    <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
                     <button type="submit" class="vendor-btn vendor-btn--primary vendor-btn--sm">
                         <i class="fas fa-search"></i> Search
                     </button>
@@ -101,9 +106,11 @@
                 {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}
             </span>
             <span class="mb-row__status mb-row__status--{{ $statusClass }}">{{ $statusLabel }}</span>
-            <span class="mb-row__status mb-row__status--{{ $arrivalColor }} mb-row__status--arrival">
-                <i class="fas fa-clock mb-row__status-icon"></i>{{ $arrivalStatus }}
-            </span>
+            @if($arrivalStatus !== '-')
+                <span class="mb-row__status mb-row__status--{{ $arrivalColor }} mb-row__status--arrival">
+                    <i class="fas fa-clock mb-row__status-icon"></i>{{ $arrivalStatus }}
+                </span>
+            @endif
             <div class="mb-row__actions">
                 <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="mb-row__btn mb-row__btn--view" title="View">
                     <i class="fas fa-eye"></i>
@@ -142,7 +149,7 @@
     <!-- Footer Container -->
     <div class="mb-footer-container">
         <div class="mb-footer-text">
-            Â© {{ date('Y') }} Slot Time Management. All rights reserved.
+            (c) {{ date('Y') }} Slot Time Management. All rights reserved.
         </div>
     </div>
 </div>

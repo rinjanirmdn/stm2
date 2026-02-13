@@ -6244,7 +6244,7 @@ input[type="datetime-local"].form-control {
 }
 
 /* ===== Table Action Buttons - Global Styling ===== */
-/* Action bar container - Horizontal layout, tidak wrap, rapi */
+/* Action bar container - Horizontal layout, no wrap, neat */
 .tw-actionbar,
 .st-table td .tw-actionbar,
 table.st-table td .tw-actionbar {

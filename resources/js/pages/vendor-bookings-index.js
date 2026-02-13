@@ -114,33 +114,62 @@
         }
     }
 
-    // Date Range Picker (single date)
-    var dateRangeInput = document.getElementById('date-range');
-    if (dateRangeInput && window.jQuery && window.jQuery.fn.dateRangePicker) {
-        var dateFrom = document.getElementById('date_from');
-        var dateTo = document.getElementById('date_to');
-        var initial = dateFrom && dateFrom.value ? dateFrom.value : '';
-        if (initial) {
-            const dt = new Date(initial);
-            if (!isNaN(dt.getTime())) {
-                dateRangeInput.value = toDisplayDate(dt);
-            }
+    // Date Range Picker (predefined ranges) — same library as vendor dashboard
+    function initVendorBookingsRangePicker() {
+        var el = document.getElementById('vendor_reportrange');
+        if (!el || !window.jQuery || !window.jQuery.fn || typeof window.jQuery.fn.daterangepicker !== 'function' || typeof window.moment !== 'function') {
+            return;
         }
 
-        window.jQuery(dateRangeInput).dateRangePicker({
-            autoClose: true,
-            singleDate: true,
-            showShortcuts: false,
-            singleMonth: true,
-            format: 'DD-MM-YYYY'
-        }).bind('datepicker-change', function(event, obj) {
-            var value = (obj && obj.value) ? obj.value : '';
-            var iso = dmyToIso(value);
-            if (dateFrom) dateFrom.value = iso;
-            if (dateTo) dateTo.value = iso;
-            dateRangeInput.value = value;
+        var $ = window.jQuery;
+        var moment = window.moment;
+        var dateFrom = document.getElementById('date_from');
+        var dateTo = document.getElementById('date_to');
+
+        var start = moment();
+        var end = moment();
+        var hasInitial = false;
+        if (dateFrom && dateFrom.value && moment(dateFrom.value, 'YYYY-MM-DD').isValid()) {
+            start = moment(dateFrom.value, 'YYYY-MM-DD');
+            hasInitial = true;
+        }
+        if (dateTo && dateTo.value && moment(dateTo.value, 'YYYY-MM-DD').isValid()) {
+            end = moment(dateTo.value, 'YYYY-MM-DD');
+            hasInitial = true;
+        }
+
+        function updateRange(s, e) {
+            $(el).find('span').first().html(s.format('DD-MM-YYYY') + ' - ' + e.format('DD-MM-YYYY'));
+            if (dateFrom) dateFrom.value = s.format('YYYY-MM-DD');
+            if (dateTo) dateTo.value = e.format('YYYY-MM-DD');
+        }
+
+        $(el).daterangepicker({
+            startDate: start,
+            endDate: end,
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            },
+            locale: { format: 'DD-MM-YYYY' },
+            alwaysShowCalendars: true,
+            opens: 'left'
+        }, function (s, e) {
+            updateRange(s, e);
         });
+
+        if (hasInitial) {
+            updateRange(start, end);
+        } else {
+            $(el).find('span').first().html('Select range');
+        }
     }
+
+    initVendorBookingsRangePicker();
 
     var inputs = document.querySelectorAll('input.flatpickr-date');
     Array.prototype.slice.call(inputs).forEach(function (input) {
