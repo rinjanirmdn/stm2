@@ -93,7 +93,7 @@
             <div class="vd-chart-header">
                 <h3 class="vd-chart-title">
                     <i class="fas fa-truck"></i>
-                    Container Performance
+                    Truck Performance
                 </h3>
             </div>
             <div class="vd-performance-body">
