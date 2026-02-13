@@ -106,8 +106,69 @@ class BottleneckAnalysisService
             'labels' => $bottleneckLabels,
             'values' => $bottleneckValues,
             'directions' => $bottleneckDirections,
+            'warehouseCodes' => array_column($bottleneckRows, 'warehouse_code'),
+            'gateNumbers' => array_column($bottleneckRows, 'gate_number'),
             'threshold_minutes' => $thresholdMinutes,
         ];
+    }
+
+    /**
+     * Get individual waiting reasons for a specific gate/direction within a date range
+     */
+    public function getWaitingReasons(string $start, string $end, string $warehouseCode, string $gateNumber, string $direction): array
+    {
+        try {
+            $diffExpr = $this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_start');
+            $waitExpr = "GREATEST({$diffExpr}, 0)";
+
+            $rows = DB::table('slots as s')
+                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+                ->leftJoin('md_gates as g', function ($join) {
+                    $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                        ->on('s.warehouse_id', '=', 'g.warehouse_id');
+                })
+                ->whereNotNull('s.arrival_time')
+                ->whereNotNull('s.actual_start')
+                ->whereIn('s.status', ['in_progress', 'completed'])
+                ->whereBetween('s.arrival_time', [$start . ' 00:00:00', $end . ' 23:59:59'])
+                ->where('w.wh_code', $warehouseCode)
+                ->where('g.gate_number', $gateNumber)
+                ->where('s.direction', $direction)
+                ->selectRaw("
+                    s.id,
+                    s.ticket_number,
+                    s.po_number,
+                    s.vendor_name,
+                    s.truck_type,
+                    s.arrival_time,
+                    s.actual_start,
+                    s.waiting_reason,
+                    {$waitExpr} AS wait_minutes
+                ")
+                ->orderByDesc('wait_minutes')
+                ->limit(20)
+                ->get();
+
+            $result = [];
+            foreach ($rows as $r) {
+                $result[] = [
+                    'id' => (int) $r->id,
+                    'ticket_number' => (string) ($r->ticket_number ?? ''),
+                    'po_number' => (string) ($r->po_number ?? ''),
+                    'vendor_name' => (string) ($r->vendor_name ?? ''),
+                    'truck_type' => (string) ($r->truck_type ?? ''),
+                    'arrival_time' => (string) ($r->arrival_time ?? ''),
+                    'actual_start' => (string) ($r->actual_start ?? ''),
+                    'wait_minutes' => round((float) ($r->wait_minutes ?? 0), 1),
+                    'waiting_reason' => (string) ($r->waiting_reason ?? ''),
+                ];
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            \Log::error('Error fetching waiting reasons: ' . $e->getMessage());
+            return [];
+        }
     }
 
     /**

@@ -451,7 +451,7 @@ class VendorBookingController extends Controller
         // Blocking GLOBAL: pending request blocks all vendors for the same time range
         $pendingOverlap = $this->countPendingRequestOverlapGlobal($plannedStart, $plannedEnd, null);
         if ($pendingOverlap > 0) {
-            return back()->withInput()->with('error', 'Waktu ini sedang diblokir karena menunggu konfirmasi tim WH');
+            return back()->withInput()->with('error', 'This time is blocked while awaiting warehouse team confirmation');
         }
 
         // Resolve PO ID from PO Number

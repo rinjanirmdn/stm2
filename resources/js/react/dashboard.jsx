@@ -384,11 +384,29 @@ function AnalyticsSlide({ data }) {
 function BottleneckSlide({ data }) {
   const { bottleneckThresholdMinutes=30, avgLeadMinutes=0, avgProcessMinutes=0 } = data;
   const bottleneckLabels = toArr(data.bottleneckLabels), bottleneckValues = toArr(data.bottleneckValues), bottleneckDirections = toArr(data.bottleneckDirections), avgTimesByTruckType = toArr(data.avgTimesByTruckType);
+  const bottleneckWarehouseCodes = toArr(data.bottleneckWarehouseCodes), bottleneckGateNumbers = toArr(data.bottleneckGateNumbers);
   const [bnDir, setBnDir] = useState('all');
+  const [reasonsModal, setReasonsModal] = useState(null); // {gate, loading, rows}
   const chartData = useMemo(() => {
-    return (bottleneckLabels||[]).map((l,i)=>({name:l,value:+(bottleneckValues[i]||0),dir:bottleneckDirections[i]||''})).filter(d=> bnDir==='all' || d.dir.toLowerCase()===bnDir);
-  }, [bottleneckLabels,bottleneckValues,bottleneckDirections,bnDir]);
+    return (bottleneckLabels||[]).map((l,i)=>({name:l,value:+(bottleneckValues[i]||0),dir:bottleneckDirections[i]||'',whCode:bottleneckWarehouseCodes[i]||'',gateNo:bottleneckGateNumbers[i]||'',idx:i})).filter(d=> bnDir==='all' || d.dir.toLowerCase()===bnDir);
+  }, [bottleneckLabels,bottleneckValues,bottleneckDirections,bottleneckWarehouseCodes,bottleneckGateNumbers,bnDir]);
   const topItem = chartData[0];
+
+  const handleBarClick = useCallback((arg) => {
+    const d = arg?.payload || arg?.activePayload?.[0]?.payload;
+    if (!d.whCode || !d.gateNo || !d.dir) return;
+    setReasonsModal({ gate: d.name, loading: true, rows: [] });
+    const params = new URLSearchParams({
+      warehouse_code: d.whCode, gate_number: d.gateNo, direction: d.dir,
+      date_from: data.range_start || '', date_to: data.range_end || ''
+    });
+    fetch(`/dashboard/waiting-reasons?${params}`, { headers: { 'Accept': 'application/json' } })
+      .then(r => r.json())
+      .then(res => {
+        setReasonsModal(prev => prev ? { ...prev, loading: false, rows: res.data || [], gate: res.gate || prev.gate } : null);
+      })
+      .catch(() => setReasonsModal(prev => prev ? { ...prev, loading: false, rows: [] } : null));
+  }, [data.range_start, data.range_end]);
 
   return (
     <div className="flex flex-col gap-2 flex-1">
@@ -401,14 +419,15 @@ function BottleneckSlide({ data }) {
             </SelectInput>
           </CardH>
           <CardB className="flex flex-col" style={{flex:'1 1 0%'}}>
-            <div style={{flex:'1 1 0%',minHeight:180}}>
+            <div className="text-[10px] text-gray-400 mb-1">Click a bar to view waiting reasons</div>
+            <div style={{flex:'1 1 0%',minHeight:180,cursor:'pointer'}}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData.slice(0,20)} layout="vertical" margin={{top:5,right:20,left:70,bottom:5}}>
+                <BarChart data={chartData.slice(0,20)} layout="vertical" margin={{top:5,right:20,left:70,bottom:5}} onClick={handleBarClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={tk('--chart-grid')}/>
                   <XAxis type="number" tick={{fontSize:10,fill:tk('--chart-axis')}}/>
                   <YAxis dataKey="name" type="category" tick={{fontSize:9,fill:tk('--text-secondary')}} width={65}/>
                   <Tooltip formatter={v=>`${(+v).toFixed(1)} min`} contentStyle={tipStyle()}/>
-                  <Bar dataKey="value" fill={tk('--chart-bottleneck')} radius={[0,6,6,0]} name="Avg Waiting (min)"/>
+                  <Bar dataKey="value" fill={tk('--chart-bottleneck')} radius={[0,6,6,0]} name="Avg Waiting (min)" style={{cursor:'pointer'}} onClick={handleBarClick}/>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -454,6 +473,49 @@ function BottleneckSlide({ data }) {
           </CardB>
         </Card>
       </div>
+
+      {/* Waiting Reasons Modal */}
+      {reasonsModal && (
+        <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.4)'}} onClick={()=>setReasonsModal(null)}>
+          <div style={{background:'#fff',borderRadius:12,maxWidth:700,width:'95%',maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}} onClick={e=>e.stopPropagation()}>
+            <div style={{padding:'16px 20px',borderBottom:'1px solid #e5e7eb',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <h3 style={{margin:0,fontSize:15,fontWeight:600,color:'#1f2937'}}>Waiting Reasons</h3>
+                <div style={{fontSize:12,color:'#6b7280',marginTop:2}}>{reasonsModal.gate}</div>
+              </div>
+              <button onClick={()=>setReasonsModal(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#9ca3af',padding:'4px 8px'}}>✕</button>
+            </div>
+            <div style={{padding:'12px 20px',overflowY:'auto',flex:1}}>
+              {reasonsModal.loading ? (
+                <div style={{textAlign:'center',padding:24,color:'#9ca3af'}}>Loading...</div>
+              ) : reasonsModal.rows.length === 0 ? (
+                <div style={{textAlign:'center',padding:24,color:'#9ca3af'}}>No waiting data for this gate</div>
+              ) : (
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                  <thead>
+                    <tr style={{borderBottom:'2px solid #e5e7eb'}}>
+                      <th style={{textAlign:'left',padding:'8px 6px',color:'#6b7280',fontWeight:600}}>Ticket</th>
+                      <th style={{textAlign:'left',padding:'8px 6px',color:'#6b7280',fontWeight:600}}>Vendor</th>
+                      <th style={{textAlign:'right',padding:'8px 6px',color:'#6b7280',fontWeight:600}}>Wait (min)</th>
+                      <th style={{textAlign:'left',padding:'8px 6px',color:'#6b7280',fontWeight:600}}>Waiting Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reasonsModal.rows.map((r,i) => (
+                      <tr key={r.id||i} style={{borderBottom:'1px solid #f3f4f6',background:i%2===0?'#fafafa':'#fff'}}>
+                        <td style={{padding:'8px 6px',fontWeight:500}}>{r.ticket_number||`#${r.id}`}</td>
+                        <td style={{padding:'8px 6px',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.vendor_name}>{r.vendor_name||'-'}</td>
+                        <td style={{padding:'8px 6px',textAlign:'right',fontWeight:600,color:r.wait_minutes>60?'#dc2626':'#059669'}}>{r.wait_minutes}</td>
+                        <td style={{padding:'8px 6px',color:r.waiting_reason?'#1f2937':'#d1d5db',fontStyle:r.waiting_reason?'normal':'italic',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.waiting_reason||''}>{r.waiting_reason||'Not provided'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

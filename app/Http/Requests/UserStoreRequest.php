@@ -53,7 +53,7 @@ class UserStoreRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
-                // 'exists:vendors,vendor_code', // Validasi ke tabel vendors (Tabel vendors tidak ada)
+                // 'exists:vendors,vendor_code', // Validation against vendors table (vendors table is not available)
                 Rule::requiredIf(fn () => (string) $this->input('role') === 'vendor'),
             ],
         ];

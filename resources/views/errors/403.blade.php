@@ -8,7 +8,7 @@
         <div class="st-col-12">
             <div class="st-card st-p-16">
                 <h2 class="st-card__title st-mb-6">403 - Forbidden</h2>
-                <div class="st-card__subtitle">Kamu tidak punya akses ke halaman ini.</div>
+                <div class="st-card__subtitle">You do not have access to this page.</div>
 
                 <div class="st-mt-12 st-flex st-gap-8">
                     <a href="{{ route('dashboard') }}" class="st-btn st-btn--outline-primary">Back to Dashboard</a>

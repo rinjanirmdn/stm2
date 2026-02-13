@@ -285,10 +285,10 @@ function initVendorBookingCreate(config) {
             var td = this;
             var cls = td.className || '';
             var text = '';
-            if (cls.indexOf('drp-sunday') !== -1) text = 'Hari Minggu';
+            if (cls.indexOf('drp-sunday') !== -1) text = 'Sunday';
             if (cls.indexOf('drp-holiday') !== -1) {
                 var dataTitle = td.getAttribute('data-holiday-name');
-                text = dataTitle || 'Hari Libur';
+                text = dataTitle || 'Holiday';
             }
             if (!text) return;
             td.addEventListener('mouseenter', function (ev) {
@@ -359,9 +359,9 @@ function initVendorBookingCreate(config) {
 
             var ds = iso;
             if (start.day() === 0) {
-                showVendorToast('Tanggal yang dipilih adalah Hari Minggu', 'warning');
+                showVendorToast('The selected date is Sunday', 'warning');
             } else if (holidayData[ds]) {
-                showVendorToast('Tanggal yang dipilih adalah hari libur: ' + holidayData[ds], 'warning');
+                showVendorToast('The selected date is a holiday: ' + holidayData[ds], 'warning');
             }
 
             syncPlannedStart();
@@ -648,7 +648,7 @@ function initVendorAvailability(config) {
             }
 
             if (isSunday) {
-                dayDiv.setAttribute('data-vendor-tooltip', 'Hari Minggu');
+                dayDiv.setAttribute('data-vendor-tooltip', 'Sunday');
             }
             if (isHoliday) {
                 dayDiv.setAttribute('data-vendor-tooltip', holidayData[dateStr]);

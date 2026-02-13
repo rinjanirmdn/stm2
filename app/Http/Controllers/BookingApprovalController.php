@@ -293,7 +293,7 @@ class BookingApprovalController extends Controller
                     null
                 );
                 if (empty($check['available'])) {
-                    $reason = (string) ($check['reason'] ?? 'Gate tidak tersedia');
+                    $reason = (string) ($check['reason'] ?? 'Gate is not available');
                     return back()->with('error', $reason);
                 }
             }
@@ -474,7 +474,7 @@ class BookingApprovalController extends Controller
             ->count();
 
         if ($pendingOverlap > 0) {
-            return back()->withInput()->with('error', 'Waktu ini sedang diblokir karena menunggu konfirmasi tim WH');
+            return back()->withInput()->with('error', 'This time is blocked while awaiting warehouse team confirmation');
         }
 
         $bookingRequest->update([

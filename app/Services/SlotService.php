@@ -652,12 +652,12 @@ class SlotService
         if ($plannedGateId && ($bcLetter === 'B' || $bcLetter === 'C')) {
             $bcCheck = $this->validateWh2BcPlannedWindow($plannedGateId, $startDt, $endDt, $excludeSlotId);
             if (empty($bcCheck['ok'])) {
-                return 2; // High risk jika tidak memenuhi aturan
+                return 2; // High risk when rule requirements are not met
             }
 
-            // Logika khusus untuk blocking risk berdasarkan kondisi yang ada
+            // Special blocking-risk logic based on existing conditions
             if ($bcLetter === 'C') {
-                // Untuk Gate C, cek apakah ada overlapping dengan Gate B
+                // For Gate C, check whether it overlaps with Gate B
                 $existingBSlots = $this->getExistingSlotsForGate($bcOtherGateId, $start, $end, $excludeSlotId);
 
                 if ($existingBSlots->isNotEmpty()) {
@@ -666,29 +666,29 @@ class SlotService
                         $bEnd = clone $bStart;
                         $bEnd->modify('+' . (int) $bSlot->planned_duration . ' minutes');
 
-                        // Kondisi 2 & 3: Jam masuk/keluar bersamaan
+                        // Condition 2 & 3: same entry/exit time
                         if (($bStart->format('H:i') === $startDt->format('H:i')) ||
                             ($bEnd->format('H:i') === $endDt->format('H:i'))) {
                             return 1; // Medium risk
                         }
 
-                        // Kondisi 4: Durasi Gate C lebih lama dari Gate B
+                        // Condition 4: Gate C duration is longer than Gate B
                         if ($plannedDurationMinutes > (int) $bSlot->planned_duration) {
                             return 0; // Low risk
                         }
 
-                        // Jika ada overlapping waktu (tapi tidak jam masuk/keluar sama persis)
-                        // dan durasi Gate C tidak lebih lama, tetap Medium karena Gate C di belakang
+                        // If there is another overlap (but entry/exit times are not exactly the same)
+                        // and Gate C duration is not longer, keep Medium because Gate C is behind
                         return 1; // Medium risk
                     }
                 }
 
-                // Default untuk Gate C jika tidak ada overlapping
+                // Default for Gate C if there is no overlap
                 return 0; // Low risk
             }
 
             if ($bcLetter === 'B') {
-                // Untuk Gate B, cek apakah ada overlapping dengan Gate C
+                // For Gate B, check whether it overlaps with Gate C
                 $existingCSlots = $this->getExistingSlotsForGate($bcOtherGateId, $start, $end, $excludeSlotId);
 
                 if ($existingCSlots->isNotEmpty()) {
@@ -697,23 +697,23 @@ class SlotService
                         $cEnd = clone $cStart;
                         $cEnd->modify('+' . (int) $cSlot->planned_duration . ' minutes');
 
-                        // Kondisi 2 & 3: Jam masuk/keluar bersamaan
+                        // Condition 2 & 3: same entry/exit time
                         if (($cStart->format('H:i') === $startDt->format('H:i')) ||
                             ($cEnd->format('H:i') === $endDt->format('H:i'))) {
-                            return 0; // Low risk untuk Gate B
+                            return 0; // Low risk for Gate B
                         }
 
-                        // Kondisi 4: Durasi Gate C lebih lama dari Gate B
+                        // Condition 4: Gate C duration is longer than Gate B
                         if ((int) $cSlot->planned_duration > $plannedDurationMinutes) {
-                            return 0; // Low risk untuk Gate B
+                            return 0; // Low risk for Gate B
                         }
 
-                        // Jika ada overlapping waktu lainnya, tetap Low karena Gate B di depan
+                        // For other overlap cases, keep Low because Gate B is in front
                         return 0; // Low risk
                     }
                 }
 
-                // Default untuk Gate B
+                // Default for Gate B
                 return 0; // Low risk
             }
         }

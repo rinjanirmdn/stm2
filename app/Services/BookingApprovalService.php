@@ -329,7 +329,7 @@ class BookingApprovalService
         if ($hour < self::OPERATING_START_HOUR || $hour >= self::OPERATING_END_HOUR) {
             return [
                 'available' => false,
-                'reason' => 'Booking harus dalam jam operasional (07:00 - 23:00)',
+                'reason' => 'Booking must be within operating hours (07:00 - 23:00)',
             ];
         }
 
@@ -341,7 +341,7 @@ class BookingApprovalService
         if ($endHour >= self::OPERATING_END_HOUR && $endDt->format('i') > '00') {
             return [
                 'available' => false,
-                'reason' => 'Booking harus selesai sebelum jam 23:00',
+                'reason' => 'Booking must finish before 23:00',
             ];
         }
 
@@ -359,7 +359,7 @@ class BookingApprovalService
             if ($pendingOverlap > 0) {
                 return [
                     'available' => false,
-                    'reason' => 'Waktu ini sedang diblokir karena menunggu konfirmasi tim WH',
+                    'reason' => 'This time is blocked while awaiting warehouse team confirmation',
                     'code' => 'BLOCKED_BY_PENDING_APPROVAL',
                 ];
             }
@@ -407,7 +407,7 @@ class BookingApprovalService
             if ($overlapCount > 0) {
                 return [
                     'available' => false,
-                    'reason' => 'Waktu ini sudah terisi oleh booking lain',
+                    'reason' => 'This time is already occupied by another booking',
                 ];
             }
         }

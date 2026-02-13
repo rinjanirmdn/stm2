@@ -438,7 +438,7 @@ class SlotController extends Controller
         }
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
+            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 characters']);
         }
 
         if ($truckNumber === '' || $plannedStart === '' || $direction === '') {
@@ -482,7 +482,7 @@ class SlotController extends Controller
         }
 
         if (! $plannedGateId) {
-            return back()->withInput()->with('error', 'Gate penuh / tidak tersedia untuk jadwal ini. Silakan pilih gate atau waktu lain.');
+            return back()->withInput()->with('error', 'Gate is full or unavailable for this schedule. Please choose another gate or time.');
         }
 
         $slotId = 0;
@@ -633,7 +633,7 @@ class SlotController extends Controller
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
+            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 characters']);
         }
 
         if ($plannedGateId !== null) {
@@ -1075,17 +1075,17 @@ class SlotController extends Controller
         }
 
         if (strlen($poNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
+            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 characters']);
         }
 
         if (! in_array($direction, ['inbound', 'outbound'], true)) {
-            return back()->withInput()->withErrors(['direction' => 'Direction harus inbound atau outbound']);
+            return back()->withInput()->withErrors(['direction' => 'Direction must be inbound or outbound']);
         }
 
         try {
             $arrivalDt = new DateTime($arrivalInput);
         } catch (\Throwable $e) {
-            return back()->withInput()->withErrors(['actual_arrival' => 'Arrival time harus berupa tanggal yang valid']);
+            return back()->withInput()->withErrors(['actual_arrival' => 'Arrival time must be a valid date']);
         }
 
         $arrivalTime = $arrivalDt->format('Y-m-d H:i:s');
@@ -1233,7 +1233,7 @@ class SlotController extends Controller
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 karakter']);
+            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 characters']);
         }
 
         $matDoc = trim((string) $request->input('mat_doc', ''));
@@ -1293,7 +1293,7 @@ class SlotController extends Controller
         }
 
         if (((string) ($slot->slot_type ?? 'planned')) === 'unplanned') {
-            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Unplanned slot tidak memiliki proses arrival');
+            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Unplanned slots do not have an arrival process');
         }
 
         if ((string) ($slot->status ?? '') !== Slot::STATUS_SCHEDULED) {
@@ -1313,7 +1313,7 @@ class SlotController extends Controller
         }
 
         if (((string) ($slot->slot_type ?? 'planned')) === 'unplanned') {
-            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Unplanned slot tidak memiliki proses arrival');
+            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Unplanned slots do not have an arrival process');
         }
 
         if ((string) ($slot->status ?? '') !== Slot::STATUS_SCHEDULED) {
@@ -1485,6 +1485,13 @@ class SlotController extends Controller
 
         $selectedGateId = $recommendedGateId;
 
+        // Compute waiting minutes (time since arrival) for waiting_reason requirement
+        $waitingMinutes = 0;
+        if (!empty($slot->arrival_time)) {
+            $arrivalDt = \Carbon\Carbon::parse($slot->arrival_time);
+            $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
+        }
+
         $viewName = $slotType === 'unplanned' ? 'unplanned.start' : 'slots.start';
 
         return view($viewName, [
@@ -1495,6 +1502,7 @@ class SlotController extends Controller
             'conflictDetails' => $conflictDetails,
             'recommendedGateId' => $recommendedGateId,
             'selectedGateId' => $selectedGateId,
+            'waitingMinutes' => $waitingMinutes,
         ]);
     }
 
@@ -1540,7 +1548,18 @@ class SlotController extends Controller
                 ->with('conflict_lines', $lines);
         }
 
-        DB::transaction(function () use ($slot, $slotId, $actualGateId) {
+        // Check if waiting > 60 min → require waiting_reason
+        $waitingMinutes = 0;
+        if (!empty($slot->arrival_time)) {
+            $arrivalDt = \Carbon\Carbon::parse($slot->arrival_time);
+            $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
+        }
+        $waitingReason = trim((string) $request->input('waiting_reason', ''));
+        if ($waitingMinutes > 60 && $waitingReason === '') {
+            return back()->withInput()->with('error', 'Waiting has exceeded 60 minutes. Please provide the reason for the long wait.');
+        }
+
+        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason) {
             $now = date('Y-m-d H:i:s');
             $arrivalTime = (string) ($slot->arrival_time ?? $now);
             $isLate = 0;
@@ -1548,13 +1567,18 @@ class SlotController extends Controller
                 $isLate = $this->isLateByPlannedStart((string) ($slot->planned_start ?? ''), $now) ? 1 : 0;
             }
 
-            DB::table('slots')->where('id', $slotId)->update([
+            $updateData = [
                 'status' => Slot::STATUS_IN_PROGRESS,
                 'arrival_time' => $arrivalTime,
                 'actual_start' => $now,
                 'is_late' => $isLate,
                 'actual_gate_id' => $actualGateId,
-            ]);
+            ];
+            if ($waitingReason !== '') {
+                $updateData['waiting_reason'] = $waitingReason;
+            }
+
+            DB::table('slots')->where('id', $slotId)->update($updateData);
 
             $gateMeta = $this->slotService->getGateMetaById($actualGateId);
             $gateName = $this->buildGateLabel((string) ($gateMeta['warehouse_code'] ?? ''), (string) ($gateMeta['gate_number'] ?? ''));

@@ -466,7 +466,7 @@
                 applySaveState();
             })
             .catch(function () {
-                riskPreview.textContent = 'Risk tidak dapat dihitung.';
+                riskPreview.textContent = 'Risk could not be calculated.';
                 uiRiskHigh = false;
                 uiRiskPending = false;
                 applySaveState();
@@ -511,9 +511,9 @@
                 }
 
                 if (data.overlap) {
-                    var msg = data.message ? String(data.message) : 'Waktu Ini Bentrok dengan Slot Lain pada Gate Ini.';
+                    var msg = data.message ? String(data.message) : 'This time conflicts with another slot at this gate.';
                     if (data.suggested_start) {
-                        msg += ' Waktu Otomatis Disesuaikan ke Setelah ' + data.suggested_start + '.';
+                        msg += ' Time was automatically adjusted to after ' + data.suggested_start + '.';
                         setPlannedStartValue(String(data.suggested_start));
                         if (timeWarning) timeWarning.textContent = msg;
                         updateRiskPreview();
@@ -600,7 +600,7 @@
 
         var whId = warehouseSelect.value;
         if (!whId) {
-            alert('Pilih Warehouse Terlebih Dahulu.');
+            alert('Please select a warehouse first.');
             return;
         }
 
@@ -626,14 +626,14 @@
         postJson(urlSchedulePreview, fd)
             .then(function (data) {
                 if (!data || !data.success) {
-                    scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--danger st-modal__message">Gagal memuat jadwal</td></tr>';
+                    scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--danger st-modal__message">Failed to load schedule</td></tr>';
                     scheduleModalInfo.textContent = '';
                     return;
                 }
 
                 var items = data.items || [];
                 if (items.length === 0) {
-                    scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">Tidak ada slot scheduled / in progress pada tanggal ini.</td></tr>';
+                    scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">No scheduled / in-progress slots on this date.</td></tr>';
                     return;
                 }
 
@@ -657,7 +657,7 @@
                 scheduleModalBody.innerHTML = html;
             })
             .catch(function () {
-                scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--danger st-modal__message">Gagal memuat jadwal</td></tr>';
+                scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--danger st-modal__message">Failed to load schedule</td></tr>';
             });
 
         scheduleModal.style.display = 'flex';
