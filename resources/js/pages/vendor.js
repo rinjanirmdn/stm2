@@ -149,7 +149,14 @@ function initVendorBookingCreate(config) {
 
     function loadMiniAvailability() {
         if (!miniAvailability) return;
-        const date = plannedDate.value;
+        var rawDate = plannedDate.dataset.isoValue || plannedDate.value || '';
+        // Normalize DD-MM-YYYY to YYYY-MM-DD if needed
+        if (rawDate && rawDate.indexOf('-') === 2) {
+            var dp = rawDate.split('-');
+            rawDate = dp[2] + '-' + dp[1] + '-' + dp[0];
+            plannedDate.dataset.isoValue = rawDate;
+        }
+        const date = rawDate;
         if (!date) {
             miniAvailability.innerHTML = '<div class="cb-availability-mini__placeholder">Select date to see available hours</div>';
             return;
@@ -247,41 +254,228 @@ function initVendorBookingCreate(config) {
         return `${d}-${m}-${y}`;
     }
 
+    // ── Vendor toast helper ──
+    function showVendorToast(message, type) {
+        var existing = document.getElementById('vendor-picker-toast');
+        if (existing) existing.remove();
+        var toast = document.createElement('div');
+        toast.id = 'vendor-picker-toast';
+        toast.className = 'vendor-picker-toast vendor-picker-toast--' + (type || 'warning');
+        toast.innerHTML = '<i class="fas ' + (type === 'info' ? 'fa-info-circle' : 'fa-exclamation-triangle') + '"></i> ' + message;
+        document.body.appendChild(toast);
+        requestAnimationFrame(function () { toast.classList.add('vendor-picker-toast--visible'); });
+        setTimeout(function () {
+            toast.classList.remove('vendor-picker-toast--visible');
+            setTimeout(function () { toast.remove(); }, 300);
+        }, 3000);
+    }
+
+    // ── Datepicker: daterangepicker (singleDatePicker) — identical to admin ──
+    function annotateDaterangepickerDays(picker) {
+        if (!picker || !picker.container) return;
+        var tooltip = document.getElementById('vendor-datepicker-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'vendor-datepicker-tooltip';
+            tooltip.className = 'vendor-datepicker-tooltip';
+            document.body.appendChild(tooltip);
+        }
+        var hideTimer = null;
+        picker.container.find('td.available').each(function () {
+            var td = this;
+            var cls = td.className || '';
+            var text = '';
+            if (cls.indexOf('drp-sunday') !== -1) text = 'Hari Minggu';
+            if (cls.indexOf('drp-holiday') !== -1) {
+                var dataTitle = td.getAttribute('data-holiday-name');
+                text = dataTitle || 'Hari Libur';
+            }
+            if (!text) return;
+            td.addEventListener('mouseenter', function (ev) {
+                if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+                tooltip.textContent = text;
+                tooltip.classList.add('vendor-datepicker-tooltip--visible');
+                tooltip.style.left = (ev.clientX + 12) + 'px';
+                tooltip.style.top = (ev.clientY + 12) + 'px';
+            });
+            td.addEventListener('mousemove', function (ev) {
+                if (!tooltip.classList.contains('vendor-datepicker-tooltip--visible')) return;
+                tooltip.style.left = (ev.clientX + 12) + 'px';
+                tooltip.style.top = (ev.clientY + 12) + 'px';
+            });
+            td.addEventListener('mouseleave', function () {
+                hideTimer = setTimeout(function () {
+                    tooltip.classList.remove('vendor-datepicker-tooltip--visible');
+                }, 150);
+            });
+        });
+    }
+
     function initVendorDatepicker() {
         if (plannedDate.getAttribute('data-st-datepicker') === '1') return;
-        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.bootstrapMaterialDatePicker !== 'function') return;
+        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.daterangepicker !== 'function') return;
         plannedDate.setAttribute('data-st-datepicker', '1');
 
-        const holidays = {};
-        if (holidayData && typeof holidayData === 'object') {
-            Object.assign(holidays, holidayData);
+        try { plannedDate.type = 'text'; } catch (e) {}
+        plannedDate.setAttribute('readonly', 'readonly');
+
+        var initialIso = plannedDate.value || '';
+        if (initialIso && initialIso.indexOf('-') === 4) {
+            var p = initialIso.split('-');
+            plannedDate.value = p[2] + '-' + p[1] + '-' + p[0];
+            plannedDate.dataset.isoValue = initialIso;
         }
 
-        // Initialize bootstrap-material-datetimepicker for date
-        window.jQuery(plannedDate).bootstrapMaterialDatePicker({
-            format: 'DD-MM-YYYY',
-            time: false,
-            minDate: new Date(),
-            disabledDays: function(date) {
-                const ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-                const isSunday = date.getDay() === 0;
-                return !isSunday && !holidays[ds];
-            },
-            weekStart: 1,
-            lang: 'en',
-            cancelText: 'Cancel',
-            okText: 'OK'
-        });
+        var startDate = initialIso && window.moment(initialIso, 'YYYY-MM-DD').isValid()
+            ? window.moment(initialIso, 'YYYY-MM-DD')
+            : window.moment();
 
-        // Handle date change
-        window.jQuery(plannedDate).on('change', function(e, date) {
-            if (date) {
-                const isoDate = toIsoDate(date.toDate());
-                plannedDate.dataset.isoValue = isoDate;
+        // Always set isoValue so loadMiniAvailability works on first call
+        plannedDate.dataset.isoValue = startDate.format('YYYY-MM-DD');
+        plannedDate.value = startDate.format('DD-MM-YYYY');
+
+        window.jQuery(plannedDate).daterangepicker({
+            singleDatePicker: true,
+            showDropdowns: true,
+            autoApply: true,
+            minDate: window.moment(),
+            locale: { format: 'DD-MM-YYYY' },
+            minYear: parseInt(window.moment().format('YYYY'), 10),
+            maxYear: parseInt(window.moment().format('YYYY'), 10) + 2,
+            startDate: startDate,
+            isCustomDate: function (date) {
+                var ds = date.format('YYYY-MM-DD');
+                var isSunday = date.day() === 0;
+                var isHoliday = holidayData[ds] || null;
+                var cls = [];
+                if (isSunday) cls.push('drp-sunday');
+                if (isHoliday) cls.push('drp-holiday');
+                return cls.length ? cls.join(' ') : '';
             }
+        }, function (start) {
+            var iso = start.format('YYYY-MM-DD');
+            plannedDate.value = start.format('DD-MM-YYYY');
+            plannedDate.dataset.isoValue = iso;
+
+            var ds = iso;
+            if (start.day() === 0) {
+                showVendorToast('Tanggal yang dipilih adalah Hari Minggu', 'warning');
+            } else if (holidayData[ds]) {
+                showVendorToast('Tanggal yang dipilih adalah hari libur: ' + holidayData[ds], 'warning');
+            }
+
             syncPlannedStart();
             loadMiniAvailability();
         });
+
+        // Inject holiday name data attributes + tooltips when picker opens
+        window.jQuery(plannedDate).on('show.daterangepicker', function (ev, picker) {
+            picker.container.find('td.drp-holiday').each(function () {
+                var td = window.jQuery(this);
+                var row = td.closest('tr');
+                var table = row.closest('table');
+                var monthEl = table.find('.month');
+                if (!monthEl.length) return;
+                var monthText = monthEl.text().trim();
+                var parts = monthText.split(' ');
+                if (parts.length < 2) return;
+                var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                var mi = monthNames.indexOf(parts[0]);
+                var yr = parseInt(parts[1], 10);
+                if (mi < 0 || isNaN(yr)) return;
+                var day = parseInt(td.text().trim(), 10);
+                if (isNaN(day)) return;
+                var ds = yr + '-' + String(mi + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                var name = holidayData[ds] || '';
+                if (name) td.attr('data-holiday-name', name);
+            });
+            annotateDaterangepickerDays(picker);
+        });
+    }
+
+    // ── Timepicker with vendor rules ──
+    var lastValidTime = plannedTime.value || '08:00';
+
+    function getMinAllowedHour() {
+        // 4 hours from now
+        var now = new Date();
+        now.setTime(now.getTime() + 4 * 60 * 60 * 1000);
+        return now;
+    }
+
+    function isTimeValid(timeStr) {
+        if (!timeStr) return false;
+        var parts = timeStr.split(':');
+        var h = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10);
+        if (isNaN(h) || isNaN(m)) return false;
+
+        // Rule: max 19:00
+        if (h > 19 || (h === 19 && m > 0)) return false;
+        // Rule: min 07:00
+        if (h < 7) return false;
+
+        // Rule: 4 hours from now (only if selected date is today)
+        var dateVal = (plannedDate.dataset.isoValue || plannedDate.value || '').trim();
+        if (dateVal) {
+            var todayIso = toIsoDate(new Date());
+            // Normalize DD-MM-YYYY to YYYY-MM-DD for comparison
+            var dateIso = dateVal;
+            if (dateVal.indexOf('-') === 2) {
+                var dp = dateVal.split('-');
+                dateIso = dp[2] + '-' + dp[1] + '-' + dp[0];
+            }
+            if (dateIso === todayIso) {
+                var minDt = getMinAllowedHour();
+                var minH = minDt.getHours();
+                var minM = minDt.getMinutes();
+                if (h < minH || (h === minH && m < minM)) return false;
+            }
+        }
+
+        return true;
+    }
+
+    // ── Time validation UI helpers ──
+    var timeErrorEl = document.getElementById('time-error');
+    var timeErrorTimer = null;
+
+    function validateAndHandleTime() {
+        var val = plannedTime.value;
+        if (!val) return;
+        if (!isTimeValid(val)) {
+            // Clear the input — don't keep invalid time
+            plannedTime.value = '';
+            // Determine error message
+            var msg = '';
+            var parts = val.split(':');
+            var h = parseInt(parts[0], 10);
+            if (h > 19 || (h === 19 && parseInt(parts[1], 10) > 0)) {
+                msg = 'Waktu booking maksimal jam 19:00';
+            } else if (h < 7) {
+                msg = 'Waktu booking minimal jam 07:00';
+            } else {
+                msg = 'Booking harus minimal 4 jam dari sekarang';
+            }
+            // Show inline error below input
+            if (timeErrorEl) {
+                timeErrorEl.textContent = msg;
+                timeErrorEl.hidden = false;
+                if (timeErrorTimer) clearTimeout(timeErrorTimer);
+                timeErrorTimer = setTimeout(function () {
+                    timeErrorEl.hidden = true;
+                }, 5000);
+            }
+        } else {
+            lastValidTime = val;
+            // Clear any previous error
+            if (timeErrorEl) {
+                timeErrorEl.hidden = true;
+                if (timeErrorTimer) { clearTimeout(timeErrorTimer); timeErrorTimer = null; }
+            }
+        }
+        syncPlannedStart();
+        loadMiniAvailability();
     }
 
     function initVendorTimepicker() {
@@ -292,21 +486,17 @@ function initVendorBookingCreate(config) {
         plannedTime.addEventListener('keydown', function (event) { event.preventDefault(); });
         plannedTime.addEventListener('paste', function (event) { event.preventDefault(); });
 
-        // Use mdtimepicker with circular clock like admin portal
+        // Use mdtimepicker — identical config to admin, with timeChanged callback for validation
         window.mdtimepicker('#planned-time', {
-            timeFormat: 'hh:mm',
             format: 'hh:mm',
             is24hour: true,
-            theme: 'blue',
+            theme: 'cyan',
             hourPadding: true,
-            autoSwitch: true,
-            readOnly: true
-        });
-
-        // Handle time change
-        plannedTime.addEventListener('timechanged', function(e) {
-            syncPlannedStart();
-            loadMiniAvailability();
+            events: {
+                timeChanged: function () {
+                    validateAndHandleTime();
+                }
+            }
         });
     }
 
@@ -348,6 +538,8 @@ function initVendorBookingCreate(config) {
     initVendorDatepicker();
     initVendorTimepicker();
     bindFileSizeGuard();
+    // Validate initial time (e.g. default 08:00 may be invalid if it's afternoon)
+    validateAndHandleTime();
     loadMiniAvailability();
 }
 
@@ -450,15 +642,16 @@ function initVendorAvailability(config) {
             if (isSunday) dayDiv.classList.add('av-calendar__day--sunday');
             if (isHoliday) dayDiv.classList.add('av-calendar__day--holiday');
 
-            if (!isPast && !isSunday && !isHoliday) {
+            if (!isPast) {
                 dayDiv.style.cursor = 'pointer';
                 dayDiv.addEventListener('click', () => selectDate(dateStr));
             }
 
             if (isSunday) {
-                dayDiv.setAttribute('data-vendor-tooltip', 'Sunday - Not available');
-            } else if (isHoliday) {
-                dayDiv.setAttribute('data-vendor-tooltip', isHoliday + ' - Holiday');
+                dayDiv.setAttribute('data-vendor-tooltip', 'Hari Minggu');
+            }
+            if (isHoliday) {
+                dayDiv.setAttribute('data-vendor-tooltip', holidayData[dateStr]);
             }
 
             container.appendChild(dayDiv);

@@ -126,7 +126,7 @@ class BookingApprovalService
         ?string $approvalAction = null
     ): Slot
     {
-        return DB::transaction(function () use ($slot, $admin, $notes) {
+        return DB::transaction(function () use ($slot, $admin, $notes, $approvalAction, $bookingRequestId) {
             $oldStatus = $slot->status;
 
             $this->ensurePlannedGateAssigned($slot);

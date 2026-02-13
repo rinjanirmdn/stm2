@@ -40,24 +40,26 @@
         </div>
     </div>
 
-    <!-- Status Alert -->
-    @if($booking->status === 'pending')
-    <div class="st-alert st-alert--pending_approval">
-        <i class="fas fa-clock"></i>
-        <div>
-            <strong>Pending Approval</strong> - This booking request is waiting for your action.
+    <!-- Status Alert (hidden when flash message already shown by layout) -->
+    @if(!session('success') && !session('error'))
+        @if($booking->status === 'pending')
+        <div class="st-alert st-alert--pending_approval">
+            <i class="fas fa-clock"></i>
+            <div>
+                <strong>Pending Approval</strong> - This booking request is waiting for your action.
+            </div>
         </div>
-    </div>
-    @elseif($booking->status === 'approved')
-    <div class="st-alert st-alert--success">
-        <i class="fas fa-check-circle"></i>
-        <strong>Approved</strong> - This booking request has been approved.
-    </div>
-    @elseif($booking->status === 'cancelled')
-    <div class="st-alert st-alert--danger">
-        <i class="fas fa-times-circle"></i>
-        <strong>Cancelled</strong> - {{ $booking->approval_notes }}
-    </div>
+        @elseif($booking->status === 'approved')
+        <div class="st-alert st-alert--success">
+            <i class="fas fa-check-circle"></i>
+            <strong>Approved</strong> - This booking request has been approved.
+        </div>
+        @elseif($booking->status === 'cancelled')
+        <div class="st-alert st-alert--danger">
+            <i class="fas fa-times-circle"></i>
+            <strong>Cancelled</strong> - {{ $booking->approval_notes }}
+        </div>
+        @endif
     @endif
 
     <!-- Booking Details -->
