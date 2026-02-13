@@ -420,6 +420,54 @@
     transform: translateY(0);
 }
 
+/* Vendor picker toast (time/date validation warnings) */
+.vendor-picker-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1e293b;
+    color: #f8fafc;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 100001;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    max-width: 90vw;
+}
+.vendor-picker-toast--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.vendor-picker-toast--warning {
+    background: #92400e;
+    color: #fef3c7;
+}
+.vendor-picker-toast--info {
+    background: #1e40af;
+    color: #dbeafe;
+}
+
+/* Datepicker day annotations (Sunday/holiday in daterangepicker) */
+.daterangepicker td.drp-sunday {
+    color: #ef4444 !important;
+    font-weight: 600 !important;
+}
+.daterangepicker td.drp-holiday {
+    color: #f59e0b !important;
+    font-weight: 600 !important;
+}
+.daterangepicker td.drp-sunday.drp-holiday {
+    color: #ef4444 !important;
+}
+
 .notification-badge {
     position: absolute;
     top: 2px;
@@ -2371,234 +2419,6 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E");
 }
 
-/* MD TimePicker (mdtimepicker) Styling - Circular Clock */
-.mdtp__wrapper {
-    font-family: 'Inter', sans-serif;
-}
-
-.mdtp__wrapper .mdtp__time_container {
-    background: #ffffff;
-}
-
-.mdtp__wrapper .mdtp__time_header {
-    background: #0284c7;
-    color: #ffffff;
-    padding: 16px 24px;
-}
-
-.mdtp__wrapper .mdtp__time_header span {
-    font-size: 48px;
-    font-weight: 300;
-}
-
-.mdtp__wrapper .mdtp__clock_container {
-    background: #ffffff;
-    padding: 20px;
-}
-
-.mdtp__wrapper .mdtp__clock {
-    background: #f1f5f9;
-    border: none;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__am,
-.mdtp__wrapper .mdtp__clock .mdtp__pm {
-    background: #e2e8f0;
-    color: #475569;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__am:hover,
-.mdtp__wrapper .mdtp__clock .mdtp__pm:hover {
-    background: #0284c7;
-    color: #ffffff;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__am.active,
-.mdtp__wrapper .mdtp__clock .mdtp__pm.active {
-    background: #0284c7;
-    color: #ffffff;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__hour_holder,
-.mdtp__wrapper .mdtp__clock .mdtp__minute_holder {
-    background: transparent;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__digit {
-    color: #475569;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__digit:hover {
-    background: #e0f2fe;
-    color: #0284c7;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__digit.active {
-    background: #0284c7;
-    color: #ffffff;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__clock_dot {
-    background: #0284c7;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__hour_hand,
-.mdtp__wrapper .mdtp__clock .mdtp__minute_hand {
-    background: #0284c7;
-}
-
-.mdtp__wrapper .mdtp__clock .mdtp__hour_hand::after,
-.mdtp__wrapper .mdtp__clock .mdtp__minute_hand::after {
-    background: #0284c7;
-}
-
-.mdtp__wrapper .mdtp__button {
-    color: #0284c7;
-    font-weight: 600;
-}
-
-.mdtp__wrapper .mdtp__button:hover {
-    background: #e0f2fe;
-}
-
-.mdtp__wrapper .mdtp__button.mdtp__button--ok {
-    color: #0284c7;
-}
-
-/* Bootstrap Material DatePicker Styling */
-.dtp {
-    font-family: 'Inter', sans-serif;
-}
-
-.dtp > .dtp-content {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-.dtp header.dtp-header {
-    background: #0284c7;
-    padding: 16px 24px;
-}
-
-.dtp header.dtp-header .dtp-date {
-    font-size: 24px;
-    font-weight: 300;
-    color: #ffffff;
-}
-
-.dtp header.dtp-header .dtp-year {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 4px;
-}
-
-.dtp .dtp-picker-month {
-    background: #ffffff;
-    padding: 16px;
-}
-
-.dtp .dtp-picker-month .dtp-select-month-range {
-    color: #1e293b;
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.dtp .dtp-picker-month .dtp-select-month-range:hover {
-    background: #e0f2fe;
-    color: #0284c7;
-}
-
-.dtp table.dtp-picker-days {
-    margin: 0;
-    background: #ffffff;
-}
-
-.dtp table.dtp-picker-days thead tr th {
-    color: #64748b;
-    font-weight: 500;
-    font-size: 12px;
-    padding: 8px 0;
-    text-transform: uppercase;
-}
-
-.dtp table.dtp-picker-days tbody tr td {
-    padding: 4px;
-}
-
-.dtp table.dtp-picker-days tbody tr td > a {
-    color: #475569;
-    font-size: 14px;
-    font-weight: 500;
-    width: 36px;
-    height: 36px;
-    line-height: 36px;
-    border-radius: 50%;
-    transition: all 0.2s;
-}
-
-.dtp table.dtp-picker-days tbody tr td > a:hover {
-    background: #e0f2fe;
-    color: #0284c7;
-}
-
-.dtp table.dtp-picker-days tbody tr td.selected > a,
-.dtp table.dtp-picker-days tbody tr td.selected > a:hover {
-    background: #0284c7;
-    color: #ffffff;
-}
-
-.dtp table.dtp-picker-days tbody tr td.disabled > a,
-.dtp table.dtp-picker-days tbody tr td.disabled > a:hover {
-    color: #cbd5e1;
-    background: transparent;
-    cursor: not-allowed;
-}
-
-.dtp .dtp-buttons {
-    background: #ffffff;
-    padding: 12px 16px;
-    border-top: 1px solid #e2e8f0;
-    text-align: right;
-}
-
-.dtp .dtp-buttons button.btn {
-    color: #0284c7;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 13px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    margin-left: 8px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.dtp .dtp-buttons button.btn:hover {
-    background: #e0f2fe;
-}
-
-.dtp .dtp-buttons button.btn.dtp-btn-ok {
-    background: #0284c7;
-    color: #ffffff;
-}
-
-.dtp .dtp-buttons button.btn.dtp-btn-ok:hover {
-    background: #0369a1;
-}
-
-.dtp .dtp-buttons button.btn.dtp-btn-cancel {
-    color: #64748b;
-}
-
-.dtp .dtp-buttons button.btn.dtp-btn-cancel:hover {
-    background: #f1f5f9;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
     .vendor-page--bookings-create .cb-form-row,
@@ -2617,14 +2437,17 @@
         width: 100%;
         justify-content: flex-end;
     }
+}
 
-    .mdtp__wrapper .mdtp__time_header span {
-        font-size: 36px;
-    }
-
-    .dtp > .dtp-content {
-        max-width: 320px;
-    }
+/* Form actions footer (bottom buttons) */
+.vendor-page--bookings-create .cb-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0 4px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 8px;
 }
 
 /* Vendor Booking Create Page */

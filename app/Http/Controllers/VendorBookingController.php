@@ -372,10 +372,17 @@ class VendorBookingController extends Controller
              return back()->withInput()->with('error', 'Account Configuration Error: Your user account is not linked to a Vendor profile.');
         }
 
+        // Normalize DD-MM-YYYY → Y-m-d (daterangepicker submits display format)
+        $rawDate = $request->input('planned_date', '');
+        if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $rawDate)) {
+            $parts = explode('-', $rawDate);
+            $request->merge(['planned_date' => $parts[2] . '-' . $parts[1] . '-' . $parts[0]]);
+        }
+
         $request->validate([
             'po_number' => 'required|string', // Enforce here
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
-            'planned_date' => 'required|date|after_or_equal:today',
+            'planned_date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'nullable|string|max:50',
             'vehicle_number' => 'nullable|string|max:50',

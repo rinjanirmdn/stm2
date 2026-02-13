@@ -13,29 +13,13 @@
 <div class="cb-container">
     <div class="cb-scroll-container">
         <div class="cb-content-container">
-            <!-- Header with Action Buttons -->
+            <!-- Header -->
             <div class="cb-header">
                 <h1 class="cb-header__title">
                     <i class="fas fa-plus-circle"></i>
                     Create New Booking
                 </h1>
-                <div class="cb-header__actions">
-                    <a href="{{ route('vendor.bookings.index') }}" class="cb-btn cb-btn--secondary">
-                        Cancel
-                    </a>
-                    <button type="submit" form="booking-form" class="cb-btn cb-btn--primary" id="submit-btn">
-                        <i class="fas fa-paper-plane"></i>
-                        Submit Booking Request
-                    </button>
-                </div>
             </div>
-
-            @if(session('error'))
-                <div class="cb-alert cb-alert--error">
-                    <i class="fas fa-exclamation-circle"></i>
-                    {{ session('error') }}
-                </div>
-            @endif
 
             <form method="POST" action="{{ route('vendor.bookings.store') }}" enctype="multipart/form-data" id="booking-form">
                 @csrf
@@ -101,6 +85,7 @@
                                            value="{{ old('planned_time', '08:00') }}"
                                            required>
                                     <div class="cb-hint">07:00 - 19:00</div>
+                                    <div class="cb-hint cb-hint--error" id="time-error" hidden></div>
                                     @error('planned_time')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror
@@ -202,6 +187,20 @@
                                     <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions (Bottom) -->
+                    <div class="cb-form-row cb-form-row--full">
+                        <div class="cb-form-actions">
+                            <a href="{{ route('vendor.bookings.index') }}" class="cb-btn cb-btn--secondary">
+                                <i class="fas fa-times"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="cb-btn cb-btn--primary" id="submit-btn">
+                                <i class="fas fa-paper-plane"></i>
+                                Submit Booking Request
+                            </button>
                         </div>
                     </div>
                 </div>
