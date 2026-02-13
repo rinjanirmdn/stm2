@@ -43,10 +43,9 @@ function initVendorBookingCreate(config) {
     const availableSlotsUrl = config.availableSlotsUrl || '';
 
     const poSearch = document.getElementById('po-search');
-    const poResults = document.getElementById('po-results');
     const poHidden = document.getElementById('po-number-hidden');
-    const poLoading = document.getElementById('po-loading');
-    const vendorNameInput = document.getElementById('vendor-name');
+    const poStatus = document.getElementById('po-status');
+    const poMessage = document.getElementById('po-message');
 
     const plannedDate = document.getElementById('planned-date');
     const plannedTime = document.getElementById('planned-time');
@@ -62,73 +61,76 @@ function initVendorBookingCreate(config) {
 
     let searchTimeout = null;
 
+    // Function to show loading state
+    function showLoading() {
+        poStatus.classList.remove('show', 'valid', 'invalid');
+        poMessage.classList.remove('valid', 'invalid');
+        poMessage.textContent = 'Checking...';
+    }
+
+    // Function to show valid state
+    function showValid(message) {
+        poStatus.classList.remove('show', 'invalid');
+        poStatus.classList.add('show', 'valid');
+        poMessage.classList.remove('invalid');
+        poMessage.classList.add('valid');
+        poMessage.textContent = message || 'Data valid';
+    }
+
+    // Function to show invalid state
+    function showInvalid(message) {
+        poStatus.classList.remove('show', 'valid');
+        poStatus.classList.add('show', 'invalid');
+        poMessage.classList.remove('valid');
+        poMessage.classList.add('invalid');
+        poMessage.textContent = message || 'PO number not found / Invalid data';
+    }
+
+    // Function to clear validation
+    function clearValidation() {
+        poStatus.classList.remove('show', 'valid', 'invalid');
+        poMessage.classList.remove('valid', 'invalid');
+        poMessage.textContent = '';
+        poHidden.value = '';
+    }
+
     poSearch.addEventListener('input', function () {
         const q = this.value.trim();
 
         if (q.length < 2) {
-            poResults.classList.remove('show');
+            clearValidation();
             return;
         }
 
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function () {
-            poLoading.classList.add('show');
+        showLoading();
 
+        searchTimeout = setTimeout(function () {
             fetch(poSearchUrl + '?q=' + encodeURIComponent(q))
                 .then(r => r.json())
                 .then(data => {
-                    poLoading.classList.remove('show');
-
                     if (data.success && data.data.length > 0) {
-                        poResults.innerHTML = data.data.map(po => `
-                            <div class="cb-po-item" data-po="${po.po_number}">
-                                <div class="cb-po-item__number">${po.po_number}</div>
-                                <div class="cb-po-item__info">${po.vendor_name || ''} | ${po.direction || ''}</div>
-                            </div>
-                        `).join('');
-                        poResults.classList.add('show');
+                        // PO found - valid
+                        const po = data.data[0];
+                        poSearch.value = po.po_number;
+                        poHidden.value = po.po_number;
+                        showValid('Data valid');
                     } else {
-                        poResults.innerHTML = '<div class="cb-po-item">No results found</div>';
-                        poResults.classList.add('show');
+                        // PO not found - invalid
+                        showInvalid('PO number not found / Invalid data');
                     }
                 })
                 .catch(err => {
-                    poLoading.classList.remove('show');
                     console.error('Search error:', err);
+                    showInvalid('Error checking PO number');
                 });
-        }, 300);
+        }, 500);
     });
 
-    poResults.addEventListener('click', function (e) {
-        const item = e.target.closest('.cb-po-item');
-        if (!item || !item.dataset.po) return;
-
-        const poNumber = item.dataset.po;
-        poSearch.value = poNumber;
-        poHidden.value = poNumber;
-        poResults.classList.remove('show');
-
-        poLoading.classList.add('show');
-        fetch(poDetailUrl + '/' + encodeURIComponent(poNumber))
-            .then(r => r.json())
-            .then(data => {
-                poLoading.classList.remove('show');
-
-                if (data.success && data.data) {
-                    if (vendorNameInput) {
-                        vendorNameInput.value = data.data.vendor_name || '';
-                    }
-                }
-            })
-            .catch(err => {
-                poLoading.classList.remove('show');
-                console.error('Detail error:', err);
-            });
-    });
-
-    document.addEventListener('click', function (e) {
-        if (!poSearch.contains(e.target) && !poResults.contains(e.target)) {
-            poResults.classList.remove('show');
+    // Clear validation when user clears the input
+    poSearch.addEventListener('blur', function () {
+        if (this.value.trim() === '') {
+            clearValidation();
         }
     });
 
@@ -247,145 +249,38 @@ function initVendorBookingCreate(config) {
 
     function initVendorDatepicker() {
         if (plannedDate.getAttribute('data-st-datepicker') === '1') return;
-        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.datepicker !== 'function') return;
+        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.bootstrapMaterialDatePicker !== 'function') return;
         plannedDate.setAttribute('data-st-datepicker', '1');
 
-        let rafId = null;
-        function scheduleReposition() {
-            if (rafId) {
-                cancelAnimationFrame(rafId);
-            }
-            rafId = requestAnimationFrame(repositionDatepicker);
+        const holidays = {};
+        if (holidayData && typeof holidayData === 'object') {
+            Object.assign(holidays, holidayData);
         }
 
-        function repositionDatepicker() {
-            const dp = window.jQuery('#ui-datepicker-div');
-            if (!dp.is(':visible')) return;
-            const rect = plannedDate.getBoundingClientRect();
-            dp.css({
-                position: 'fixed',
-                top: rect.bottom + 4,
-                left: rect.left
-            });
-        }
-
-        function applyVendorDatepickerTooltips(inst) {
-            if (!inst || !inst.dpDiv) return;
-            const dp = window.jQuery(inst.dpDiv);
-
-            dp.find('td.is-holiday, td.is-sunday').each(function () {
-                const cell = window.jQuery(this);
-                const dayText = cell.find('a, span').first().text();
-                if (!dayText) return;
-                const fallbackYear = inst.drawYear ?? inst.selectedYear;
-                const fallbackMonth = inst.drawMonth ?? inst.selectedMonth;
-                const year = cell.data('year') ?? fallbackYear;
-                const month = cell.data('month') ?? fallbackMonth;
-                if (year === undefined || month === undefined) return;
-                const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayText).padStart(2, '0')}`;
-                const jsDate = new Date(`${ds}T00:00:00`);
-                const isSunday = jsDate.getDay() === 0;
-                const holidayName = holidayData[ds];
-                const title = holidayName ? `${holidayName} - Holiday` : (isSunday ? 'Sunday - Not available' : '');
-                if (title) {
-                    cell.attr('data-vendor-tooltip', title);
-                    cell.find('a, span').attr('data-vendor-tooltip', title);
-                }
-                cell.removeAttr('title');
-                cell.find('a, span').removeAttr('title');
-            });
-        }
-
-        function bindVendorDatepickerHover(inst) {
-            if (!inst || !inst.dpDiv) return;
-            const dp = window.jQuery(inst.dpDiv);
-            let hideTimer = null;
-            let tooltip = document.getElementById('vendor-datepicker-tooltip');
-            if (!tooltip) {
-                tooltip = document.createElement('div');
-                tooltip.id = 'vendor-datepicker-tooltip';
-                tooltip.className = 'vendor-datepicker-tooltip';
-                document.body.appendChild(tooltip);
-            }
-
-            dp.off('mouseenter.vendor-tooltip mousemove.vendor-tooltip mouseleave.vendor-tooltip', 'td.is-holiday, td.is-sunday');
-            dp.on('mouseenter.vendor-tooltip', 'td.is-holiday, td.is-sunday', function (event) {
-                const text = window.jQuery(this).attr('data-vendor-tooltip') || '';
-                if (!text) return;
-                if (hideTimer) {
-                    clearTimeout(hideTimer);
-                    hideTimer = null;
-                }
-                tooltip.textContent = text;
-                tooltip.classList.add('vendor-datepicker-tooltip--visible');
-                tooltip.style.left = `${event.clientX + 12}px`;
-                tooltip.style.top = `${event.clientY + 12}px`;
-            });
-            dp.on('mousemove.vendor-tooltip', 'td.is-holiday, td.is-sunday', function (event) {
-                tooltip.style.left = `${event.clientX + 12}px`;
-                tooltip.style.top = `${event.clientY + 12}px`;
-            });
-            dp.on('mouseleave.vendor-tooltip', 'td.is-holiday, td.is-sunday', function () {
-                hideTimer = setTimeout(function () {
-                    tooltip.classList.remove('vendor-datepicker-tooltip--visible');
-                }, 200);
-            });
-        }
-
-        if (plannedDate.value) {
-            const initial = new Date(plannedDate.value);
-            if (!isNaN(initial.getTime())) {
-                plannedDate.dataset.isoValue = toIsoDate(initial);
-                plannedDate.value = toDisplayDate(initial);
-            }
-        }
-
-        window.jQuery(plannedDate).datepicker({
-            dateFormat: 'dd-mm-yy',
-            minDate: 0,
-            beforeShowDay: function (date) {
+        // Initialize bootstrap-material-datetimepicker for date
+        window.jQuery(plannedDate).bootstrapMaterialDatePicker({
+            format: 'DD-MM-YYYY',
+            time: false,
+            minDate: new Date(),
+            disabledDays: function(date) {
                 const ds = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
                 const isSunday = date.getDay() === 0;
-                if (holidayData[ds]) {
-                    return [false, 'is-holiday', holidayData[ds]];
-                }
-                if (isSunday) {
-                    return [false, 'is-sunday', 'Sunday - Not available'];
-                }
-                return [true, '', ''];
+                return !isSunday && !holidays[ds];
             },
-            beforeShow: function (input, inst) {
-                setTimeout(function () {
-                    scheduleReposition();
-                    document.removeEventListener('scroll', scheduleReposition, true);
-                    window.removeEventListener('resize', scheduleReposition);
-                    document.addEventListener('scroll', scheduleReposition, true);
-                    window.addEventListener('resize', scheduleReposition);
-                    applyVendorDatepickerTooltips(inst);
-                    bindVendorDatepickerHover(inst);
-                }, 0);
-            },
-            onChangeMonthYear: function () {
-                setTimeout(function () {
-                    scheduleReposition();
-                    const inst = window.jQuery(plannedDate).data('datepicker');
-                    applyVendorDatepickerTooltips(inst);
-                    bindVendorDatepickerHover(inst);
-                }, 0);
-            },
-            onClose: function () {
-                document.removeEventListener('scroll', scheduleReposition, true);
-                window.removeEventListener('resize', scheduleReposition);
-            },
-            onSelect: function () {
-                const picked = window.jQuery(plannedDate).datepicker('getDate');
-                if (picked) {
-                    plannedDate.dataset.isoValue = toIsoDate(picked);
-                    plannedDate.value = toDisplayDate(picked);
-                }
-                syncPlannedStart();
-                loadMiniAvailability();
+            weekStart: 1,
+            lang: 'en',
+            cancelText: 'Cancel',
+            okText: 'OK'
+        });
+
+        // Handle date change
+        window.jQuery(plannedDate).on('change', function(e, date) {
+            if (date) {
+                const isoDate = toIsoDate(date.toDate());
+                plannedDate.dataset.isoValue = isoDate;
             }
+            syncPlannedStart();
+            loadMiniAvailability();
         });
     }
 
@@ -397,31 +292,19 @@ function initVendorBookingCreate(config) {
         plannedTime.addEventListener('keydown', function (event) { event.preventDefault(); });
         plannedTime.addEventListener('paste', function (event) { event.preventDefault(); });
 
-        function ensureTimepickerOkEnabled() {
-            const wrapper = document.querySelector('.mdtp__wrapper');
-            if (!wrapper) return;
-            const buttons = wrapper.querySelectorAll('button');
-            buttons.forEach((btn) => {
-                if (btn.textContent.trim().toLowerCase() === 'ok') {
-                    btn.disabled = false;
-                    btn.removeAttribute('disabled');
-                    btn.style.pointerEvents = 'auto';
-                }
-            });
-        }
-
+        // Use mdtimepicker with circular clock like admin portal
         window.mdtimepicker('#planned-time', {
+            timeFormat: 'hh:mm',
             format: 'hh:mm',
             is24hour: true,
-            theme: 'cyan',
-            hourPadding: true
+            theme: 'blue',
+            hourPadding: true,
+            autoSwitch: true,
+            readOnly: true
         });
 
-        plannedTime.addEventListener('click', function () {
-            setTimeout(ensureTimepickerOkEnabled, 0);
-        });
-
-        plannedTime.addEventListener('change', function () {
+        // Handle time change
+        plannedTime.addEventListener('timechanged', function(e) {
             syncPlannedStart();
             loadMiniAvailability();
         });

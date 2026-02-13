@@ -53,27 +53,27 @@
             </div>
             <div class="vd-chart-body">
                 <div class="vd-bar-chart" id="statusBarChart">
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['pending'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #f59e0b;">
+                    <div class="vd-bar-item" data-count="{{ $stats['pending'] ?? 0 }}" style="--bar-height: {{ (($stats['pending'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #f59e0b;">
                         <div class="vd-bar-value">{{ $stats['pending'] ?? 0 }}</div>
                         <div class="vd-bar-label">PND</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['scheduled'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #64748b;">
+                    <div class="vd-bar-item" data-count="{{ $stats['scheduled'] ?? 0 }}" style="--bar-height: {{ (($stats['scheduled'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #64748b;">
                         <div class="vd-bar-value">{{ $stats['scheduled'] ?? 0 }}</div>
                         <div class="vd-bar-label">SCH</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['waiting'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #f59e0b;">
+                    <div class="vd-bar-item" data-count="{{ $stats['waiting'] ?? 0 }}" style="--bar-height: {{ (($stats['waiting'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #f59e0b;">
                         <div class="vd-bar-value">{{ $stats['waiting'] ?? 0 }}</div>
                         <div class="vd-bar-label">WAIT</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['in_progress'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #3b82f6;">
+                    <div class="vd-bar-item" data-count="{{ $stats['in_progress'] ?? 0 }}" style="--bar-height: {{ (($stats['in_progress'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #3b82f6;">
                         <div class="vd-bar-value">{{ $stats['in_progress'] ?? 0 }}</div>
                         <div class="vd-bar-label">IN PR</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['completed'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #10b981;">
+                    <div class="vd-bar-item" data-count="{{ $stats['completed'] ?? 0 }}" style="--bar-height: {{ (($stats['completed'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #10b981;">
                         <div class="vd-bar-value">{{ $stats['completed'] ?? 0 }}</div>
                         <div class="vd-bar-label">CMPLT</div>
                     </div>
-                    <div class="vd-bar-item" style="--bar-height: {{ (($stats['rejected'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #ef4444;">
+                    <div class="vd-bar-item" data-count="{{ $stats['rejected'] ?? 0 }}" style="--bar-height: {{ (($stats['rejected'] ?? 0) / max($stats['total'], 1)) * 100 }}%; --bar-color: #ef4444;">
                         <div class="vd-bar-value">{{ $stats['rejected'] ?? 0 }}</div>
                         <div class="vd-bar-label">CXL</div>
                     </div>
@@ -86,44 +86,46 @@
             <div class="vd-chart-header">
                 <h3 class="vd-chart-title">
                     <i class="fas fa-truck"></i>
-                    Container Performance
+                    Truck Performance
                 </h3>
             </div>
             <div class="vd-performance-body">
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--success">
-                        <i class="fas fa-check-circle"></i>
+                <div class="vd-performance-grid">
+                    <div class="vd-performance-item">
+                        <div class="vd-performance-icon vd-performance-icon--success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="vd-performance-info">
+                            <div class="vd-performance-label">On-Time Arrivals</div>
+                            <div class="vd-performance-value" id="onTimeArrivals">-</div>
+                        </div>
                     </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">On-Time Arrivals</div>
-                        <div class="vd-performance-value" id="onTimeArrivals">-</div>
+                    <div class="vd-performance-item">
+                        <div class="vd-performance-icon vd-performance-icon--warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="vd-performance-info">
+                            <div class="vd-performance-label">Late Arrivals</div>
+                            <div class="vd-performance-value" id="lateArrivals">-</div>
+                        </div>
                     </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--warning">
-                        <i class="fas fa-clock"></i>
+                    <div class="vd-performance-item">
+                        <div class="vd-performance-icon vd-performance-icon--info">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div class="vd-performance-info">
+                            <div class="vd-performance-label">Avg Waiting</div>
+                            <div class="vd-performance-value" id="avgWaiting">-</div>
+                        </div>
                     </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Late Arrivals</div>
-                        <div class="vd-performance-value" id="lateArrivals">-</div>
-                    </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--info">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Avg Waiting</div>
-                        <div class="vd-performance-value" id="avgWaiting">-</div>
-                    </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--success">
-                        <i class="fas fa-tachometer-alt"></i>
-                    </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Avg Process Time</div>
-                        <div class="vd-performance-value" id="avgProcess">-</div>
+                    <div class="vd-performance-item">
+                        <div class="vd-performance-icon vd-performance-icon--success">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <div class="vd-performance-info">
+                            <div class="vd-performance-label">Avg Process Time</div>
+                            <div class="vd-performance-value" id="avgProcess">-</div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -58,10 +58,10 @@
 .vendor-header__logo {
     height: 52px;
     width: 52px;
-    object-fit: contain;
+    object-fit: cover;
     background: #ffffff;
-    border-radius: 10px;
-    padding: 6px;
+    border-radius: 15px;
+    padding: 0px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -90,14 +90,17 @@
 }
 
 .vendor-nav-link:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: #0284c7;
+    color: #ffffff;
     opacity: 1;
 }
 
 .vendor-nav-link.active {
-    background: rgba(255, 255, 255, 0.12);
+    background: #0284c7;
+    color: #ffffff;
     opacity: 1;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10) inset;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
 }
 
 .vendor-nav-divider {
@@ -220,13 +223,14 @@
 }
 
 .vendor-btn--primary {
-    background: linear-gradient(135deg, var(--vendor-brand) 0%, var(--vendor-brand-2) 100%);
+    background: #0284c7;
     color: #ffffff;
 }
 
 .vendor-btn--primary:hover {
+    background: #0369a1;
     transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.28);
+    box-shadow: 0 10px 20px rgba(2, 132, 199, 0.28);
 }
 
 .vendor-btn--nav {
@@ -859,6 +863,12 @@
     height: 100%;
     position: relative;
     min-width: 30px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.vendor-page--dashboard .vd-bar-item:hover {
+    transform: translateY(-4px);
 }
 
 .vendor-page--dashboard .vd-bar-item::before {
@@ -869,7 +879,39 @@
     min-height: 4px;
     background: var(--bar-color, #64748b);
     border-radius: 4px 4px 0 0;
-    transition: height 0.5s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.vendor-page--dashboard .vd-bar-item:hover::before {
+    filter: brightness(1.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 6px 6px 0 0;
+}
+
+/* Tooltip on hover */
+.vendor-page--dashboard .vd-bar-item::after {
+    content: attr(data-count);
+    position: absolute;
+    bottom: calc(var(--bar-height, 4px) + 8px);
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    background: #1e293b;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.vendor-page--dashboard .vd-bar-item:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
 }
 
 .vendor-page--dashboard .vd-bar-value {
@@ -879,6 +921,12 @@
     margin-bottom: 4px;
     position: absolute;
     top: calc(100% - var(--bar-height, 4px) - 20px);
+    transition: all 0.3s ease;
+}
+
+.vendor-page--dashboard .vd-bar-item:hover .vd-bar-value {
+    transform: translateY(-4px);
+    color: var(--bar-color, #64748b);
 }
 
 .vendor-page--dashboard .vd-bar-label {
@@ -889,6 +937,12 @@
     position: absolute;
     bottom: -24px;
     white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.vendor-page--dashboard .vd-bar-item:hover .vd-bar-label {
+    color: #1e293b;
+    font-weight: 600;
 }
 
 /* Performance Card */
@@ -897,14 +951,20 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+}
+
+.vendor-page--dashboard .vd-performance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex: 1;
 }
 
 .vendor-page--dashboard .vd-performance-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px;
+    padding: 12px;
     border-radius: 8px;
     background: #f8fafc;
 }
@@ -2077,6 +2137,56 @@
     opacity: 1;
 }
 
+/* PO Validation Status Icons */
+.vendor-page--bookings-create .cb-input-status {
+    position: absolute;
+    top: calc(50% - 10px);
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: opacity 0.2s ease;
+}
+
+.vendor-page--bookings-create .cb-input-status.show {
+    opacity: 1;
+}
+
+.vendor-page--bookings-create .cb-input-status.valid::before {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #10b981;
+}
+
+.vendor-page--bookings-create .cb-input-status.invalid::before {
+    content: '\f00d';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #ef4444;
+}
+
+/* PO Validation Message */
+.vendor-page--bookings-create .cb-po-message {
+    font-size: 12px;
+    margin-top: 4px;
+    min-height: 18px;
+    transition: all 0.2s ease;
+}
+
+.vendor-page--bookings-create .cb-po-message.valid {
+    color: #10b981;
+}
+
+.vendor-page--bookings-create .cb-po-message.invalid {
+    color: #ef4444;
+}
+
 .vendor-page--bookings-create .cb-po-results {
     position: absolute;
     top: 100%;
@@ -2187,6 +2297,334 @@
 
 .vendor-page--bookings-create .cb-btn--primary:hover {
     background: #1d4ed8;
+}
+
+/* New Form Layout - 2 Column Grid */
+.vendor-page--bookings-create .cb-form-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vendor-page--bookings-create .cb-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.vendor-page--bookings-create .cb-form-row--full {
+    grid-template-columns: 1fr;
+}
+
+.vendor-page--bookings-create .cb-section--notes {
+    grid-column: 1 / -1;
+}
+
+/* Field row for Date/Time side by side */
+.vendor-page--bookings-create .cb-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.vendor-page--bookings-create .cb-field--half {
+    margin-bottom: 0;
+}
+
+/* 2x2 Grid for Vehicle & Driver fields */
+.vendor-page--bookings-create .cb-field-grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+}
+
+.vendor-page--bookings-create .cb-field-grid-2x2 .cb-field {
+    margin-bottom: 0;
+}
+
+/* Header actions */
+.vendor-page--bookings-create .cb-header__actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Large textarea for notes */
+.vendor-page--bookings-create .cb-textarea--large {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Date/Time input styling to match admin */
+.vendor-page--bookings-create .cb-input--date,
+.vendor-page--bookings-create .cb-input--time {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.vendor-page--bookings-create .cb-input--time {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E");
+}
+
+/* MD TimePicker (mdtimepicker) Styling - Circular Clock */
+.mdtp__wrapper {
+    font-family: 'Inter', sans-serif;
+}
+
+.mdtp__wrapper .mdtp__time_container {
+    background: #ffffff;
+}
+
+.mdtp__wrapper .mdtp__time_header {
+    background: #0284c7;
+    color: #ffffff;
+    padding: 16px 24px;
+}
+
+.mdtp__wrapper .mdtp__time_header span {
+    font-size: 48px;
+    font-weight: 300;
+}
+
+.mdtp__wrapper .mdtp__clock_container {
+    background: #ffffff;
+    padding: 20px;
+}
+
+.mdtp__wrapper .mdtp__clock {
+    background: #f1f5f9;
+    border: none;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__am,
+.mdtp__wrapper .mdtp__clock .mdtp__pm {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__am:hover,
+.mdtp__wrapper .mdtp__clock .mdtp__pm:hover {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__am.active,
+.mdtp__wrapper .mdtp__clock .mdtp__pm.active {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__hour_holder,
+.mdtp__wrapper .mdtp__clock .mdtp__minute_holder {
+    background: transparent;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__digit {
+    color: #475569;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__digit:hover {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__digit.active {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__clock_dot {
+    background: #0284c7;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__hour_hand,
+.mdtp__wrapper .mdtp__clock .mdtp__minute_hand {
+    background: #0284c7;
+}
+
+.mdtp__wrapper .mdtp__clock .mdtp__hour_hand::after,
+.mdtp__wrapper .mdtp__clock .mdtp__minute_hand::after {
+    background: #0284c7;
+}
+
+.mdtp__wrapper .mdtp__button {
+    color: #0284c7;
+    font-weight: 600;
+}
+
+.mdtp__wrapper .mdtp__button:hover {
+    background: #e0f2fe;
+}
+
+.mdtp__wrapper .mdtp__button.mdtp__button--ok {
+    color: #0284c7;
+}
+
+/* Bootstrap Material DatePicker Styling */
+.dtp {
+    font-family: 'Inter', sans-serif;
+}
+
+.dtp > .dtp-content {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.dtp header.dtp-header {
+    background: #0284c7;
+    padding: 16px 24px;
+}
+
+.dtp header.dtp-header .dtp-date {
+    font-size: 24px;
+    font-weight: 300;
+    color: #ffffff;
+}
+
+.dtp header.dtp-header .dtp-year {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 4px;
+}
+
+.dtp .dtp-picker-month {
+    background: #ffffff;
+    padding: 16px;
+}
+
+.dtp .dtp-picker-month .dtp-select-month-range {
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.dtp .dtp-picker-month .dtp-select-month-range:hover {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.dtp table.dtp-picker-days {
+    margin: 0;
+    background: #ffffff;
+}
+
+.dtp table.dtp-picker-days thead tr th {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 12px;
+    padding: 8px 0;
+    text-transform: uppercase;
+}
+
+.dtp table.dtp-picker-days tbody tr td {
+    padding: 4px;
+}
+
+.dtp table.dtp-picker-days tbody tr td > a {
+    color: #475569;
+    font-size: 14px;
+    font-weight: 500;
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.dtp table.dtp-picker-days tbody tr td > a:hover {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.dtp table.dtp-picker-days tbody tr td.selected > a,
+.dtp table.dtp-picker-days tbody tr td.selected > a:hover {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.dtp table.dtp-picker-days tbody tr td.disabled > a,
+.dtp table.dtp-picker-days tbody tr td.disabled > a:hover {
+    color: #cbd5e1;
+    background: transparent;
+    cursor: not-allowed;
+}
+
+.dtp .dtp-buttons {
+    background: #ffffff;
+    padding: 12px 16px;
+    border-top: 1px solid #e2e8f0;
+    text-align: right;
+}
+
+.dtp .dtp-buttons button.btn {
+    color: #0284c7;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    margin-left: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dtp .dtp-buttons button.btn:hover {
+    background: #e0f2fe;
+}
+
+.dtp .dtp-buttons button.btn.dtp-btn-ok {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.dtp .dtp-buttons button.btn.dtp-btn-ok:hover {
+    background: #0369a1;
+}
+
+.dtp .dtp-buttons button.btn.dtp-btn-cancel {
+    color: #64748b;
+}
+
+.dtp .dtp-buttons button.btn.dtp-btn-cancel:hover {
+    background: #f1f5f9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .vendor-page--bookings-create .cb-form-row,
+    .vendor-page--bookings-create .cb-field-row,
+    .vendor-page--bookings-create .cb-field-grid-2x2 {
+        grid-template-columns: 1fr;
+    }
+
+    .vendor-page--bookings-create .cb-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .vendor-page--bookings-create .cb-header__actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .mdtp__wrapper .mdtp__time_header span {
+        font-size: 36px;
+    }
+
+    .dtp > .dtp-content {
+        max-width: 320px;
+    }
 }
 
 /* Vendor Booking Create Page */
