@@ -24,6 +24,8 @@ class BookingRequest extends Model
         'direction',
         'planned_start',
         'planned_duration',
+        'planned_gate_id',
+        'warehouse_id',
         'truck_type',
         'vehicle_number',
         'driver_name',

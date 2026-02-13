@@ -197,35 +197,91 @@ if (shiftFilter) {
         shift3: { start: 23, end: 6, wrap: true }
     };
 
-    function isHourInRange(hour, range) {
+    // Build ordered list of hours for a shift
+    function getShiftHours(range) {
+        var hours = [];
         if (range.wrap) {
-            return hour >= range.start || hour <= range.end;
+            for (var h = range.start; h <= 23; h++) hours.push(h);
+            for (var h2 = 0; h2 <= range.end; h2++) hours.push(h2);
+        } else {
+            for (var h3 = range.start; h3 <= range.end; h3++) hours.push(h3);
         }
-        return hour >= range.start && hour <= range.end;
+        return hours;
     }
+
+    // Map: for each hour in the shift, what is its slot index (0-based position in the visible grid)
+    function buildHourToSlotIndex(hours) {
+        var map = {};
+        for (var i = 0; i < hours.length; i++) {
+            map[hours[i]] = i;
+        }
+        return map;
+    }
+
+    var timeCol = document.querySelector('.st-dock-time-col');
 
     function applyShiftFilter(shift) {
         var range = shiftRanges[shift] || shiftRanges.full;
         var gridBody = document.querySelector('.st-dock-grid-body');
+        var hours = getShiftHours(range);
+        var hourMap = buildHourToSlotIndex(hours);
+        var slotHeight = 60; // px per hour slot
 
-        // Show/hide slot cards based on their start hour
+        // Rebuild time column with correct hour order
+        if (timeCol) {
+            timeCol.innerHTML = '';
+            hours.forEach(function(h) {
+                var div = document.createElement('div');
+                div.className = 'st-dock-time-slot';
+                div.setAttribute('data-hour', h);
+                div.textContent = (h < 10 ? '0' : '') + h + ':00';
+                timeCol.appendChild(div);
+            });
+        }
+
+        // Adjust gate column heights
+        var colHeight = hours.length * slotHeight;
+        document.querySelectorAll('.st-dock-gate-col').forEach(function(col) {
+            col.style.height = colHeight + 'px';
+            // Update background grid lines to match
+            col.style.backgroundSize = '100% ' + slotHeight + 'px';
+        });
+
+        // Reposition slot cards
         document.querySelectorAll('.st-dock-card').forEach(function(card) {
-            var topPx = parseInt(card.dataset.top, 10) || 0;
-            var cardHour = Math.floor(topPx / 60);
-            card.style.display = isHourInRange(cardHour, range) ? '' : 'none';
+            var origTop = parseInt(card.dataset.top, 10) || 0;
+            var origHeight = parseInt(card.dataset.height, 10) || 60;
+            var cardHour = Math.floor(origTop / 60);
+            var minuteInHour = origTop % 60;
+
+            // Check if card's hour is in the visible shift
+            if (typeof hourMap[cardHour] !== 'undefined') {
+                card.style.display = '';
+                var newTop = hourMap[cardHour] * slotHeight + minuteInHour;
+                card.style.top = newTop + 'px';
+                card.style.height = origHeight + 'px';
+            } else {
+                card.style.display = 'none';
+            }
         });
 
-        // Show/hide current time line
+        // Reposition current time line
         document.querySelectorAll('.st-dock-time-line').forEach(function(line) {
-            var topPx = parseInt(line.dataset.top, 10) || 0;
-            var lineHour = Math.floor(topPx / 60);
-            line.style.display = isHourInRange(lineHour, range) ? '' : 'none';
+            var origTop = parseInt(line.dataset.top, 10) || 0;
+            var lineHour = Math.floor(origTop / 60);
+            var minuteInHour = origTop % 60;
+
+            if (typeof hourMap[lineHour] !== 'undefined') {
+                line.style.display = '';
+                line.style.top = (hourMap[lineHour] * slotHeight + minuteInHour) + 'px';
+            } else {
+                line.style.display = 'none';
+            }
         });
 
-        // Scroll to the start of the shift range
+        // Scroll to top
         if (gridBody) {
-            var scrollTarget = range.start * 60; // 60px per hour
-            gridBody.scrollTop = scrollTarget;
+            gridBody.scrollTop = 0;
         }
     }
 
@@ -243,7 +299,7 @@ if (shiftFilter) {
         applyShiftFilter(shift);
     });
 
-    // Default: scroll to current hour or 07:00 on load
+    // Default: scroll to current hour on load
     var gridBody = document.querySelector('.st-dock-grid-body');
     if (gridBody) {
         var nowHour = new Date().getHours();

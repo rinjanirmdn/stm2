@@ -7,7 +7,6 @@ use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
 use App\Services\TimeCalculationService;
-use App\Services\SlotReceiptReconciliationService;
 use App\Models\Slot;
 use DateTime;
 use Illuminate\Http\Request;
@@ -834,7 +833,7 @@ class SlotController extends Controller
             'totalLeadTimeMinutes' => $totalLeadTimeMinutes,
             'targetStatus' => $targetStatus,
             'logs' => $logs,
-            'slotItems' => $slotItems,
+            'slotItems' => collect(),
         ]);
     }
 
@@ -1299,13 +1298,6 @@ class SlotController extends Controller
 
         if ((string) ($slot->status ?? '') !== Slot::STATUS_SCHEDULED) {
             return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled slots can be arrived');
-        }
-
-        $slotItems = collect();
-        if (Schema::hasTable('slot_po_items')) {
-            $slotItems = SlotPoItem::where('slot_id', $slotId)
-                ->orderBy('item_no')
-                ->get();
         }
 
         return view('slots.arrival', [

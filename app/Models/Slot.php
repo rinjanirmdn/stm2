@@ -232,11 +232,6 @@ class Slot extends Model
         return $this->hasMany(BookingHistory::class)->orderBy('created_at', 'desc');
     }
 
-    public function poItems()
-    {
-        return $this->hasMany(SlotPoItem::class, 'slot_id');
-    }
-
     /**
      * Scope for pending approval slots
      */

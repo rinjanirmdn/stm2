@@ -9,34 +9,36 @@ class SapPoService
     private array $dummyPurchaseOrders = [
         [
             'po_number' => '4500000001',
+            'vendor_code' => 'V1001',
             'vendor_name' => 'PT Dummy Supplier 1',
+            'supplier_code' => 'V1001',
+            'supplier_name' => 'PT Dummy Supplier 1',
+            'direction' => 'inbound',
             'plant' => 'WH1',
             'warehouse_name' => 'Warehouse 1',
             'doc_date' => '2025-12-01',
-            'items' => [
-                ['material' => 'MAT-0001', 'description' => 'Dummy Item A', 'qty' => 10, 'uom' => 'PCS'],
-                ['material' => 'MAT-0002', 'description' => 'Dummy Item B', 'qty' => 5, 'uom' => 'PCS'],
-            ],
         ],
         [
             'po_number' => '4500000002',
+            'vendor_code' => 'V1002',
             'vendor_name' => 'PT Dummy Supplier 2',
+            'supplier_code' => 'V1002',
+            'supplier_name' => 'PT Dummy Supplier 2',
+            'direction' => 'inbound',
             'plant' => 'WH2',
             'warehouse_name' => 'Warehouse 2',
             'doc_date' => '2025-12-05',
-            'items' => [
-                ['material' => 'MAT-0100', 'description' => 'Dummy Item C', 'qty' => 20, 'uom' => 'BOX'],
-            ],
         ],
         [
             'po_number' => '4500001234',
+            'vendor_code' => 'V2000',
             'vendor_name' => 'PT Example Vendor',
+            'supplier_code' => 'V2000',
+            'supplier_name' => 'PT Example Vendor',
+            'direction' => 'inbound',
             'plant' => 'WH1',
             'warehouse_name' => 'Warehouse 1',
             'doc_date' => '2025-12-10',
-            'items' => [
-                ['material' => 'MAT-9999', 'description' => 'Dummy Item Z', 'qty' => 1, 'uom' => 'PCS'],
-            ],
         ],
     ];
 
@@ -70,11 +72,12 @@ class SapPoService
                 }
                 $out[] = [
                     'po_number' => $poNumber,
+                    'vendor_code' => (string) ($po['vendor_code'] ?? ''),
                     'vendor_name' => (string) ($po['vendor_name'] ?? ''),
                     'plant' => (string) ($po['plant'] ?? ''),
                     'doc_date' => (string) ($po['doc_date'] ?? ''),
                     'warehouse_name' => (string) ($po['warehouse_name'] ?? ''),
-                    'direction' => null,
+                    'direction' => (string) ($po['direction'] ?? 'inbound'),
                     'source' => 'dummy',
                 ];
                 if (count($out) >= $limit) {
@@ -185,7 +188,6 @@ class SapPoService
                             'doc_date' => (string)($item['DocDate'] ?? ''),
                             'plant' => '',
                             'warehouse_name' => '',
-                            'items' => [],
                         ];
 
                         if (count($results) >= $limit) {
@@ -298,7 +300,6 @@ class SapPoService
                     'plant' => (string) ($data['plant'] ?? $data['wh'] ?? ''),
                     'warehouse_name' => (string) ($data['warehouse_name'] ?? $data['warehouseName'] ?? ''),
                     'doc_date' => (string) ($data['doc_date'] ?? $data['docDate'] ?? ''),
-                    'items' => is_array($data['items'] ?? null) ? $data['items'] : [],
                 ];
             } catch (\Throwable $e) {
                 return null;
@@ -376,43 +377,6 @@ class SapPoService
                 $partnerName = $supplierName;
             }
 
-            $items = [];
-            foreach ($rows as $it) {
-                if (! is_array($it)) {
-                    continue;
-                }
-
-                if (empty($items)) {
-                    $qtyFields = [];
-                    foreach ($it as $k => $v) {
-                        if (stripos((string) $k, 'qty') !== false) {
-                            $qtyFields[$k] = $v;
-                        }
-                    }
-
-                    \Log::info('SAP PO Detail Row Sample', [
-                        'po' => (string) ($first['PoNo'] ?? $poNumber),
-                        'keys' => array_slice(array_keys($it), 0, 60),
-                        'qty_fields' => $qtyFields,
-                        'ItemNo' => $it['ItemNo'] ?? null,
-                        'MaterialCode' => $it['MaterialCode'] ?? null,
-                        'MaterialName' => $it['MaterialName'] ?? null,
-                        'QtyPO' => $it['QtyPO'] ?? null,
-                        'UnitPO' => $it['UnitPO'] ?? null,
-                        'QtyGRTotal' => $it['QtyGRTotal'] ?? null,
-                    ]);
-                }
-
-                $items[] = [
-                    'item_no' => (string) ($it['ItemNo'] ?? ''),
-                    'material' => (string) ($it['MaterialCode'] ?? ''),
-                    'description' => (string) ($it['MaterialName'] ?? ''),
-                    'qty' => $it['QtyPO'] ?? null,
-                    'uom' => (string) ($it['UnitPO'] ?? ''),
-                    'qty_gr_total' => $it['QtyGRTotal'] ?? null,
-                ];
-            }
-
             return [
                 'po_number' => (string) ($first['PoNo'] ?? $poNumber),
                 // Backward-compatible
@@ -428,7 +392,6 @@ class SapPoService
                 'doc_date' => $docDate,
                 'plant' => '',
                 'warehouse_name' => '',
-                'items' => $items,
             ];
         } catch (\Throwable $e) {
             return null;

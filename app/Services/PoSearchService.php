@@ -157,8 +157,11 @@ class PoSearchService
                     'vendor_code' => $vendorCode,
                     'vendor_name' => $vendorName,
                     'vendor_type' => $vendorType,
+                    'supplier_code' => (string) ($api['supplier_code'] ?? $vendorCode),
+                    'supplier_name' => (string) ($api['supplier_name'] ?? $vendorName),
+                    'customer_code' => (string) ($api['customer_code'] ?? ''),
+                    'customer_name' => (string) ($api['customer_name'] ?? ''),
                     'direction' => $direction,
-                    'items' => is_array($api['items'] ?? null) ? $api['items'] : [],
                     'source' => 'sap'
                 ];
             }
