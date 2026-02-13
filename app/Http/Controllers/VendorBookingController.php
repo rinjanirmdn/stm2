@@ -213,6 +213,8 @@ class VendorBookingController extends Controller
 
         $onTime = 0;
         $late = 0;
+        $totalLateArrival = 0;
+        $lateArrivalCount = 0;
         $totalWaiting = 0;
         $totalProcess = 0;
         $waitingCount = 0;
@@ -221,9 +223,12 @@ class VendorBookingController extends Controller
         foreach ($completedSlots as $slot) {
             // On-time vs late: compare arrival_time to planned_start
             if ($slot->arrival_time && $slot->planned_start) {
-                $diffMin = $slot->arrival_time->diffInMinutes($slot->planned_start, false);
+                // Positive value means truck arrived AFTER planned_start
+                $diffMin = $slot->planned_start->diffInMinutes($slot->arrival_time, false);
                 if ($diffMin > 15) {
                     $late++;
+                    $totalLateArrival += $diffMin;
+                    $lateArrivalCount++;
                 } else {
                     $onTime++;
                 }
@@ -245,8 +250,11 @@ class VendorBookingController extends Controller
         return [
             'on_time'     => $onTime,
             'late'        => $late,
+            'avg_late'    => $lateArrivalCount > 0 ? round($totalLateArrival / $lateArrivalCount) : null,
             'avg_waiting' => $waitingCount > 0 ? round($totalWaiting / $waitingCount) : null,
             'avg_process' => $processCount > 0 ? round($totalProcess / $processCount) : null,
+            'waiting_count' => $waitingCount,
+            'process_count' => $processCount,
         ];
     }
 
@@ -278,11 +286,14 @@ class VendorBookingController extends Controller
         }
 
         // Counts for status tabs (independent from current status filter & pagination)
+        $pendingCount = (clone $baseQuery)->where('status', BookingRequest::STATUS_PENDING)->count();
+        $approvedCount = (clone $baseQuery)->where('status', BookingRequest::STATUS_APPROVED)->count();
+        $cancelledCount = (clone $baseQuery)->where('status', BookingRequest::STATUS_CANCELLED)->count();
         $counts = [
-            'pending' => (clone $baseQuery)->where('status', BookingRequest::STATUS_PENDING)->count(),
-            'scheduled' => (clone $baseQuery)->where('status', BookingRequest::STATUS_APPROVED)->count(),
-            'completed' => 0,
-            'all' => (clone $baseQuery)->count(),
+            'pending' => $pendingCount,
+            'scheduled' => $approvedCount,
+            'cancelled' => $cancelledCount,
+            'all' => $pendingCount + $approvedCount + $cancelledCount,
         ];
 
         $query = (clone $baseQuery)
@@ -639,7 +650,7 @@ class VendorBookingController extends Controller
             }
 
             // Get all existing slots for the date - optimized query
-            \Log::info('Getting slots for date: ' . $date);
+            Log::info('Getting slots for date: ' . $date);
             $existingSlots = Slot::whereDate('planned_start', $date)
                 ->whereIn('status', [
                     Slot::STATUS_PENDING_APPROVAL,
@@ -651,7 +662,7 @@ class VendorBookingController extends Controller
                 ->select('planned_start', 'planned_duration', 'planned_gate_id')
                 ->get();
 
-            \Log::info('Found ' . $existingSlots->count() . ' slots');
+            Log::info('Found ' . $existingSlots->count() . ' slots');
 
             // Build time conflicts map
             $timeConflicts = [];
@@ -714,7 +725,7 @@ class VendorBookingController extends Controller
                 'error' => 'Validation failed: ' . $e->getMessage()
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Error in getAvailableSlots: ' . $e->getMessage());
+            Log::error('Error in getAvailableSlots: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => 'Failed to load availability: ' . $e->getMessage()

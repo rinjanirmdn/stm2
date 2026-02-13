@@ -63,7 +63,7 @@ function VendorStatusOverviewChart({ stats }) {
       { name: 'in_progress', value: inProgress, fill: tk('--in-progress', '#0284c7') },
       { name: 'completed', value: completed, fill: tk('--completed', '#059669') },
       { name: 'rejected', value: rejected, fill: tk('--cancelled', '#dc2626') },
-      { name: 'cancelled', value: cancelled, fill: tk('--cancelled', '#dc2626') },
+      { name: 'cancelled', value: cancelled, fill: '#0f172a' },
     ];
   }, [stats]);
 

@@ -11,31 +11,35 @@
 <div class="vd-container">
     <!-- Status Cards -->
     <div class="vd-status-strip">
-        <a href="{{ route('vendor.bookings.index', ['status' => 'pending']) }}" class="vd-status-item vd-status-item--pending">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'pending']) }}" class="vd-status-item vd-status-item--pending" title="Booking requests awaiting approval.">
             <div class="vd-status-item__count">{{ $stats['pending'] ?? 0 }}</div>
             <div class="vd-status-item__label">Pending</div>
         </a>
-        <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}" class="vd-status-item vd-status-item--scheduled">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}" class="vd-status-item vd-status-item--scheduled" title="Slots scheduled, truck not arrived.">
             <div class="vd-status-item__count">{{ $stats['scheduled'] ?? 0 }}</div>
             <div class="vd-status-item__label">Scheduled</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--waiting">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--waiting" title="Truck arrived, waiting in queue.">
             <div class="vd-status-item__count">{{ $stats['waiting'] ?? 0 }}</div>
             <div class="vd-status-item__label">Waiting</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--inprogress">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--inprogress" title="Loading/Unloading in progress.">
             <div class="vd-status-item__count">{{ $stats['in_progress'] ?? 0 }}</div>
             <div class="vd-status-item__label">In Progress</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--completed">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--completed" title="Process finished.">
             <div class="vd-status-item__count">{{ $stats['completed'] ?? 0 }}</div>
             <div class="vd-status-item__label">Completed</div>
         </a>
-        <a href="{{ route('vendor.bookings.index', ['status' => 'rejected']) }}" class="vd-status-item vd-status-item--rejected">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'rejected']) }}" class="vd-status-item vd-status-item--rejected" title="Rejected requests.">
             <div class="vd-status-item__count">{{ $stats['rejected'] ?? 0 }}</div>
             <div class="vd-status-item__label">Rejected</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--total">
+        <a href="{{ route('vendor.bookings.index', ['status' => 'cancelled']) }}" class="vd-status-item vd-status-item--cancelled" title="Cancelled slots/requests.">
+            <div class="vd-status-item__count">{{ $stats['cancelled'] ?? 0 }}</div>
+            <div class="vd-status-item__label">Cancelled</div>
+        </a>
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--total" title="Total slots in selected range.">
             <div class="vd-status-item__count">{{ $stats['total'] ?? 0 }}</div>
             <div class="vd-status-item__label">Total</div>
         </a>
@@ -82,45 +86,42 @@
         <div class="vd-performance-card">
             <div class="vd-chart-header">
                 <h3 class="vd-chart-title">
-                    <i class="fas fa-truck"></i>
                     Truck Performance
                 </h3>
             </div>
             <div class="vd-performance-body">
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--success">
-                        <i class="fas fa-check-circle"></i>
+                <div class="vd-performance-rows">
+                    <div class="vd-performance-row vd-performance-row--single" title="Late arrivals: average lateness (minutes) and total late count.">
+                        <div class="vd-performance-row__label">Late</div>
+                        <div class="vd-performance-row__vals">
+                            <div class="vd-performance-val" title="Average lateness (minutes) and total late count.">
+                                <span class="vd-performance-val__v">
+                                    {{ $performance['avg_late'] !== null ? $performance['avg_late'] . 'm' : '-' }} / {{ $performance['late'] ?? 0 }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">On-Time Arrivals</div>
-                        <div class="vd-performance-value">{{ $performance['on_time'] ?? '-' }}</div>
+
+                    <div class="vd-performance-row vd-performance-row--single" title="Waiting time: average minutes and number of samples.">
+                        <div class="vd-performance-row__label">Avg Waiting</div>
+                        <div class="vd-performance-row__vals">
+                            <div class="vd-performance-val" title="Average waiting time (minutes) and number of samples.">
+                                <span class="vd-performance-val__v">
+                                    {{ $performance['avg_waiting'] !== null ? $performance['avg_waiting'] . 'm' : '-' }} / {{ $performance['waiting_count'] ?? 0 }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--warning">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Late Arrivals</div>
-                        <div class="vd-performance-value">{{ $performance['late'] ?? '-' }}</div>
-                    </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--info">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Avg Waiting</div>
-                        <div class="vd-performance-value">{{ $performance['avg_waiting'] !== null ? $performance['avg_waiting'] . 'm' : '-' }}</div>
-                    </div>
-                </div>
-                <div class="vd-performance-item">
-                    <div class="vd-performance-icon vd-performance-icon--success">
-                        <i class="fas fa-tachometer-alt"></i>
-                    </div>
-                    <div class="vd-performance-info">
-                        <div class="vd-performance-label">Avg Process Time</div>
-                        <div class="vd-performance-value">{{ $performance['avg_process'] !== null ? $performance['avg_process'] . 'm' : '-' }}</div>
+
+                    <div class="vd-performance-row vd-performance-row--single" title="Process time: average minutes and number of samples.">
+                        <div class="vd-performance-row__label">Avg Process</div>
+                        <div class="vd-performance-row__vals">
+                            <div class="vd-performance-val" title="Average process time (minutes) and number of samples.">
+                                <span class="vd-performance-val__v">
+                                    {{ $performance['avg_process'] !== null ? $performance['avg_process'] . 'm' : '-' }} / {{ $performance['process_count'] ?? 0 }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -160,7 +161,7 @@
                             'in_progress' => 'info',
                             'completed' => 'success',
                             'rejected' => 'danger',
-                            'cancelled' => 'secondary',
+                            'cancelled' => 'cancelled',
                             default => 'secondary',
                         };
                         $ticketLabel = $slot ? ($slot->ticket_number ?? $booking->request_number ?? 'REQ-' . $booking->id) : ($booking->request_number ?? 'REQ-' . $booking->id);

@@ -223,14 +223,14 @@
 }
 
 .vendor-btn--primary {
-    background: #0284c7;
+    background: #1d4ed8;
     color: #ffffff;
 }
 
 .vendor-btn--primary:hover {
-    background: #0369a1;
+    background: #1e40af;
     transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(2, 132, 199, 0.28);
+    box-shadow: 0 10px 20px rgba(29, 78, 216, 0.28);
 }
 
 .vendor-btn--nav {
@@ -368,9 +368,15 @@
 }
 
 .vendor-badge--warning {
-    background: #fbbf24;
-    color: #ffffff;
-    border: 1px solid #f59e0b;
+    background: #ffedd5;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+}
+
+.vendor-badge--cancelled {
+    background: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
 }
 
 .vendor-badge--danger {
@@ -848,6 +854,10 @@
     color: #ef4444;
 }
 
+.vendor-page--dashboard .vd-status-item--cancelled .vd-status-item__count {
+    color: #0f172a;
+}
+
 .vendor-page--dashboard .vd-status-item--total .vd-status-item__count {
     color: #64748b;
 }
@@ -961,7 +971,7 @@
 }
 
 .vd-range-picker i {
-    color: #2563eb;
+    color: #1d4ed8;
 }
 
 .vd-range-picker span {
@@ -1031,11 +1041,11 @@
 
 .vd-date-filter-btn {
     padding: 8px 14px;
-    background: #3b82f6;
+    background: #1d4ed8;
     color: #ffffff;
     border: none;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -1045,7 +1055,7 @@
 }
 
 .vd-date-filter-btn:hover {
-    background: #2563eb;
+    background: #1e40af;
 }
 
 .vd-date-reset-btn {
@@ -1280,11 +1290,88 @@
     flex-direction: column;
 }
 
+.vendor-page--dashboard .vd-performance-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vendor-page--dashboard .vd-performance-row {
+    padding: 12px;
+    border-radius: 8px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vendor-page--dashboard .vd-performance-row__label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.vendor-page--dashboard .vd-performance-row__vals {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex: 1;
+}
+
+.vendor-page--dashboard .vd-performance-row--single .vd-performance-row__vals {
+    display: flex;
+}
+
+.vendor-page--dashboard .vd-performance-val {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.vendor-page--dashboard .vd-performance-row--single .vd-performance-val {
+    justify-content: flex-end;
+}
+
+.vendor-page--dashboard .vd-performance-row--single .vd-performance-val__v {
+    width: auto;
+}
+
+.vendor-page--dashboard .vd-performance-val__k {
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.vendor-page--dashboard .vd-performance-val__v {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    width: 100%;
+    text-align: right;
+}
+
+/* keep label size consistent for single-line layout */
+
+
 .vendor-page--dashboard .vd-performance-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     flex: 1;
+}
+
+.vendor-page--dashboard .vd-performance-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
 }
 
 .vendor-page--dashboard .vd-performance-item {
@@ -1294,6 +1381,10 @@
     padding: 12px;
     border-radius: 8px;
     background: #f8fafc;
+}
+
+.vendor-page--dashboard .vd-performance-rows .vd-performance-item {
+    display: none;
 }
 
 .vendor-page--dashboard .vd-performance-icon {
@@ -1686,15 +1777,31 @@
 
 .vendor-page--bookings-index .date-range-input {
     padding-right: 40px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vendor-page--bookings-index .date-range-input__left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
 }
 
 .vendor-page--bookings-index .date-range-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-65%);
-    color: #64748b;
+    color: #1d4ed8;
     pointer-events: none;
+}
+
+.vendor-page--bookings-index .date-range-input .fa-caret-down {
+    color: #1d4ed8;
+}
+
+.vendor-page--bookings-index .mb-tab--cancelled .mb-tab__count {
+    color: #0f172a;
 }
 
 .vendor-page--bookings-index .mb-row {
@@ -1770,9 +1877,9 @@
 }
 
 .vendor-page--bookings-index .mb-row__status--pending {
-    background: #fbbf24;
-    color: #ffffff;
-    border: 1px solid #f59e0b;
+    background: #ffedd5;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
 }
 
 .vendor-page--bookings-index .mb-row__status--scheduled {
@@ -1797,7 +1904,8 @@
 
 .vendor-page--bookings-index .mb-row__status--cancelled {
     background: #f1f5f9;
-    color: #64748b;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
 }
 
 .vendor-page--bookings-index .mb-row__status--arrival {
