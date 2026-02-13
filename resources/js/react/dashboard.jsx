@@ -140,7 +140,7 @@ function StatCard({ label, value, tip }) {
 }
 function MiniMetric({ label, value }) {
   return (
-    <div className="text-center bg-gray-50 rounded-lg" style={{padding:'var(--ds-pad)'}}>
+    <div className="text-center bg-white rounded-lg border border-gray-300 shadow-sm" style={{padding:'var(--ds-pad)'}}>
       <div className="text-gray-500 uppercase leading-tight break-words" style={{fontSize:'var(--ds-tiny)'}} title={label}>{label}</div>
       <div className="font-bold text-gray-800 leading-tight" style={{fontSize:'var(--ds-body)'}}>{typeof value === 'number' ? value.toLocaleString() : value}</div>
     </div>
@@ -339,7 +339,8 @@ function AnalyticsSlide({ data }) {
                       if(!value) return null;
                       const R=Math.PI/180, r=or+14;
                       const x=pcx+r*Math.cos(-midAngle*R), y=pcy+r*Math.sin(-midAngle*R);
-                      return <text x={x} y={y} textAnchor={x>pcx?'start':'end'} dominantBaseline="central" style={{fontSize:csVar('--ds-body'),fontWeight:700,fill:tk('--text-primary')}}>{pct}%</text>;
+                      const fontSize = Math.max(10, or * 0.18);
+                      return <text x={x} y={y} textAnchor={x>pcx?'start':'end'} dominantBaseline="central" style={{fontSize,fontWeight:700,fill:tk('--text-primary')}}>{pct}%</text>;
                     }}
                     labelLine={{stroke:tk('--chart-axis'),strokeWidth:1}}>
                     {dirData.items.map((_,i)=><Cell key={i} fill={COLORS_DIR()[i]}/>)}
@@ -347,10 +348,10 @@ function AnalyticsSlide({ data }) {
                   <Tooltip/>
                 </PieChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{containerType:'size'}}>
                 <div className="text-center">
-                  <div className="font-bold text-gray-800 leading-tight" style={{fontSize:'var(--ds-metric-value)'}}>{dirData.total}</div>
-                  <div className="text-gray-400 uppercase tracking-wide" style={{fontSize:'var(--ds-tiny)'}}>Total</div>
+                  <div className="font-bold text-gray-800 leading-tight" style={{fontSize:'min(clamp(18px, 6cqmin, 36px), 12cqmin)'}}>{dirData.total}</div>
+                  <div className="text-gray-400 uppercase tracking-wide" style={{fontSize:'min(clamp(9px, 2.5cqmin, 14px), 5cqmin)'}}>Total</div>
                 </div>
               </div>
             </div>
@@ -490,7 +491,8 @@ function KPISlide({ data }) {
                     const p = total > 0 ? ((value/total)*100).toFixed(1) : '0';
                     const R=Math.PI/180, r=or+14;
                     const x=pcx+r*Math.cos(-midAngle*R), y=pcy+r*Math.sin(-midAngle*R);
-                    return <text x={x} y={y} textAnchor={x>pcx?'start':'end'} dominantBaseline="central" style={{fontSize:csVar('--ds-body'),fontWeight:700,fill:tk('--text-primary')}}>{p}%</text>;
+                    const fontSize = Math.max(8, or * 0.14);
+                    return <text x={x} y={y} textAnchor={x>pcx?'start':'end'} dominantBaseline="central" style={{fontSize,fontWeight:600,fill:tk('--text-primary')}}>{p}%</text>;
                   }}
                   labelLine={{stroke:tk('--chart-axis'),strokeWidth:1}}>
                   {chartData.map((_,i)=><Cell key={i} fill={colors[i]||tk('--border-light')}/>)}
@@ -498,9 +500,9 @@ function KPISlide({ data }) {
                 <Tooltip/>
               </PieChart>
             </ResponsiveContainer>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{containerType:'size'}}>
               <div className="text-center">
-                <div className="font-bold leading-tight" style={{fontSize:'clamp(11px, 1.1vi, 20px)',color:pctColor}}>{pct}%</div>
+                <div className="font-bold leading-tight" style={{fontSize:'min(clamp(14px, 4.5cqmin, 28px), 9cqmin)',color:pctColor}}>{pct}%</div>
               </div>
             </div>
           </div>

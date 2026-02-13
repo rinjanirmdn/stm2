@@ -34,7 +34,7 @@
 <body class="vendor-app @yield('body_class')">
     <header class="vendor-header">
         <div class="vendor-header__brand">
-            <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" class="vendor-header__logo">
+            <img src="{{ asset('img/logo-icon.png') }}" alt="Slot Time" class="vendor-header__logo">
             <span class="vendor-header__title">Vendor Portal</span>
         </div>
 
@@ -136,6 +136,13 @@
 
         @yield('content')
     </main>
+
+    <!-- Global Footer -->
+    <footer class="vendor-footer">
+        <div class="vendor-footer__content">
+            <span>&copy; {{ date('Y') }} Slot Time Management. All rights reserved.</span>
+        </div>
+    </footer>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>

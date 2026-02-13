@@ -35,7 +35,7 @@
 }
 
 .vendor-header {
-    background: #0f172a;
+    background: #38bdf8;
     color: #ffffff;
     height: 72px;
     padding: 0 20px;
@@ -56,11 +56,13 @@
 }
 
 .vendor-header__logo {
-    height: 40px;
-    background: #ffffff;
-    padding: 2px;
-    border-radius: 6px;
+    height: 52px;
+    width: 52px;
     object-fit: contain;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .vendor-header__title {
@@ -424,7 +426,7 @@
     padding: 2px 6px;
     border-radius: 99px;
     font-weight: 700;
-    border: 2px solid #1e40af;
+    border: 2px solid #38bdf8;
 }
 
 .notification-dropdown {
@@ -660,7 +662,7 @@
 .vendor-page--dashboard .vd-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 72px - 48px);
+    min-height: calc(100vh - 72px - 48px - 52px);
     width: 100%;
     margin: 0;
     background: #f1f5f9;
@@ -681,14 +683,21 @@
 }
 
 .vendor-page--dashboard .vd-footer-container {
+    display: none;
+}
+
+/* Global Footer */
+.vendor-footer {
     background: #ffffff;
     border-top: 1px solid #e5e7eb;
     padding: 16px 20px;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 0 0 12px 12px;
+    text-align: center;
+    margin-top: auto;
+}
+
+.vendor-footer__content {
+    font-size: 12px;
+    color: #64748b;
 }
 
 .vendor-page--dashboard .vd-status-strip {
@@ -739,18 +748,285 @@
     font-size: 14px;
 }
 
-.vendor-page--dashboard .vd-status-item--warning .vd-status-item__count {
-    background: transparent;
-    color: #64748b;
-    border: none;
+.vendor-page--dashboard .vd-status-item--pending .vd-status-item__count {
+    color: #f59e0b;
 }
 
-.vendor-page--dashboard .vd-status-item--info .vd-status-item__count {
+.vendor-page--dashboard .vd-status-item--scheduled .vd-status-item__count {
+    color: #64748b;
+}
+
+.vendor-page--dashboard .vd-status-item--waiting .vd-status-item__count {
+    color: #f97316;
+}
+
+.vendor-page--dashboard .vd-status-item--inprogress .vd-status-item__count {
     color: #3b82f6;
 }
 
-.vendor-page--dashboard .vd-status-item--success .vd-status-item__count {
+.vendor-page--dashboard .vd-status-item--completed .vd-status-item__count {
     color: #10b981;
+}
+
+.vendor-page--dashboard .vd-status-item--rejected .vd-status-item__count {
+    color: #ef4444;
+}
+
+.vendor-page--dashboard .vd-status-item--total .vd-status-item__count {
+    color: #64748b;
+}
+
+/* Charts Section - 3 Containers */
+.vendor-page--dashboard .vd-charts-section {
+    display: grid;
+    grid-template-columns: 1fr 280px 320px;
+    gap: 16px;
+    padding: 16px 20px 20px;
+    background: #f1f5f9;
+    flex: 1;
+    min-height: 0;
+}
+
+.vendor-page--dashboard .vd-chart-card,
+.vendor-page--dashboard .vd-performance-card,
+.vendor-page--dashboard .vd-recent-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.vendor-page--dashboard .vd-chart-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.vendor-page--dashboard .vd-chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vendor-page--dashboard .vd-chart-title i {
+    color: #64748b;
+}
+
+.vendor-page--dashboard .vd-view-all-link {
+    font-size: 12px;
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.vendor-page--dashboard .vd-view-all-link:hover {
+    text-decoration: underline;
+}
+
+.vendor-page--dashboard .vd-chart-body {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+}
+
+/* Bar Chart */
+.vendor-page--dashboard .vd-bar-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 160px;
+    width: 100%;
+    gap: 8px;
+    padding-bottom: 24px;
+}
+
+.vendor-page--dashboard .vd-bar-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    position: relative;
+    min-width: 30px;
+}
+
+.vendor-page--dashboard .vd-bar-item::before {
+    content: '';
+    width: 100%;
+    max-width: 40px;
+    height: var(--bar-height, 4px);
+    min-height: 4px;
+    background: var(--bar-color, #64748b);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+}
+
+.vendor-page--dashboard .vd-bar-value {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+    position: absolute;
+    top: calc(100% - var(--bar-height, 4px) - 20px);
+}
+
+.vendor-page--dashboard .vd-bar-label {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 500;
+    position: absolute;
+    bottom: -24px;
+    white-space: nowrap;
+}
+
+/* Performance Card */
+.vendor-page--dashboard .vd-performance-body {
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vendor-page--dashboard .vd-performance-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.vendor-page--dashboard .vd-performance-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.vendor-page--dashboard .vd-performance-icon--success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.vendor-page--dashboard .vd-performance-icon--warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.vendor-page--dashboard .vd-performance-icon--info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.vendor-page--dashboard .vd-performance-info {
+    flex: 1;
+}
+
+.vendor-page--dashboard .vd-performance-label {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.vendor-page--dashboard .vd-performance-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* Recent Bookings Card */
+.vendor-page--dashboard .vd-recent-body {
+    padding: 8px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 200px;
+}
+
+.vendor-page--dashboard .vd-recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+
+.vendor-page--dashboard .vd-recent-item:hover {
+    background: #f1f5f9;
+}
+
+.vendor-page--dashboard .vd-recent-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.vendor-page--dashboard .vd-recent-ticket {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.vendor-page--dashboard .vd-recent-time {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.vendor-page--dashboard .vd-recent-meta {
+    flex-shrink: 0;
+}
+
+.vendor-page--dashboard .vd-recent-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    color: #94a3b8;
+    font-size: 12px;
+    gap: 8px;
+}
+
+.vendor-page--dashboard .vd-recent-empty i {
+    font-size: 20px;
+}
+
+.vendor-page--dashboard .vd-badge--xs {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+@media (max-width: 1024px) {
+    .vendor-page--dashboard .vd-charts-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .vendor-page--dashboard .vd-status-strip {
+        flex-wrap: wrap;
+    }
+
+    .vendor-page--dashboard .vd-status-item {
+        flex: 1 1 33%;
+        border-bottom: 1px solid #e5e7eb;
+    }
 }
 
 .vendor-page--dashboard .vd-action-box {
@@ -893,7 +1169,7 @@
 .vendor-page--bookings-index .mb-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 72px - 48px);
+    min-height: calc(100vh - 72px - 48px - 52px);
     width: 100%;
     margin: 0;
     background: #f1f5f9;
@@ -914,14 +1190,7 @@
 }
 
 .vendor-page--bookings-index .mb-footer-container {
-    background: #ffffff;
-    border-top: 1px solid #e5e7eb;
-    padding: 16px 20px;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 0 0 12px 12px;
+    display: none;
 }
 
 .vendor-page--bookings-index .mb-tabs {
@@ -1257,7 +1526,7 @@
 .vendor-page--availability .av-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 72px - 48px);
+    min-height: calc(100vh - 72px - 48px - 52px);
     width: 100%;
     margin: 0;
     background: #f1f5f9;
@@ -1280,18 +1549,7 @@
 }
 
 .vendor-page--availability .av-footer-container {
-    background: #ffffff;
-    border-top: 1px solid #e5e7eb;
-    padding: 16px 20px;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 0 0 12px 12px;
-    position: sticky;
-    bottom: 0;
-    z-index: 100;
-    font-size: 14px;
+    display: none;
 }
 
 .vendor-page--availability .av-footer-text {
@@ -1797,16 +2055,21 @@
 
 .vendor-page--bookings-create .cb-input-loader {
     position: absolute;
-    top: 50%;
+    top: calc(50% - 8px);
     right: 12px;
     width: 16px;
     height: 16px;
-    border: 2px solid #e5e7eb;
-    border-top-color: #2563eb;
-    border-radius: 999px;
-    transform: translateY(-65%);
     opacity: 0;
     pointer-events: none;
+}
+
+.vendor-page--bookings-create .cb-input-loader::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid #e5e7eb;
+    border-top-color: #2563eb;
+    border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
 

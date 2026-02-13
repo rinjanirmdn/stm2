@@ -169,14 +169,17 @@ class VendorBookingController extends Controller
         $user = Auth::user();
         $vendorCode = $user->vendor_code;
 
-        // Get booking statistics
+        // Get booking statistics with all statuses
+        $baseQuery = BookingRequest::where('requested_by', $user->id);
+
         $stats = [
-            'pending_approval' => BookingRequest::where('requested_by', $user->id)
-                ->where('status', BookingRequest::STATUS_PENDING)
-                ->count(),
-            'scheduled' => BookingRequest::where('requested_by', $user->id)
-                ->where('status', BookingRequest::STATUS_APPROVED)
-                ->count(),
+            'pending' => (clone $baseQuery)->where('status', BookingRequest::STATUS_PENDING)->count(),
+            'scheduled' => (clone $baseQuery)->where('status', BookingRequest::STATUS_APPROVED)->count(),
+            'waiting' => (clone $baseQuery)->where('status', 'waiting')->count(),
+            'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
+            'completed' => (clone $baseQuery)->where('status', 'completed')->count(),
+            'rejected' => (clone $baseQuery)->where('status', BookingRequest::STATUS_REJECTED)->count(),
+            'total' => (clone $baseQuery)->count(),
             'completed_this_month' => Slot::where('requested_by', $user->id)
                 ->where('status', Slot::STATUS_COMPLETED)
                 ->whereMonth('actual_finish', now()->month)
