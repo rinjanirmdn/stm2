@@ -556,13 +556,44 @@ function initVendorAvailability(config) {
                     container.innerHTML = '<p class="av-empty av-empty--error av-empty--compact">Failed to load</p>';
                     return;
                 }
-                const available = data.slots.filter(s => s.is_available);
-                if (!available.length) {
+
+                // Group slots by shift (2 columns: Shift 1 & Shift 2+3)
+                const shifts = {
+                    shift1: { label: 'Shift 1 (07:00 - 15:00)', icon: 'fa-sun', slots: [] },
+                    shift2n3: { label: 'Shift 2 & 3 (15:00 - 07:00)', icon: 'fa-moon', slots: [] }
+                };
+
+                data.slots.forEach(slot => {
+                    const hour = parseInt(slot.time.split(':')[0], 10);
+                    if (hour >= 7 && hour < 15) {
+                        shifts.shift1.slots.push(slot);
+                    } else {
+                        shifts.shift2n3.slots.push(slot);
+                    }
+                });
+
+                // Get all available slots sorted by time
+                const availableSlots = data.slots.filter(s => s.is_available).sort((a, b) => a.time.localeCompare(b.time));
+
+                if (availableSlots.length === 0) {
                     container.innerHTML = '<p class="av-empty av-empty--compact">No available times</p>';
                     return;
                 }
-                let html = '';
-                available.forEach(slot => {
+
+                // Split into two equal columns
+                const midPoint = Math.ceil(availableSlots.length / 2);
+                const col1Slots = availableSlots.slice(0, midPoint);
+                const col2Slots = availableSlots.slice(midPoint);
+
+                // Build 2-column layout (split equally)
+                let html = '<div class="av-shifts-grid">';
+
+                // Column 1
+                html += `
+                    <div class="av-shift av-shift--col1">
+                        <div class="av-shift__slots">
+                `;
+                col1Slots.forEach(slot => {
                     const isAllowed = isTimeAllowed(date, slot.time);
                     html += `
                         <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
@@ -571,8 +602,32 @@ function initVendorAvailability(config) {
                         </button>
                     `;
                 });
+                html += '</div></div>';
+
+                // Column 2
+                html += `
+                    <div class="av-shift av-shift--col2">
+                        <div class="av-shift__slots">
+                `;
+                if (col2Slots.length === 0) {
+                    html += '<div class="av-empty av-empty--compact">No slots</div>';
+                } else {
+                    col2Slots.forEach(slot => {
+                        const isAllowed = isTimeAllowed(date, slot.time);
+                        html += `
+                            <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
+                                <span class="av-available-time">${slot.time}</span>
+                                ${isAllowed ? '' : '<span class="av-available-note">Not available</span>'}
+                            </button>
+                        `;
+                    });
+                }
+                html += '</div></div>';
+
+                html += '</div>';
                 container.innerHTML = html;
 
+                // Add click handlers
                 container.querySelectorAll('.av-available-item[data-time]').forEach(btn => {
                     if (btn.hasAttribute('disabled')) {
                         return;
