@@ -50,7 +50,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-date-range-picker@0.21.1/dist/daterangepicker.min.css">
     @stack('styles')
 </head>
-<body class="st-app @yield('body_class')">
+@php
+    $stIsDashboardRoute = request()->routeIs('dashboard');
+    $stIsDisplayOnly = $stIsDashboardRoute && request()->query('display') === '1';
+@endphp
+<body class="st-app @yield('body_class'){{ $stIsDisplayOnly ? ' st-display-only' : '' }}">
     <!-- Mobile sidebar overlay -->
     <div class="st-sidebar__overlay" id="mobile-menu-overlay"></div>
 
@@ -148,6 +152,12 @@
                         <span class="st-topbar__user-role">{{ auth()->user()?->getRoleNames()?->first() ?? 'User' }}</span>
                     </div>
                     <div class="st-topbar__user-actions">
+                        @if($stIsDashboardRoute && !$stIsDisplayOnly)
+                            <a href="{{ request()->fullUrlWithQuery(['display' => '1']) }}" class="st-icon-button" title="Presentation Only" aria-label="Presentation Only" target="_blank" rel="noopener">
+                                <i class="fas fa-display"></i>
+                            </a>
+                        @endif
+
                         <!-- Notification Component -->
                         <div class="st-notification">
                             <button type="button" class="st-notification-btn" id="st-notification-btn">
@@ -284,6 +294,11 @@
 <script type="application/json" id="st-app-config">{!! json_encode([
     'reminderUrl' => $stReminderUrl,
     'latestUrl' => $stLatestUrl,
+    'realtime' => [
+        'enabled' => true,
+        'versionUrl' => \Illuminate\Support\Facades\Route::has('api.realtime.version') ? route('api.realtime.version') : null,
+        'pollMs' => 10000,
+    ],
     'notifications' => [
         'markAllUrl' => $stMarkAllUrl,
         'clearUrl' => $stClearUrl,

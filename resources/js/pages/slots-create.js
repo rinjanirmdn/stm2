@@ -4,6 +4,9 @@
     var poInput = document.getElementById('po_number');
     var poSuggestions = document.getElementById('po_suggestions');
     var poLoading = document.getElementById('po_loading');
+    var poStatus = document.getElementById('po_status');
+    var poDetailRequestSeq = 0;
+    var poLastAutoFilledValue = '';
 
     var vendorSearch = document.getElementById('vendor_search');
     var vendorNameInput = vendorSearch;
@@ -31,9 +34,38 @@
         if (!poLoading) return;
         if (isLoading) {
             poLoading.classList.add('show');
+            if (poStatus) poStatus.classList.remove('show');
         } else {
             poLoading.classList.remove('show');
         }
+    }
+
+    function setPoStatus(type) {
+        if (!poStatus) return;
+        poStatus.classList.remove('show', 'valid', 'invalid');
+        if (type === 'valid' || type === 'invalid') {
+            poStatus.classList.add('show', type);
+        }
+    }
+
+    function clearPoFeedback() {
+        setPoLoading(false);
+        setPoStatus('');
+    }
+
+    function showPoLoading() {
+        setPoLoading(true);
+        setPoStatus('');
+    }
+
+    function showPoValid() {
+        setPoLoading(false);
+        setPoStatus('valid');
+    }
+
+    function showPoInvalid() {
+        setPoLoading(false);
+        setPoStatus('invalid');
     }
 
     var riskPreview = document.getElementById('risk_preview');
@@ -176,11 +208,10 @@
             callback({ success: false });
             return;
         }
-        setPoLoading(true);
+        showPoLoading();
         var url = String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber));
         getJson(url)
             .then(function (data) {
-                setPoLoading(false);
                 if (data && data.success && data.data) {
                     callback({ success: true, data: data.data });
                 } else {
@@ -188,9 +219,50 @@
                 }
             })
             .catch(function () {
-                setPoLoading(false);
                 callback({ success: false });
             });
+    }
+
+    function applyPoDetail(data) {
+        if (!data) return;
+        if (vendorNameInput) {
+            vendorNameInput.value = data.vendor_name || '';
+        }
+        if (vendorSearch) {
+            vendorSearch.value = normalizeVendorText(data.vendor_name || '');
+        }
+        if (data.direction && directionSelect) {
+            directionSelect.value = data.direction;
+            try {
+                directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            } catch (e) {}
+            onDirectionChanged();
+        }
+    }
+
+    function tryAutoFillFromTypedPo(poNumber) {
+        var po = String(poNumber || '').trim();
+        if (po.length < 10) return;
+        if (po === poLastAutoFilledValue) return;
+
+        var reqSeq = ++poDetailRequestSeq;
+        fetchPoDetail(po, function (data) {
+            if (reqSeq !== poDetailRequestSeq) return;
+            if (!poInput) return;
+            if (String(poInput.value || '').trim() !== po) return;
+
+            if (data.success && data.data) {
+                applyPoDetail(data.data);
+                poLastAutoFilledValue = po;
+                closePoSuggestions();
+                showPoValid();
+            } else {
+                poLastAutoFilledValue = '';
+                if (vendorNameInput) vendorNameInput.value = '';
+                if (vendorSearch) vendorSearch.value = '';
+                showPoInvalid();
+            }
+        });
     }
 
     function normalizeVendorText(v) {
@@ -779,13 +851,25 @@
             var q = (poInput.value || '').trim();
             if (vendorNameInput) vendorNameInput.value = '';
             if (vendorSearch) vendorSearch.value = '';
+            setPoStatus('');
+            poLastAutoFilledValue = '';
+
+            if (q.length < 2) {
+                if (poDebounceTimer) clearTimeout(poDebounceTimer);
+                clearPoFeedback();
+                closePoSuggestions();
+                return;
+            }
 
             if (poDebounceTimer) clearTimeout(poDebounceTimer);
             poDebounceTimer = setTimeout(function () {
-                setPoLoading(true);
+                if (q.length >= 10) {
+                    tryAutoFillFromTypedPo(q);
+                    return;
+                }
+
                 getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
                     .then(function (data) {
-                        setPoLoading(false);
                         if (!data || !data.success) {
                             closePoSuggestions();
                             return;
@@ -793,7 +877,6 @@
                         renderPoSuggestions(data.data || []);
                     })
                     .catch(function () {
-                        setPoLoading(false);
                         closePoSuggestions();
                     });
             }, 250);
@@ -818,27 +901,24 @@
         // Auto-fetch detail on blur/change if user typed a full number directly
         function autoFetchDetail() {
             var val = (poInput.value || '').trim();
-            if (val.length >= 5) {
+            if (val.length >= 10) {
                 // Delay slightly to avoid conflict with suggestion click
                 setTimeout(function() {
                     fetchPoDetail(val, function (data) {
                         if (data.success && data.data) {
-                            if (vendorNameInput) {
-                                vendorNameInput.value = data.data.vendor_name || '';
-                            }
-                            if (vendorSearch) {
-                                vendorSearch.value = normalizeVendorText(data.data.vendor_name || '');
-                            }
-                            if (data.data.direction && directionSelect) {
-                                directionSelect.value = data.data.direction;
-                                try {
-                                    directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                                } catch (e) {}
-                                onDirectionChanged();
-                            }
+                            applyPoDetail(data.data);
+                            poLastAutoFilledValue = val;
+                            showPoValid();
+                        } else {
+                            poLastAutoFilledValue = '';
+                            if (vendorNameInput) vendorNameInput.value = '';
+                            if (vendorSearch) vendorSearch.value = '';
+                            showPoInvalid();
                         }
                     });
                 }, 200);
+            } else if (val === '') {
+                clearPoFeedback();
             }
         }
         poInput.addEventListener('change', autoFetchDetail);
@@ -854,19 +934,14 @@
             closePoSuggestions();
             fetchPoDetail(poNumber, function (data) {
                 if (data.success && data.data) {
-                    if (vendorNameInput) {
-                        vendorNameInput.value = data.data.vendor_name || '';
-                    }
-                    if (vendorSearch) {
-                        vendorSearch.value = normalizeVendorText(data.data.vendor_name || '');
-                    }
-                    if (data.data.direction && directionSelect) {
-                        directionSelect.value = data.data.direction;
-                        try {
-                            directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                        } catch (e) {}
-                        onDirectionChanged();
-                    }
+                    applyPoDetail(data.data);
+                    poLastAutoFilledValue = poNumber;
+                    showPoValid();
+                } else {
+                    poLastAutoFilledValue = '';
+                    if (vendorNameInput) vendorNameInput.value = '';
+                    if (vendorSearch) vendorSearch.value = '';
+                    showPoInvalid();
                 }
             });
         });
@@ -879,7 +954,15 @@
     });
 
     if (poInput && (poInput.value || '').trim() !== '') {
-        fetchPoDetail((poInput.value || '').trim());
+        fetchPoDetail((poInput.value || '').trim(), function (data) {
+            if (data.success && data.data) {
+                applyPoDetail(data.data);
+                poLastAutoFilledValue = (poInput.value || '').trim();
+                showPoValid();
+            } else {
+                showPoInvalid();
+            }
+        });
     }
 
     updateDurationFromTruckType();

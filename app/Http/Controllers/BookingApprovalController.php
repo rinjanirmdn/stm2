@@ -13,6 +13,7 @@ use App\Services\SlotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
@@ -86,7 +87,8 @@ class BookingApprovalController extends Controller
         $requestedBy = trim((string) $request->query('requested_by', ''));
         if ($requestedBy !== '') {
             $query->where(function ($q) use ($requestedBy) {
-                $q->where('u_requester.name', 'like', '%' . $requestedBy . '%')
+                $q->where('u_requester.full_name', 'like', '%' . $requestedBy . '%')
+                    ->orWhere('u_requester.name', 'like', '%' . $requestedBy . '%')
                     ->orWhere('u_requester.email', 'like', '%' . $requestedBy . '%');
             });
         }
@@ -186,35 +188,47 @@ class BookingApprovalController extends Controller
         $bookings = $query->paginate(20);
 
         // Get counts for tabs
-        $counts = [
-            'all' => BookingRequest::count(),
-            'pending' => BookingRequest::where('status', BookingRequest::STATUS_PENDING)->count(),
-            'approved' => BookingRequest::where('status', BookingRequest::STATUS_APPROVED)->count(),
-        ];
+        $counts = Cache::remember('bookings:index:tab_counts', now()->addSeconds(20), function () {
+            $row = BookingRequest::query()
+                ->selectRaw('COUNT(*) as all_count')
+                ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending_count', [BookingRequest::STATUS_PENDING])
+                ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as approved_count', [BookingRequest::STATUS_APPROVED])
+                ->first();
 
-        $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('md_warehouse', 'is_active')) {
-            $warehousesQ->where('is_active', true);
-        }
-        $warehouses = $warehousesQ->get();
+            return [
+                'all' => (int) ($row->all_count ?? 0),
+                'pending' => (int) ($row->pending_count ?? 0),
+                'approved' => (int) ($row->approved_count ?? 0),
+            ];
+        });
 
-        $gateOptions = Gate::query()
-            ->from('md_gates', 'g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
-            ->when(Schema::hasColumn('md_gates', 'is_active'), fn ($q) => $q->where('g.is_active', true))
-            ->orderBy('w.wh_code')
-            ->orderBy('g.gate_number')
-            ->get(['g.id', 'g.gate_number', 'w.wh_code'])
-            ->map(function ($g) {
-                $whCode = (string) ($g->wh_code ?? '');
-                $gateNo = (string) ($g->gate_number ?? '');
-                $display = $this->slotService->getGateDisplayName($whCode, $gateNo);
-                return [
-                    'id' => (int) ($g->id ?? 0),
-                    'label' => trim(($whCode !== '' ? ($whCode . ' - ') : '') . $display),
-                ];
-            })
-            ->values();
+        $warehouses = Cache::remember('bookings:index:warehouses', now()->addMinutes(10), function () {
+            $warehousesQ = Warehouse::query();
+            if (Schema::hasColumn('md_warehouse', 'is_active')) {
+                $warehousesQ->where('is_active', true);
+            }
+            return $warehousesQ->get();
+        });
+
+        $gateOptions = Cache::remember('bookings:index:gate_options', now()->addMinutes(10), function () {
+            return Gate::query()
+                ->from('md_gates', 'g')
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+                ->when(Schema::hasColumn('md_gates', 'is_active'), fn ($q) => $q->where('g.is_active', true))
+                ->orderBy('w.wh_code')
+                ->orderBy('g.gate_number')
+                ->get(['g.id', 'g.gate_number', 'w.wh_code'])
+                ->map(function ($g) {
+                    $whCode = (string) ($g->wh_code ?? '');
+                    $gateNo = (string) ($g->gate_number ?? '');
+                    $display = $this->slotService->getGateDisplayName($whCode, $gateNo);
+                    return [
+                        'id' => (int) ($g->id ?? 0),
+                        'label' => trim(($whCode !== '' ? ($whCode . ' - ') : '') . $display),
+                    ];
+                })
+                ->values();
+        });
 
         return view('admin.bookings.index', compact('bookings', 'counts', 'warehouses', 'status', 'sorts', 'dirs', 'gateOptions'));
     }

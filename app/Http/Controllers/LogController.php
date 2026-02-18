@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class LogController extends Controller
@@ -39,7 +41,7 @@ class LogController extends Controller
             'description' => 'al.description',
             'mat_doc' => 's.mat_doc',
             'po' => 's.po_number',
-            'user' => 'u.nik',
+            'user' => DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)'),
         ];
 
         $sorts = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $sorts), fn ($v) => $v !== ''));
@@ -77,6 +79,8 @@ class LogController extends Controller
                 'al.created_by',
                 'al.created_at',
                 'u.nik as created_by_nik',
+                'u.full_name as created_by_name',
+                'u.email as created_by_email',
                 's.mat_doc as slot_mat_doc',
                 's.po_number as slot_po_number',
             ]);
@@ -117,7 +121,9 @@ class LogController extends Controller
         }
         if ($fUser !== '') {
             $logsQ->where(function($q) use ($fUser) {
-                $q->where('u.name', 'like', '%' . $fUser . '%')
+                $q->where('u.full_name', 'like', '%' . $fUser . '%')
+                  ->orWhere('u.name', 'like', '%' . $fUser . '%')
+                  ->orWhere('u.nik', 'like', '%' . $fUser . '%')
                   ->orWhere('u.email', 'like', '%' . $fUser . '%');
             });
         }
@@ -125,16 +131,29 @@ class LogController extends Controller
         if (count($sorts) > 0) {
             foreach ($sorts as $i => $s) {
                 $d = $dirs[$i] ?? 'desc';
-                $logsQ->orderBy($allowedSorts[$s], $d);
+                $col = $allowedSorts[$s];
+                if ($col instanceof \Illuminate\Database\Query\Expression) {
+                    $logsQ->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()) . ' ' . strtoupper($d));
+                } else {
+                    $logsQ->orderBy($col, $d);
+                }
             }
         } else {
             $logsQ->orderBy('al.created_at', 'desc');
         }
 
-        $logs = $logsQ
+        $logsQ
             ->orderBy('al.id', ($dir === 'asc') ? 'asc' : 'desc')
-            ->limit(200)
-            ->get();
+            ->limit(200);
+
+        $logsCacheKey = 'logs:index:data:' . sha1(json_encode([
+            'uid' => Auth::id(),
+            'query' => $request->query(),
+            'version' => (string) Cache::get('st_realtime_version', '0'),
+        ]));
+        $logs = Cache::remember($logsCacheKey, now()->addSeconds(10), function () use ($logsQ) {
+            return $logsQ->get();
+        });
 
         return view('logs.index', [
             'logs' => $logs,

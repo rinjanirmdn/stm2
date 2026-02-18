@@ -8,6 +8,8 @@ use App\Services\TransactionReportService;
 use App\Services\ExportService;
 use App\Exports\TransactionsExport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -185,7 +187,14 @@ class ReportController extends Controller
             $rowsQ->limit((int) $pageSize);
         }
 
-        $rows = $rowsQ->get();
+        $rowsCacheKey = 'reports:transactions:rows:' . sha1(json_encode([
+            'uid' => Auth::id(),
+            'query' => $request->query(),
+            'version' => (string) Cache::get('st_realtime_version', '0'),
+        ]));
+        $rows = Cache::remember($rowsCacheKey, now()->addSeconds(10), function () use ($rowsQ) {
+            return $rowsQ->get();
+        });
 
         // Get filter options
         $filterOptions = $this->transactionService->getFilterOptions();
@@ -309,10 +318,12 @@ class ReportController extends Controller
 
         $warehouseValues = array_values(array_filter($warehouseFilter, fn ($v) => (string) $v !== ''));
 
-        $warehouses = DB::table('md_warehouse')
-            ->select(['id', 'wh_name as name', 'wh_code as code'])
-            ->orderBy('wh_name')
-            ->get();
+        $warehouses = Cache::remember('reports:gate_status:warehouses', now()->addMinutes(10), function () {
+            return DB::table('md_warehouse')
+                ->select(['id', 'wh_name as name', 'wh_code as code'])
+                ->orderBy('wh_name')
+                ->get();
+        });
 
         $rowsQ = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -360,25 +371,28 @@ class ReportController extends Controller
             ];
         })->all();
 
-        $gatesQ = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
-            ->select([
-                'g.id',
-                'g.warehouse_id',
-                'g.gate_number',
-                'g.is_active',
-                'g.is_backup',
-                'w.wh_name as warehouse_name',
-                'w.wh_code as warehouse_code',
-            ])
-            ->orderBy('w.wh_code')
-            ->orderBy('g.gate_number');
+        $gateCacheKey = 'reports:gate_status:gates:' . sha1(json_encode(array_map('intval', $warehouseValues)));
+        $gates = Cache::remember($gateCacheKey, now()->addSeconds(30), function () use ($warehouseValues) {
+            $gatesQ = DB::table('md_gates as g')
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+                ->select([
+                    'g.id',
+                    'g.warehouse_id',
+                    'g.gate_number',
+                    'g.is_active',
+                    'g.is_backup',
+                    'w.wh_name as warehouse_name',
+                    'w.wh_code as warehouse_code',
+                ])
+                ->orderBy('w.wh_code')
+                ->orderBy('g.gate_number');
 
-        if (!empty($warehouseValues)) {
-            $gatesQ->whereIn('g.warehouse_id', array_map('intval', $warehouseValues));
-        }
+            if (!empty($warehouseValues)) {
+                $gatesQ->whereIn('g.warehouse_id', array_map('intval', $warehouseValues));
+            }
 
-        $gates = $gatesQ->get();
+            return $gatesQ->get();
+        });
 
         return [
             'rows' => $rows,

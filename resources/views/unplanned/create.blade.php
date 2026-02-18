@@ -35,6 +35,7 @@
                     <div class="st-relative">
                         <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off" class="st-input st-input--pr-40{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
                         <span class="st-input-loader" id="po_loading" aria-hidden="true"></span>
+                        <span class="st-input-status" id="po_status" aria-hidden="true"></span>
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
                     @error('po_number')
@@ -143,10 +144,12 @@
                 <div class="st-form-field st-w-full">
                     <label class="st-label st-font-semibold">Queue Status</label>
                     <div class="st-flex st-gap-12 st-align-center">
-                        <span class="st-badge st-badge--secondary">Waiting</span>
-                        <span class="st-text--sm st-text--muted">Set to Waiting</span>
+                        <label class="st-flex st-align-center st-gap-6 st-cursor-pointer">
+                            <input type="checkbox" name="set_waiting" value="1" {{ old('set_waiting', '') === '1' ? 'checked' : '' }} class="st-checkbox--plain">
+                            <span>Set to Waiting</span>
+                        </label>
+                        <span class="st-text--sm st-text--muted">Unchecked = Completed</span>
                     </div>
-                    <input type="hidden" name="set_waiting" value="1">
                 </div>
             </div>
 

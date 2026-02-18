@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Spatie\Permission\Models\Role;
 
 class UserRoleService
 {
@@ -96,10 +98,12 @@ class UserRoleService
      */
     public function getAllRoles(): \Illuminate\Support\Collection
     {
-        return DB::table('md_roles')
-            ->select(['id', 'roles_name', 'roles_guard_name'])
-            ->orderBy('roles_name')
-            ->get();
+        return Cache::remember('users:roles:all', now()->addMinutes(10), function () {
+            return DB::table('md_roles')
+                ->select(['id', 'roles_name', 'roles_guard_name'])
+                ->orderBy('roles_name')
+                ->get();
+        });
     }
 
     /**

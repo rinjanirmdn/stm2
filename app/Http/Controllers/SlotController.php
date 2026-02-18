@@ -293,7 +293,14 @@ class SlotController extends Controller
         // Apply page size limit
         $query = $this->filterService->applyPageSize($query, $pageSize);
 
-        $slots = $query->get();
+        $slotsCacheKey = 'slots:index:data:' . sha1(json_encode([
+            'uid' => Auth::id(),
+            'query' => $request->query(),
+            'version' => (string) Cache::get('st_realtime_version', '0'),
+        ]));
+        $slots = Cache::remember($slotsCacheKey, now()->addSeconds(10), function () use ($query) {
+            return $query->get();
+        });
 
         // Note: Blocking risk is now recalculated in background by RecalculateBlockingRiskJob
         // which runs every 5 minutes via Laravel scheduler.
@@ -880,7 +887,6 @@ class SlotController extends Controller
             ->select([
                 's.*',
                 's.po_number as truck_number',
-                's.po_number as truck_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 's.vendor_name',
@@ -970,9 +976,7 @@ class SlotController extends Controller
             if (in_array($actualSort, $allowedSorts, true)) {
                 if ($actualSort === 'po_number') {
                     $query->orderBy('s.po_number', $dir);
-                    $query->orderBy('s.po_number', $dir);
                 } elseif ($actualSort === 'vendor_name') {
-                    $query->orderBy('s.vendor_name', $dir);
                     $query->orderBy('s.vendor_name', $dir);
                 } elseif ($actualSort === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $dir);
@@ -988,22 +992,35 @@ class SlotController extends Controller
 
         // Apply pagination
         if ($pageSize === 'all') {
-            $unplannedSlots = $query->get();
+            $unplannedSlotsQuery = $query;
         } else {
             $limit = is_numeric($pageSize) ? (int) $pageSize : 50;
-            $unplannedSlots = $query->limit($limit)->get();
+            $unplannedSlotsQuery = $query->limit($limit);
         }
 
+        $unplannedCacheKey = 'unplanned:index:data:' . sha1(json_encode([
+            'uid' => Auth::id(),
+            'query' => $request->query(),
+            'version' => (string) Cache::get('st_realtime_version', '0'),
+        ]));
+        $unplannedSlots = Cache::remember($unplannedCacheKey, now()->addSeconds(10), function () use ($unplannedSlotsQuery) {
+            return $unplannedSlotsQuery->get();
+        });
+
         // Get warehouses and gates for filter dropdowns
-        $warehouses = DB::table('md_warehouse')
-            ->select(['id', 'wh_name as name', 'wh_code as code'])
-            ->orderBy('wh_name')
-            ->get();
-        $gates = DB::table('md_gates')
-            ->where('is_active', true)
-            ->orderBy('gate_number')
-            ->pluck('gate_number')
-            ->all();
+        $warehouses = Cache::remember('unplanned:index:warehouses', now()->addMinutes(10), function () {
+            return DB::table('md_warehouse')
+                ->select(['id', 'wh_name as name', 'wh_code as code'])
+                ->orderBy('wh_name')
+                ->get();
+        });
+        $gates = Cache::remember('unplanned:index:gates', now()->addMinutes(10), function () {
+            return DB::table('md_gates')
+                ->where('is_active', true)
+                ->orderBy('gate_number')
+                ->pluck('gate_number')
+                ->all();
+        });
 
         // Prepare data for view
         $viewData = compact('unplannedSlots', 'warehouses', 'gates', 'pageTitle');
@@ -1027,17 +1044,21 @@ class SlotController extends Controller
 
     public function unplannedCreate()
     {
-        $warehouses = DB::table('md_warehouse')
-            ->select(['id', 'wh_name as name', 'wh_code as code'])
-            ->orderBy('wh_name')
-            ->get();
-        $gates = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
-            ->where('g.is_active', true)
-            ->orderBy('w.wh_name')
-            ->orderBy('g.gate_number')
-            ->select(['g.*', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code'])
-            ->get();
+        $warehouses = Cache::remember('unplanned:create:warehouses', now()->addMinutes(10), function () {
+            return DB::table('md_warehouse')
+                ->select(['id', 'wh_name as name', 'wh_code as code'])
+                ->orderBy('wh_name')
+                ->get();
+        });
+        $gates = Cache::remember('unplanned:create:gates', now()->addMinutes(10), function () {
+            return DB::table('md_gates as g')
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+                ->where('g.is_active', true)
+                ->orderBy('w.wh_name')
+                ->orderBy('g.gate_number')
+                ->select(['g.*', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code'])
+                ->get();
+        });
 
         $truckTypes = $this->getTruckTypeOptions();
 
@@ -1103,12 +1124,9 @@ class SlotController extends Controller
         }
 
         $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
-        $status = $setWaiting ? 'waiting' : 'arrived';
-        $actualStart = null;
-        $actualFinish = null;
-        if ($status === 'arrived') {
-            $status = 'waiting';
-        }
+        $status = $setWaiting ? 'waiting' : 'completed';
+        $actualStart = $status === 'completed' ? $arrivalTime : null;
+        $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
         $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $poDetail) {
             $slotId = (int) DB::table('slots')->insertGetId([
@@ -1119,6 +1137,7 @@ class SlotController extends Controller
                 'vendor_name' => $poDetail['vendor_name'] ?? null,
                 'vendor_type' => $poDetail['vendor_type'] ?? null,
                 'actual_gate_id' => $actualGateId,
+                'planned_start' => $arrivalTime,
                 'arrival_time' => $arrivalTime,
                 'mat_doc' => $matDoc !== '' ? $matDoc : null,
                 'truck_type' => $truckType !== '' ? $truckType : null,
@@ -1244,15 +1263,11 @@ class SlotController extends Controller
         $notes = trim((string) $request->input('notes', ''));
 
         $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
-        $status = $setWaiting ? 'waiting' : 'arrived';
-        if ($status === 'arrived' && (string)($slot->status ?? '') === 'waiting') {
-             // allow downgrade? for now follow request
-        }
-        if ($status === 'arrived') {
-            $status = 'waiting'; // Unplanned is usually waiting
-        }
+        $status = $setWaiting ? 'waiting' : 'completed';
+        $actualStart = $status === 'completed' ? $arrivalTime : null;
+        $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status) {
+        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish) {
             $truck = DB::table('po')->where('po_number', $truckNumber)->select(['id'])->first();
             if ($truck) {
                 $truckId = (int) $truck->id;
@@ -1276,6 +1291,8 @@ class SlotController extends Controller
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
                 'late_reason' => $notes !== '' ? $notes : null,
                 'status' => $status,
+                'actual_start' => $actualStart,
+                'actual_finish' => $actualFinish,
                 'updated_at' => now(),
             ]);
 

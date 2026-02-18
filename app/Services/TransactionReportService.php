@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Slot;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class TransactionReportService
@@ -361,9 +362,14 @@ class TransactionReportService
      */
     public function getFilterOptions(): array
     {
-        return [
-            'warehouses' => DB::table('md_warehouse')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
-            'vendors' => collect(),
-        ];
+        return Cache::remember('reports:transactions:filter_options', now()->addMinutes(10), function () {
+            return [
+                'warehouses' => DB::table('md_warehouse')
+                    ->select(['id', 'wh_name as name', 'wh_code as code'])
+                    ->orderBy('wh_name')
+                    ->get(),
+                'vendors' => collect(),
+            ];
+        });
     }
 }

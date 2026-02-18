@@ -15,17 +15,63 @@
     var poInput = document.getElementById('po_number');
     var poSuggestions = document.getElementById('po_suggestions');
     var poLoading = document.getElementById('po_loading');
+    var poStatus = document.getElementById('po_status');
     var vendorNameInput = document.getElementById('vendor_name');
     var directionSelect = document.getElementById('direction');
     var poDebounceTimer = null;
+    var poDetailRequestSeq = 0;
+    var poLastAutoFilledValue = '';
 
     function setPoLoading(isLoading) {
         if (!poLoading) return;
         if (isLoading) {
             poLoading.classList.add('show');
+            if (poStatus) poStatus.classList.remove('show');
         } else {
             poLoading.classList.remove('show');
         }
+    }
+
+    function isRequiredReady() {
+        var poVal = poInput ? String(poInput.value || '').trim() : '';
+        var directionVal = directionSelect ? String(directionSelect.value || '').trim() : '';
+        var gateVal = gateSelect ? String(gateSelect.value || '').trim() : '';
+        var dateVal = arrivalDateInput ? String(arrivalDateInput.value || '').trim() : '';
+        var timeVal = arrivalTimeInput ? String(arrivalTimeInput.value || '').trim() : '';
+        return poVal !== '' && directionVal !== '' && gateVal !== '' && dateVal !== '' && timeVal !== '';
+    }
+
+    function updateSubmitState() {
+        if (!saveBtn) return;
+        saveBtn.disabled = !isRequiredReady();
+    }
+
+    function setPoStatus(type) {
+        if (!poStatus) return;
+        poStatus.classList.remove('show', 'valid', 'invalid');
+        if (type === 'valid' || type === 'invalid') {
+            poStatus.classList.add('show', type);
+        }
+    }
+
+    function clearPoFeedback() {
+        setPoLoading(false);
+        setPoStatus('');
+    }
+
+    function showPoLoading() {
+        setPoLoading(true);
+        setPoStatus('');
+    }
+
+    function showPoValid() {
+        setPoLoading(false);
+        setPoStatus('valid');
+    }
+
+    function showPoInvalid() {
+        setPoLoading(false);
+        setPoStatus('invalid');
     }
 
     function csrfToken() {
@@ -78,10 +124,9 @@
             callback({ success: false });
             return;
         }
-        setPoLoading(true);
+        showPoLoading();
         getJson(String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber)))
             .then(function (data) {
-                setPoLoading(false);
                 if (data && data.success && data.data) {
                     callback({ success: true, data: data.data });
                 } else {
@@ -89,34 +134,80 @@
                 }
             })
             .catch(function () {
-                setPoLoading(false);
                 callback({ success: false });
             });
+    }
+
+    function applyPoDetail(data) {
+        if (!data) return;
+        if (vendorNameInput) {
+            vendorNameInput.value = data.vendor_name || '';
+        }
+        if (data.direction && directionSelect) {
+            directionSelect.value = data.direction;
+        }
+    }
+
+    function tryAutoFillFromTypedPo(poNumber) {
+        var po = String(poNumber || '').trim();
+        if (po.length < 10) return;
+        if (po === poLastAutoFilledValue) return;
+
+        var reqSeq = ++poDetailRequestSeq;
+
+        fetchPoDetail(po, function (data) {
+            if (reqSeq !== poDetailRequestSeq) return;
+            if (!poInput) return;
+            if (String(poInput.value || '').trim() !== po) return;
+
+            if (data.success && data.data) {
+                applyPoDetail(data.data);
+                poLastAutoFilledValue = po;
+                closePoSuggestions();
+                showPoValid();
+            } else {
+                poLastAutoFilledValue = '';
+                if (vendorNameInput) vendorNameInput.value = '';
+                showPoInvalid();
+            }
+        });
     }
 
     if (poInput) {
         poInput.addEventListener('input', function () {
             var q = (poInput.value || '').trim();
             if (vendorNameInput) vendorNameInput.value = '';
+            setPoStatus('');
+            poLastAutoFilledValue = '';
             if (q.length > 10) {
                 q = q.slice(0, 10);
                 poInput.value = q;
             }
 
+            if (q.length < 2) {
+                if (poDebounceTimer) clearTimeout(poDebounceTimer);
+                clearPoFeedback();
+                closePoSuggestions();
+                return;
+            }
+
             if (poDebounceTimer) clearTimeout(poDebounceTimer);
             poDebounceTimer = setTimeout(function () {
-                setPoLoading(true);
+                if (q.length >= 10) {
+                    tryAutoFillFromTypedPo(q);
+                    return;
+                }
+
                 getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
                     .then(function (data) {
-                        setPoLoading(false);
                         if (!data || !data.success) {
                             closePoSuggestions();
                             return;
                         }
-                        renderPoSuggestions(data.data || []);
+                        var items = data.data || [];
+                        renderPoSuggestions(items);
                     })
                     .catch(function () {
-                        setPoLoading(false);
                         closePoSuggestions();
                     });
             }, 250);
@@ -140,23 +231,31 @@
 
         function autoFetchDetail() {
             var val = (poInput.value || '').trim();
-            if (val.length >= 5) {
+            if (val.length >= 10) {
                 setTimeout(function () {
                     fetchPoDetail(val, function (data) {
                         if (data.success && data.data) {
-                            if (vendorNameInput) {
-                                vendorNameInput.value = data.data.vendor_name || '';
-                            }
-                            if (data.data.direction && directionSelect) {
-                                directionSelect.value = data.data.direction;
-                            }
+                            applyPoDetail(data.data);
+                            poLastAutoFilledValue = val;
+                            showPoValid();
+                        } else {
+                            poLastAutoFilledValue = '';
+                            if (vendorNameInput) vendorNameInput.value = '';
+                            showPoInvalid();
                         }
                     });
                 }, 200);
+            } else if (val === '') {
+                clearPoFeedback();
             }
         }
         poInput.addEventListener('change', autoFetchDetail);
         poInput.addEventListener('blur', autoFetchDetail);
+
+        // Hydrate feedback on page load when old value is present.
+        if ((poInput.value || '').trim().length >= 10) {
+            autoFetchDetail();
+        }
     }
 
     if (poSuggestions) {
@@ -168,12 +267,12 @@
             closePoSuggestions();
             fetchPoDetail(po, function (data) {
                 if (data.success && data.data) {
-                    if (vendorNameInput) {
-                        vendorNameInput.value = data.data.vendor_name || '';
-                    }
-                    if (data.data.direction && directionSelect) {
-                        directionSelect.value = data.data.direction;
-                    }
+                    applyPoDetail(data.data);
+                    poLastAutoFilledValue = po;
+                    showPoValid();
+                } else {
+                    if (vendorNameInput) vendorNameInput.value = '';
+                    showPoInvalid();
                 }
             });
         });
@@ -190,6 +289,8 @@
     var arrivalInput = document.getElementById('actual_arrival_input');
     var arrivalDateInput = document.getElementById('actual_arrival_date_input');
     var arrivalTimeInput = document.getElementById('actual_arrival_time_input');
+    var formEl = document.querySelector('form[action*="/unplanned"]');
+    var saveBtn = formEl ? formEl.querySelector('button[type="submit"]') : null;
 
     function syncArrivalValue() {
         if (!arrivalInput || !arrivalDateInput || !arrivalTimeInput) return;
@@ -302,16 +403,70 @@
             var enabled = !!(gateSelect.value || '').trim();
             if (arrivalDateInput) arrivalDateInput.disabled = !enabled;
             if (arrivalTimeInput) arrivalTimeInput.disabled = !enabled;
+            if (!enabled) {
+                if (arrivalDateInput) arrivalDateInput.value = '';
+                if (arrivalTimeInput) arrivalTimeInput.value = '';
+                syncArrivalValue();
+            }
             if (enabled) {
                 initArrivalDatepicker();
                 initArrivalTimepicker();
             }
+            updateSubmitState();
         });
+    }
+
+    if (arrivalDateInput) {
+        ['input', 'change', 'blur'].forEach(function (evt) {
+            arrivalDateInput.addEventListener(evt, function () {
+                syncArrivalValue();
+                updateSubmitState();
+            });
+        });
+    }
+
+    if (arrivalTimeInput) {
+        ['input', 'change', 'blur'].forEach(function (evt) {
+            arrivalTimeInput.addEventListener(evt, function () {
+                syncArrivalValue();
+                updateSubmitState();
+            });
+        });
+    }
+
+    if (poInput) {
+        ['input', 'change', 'blur'].forEach(function (evt) {
+            poInput.addEventListener(evt, updateSubmitState);
+        });
+    }
+    if (directionSelect) {
+        directionSelect.addEventListener('change', updateSubmitState);
     }
 
     if (arrivalInput && arrivalInput.value) {
         var parts = arrivalInput.value.split(' ');
         if (arrivalDateInput) arrivalDateInput.value = parts[0] || '';
         if (arrivalTimeInput) arrivalTimeInput.value = (parts[1] || '').slice(0, 5);
+    }
+
+    var gateEnabledOnLoad = !!(gateSelect && String(gateSelect.value || '').trim());
+    if (arrivalDateInput) arrivalDateInput.disabled = !gateEnabledOnLoad;
+    if (arrivalTimeInput) arrivalTimeInput.disabled = !gateEnabledOnLoad;
+    if (gateEnabledOnLoad) {
+        initArrivalDatepicker();
+        initArrivalTimepicker();
+    }
+
+    syncArrivalValue();
+    updateSubmitState();
+
+    if (formEl) {
+        formEl.addEventListener('submit', function (e) {
+            syncArrivalValue();
+            updateSubmitState();
+            if (!isRequiredReady()) {
+                e.preventDefault();
+            }
+        });
     }
 });

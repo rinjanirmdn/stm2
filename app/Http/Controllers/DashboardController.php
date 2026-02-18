@@ -12,6 +12,7 @@ use DatePeriod;
 use DateTime;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -50,7 +51,7 @@ class DashboardController extends Controller
             }
         }
 
-        $dashboardData = $this->buildDashboardData($request);
+        $dashboardData = $this->getDashboardDataCached($request);
 
         return view('dashboard.react', ['dashboardData' => $dashboardData]);
     }
@@ -60,7 +61,22 @@ class DashboardController extends Controller
      */
     public function data(Request $request)
     {
-        return response()->json($this->buildDashboardData($request));
+        return response()->json($this->getDashboardDataCached($request));
+    }
+
+    private function getDashboardDataCached(Request $request): array
+    {
+        $version = (string) Cache::get('st_realtime_version', '0');
+        $cacheKey = 'dashboard:data:' . sha1(json_encode([
+            'uid' => Auth::id(),
+            'path' => $request->path(),
+            'query' => $request->query(),
+            'version' => $version,
+        ]));
+
+        return Cache::remember($cacheKey, now()->addSeconds(10), function () use ($request) {
+            return $this->buildDashboardData($request);
+        });
     }
 
     /**

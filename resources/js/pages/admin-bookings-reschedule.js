@@ -36,6 +36,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const calendarPreview = document.getElementById('calendar-preview');
     const warehouseHidden = document.getElementById('warehouse_hidden');
 
+    function getDateInputIsoValue(inputEl) {
+        if (!inputEl) return '';
+        var iso = inputEl.dataset ? String(inputEl.dataset.isoValue || '').trim() : '';
+        if (iso) return iso;
+        var raw = String(inputEl.value || '').trim();
+        if (!raw) return '';
+        if (raw.indexOf('-') === 2) {
+            var parts = raw.split('-');
+            if (parts.length === 3 && parts[2].length === 4) {
+                return parts[2] + '-' + parts[1] + '-' + parts[0];
+            }
+        }
+        return raw;
+    }
+
     // Gate and warehouse sync
     function syncWarehouseFromGate() {
         const gateSelect = document.getElementById('gate_select');
@@ -56,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function checkAvailability() {
         const gateId = gateSelect.value;
-        const date = dateInput.value;
+        const date = getDateInputIsoValue(dateInput);
         const time = timeInput.value;
         const duration = durationInput.value;
 
@@ -100,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadCalendarPreview() {
-        const date = dateInput.value;
+        const date = getDateInputIsoValue(dateInput);
 
         const warehouseId = (warehouseHidden && warehouseHidden.value) ? warehouseHidden.value : defaultWarehouseId;
 

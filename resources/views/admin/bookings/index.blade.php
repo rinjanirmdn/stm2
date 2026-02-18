@@ -204,7 +204,7 @@
                                             <span class="st-colhead__label">Status</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status_filter" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="status_filter">
                                                 <div class="st-font-semibold st-mb-6">Status Filter</div>
