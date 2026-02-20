@@ -194,12 +194,10 @@
                     <div class="cb-form-row cb-form-row--full">
                         <div class="cb-form-actions">
                             <a href="{{ route('vendor.bookings.index') }}" class="cb-btn cb-btn--secondary">
-                                <i class="fas fa-times"></i>
                                 Cancel
                             </a>
                             <button type="submit" class="cb-btn cb-btn--primary" id="submit-btn">
-                                <i class="fas fa-paper-plane"></i>
-                                Submit Booking Request
+                                Submit
                             </button>
                         </div>
                     </div>

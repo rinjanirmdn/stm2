@@ -49,15 +49,11 @@
         <div class="av-main">
             <div class="av-main__header">
                 <span class="av-main__title">
-                    <i class="fas fa-clock"></i>
                     {{ \Carbon\Carbon::parse($selectedDate)->format('l, d F Y') }}
                 </span>
                 <div class="av-main__actions">
-                    <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm av-main__mobile-filter" id="av-mobile-filter-btn">
-                        <i class="fas fa-sliders"></i> Filters
-                    </button>
                     <a href="{{ route('vendor.bookings.create', ['date' => $selectedDate]) }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
-                        <i class="fas fa-plus"></i> New Booking
+                        New
                     </a>
                 </div>
             </div>

@@ -26,6 +26,12 @@
     --vendor-ring: 0 0 0 3px rgba(37, 99, 235, 0.25);
 }
 
+/* Global vendor icon style (used outside dashboard) */
+.vendor-icon {
+	font-size: 13px;
+	color: #64748b;
+}
+
 /* Layout */
 .vendor-app {
     min-height: 100vh;
@@ -130,6 +136,74 @@
     opacity: 0.85;
 }
 
+.vendor-header__user-menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    border-radius: 9999px;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    color: #e0f2fe;
+    cursor: pointer;
+}
+
+.vendor-header__user-menu-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.vendor-header__user-menu {
+    position: absolute;
+    right: 16px;
+    top: 68px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+    padding: 12px 14px;
+    min-width: 220px;
+    display: none;
+    z-index: 60;
+}
+
+.vendor-header__user-menu.vendor-header__user-menu--open {
+    display: block;
+}
+
+.vendor-header__user-menu-info {
+    margin-bottom: 10px;
+    font-size: 0.875rem;
+    color: #0f172a;
+}
+
+.vendor-header__user-menu-actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.vendor-header__user-menu-actions .vendor-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vendor-header__user-menu-info .vendor-header__user-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.vendor-header__user-menu-info .vendor-header__user-company {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
 .vendor-main {
     max-width: 1400px;
     margin: 0 auto;
@@ -223,14 +297,15 @@
 }
 
 .vendor-btn--primary {
-    background: #1d4ed8;
+    background: var(--primary);
     color: #ffffff;
 }
 
 .vendor-btn--primary:hover {
-    background: #1e40af;
+    background: var(--primary);
+    opacity: 0.9;
     transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(29, 78, 216, 0.28);
+    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.15);
 }
 
 .vendor-btn--nav {
@@ -239,45 +314,45 @@
 }
 
 .vendor-btn--success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: #10b981;
     color: #ffffff;
 }
 
 .vendor-btn--danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: #dc2626;
     color: #ffffff;
 }
 
 .vendor-btn--secondary {
-    background: var(--vendor-surface-2);
-    color: #334155;
-    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
 }
 
 .vendor-btn--secondary:hover {
-    background: #eef2f7;
-    color: #0f172a;
+    background: #f8fafc;
+    color: #111827;
 }
 
 .vendor-header .vendor-notification__toggle {
-    background: rgba(2, 132, 199, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 10px;
     width: 44px;
     height: 44px;
     padding: 0;
     justify-content: center;
-    color: #ffffff;
+    color: #4b5563;
 }
 
 .vendor-header .vendor-notification__toggle:hover {
-    background: rgba(2, 132, 199, 0.7);
+    background: #f3f4f6;
 }
 
 .vendor-header .vendor-btn--secondary {
-    background: rgba(2, 132, 199, 0.5);
-    color: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #ffffff;
+    color: #374151;
+    border: 1px solid #e5e7eb;
     width: 44px;
     height: 44px;
     padding: 0;
@@ -286,8 +361,8 @@
 }
 
 .vendor-header .vendor-btn--secondary:hover {
-    background: rgba(2, 132, 199, 0.7);
-    color: #ffffff;
+    background: #f3f4f6;
+    color: #111827;
 }
 
 .vendor-header .vendor-notification__toggle,
@@ -315,6 +390,10 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
+}
+
+.vendor-alert strong {
+    font-size: 0.95rem;
 }
 
 .vendor-alert--success {
@@ -469,7 +548,7 @@
     color: #f8fafc;
     padding: 10px 20px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 0.875rem;
     font-weight: 500;
     z-index: 100001;
     opacity: 0;
@@ -726,19 +805,87 @@
     .vendor-header {
         height: auto;
         padding: 12px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: flex-start;
         gap: 10px;
     }
 
-    .vendor-header__nav {
+    /* Order: brand (top), user info, then nav menu */
+    .vendor-header__brand {
+        order: 0;
+    }
+
+    .vendor-header__user {
+        order: 1;
+        width: 100%;
+        justify-content: space-between;
         flex-wrap: wrap;
-        justify-content: flex-start;
+        gap: 8px;
+    }
+
+    .vendor-header__nav {
+        order: 2;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        margin-top: 4px;
+        text-align: center;
+    }
+
+    /* On small screens, keep notification bell visible but hide user text + desktop logout */
+    .vendor-header__user {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .vendor-header__user-info,
+    .vendor-header__user > form {
+        display: none;
+    }
+
+    /* Hide header bell button on mobile, but keep its dropdown usable */
+    #notification-btn {
+        display: none;
+    }
+
+    .vendor-header__user-menu-btn {
+        display: inline-flex;
+        position: absolute;
+        right: 12px;
+        top: 12px;
+    }
+
+    /* On small screens, show notification dropdown just below the header, near the top-right */
+    .notification-dropdown {
+        position: fixed;
+        top: 72px;
+        right: 8px;
+        left: 8px;
+        transform: none;
+        width: auto;
+        max-width: 420px;
+        margin: 0 auto;
+        z-index: 1100;
+    }
+
+    .vendor-header__user-info {
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+    }
+
+    .vendor-header__user-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .vendor-main {
         padding: 12px;
     }
 }
+
 
 /* Pages: Vendor Dashboard */
 .vendor-page--dashboard .vd-container {
@@ -865,12 +1012,13 @@
 /* Charts Section - 3 Containers */
 .vendor-page--dashboard .vd-charts-section {
     display: grid;
-    grid-template-columns: 1fr 280px 320px;
+    grid-template-columns: 1fr 320px;
     gap: 16px;
     padding: 16px 20px 20px;
     background: #f1f5f9;
     flex: 1;
     min-height: 0;
+    min-width: 0;
 }
 
 .vendor-page--dashboard .vd-chart-card,
@@ -941,6 +1089,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin-top: 4px;
 }
 
 .vd-date-filter-form {
@@ -951,31 +1100,57 @@
 }
 
 .vd-range-picker {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-    border-radius: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
     border: 1px solid #d1d5db;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-family: inherit;
     background: #ffffff;
     color: #374151;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    /* Dashboard charts: stack header and controls on small screens */
+    .vendor-page--dashboard .vd-chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .vd-date-filter {
+        width: 100%;
+        margin-top: 0;
+    }
+
+    .vd-date-filter-form {
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .vd-range-picker {
+        max-width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .vd-date-filter-btn,
+    .vd-date-reset-btn {
+        margin-top: 4px;
+    }
 }
 
 .vd-range-picker:hover {
-    border-color: #93c5fd;
-    background: rgba(59, 130, 246, 0.04);
-}
-
-.vd-range-picker i {
-    color: #1d4ed8;
+    background: #f8fafc;
 }
 
 .vd-range-picker span {
     white-space: nowrap;
+}
+
+.vd-range-picker i {
+    color: inherit;
 }
 
 #vendor-status-overview-react {
@@ -1040,14 +1215,14 @@
 }
 
 .vd-date-filter-btn {
-    padding: 8px 14px;
-    background: #1d4ed8;
+    padding: 8px 16px;
+    background: var(--primary);
     color: #ffffff;
+    border-radius: 10px;
     border: none;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
     cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
     transition: background-color 0.2s;
     display: flex;
     align-items: center;
@@ -1055,13 +1230,16 @@
 }
 
 .vd-date-filter-btn:hover {
-    background: #1e40af;
+    background: var(--primary);
+    opacity: 0.9;
 }
 
 .vd-date-reset-btn {
-    padding: 8px 12px;
-    background: #f1f5f9;
-    color: #64748b;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #6b7280;
     border: none;
     border-radius: 6px;
     font-size: 13px;
@@ -1075,8 +1253,32 @@
 }
 
 .vd-date-reset-btn:hover {
-    background: #e2e8f0;
-    color: #475569;
+    background: #f8fafc;
+    color: #111827;
+}
+
+/* Unified small icon style for dashboard controls (calendar, filter, reset, etc.) */
+.vd-icon {
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Small info/tooltip icon next to headings */
+.vendor-info-pin {
+	font-size: 11px;
+	color: #9ca3af;
+	margin-left: 6px;
+	cursor: help;
+}
+
+.vendor-info-pin:hover {
+	color: #6b7280;
+}
+
+.vd-date-filter-btn .vd-icon,
+.vd-range-picker .vd-icon,
+.vd-date-reset-btn .vd-icon {
+    margin-right: 6px;
 }
 
 /* Bar Chart with Axes - Clean Design */
@@ -1431,8 +1633,8 @@
 .vendor-page--dashboard .vd-recent-body {
     padding: 8px;
     flex: 1;
-    overflow-y: auto;
-    max-height: 200px;
+    overflow-y: visible;
+    max-height: none;
 }
 
 .vendor-page--dashboard .vd-recent-item {
@@ -1467,6 +1669,10 @@
 }
 
 .vendor-page--dashboard .vd-recent-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
     flex-shrink: 0;
 }
 
@@ -1750,6 +1956,8 @@
     padding: 20px;
     margin: 0;
     flex: 1;
+    min-width: 0;
+    overflow-x: auto;
 }
 
 .vendor-page--bookings-index .mb-search {
@@ -1779,6 +1987,22 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+@media (max-width: 768px) {
+    .vendor-page--bookings-index .mb-search {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vendor-page--bookings-index .mb-search__input {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .vendor-page--bookings-index .mb-search .vendor-btn {
+        width: auto;
+    }
+}
+
 .vendor-page--bookings-index .date-range-input {
     padding-right: 40px;
     cursor: pointer;
@@ -1796,12 +2020,12 @@
 }
 
 .vendor-page--bookings-index .date-range-icon {
-    color: #1d4ed8;
+    color: #64748b;
     pointer-events: none;
 }
 
 .vendor-page--bookings-index .date-range-input .fa-caret-down {
-    color: #1d4ed8;
+    color: #64748b;
 }
 
 .vendor-page--bookings-index .mb-tab--cancelled .mb-tab__count {
@@ -1896,6 +2120,12 @@
     color: #166534;
 }
 
+.vendor-page--bookings-index .mb-row__status--rejected {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
 .vendor-page--bookings-index .mb-row__status--action {
     background: #fee2e2;
     color: #991b1b;
@@ -1915,6 +2145,10 @@
 .vendor-page--bookings-index .mb-row__status--arrival {
     font-size: 11px;
     margin-left: 4px;
+}
+
+.vendor-page--bookings-index .mb-row__status-tag {
+    margin-left: 6px;
 }
 
 .vendor-page--bookings-index .mb-row__status-icon {
@@ -2080,6 +2314,21 @@
     padding: 12px 16px;
     border-bottom: 1px solid #e5e7eb;
     background: #ffffff;
+}
+
+.vendor-page--availability .av-main__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.vendor-page--availability .av-main__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .vendor-page--availability .av-time-slots {
@@ -2308,6 +2557,29 @@
     background: #fffbeb;
     cursor: not-allowed;
     pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+    .vendor-page--availability {
+        height: auto;
+        min-height: calc(100vh - 72px - 48px);
+        overflow: visible;
+    }
+
+    .vendor-page--availability .av-layout {
+        grid-template-columns: 1fr;
+        min-width: 0;
+    }
+
+    .vendor-page--availability .av-sidebar {
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .vendor-page--availability .av-main {
+        min-width: 0;
+        overflow: visible;
+    }
 }
 
 .vendor-page--bookings-create .cb-container {

@@ -4599,8 +4599,32 @@ table.st-table thead th:not(:has(.st-colhead)):not(:has(.st-filter-header)) {
     border-color: #16a34a;
 }
 
+.st-booking-summary-pill--cancelled {
+    border-color: #1e293b;
+}
+
+.st-booking-summary-pill--rejected {
+    border-color: var(--cancelled);
+}
+
 .st-booking-summary-pill--all {
     border-color: #2563eb;
+}
+
+.st-booking-summary-pills {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
+}
+
+@media (max-width: 1280px) {
+    .st-booking-summary-pills {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .st-booking-summary-pill--all {
+        grid-column: 1 / -1;
+    }
 }
 
 /* Responsive layout for Booking Requests header */
@@ -5567,12 +5591,6 @@ input[type="datetime-local"].form-control {
 .st-badge--outbound {
     background: var(--outbound-bg);
     color: var(--outbound);
-}
-
-.st-badge--pending_approval {
-    background: #fbbf24 !important;
-    color: #ffffff !important;
-    border: 1px solid #f59e0b;
 }
 
 .st-badge--pending {
@@ -9467,17 +9485,11 @@ img {
         width: 100%;
     }
 
-    /* Booking summary pills stay horizontal but smaller */
-    .st-form-field .st-flex.st-gap-10 {
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-
-    .st-booking-summary-pill {
-        flex: 1 1 calc(33.333% - 8px);
-        min-width: 80px;
-        font-size: 11px;
-        padding: 5px 8px;
+    /* Booking Requests: keep header controls usable on small screens */
+    .st-form-row .st-booking-header-controls {
+        width: 100%;
+        justify-content: flex-start;
+        margin-left: 0;
     }
 }
 
@@ -9486,6 +9498,10 @@ img {
     .st-form-field .st-flex.st-gap-10 {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .st-booking-summary-pills {
+        grid-template-columns: 1fr;
     }
 
     .st-booking-summary-pill {

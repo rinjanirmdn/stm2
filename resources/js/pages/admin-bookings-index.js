@@ -83,6 +83,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (curPills && newPills) {
                     curPills.innerHTML = newPills.innerHTML;
                 }
+
+                try {
+                    if (typeof window.stSyncFilterIndicatorsFromForms === 'function') {
+                        window.stSyncFilterIndicatorsFromForms(bookingFilterForm);
+                    }
+                } catch (e) {}
                 if (pushState) {
                     window.history.pushState(null, '', url);
                 }
@@ -148,6 +154,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } catch (e) {}
+
+        // Ensure Requested At filter indicator (created_at) is in sync with actual URL
+        try {
+            var url2 = new URL(window.location.href);
+            var hasCreatedAtParam = url2.searchParams.has('created_at');
+            var createdAtInput = bookingFilterForm.querySelector('input[name="created_at"]');
+
+            if (createdAtInput && !hasCreatedAtParam) {
+                createdAtInput.value = '';
+                var createdAtBtn = bookingFilterForm.querySelector('.st-filter-trigger[data-filter="created_at"]');
+                if (createdAtBtn) {
+                    createdAtBtn.classList.remove('st-filter-trigger--active', 'is-filtered');
+                }
+                if (typeof window.stSyncFilterIndicatorsFromForms === 'function') {
+                    window.stSyncFilterIndicatorsFromForms(bookingFilterForm);
+                }
+            }
+        } catch (e) {}
     }
 });
 
@@ -188,9 +212,67 @@ window.openApproveModal = function (id, ticket) {
     const modal = document.getElementById('approveModal');
     const ticketSpan = document.getElementById('modalTicketNumber');
     const form = document.getElementById('approveForm');
+    const gateSelect = document.getElementById('modal_planned_gate_id');
+    const availabilityBox = document.getElementById('modal_gate_availability');
     if (!modal || !ticketSpan || !form) return;
     ticketSpan.innerText = ticket;
     form.action = stBookingsBaseUrl() + '/' + id + '/approve';
+
+    function updateGateAvailability(bookingId) {
+        if (!availabilityBox || !gateSelect) return;
+        const gateId = String(gateSelect.value || '').trim();
+        if (!gateId) {
+            availabilityBox.textContent = '';
+            availabilityBox.className = 'st-text-12 st-mt-4';
+            return;
+        }
+
+        let cfg = {};
+        try {
+            cfg = stReadJson('admin_bookings_index_config', {});
+        } catch (e) { cfg = {}; }
+
+        const checkUrl = String(cfg.checkGateUrl || '').trim();
+        if (!checkUrl) return;
+
+        const url = checkUrl + '?booking_id=' + encodeURIComponent(String(bookingId))
+            + '&planned_gate_id=' + encodeURIComponent(String(gateId));
+
+        availabilityBox.textContent = 'Checking availability...';
+        availabilityBox.className = 'st-text-12 st-mt-4';
+
+        fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                const ok = !!(data && data.available);
+                const label = (data && data.label) ? String(data.label) : (ok ? 'Available' : 'Not Available');
+                const reason = (data && data.reason) ? String(data.reason) : '';
+                availabilityBox.textContent = reason ? (label + ' - ' + reason) : label;
+                availabilityBox.className = 'st-text-12 st-mt-4 ' + (ok ? 'st-text-success' : 'st-text-danger');
+            })
+            .catch(function () {
+                availabilityBox.textContent = 'Not Available';
+                availabilityBox.className = 'st-text-12 st-mt-4 st-text-danger';
+            });
+    }
+
+    if (gateSelect) {
+        const handler = function () {
+            try { updateGateAvailability(id); } catch (e) {}
+        };
+        gateSelect.removeEventListener('change', handler);
+        gateSelect.addEventListener('change', handler);
+        if (gateSelect.value) {
+            try { updateGateAvailability(id); } catch (e) {}
+        } else if (availabilityBox) {
+            availabilityBox.textContent = '';
+            availabilityBox.className = 'st-text-12 st-mt-4';
+        }
+    }
     modal.classList.add('active');
 };
 

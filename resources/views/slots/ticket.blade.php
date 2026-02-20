@@ -48,6 +48,13 @@
             text-align: center;
         }
 
+        .ticket-logo {
+            display: block;
+            margin: 0 auto 6px;
+            max-width: 150px;
+            height: auto;
+        }
+
         .title {
             font-size: 16px;
             font-weight: bold;
@@ -102,6 +109,24 @@
             text-align: center;
             margin: 10pt 0;
         }
+
+        .st-barcode-img {
+            display: block;
+            margin: 0 auto;
+            width: 180px;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .barcode-wrap {
+            display: flex;
+            justify-content: center;
+        }
+
+        .st-barcode-center {
+            display: inline-block;
+            max-width: 100%;
+        }
         /* ... */
     </style>
 </head>
@@ -109,6 +134,7 @@
     <div class="ticket-container">
         <div class="ticket-inner">
             <div class="header">
+                <img src="{{ $logoDataUri ?? asset('img/logo-full.png') }}" alt="Logo" class="ticket-logo" />
                 <div class="title">Slot Ticket Docking</div>
                 <div class="subtitle">
                     {{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}

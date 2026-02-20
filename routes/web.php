@@ -135,14 +135,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/po/search', [SapController::class, 'searchPO']);
         Route::get('/po/{poNumber}', [SapController::class, 'getPODetails']);
         Route::post('/slot/sync', [SapController::class, 'syncSlot']);
-        
+
         // New OData V4 endpoints
         Route::get('/po/odata/search', [SapController::class, 'searchPOOdata'])->name('po.odata.search');
-        
+
         // Vendor endpoints
         Route::get('/vendor/search', [SapController::class, 'searchVendor'])->name('vendor.search');
         Route::get('/vendor/{vendorCode}', [SapController::class, 'getVendor'])->name('vendor.show');
-        
+
         // Health check & testing
         Route::get('/health', [SapController::class, 'health'])->name('health');
         Route::get('/metadata', [SapController::class, 'metadata']);
@@ -200,7 +200,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:vendor'])->prefix('vendor')->name('vendor.')->group(function () {
         // Vendor Dashboard
         Route::get('/dashboard', [VendorBookingController::class, 'dashboard'])->name('dashboard');
-        
+
         // Bookings
         Route::prefix('bookings')->name('bookings.')->group(function () {
             Route::get('/', [VendorBookingController::class, 'index'])->name('index');
@@ -210,10 +210,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/ticket', [VendorBookingController::class, 'ticket'])->whereNumber('id')->name('ticket');
             Route::post('/{id}/cancel', [VendorBookingController::class, 'cancel'])->whereNumber('id')->name('cancel');
         });
-        
+
         // Availability
         Route::get('/availability', [VendorBookingController::class, 'availability'])->name('availability');
-        
+
         // AJAX endpoints
         Route::prefix('ajax')->name('ajax.')->group(function () {
             Route::get('/available-slots', [VendorBookingController::class, 'getAvailableSlots'])->name('available_slots');
@@ -224,7 +224,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/po/{poNumber}', [VendorBookingController::class, 'ajaxPoDetail'])->where('poNumber', '[A-Za-z0-9\-]+')->name('po_detail');
         });
     });
-    
+
     // Remove duplicate AJAX routes
 
     // ========================================
@@ -233,23 +233,24 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('bookings.')->group(function () {
         Route::get('/', [BookingApprovalController::class, 'index'])->name('index');
         Route::get('/{id}', [BookingApprovalController::class, 'show'])->whereNumber('id')->name('show');
-        
+
         // Approval actions
         Route::post('/{id}/approve', [BookingApprovalController::class, 'approve'])->whereNumber('id')->name('approve')
             ->middleware('permission:bookings.approve');
         Route::post('/{id}/reject', [BookingApprovalController::class, 'reject'])->whereNumber('id')->name('reject')
             ->middleware('permission:bookings.reject');
-        
+
         // Reschedule
         Route::get('/{id}/reschedule', [BookingApprovalController::class, 'rescheduleForm'])->whereNumber('id')->name('reschedule')
             ->middleware('permission:bookings.reschedule');
         Route::post('/{id}/reschedule', [BookingApprovalController::class, 'reschedule'])->whereNumber('id')->name('reschedule.store')
             ->middleware('permission:bookings.reschedule');
-        
+
         // AJAX
         Route::get('/ajax/calendar', [BookingApprovalController::class, 'calendarData'])->name('ajax.calendar');
         Route::get('/ajax/pending-count', [BookingApprovalController::class, 'pendingCount'])->name('ajax.pending_count');
         Route::get('/ajax/reminders', [BookingApprovalController::class, 'reminderData'])->name('ajax.reminders');
+        Route::get('/ajax/check-gate', [BookingApprovalController::class, 'ajaxCheckGateAvailability'])->name('ajax.check_gate');
     });
 });
 

@@ -14,20 +14,117 @@
             <i class="fas fa-calendar-alt"></i>
             Reschedule Request {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
         </h2>
-        <a href="{{ route('bookings.show', $booking->id) }}" class="st-btn st-btn--secondary">
-            <i class="fas fa-arrow-left"></i>
-            Back
-        </a>
     </div>
 
-    <!-- Current Schedule Info -->
-    <div class="st-alert st-alert--info">
-        <i class="fas fa-info-circle"></i>
-        <div>
-            <strong>Current Request:</strong>
-            {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}
-            ({{ $booking->planned_duration }} Min)
-            - Requested by {{ $booking->requester?->full_name ?? 'Vendor' }}
+    <!-- Top: Compact booking summary (3 cards) -->
+    <div class="booking-detail-grid booking-detail-grid--compact st-mb-20">
+        <!-- Request Information Card -->
+        <div class="detail-card detail-card--compact">
+            <div class="detail-card__header">
+                <h3 class="detail-card__title">
+                    <i class="fas fa-info-circle"></i>
+                    Request Information
+                </h3>
+            </div>
+            <div class="detail-card__body">
+                <div class="detail-grid-compact">
+                    <div class="detail-item">
+                        <label class="detail-label">Request Number</label>
+                        <div class="detail-value">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">Status</label>
+                        <div class="detail-value">
+                            @php
+                                $badgeColor = match($booking->status) {
+                                    'pending' => 'pending_approval',
+                                    'approved' => 'success',
+                                    'rejected' => 'danger',
+                                    'cancelled' => 'secondary',
+                                    default => 'secondary',
+                                };
+                                $badgeLabel = match($booking->status) {
+                                    'pending' => 'Pending',
+                                    'approved' => 'Approved',
+                                    'rejected' => 'Rejected',
+                                    'cancelled' => 'Cancelled',
+                                    default => ucfirst(str_replace('_',' ', (string) $booking->status)),
+                                };
+                            @endphp
+                            <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">Supplier</label>
+                        <div class="detail-value">{{ $booking->supplier_name ?? '-' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">Requested By</label>
+                        <div class="detail-value">{{ $booking->requester?->full_name ?? '-' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Information Card -->
+        <div class="detail-card detail-card--compact">
+            <div class="detail-card__header">
+                <h3 class="detail-card__title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Current Schedule
+                </h3>
+            </div>
+            <div class="detail-card__body">
+                <div class="detail-grid-compact">
+                    <div class="detail-item">
+                        <label class="detail-label">Warehouse</label>
+                        <div class="detail-value">{{ $booking->warehouse_id ? ($booking->convertedSlot?->warehouse?->wh_code ?? '-') : '-' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">Gate</label>
+                        <div class="detail-value">
+                            {{ app(\App\Services\SlotService::class)->getGateDisplayName(
+                                $booking->convertedSlot?->plannedGate?->warehouse->wh_code ?? '',
+                                $booking->convertedSlot?->plannedGate?->gate_number ?? ''
+                            ) ?: 'To be assigned' }}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">Date</label>
+                        <div class="detail-value">{{ $booking->planned_start?->format('d M Y') ?? '-' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">Time</label>
+                        <div class="detail-value">{{ $booking->planned_start?->format('H:i') ?? '-' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">Duration</label>
+                        <div class="detail-value">{{ $booking->planned_duration }} minutes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicle Information Card -->
+        <div class="detail-card detail-card--compact">
+            <div class="detail-card__header">
+                <h3 class="detail-card__title">
+                    <i class="fas fa-truck"></i>
+                    Vehicle Information
+                </h3>
+            </div>
+            <div class="detail-card__body">
+                <div class="detail-grid-compact">
+                    <div class="detail-item">
+                        <label class="detail-label">Truck Type</label>
+                        <div class="detail-value">{{ $booking->truck_type ?? '-' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">Vehicle Number</label>
+                        <div class="detail-value">{{ $booking->vehicle_number ?? '-' }}</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -35,111 +132,93 @@
         @csrf
 
         <div class="st-form-grid">
-            <!-- Left Column: Current Info -->
-            <div class="st-form-section">
-                <h3 class="st-form-section__title">
-                    <i class="fas fa-clock"></i>
-                    Vendor's Request
-                </h3>
-
-                <table class="st-detail-table st-table st-table--sm">
-                    <tr>
-                        <td>Supplier</td>
-                        <td><strong>{{ $booking->supplier_name ?? '-' }}</strong></td>
-                    </tr>
-                    <tr>
-                        <td>Direction</td>
-                        <td>
-                            <span class="st-badge st-badge--{{ $booking->direction === 'inbound' ? 'info' : 'warning' }}">
-                                {{ ucfirst($booking->direction) }}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Requested Date</td>
-                        <td>{{ $booking->planned_start?->format('d M Y') ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Requested Time</td>
-                        <td>{{ $booking->planned_start?->format('H:i') ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Duration</td>
-                        <td>{{ $booking->planned_duration }} Min</td>
-                    </tr>
-                    <tr>
-                        <td>Truck Type</td>
-                        <td>{{ $booking->truck_type ?? '-' }}</td>
-                    </tr>
-                </table>
-            </div>
-
-            <!-- Right Column: New Schedule -->
-            <div class="st-form-section">
+            <!-- Left: New Schedule form -->
+            <div class="st-form-section st-form-section--outlined-blue">
                 <h3 class="st-form-section__title">
                     <i class="fas fa-edit"></i>
                     New Schedule
                 </h3>
 
-                <div class="admin-form-group">
-                    <label class="admin-form-label">Gate <span class="st-text-danger">*</span></label>
-                    <select name="planned_gate_id" id="gate_select" class="admin-form-select" required>
-                        <option value="">Select Gate...</option>
-                        @foreach ($gates as $gate)
-                            @php
-                                $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
-                            @endphp
-                            <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('planned_gate_id', $booking->planned_gate_id ?? '') === (string)$gate->id ? 'selected' : '' }}>
-                                {{ $gateLabel }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <input type="hidden" name="warehouse_id" id="warehouse_hidden" value="">
-                </div>
+                <div class="reschedule-form-left">
+                    <div class="st-form-group">
+                        <label class="st-label">Gate <span class="st-required">*</span></label>
+                        <select name="planned_gate_id" id="gate_select" class="st-select" required>
+                            <option value="">Select Gate...</option>
+                            @foreach ($gates as $gate)
+                                @php
+                                    $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse?->wh_code ?? '', $gate->gate_number ?? '');
+                                @endphp
+                                <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('planned_gate_id', $booking->planned_gate_id ?? '') === (string)$gate->id ? 'selected' : '' }}>
+                                    {{ $gateLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" name="warehouse_id" id="warehouse_hidden" value="">
+                        <div id="reschedule_gate_availability" class="st-text-12 st-mt-4"></div>
+                    </div>
 
-                <div class="st-form-group">
-                    <label class="st-label">Date <span class="st-required">*</span></label>
-                    <input type="date" name="planned_date" class="st-input" required min="{{ now()->format('Y-m-d') }}"
-                           value="{{ old('planned_date', $booking->planned_start?->format('Y-m-d')) }}"
-                           id="planned_date" placeholder="Select Date">
-                    @error('planned_date')
-                        <span class="st-error">{{ $message }}</span>
-                    @enderror
-                </div>
+                    <div class="st-form-group">
+                        <label class="st-label">Date <span class="st-required">*</span></label>
+                        <input type="date" name="planned_date" class="st-input" required min="{{ now()->format('Y-m-d') }}"
+                               value="{{ old('planned_date', $booking->planned_start?->format('Y-m-d')) }}"
+                               id="planned_date" placeholder="Select Date">
+                        @error('planned_date')
+                            <span class="st-error">{{ $message }}</span>
+                        @enderror
+                    </div>
 
-                <div class="st-form-group">
-                    <label class="st-label">Time <span class="st-required">*</span></label>
-                    <input type="time" name="planned_time" class="st-input" required
-                           min="07:00" max="22:00"
-                           value="{{ old('planned_time', $booking->planned_start?->format('H:i')) }}"
-                           id="planned_time">
-                    <small class="st-hint">Operating hours: 07:00 - 23:00</small>
-                    @error('planned_time')
-                        <span class="st-error">{{ $message }}</span>
-                    @enderror
-                </div>
+                    <div class="st-form-group">
+                        <label class="st-label">Time <span class="st-required">*</span></label>
+                        <input type="time" name="planned_time" class="st-input" required
+                               min="07:00" max="22:00"
+                               value="{{ old('planned_time', $booking->planned_start?->format('H:i')) }}"
+                               id="planned_time">
+                        <small class="st-hint">Operating hours: 07:00 - 23:00</small>
+                        @error('planned_time')
+                            <span class="st-error">{{ $message }}</span>
+                        @enderror
+                    </div>
 
-                <div class="st-form-group">
-                    <label class="st-label">Duration (minutes) <span class="st-required">*</span></label>
-                    <input type="number" name="planned_duration" class="st-input" required
-                           min="30" max="480" step="1"
-                           value="{{ old('planned_duration', $booking->planned_duration) }}"
-                           id="planned_duration">
-                    @error('planned_duration')
-                        <span class="st-error">{{ $message }}</span>
-                    @enderror
-                </div>
+                    <div class="st-form-group">
+                        <label class="st-label">Duration (minutes) <span class="st-required">*</span></label>
+                        <input type="number" name="planned_duration" class="st-input" required
+                               min="30" max="480" step="1"
+                               value="{{ old('planned_duration', $booking->planned_duration) }}"
+                               id="planned_duration">
+                        @error('planned_duration')
+                            <span class="st-error">{{ $message }}</span>
+                        @enderror
+                    </div>
 
-                <div class="st-form-group st-mt-24">
-                    <label class="st-label">Notes for Vendor</label>
-                    <textarea name="notes" class="st-textarea" rows="3"
-                              placeholder="Explain Why You're Rescheduling This Booking...">{{ old('notes') }}</textarea>
+                    <div class="st-form-group st-mt-24 reschedule-notes">
+                        <label class="st-label">Notes for Vendor</label>
+                        <textarea name="notes" class="st-textarea" rows="3"
+                                  placeholder="Explain Why You're Rescheduling This Booking...">{{ old('notes') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: List Schedule (availability) -->
+            <div class="st-form-section st-form-section--outlined-blue">
+                <h3 class="st-form-section__title">
+                    <i class="fas fa-list"></i>
+                    List Schedule
+                </h3>
+
+                <div class="reschedule-availability-right">
+                    <div class="reschedule-availability-header">
+                        <h4 class="reschedule-availability-title">Gate Availability</h4>
+                        <p class="reschedule-availability-subtitle">Inbound & Outbound slots for selected date and gate.</p>
+                    </div>
+                    <div id="reschedule_availability_list" class="reschedule-availability-list">
+                        <p class="st-text-12 st-text--muted">Select a date and gate to see existing slots.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="st-form-actions">
-            <a href="{{ route('bookings.show', $booking->id) }}" class="st-btn st-btn--secondary">
+            <a href="{{ route('bookings.index') }}" class="st-btn st-btn--secondary">
                 Cancel
             </a>
             <button type="submit" class="st-btn st-btn--warning">
@@ -152,25 +231,12 @@
 
 @endsection
 
-<script type="application/json" id="reschedule_gates_json">{!! $gates->map(function ($coll, $wid) {
-    $arr = [];
-    foreach ($coll as $g) {
-        $arr[] = [
-            'id' => (int) ($g->id ?? 0),
-            'warehouse_id' => (int) ($g->warehouse_id ?? 0),
-            'gate_number' => (string) ($g->gate_number ?? ''),
-            'name' => (string) ($g->name ?? ''),
-            'warehouse_code' => (string) ($g->warehouse?->wh_code ?? ''),
-        ];
-    }
-    return $arr;
-})->toJson() !!}</script>
-
 @push('scripts')
 <script type="application/json" id="admin_bookings_reschedule_config">{!! json_encode([
     'bookingId' => (int) ($booking->id ?? 0),
+    'checkGateUrl' => route('bookings.ajax.check_gate', [], false),
     'warehouseId' => (int) ($booking->warehouse_id ?? 0),
-    'calendarBaseUrl' => url('/bookings/ajax/calendar'),
+    'calendarBaseUrl' => route('bookings.ajax.calendar', [], false),
 ]) !!}</script>
 @vite(['resources/js/pages/admin-bookings-reschedule.js'])
 @endpush

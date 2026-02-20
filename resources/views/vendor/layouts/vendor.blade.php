@@ -38,6 +38,28 @@
         <div class="vendor-header__brand">
             <img src="{{ asset('img/logo-icon.png') }}" alt="Slot Time" class="vendor-header__logo">
             <span class="vendor-header__title">Vendor Portal</span>
+
+            <!-- Compact user menu for mobile (three dots) -->
+            <button type="button" class="vendor-header__user-menu-btn" id="vendor-user-menu-btn" aria-label="Open user menu">
+                <i class="fas fa-ellipsis-v vendor-header__user-menu-icon"></i>
+            </button>
+            <div class="vendor-header__user-menu" id="vendor-user-menu">
+                <div class="vendor-header__user-menu-info">
+                    <div class="vendor-header__user-name">{{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}</div>
+                    <div class="vendor-header__user-company">{{ auth()->user()->vendor_code ?? 'Vendor' }}</div>
+                </div>
+                <div class="vendor-header__user-menu-actions">
+                    <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm vendor-header__user-menu-notif" id="vendor-user-menu-notif" aria-label="Notifications" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <form method="POST" action="{{ route('logout') }}" class="vendor-inline-form vendor-header__user-menu-logout">
+                        @csrf
+                        <button type="submit" class="vendor-btn vendor-btn--secondary vendor-btn--sm" aria-label="Logout" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <nav class="vendor-header__nav">

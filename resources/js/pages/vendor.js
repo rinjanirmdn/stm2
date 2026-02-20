@@ -35,7 +35,39 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     initVendorNotifications();
+    initVendorHeaderUserMenu();
 });
+
+function initVendorHeaderUserMenu() {
+    const menuBtn = document.getElementById('vendor-user-menu-btn');
+    const menu = document.getElementById('vendor-user-menu');
+    const notifProxy = document.getElementById('vendor-user-menu-notif');
+    const notifDropdown = document.getElementById('notification-dropdown');
+    if (!menuBtn || !menu) return;
+
+    function closeMenu() {
+        menu.classList.remove('vendor-header__user-menu--open');
+    }
+
+    menuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        menu.classList.toggle('vendor-header__user-menu--open');
+    });
+
+    if (notifProxy && notifDropdown) {
+        notifProxy.addEventListener('click', function (e) {
+            e.stopPropagation();
+            // Toggle the same dropdown used by the main notification bell
+            notifDropdown.classList.toggle('show');
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!menu.classList.contains('vendor-header__user-menu--open')) return;
+        if (menu.contains(e.target) || menuBtn.contains(e.target)) return;
+        closeMenu();
+    });
+}
 
 function initVendorBookingCreate(config) {
     const poSearchUrl = config.poSearchUrl || '';

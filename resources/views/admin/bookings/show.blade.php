@@ -18,25 +18,9 @@
             </h2>
             <div class="booking-detail__subtitle">
                 <span>{{ $booking->supplier_name ?? '-' }}</span>
-                <span class="booking-detail__dot">â€¢</span>
+                <span class="booking-detail__dot">:</span>
                 <span>{{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}</span>
             </div>
-        </div>
-        <div class="st-card__actions">
-            <a href="{{ route('bookings.index') }}" class="st-btn st-btn--secondary">
-                <i class="fas fa-arrow-left"></i>
-                Back
-            </a>
-            @if($booking->status === 'pending')
-                <button type="button" class="st-btn st-btn--success" onclick="openApproveModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
-                    <i class="fas fa-check"></i>
-                    Approve
-                </button>
-                <button type="button" class="st-btn st-btn--danger" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
-                    <i class="fas fa-times"></i>
-                    Reject
-                </button>
-            @endif
         </div>
     </div>
 
@@ -197,6 +181,29 @@
 
     </div>
 
+    <div class="st-form-actions">
+        <a href="{{ route('bookings.index') }}" class="st-btn st-btn--secondary">
+            <i class="fas fa-arrow-left"></i>
+            Back
+        </a>
+        @if($booking->status === 'pending')
+            <button type="button" class="st-btn st-btn--success" onclick="openApproveModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+                <i class="fas fa-check"></i>
+                Approve
+            </button>
+            @can('bookings.reschedule')
+                <a href="{{ route('bookings.reschedule', $booking->id) }}" class="st-btn st-btn--warning">
+                    <i class="fas fa-calendar-alt"></i>
+                    Reschedule
+                </a>
+            @endcan
+            <button type="button" class="st-btn st-btn--danger" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+                <i class="fas fa-times"></i>
+                Reject
+            </button>
+        @endif
+    </div>
+
     <!-- Approve Modal -->
 <div id="approveModal" class="st-custom-modal">
     <div class="st-custom-modal-overlay" onclick="closeApproveModal()"></div>
@@ -230,11 +237,37 @@
                         @endforeach
                     </select>
                     <input type="hidden" name="warehouse_id" id="modal_warehouse_id" value="">
+                    <div id="modal_gate_availability" class="st-text-12 st-mt-4"></div>
                 </div>
             </div>
             <div class="st-custom-modal-footer">
                 <button type="submit" class="st-btn st-btn--success">Approve Booking</button>
                 <button type="button" class="st-btn st-btn--secondary" onclick="closeApproveModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="reject-modal" class="st-custom-modal">
+    <div class="st-custom-modal-overlay" onclick="closeRejectModal()"></div>
+    <div class="st-custom-modal-container">
+        <div class="st-custom-modal-header">
+            <h3>Reject Booking</h3>
+            <button type="button" class="st-custom-modal-close" onclick="closeRejectModal()">&times;</button>
+        </div>
+        <form method="POST" id="reject-form">
+            @csrf
+            <div class="st-custom-modal-body">
+                <p>Are you sure you want to reject booking <strong id="reject-ticket"></strong>?</p>
+                <div class="st-form-field st-mt-4">
+                    <label class="st-label">Reason for Rejection <span class="st-required">*</span></label>
+                    <textarea name="reason" class="st-textarea" rows="3" required placeholder="Please Provide a Reason for Rejection..."></textarea>
+                </div>
+            </div>
+            <div class="st-custom-modal-footer">
+                <button type="submit" class="st-btn st-btn--danger">Reject Booking</button>
+                <button type="button" class="st-btn st-btn--secondary" onclick="closeRejectModal()">Cancel</button>
             </div>
         </form>
     </div>
@@ -257,6 +290,7 @@
 @push('scripts')
 <script type="application/json" id="admin_bookings_show_config">{!! json_encode([
     'bookingsBaseUrl' => url('/bookings'),
+    'checkGateUrl' => route('bookings.ajax.check_gate', [], false),
 ]) !!}</script>
 @vite(['resources/js/pages/admin-bookings-show.js'])
 @endpush

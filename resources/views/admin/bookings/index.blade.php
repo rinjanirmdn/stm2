@@ -14,7 +14,7 @@
             <div class="st-form-row st-gap-8 st-items-end">
                 <div class="st-form-field st-flex-1">
                     <label class="st-label st-text-12">Booking Summary</label>
-                    <div class="st-flex st-gap-10 st-w-full">
+                    <div class="st-flex st-flex-wrap st-gap-10 st-w-full st-booking-summary-pills">
                         <div class="st-booking-summary-pill st-booking-summary-pill--pending">
                             <span class="st-booking-summary-pill__label">Pending</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['pending'] ?? 0 }}</span>
@@ -23,28 +23,36 @@
                             <span class="st-booking-summary-pill__label">Approved</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['approved'] ?? 0 }}</span>
                         </div>
+                        <div class="st-booking-summary-pill st-booking-summary-pill--cancelled">
+                            <span class="st-booking-summary-pill__label">Cancelled</span>
+                            <span class="st-booking-summary-pill__value">{{ $counts['cancelled'] ?? 0 }}</span>
+                        </div>
+                        <div class="st-booking-summary-pill st-booking-summary-pill--rejected">
+                            <span class="st-booking-summary-pill__label">Rejected</span>
+                            <span class="st-booking-summary-pill__value">{{ $counts['rejected'] ?? 0 }}</span>
+                        </div>
                         <div class="st-booking-summary-pill st-booking-summary-pill--all">
                             <span class="st-booking-summary-pill__label">All</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['all'] ?? 0 }}</span>
                         </div>
                     </div>
                 </div>
-                <div class="st-form-field st-maxw-220">
-                    <label class="st-label st-text-12">Search</label>
-                    <input type="text" name="search" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Request No, PO..." value="{{ request('search') }}">
-                </div>
-                <div class="st-form-field st-maxw-220 st-relative">
-                    <label class="st-label st-text-12">Date Range</label>
-                    <div id="booking_reportrange" class="st-dashboard-range-picker">
-                        <span>Select range</span>
+                <div class="st-flex st-flex-wrap st-gap-8 st-items-end st-booking-header-controls">
+                    <div class="st-form-field st-maxw-220">
+                        <label class="st-label st-text-12">Search</label>
+                        <input type="text" name="search" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Request No, PO..." value="{{ request('search') }}">
                     </div>
-                    <input type="hidden" name="date_from" id="date_from" form="booking-filter-form" value="{{ request('date_from') }}">
-                    <input type="hidden" name="date_to" id="date_to" form="booking-filter-form" value="{{ request('date_to') }}">
-                </div>
-                <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
-                    @if(request()->hasAny(['date_from', 'date_to', 'search', 'request_number', 'po_number', 'supplier_name', 'planned_start', 'converted_ticket', 'planned_gate_id', 'direction', 'status_filter', 'created_at']))
-                    <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn st-btn--outline-primary st-text-12 st-py-2 st-px-10 st-h-24">Reset</a>
-                    @endif
+                    <div class="st-form-field st-maxw-220 st-relative">
+                        <label class="st-label st-text-12">Date Range</label>
+                        <div id="booking_reportrange" class="st-dashboard-range-picker">
+                            <span>Select range</span>
+                        </div>
+                        <input type="hidden" name="date_from" id="date_from" form="booking-filter-form" value="{{ request('date_from') }}">
+                        <input type="hidden" name="date_to" id="date_to" form="booking-filter-form" value="{{ request('date_to') }}">
+                    </div>
+                    <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
+                        <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn st-btn--outline-primary st-text-12 st-py-2 st-px-10 st-h-24">Reset</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -58,7 +66,7 @@
                     @php
                         $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
                         $dirsArr = isset($dirs) && is_array($dirs) ? $dirs : [];
-                        $showConvertedTicket = in_array($status, ['approved', 'all'], true) || request('status_filter') === 'approved';
+                        $showConvertedTicket = $status === 'all';
                     @endphp
                     @foreach ($sortsArr as $i => $s)
                         @php $d = $dirsArr[$i] ?? 'asc'; @endphp
@@ -69,9 +77,9 @@
                         <table class="st-table">
                             <thead>
                                 <tr>
-                                    <th class="st-table-col-60">#</th>
-                                    <th>
-                                        <div class="st-colhead">
+                                    <th class="st-table-col-60 st-text-center">#</th>
+                                    <th class="st-text-center">
+                                        <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">Request</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="request_number" title="Sort">â‡…</button>
@@ -86,8 +94,8 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th>
-                                        <div class="st-colhead">
+                                    <th class="st-text-center">
+                                        <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">PO</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po_number" title="Sort">â‡…</button>
@@ -102,8 +110,8 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th>
-                                        <div class="st-colhead">
+                                    <th class="st-text-center">
+                                        <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">Supplier</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="supplier_name" title="Sort">â‡…</button>
@@ -118,8 +126,8 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th>
-                                        <div class="st-colhead">
+                                    <th class="st-text-center">
+                                        <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">Scheduled</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="planned_start" title="Sort">â‡…</button>
@@ -135,8 +143,8 @@
                                         </div>
                                     </th>
                                     @if($showConvertedTicket)
-                                        <th>
-                                            <div class="st-colhead">
+                                        <th class="st-text-center">
+                                            <div class="st-colhead st-justify-center">
                                                 <span class="st-colhead__label">Ticket</span>
                                                 <span class="st-colhead__icons">
                                                     <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="converted_ticket" title="Sort">â‡…</button>
@@ -152,8 +160,8 @@
                                             </div>
                                         </th>
                                     @endif
-                                    <th>
-                                        <div class="st-colhead">
+                                    <th class="st-text-center">
+                                        <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">Gate</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="gate" title="Sort">â‡…</button>
@@ -179,8 +187,8 @@
                                             @endif
                                         </div>
                                     </th>
-                                    <th class="st-table-col-90">
-                                        <div class="st-colhead">
+                                    <th class="st-table-col-90 st-text-center">
+                                        <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">Direction</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" data-type="text" title="Sort">â‡…</button>
@@ -199,12 +207,12 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-120">
-                                        <div class="st-colhead">
+                                    <th class="st-table-col-120 st-text-center">
+                                        <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">Status</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status_filter" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="status_filter">
                                                 <div class="st-font-semibold st-mb-6">Status Filter</div>
@@ -221,12 +229,12 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-150">
-                                        <div class="st-colhead">
+                                    <th class="st-table-col-150 st-text-center">
+                                        <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">Requested At</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="requested_at" data-type="date" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="requested_at" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" data-type="date" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="created_at" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-220 st-maxh-220" data-filter-panel="created_at">
                                                 <div class="st-font-semibold st-mb-6">Requested At Filter</div>
@@ -237,29 +245,39 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th>Actions</th>
+                                    <th class="st-text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if($bookings->count() > 0)
                                     @foreach($bookings as $booking)
                                         <tr>
-                                            <td>{{ $loop->index + 1 }}</td>
-                                            <td>
+                                            <td class="st-text-center">{{ $loop->index + 1 }}</td>
+                                            <td class="st-text-center">
                                                 <a href="{{ route('bookings.show', $booking->id) }}" class="st-link">
                                                     <strong>{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</strong>
                                                 </a>
                                             </td>
-                                            <td>{{ $booking->po_number ?? '-' }}</td>
-                                            <td>{{ $booking->supplier_name ?? '-' }}</td>
-                                            <td>
+                                            <td class="st-text-center">{{ $booking->po_number ?? '-' }}</td>
+                                            <td class="st-text-center">{{ $booking->supplier_name ?? '-' }}</td>
+                                            <td class="st-text-center">
                                                 {{ $booking->planned_start?->format('d M Y') ?? '-' }}
                                                 <br><small class="st-text-muted">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>
                                             </td>
                                             @if($showConvertedTicket)
-                                                <td>{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
+                                                <td class="st-text-center">{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
                                             @endif
-                                            <td>{{ $booking->convertedSlot?->plannedGate?->name ?? 'TBD' }}</td>
+                                            <td class="st-text-center">
+                                                @php
+                                                    $gateDisplay = '-';
+                                                    if ($booking->convertedSlot?->plannedGate) {
+                                                        $whCode = (string) ($booking->convertedSlot?->warehouse?->wh_code ?? '');
+                                                        $gateNo = (string) ($booking->convertedSlot?->plannedGate?->gate_number ?? '');
+                                                        $gateDisplay = app(\App\Services\SlotService::class)->getGateDisplayName($whCode, $gateNo);
+                                                    }
+                                                @endphp
+                                                {{ $gateDisplay !== '' ? $gateDisplay : '-' }}
+                                            </td>
                                             <td class="st-td-center">
                                                 <span class="st-badge st-badge--{{ $booking->direction }}">
                                                     {{ ucfirst($booking->direction) }}
@@ -295,7 +313,7 @@
 
                                                         @if($booking->status === 'pending')
                                                             @can('bookings.approve')
-                                                                <a href="{{ route('bookings.show', $booking->id) }}" class="st-action-item">Approve</a>
+                                                                <button type="button" class="st-action-item" onclick="openApproveModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">Approve</button>
                                                             @endcan
 
                                                             @can('bookings.reject')
@@ -341,8 +359,19 @@
         </div>
         <form id="approveForm" method="POST" action="">
             @csrf
-            <div class="st-custom-modal-body text-center">
-                <p>Are you sure you want to approve booking <strong id="modalTicketNumber"></strong>?</p>
+            <div class="st-custom-modal-body">
+                <p class="st-text-center">Are you sure you want to approve booking <strong id="modalTicketNumber"></strong>?</p>
+
+                <div class="st-form-group st-form-group--mt-15">
+                    <label class="st-label st-label--strong">Gate <span class="st-required">*</span></label>
+                    <select name="planned_gate_id" id="modal_planned_gate_id" class="st-select" required>
+                        <option value="">Select Gate...</option>
+                        @foreach(($gateOptions ?? []) as $opt)
+                            <option value="{{ $opt['id'] }}">{{ $opt['label'] }}</option>
+                        @endforeach
+                    </select>
+                    <div id="modal_gate_availability" class="st-text-12 st-mt-4"></div>
+                </div>
             </div>
             <div class="st-custom-modal-footer">
                 <button type="submit" class="st-btn st-btn--success">Yes, Approve</button>
@@ -382,6 +411,7 @@
 @push('scripts')
 <script type="application/json" id="admin_bookings_index_config">{!! json_encode([
     'bookingsBaseUrl' => url('/bookings'),
+    'checkGateUrl' => route('bookings.ajax.check_gate', [], false),
 ]) !!}</script>
 @vite(['resources/js/pages/admin-bookings-index.js'])
 @endpush

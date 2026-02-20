@@ -23,13 +23,10 @@ function readJsonFromScriptTag(id) {
 }
 
 const statusAbbr = {
-  pending: 'PND',
   scheduled: 'SCH',
   waiting: 'WAIT',
   in_progress: 'IN PR',
   completed: 'CMPLT',
-  rejected: 'REJ',
-  cancelled: 'CXL',
 };
 
 function tk(name, fallback = '') {
@@ -48,22 +45,16 @@ function tipStyle() {
 
 function VendorStatusOverviewChart({ stats }) {
   const data = useMemo(() => {
-    const pending = Number(stats?.pending || 0);
     const scheduled = Number(stats?.scheduled || 0);
     const waiting = Number(stats?.waiting || 0);
     const inProgress = Number(stats?.in_progress || 0);
     const completed = Number(stats?.completed || 0);
-    const rejected = Number(stats?.rejected || 0);
-    const cancelled = Number(stats?.cancelled || 0);
 
     return [
-      { name: 'pending', value: pending, fill: tk('--pending', '#f59e0b') },
       { name: 'scheduled', value: scheduled, fill: tk('--scheduled', '#6b7280') },
       { name: 'waiting', value: waiting, fill: tk('--waiting', '#d97706') },
       { name: 'in_progress', value: inProgress, fill: tk('--in-progress', '#0284c7') },
       { name: 'completed', value: completed, fill: tk('--completed', '#059669') },
-      { name: 'rejected', value: rejected, fill: tk('--cancelled', '#dc2626') },
-      { name: 'cancelled', value: cancelled, fill: '#0f172a' },
     ];
   }, [stats]);
 

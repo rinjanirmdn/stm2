@@ -57,6 +57,7 @@ window.openApproveModal = function (id, ticket) {
     const form = document.getElementById('approveForm');
     const gateSelect = document.getElementById('modal_planned_gate_id');
     const warehouseHidden = document.getElementById('modal_warehouse_id');
+    const availabilityBox = document.getElementById('modal_gate_availability');
 
     ticketSpan.innerText = ticket;
     form.action = stBookingsBaseUrl() + '/' + id + '/approve';
@@ -73,11 +74,57 @@ window.openApproveModal = function (id, ticket) {
     if (gateSelect) {
         gateSelect.addEventListener('change', function() {
             syncModalWarehouseFromGate();
+            try { updateGateAvailability(id); } catch (e) {}
         });
         // Initial sync if gate is pre-selected
         if (gateSelect.value) {
             syncModalWarehouseFromGate();
+            try { updateGateAvailability(id); } catch (e) {}
         }
+    }
+
+    function updateGateAvailability(bookingId) {
+        if (!availabilityBox || !gateSelect) return;
+        const gateId = String(gateSelect.value || '').trim();
+        if (!gateId) {
+            availabilityBox.textContent = '';
+            availabilityBox.className = 'st-text-12 st-mt-4';
+            return;
+        }
+
+        let cfg = {};
+        try {
+            const el = document.getElementById('admin_bookings_show_config');
+            cfg = el ? (JSON.parse(el.textContent || '{}') || {}) : {};
+        } catch (e) { cfg = {}; }
+
+        const checkUrl = String(cfg.checkGateUrl || '').trim();
+        if (!checkUrl) return;
+
+        const url = checkUrl + '?booking_id=' + encodeURIComponent(String(bookingId))
+            + '&planned_gate_id=' + encodeURIComponent(String(gateId));
+
+        availabilityBox.textContent = 'Checking availability...';
+        availabilityBox.className = 'st-text-12 st-mt-4';
+
+        fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                const ok = !!(data && data.available);
+                const label = (data && data.label) ? String(data.label) : (ok ? 'Available' : 'Not Available');
+                const reason = (data && data.reason) ? String(data.reason) : '';
+
+                availabilityBox.textContent = reason ? (label + ' - ' + reason) : label;
+                availabilityBox.className = 'st-text-12 st-mt-4 ' + (ok ? 'st-text-success' : 'st-text-danger');
+            })
+            .catch(function () {
+                availabilityBox.textContent = 'Not Available';
+                availabilityBox.className = 'st-text-12 st-mt-4 st-text-danger';
+            });
     }
 
     modal.classList.add('active');

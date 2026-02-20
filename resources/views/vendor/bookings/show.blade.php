@@ -11,13 +11,13 @@
             <i class="fas fa-ticket"></i>
             Booking {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
         </h1>
-        <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">
-            <i class="fas fa-arrow-left"></i>
-            Back
-        </a>
     </div>
 
     <!-- Status Banner -->
+    @php
+        $isRescheduled = ($booking->convertedSlot?->approval_action ?? null) === \App\Models\Slot::APPROVAL_RESCHEDULED;
+    @endphp
+
     @if($booking->status === 'pending')
     <div class="vendor-alert vendor-alert--warning">
         <i class="fas fa-clock"></i>
@@ -41,7 +41,11 @@
     @elseif($booking->status === 'approved')
     <div class="vendor-alert vendor-alert--success">
         <i class="fas fa-check-circle"></i>
-        <strong>Approved</strong> - Your booking request has been approved.
+        @if($isRescheduled)
+            <strong>Rescheduled & Approved</strong> - Your booking has been rescheduled. Please follow the new schedule below.
+        @else
+            <strong>Approved</strong> - Your booking request has been approved.
+        @endif
     </div>
     @endif
 
@@ -57,6 +61,20 @@
                 <tr>
                     <td class="vb-table__label">Ticket Number</td>
                     <td class="vb-table__value--strong">{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="vb-table__label">Gate</td>
+                    <td class="vb-table__value--strong">
+                        @php
+                            $gateDisplay = '-';
+                            if ($booking->status === 'approved' && $booking->convertedSlot?->plannedGate) {
+                                $whCode = (string) ($booking->convertedSlot?->warehouse?->wh_code ?? '');
+                                $gateNo = (string) ($booking->convertedSlot?->plannedGate?->gate_number ?? '');
+                                $gateDisplay = app(\App\Services\SlotService::class)->getGateDisplayName($whCode, $gateNo);
+                            }
+                        @endphp
+                        {{ $gateDisplay !== '' ? $gateDisplay : '-' }}
+                    </td>
                 </tr>
                 <tr>
                     <td class="vb-table__label">Status</td>
@@ -94,6 +112,14 @@
             </h3>
 
             <table class="vb-table st-table st-table--sm">
+                @if($isRescheduled)
+                <tr>
+                    <td class="vb-table__label">Schedule Type</td>
+                    <td>
+                        <span class="vendor-badge vendor-badge--info">Rescheduled</span>
+                    </td>
+                </tr>
+                @endif
                 <tr>
                     <td class="vb-table__label">Scheduled Date</td>
                     <td class="vb-table__value--strong">{{ $booking->planned_start?->format('d M Y') ?? '-' }}</td>
@@ -198,6 +224,11 @@
     @if(in_array($booking->status, ['pending', 'approved']))
     <div class="vb-actions">
         <div class="vb-actions__row">
+            <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back
+            </a>
+
             @if(!empty($booking->convertedSlot?->ticket_number))
             <a href="{{ route('vendor.bookings.ticket', $booking->convertedSlot->id) }}" class="vendor-btn vendor-btn--secondary" target="_blank">
                 <i class="fas fa-print"></i>

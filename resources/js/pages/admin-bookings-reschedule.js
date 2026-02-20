@@ -8,180 +8,177 @@
     }
 }
 
-function stNormalizeUrl(u) {
-    try {
-        var s = String(u || '');
-        if (!s) return '';
-        if (s.indexOf('://') !== -1) {
-            var parsed = new URL(s);
-            return parsed.pathname + parsed.search + parsed.hash;
-        }
-        return s;
-    } catch (ex) {
-        return '';
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     var config = stReadJson('admin_bookings_reschedule_config', {});
     var bookingId = config.bookingId || null;
-    var defaultWarehouseId = config.warehouseId || '';
-    var calendarBaseUrl = stNormalizeUrl(config.calendarBaseUrl || '/bookings/ajax/calendar');
-    const dateInput = document.getElementById('planned_date');
-    const timeInput = document.getElementById('planned_time');
-    const durationInput = document.getElementById('planned_duration');
-    const gateSelect = document.getElementById('gate_select');
-    const availabilityCheck = document.getElementById('availability-check');
-    const availabilityResult = document.getElementById('availability-result');
-    const calendarPreview = document.getElementById('calendar-preview');
-    const warehouseHidden = document.getElementById('warehouse_hidden');
+    var checkGateUrl = String(config.checkGateUrl || '').trim();
+    var calendarBaseUrl = String(config.calendarBaseUrl || '').trim();
 
-    // Gate and warehouse sync
+    var gateSelect = document.getElementById('gate_select');
+    var warehouseHidden = document.getElementById('warehouse_hidden');
+    var availabilityBox = document.getElementById('reschedule_gate_availability');
+    var dateInput = document.getElementById('planned_date');
+    var timeInput = document.getElementById('planned_time');
+    var durationInput = document.getElementById('planned_duration');
+    var availabilityList = document.getElementById('reschedule_availability_list');
+
     function syncWarehouseFromGate() {
-        const gateSelect = document.getElementById('gate_select');
         if (!gateSelect || !warehouseHidden) return;
-        const selected = gateSelect.options[gateSelect.selectedIndex];
+        var selected = gateSelect.options[gateSelect.selectedIndex];
         if (!selected) return;
         warehouseHidden.value = selected.getAttribute('data-warehouse-id') || '';
-
-        // Load availability after warehouse changes
-        checkAvailability();
-        loadCalendarPreview();
     }
 
-    // Check availability when inputs change
-    [dateInput, timeInput, durationInput, gateSelect].forEach(function(input) {
-        input.addEventListener('change', checkAvailability);
-    });
-
-    function checkAvailability() {
-        const gateId = gateSelect.value;
-        const date = dateInput.value;
-        const time = timeInput.value;
-        const duration = durationInput.value;
-
-        if (!date || !time || !duration) {
-            availabilityCheck.style.display = 'none';
+    function updateGateAvailability() {
+        if (!gateSelect || !availabilityBox || !checkGateUrl || !bookingId) return;
+        var gateId = String(gateSelect.value || '').trim();
+        if (!gateId) {
+            availabilityBox.textContent = '';
+            availabilityBox.className = 'st-text-12 st-mt-4';
             return;
         }
 
-        const plannedStart = date + ' ' + time + ':00';
+        var plannedDate = dateInput ? String(dateInput.value || '').trim() : '';
+        var plannedTime = timeInput ? String(timeInput.value || '').trim() : '';
+        var plannedDuration = durationInput ? String(durationInput.value || '').trim() : '';
 
-        const warehouseId = (warehouseHidden && warehouseHidden.value) ? warehouseHidden.value : defaultWarehouseId;
-        var params = `warehouse_id=${warehouseId}&gate_id=${gateId}&planned_start=${encodeURIComponent(plannedStart)}&planned_duration=${duration}`;
-        if (bookingId) {
-            params += `&exclude_slot_id=${bookingId}`;
+        var params = 'booking_id=' + encodeURIComponent(String(bookingId))
+            + '&planned_gate_id=' + encodeURIComponent(String(gateId));
+        if (plannedDate && plannedTime && plannedDuration) {
+            params += '&planned_date=' + encodeURIComponent(plannedDate)
+                + '&planned_time=' + encodeURIComponent(plannedTime)
+                + '&planned_duration=' + encodeURIComponent(plannedDuration);
         }
 
-        fetch(`${calendarBaseUrl}?${params}`)
-            .then(response => response.json())
-            .then(data => {
-                availabilityCheck.style.display = 'block';
+        var url = checkGateUrl + '?' + params;
 
-                if (data.available !== false) {
-                    availabilityResult.innerHTML = `
-                        <div class="st-flex st-items-center st-gap-8 st-text-success">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Time Slot Is Available</span>
-                        </div>
-                    `;
-                } else {
-                    availabilityResult.innerHTML = `
-                        <div class="st-flex st-items-center st-gap-8 st-text-danger">
-                            <i class="fas fa-times-circle"></i>
-                            <span>${data.reason || 'Time Slot Is Not Available'}</span>
-                        </div>
-                    `;
-                }
+        availabilityBox.textContent = 'Checking availability...';
+        availabilityBox.className = 'st-text-12 st-mt-4';
+
+        fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var ok = !!(data && data.available);
+                var label = (data && data.label) ? String(data.label) : (ok ? 'Available' : 'Not Available');
+                var reason = (data && data.reason) ? String(data.reason) : '';
+                availabilityBox.textContent = reason ? (label + ' - ' + reason) : label;
+                availabilityBox.className = 'st-text-12 st-mt-4 ' + (ok ? 'st-text-success' : 'st-text-danger');
             })
-            .catch(error => {
-                console.error('Error:', error);
+            .catch(function() {
+                availabilityBox.textContent = 'Not Available';
+                availabilityBox.className = 'st-text-12 st-mt-4 st-text-danger';
             });
     }
 
-    function loadCalendarPreview() {
-        const date = dateInput.value;
+    function loadAvailabilityList() {
+        if (!availabilityList || !calendarBaseUrl) return;
+        var dateVal = dateInput ? String(dateInput.value || '').trim() : '';
+        var gateId = gateSelect ? String(gateSelect.value || '').trim() : '';
 
-        const warehouseId = (warehouseHidden && warehouseHidden.value) ? warehouseHidden.value : defaultWarehouseId;
+        // Always use the warehouse tied to the currently selected gate
+        var currentWarehouseId = null;
+        if (warehouseHidden && String(warehouseHidden.value || '').trim() !== '') {
+            currentWarehouseId = String(warehouseHidden.value || '').trim();
+        } else if (config && config.warehouseId) {
+            // Fallback to initial warehouse from config if hidden not set yet
+            currentWarehouseId = String(config.warehouseId);
+        }
 
-        if (!date) {
+        if (!dateVal || !gateId || !currentWarehouseId) {
+            availabilityList.innerHTML = '<p class="st-text-12 st-text--muted">Select a date and gate to see existing slots.</p>';
             return;
         }
 
-        calendarPreview.innerHTML = '<p class="st-text-center st-text--muted st-p-20"><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
+        var url = calendarBaseUrl + '?warehouse_id=' + encodeURIComponent(String(currentWarehouseId)) +
+            '&date=' + encodeURIComponent(dateVal);
 
-        fetch(`${calendarBaseUrl}?warehouse_id=${warehouseId}&date=${date}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.gates) {
-                    renderCalendar(data.gates);
+        availabilityList.innerHTML = '<p class="st-text-12 st-text--muted"><i class="fas fa-spinner fa-spin"></i> Loading availability...</p>';
+
+        fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (!data || !data.success || !Array.isArray(data.gates)) {
+                    availabilityList.innerHTML = '<p class="st-text-12 st-text-danger">Failed to load availability.</p>';
+                    return;
                 }
+
+                // Find gate in response
+                var gateBlock = null;
+                data.gates.forEach(function(g) {
+                    if (g && g.gate && String(g.gate.id) === String(gateId)) {
+                        gateBlock = g;
+                    }
+                });
+
+                if (!gateBlock || !Array.isArray(gateBlock.slots) || gateBlock.slots.length === 0) {
+                    availabilityList.innerHTML = '<p class="st-text-12 st-text-success">No existing slots for this gate and date. All times are available.</p>';
+                    return;
+                }
+
+                // Sort slots by start_time
+                var slots = gateBlock.slots.slice().sort(function(a, b) {
+                    var ta = (a.start_time || '').localeCompare(b.start_time || '');
+                    return ta;
+                });
+
+                var html = '<ul class="reschedule-availability-ul">';
+                slots.forEach(function(s) {
+                    var time = (s.start_time || '') + ' - ' + (s.end_time || '');
+                    var vendor = s.vendor_name || '-';
+                    var status = s.status_label || s.status || '';
+                    html += '<li class="reschedule-availability-item">' +
+                        '<div class="reschedule-availability-time">' + time + '</div>' +
+                        '<div class="reschedule-availability-meta">' +
+                        '<span class="reschedule-availability-vendor">' + vendor + '</span>' +
+                        (status ? '<span class="reschedule-availability-status">' + status + '</span>' : '') +
+                        '</div>' +
+                        '</li>';
+                });
+                html += '</ul>';
+                availabilityList.innerHTML = html;
             })
-            .catch(error => {
-                calendarPreview.innerHTML = '<p class="st-text-center st-text-danger st-p-20">Failed to load</p>';
+            .catch(function() {
+                availabilityList.innerHTML = '<p class="st-text-12 st-text-danger">Failed to load availability.</p>';
             });
     }
 
-    function renderCalendar(gates) {
-        const hours = [];
-        for (let h = 7; h < 23; h++) {
-            hours.push(h.toString().padStart(2, '0') + ':00');
-        }
-
-        let html = '<div class="st-cal-preview__wrap"><table class="st-cal-preview__table">';
-        html += '<thead><tr><th>Time</th>';
-
-        gates.forEach(g => {
-            html += `<th>${g.gate.name}</th>`;
-        });
-        html += '</tr></thead><tbody>';
-
-        hours.forEach(hour => {
-            html += `<tr><td class="st-font-semibold">${hour}</td>`;
-
-            gates.forEach(g => {
-                const slot = g.slots.find(s => s.start_time === hour);
-                const occupiedSlot = g.slots.find(s => s.start_time < hour && s.end_time > hour);
-
-                if (slot) {
-                    const isPending = slot.status === 'pending_approval';
-                    const isCurrentBooking = bookingId ? slot.id === bookingId : false;
-                    const bgColor = isCurrentBooking ? '#fef3c7' : (isPending ? '#fce7f3' : '#dcfce7');
-
-                    const stateClass = isPending ? 'st-cal-preview__pending' : 'st-cal-preview__occupied';
-                    const currentBadge = isCurrentBooking ? '<div class="st-cal-preview__current">Current</div>' : '';
-                    html += `<td class="${stateClass}">
-                        <div class="st-font-semibold">${slot.start_time} - ${slot.end_time}</div>
-                        <div class="st-text--sm st-text--muted">${slot.vendor_name}</div>
-                        ${currentBadge}
-                    </td>`;
-                } else if (!occupiedSlot) {
-                    html += `<td class="st-cal-preview__slot">
-                        <i class="fas fa-check st-cal-preview__slot-icon"></i>
-                    </td>`;
-                } else {
-                    html += `<td></td>`;
-                }
-            });
-            html += '</tr>';
-        });
-
-        html += '</tbody></table></div>';
-        calendarPreview.innerHTML = html;
-    }
-
-    // Gate change listener
     if (gateSelect) {
         gateSelect.addEventListener('change', function() {
             syncWarehouseFromGate();
+            try { updateGateAvailability(); } catch (e) {}
+            try { loadAvailabilityList(); } catch (e) {}
         });
-        // Initial sync if gate is pre-selected
         if (gateSelect.value) {
             syncWarehouseFromGate();
+            try { updateGateAvailability(); } catch (e) {}
+            try { loadAvailabilityList(); } catch (e) {}
         }
     }
 
-    // Initial load
-    checkAvailability();
-    loadCalendarPreview();
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            try { updateGateAvailability(); } catch (e) {}
+            try { loadAvailabilityList(); } catch (e) {}
+        });
+    }
+
+    if (timeInput) {
+        timeInput.addEventListener('change', function() {
+            try { updateGateAvailability(); } catch (e) {}
+        });
+    }
+
+    if (durationInput) {
+        durationInput.addEventListener('change', function() {
+            try { updateGateAvailability(); } catch (e) {}
+        });
+    }
 });

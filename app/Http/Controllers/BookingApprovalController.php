@@ -36,8 +36,8 @@ class BookingApprovalController extends Controller
             ->leftJoin('md_gates as g_planned', 's_converted.planned_gate_id', '=', 'g_planned.id')
             ->select('booking_requests.*');
 
-        // Default to pending approval
-        $status = $request->get('status', BookingRequest::STATUS_PENDING);
+        // Default to all
+        $status = $request->get('status', 'all');
         if ($status === 'pending_approval') {
             $status = BookingRequest::STATUS_PENDING;
         }
@@ -50,14 +50,6 @@ class BookingApprovalController extends Controller
 
         $dateFrom = trim((string) $request->query('date_from', ''));
         $dateTo = trim((string) $request->query('date_to', ''));
-        if ($dateFrom === '' && $dateTo === '') {
-            $dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
-            $dateTo = Carbon::now()->format('Y-m-d');
-            $request->merge([
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
-            ]);
-        }
 
         // Filter by date
         if ($request->filled('date_from')) {
@@ -186,10 +178,21 @@ class BookingApprovalController extends Controller
         $bookings = $query->paginate(20);
 
         // Get counts for tabs
+        $statusCounts = BookingRequest::query()
+            ->select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $pendingCount = (int) ($statusCounts[BookingRequest::STATUS_PENDING] ?? 0);
+        $approvedCount = (int) ($statusCounts[BookingRequest::STATUS_APPROVED] ?? 0);
+        $cancelledCount = (int) ($statusCounts[BookingRequest::STATUS_CANCELLED] ?? 0);
+        $rejectedCount = (int) ($statusCounts[BookingRequest::STATUS_REJECTED] ?? 0);
         $counts = [
-            'all' => BookingRequest::count(),
-            'pending' => BookingRequest::where('status', BookingRequest::STATUS_PENDING)->count(),
-            'approved' => BookingRequest::where('status', BookingRequest::STATUS_APPROVED)->count(),
+            'pending' => $pendingCount,
+            'approved' => $approvedCount,
+            'cancelled' => $cancelledCount,
+            'rejected' => $rejectedCount,
+            'all' => $pendingCount + $approvedCount + $cancelledCount + $rejectedCount,
         ];
 
         $warehousesQ = Warehouse::query();
@@ -217,6 +220,95 @@ class BookingApprovalController extends Controller
             ->values();
 
         return view('admin.bookings.index', compact('bookings', 'counts', 'warehouses', 'status', 'sorts', 'dirs', 'gateOptions'));
+    }
+
+    public function ajaxCheckGateAvailability(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|integer|exists:booking_requests,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id',
+        ]);
+
+        $bookingRequest = BookingRequest::query()
+            ->where('id', (int) $request->booking_id)
+            ->firstOrFail();
+
+        $plannedGateId = (int) $request->planned_gate_id;
+        $gate = Gate::where('id', $plannedGateId)
+            ->when(Schema::hasColumn('md_gates', 'is_active'), fn ($q) => $q->where('is_active', true))
+            ->with('warehouse')
+            ->first();
+
+        if (! $gate) {
+            return response()->json([
+                'available' => false,
+                'label' => 'Not Available',
+                'reason' => 'Selected gate is not active or not found.',
+            ]);
+        }
+
+        $warehouseId = (int) ($gate->warehouse_id ?? 0);
+
+        // Allow override from query (used by reschedule form)
+        $overrideDate = trim((string) $request->query('planned_date', ''));
+        $overrideTime = trim((string) $request->query('planned_time', ''));
+        $overrideDuration = (int) $request->query('planned_duration', 0);
+
+        if ($overrideDate !== '' && $overrideTime !== '' && $overrideDuration > 0) {
+            $plannedStart = $overrideDate . ' ' . $overrideTime . ':00';
+            $durationMinutes = $overrideDuration;
+        } else {
+            $plannedStart = (string) ($bookingRequest->planned_start?->format('Y-m-d H:i:s') ?? '');
+            $durationMinutes = (int) ($bookingRequest->planned_duration ?? 0);
+        }
+        if ($warehouseId <= 0 || $plannedStart === '' || $durationMinutes <= 0) {
+            return response()->json([
+                'available' => false,
+                'label' => 'Not Available',
+                'reason' => 'Missing schedule information.',
+            ]);
+        }
+
+        $check = $this->bookingService->checkAvailability(
+            $warehouseId,
+            $plannedGateId,
+            $plannedStart,
+            $durationMinutes,
+            null
+        );
+
+        $available = ! empty($check['available']);
+
+        $reason = (string) ($check['reason'] ?? '');
+        $reason = $this->translateAvailabilityReason($reason);
+        return response()->json([
+            'available' => $available,
+            'label' => $available ? 'Available' : 'Not Available',
+            'reason' => $reason,
+        ]);
+    }
+
+    private function translateAvailabilityReason(string $reason): string
+    {
+        $reason = trim($reason);
+        if ($reason === '') {
+            return '';
+        }
+
+        $map = [
+            'Waktu ini sedang diblokir karena menunggu konfirmasi tim WH' => 'This time is blocked pending WH confirmation.',
+            'Waktu ini sudah terisi oleh booking lain' => 'This time is already occupied by another booking.',
+            'Booking harus dalam jam operasional (07:00 - 23:00)' => 'Booking must be within operating hours (07:00 - 23:00).',
+            'Booking harus selesai sebelum jam 23:00' => 'Booking must finish before 23:00.',
+            'Gate penuh / tidak tersedia untuk jadwal ini. Silakan pilih gate atau waktu lain.' => 'Gate is not available for this schedule. Please choose another gate or time.',
+            'Gate tidak tersedia' => 'Gate is not available.',
+        ];
+
+        if (array_key_exists($reason, $map)) {
+            return $map[$reason];
+        }
+
+        return $reason;
     }
 
     /**
@@ -293,7 +385,7 @@ class BookingApprovalController extends Controller
                     null
                 );
                 if (empty($check['available'])) {
-                    $reason = (string) ($check['reason'] ?? 'Gate tidak tersedia');
+                    $reason = (string) ($check['reason'] ?? 'Gate is not available');
                     return back()->with('error', $reason);
                 }
             }
@@ -341,6 +433,8 @@ class BookingApprovalController extends Controller
                     'approved_by' => Auth::id(),
                     'approved_at' => now(),
                     'approval_notes' => $request->notes,
+                    'planned_gate_id' => $plannedGateId,
+                    'warehouse_id' => $warehouseId,
                     'converted_slot_id' => $slot->id,
                 ]);
 

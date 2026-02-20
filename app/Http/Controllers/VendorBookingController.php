@@ -174,16 +174,25 @@ class VendorBookingController extends Controller
         // Slot stats (operational statuses live on slots table)
         $slotBase = Slot::where('requested_by', $user->id);
 
+        $pendingCount   = (clone $brBase)->where('status', BookingRequest::STATUS_PENDING)->count();
+        $scheduledCount = (clone $slotBase)->where('status', Slot::STATUS_SCHEDULED)->count();
+        $waitingCount   = (clone $slotBase)->where('status', Slot::STATUS_WAITING)->count();
+        $inProgCount    = (clone $slotBase)->where('status', Slot::STATUS_IN_PROGRESS)->count();
+        $completedCount = (clone $slotBase)->where('status', Slot::STATUS_COMPLETED)->count();
+        $rejectedCount  = (clone $brBase)->where('status', BookingRequest::STATUS_REJECTED)->count();
+        $cancelledCount = (clone $brBase)->where('status', BookingRequest::STATUS_CANCELLED)->count()
+                        + (clone $slotBase)->where('status', Slot::STATUS_CANCELLED)->count();
+
         $stats = [
-            'pending'     => (clone $brBase)->where('status', BookingRequest::STATUS_PENDING)->count(),
-            'scheduled'   => (clone $slotBase)->where('status', Slot::STATUS_SCHEDULED)->count(),
-            'waiting'     => (clone $slotBase)->where('status', Slot::STATUS_WAITING)->count(),
-            'in_progress' => (clone $slotBase)->where('status', Slot::STATUS_IN_PROGRESS)->count(),
-            'completed'   => (clone $slotBase)->where('status', Slot::STATUS_COMPLETED)->count(),
-            'rejected'    => (clone $brBase)->where('status', BookingRequest::STATUS_REJECTED)->count(),
-            'cancelled'   => (clone $brBase)->where('status', BookingRequest::STATUS_CANCELLED)->count()
-                           + (clone $slotBase)->where('status', Slot::STATUS_CANCELLED)->count(),
-            'total'       => (clone $brBase)->count(),
+            'pending'     => $pendingCount,
+            'scheduled'   => $scheduledCount,
+            'waiting'     => $waitingCount,
+            'in_progress' => $inProgCount,
+            'completed'   => $completedCount,
+            'rejected'    => $rejectedCount,
+            'cancelled'   => $cancelledCount,
+            // Dashboard "All" card should only show core operational statuses
+            'total'       => $scheduledCount + $waitingCount + $inProgCount + $completedCount,
         ];
 
         // Get recent bookings (show both pending BR and converted slots)
@@ -289,11 +298,13 @@ class VendorBookingController extends Controller
         $pendingCount = (clone $baseQuery)->where('status', BookingRequest::STATUS_PENDING)->count();
         $approvedCount = (clone $baseQuery)->where('status', BookingRequest::STATUS_APPROVED)->count();
         $cancelledCount = (clone $baseQuery)->where('status', BookingRequest::STATUS_CANCELLED)->count();
+        $rejectedCount = (clone $baseQuery)->where('status', BookingRequest::STATUS_REJECTED)->count();
         $counts = [
             'pending' => $pendingCount,
-            'scheduled' => $approvedCount,
+            'approved' => $approvedCount,
             'cancelled' => $cancelledCount,
-            'all' => $pendingCount + $approvedCount + $cancelledCount,
+            'rejected' => $rejectedCount,
+            'all' => $pendingCount + $approvedCount + $cancelledCount + $rejectedCount,
         ];
 
         $query = (clone $baseQuery)
@@ -891,36 +902,34 @@ class VendorBookingController extends Controller
             abort(403);
         }
 
+        $gateLetter = '-';
+        try {
+            $whCode = trim((string) ($slot->planned_gate_warehouse_code ?? ''));
+            $gateNo = trim((string) ($slot->planned_gate_number ?? ''));
+            if ($whCode !== '' && $gateNo !== '') {
+                $gateLetter = $this->slotService->getGateDisplayName($whCode, $gateNo);
+            }
+        } catch (\Throwable $e) {
+            $gateLetter = '-';
+        }
+
         $barcodePng = null;
         $barcodeSvg = null;
         $barcodeHtml = null;
 
         if (! empty($slot->ticket_number)) {
-            $barcodeDir = storage_path('framework/cache/barcodes');
-            if (! is_dir($barcodeDir)) {
-                @mkdir($barcodeDir, 0755, true);
-            }
-
             try {
-                $dns1d = new \Milon\Barcode\DNS1D();
-                $dns1d->setStorPath($barcodeDir);
+                $ticketNumber = (string) $slot->ticket_number;
+                $cacheKey = 'vendor_ticket_barcode_svg_' . md5($ticketNumber);
 
-                $rawPng = $dns1d->getBarcodePNG((string) $slot->ticket_number, 'C128', 3, 80);
-                if (is_string($rawPng) && $rawPng !== '') {
-                    $barcodePng = preg_replace('/\s+/', '', $rawPng);
-                }
-
-                $html = $dns1d->getBarcodeHTML((string) $slot->ticket_number, 'C128', 2, 55, 'black', 0);
-                if (is_string($html) && $html !== '') {
-                    $barcodeHtml = $html;
-                }
-
-                if (empty($barcodePng)) {
-                    $svg = $dns1d->getBarcodeSVG((string) $slot->ticket_number, 'C128', 2, 60);
-                    if (is_string($svg) && $svg !== '') {
-                        $barcodeSvg = preg_replace('/^<\?xml[^>]*>\s*/', '', $svg);
+                $barcodeSvg = Cache::remember($cacheKey, now()->addDays(30), function () use ($ticketNumber) {
+                    $dns1d = new \Milon\Barcode\DNS1D();
+                    $svg = $dns1d->getBarcodeSVG($ticketNumber, 'C128', 2, 60);
+                    if (! is_string($svg) || $svg === '') {
+                        return null;
                     }
-                }
+                    return preg_replace('/^<\?xml[^>]*>\s*/', '', $svg);
+                });
             } catch (\Throwable $e) {
                 $barcodePng = null;
                 $barcodeSvg = null;
@@ -933,11 +942,23 @@ class VendorBookingController extends Controller
             }
         }
 
+        $logoDataUri = null;
+        try {
+            $logoPath = public_path('img/logo-full.png');
+            if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
+                $logoDataUri = 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+            }
+        } catch (\Throwable $e) {
+            $logoDataUri = null;
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
             'slot' => $slot,
+            'gateLetter' => $gateLetter,
             'barcodePng' => $barcodePng,
             'barcodeSvg' => $barcodeSvg,
             'barcodeHtml' => $barcodeHtml,
+            'logoDataUri' => $logoDataUri,
         ])
             ->setOption('isRemoteEnabled', true)
             ->setOption('isHtml5ParserEnabled', true)
