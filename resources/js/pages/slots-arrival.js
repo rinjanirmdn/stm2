@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 ticketHint.textContent = '';
             } else {
                 ticketHint.style.display = 'block';
-                ticketHint.textContent = 'Ticket number tidak sesuai dengan slot ini.';
+                ticketHint.textContent = 'Ticket number does not match this slot.';
             }
         }
     }
@@ -70,14 +70,14 @@ document.addEventListener('DOMContentLoaded', function () {
             ticketInput.value = code;
             ticketInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
-        updateScanStatus('Ticket terdeteksi: ' + code);
+        updateScanStatus('Ticket detected: ' + code);
         stopCameraScan();
     }
 
     function startHtml5Scanner() {
         if (!scanReader) return;
         if (!window.Html5Qrcode) {
-            updateScanStatus('Scanner tidak siap. Silakan input manual.');
+            updateScanStatus('Scanner is not ready. Please enter manually.');
             scanWrap.style.display = 'block';
             return;
         }
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 function () {}
             )
             .catch(function () {
-                updateScanStatus('Akses kamera ditolak. Silakan input manual.');
+                updateScanStatus('Camera access denied. Please enter manually.');
             });
     }
 
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             requestAnimationFrame(scanLoop);
                         })
                         .catch(function () {
-                            updateScanStatus('Gagal membaca barcode. Coba ulangi.');
+                            updateScanStatus('Failed to read barcode. Please try again.');
                             requestAnimationFrame(scanLoop);
                         });
                 };
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 requestAnimationFrame(scanLoop);
             })
             .catch(function () {
-                updateScanStatus('Akses kamera ditolak. Silakan input manual.');
+                updateScanStatus('Camera access denied. Please enter manually.');
                 scanWrap.style.display = 'block';
             });
     }

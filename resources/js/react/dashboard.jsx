@@ -12,11 +12,106 @@ import {
 } from 'lucide-react';
 
 function getData() { return window.__DASHBOARD_DATA__ || {}; }
+function isDisplayOnlyMode() {
+  try {
+    return new URLSearchParams(window.location.search || '').get('display') === '1';
+  } catch (e) {
+    return false;
+  }
+}
 
 /* ── jQuery picker helpers ── */
 const $ = () => window.jQuery;
 const moment = () => window.moment;
 const fmtDisplay = (iso) => { if (!iso) return ''; const p = iso.split('-'); return p.length===3 ? `${p[2]}-${p[1]}-${p[0]}` : iso; };
+const getHolidayData = () => {
+  try {
+    if (typeof window.getIndonesiaHolidays === 'function') return window.getIndonesiaHolidays() || {};
+  } catch (e) {}
+  return {};
+};
+
+function stDateClasses(momentDate, holidayData) {
+  if (!momentDate) return '';
+  const classes = [];
+  const iso = momentDate.format('YYYY-MM-DD');
+  if (momentDate.day() === 0) classes.push('drp-sunday');
+  if (holidayData && holidayData[iso]) classes.push('drp-holiday');
+  return classes.join(' ');
+}
+
+function stResolvePickerCellIso(cellEl) {
+  if (!cellEl || !window.jQuery || typeof moment() !== 'function') return '';
+  const cell = window.jQuery(cellEl);
+  const day = parseInt(cell.text().trim(), 10);
+  if (!Number.isFinite(day)) return '';
+
+  const monthText = cell.closest('table').find('.month').first().text().trim();
+  if (!monthText) return '';
+
+  let baseMonth = moment()(monthText, ['MMM YYYY', 'MMMM YYYY'], true);
+  if (!baseMonth.isValid()) {
+    baseMonth = moment()(monthText, ['MMM YYYY', 'MMMM YYYY'], false);
+  }
+  if (!baseMonth.isValid()) return '';
+
+  let month = baseMonth.month();
+  let year = baseMonth.year();
+  if (cell.hasClass('off')) {
+    if (day >= 20) month -= 1;
+    else month += 1;
+    if (month < 0) {
+      month = 11;
+      year -= 1;
+    }
+    if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+  }
+
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function stDecoratePickerDays(picker, holidayData) {
+  if (!picker || !picker.container || !window.jQuery) return;
+  picker.container.find('td.available').each(function () {
+    const td = window.jQuery(this);
+    const hasSunday = td.hasClass('drp-sunday');
+    const hasHoliday = td.hasClass('drp-holiday');
+    let tooltipText = '';
+
+    if (hasHoliday) {
+      const iso = stResolvePickerCellIso(this);
+      tooltipText = (iso && holidayData && holidayData[iso]) ? holidayData[iso] : 'Holiday';
+    } else if (hasSunday) {
+      tooltipText = 'Sunday';
+    }
+
+    if (tooltipText) {
+      td.attr('data-tooltip', tooltipText);
+      td.find('a, span').attr('data-tooltip', tooltipText);
+    } else {
+      td.removeAttr('data-tooltip');
+      td.find('a, span').removeAttr('data-tooltip');
+    }
+  });
+}
+
+function stBindPickerDecorators($el, holidayData) {
+  if (!$el || !$el.length) return;
+  $el.off('show.daterangepicker.st-dateinfo showCalendar.daterangepicker.st-dateinfo');
+  $el.on('show.daterangepicker.st-dateinfo showCalendar.daterangepicker.st-dateinfo', function (_ev, picker) {
+    stDecoratePickerDays(picker, holidayData);
+  });
+
+  const picker = $el.data('daterangepicker');
+  if (picker) {
+    setTimeout(() => {
+      stDecoratePickerDays(picker, holidayData);
+    }, 0);
+  }
+}
 
 /** Wait for jQuery + daterangepicker to be available, then call fn */
 function whenJQReady(fn) {
@@ -42,24 +137,29 @@ function JQDatePicker({ value, onChange, label }) {
     if (!el) return;
     whenJQReady(() => {
       if (el.getAttribute('data-jq-init') === '1') return;
+      const holidayData = getHolidayData();
       el.setAttribute('data-jq-init', '1');
       el.setAttribute('data-st-datepicker', '1'); // prevent main.js double-init
       try { el.type = 'text'; } catch(e) {}
       el.setAttribute('readonly', 'readonly');
       el.value = fmtDisplay(value);
-      $()(el).daterangepicker({
+      const $el = $()(el);
+      $el.daterangepicker({
         singleDatePicker: true,
         showDropdowns: true,
         autoApply: true,
         locale: { format: 'DD-MM-YYYY' },
-        minYear: 2020,
-        maxYear: parseInt(moment()().format('YYYY'), 10) + 2,
+        minYear: 1901,
+        maxYear: parseInt(moment()().format('YYYY'), 10) + 5,
         startDate: value ? moment()(value, 'YYYY-MM-DD') : moment()(),
+        isCustomDate: (d) => stDateClasses(d, holidayData),
       }, function(start) {
         const iso = start.format('YYYY-MM-DD');
         el.value = start.format('DD-MM-YYYY');
         cbRef.current(iso);
       });
+
+      stBindPickerDecorators($el, holidayData);
     });
   }, []);
 
@@ -83,10 +183,12 @@ function JQRangePicker({ startValue, endValue, onApply }) {
     if (!el) return;
     whenJQReady(() => {
       if (el.getAttribute('data-jq-init') === '1') return;
+      const holidayData = getHolidayData();
       el.setAttribute('data-jq-init', '1');
       const start = startValue ? moment()(startValue, 'YYYY-MM-DD') : moment()().startOf('month');
       const end = endValue ? moment()(endValue, 'YYYY-MM-DD') : moment()();
-      $()(el).daterangepicker({
+      const $el = $()(el);
+      $el.daterangepicker({
         startDate: start,
         endDate: end,
         ranges: {
@@ -99,11 +201,14 @@ function JQRangePicker({ startValue, endValue, onApply }) {
         },
         locale: { format: 'DD-MM-YYYY' },
         alwaysShowCalendars: true,
+        isCustomDate: (d) => stDateClasses(d, holidayData),
       }, function(s, e) {
         el.querySelector('span').textContent = s.format('DD-MM-YYYY') + ' — ' + e.format('DD-MM-YYYY');
         cbRef.current(s.format('YYYY-MM-DD'), e.format('YYYY-MM-DD'));
       });
       el.querySelector('span').textContent = start.format('DD-MM-YYYY') + ' — ' + end.format('DD-MM-YYYY');
+
+      stBindPickerDecorators($el, holidayData);
     });
   }, []);
 
@@ -207,6 +312,14 @@ const STAT_TIPS = { Pending:'Booking requests awaiting approval.', Scheduled:'Sl
 /** Build current URL params from data + overrides (for history state) */
 function buildParams(currentData, overrides) {
   const params = new URLSearchParams();
+  const preserveDisplay = (() => {
+    try {
+      return new URLSearchParams(window.location.search || '').get('display') === '1';
+    } catch (e) {
+      return false;
+    }
+  })();
+  if (preserveDisplay) params.set('display', '1');
   const keys = ['range_start','range_end','timeline_date','timeline_from','timeline_to','schedule_date','schedule_from','schedule_to','activity_date','activity_warehouse','activity_user'];
   keys.forEach(k => { if (currentData[k]) params.set(k, currentData[k]); });
   Object.entries(overrides).forEach(([k,v]) => { if (v !== undefined && v !== null) params.set(k, v); });
@@ -214,9 +327,10 @@ function buildParams(currentData, overrides) {
 }
 
 /** Fetch dashboard data via AJAX, update React state, update URL silently */
-async function fetchDashboard(currentData, overrides, setData, setLoading) {
+async function fetchDashboard(currentData, overrides, setData, setLoading, options = {}) {
+  const silent = !!options.silent;
   const params = buildParams(currentData, overrides);
-  setLoading(true);
+  if (!silent) setLoading(true);
   try {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const res = await fetch('/dashboard/data?' + params.toString(), {
@@ -231,7 +345,7 @@ async function fetchDashboard(currentData, overrides, setData, setLoading) {
   } catch (e) {
     console.error('[Dashboard] Fetch error:', e);
   } finally {
-    setLoading(false);
+    if (!silent) setLoading(false);
   }
 }
 
@@ -253,7 +367,7 @@ function csVar(name) {
   return parseFloat(v) || 14;
 }
 
-function AnalyticsSlide({ data }) {
+function AnalyticsSlide({ data, isDisplayOnly = false }) {
   const { pendingRange=0, scheduledRange=0, waitingRange=0, activeRange=0, completedStatusRange=0, cancelledRange=0, totalAllRange=0, inboundRange=0, outboundRange=0, directionByGate={} } = data;
   const trendDays = toArr(data.trendDays), trendCounts = toArr(data.trendCounts), trendInbound = toArr(data.trendInbound), trendOutbound = toArr(data.trendOutbound);
   const [dirGate, setDirGate] = useState('all');
@@ -325,10 +439,12 @@ function AnalyticsSlide({ data }) {
         <Card className="flex flex-col overflow-hidden">
           <CardH>
             <h3 className="font-semibold text-gray-800" style={{fontSize:'var(--ds-title)'}}>Direction</h3>
-            <SelectInput value={dirGate} onChange={setDirGate}>
-              <option value="all">All Gates</option>
-              {gateOpts.map(g=><option key={g} value={g}>{g}</option>)}
-            </SelectInput>
+            {!isDisplayOnly && (
+              <SelectInput value={dirGate} onChange={setDirGate}>
+                <option value="all">All Gates</option>
+                {gateOpts.map(g=><option key={g} value={g}>{g}</option>)}
+              </SelectInput>
+            )}
           </CardH>
           <CardB className="flex flex-col p-3 gap-2" style={{flex:'1 1 0%'}}>
             <div className="relative w-full" style={{flex:'1 1 0%',minHeight:100}}>
@@ -381,14 +497,33 @@ function AnalyticsSlide({ data }) {
 /* ================================================================
    SLIDE 1 — BOTTLENECK & PERFORMANCE
    ================================================================ */
-function BottleneckSlide({ data }) {
+function BottleneckSlide({ data, isDisplayOnly = false }) {
   const { bottleneckThresholdMinutes=30, avgLeadMinutes=0, avgProcessMinutes=0 } = data;
   const bottleneckLabels = toArr(data.bottleneckLabels), bottleneckValues = toArr(data.bottleneckValues), bottleneckDirections = toArr(data.bottleneckDirections), avgTimesByTruckType = toArr(data.avgTimesByTruckType);
+  const bottleneckWarehouseCodes = toArr(data.bottleneckWarehouseCodes), bottleneckGateNumbers = toArr(data.bottleneckGateNumbers);
   const [bnDir, setBnDir] = useState('all');
+  const [reasonsModal, setReasonsModal] = useState(null); // {gate, loading, rows}
   const chartData = useMemo(() => {
-    return (bottleneckLabels||[]).map((l,i)=>({name:l,value:+(bottleneckValues[i]||0),dir:bottleneckDirections[i]||''})).filter(d=> bnDir==='all' || d.dir.toLowerCase()===bnDir);
-  }, [bottleneckLabels,bottleneckValues,bottleneckDirections,bnDir]);
+    return (bottleneckLabels||[]).map((l,i)=>({name:l,value:+(bottleneckValues[i]||0),dir:bottleneckDirections[i]||'',whCode:bottleneckWarehouseCodes[i]||'',gateNo:bottleneckGateNumbers[i]||'',idx:i})).filter(d=> bnDir==='all' || d.dir.toLowerCase()===bnDir);
+  }, [bottleneckLabels,bottleneckValues,bottleneckDirections,bottleneckWarehouseCodes,bottleneckGateNumbers,bnDir]);
   const topItem = chartData[0];
+
+  const handleBarClick = useCallback((arg) => {
+    if (isDisplayOnly) return;
+    const d = arg?.payload || arg?.activePayload?.[0]?.payload;
+    if (!d.whCode || !d.gateNo || !d.dir) return;
+    setReasonsModal({ gate: d.name, loading: true, rows: [] });
+    const params = new URLSearchParams({
+      warehouse_code: d.whCode, gate_number: d.gateNo, direction: d.dir,
+      date_from: data.range_start || '', date_to: data.range_end || ''
+    });
+    fetch(`/dashboard/waiting-reasons?${params}`, { headers: { 'Accept': 'application/json' } })
+      .then(r => r.json())
+      .then(res => {
+        setReasonsModal(prev => prev ? { ...prev, loading: false, rows: res.data || [], gate: res.gate || prev.gate } : null);
+      })
+      .catch(() => setReasonsModal(prev => prev ? { ...prev, loading: false, rows: [] } : null));
+  }, [data.range_start, data.range_end, isDisplayOnly]);
 
   return (
     <div className="flex flex-col gap-2 flex-1">
@@ -396,19 +531,22 @@ function BottleneckSlide({ data }) {
         <Card className="flex flex-col">
           <CardH>
             <h3 className="text-sm font-semibold text-gray-800">Bottleneck (Avg Waiting)</h3>
-            <SelectInput value={bnDir} onChange={setBnDir}>
-              <option value="all">All</option><option value="inbound">Inbound</option><option value="outbound">Outbound</option>
-            </SelectInput>
+            {!isDisplayOnly && (
+              <SelectInput value={bnDir} onChange={setBnDir}>
+                <option value="all">All</option><option value="inbound">Inbound</option><option value="outbound">Outbound</option>
+              </SelectInput>
+            )}
           </CardH>
           <CardB className="flex flex-col" style={{flex:'1 1 0%'}}>
-            <div style={{flex:'1 1 0%',minHeight:180}}>
+            {!isDisplayOnly && <div className="text-[10px] text-gray-400 mb-1">Click a bar to view waiting reasons</div>}
+            <div style={{flex:'1 1 0%',minHeight:180,cursor:'pointer',marginLeft:'-6px'}}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData.slice(0,20)} layout="vertical" margin={{top:5,right:20,left:70,bottom:5}}>
+                <BarChart data={chartData.slice(0,20)} layout="vertical" margin={{top:5,right:6,left:0,bottom:5}} onClick={isDisplayOnly ? undefined : handleBarClick}>
                   <CartesianGrid strokeDasharray="3 3" stroke={tk('--chart-grid')}/>
                   <XAxis type="number" tick={{fontSize:10,fill:tk('--chart-axis')}}/>
-                  <YAxis dataKey="name" type="category" tick={{fontSize:9,fill:tk('--text-secondary')}} width={65}/>
+                  <YAxis dataKey="name" type="category" tick={{fontSize:9,fill:tk('--text-secondary')}} width={52}/>
                   <Tooltip formatter={v=>`${(+v).toFixed(1)} min`} contentStyle={tipStyle()}/>
-                  <Bar dataKey="value" fill={tk('--chart-bottleneck')} radius={[0,6,6,0]} name="Avg Waiting (min)"/>
+                  <Bar dataKey="value" fill={tk('--chart-bottleneck')} radius={[0,6,6,0]} name="Avg Waiting (min)" style={{cursor: isDisplayOnly ? 'default' : 'pointer'}} onClick={isDisplayOnly ? undefined : handleBarClick}/>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -454,6 +592,49 @@ function BottleneckSlide({ data }) {
           </CardB>
         </Card>
       </div>
+
+      {/* Waiting Reasons Modal */}
+      {!isDisplayOnly && reasonsModal && (
+        <div style={{position:'fixed',inset:0,zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.4)'}} onClick={()=>setReasonsModal(null)}>
+          <div style={{background:'#fff',borderRadius:12,maxWidth:700,width:'95%',maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}} onClick={e=>e.stopPropagation()}>
+            <div style={{padding:'16px 20px',borderBottom:'1px solid #e5e7eb',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <h3 style={{margin:0,fontSize:15,fontWeight:600,color:'#1f2937'}}>Waiting Reasons</h3>
+                <div style={{fontSize:12,color:'#6b7280',marginTop:2}}>{reasonsModal.gate}</div>
+              </div>
+              <button onClick={()=>setReasonsModal(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#9ca3af',padding:'4px 8px'}}>✕</button>
+            </div>
+            <div style={{padding:'12px 20px',overflowY:'auto',flex:1}}>
+              {reasonsModal.loading ? (
+                <div style={{textAlign:'center',padding:24,color:'#9ca3af'}}>Loading...</div>
+              ) : reasonsModal.rows.length === 0 ? (
+                <div style={{textAlign:'center',padding:24,color:'#9ca3af'}}>No waiting data for this gate</div>
+              ) : (
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                  <thead>
+                    <tr style={{borderBottom:'2px solid #e5e7eb'}}>
+                      <th style={{textAlign:'left',padding:'8px 6px',color:'#6b7280',fontWeight:600}}>Ticket</th>
+                      <th style={{textAlign:'left',padding:'8px 6px',color:'#6b7280',fontWeight:600}}>Vendor</th>
+                      <th style={{textAlign:'right',padding:'8px 6px',color:'#6b7280',fontWeight:600}}>Wait (min)</th>
+                      <th style={{textAlign:'left',padding:'8px 6px',color:'#6b7280',fontWeight:600}}>Waiting Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reasonsModal.rows.map((r,i) => (
+                      <tr key={r.id||i} style={{borderBottom:'1px solid #f3f4f6',background:i%2===0?'#fafafa':'#fff'}}>
+                        <td style={{padding:'8px 6px',fontWeight:500}}>{r.ticket_number||`#${r.id}`}</td>
+                        <td style={{padding:'8px 6px',maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.vendor_name}>{r.vendor_name||'-'}</td>
+                        <td style={{padding:'8px 6px',textAlign:'right',fontWeight:600,color:r.wait_minutes>60?'#dc2626':'#059669'}}>{r.wait_minutes}</td>
+                        <td style={{padding:'8px 6px',color:r.waiting_reason?'#1f2937':'#d1d5db',fontStyle:r.waiting_reason?'normal':'italic',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.waiting_reason||''}>{r.waiting_reason||'Not provided'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -461,7 +642,7 @@ function BottleneckSlide({ data }) {
 /* ================================================================
    SLIDE 2 — KPI
    ================================================================ */
-function KPISlide({ data }) {
+function KPISlide({ data, isDisplayOnly = false }) {
   const { onTimeDir={}, targetDir={}, completionRate=0, completionTotalSlots=0, completionCompletedSlots=0 } = data;
   const [kpiDir, setKpiDir] = useState('all');
   const src = kpiDir === 'all' ? (onTimeDir?.all||{}) : (onTimeDir?.[kpiDir]||{});
@@ -528,12 +709,14 @@ function KPISlide({ data }) {
 
   return (
     <div className="flex flex-col gap-2 flex-1">
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-500 font-medium">KPI</span>
-        <SelectInput value={kpiDir} onChange={setKpiDir}>
-          <option value="all">All Direction</option><option value="inbound">Inbound</option><option value="outbound">Outbound</option>
-        </SelectInput>
-      </div>
+      {!isDisplayOnly && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 font-medium">KPI</span>
+          <SelectInput value={kpiDir} onChange={setKpiDir}>
+            <option value="all">All Direction</option><option value="inbound">Inbound</option><option value="outbound">Outbound</option>
+          </SelectInput>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
         <KpiCard title="On Time vs Late" pct={onTimePct} pctColor={tk('--completed')}
           chartData={[{name:'On Time',value:onT},{name:'Late',value:late}]}
@@ -552,7 +735,7 @@ function KPISlide({ data }) {
 /* ================================================================
    SLIDE 3 — TIMELINE (24h)
    ================================================================ */
-function TimelineSlide({ data, onFilter }) {
+function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
   const { timelineBlocksByGate={}, timeline_date='', timeline_from='', timeline_to='', today='' } = data;
   const gateCards = toArr(data.gateCards);
   const [tip, setTip] = useState(null); // {x,y,block}
@@ -566,6 +749,9 @@ function TimelineSlide({ data, onFilter }) {
   });
   const shiftRanges = { full:['00:00','23:59'], shift1:['07:00','15:00'], shift2:['15:00','23:00'], shift3:['23:00','07:00'] };
   const [fromH, toH] = shiftRanges[shift] || shiftRanges.shift1;
+  const gateColW = 84;
+  const laneColW = 34;
+  const stickyNudgeX = -4;
 
   // Sync local state when data changes from AJAX
   useEffect(() => { setTlDate(timeline_date || today); }, [timeline_date, today]);
@@ -582,29 +768,33 @@ function TimelineSlide({ data, onFilter }) {
     if (onFilter) onFilter({ timeline_date:tlDate, timeline_from:sf, timeline_to:st });
   };
 
+  const tlDateLabel = useMemo(() => fmtDisplay(tlDate || ''), [tlDate]);
+
   return (
     <div className="flex flex-col gap-2 flex-1">
-      <Card>
-        <CardB className="py-2 px-3">
-          <div className="flex items-end gap-3 flex-wrap">
-            <JQDatePicker label="Date" value={tlDate} onChange={setTlDate} />
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[11px] text-gray-500 font-medium">Shift</label>
-              <SelectInput value={shift} onChange={setShift}>
-                <option value="full">24 Hours</option>
-                <option value="shift1">Shift 1 (07-15)</option>
-                <option value="shift2">Shift 2 (15-23)</option>
-                <option value="shift3">Shift 3 (23-07)</option>
-              </SelectInput>
+      {!isDisplayOnly && (
+        <Card>
+          <CardB className="py-2 px-3">
+            <div className="flex items-end gap-3 flex-wrap">
+              <JQDatePicker label="Date" value={tlDate} onChange={setTlDate} />
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[11px] text-gray-500 font-medium">Shift</label>
+                <SelectInput value={shift} onChange={setShift}>
+                  <option value="full">24 Hours</option>
+                  <option value="shift1">Shift 1 (07-15)</option>
+                  <option value="shift2">Shift 2 (15-23)</option>
+                  <option value="shift3">Shift 3 (23-07)</option>
+                </SelectInput>
+              </div>
+              <button onClick={applyTimeline} className="px-4 py-1.5 text-[13px] font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors shadow-sm">Apply</button>
+              <button onClick={()=>{setTlDate(today); setShift('shift1'); onFilter({ timeline_date:today, timeline_from:'07:00', timeline_to:'15:00' });}} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
             </div>
-            <button onClick={applyTimeline} className="px-4 py-1.5 text-[13px] font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors shadow-sm">Apply</button>
-            <button onClick={()=>{setTlDate(today); setShift('shift1'); onFilter({ timeline_date:today, timeline_from:'07:00', timeline_to:'15:00' });}} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
-          </div>
-        </CardB>
-      </Card>
+          </CardB>
+        </Card>
+      )}
       <Card className="flex flex-col flex-1">
         <CardH>
-          <h3 className="text-[13px] font-semibold text-gray-800">Timeline — {tlDate}</h3>
+          <h3 className="text-[13px] font-semibold text-gray-800">Timeline — {tlDateLabel}</h3>
           <div className="flex items-center gap-3 text-[11px] text-gray-500">
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-gray-400 inline-block"></span> Scheduled</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span> Waiting</span>
@@ -612,13 +802,13 @@ function TimelineSlide({ data, onFilter }) {
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span> Completed</span>
           </div>
         </CardH>
-        <CardB className="overflow-auto flex flex-col" style={{flex:'1 1 0%',padding:'var(--ds-pad)'}}>
-          <div className="min-w-[700px] flex flex-col flex-1">
+        <CardB className="overflow-auto flex flex-col" style={{flex:'1 1 0%'}}>
+          <div className="min-w-[700px] flex flex-col flex-1" style={{padding:'var(--ds-pad)'}}>
             {/* Timeline header */}
             <div className="flex border-b border-gray-200 pb-1.5 mb-1 sticky top-0 bg-white z-10 shrink-0">
-              <div className="w-28 shrink-0 font-semibold text-gray-500 px-2" style={{fontSize:'var(--ds-small)'}}>Gate</div>
-              <div className="w-12 shrink-0 font-semibold text-gray-500 text-center" style={{fontSize:'var(--ds-small)'}}>Lane</div>
-              <div className="flex flex-1">
+              <div className="shrink-0 font-semibold text-gray-500 px-2 sticky z-20 bg-white border-r border-gray-100" style={{width:gateColW,left:stickyNudgeX,fontSize:'var(--ds-small)'}}>Gate</div>
+              <div className="shrink-0 font-semibold text-gray-500 text-center sticky z-20 bg-white border-r border-gray-100" style={{width:laneColW,left:gateColW + stickyNudgeX,fontSize:'var(--ds-small)'}}>Lane</div>
+              <div className="flex flex-1 min-w-[600px]">
                 {hours.map((h,i)=><div key={i} className="flex-1 text-center font-medium text-gray-400 border-l border-gray-100" style={{fontSize:'var(--ds-tiny)'}}>{String(h).padStart(2,'0')}:00</div>)}
               </div>
             </div>
@@ -642,15 +832,15 @@ function TimelineSlide({ data, onFilter }) {
               });
               return (
                 <div key={gi} className="flex border-b border-gray-100 hover:bg-sky-50/20 transition-colors" style={{flex:'1 1 0%',minHeight:40}}>
-                  <div className="w-28 shrink-0 px-2 flex flex-col justify-center">
+                  <div className="shrink-0 px-2 flex flex-col justify-center sticky z-10 bg-white border-r border-gray-100" style={{width:gateColW,minWidth:gateColW,left:stickyNudgeX}}>
                     <div className="font-semibold text-gray-700 leading-tight truncate" style={{fontSize:'var(--ds-body)'}} title={gate.title||gate.gate_name}>{title}</div>
                     <div className="text-gray-400 mt-0.5" style={{fontSize:'var(--ds-tiny)'}}>{gate.status_label||'Idle'}</div>
                   </div>
-                  <div className="w-12 shrink-0 flex flex-col py-1 text-gray-400 text-center" style={{fontSize:'var(--ds-tiny)',gap:'var(--ds-gap)'}}>
+                  <div className="shrink-0 flex flex-col py-1 text-gray-400 text-center sticky z-10 bg-white border-r border-gray-100" style={{left:gateColW + stickyNudgeX,width:laneColW,minWidth:laneColW,fontSize:'var(--ds-tiny)',gap:'var(--ds-gap)'}}>
                     <div className="text-sky-600 font-medium flex items-center justify-center" style={{flex:'1 1 0%',minHeight:12}}>Plan</div>
                     <div className="text-emerald-600 font-medium flex items-center justify-center" style={{flex:'1 1 0%',minHeight:12}}>Act</div>
                   </div>
-                  <div className="flex-1 flex flex-col py-1" style={{gap:'var(--ds-gap)'}}>
+                  <div className="flex-1 flex flex-col py-1 min-w-[600px]" style={{gap:'var(--ds-gap)'}}>
                     <div className="relative bg-sky-50/70 rounded overflow-hidden border border-sky-100/50" style={{flex:'1 1 0%',minHeight:12}}>{renderBlocks(planned)}</div>
                     <div className="relative bg-emerald-50/70 rounded overflow-hidden border border-emerald-100/50" style={{flex:'1 1 0%',minHeight:12}}>{renderBlocks(actual)}</div>
                   </div>
@@ -730,7 +920,7 @@ function TimelineSlide({ data, onFilter }) {
 /* ================================================================
    SLIDE 4 — SCHEDULE
    ================================================================ */
-function ScheduleSlide({ data, onFilter }) {
+function ScheduleSlide({ data, onFilter, isDisplayOnly = false }) {
   const { schedule_date='', processStatusCounts={}, today='', schedule_from='', schedule_to='' } = data;
   const schedule = toArr(data.schedule);
   const [schDate, setSchDate] = useState(schedule_date || today);
@@ -749,6 +939,8 @@ function ScheduleSlide({ data, onFilter }) {
     const [sf,st] = shiftRanges[schShift]||shiftRanges.shift1;
     if (onFilter) onFilter({ schedule_date:schDate, schedule_from:sf, schedule_to:st });
   };
+
+  const schDateLabel = useMemo(() => fmtDisplay(schDate || ''), [schDate]);
 
   /* ── Client-side filtering ── */
   const [statusFilter, setStatusFilter] = useState('all');
@@ -773,6 +965,10 @@ function ScheduleSlide({ data, onFilter }) {
 
   // Filtered rows
   const rows = useMemo(() => {
+    if (isDisplayOnly) {
+      return allRows;
+    }
+
     let filtered = allRows;
     if (statusFilter !== 'all') {
       filtered = filtered.filter(r => {
@@ -793,31 +989,32 @@ function ScheduleSlide({ data, onFilter }) {
       );
     }
     return filtered;
-  }, [allRows, statusFilter, search]);
+  }, [allRows, statusFilter, search, isDisplayOnly]);
 
   const statuses = ['pending','scheduled','waiting','in_progress','completed','cancelled'];
 
   return (
     <div className="flex flex-col gap-2 flex-1">
-      {/* Filters bar */}
-      <Card>
-        <CardB className="py-2 px-3">
-          <div className="flex items-end gap-3 flex-wrap">
-            <JQDatePicker label="Date" value={schDate} onChange={setSchDate} />
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[11px] text-gray-500 font-medium">Shift</label>
-              <SelectInput value={schShift} onChange={setSchShift}>
-                <option value="full">24 Hours</option>
-                <option value="shift1">Shift 1 (07-15)</option>
-                <option value="shift2">Shift 2 (15-23)</option>
-                <option value="shift3">Shift 3 (23-07)</option>
-              </SelectInput>
+      {!isDisplayOnly && (
+        <Card>
+          <CardB className="py-2 px-3">
+            <div className="flex items-end gap-3 flex-wrap">
+              <JQDatePicker label="Date" value={schDate} onChange={setSchDate} />
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[11px] text-gray-500 font-medium">Shift</label>
+                <SelectInput value={schShift} onChange={setSchShift}>
+                  <option value="full">24 Hours</option>
+                  <option value="shift1">Shift 1 (07-15)</option>
+                  <option value="shift2">Shift 2 (15-23)</option>
+                  <option value="shift3">Shift 3 (23-07)</option>
+                </SelectInput>
+              </div>
+              <button onClick={applySchedule} className="px-4 py-1.5 text-[13px] font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors shadow-sm">Apply</button>
+              <button onClick={()=>{setSchDate(today); setSchShift('shift1'); onFilter({ schedule_date:today, schedule_from:'07:00', schedule_to:'15:00' });}} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
             </div>
-            <button onClick={applySchedule} className="px-4 py-1.5 text-[13px] font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors shadow-sm">Apply</button>
-            <button onClick={()=>{setSchDate(today); setSchShift('shift1'); onFilter({ schedule_date:today, schedule_from:'07:00', schedule_to:'15:00' });}} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
-          </div>
-        </CardB>
-      </Card>
+          </CardB>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 flex-1">
         {/* Left: Status Chart */}
@@ -870,20 +1067,24 @@ function ScheduleSlide({ data, onFilter }) {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-[13px] font-semibold text-gray-800">Schedule</h3>
-                <p className="text-[11px] text-gray-400">{schedule_date||today} — {rows.length} of {allRows.length} entries</p>
+                <p className="text-[11px] text-gray-400">{schDateLabel} — {rows.length}{!isDisplayOnly ? ` of ${allRows.length}` : ''} entries</p>
               </div>
-              <div className="w-48">
-                <SearchInput value={search} onChange={setSearch} placeholder="Search PO, vendor..." />
+              {!isDisplayOnly && (
+                <div className="w-48">
+                  <SearchInput value={search} onChange={setSearch} placeholder="Search PO, vendor..." />
+                </div>
+              )}
+            </div>
+            {!isDisplayOnly && (
+              <div className="flex items-center gap-1 flex-wrap">
+                <FilterPill label="All" active={statusFilter==='all'} onClick={()=>setStatusFilter('all')} count={allRows.length} />
+                {statuses.map(s => {
+                  const cnt = statusCounts[s]||0;
+                  if (cnt === 0) return null;
+                  return <FilterPill key={s} label={s.replace(/_/g,' ')} active={statusFilter===s} onClick={()=>setStatusFilter(s)} count={cnt} />;
+                })}
               </div>
-            </div>
-            <div className="flex items-center gap-1 flex-wrap">
-              <FilterPill label="All" active={statusFilter==='all'} onClick={()=>setStatusFilter('all')} count={allRows.length} />
-              {statuses.map(s => {
-                const cnt = statusCounts[s]||0;
-                if (cnt === 0) return null;
-                return <FilterPill key={s} label={s.replace(/_/g,' ')} active={statusFilter===s} onClick={()=>setStatusFilter(s)} count={cnt} />;
-              })}
-            </div>
+            )}
           </CardH>
           <CardB className="overflow-auto p-0 flex-1">
             <table className="w-full text-[12px]">
@@ -913,7 +1114,7 @@ function ScheduleSlide({ data, onFilter }) {
                   );
                 }) : (
                   <tr><td colSpan={6} className="text-center text-gray-400 py-10">
-                    {search || statusFilter!=='all' ? 'No matching entries' : 'No schedule data for this filter'}
+                    {isDisplayOnly ? 'No schedule data available' : (search || statusFilter!=='all' ? 'No matching entries' : 'No schedule data for this filter')}
                   </td></tr>
                 )}
               </tbody>
@@ -940,14 +1141,50 @@ function Dashboard() {
   const [data, setData] = useState(() => getData());
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(0);
+  const isDisplayOnly = useMemo(() => isDisplayOnlyMode(), []);
+  const [isRotationPaused, setIsRotationPaused] = useState(false);
+  const dataRef = useRef(data);
+  useEffect(() => { dataRef.current = data; }, [data]);
+
   const total = SLIDES.length;
   const prev = () => setActive(a => (a - 1 + total) % total);
   const next = () => setActive(a => (a + 1) % total);
 
   /** Apply filter params via AJAX (no page reload) */
   const onFilter = useCallback((params) => {
-    fetchDashboard(data, params, setData, setLoading);
-  }, [data]);
+    fetchDashboard(dataRef.current || {}, params, setData, setLoading);
+  }, []);
+
+  /** TV/display mode: periodic silent refresh without visual page reload */
+  useEffect(() => {
+    const intervalMs = 5000;
+    const timer = setInterval(() => {
+      if (document.hidden) return;
+      fetchDashboard(dataRef.current || {}, {}, setData, setLoading, { silent: true });
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  /** Hook global realtime refresh to AJAX data fetch for dashboard */
+  useEffect(() => {
+    const prevAjaxReload = window.ajaxReload;
+    window.ajaxReload = function () {
+      fetchDashboard(dataRef.current || {}, {}, setData, setLoading, { silent: true });
+    };
+
+    return () => {
+      if (typeof prevAjaxReload === 'function') {
+        window.ajaxReload = prevAjaxReload;
+      } else {
+        try {
+          delete window.ajaxReload;
+        } catch (e) {
+          window.ajaxReload = undefined;
+        }
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -959,14 +1196,28 @@ function Dashboard() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  useEffect(() => {
+    if (!isDisplayOnly) return;
+    if (isRotationPaused) return;
+    const rotateMs = 10000;
+    const timer = setInterval(() => {
+      setActive((current) => {
+        if (total <= 1) return current;
+        const nextIndex = (current + 1) % total;
+        return nextIndex === current ? ((current + 1) % total) : nextIndex;
+      });
+    }, rotateMs);
+    return () => clearInterval(timer);
+  }, [isDisplayOnly, isRotationPaused, total]);
+
   const renderSlide = () => {
     try {
       switch(active) {
-        case 0: return <AnalyticsSlide data={data}/>;
-        case 1: return <KPISlide data={data}/>;
-        case 2: return <BottleneckSlide data={data}/>;
-        case 3: return <TimelineSlide data={data} onFilter={onFilter}/>;
-        case 4: return <ScheduleSlide data={data} onFilter={onFilter}/>;
+        case 0: return <AnalyticsSlide data={data} isDisplayOnly={isDisplayOnly} />;
+        case 1: return <KPISlide data={data} isDisplayOnly={isDisplayOnly} />;
+        case 2: return <BottleneckSlide data={data} isDisplayOnly={isDisplayOnly} />;
+        case 3: return <TimelineSlide data={data} onFilter={onFilter} isDisplayOnly={isDisplayOnly} />;
+        case 4: return <ScheduleSlide data={data} onFilter={onFilter} isDisplayOnly={isDisplayOnly} />;
         default: return null;
       }
     } catch(e) {
@@ -978,44 +1229,41 @@ function Dashboard() {
   const ICONS = [BarChart3, Target, Gauge, Layers, Calendar];
 
   return (
-    <div className="flex flex-col relative pb-2 flex-1">
-      {/* Loading overlay */}
-      {loading && (
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-50 flex items-center justify-center rounded-xl">
-          <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-lg shadow-lg border border-gray-200">
-            <div className="w-4 h-4 border-2 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-[13px] text-gray-600 font-medium">Loading...</span>
+    <div
+      className="flex flex-col relative pb-2 flex-1"
+      onPointerUp={isDisplayOnly ? function () { setIsRotationPaused((v) => !v); } : undefined}
+    >
+      <style>{`@keyframes stSlideFadeIn { 0% { opacity: 0; transform: translateY(10px) scale(0.995); } 100% { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
+      {!isDisplayOnly && (
+        <div className="flex flex-wrap items-center gap-2 mb-2 bg-white rounded-xl border border-gray-200 px-2 py-1.5 shadow-sm">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <JQRangePicker startValue={data.range_start||''} endValue={data.range_end||''} onApply={(s,e) => onFilter({ range_start:s, range_end:e })} />
+            <a href="/dashboard" className="text-[11px] text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1 no-underline"><RotateCcw size={11}/> Reset</a>
           </div>
+          <div className="flex items-center gap-1 flex-1 justify-center">
+            <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronLeft size={16}/></button>
+            <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5 overflow-x-auto">
+              {SLIDES.map((s,i)=>{
+                const Icon = ICONS[i] || BarChart3;
+                return (
+                  <button key={s.id} onClick={()=>setActive(i)} className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all shrink-0 ${i===active ? 'bg-white text-sky-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60 border border-transparent'}`}>
+                    <Icon size={13} />
+                    <span className="hidden md:inline">{s.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={next} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronRight size={16}/></button>
+          </div>
+          <div className="text-[12px] font-medium text-gray-500 shrink-0">{active+1}/{total}</div>
         </div>
       )}
 
-      {/* Slide Nav Bar - responsive: wraps on small screens */}
-      <div className="flex flex-wrap items-center gap-2 mb-2 bg-white rounded-xl border border-gray-200 px-2 py-1.5 shadow-sm">
-        <div className="flex items-center gap-1.5 shrink-0">
-          <JQRangePicker startValue={data.range_start||''} endValue={data.range_end||''} onApply={(s,e) => onFilter({ range_start:s, range_end:e })} />
-          <a href="/dashboard" className="text-[11px] text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1 no-underline"><RotateCcw size={11}/> Reset</a>
-        </div>
-        <div className="flex items-center gap-1 flex-1 justify-center">
-          <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronLeft size={16}/></button>
-          <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5 overflow-x-auto">
-            {SLIDES.map((s,i)=>{
-              const Icon = ICONS[i] || BarChart3;
-              return (
-                <button key={s.id} onClick={()=>setActive(i)} className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all shrink-0 ${i===active ? 'bg-white text-sky-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60 border border-transparent'}`}>
-                  <Icon size={13} />
-                  <span className="hidden md:inline">{s.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          <button onClick={next} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronRight size={16}/></button>
-        </div>
-        <div className="text-[12px] font-medium text-gray-500 shrink-0">{active+1}/{total}</div>
-      </div>
-
       {/* Slide Content */}
       <div className="flex-1 flex flex-col">
-        {renderSlide()}
+        <div key={`slide-${active}`} className="flex-1 flex flex-col min-h-0" style={{ animation: 'stSlideFadeIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
+          {renderSlide()}
+        </div>
       </div>
     </div>
   );

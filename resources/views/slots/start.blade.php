@@ -113,6 +113,32 @@
                 </div>
             </div>
 
+            @php
+                $waitingMinutes = $waitingMinutes ?? 0;
+                $requireReason = $waitingMinutes > 60;
+            @endphp
+
+            @if ($requireReason)
+                <div class="st-alert st-alert--warning st-mb-12">
+                    <span class="st-alert__icon"><i class="fa-solid fa-clock"></i></span>
+                    <span class="st-alert__text">
+                        The truck has been waiting for <strong>{{ $waitingMinutes }} minutes</strong> (more than 60 minutes).
+                        Please provide the reason for the long wait before starting the process.
+                    </span>
+                </div>
+
+                <div class="st-form-row st-form-field--mb-12">
+                    <div class="st-form-field">
+                        <label class="st-label">Long Waiting Reason <span class="st-text--danger-dark">*</span></label>
+                        <textarea name="waiting_reason" class="st-input" rows="3" required
+                                  placeholder="Explain why the truck waited more than 60 minutes...">{{ old('waiting_reason') }}</textarea>
+                        <div class="st-text--sm st-text--muted st-mt-4">
+                            Example: Gate occupied, previous unloading delay, document issue, etc.
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="st-form-actions">
                 <button type="submit" class="st-btn">Start Slot</button>
                 <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>

@@ -13,6 +13,7 @@ use App\Services\SlotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
@@ -78,7 +79,8 @@ class BookingApprovalController extends Controller
         $requestedBy = trim((string) $request->query('requested_by', ''));
         if ($requestedBy !== '') {
             $query->where(function ($q) use ($requestedBy) {
-                $q->where('u_requester.name', 'like', '%' . $requestedBy . '%')
+                $q->where('u_requester.full_name', 'like', '%' . $requestedBy . '%')
+                    ->orWhere('u_requester.name', 'like', '%' . $requestedBy . '%')
                     ->orWhere('u_requester.email', 'like', '%' . $requestedBy . '%');
             });
         }
@@ -201,23 +203,25 @@ class BookingApprovalController extends Controller
         }
         $warehouses = $warehousesQ->get();
 
-        $gateOptions = Gate::query()
-            ->from('md_gates', 'g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
-            ->when(Schema::hasColumn('md_gates', 'is_active'), fn ($q) => $q->where('g.is_active', true))
-            ->orderBy('w.wh_code')
-            ->orderBy('g.gate_number')
-            ->get(['g.id', 'g.gate_number', 'w.wh_code'])
-            ->map(function ($g) {
-                $whCode = (string) ($g->wh_code ?? '');
-                $gateNo = (string) ($g->gate_number ?? '');
-                $display = $this->slotService->getGateDisplayName($whCode, $gateNo);
-                return [
-                    'id' => (int) ($g->id ?? 0),
-                    'label' => trim(($whCode !== '' ? ($whCode . ' - ') : '') . $display),
-                ];
-            })
-            ->values();
+        $gateOptions = Cache::remember('bookings:index:gate_options', now()->addMinutes(10), function () {
+            return Gate::query()
+                ->from('md_gates', 'g')
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+                ->when(Schema::hasColumn('md_gates', 'is_active'), fn ($q) => $q->where('g.is_active', true))
+                ->orderBy('w.wh_code')
+                ->orderBy('g.gate_number')
+                ->get(['g.id', 'g.gate_number', 'w.wh_code'])
+                ->map(function ($g) {
+                    $whCode = (string) ($g->wh_code ?? '');
+                    $gateNo = (string) ($g->gate_number ?? '');
+                    $display = $this->slotService->getGateDisplayName($whCode, $gateNo);
+                    return [
+                        'id' => (int) ($g->id ?? 0),
+                        'label' => trim(($whCode !== '' ? ($whCode . ' - ') : '') . $display),
+                    ];
+                })
+                ->values();
+        });
 
         return view('admin.bookings.index', compact('bookings', 'counts', 'warehouses', 'status', 'sorts', 'dirs', 'gateOptions'));
     }
@@ -385,6 +389,7 @@ class BookingApprovalController extends Controller
                     null
                 );
                 if (empty($check['available'])) {
+                    $reason = (string) ($check['reason'] ?? 'Gate is not available');
                     $reason = (string) ($check['reason'] ?? 'Gate is not available');
                     return back()->with('error', $reason);
                 }
@@ -568,7 +573,7 @@ class BookingApprovalController extends Controller
             ->count();
 
         if ($pendingOverlap > 0) {
-            return back()->withInput()->with('error', 'Waktu ini sedang diblokir karena menunggu konfirmasi tim WH');
+            return back()->withInput()->with('error', 'This time is blocked while awaiting warehouse team confirmation');
         }
 
         $bookingRequest->update([

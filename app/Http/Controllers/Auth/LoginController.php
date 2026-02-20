@@ -38,7 +38,7 @@ class LoginController extends Controller
 
         if (! $authed) {
             return back()
-                ->withErrors(['login' => 'Email/NIK/username atau password salah'])
+                ->withErrors(['login' => 'Invalid Email/NIK/username or password'])
                 ->onlyInput('login');
         }
 
@@ -52,7 +52,7 @@ class LoginController extends Controller
             $request->session()->regenerateToken();
 
             return back()
-                ->withErrors(['login' => 'Akun Anda tidak aktif. Silakan hubungi administrator.'])
+                ->withErrors(['login' => 'Your account is inactive. Please contact the administrator.'])
                 ->onlyInput('login');
         }
 

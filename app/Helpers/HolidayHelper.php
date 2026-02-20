@@ -33,7 +33,9 @@ class HolidayHelper
     {
         return Cache::remember('indonesia_holidays_ics', 86400, function () {
             try {
-                $response = Http::timeout(15)->get('https://calendar.google.com/calendar/ical/en.indonesian%23holiday%40group.v.calendar.google.com/public/basic.ics');
+                $response = Http::timeout(3)
+                    ->connectTimeout(2)
+                    ->get('https://calendar.google.com/calendar/ical/en.indonesian%23holiday%40group.v.calendar.google.com/public/basic.ics');
 
                 if (!$response->ok()) {
                     return [];

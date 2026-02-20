@@ -4,14 +4,55 @@
 
     var isLoading = false;
 
+    function appendControlToParams(params, el) {
+        if (!el || !el.name || el.disabled) return;
+        var tag = String(el.tagName || '').toLowerCase();
+        var type = String(el.type || '').toLowerCase();
+
+        if ((type === 'checkbox' || type === 'radio') && !el.checked) return;
+
+        if (tag === 'select' && el.multiple) {
+            Array.prototype.slice.call(el.options || []).forEach(function (opt) {
+                if (!opt || !opt.selected) return;
+                var val = String(opt.value || '').trim();
+                if (val !== '') params.append(el.name, val);
+            });
+            return;
+        }
+
+        var val = String(el.value || '').trim();
+        if (val !== '') params.append(el.name, val);
+    }
+
     function buildQueryStringFromForm() {
-        var fd = new FormData(userFilterForm);
         var params = new URLSearchParams();
-        fd.forEach(function (v, k) {
-            var val = String(v || '').trim();
-            if (val !== '') params.append(k, val);
+
+        userFilterForm.querySelectorAll('input, select, textarea').forEach(function (el) {
+            appendControlToParams(params, el);
         });
-        return params.toString();
+
+        var formId = String(userFilterForm.getAttribute('id') || '').trim();
+        if (formId) {
+            document.querySelectorAll('[form="' + CSS.escape(formId) + '"]').forEach(function (el) {
+                appendControlToParams(params, el);
+            });
+        }
+
+        // Users page keeps global search box in another form; preserve it on sort/filter AJAX.
+        var globalSearch = document.querySelector('.st-card.st-mb-12 input[name="q"]');
+        if (globalSearch) {
+            appendControlToParams(params, globalSearch);
+        }
+
+        var seen = new Set();
+        var dedup = new URLSearchParams();
+        params.forEach(function (v, k) {
+            var sig = k + '::' + v;
+            if (seen.has(sig)) return;
+            seen.add(sig);
+            dedup.append(k, v);
+        });
+        return dedup.toString();
     }
 
     function setLoading(on) {
@@ -79,10 +120,19 @@
 
     window.addEventListener('popstate', function () {
         var params = new URLSearchParams(window.location.search);
-        userFilterForm.querySelectorAll('input, select').forEach(function (el) {
+        var controls = Array.prototype.slice.call(userFilterForm.querySelectorAll('input, select, textarea'));
+        var formId = String(userFilterForm.getAttribute('id') || '').trim();
+        if (formId) {
+            controls = controls.concat(Array.prototype.slice.call(document.querySelectorAll('[form="' + CSS.escape(formId) + '"]')));
+        }
+        controls.forEach(function (el) {
             if (el.type === 'hidden') return;
             if (el.name) el.value = params.get(el.name) || '';
         });
+        var globalSearch = document.querySelector('.st-card.st-mb-12 input[name="q"]');
+        if (globalSearch) {
+            globalSearch.value = params.get('q') || '';
+        }
         ajaxReload(false);
     });
 });

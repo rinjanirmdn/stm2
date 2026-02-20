@@ -101,11 +101,12 @@ class GateStatusMonitor {
         const slotInfo = gateElement.querySelector('.current-slot-info');
         if (slotInfo && gate.current_slot) {
             slotInfo.innerHTML = `
-                <div class="slot-po">${gate.current_slos.po_number}</div>
+                <div class="slot-number">Slot #${gate.current_slot.id}</div>
+                <div class="slot-ticket">${gate.current_slot.ticket_number}</div>
                 <div class="slot-time">${this.formatTime(gate.current_slot.planned_start)} - ${this.formatTime(gate.current_slot.planned_finish)}</div>
             `;
         } else if (slotInfo) {
-            slotInfo.innerHTML = '<div class="no-slot">Tidak ada slot</div>';
+            slotInfo.innerHTML = '<div class="no-slot">No slot</div>';
         }
 
         // Add animation for status change

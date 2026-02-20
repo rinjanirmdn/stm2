@@ -2581,8 +2581,50 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 
 .st-app {
     --st-sidebar-width: 240px;
+    --st-sidebar-expanded-width: 220px;
     display: flex;
     min-height: 100vh;
+}
+
+@media (max-width: 1400px) {
+    .st-app {
+        --st-sidebar-expanded-width: 200px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .st-app {
+        --st-sidebar-expanded-width: 184px;
+    }
+}
+
+/* Presentation / display-only mode (used by dashboard?display=1) */
+.st-app.st-display-only .st-sidebar,
+.st-app.st-display-only .st-topbar,
+.st-app.st-display-only .st-footer,
+.st-app.st-display-only .st-reminder-banner,
+.st-app.st-display-only .st-reminder-toast,
+.st-app.st-display-only .st-notification-toast,
+.st-app.st-display-only .st-sidebar__overlay {
+    display: none !important;
+}
+
+.st-app.st-display-only .st-main,
+.st-app.st-display-only .st-main-layout,
+.st-app.st-display-only .st-content,
+.st-app.st-display-only .st-content--layout {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.st-app.st-display-only .st-content--layout {
+    min-height: 100vh !important;
+}
+
+.st-app.st-display-only #react-dashboard {
+    padding: 0 !important;
 }
 
 /* Sidebar */
@@ -2601,7 +2643,9 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     top: 0;
     align-self: flex-start;
     height: 100vh;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 900;
+    transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1), padding 0.24s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.24s ease;
+    will-change: width, padding;
     min-height: 0;
     left: 0;
 }
@@ -2759,6 +2803,7 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     width: var(--st-sidebar-width);
     flex: 0 0 var(--st-sidebar-width);
     padding: 12px 6px;
+    transition: width 0.18s cubic-bezier(0.4, 0, 0.2, 1), padding 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s ease;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__brand {
@@ -2789,7 +2834,15 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 }
 
 .st-app--sidebar-collapsed .st-sidebar__link span {
-    display: none;
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-4px);
+    transition: max-width 0.2s ease, opacity 0.16s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+    pointer-events: none;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__link i {
@@ -2830,12 +2883,13 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 }
 
 .st-app--sidebar-collapsed .st-sidebar__link {
-    justify-content: center;
+    justify-content: flex-start;
     width: 40px;
     height: 40px;
-    padding: 0;
+    padding: 0 10px;
     margin: 4px 0;
     border-radius: 999px;
+    gap: 0;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__link i {
@@ -2844,12 +2898,12 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 
 /* On hover, temporarily expand collapsed sidebar as overlay (no layout shift) */
 .st-app--sidebar-collapsed .st-sidebar:hover {
-    width: 220px;
+    width: var(--st-sidebar-expanded-width);
     position: fixed;
     top: 0;
     left: 0;
     height: 100vh;
-    z-index: 1000;
+    z-index: 900;
     box-shadow: 4px 0 24px rgba(2, 132, 199, 0.25);
 }
 
@@ -2864,10 +2918,19 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     margin: 2px 0;
     border-radius: 8px;
     justify-content: flex-start;
+    gap: 12px;
 }
 
 .st-app--sidebar-collapsed .st-sidebar:hover .st-sidebar__link span {
-    display: inline;
+    max-width: calc(var(--st-sidebar-expanded-width) - 90px);
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition: max-width 0.2s ease, opacity 0.16s ease, transform 0.2s ease, visibility 0s linear 0s;
+}
+
+.st-app--sidebar-collapsed .st-sidebar:hover .st-sidebar__link::after {
+    display: none;
 }
 
 /* Logo switching on hover */
@@ -2895,7 +2958,8 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     display: flex;
     flex-direction: column;
     margin-left: var(--st-sidebar-width);
-    transition: margin-left 0.25s ease;
+    transition: margin-left 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: margin-left;
 }
 
 .st-topbar {
@@ -3683,6 +3747,21 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     pointer-events: auto !important;
 }
 
+/* Global daterangepicker day annotations (match vendor booking visual cues) */
+.daterangepicker td.drp-sunday {
+    color: #ef4444 !important;
+    font-weight: 600 !important;
+}
+
+.daterangepicker td.drp-holiday {
+    color: #f59e0b !important;
+    font-weight: 600 !important;
+}
+
+.daterangepicker td.drp-sunday.drp-holiday {
+    color: #ef4444 !important;
+}
+
 .ui-datepicker,
 .ui-datepicker .ui-datepicker-calendar,
 .ui-datepicker table,
@@ -4337,15 +4416,73 @@ table.st-table thead th:not(:has(.st-colhead)):not(:has(.st-filter-header)) {
     border: 2px solid #e5e7eb;
     border-top-color: #3b82f6;
     border-radius: 999px;
-    transform: translateY(-50%);
-    margin-top: -5px;
+    margin-top: -8px;
     opacity: 0;
     pointer-events: none;
-    animation: spin 0.8s linear infinite;
+    animation: st-input-spin 0.8s linear infinite;
+}
+
+@keyframes st-input-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .st-input-loader.show {
     opacity: 1;
+}
+
+.st-input-status {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 16px;
+    height: 16px;
+    transform: translateY(-50%);
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.st-input-status.show {
+    opacity: 1;
+}
+
+.st-input-status.valid::before,
+.st-input-status.invalid::before {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 13px;
+    line-height: 16px;
+    display: block;
+}
+
+.st-input-status.valid::before {
+    content: '\f00c';
+    color: #10b981;
+}
+
+.st-input-status.invalid::before {
+    content: '\f00d';
+    color: #ef4444;
+}
+
+.st-po-message {
+    min-height: 18px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.st-po-message.valid {
+    color: #10b981;
+}
+
+.st-po-message.invalid {
+    color: #ef4444;
 }
 
 .st-status-badge {
@@ -6262,7 +6399,7 @@ input[type="datetime-local"].form-control {
 }
 
 /* ===== Table Action Buttons - Global Styling ===== */
-/* Action bar container - Horizontal layout, tidak wrap, rapi */
+/* Action bar container - Horizontal layout, no wrap, neat */
 .tw-actionbar,
 .st-table td .tw-actionbar,
 table.st-table td .tw-actionbar {
@@ -8992,11 +9129,11 @@ table.st-table td form {
 }
 
 .date-picker-wrapper {
-    z-index: 3000 !important;
+    z-index: 120000 !important;
 }
 
 .ui-datepicker {
-    z-index: 3000 !important;
+    z-index: 120000 !important;
 }
 
 /* Flatpickr Modern Styling */

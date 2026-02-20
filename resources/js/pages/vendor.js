@@ -317,10 +317,10 @@ function initVendorBookingCreate(config) {
             var td = this;
             var cls = td.className || '';
             var text = '';
-            if (cls.indexOf('drp-sunday') !== -1) text = 'Hari Minggu';
+            if (cls.indexOf('drp-sunday') !== -1) text = 'Sunday';
             if (cls.indexOf('drp-holiday') !== -1) {
                 var dataTitle = td.getAttribute('data-holiday-name');
-                text = dataTitle || 'Hari Libur';
+                text = dataTitle || 'Holiday';
             }
             if (!text) return;
             td.addEventListener('mouseenter', function (ev) {
@@ -391,9 +391,9 @@ function initVendorBookingCreate(config) {
 
             var ds = iso;
             if (start.day() === 0) {
-                showVendorToast('Tanggal yang dipilih adalah Hari Minggu', 'warning');
+                showVendorToast('The selected date is Sunday', 'warning');
             } else if (holidayData[ds]) {
-                showVendorToast('Tanggal yang dipilih adalah hari libur: ' + holidayData[ds], 'warning');
+                showVendorToast('The selected date is a holiday: ' + holidayData[ds], 'warning');
             }
 
             syncPlannedStart();
@@ -680,7 +680,7 @@ function initVendorAvailability(config) {
             }
 
             if (isSunday) {
-                dayDiv.setAttribute('data-vendor-tooltip', 'Hari Minggu');
+                dayDiv.setAttribute('data-vendor-tooltip', 'Sunday');
             }
             if (isHoliday) {
                 dayDiv.setAttribute('data-vendor-tooltip', holidayData[dateStr]);
@@ -781,21 +781,6 @@ function initVendorAvailability(config) {
                     container.innerHTML = '<p class="av-empty av-empty--error av-empty--compact">Failed to load</p>';
                     return;
                 }
-
-                // Group slots by shift (2 columns: Shift 1 & Shift 2+3)
-                const shifts = {
-                    shift1: { label: 'Shift 1 (07:00 - 15:00)', icon: 'fa-sun', slots: [] },
-                    shift2n3: { label: 'Shift 2 & 3 (15:00 - 07:00)', icon: 'fa-moon', slots: [] }
-                };
-
-                data.slots.forEach(slot => {
-                    const hour = parseInt(slot.time.split(':')[0], 10);
-                    if (hour >= 7 && hour < 15) {
-                        shifts.shift1.slots.push(slot);
-                    } else {
-                        shifts.shift2n3.slots.push(slot);
-                    }
-                });
 
                 // Get all available slots sorted by time
                 const availableSlots = data.slots.filter(s => s.is_available).sort((a, b) => a.time.localeCompare(b.time));

@@ -159,7 +159,7 @@
     <!-- Footer Container -->
     <div class="mb-footer-container">
         <div class="mb-footer-text">
-            Â© {{ date('Y') }} Slot Time Management. All rights reserved.
+            (c) {{ date('Y') }} Slot Time Management. All rights reserved.
         </div>
     </div>
 </div>

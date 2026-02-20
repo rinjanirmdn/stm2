@@ -27,6 +27,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/dashboard/data', [DashboardController::class, 'data'])->name('dashboard.data');
+    Route::get('/dashboard/waiting-reasons', [DashboardController::class, 'waitingReasons'])->name('dashboard.waitingReasons');
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
@@ -121,6 +122,20 @@ Route::middleware('auth')->group(function () {
     // Real-time gate status streaming
     Route::get('/api/gate-status', [GateStatusController::class, 'apiIndex'])->name('api.gate-status');
     Route::get('/api/gate-status/stream', [GateStatusController::class, 'stream'])->name('api.gate-status.stream');
+    Route::get('/api/realtime/version', function () {
+        $cacheKey = 'st_realtime_version';
+        $version = (string) \Illuminate\Support\Facades\Cache::get($cacheKey, '');
+        if ($version === '') {
+            $version = (string) floor(microtime(true) * 1000);
+            \Illuminate\Support\Facades\Cache::forever($cacheKey, $version);
+        }
+
+        return response()->json([
+            'success' => true,
+            'version' => $version,
+            'server_time' => now()->toIso8601String(),
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    })->name('api.realtime.version');
 
     // Notifications
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');

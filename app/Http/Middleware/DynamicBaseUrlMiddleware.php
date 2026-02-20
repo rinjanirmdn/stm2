@@ -37,7 +37,14 @@ class DynamicBaseUrlMiddleware
             $dynamicViteBase = $scheme.'://'.$host.':'.$vitePort;
             $dynamicHotFile = storage_path('framework/vite-hot-'.sha1($dynamicViteBase));
 
-            @file_put_contents($dynamicHotFile, $dynamicViteBase);
+            $needsWrite = true;
+            if (is_file($dynamicHotFile)) {
+                $existing = trim((string) @file_get_contents($dynamicHotFile));
+                $needsWrite = $existing !== $dynamicViteBase;
+            }
+            if ($needsWrite) {
+                @file_put_contents($dynamicHotFile, $dynamicViteBase);
+            }
             Vite::useHotFile($dynamicHotFile);
         }
 

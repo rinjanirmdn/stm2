@@ -173,11 +173,56 @@ document.addEventListener('DOMContentLoaded', function () {
     var brand = document.querySelector('.st-sidebar__brand');
     var canInitSidebar = !!app && !!brand;
 
+    function stEscapeForAttrSelector(value) {
+        var raw = String(value || '');
+        try {
+            if (window.CSS && typeof window.CSS.escape === 'function') {
+                return window.CSS.escape(raw);
+            }
+        } catch (e) { }
+        return raw.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    }
+
+    function stGetSortStateFromUrl() {
+        var out = [];
+        try {
+            var params = new URLSearchParams(window.location.search || '');
+            var sorts = params.getAll('sort[]');
+            var dirs = params.getAll('dir[]');
+
+            if (!sorts.length) {
+                var singleSort = String(params.get('sort') || '').trim();
+                var singleDir = String(params.get('dir') || '').trim().toLowerCase();
+                if (singleSort && (singleDir === 'asc' || singleDir === 'desc')) {
+                    out.push({ sort: singleSort, dir: singleDir });
+                }
+                return out;
+            }
+
+            sorts.forEach(function (s, i) {
+                var sort = String(s || '').trim();
+                var dir = String(dirs[i] || '').trim().toLowerCase();
+                if (!sort) return;
+                if (dir !== 'asc' && dir !== 'desc') return;
+                out.push({ sort: sort, dir: dir });
+            });
+        } catch (e) { }
+        return out;
+    }
+
     function stSyncSortIndicatorsFromForms(root) {
         var scope = root || document;
-        var forms = scope.querySelectorAll('form');
-        if (!forms || forms.length === 0) return;
+        if (!scope || !scope.querySelectorAll) return false;
 
+        // Ensure legacy text icons are upgraded before applying sort-direction states.
+        try { stUpgradeTableHeaderIcons(scope); } catch (e) { }
+
+        var forms = [];
+        if (scope.matches && scope.matches('form')) {
+            forms.push(scope);
+        }
+        forms = forms.concat(Array.prototype.slice.call(scope.querySelectorAll('form')));
+        var appliedCount = 0;
         forms.forEach(function (form) {
             if (!form || !form.querySelector) return;
 
@@ -203,6 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!btn) return;
                 btn.classList.remove('is-sorted', 'sort-asc', 'sort-desc');
                 btn.removeAttribute('data-dir');
+                stClearSortSvgState(btn);
             });
 
             sorts.forEach(function (sortKey, i) {
@@ -210,18 +256,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 var dir = String(dirs[i] || '').trim().toLowerCase();
                 if (!sortKey) return;
                 if (dir !== 'asc' && dir !== 'desc') return;
-                var selector = '.st-sort-trigger[data-sort="' + CSS.escape(sortKey) + '"]';
+                var selector = '.st-sort-trigger[data-sort="' + stEscapeForAttrSelector(sortKey) + '"]';
                 var activeBtn = form.querySelector(selector);
                 if (!activeBtn) return;
                 activeBtn.classList.add('is-sorted');
                 activeBtn.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
                 activeBtn.setAttribute('data-dir', dir);
+                appliedCount += 1;
 
                 try {
                     stApplySortSvgState(activeBtn, dir);
                 } catch (e) { }
             });
         });
+
+        // Fallback: some pages keep active sort only in URL on initial document render.
+        // Do not use URL fallback for form-scoped sync, because URL may still contain stale
+        // sort params before pushState runs and can re-activate a just-cleared direction.
+        var isDocumentScope = scope === document;
+        if (appliedCount === 0 && isDocumentScope) {
+            stGetSortStateFromUrl().forEach(function (item) {
+                if (!item || !item.sort) return;
+                var selector = '.st-sort-trigger[data-sort="' + stEscapeForAttrSelector(item.sort) + '"]';
+                var activeBtn = scope.querySelector(selector);
+                if (!activeBtn) return;
+                activeBtn.classList.add('is-sorted');
+                activeBtn.classList.add(item.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+                activeBtn.setAttribute('data-dir', item.dir);
+                try {
+                    stApplySortSvgState(activeBtn, item.dir);
+                } catch (e) { }
+            });
+        }
         return true;
     }
 
@@ -330,6 +396,17 @@ document.addEventListener('DOMContentLoaded', function () {
             if (down) down.style.stroke = primary;
             if (up) up.style.stroke = gray;
         }
+    }
+
+    function stClearSortSvgState(btn) {
+        if (!btn) return;
+        var up = btn.querySelector ? btn.querySelector('.icon-box svg .arrow-up') : null;
+        var down = btn.querySelector ? btn.querySelector('.icon-box svg .arrow-down') : null;
+        [up, down].forEach(function (el) {
+            if (!el || !el.style) return;
+            el.style.removeProperty('stroke');
+            el.style.removeProperty('stroke-width');
+        });
     }
 
     function stHasNonEmptyValue(el) {
@@ -492,6 +569,96 @@ document.addEventListener('DOMContentLoaded', function () {
         input.value = isoValue || '';
     }
 
+    function stToDisplayDatePickerClasses(momentDate) {
+        if (!momentDate) return '';
+        var classes = [];
+        var iso = momentDate.format('YYYY-MM-DD');
+        if (momentDate.day() === 0) {
+            classes.push('drp-sunday');
+        }
+        if (stHolidayData && stHolidayData[iso]) {
+            classes.push('drp-holiday');
+        }
+        return classes.join(' ');
+    }
+
+    function stResolveDaterangepickerCellIso(cellEl) {
+        if (!cellEl || !window.jQuery || typeof window.moment !== 'function') return '';
+        var cell = window.jQuery(cellEl);
+        var day = parseInt(cell.text().trim(), 10);
+        if (!isFinite(day)) return '';
+
+        var table = cell.closest('table');
+        var monthText = table.find('.month').first().text().trim();
+        if (!monthText) return '';
+
+        var baseMonth = window.moment(monthText, ['MMM YYYY', 'MMMM YYYY'], true);
+        if (!baseMonth.isValid()) {
+            baseMonth = window.moment(monthText, ['MMM YYYY', 'MMMM YYYY'], false);
+        }
+        if (!baseMonth.isValid()) return '';
+
+        var month = baseMonth.month();
+        var year = baseMonth.year();
+        if (cell.hasClass('off')) {
+            if (day >= 20) {
+                month -= 1;
+            } else {
+                month += 1;
+            }
+            if (month < 0) {
+                month = 11;
+                year -= 1;
+            }
+            if (month > 11) {
+                month = 0;
+                year += 1;
+            }
+        }
+
+        return year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    }
+
+    function stDecorateDaterangepickerDays(picker) {
+        if (!picker || !picker.container || !window.jQuery) return;
+        picker.container.find('td.available').each(function () {
+            var td = window.jQuery(this);
+            var hasSunday = td.hasClass('drp-sunday');
+            var hasHoliday = td.hasClass('drp-holiday');
+            var tooltipText = '';
+
+            if (hasHoliday) {
+                var ds = stResolveDaterangepickerCellIso(this);
+                tooltipText = (ds && stHolidayData && stHolidayData[ds]) ? stHolidayData[ds] : 'Holiday';
+            } else if (hasSunday) {
+                tooltipText = 'Sunday';
+            }
+
+            if (tooltipText) {
+                td.attr('data-tooltip', tooltipText);
+                td.find('a, span').attr('data-tooltip', tooltipText);
+            } else {
+                td.removeAttr('data-tooltip');
+                td.find('a, span').removeAttr('data-tooltip');
+            }
+        });
+    }
+
+    function stBindDaterangepickerDecorators($input) {
+        if (!$input || !$input.length) return;
+        $input.off('show.daterangepicker.st-dateinfo showCalendar.daterangepicker.st-dateinfo');
+        $input.on('show.daterangepicker.st-dateinfo showCalendar.daterangepicker.st-dateinfo', function (ev, picker) {
+            stDecorateDaterangepickerDays(picker);
+        });
+
+        var picker = $input.data('daterangepicker');
+        if (picker) {
+            setTimeout(function () {
+                stDecorateDaterangepickerDays(picker);
+            }, 0);
+        }
+    }
+
     function initPredefinedDateRange(containerSelector, startInputSelector, endInputSelector) {
         var reportRange = window.jQuery(containerSelector);
         if (reportRange.length) {
@@ -530,6 +697,9 @@ document.addEventListener('DOMContentLoaded', function () {
             reportRange.daterangepicker({
                 startDate: start,
                 endDate: end,
+                locale: {
+                    format: 'DD-MM-YYYY'
+                },
                 ranges: {
                    'Today': [window.moment(), window.moment()],
                    'Yesterday': [window.moment().subtract(1, 'days'), window.moment().subtract(1, 'days')],
@@ -537,8 +707,11 @@ document.addEventListener('DOMContentLoaded', function () {
                    'Last 30 Days': [window.moment().subtract(29, 'days'), window.moment()],
                    'This Month': [window.moment().startOf('month'), window.moment().endOf('month')],
                    'Last Month': [window.moment().subtract(1, 'month').startOf('month'), window.moment().subtract(1, 'month').endOf('month')]
-                }
+                },
+                isCustomDate: stToDisplayDatePickerClasses
             }, cb);
+
+            stBindDaterangepickerDecorators(reportRange);
 
             if (hasInitial) {
                 updateRange(start, end);
@@ -576,13 +749,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         format: 'DD-MM-YYYY'
                     },
                     minYear: 1901,
-                    maxYear: parseInt(window.moment().format('YYYY'), 10) + 5
+                    maxYear: parseInt(window.moment().format('YYYY'), 10) + 5,
+                    isCustomDate: stToDisplayDatePickerClasses
                 }, function(start, end, label) {
                     // Trigger change event for other listeners
                     var iso = start.format('YYYY-MM-DD');
                     setDisplayValue(input, iso);
                     input.dispatchEvent(new Event('change', { bubbles: true }));
                 });
+
+                stBindDaterangepickerDecorators(window.jQuery(input));
             });
 
             // 2. Predefined Range Pickers
@@ -1119,6 +1295,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var sortKey = String(btn.getAttribute('data-sort') || '').trim();
         if (!sortKey) return;
 
+        // Make sure clicked header already uses SVG icon markup for direction highlighting.
+        try { stUpgradeTableHeaderIcons(btn.closest('thead') || document); } catch (err) { }
+
         if (stActiveSortPanel && stActiveSortKey === sortKey && stActiveSortPanel.style.display !== 'none') {
             stCloseSortPanel();
             return;
@@ -1189,9 +1368,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.classList.add('is-sorted');
                 btn.classList.add(newDir === 'asc' ? 'sort-asc' : 'sort-desc');
                 btn.setAttribute('data-dir', newDir);
+                stApplySortSvgState(btn, newDir);
             } else {
                 btn.classList.remove('is-sorted');
                 btn.removeAttribute('data-dir');
+                stClearSortSvgState(btn);
             }
         }
 
@@ -1503,10 +1684,10 @@ document.addEventListener('DOMContentLoaded', function () {
         var scope = root || document;
 
         scope.querySelectorAll('.st-sort-trigger').forEach(function (btn) {
-            if (!btn || btn.getAttribute('data-st-svg') === '1') return;
-            var t = (btn.textContent || '').trim();
-            if (t === '' || t === '⇅' || t === '↕' || t === '↕︎') btn.textContent = '';
+            if (!btn) return;
             if (!btn.querySelector('.icon-box')) {
+                // Clear legacy placeholder text (including mojibake variants) so SVG state styling is visible.
+                btn.textContent = '';
                 btn.insertAdjacentHTML('beforeend', stIconSvgSort());
             }
             btn.setAttribute('data-st-svg', '1');
@@ -1517,10 +1698,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         scope.querySelectorAll('.st-filter-trigger').forEach(function (btn) {
-            if (!btn || btn.getAttribute('data-st-svg') === '1') return;
-            var t = (btn.textContent || '').trim();
-            if (t === '' || t === '⏷' || t === '▼' || t === '▾') btn.textContent = '';
+            if (!btn) return;
             if (!btn.querySelector('.icon-box')) {
+                // Clear legacy placeholder text (including mojibake variants) so SVG state styling is visible.
+                btn.textContent = '';
                 btn.insertAdjacentHTML('beforeend', stIconSvgFilter());
             }
             btn.setAttribute('data-st-svg', '1');
@@ -1547,7 +1728,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!btn || !btn.classList) return;
         if (btn.classList.contains('st-sort-trigger')) {
             // prefer syncing from form inputs to keep dir accurate
-            var form = btn.closest('form');
+            var form = stFindAssociatedForm(btn) || (btn.closest ? btn.closest('form') : null);
             if (form) stSyncSortIndicatorsFromForms(form);
         }
         if (btn.classList.contains('st-filter-trigger')) {
@@ -1974,10 +2155,160 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function initBfcacheResync() {
+        window.addEventListener('pageshow', function (event) {
+            if (!event || !event.persisted) return;
+
+            if (typeof window.ajaxReload === 'function') {
+                try {
+                    window.ajaxReload(false);
+                    return;
+                } catch (e) {
+                    // fallback below
+                }
+            }
+
+            window.location.reload();
+        });
+    }
+
+    function initGlobalRealtimeSync() {
+        var realtimeCfg = stAppConfig && stAppConfig.realtime ? stAppConfig.realtime : {};
+        if (!realtimeCfg || realtimeCfg.enabled === false) return;
+
+        var versionUrl = String(realtimeCfg.versionUrl || '').trim();
+        if (!versionUrl) return;
+
+        var pollMs = parseInt(realtimeCfg.pollMs, 10);
+        if (!isFinite(pollMs) || pollMs < 10000) {
+            pollMs = 20000;
+        }
+
+        var storageKey = 'st_realtime_global_version';
+        var pendingRefresh = false;
+        var isChecking = false;
+        var hasBootstrappedVersion = false;
+
+        function canRefreshNow() {
+            if (document.hidden) return false;
+            var active = document.activeElement;
+            if (!active) return true;
+            var tag = String(active.tagName || '').toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return false;
+            if (active.isContentEditable) return false;
+            return true;
+        }
+
+        function performRefresh() {
+            if (window.__stRealtimeReloading) return;
+            window.__stRealtimeReloading = 1;
+
+            if (typeof window.ajaxReload === 'function') {
+                try {
+                    window.ajaxReload(false);
+                    window.__stRealtimeReloading = 0;
+                    return;
+                } catch (e) {
+                    window.__stRealtimeReloading = 0;
+                }
+            }
+
+            window.location.reload();
+        }
+
+        function handleVersion(nextVersion) {
+            var current = String(nextVersion || '').trim();
+            if (!current) return;
+
+            var prev = '';
+            try {
+                prev = String(sessionStorage.getItem(storageKey) || '');
+            } catch (e) {
+                prev = '';
+            }
+
+            if (!hasBootstrappedVersion) {
+                hasBootstrappedVersion = true;
+                try { sessionStorage.setItem(storageKey, current); } catch (e) { }
+                pendingRefresh = false;
+                return;
+            }
+
+            if (!prev) {
+                try { sessionStorage.setItem(storageKey, current); } catch (e) { }
+                return;
+            }
+
+            if (prev === current) {
+                if (pendingRefresh && canRefreshNow()) {
+                    pendingRefresh = false;
+                    performRefresh();
+                }
+                return;
+            }
+
+            try { sessionStorage.setItem(storageKey, current); } catch (e) { }
+
+            if (canRefreshNow()) {
+                performRefresh();
+            } else {
+                pendingRefresh = true;
+            }
+        }
+
+        function checkVersion() {
+            if (document.hidden) return;
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+            if (isChecking) return;
+            isChecking = true;
+            fetch(versionUrl, {
+                method: 'GET',
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (!data || !data.success) return;
+                    handleVersion(data.version || '');
+                })
+                .catch(function () {
+                    // ignore transient errors
+                })
+                .finally(function () {
+                    isChecking = false;
+                });
+        }
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) return;
+            if (pendingRefresh && canRefreshNow()) {
+                pendingRefresh = false;
+                performRefresh();
+                return;
+            }
+            checkVersion();
+        });
+
+        document.addEventListener('focusin', function () {
+            if (!pendingRefresh) return;
+            if (!canRefreshNow()) return;
+            pendingRefresh = false;
+            performRefresh();
+        });
+
+        checkVersion();
+        setInterval(checkVersion, pollMs);
+    }
+
     initNotificationDropdown();
     initNotificationActions();
     initReminderBanner();
     initNotificationToast();
+    initBfcacheResync();
+    initGlobalRealtimeSync();
     initPwa();
     initAppInstalledHandler();
     initSidebarToggle();

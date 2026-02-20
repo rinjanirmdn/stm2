@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Services\UserRoleService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -151,7 +153,14 @@ class UserController extends Controller
                 ->orderByDesc('md_users.id');
         }
 
-        $users = $usersQ->get();
+        $usersCacheKey = 'users:index:data:' . sha1(json_encode([
+            'uid' => Auth::id(),
+            'query' => $request->query(),
+            'version' => (string) Cache::get('st_realtime_version', '0'),
+        ]));
+        $users = Cache::remember($usersCacheKey, now()->addSeconds(10), function () use ($usersQ) {
+            return $usersQ->get();
+        });
 
         return view('users.index', [
             'users' => $users,

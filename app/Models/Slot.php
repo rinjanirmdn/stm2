@@ -52,6 +52,7 @@ class Slot extends Model
         'planned_duration',
         'is_late',
         'late_reason',
+        'waiting_reason',
         'cancelled_reason',
         'cancelled_at',
         'moved_gate',

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\SlotService;
 use App\Services\DashboardStatsService;
 use App\Services\BottleneckAnalysisService;
 use App\Services\GateStatusService;
@@ -13,7 +12,7 @@ use DatePeriod;
 use DateTime;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -52,7 +51,7 @@ class DashboardController extends Controller
             }
         }
 
-        $dashboardData = $this->buildDashboardData($request);
+        $dashboardData = $this->getDashboardDataCached($request);
 
         return view('dashboard.react', ['dashboardData' => $dashboardData]);
     }
@@ -62,7 +61,22 @@ class DashboardController extends Controller
      */
     public function data(Request $request)
     {
-        return response()->json($this->buildDashboardData($request));
+        return response()->json($this->getDashboardDataCached($request));
+    }
+
+    private function getDashboardDataCached(Request $request): array
+    {
+        $version = (string) Cache::get('st_realtime_version', '0');
+        $cacheKey = 'dashboard:data:' . sha1(json_encode([
+            'uid' => Auth::id(),
+            'path' => $request->path(),
+            'query' => $request->query(),
+            'version' => $version,
+        ]));
+
+        return Cache::remember($cacheKey, now()->addSeconds(10), function () use ($request) {
+            return $this->buildDashboardData($request);
+        });
     }
 
     /**
@@ -292,6 +306,8 @@ class DashboardController extends Controller
             'bottleneckLabels' => $bottleneckData['labels'],
             'bottleneckValues' => $bottleneckData['values'],
             'bottleneckDirections' => $bottleneckData['directions'],
+            'bottleneckWarehouseCodes' => $bottleneckData['warehouseCodes'] ?? [],
+            'bottleneckGateNumbers' => $bottleneckData['gateNumbers'] ?? [],
             'bottleneckThresholdMinutes' => $bottleneckData['threshold_minutes'],
             'avgLeadMinutes' => $averageTimes['avg_lead_minutes'],
             'avgProcessMinutes' => $averageTimes['avg_process_minutes'],
@@ -430,5 +446,33 @@ class DashboardController extends Controller
         }
 
         return [$rangeStart, $rangeEnd];
+    }
+
+    /**
+     * API: Get waiting reasons for a specific bottleneck gate/direction
+     */
+    public function waitingReasons(Request $request)
+    {
+        $warehouseCode = trim((string) $request->query('warehouse_code', ''));
+        $gateNumber = trim((string) $request->query('gate_number', ''));
+        $direction = trim((string) $request->query('direction', ''));
+        $dateFrom = trim((string) $request->query('date_from', ''));
+        $dateTo = trim((string) $request->query('date_to', ''));
+
+        if ($warehouseCode === '' || $gateNumber === '' || $direction === '') {
+            return response()->json(['success' => false, 'error' => 'Missing parameters'], 422);
+        }
+
+        $today = date('Y-m-d');
+        if ($dateFrom === '') $dateFrom = date('Y-m-d', strtotime('-30 days'));
+        if ($dateTo === '') $dateTo = $today;
+
+        $reasons = $this->bottleneckService->getWaitingReasons($dateFrom, $dateTo, $warehouseCode, $gateNumber, $direction);
+
+        return response()->json([
+            'success' => true,
+            'data' => $reasons,
+            'gate' => "Gate {$gateNumber} ({$warehouseCode}) - " . ucfirst($direction),
+        ]);
     }
 }

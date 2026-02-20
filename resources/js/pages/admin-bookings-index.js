@@ -31,15 +31,53 @@ document.addEventListener('DOMContentLoaded', function() {
     var bookingFilterForm = document.getElementById('booking-filter-form');
     var isLoading = false;
 
+    function appendControlToParams(params, el) {
+        if (!el || !el.name || el.disabled) return;
+        var tag = String(el.tagName || '').toLowerCase();
+        var type = String(el.type || '').toLowerCase();
+
+        if ((type === 'checkbox' || type === 'radio') && !el.checked) return;
+
+        if (tag === 'select' && el.multiple) {
+            Array.prototype.slice.call(el.options || []).forEach(function (opt) {
+                if (!opt || !opt.selected) return;
+                var val = String(opt.value || '').trim();
+                if (val !== '') params.append(el.name, val);
+            });
+            return;
+        }
+
+        var val = String(el.value || '').trim();
+        if (val !== '') params.append(el.name, val);
+    }
+
     function buildQueryStringFromForm() {
         if (!bookingFilterForm) return '';
-        var fd = new FormData(bookingFilterForm);
         var params = new URLSearchParams();
-        fd.forEach(function (v, k) {
-            var val = String(v || '').trim();
-            if (val !== '') params.append(k, val);
+
+        // Include controls inside form
+        bookingFilterForm.querySelectorAll('input, select, textarea').forEach(function (el) {
+            appendControlToParams(params, el);
         });
-        return params.toString();
+
+        // Include controls outside form linked via form="booking-filter-form"
+        var formId = String(bookingFilterForm.getAttribute('id') || '').trim();
+        if (formId) {
+            document.querySelectorAll('[form="' + CSS.escape(formId) + '"]').forEach(function (el) {
+                appendControlToParams(params, el);
+            });
+        }
+
+        // De-duplicate while preserving order
+        var seen = new Set();
+        var dedup = new URLSearchParams();
+        params.forEach(function (v, k) {
+            var sig = k + '::' + v;
+            if (seen.has(sig)) return;
+            seen.add(sig);
+            dedup.append(k, v);
+        });
+        return dedup.toString();
     }
 
     function setLoading(on) {
@@ -104,7 +142,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.ajaxReload = ajaxReload;
 
     if (bookingFilterForm) {
-        var searchInput = bookingFilterForm.querySelector('input[name="search"]');
+        var searchInput = document.querySelector('input[name="search"][form="booking-filter-form"]')
+            || bookingFilterForm.querySelector('input[name="search"]');
         if (searchInput) {
             var timeout;
             searchInput.addEventListener('input', function() {
@@ -130,7 +169,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         window.addEventListener('popstate', function () {
             var params = new URLSearchParams(window.location.search);
-            bookingFilterForm.querySelectorAll('input, select').forEach(function (el) {
+            var formId = String(bookingFilterForm.getAttribute('id') || '').trim();
+            var controls = Array.prototype.slice.call(bookingFilterForm.querySelectorAll('input, select, textarea'));
+            if (formId) {
+                controls = controls.concat(Array.prototype.slice.call(document.querySelectorAll('[form="' + CSS.escape(formId) + '"]')));
+            }
+            controls.forEach(function (el) {
                 if (el.type === 'hidden' && el.name === 'status') return;
                 if (el.name) el.value = params.get(el.name) || '';
             });

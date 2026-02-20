@@ -93,19 +93,59 @@
         }
     }
 
+    function appendControlToParams(params, el) {
+        if (!el || !el.name || el.disabled) return;
+        var tag = String(el.tagName || '').toLowerCase();
+        var type = String(el.type || '').toLowerCase();
+
+        if ((type === 'checkbox' || type === 'radio') && !el.checked) return;
+
+        if (tag === 'select' && el.multiple) {
+            Array.prototype.slice.call(el.options || []).forEach(function (opt) {
+                if (!opt || !opt.selected) return;
+                var val = String(opt.value || '').trim();
+                if (val !== '') params.append(el.name, val);
+            });
+            return;
+        }
+
+        var val = String(el.value || '').trim();
+        if (val !== '') params.append(el.name, val);
+    }
+
     function buildQueryStringFromForm() {
-        var fd = new FormData(filterForm);
         var params = new URLSearchParams();
-        fd.forEach(function (value, key) {
-            if (value === '' || value === null || typeof value === 'undefined') return;
-            params.append(key, value);
+
+        filterForm.querySelectorAll('input, select, textarea').forEach(function (el) {
+            appendControlToParams(params, el);
         });
-        return params.toString();
+
+        var formId = String(filterForm.getAttribute('id') || '').trim();
+        if (formId) {
+            document.querySelectorAll('[form="' + CSS.escape(formId) + '"]').forEach(function (el) {
+                appendControlToParams(params, el);
+            });
+        }
+
+        var seen = new Set();
+        var dedup = new URLSearchParams();
+        params.forEach(function (v, k) {
+            var sig = k + '::' + v;
+            if (seen.has(sig)) return;
+            seen.add(sig);
+            dedup.append(k, v);
+        });
+        return dedup.toString();
     }
 
     function syncFormFromUrl() {
         var params = new URLSearchParams(window.location.search);
-        Array.prototype.slice.call(filterForm.elements).forEach(function (el) {
+        var controls = Array.prototype.slice.call(filterForm.elements);
+        var formId = String(filterForm.getAttribute('id') || '').trim();
+        if (formId) {
+            controls = controls.concat(Array.prototype.slice.call(document.querySelectorAll('[form="' + CSS.escape(formId) + '"]')));
+        }
+        controls.forEach(function (el) {
             if (!el || !el.name) return;
             var name = el.name;
             var values = params.getAll(name);
@@ -465,19 +505,28 @@
     }
 
     function setupSorting() {
+        var sortInputs = filterForm.querySelectorAll('input[name="sort[]"]');
+        var dirInputs = filterForm.querySelectorAll('input[name="dir[]"]');
         var sortInput = filterForm.querySelector('input[name="sort"]');
         var dirInput = filterForm.querySelector('input[name="dir"]');
-        if (!sortInput || !dirInput) return;
 
-        var currentSort = String(sortInput.value || '');
-        var currentDir = String(dirInput.value || 'desc');
+        var currentSort = '';
+        var currentDir = 'desc';
+        if (sortInputs.length && dirInputs.length) {
+            currentSort = String((sortInputs[0] && sortInputs[0].value) || '');
+            currentDir = String((dirInputs[0] && dirInputs[0].value) || 'desc');
+        } else if (sortInput && dirInput) {
+            currentSort = String(sortInput.value || '');
+            currentDir = String(dirInput.value || 'desc');
+        }
 
         // Clear all active indicators first
         document.querySelectorAll('.st-colhead, .st-filter-header').forEach(function(head) {
             head.classList.remove('st-colhead--active-sort', 'st-filter-header--active-sort');
         });
         document.querySelectorAll('.st-sort-trigger').forEach(function(btn) {
-            btn.classList.remove('st-sort-trigger--active');
+            btn.classList.remove('st-sort-trigger--active', 'is-sorted', 'sort-asc', 'sort-desc');
+            btn.removeAttribute('data-dir');
         });
 
         // Set active indicator for current sort
@@ -485,40 +534,16 @@
             var activeSortBtn = document.querySelector('.st-sort-trigger[data-sort="' + currentSort + '"]');
             if (activeSortBtn) {
                 activeSortBtn.classList.add('st-sort-trigger--active');
+                var normalizedDir = String(currentDir || '').trim().toLowerCase();
+                if (normalizedDir === 'asc' || normalizedDir === 'desc') {
+                    activeSortBtn.classList.add('is-sorted', normalizedDir === 'asc' ? 'sort-asc' : 'sort-desc');
+                    activeSortBtn.setAttribute('data-dir', normalizedDir);
+                }
             }
         }
 
-        document.querySelectorAll('.st-sort-trigger').forEach(function (btn) {
-            if (!btn || btn.getAttribute('data-sort-bound') === '1') return;
-            btn.setAttribute('data-sort-bound', '1');
-
-            var key = String(btn.getAttribute('data-sort') || '');
-            if (!key) return;
-
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                var nowSort = String(sortInput.value || '');
-                var nowDir = String(dirInput.value || 'desc');
-                var nextDir = 'asc';
-                var nextSort = key;
-
-                // 3-step toggle: asc -> desc -> off
-                if (nowSort === key) {
-                    if (nowDir === 'asc') {
-                        nextDir = 'desc';
-                    } else {
-                        nextSort = '';
-                        nextDir = '';
-                    }
-                } else {
-                    nextDir = (key === 'lead_time') ? 'desc' : 'asc';
-                }
-
-                sortInput.value = nextSort;
-                dirInput.value = nextDir;
-                ajaxReload(true);
-            });
-        });
+        // Sort click logic is handled globally in resources/js/pages/main.js.
+        // Keep this function for local indicator hydration only.
     }
 
     // Ensure form is synced with URL parameters on load (clears browser-restored values for hidden inputs)
