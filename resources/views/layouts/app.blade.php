@@ -61,8 +61,14 @@
     <aside class="st-sidebar" id="sidebar">
         <div class="st-sidebar__brand">
             <div class="st-sidebar__brand-main">
-                <img src="{{ asset('img/logo-icon.png') }}" alt="Slot Time" class="st-sidebar__logo st-sidebar__logo--icon">
-                <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" class="st-sidebar__logo st-sidebar__logo--full">
+                <div class="st-sidebar__logo-stack st-sidebar__logo-stack--oneject">
+                    <img src="{{ asset('img/logo-icon.png') }}" alt="Oneject" class="st-sidebar__logo st-sidebar__logo--icon st-sidebar__logo--oneject-icon">
+                    <img src="{{ asset('img/logo-full.png') }}" alt="Oneject" class="st-sidebar__logo st-sidebar__logo--full st-sidebar__logo--oneject-full">
+                </div>
+                <div class="st-sidebar__logo-stack st-sidebar__logo-stack--edocking">
+                    <img src="{{ asset('img/No bg_e-Docking Control System.png') }}" alt="e-Docking" class="st-sidebar__logo st-sidebar__logo--icon st-sidebar__logo--edocking-icon">
+                    <img src="{{ asset('img/No bg_e-Docking Control System.png') }}" alt="e-Docking Control System" class="st-sidebar__logo st-sidebar__logo--full st-sidebar__logo--edocking-full">
+                </div>
             </div>
         </div>
 

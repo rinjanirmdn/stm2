@@ -211,7 +211,7 @@
 
 .st-leadtime-meta {
     font-size: 9px;
-    color: #9ca3af;
+    color: rgba(255, 255, 255, 0.82);
     margin-top: 1px;
 }
 
@@ -2176,14 +2176,12 @@
     }
 
     /* Tablet and desktop logo adjustments */
-    .st-sidebar__logo--full {
-        width: 100%;
-        height: 50px;
+    .st-sidebar__logo-stack--oneject .st-sidebar__logo--full {
+        height: 32px;
     }
 
-    .st-sidebar__logo--icon {
-        width: 36px;
-        height: 36px;
+    .st-sidebar__logo-stack--edocking .st-sidebar__logo--full {
+        height: 26px;
     }
 }
 
@@ -2197,15 +2195,18 @@
     height: 100%;
     margin: 0 auto;
     object-fit: contain;
-    transform: scale(1.5);
+    object-position: center;
+    transform: none;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__brand-main {
     justify-content: center;
+    align-items: center;
+    gap: 8px;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__brand {
-    padding: 0;
+    padding: 4px 0;
     margin-bottom: 12px;
     overflow: hidden;
 }
@@ -2631,13 +2632,13 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 .st-sidebar {
     width: var(--st-sidebar-width);
     flex: 0 0 var(--st-sidebar-width);
-    background: #38bdf8;
-    color: #0f172a;
+    background: linear-gradient(180deg, #5fc5e7 0%, #4fa8c6 34%, #3f8e97 58%, #2f766f 78%, #1f5e53 100%);
+    color: #f8fafc;
     display: flex;
     flex-direction: column;
     padding: 20px 16px;
-    border-right: 1px solid #7dd3fc;
-    box-shadow: 2px 0 8px rgba(56, 189, 248, 0.2);
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 2px 0 14px rgba(15, 23, 42, 0.22);
     overflow-y: auto;
     position: fixed;
     top: 0;
@@ -2654,27 +2655,35 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 12px;
+    padding: 0;
     margin-bottom: 16px;
-    background: #ffffff;
-    border-radius: 10px;
+    background: transparent;
+    border-radius: 0;
     transition: all 0.2s ease;
     position: relative;
-    height: 48px;
-    overflow: hidden;
+    height: auto;
+    overflow: visible;
 }
 
 .st-sidebar__brand:hover {
-    background: #ffffff;
+    background: transparent;
     transform: none;
     box-shadow: none;
 }
 
 .st-sidebar__brand-main {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
+    justify-content: center;
+}
+
+.st-sidebar__logo-stack {
+    width: 100%;
+    display: flex;
+    align-items: center;
     justify-content: center;
 }
 
@@ -2691,17 +2700,34 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 }
 
 .st-sidebar__logo--full {
-    width: 100%;
-    height: 100%;
+    width: auto;
+    max-width: 100%;
+    height: 32px;
     display: block;
     object-fit: contain;
+    object-position: center;
+}
+
+.st-sidebar__logo--oneject-full {
+    height: 32px;
+}
+
+.st-sidebar__logo--edocking-full {
+    height: 26px;
 }
 
 .st-sidebar__logo--icon {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: none;
     flex-shrink: 0;
+    object-fit: contain;
+    object-position: center;
+}
+
+.st-sidebar__logo--edocking-icon {
+    object-fit: cover;
+    object-position: 14% center;
 }
 
 .st-sidebar__nav {
@@ -2723,7 +2749,7 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     gap: 12px;
     padding: 10px 16px;
     margin-bottom: 0;
-    color: #000000;
+    color: rgba(255, 255, 255, 0.95);
     text-decoration: none;
     border-radius: 8px;
     font-size: 14px;
@@ -2736,7 +2762,7 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 .st-sidebar__link i {
     width: 20px;
     text-align: center;
-    color: #000000;
+    color: rgba(255, 255, 255, 0.95);
     font-size: 18px;
     transition: color 0.2s ease;
     display: flex;
@@ -2745,7 +2771,7 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 }
 
 .st-sidebar__link:hover {
-    background: #0284c7;
+    background: rgba(255, 255, 255, 0.18);
     color: #ffffff;
     transform: translateX(2px);
 }
@@ -2755,10 +2781,10 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 }
 
 .st-sidebar__link--active {
-    background: #0284c7;
+    background: rgba(255, 255, 255, 0.24);
     color: #ffffff;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.2);
 }
 
 .st-sidebar__link--active i {
@@ -2777,7 +2803,7 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
     gap: 8px;
     padding: 6px 12px;
     font-size: 13px;
-    color: #9ca3af;
+    color: rgba(255, 255, 255, 0.82);
     text-decoration: none;
     border-radius: 6px;
     transition: all 0.2s ease;
@@ -2790,8 +2816,8 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 }
 
 .st-sidebar__submenu-link:hover {
-    background: rgba(148, 163, 184, 0.08);
-    color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
 }
 
 /* Collapsed sidebar state (desktop) */
@@ -2807,13 +2833,13 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 }
 
 .st-app--sidebar-collapsed .st-sidebar__brand {
-    padding: 6px;
-    height: 44px;
+    padding: 4px 0;
+    height: auto;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__brand-main {
     justify-content: center;
-    gap: 0;
+    gap: 8px;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__logo--full {
@@ -2822,6 +2848,8 @@ table.st-table thead th .st-filter-header--inline-compact > span:first-child {
 
 .st-app--sidebar-collapsed .st-sidebar__logo--icon {
     display: block;
+    width: 28px;
+    height: 28px;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__brand-main .st-sidebar__title {
