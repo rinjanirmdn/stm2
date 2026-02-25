@@ -65,10 +65,6 @@
                     <img src="{{ asset('img/logo-icon.png') }}" alt="Oneject" class="st-sidebar__logo st-sidebar__logo--icon st-sidebar__logo--oneject-icon">
                     <img src="{{ asset('img/logo-full.png') }}" alt="Oneject" class="st-sidebar__logo st-sidebar__logo--full st-sidebar__logo--oneject-full">
                 </div>
-                <div class="st-sidebar__logo-stack st-sidebar__logo-stack--edocking">
-                    <img src="{{ asset('img/No bg_e-Docking Control System.png') }}" alt="e-Docking" class="st-sidebar__logo st-sidebar__logo--icon st-sidebar__logo--edocking-icon">
-                    <img src="{{ asset('img/No bg_e-Docking Control System.png') }}" alt="e-Docking Control System" class="st-sidebar__logo st-sidebar__logo--full st-sidebar__logo--edocking-full">
-                </div>
             </div>
         </div>
 
@@ -153,66 +149,74 @@
                     <h1 class="st-topbar__title">{{ $pageTitle ?? trim($__env->yieldContent('page_title')) ?: 'Dashboard' }}</h1>
                 </div>
                 <div class="st-topbar__user">
-                    <div class="st-topbar__user-info">
-                        <span class="st-topbar__user-name">{{ auth()->user()->name ?? 'User' }}</span>
-                        <span class="st-topbar__user-role">{{ auth()->user()?->getRoleNames()?->first() ?? 'User' }}</span>
-                    </div>
-                    <div class="st-topbar__user-actions">
-                        @if($stIsDashboardRoute && !$stIsDisplayOnly)
-                            <a href="{{ request()->fullUrlWithQuery(['display' => '1']) }}" class="st-icon-button" title="Presentation Only" aria-label="Presentation Only" target="_blank" rel="noopener">
-                                <i class="fas fa-display"></i>
-                            </a>
-                        @endif
+                    <img src="{{ asset('img/e-Docking Control System.png') }}" alt="e-Docking Control System" class="st-topbar__brand-logo">
 
-                        <!-- Notification Component -->
-                        <div class="st-notification">
-                            <button type="button" class="st-notification-btn" id="st-notification-btn">
-                                <i class="fas fa-bell"></i>
-                                @if(auth()->user()->unreadNotifications->count() > 0)
-                                    <span class="st-notification-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
-                                @endif
-                            </button>
+                    <!-- Notification Component -->
+                    <div class="st-notification">
+                        <button type="button" class="st-notification-btn" id="st-notification-btn">
+                            <i class="fas fa-bell"></i>
+                            @if(auth()->user()->unreadNotifications->count() > 0)
+                                <span class="st-notification-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
+                            @endif
+                        </button>
 
-                            <div class="st-notification-dropdown" id="st-notification-dropdown">
-                                <div class="st-notification-header">
-                                    <span>Notifications</span>
-                                    <div class="st-notification-actions">
-                                        <button type="button" class="st-notification-link" id="st-notification-clear">Clear</button>
-                                        <button type="button" class="st-notification-link" id="st-notification-mark-all">Mark all read</button>
-                                    </div>
-                                </div>
-                                <div class="st-notification-list">
-                                    @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
-                                        <a href="{{ $notification->data['action_url'] ?? '#' }}" class="st-notification-item {{ $notification->read_at ? '' : 'st-notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
-                                            <div class="st-notification-icon st-notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
-                                                <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
-                                            </div>
-                                            <div class="st-notification-content">
-                                                <span class="st-notification-title">{{ $notification->data['title'] ?? 'Notification' }}</span>
-                                                <span class="st-notification-message">{{ $notification->data['message'] ?? '' }}</span>
-                                                <span class="st-notification-time">{{ $notification->created_at->diffForHumans() }}</span>
-                                            </div>
-                                        </a>
-                                    @empty
-                                        <div class="st-notification-empty">
-                                            <i class="fas fa-bell-slash st-notification-empty__icon"></i>
-                                            <p class="st-notification-empty__text">No notifications yet</p>
-                                        </div>
-                                    @endforelse
+                        <div class="st-notification-dropdown" id="st-notification-dropdown">
+                            <div class="st-notification-header">
+                                <span>Notifications</span>
+                                <div class="st-notification-actions">
+                                    <button type="button" class="st-notification-link" id="st-notification-clear">Clear</button>
+                                    <button type="button" class="st-notification-link" id="st-notification-mark-all">Mark all read</button>
                                 </div>
                             </div>
+                            <div class="st-notification-list">
+                                @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
+                                    <a href="{{ $notification->data['action_url'] ?? '#' }}" class="st-notification-item {{ $notification->read_at ? '' : 'st-notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                        <div class="st-notification-icon st-notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
+                                            <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
+                                        </div>
+                                        <div class="st-notification-content">
+                                            <span class="st-notification-title">{{ $notification->data['title'] ?? 'Notification' }}</span>
+                                            <span class="st-notification-message">{{ $notification->data['message'] ?? '' }}</span>
+                                            <span class="st-notification-time">{{ $notification->created_at->diffForHumans() }}</span>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div class="st-notification-empty">
+                                        <i class="fas fa-bell-slash st-notification-empty__icon"></i>
+                                        <p class="st-notification-empty__text">No notifications yet</p>
+                                    </div>
+                                @endforelse
+                            </div>
                         </div>
-
-                        <a href="{{ route('profile') }}" class="st-icon-button" title="Profile">
-                            <span class="st-icon-glyph">👤</span>
-                        </a>
-                        <form method="POST" action="{{ route('logout') }}" class="st-inline-form">
-                            @csrf
-                            <button type="submit" class="st-icon-button st-icon-button--ghost" title="Logout">
-                                <span class="st-icon-glyph">⮕</span>
-                            </button>
-                        </form>
                     </div>
+
+                    <details class="st-topbar__menu">
+                        <summary class="st-icon-button st-topbar__menu-toggle" title="User menu" aria-label="User menu">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </summary>
+                        <div class="st-topbar__menu-dropdown" role="menu">
+                            <div class="st-topbar__user-info">
+                                <span class="st-topbar__user-name">{{ auth()->user()->name ?? 'User' }}</span>
+                                <span class="st-topbar__user-role">{{ auth()->user()?->getRoleNames()?->first() ?? 'User' }}</span>
+                            </div>
+                            <div class="st-topbar__user-actions">
+                                <a href="{{ route('profile') }}" class="st-icon-button" title="Profile" aria-label="Profile">
+                                    <i class="fas fa-user"></i>
+                                </a>
+                                @if($stIsDashboardRoute && !$stIsDisplayOnly)
+                                    <a href="{{ request()->fullUrlWithQuery(['display' => '1']) }}" class="st-icon-button" title="Presentation Only" aria-label="Presentation Only" target="_blank" rel="noopener">
+                                        <i class="fas fa-display"></i>
+                                    </a>
+                                @endif
+                                <form method="POST" action="{{ route('logout') }}" class="st-inline-form">
+                                    @csrf
+                                    <button type="submit" class="st-icon-button st-icon-button--ghost" title="Logout" aria-label="Logout">
+                                        <i class="fas fa-right-from-bracket"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
         </header>
