@@ -1,5 +1,5 @@
 {
-    "name": "Slot Time Management",
+    "name": "e-Docking Control System",
     "short_name": "SlotTM",
     "description": "Sistem manajemen slot untuk warehouse gate scheduling",
     "start_url": "/",
@@ -9,7 +9,11 @@
     "orientation": "portrait-primary",
     "scope": "/",
     "lang": "id-ID",
-    "categories": ["business", "productivity", "utilities"],
+    "categories": [
+        "business",
+        "productivity",
+        "utilities"
+    ],
     "icons": [
         {
             "src": "/icons/icon-72x72.svg",
@@ -66,14 +70,24 @@
             "short_name": "Slots",
             "description": "Lihat semua slot",
             "url": "/slots",
-            "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+            "icons": [
+                {
+                    "src": "/icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
         },
         {
             "name": "Buat Slot",
             "short_name": "Buat",
             "description": "Buat slot baru",
             "url": "/slots/create",
-            "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+            "icons": [
+                {
+                    "src": "/icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
         }
     ],
     "screenshots": [

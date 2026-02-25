@@ -112,7 +112,7 @@ class SlotService
     }
 
     /**
-     * Get next available slot time for a specific gate
+     * Get next available e-DCS for a specific gate
      */
     public function getNextAvailableTime(int $gateId, string $startTime, int $durationMinutes): ?string
     {

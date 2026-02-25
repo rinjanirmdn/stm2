@@ -41,9 +41,9 @@
             </a>
             <a href="{{ route('vendor.bookings.index', array_merge(request()->except('page', 'status'), ['status' => ''])) }}"
                class="mb-tab mb-tab--all {{ $currentStatus === '' ? 'mb-tab--active' : '' }}"
-               title="All your bookings, regardless of status.">
+               title="Total of all your bookings, regardless of status.">
                 <span class="mb-tab__count">{{ ($tabCounts['all'] ?? $bookings->total()) }}</span>
-                <span>All</span>
+                <span>Total</span>
             </a>
         </div>
 
@@ -159,7 +159,7 @@
     <!-- Footer Container -->
     <div class="mb-footer-container">
         <div class="mb-footer-text">
-            (c) {{ date('Y') }} Slot Time Management. All rights reserved.
+            (c) {{ date('Y') }} e-Docking Control System. All rights reserved.
         </div>
     </div>
 </div>

@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Edit Unplanned Transaction - Slot Time Management')
+@section('title', 'Edit Unplanned Transaction - e-Docking Control System')
 @section('page_title', 'Edit Unplanned Transaction')
 
 @section('content')

@@ -164,15 +164,48 @@ class VendorBookingController extends Controller
     /**
      * Vendor Dashboard
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $user = Auth::user();
 
+        $today = date('Y-m-d');
+        $rangeStart = trim((string) $request->query('range_start', ''));
+        $rangeEnd = trim((string) $request->query('range_end', ''));
+
+        if ($rangeStart === '' && $rangeEnd === '') {
+            $firstOfMonth = date('Y-m-01', strtotime($today));
+            $lastOfMonth = date('Y-m-t', strtotime($today));
+            $rangeStart = $firstOfMonth;
+            $rangeEnd = $lastOfMonth;
+        } elseif ($rangeStart === '' && $rangeEnd !== '') {
+            $rangeStart = $rangeEnd;
+        } elseif ($rangeEnd === '' && $rangeStart !== '') {
+            $rangeEnd = $rangeStart;
+        }
+
+        foreach (['rangeStart', 'rangeEnd'] as $var) {
+            $val = $$var;
+            $dt = \DateTime::createFromFormat('Y-m-d', $val);
+            if (! $dt || $dt->format('Y-m-d') !== $val) {
+                $$var = $today;
+            }
+        }
+
+        if (strtotime($rangeStart) > strtotime($rangeEnd)) {
+            $tmp = $rangeStart;
+            $rangeStart = $rangeEnd;
+            $rangeEnd = $tmp;
+        }
+
         // BookingRequest stats (only valid BR statuses: pending, approved, rejected, cancelled)
-        $brBase = BookingRequest::where('requested_by', $user->id);
+        $brBase = BookingRequest::where('requested_by', $user->id)
+            ->whereDate('planned_start', '>=', $rangeStart)
+            ->whereDate('planned_start', '<=', $rangeEnd);
 
         // Slot stats (operational statuses live on slots table)
-        $slotBase = Slot::where('requested_by', $user->id);
+        $slotBase = Slot::where('requested_by', $user->id)
+            ->whereDate('planned_start', '>=', $rangeStart)
+            ->whereDate('planned_start', '<=', $rangeEnd);
 
         $pendingCount   = (clone $brBase)->where('status', BookingRequest::STATUS_PENDING)->count();
         $scheduledCount = (clone $slotBase)->where('status', Slot::STATUS_SCHEDULED)->count();
@@ -191,33 +224,66 @@ class VendorBookingController extends Controller
             'completed'   => $completedCount,
             'rejected'    => $rejectedCount,
             'cancelled'   => $cancelledCount,
-            // Dashboard "All" card should only show core operational statuses
+            // Dashboard "Total" card should only show core operational statuses
             'total'       => $scheduledCount + $waitingCount + $inProgCount + $completedCount,
         ];
 
         // Get recent bookings (show both pending BR and converted slots)
-        $recentBookings = BookingRequest::where('requested_by', $user->id)
+        $recentBookingsQuery = BookingRequest::where('requested_by', $user->id)
             ->with(['convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate'])
+            ->when($rangeStart && $rangeEnd, function ($q) use ($rangeStart, $rangeEnd) {
+                $q->whereDate('planned_start', '>=', $rangeStart)
+                    ->whereDate('planned_start', '<=', $rangeEnd);
+            })
             ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+            ->limit(20);
+
+        $recentBookings = $recentBookingsQuery->get();
+
+        $arrivalFilter = (string) $request->query('arrival_filter', '');
+        if (in_array($arrivalFilter, ['ontime', 'late'], true)) {
+            $recentBookings = $recentBookings->filter(function ($booking) use ($arrivalFilter) {
+                $slot = $booking->convertedSlot;
+                if (! $slot || ! $slot->planned_start || ! $slot->arrival_time) {
+                    return false;
+                }
+
+                $diffMin = $slot->planned_start->diffInMinutes($slot->arrival_time, false);
+
+                if ($arrivalFilter === 'late') {
+                    return $diffMin > 15;
+                }
+
+                return $diffMin <= 15;
+            })->values();
+        }
+
+        $recentBookings = $recentBookings->take(5);
 
         // Performance metrics
-        $performance = $this->computeVendorPerformance($user->id);
+        $performance = $this->computeVendorPerformance($user->id, $rangeStart, $rangeEnd);
 
-        return view('vendor.dashboard', compact('stats', 'recentBookings', 'performance'));
+        return view('vendor.dashboard', compact('stats', 'recentBookings', 'performance', 'rangeStart', 'rangeEnd', 'arrivalFilter'));
     }
 
     /**
      * Compute vendor performance metrics from completed slots
      */
-    private function computeVendorPerformance(int $userId): array
+    private function computeVendorPerformance(int $userId, string $rangeStart, string $rangeEnd): array
     {
+        // Hitung on-time vs late untuk semua slot yang sudah punya arrival & planned_start,
+        // terlepas dari statusnya (termasuk in_progress, waiting, dll.)
+        $arrivalSlots = Slot::where('requested_by', $userId)
+            ->whereNotNull('arrival_time')
+            ->whereNotNull('planned_start')
+            ->whereBetween('arrival_time', [$rangeStart . ' 00:00:00', $rangeEnd . ' 23:59:59'])
+            ->get();
+
+        // Untuk rata-rata waiting & process, tetap gunakan slot yang sudah completed
         $completedSlots = Slot::where('requested_by', $userId)
             ->where('status', Slot::STATUS_COMPLETED)
             ->whereNotNull('actual_finish')
-            ->whereMonth('actual_finish', now()->month)
-            ->whereYear('actual_finish', now()->year)
+            ->whereBetween('actual_finish', [$rangeStart . ' 00:00:00', $rangeEnd . ' 23:59:59'])
             ->get();
 
         $onTime = 0;
@@ -229,7 +295,7 @@ class VendorBookingController extends Controller
         $waitingCount = 0;
         $processCount = 0;
 
-        foreach ($completedSlots as $slot) {
+        foreach ($arrivalSlots as $slot) {
             // On-time vs late: compare arrival_time to planned_start
             if ($slot->arrival_time && $slot->planned_start) {
                 // Positive value means truck arrived AFTER planned_start
@@ -242,7 +308,9 @@ class VendorBookingController extends Controller
                     $onTime++;
                 }
             }
+        }
 
+        foreach ($completedSlots as $slot) {
             // Avg waiting: arrival_time to actual_start
             if ($slot->arrival_time && $slot->actual_start) {
                 $totalWaiting += $slot->arrival_time->diffInMinutes($slot->actual_start);

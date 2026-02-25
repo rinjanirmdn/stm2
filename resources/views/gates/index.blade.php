@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Gates Management - Slot Time Management')
+@section('title', 'Gates Management - e-Docking Control System')
 @section('page_title', 'Gates Management')
 
 @push('styles')
@@ -100,7 +100,7 @@
 
             <div class="st-flex st-gap-12 st-align-center">
                 <button class="st-btn st-btn--primary st-btn--sm" onclick="window.location.href='{{ route('slots.create') }}'">
-                    Create Slots
+                    Create Planned
                 </button>
             </div>
         </header>
@@ -268,7 +268,7 @@
                                 : route('slots.show', $slot->id);
                         @endphp
 
-                        <!-- Slot Card -->
+                        <!-- Planned Card -->
                         <div id="slot-{{ $slot->id }}" class="st-dock-card {{ $bgClass }} {{ $paddingClass }}"
                              data-top="{{ $minutesFrom7 }}"
                              data-height="{{ $duration }}"

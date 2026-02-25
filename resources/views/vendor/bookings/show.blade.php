@@ -230,7 +230,7 @@
             </a>
 
             @if(!empty($booking->convertedSlot?->ticket_number))
-            <a href="{{ route('vendor.bookings.ticket', $booking->convertedSlot->id) }}" class="vendor-btn vendor-btn--secondary" target="_blank">
+            <a href="{{ route('vendor.bookings.ticket', ['slotId' => $booking->convertedSlot->id]) }}" class="vendor-btn vendor-btn--secondary" target="_blank">
                 <i class="fas fa-print"></i>
                 Print Ticket
             </a>

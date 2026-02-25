@@ -222,7 +222,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [VendorBookingController::class, 'create'])->name('create');
             Route::post('/', [VendorBookingController::class, 'store'])->name('store');
             Route::get('/{id}', [VendorBookingController::class, 'show'])->whereNumber('id')->name('show');
-            Route::get('/{id}/ticket', [VendorBookingController::class, 'ticket'])->whereNumber('id')->name('ticket');
+            Route::get('/{slotId}/ticket', [SlotController::class, 'ticket'])->whereNumber('slotId')->name('ticket');
             Route::post('/{id}/cancel', [VendorBookingController::class, 'cancel'])->whereNumber('id')->name('cancel');
         });
 

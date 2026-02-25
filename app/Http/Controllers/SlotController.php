@@ -479,7 +479,7 @@ class SlotController extends Controller
                 ->count();
 
             if ($overlapCount > 0) {
-                return back()->withInput()->with('error', 'Planned time overlaps with another slot on the same lane');
+                return back()->withInput()->with('error', 'Planned time overlaps with another booking on the same lane');
             }
 
             $bcCheck = $this->slotService->validateWh2BcPlannedWindow($plannedGateId, $plannedStartDt, $plannedEndDt, 0);
@@ -520,12 +520,12 @@ class SlotController extends Controller
             ]);
 
             if ($slotId > 0) {
-                $this->slotService->logActivity($slotId, 'status_change', 'Slot Created');
+                $this->slotService->logActivity($slotId, 'status_change', 'Data Created');
             }
         });
 
         if ($slotId <= 0) {
-            return back()->withInput()->with('error', 'Failed to create slot');
+            return back()->withInput()->with('error', 'Failed to create dat');
         }
 
 
@@ -542,14 +542,14 @@ class SlotController extends Controller
             'blocking_risk_cached_at' => now(),
         ]);
 
-        return redirect()->route('slots.index')->with('success', 'Slot created successfully');
+        return redirect()->route('slots.index')->with('success', 'Data created successfully');
     }
 
     public function edit(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         if (((string) ($slot->slot_type ?? 'planned')) !== 'planned' || (string) ($slot->status ?? '') !== 'scheduled') {
@@ -591,7 +591,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         if (((string) ($slot->slot_type ?? 'planned')) !== 'planned' || (string) ($slot->status ?? '') !== 'scheduled') {
@@ -678,7 +678,7 @@ class SlotController extends Controller
                 ->count();
 
             if ($overlapCount > 0) {
-                return back()->withInput()->with('error', 'Planned time overlaps with another slot on the same lane');
+                return back()->withInput()->with('error', 'Planned time overlaps with another booking on the same lane');
             }
 
             $bcCheck = $this->slotService->validateWh2BcPlannedWindow($plannedGateId, $plannedStartDt, $plannedEndDt, $slotId);
@@ -713,7 +713,7 @@ class SlotController extends Controller
                 'updated_at' => now(),
             ]);
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot Updated');
+            $this->slotService->logActivity($slotId, 'status_change', 'Data Updated');
         });
 
         // Calculate blocking risk immediately after update
@@ -729,14 +729,14 @@ class SlotController extends Controller
             'blocking_risk_cached_at' => now(),
         ]);
 
-        return redirect()->route('slots.index')->with('success', 'Slot updated successfully');
+        return redirect()->route('slots.index')->with('success', 'Data updated successfully');
     }
 
     public function show(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         $poNumber = trim((string) ($slot->po_number ?? ''));
@@ -1168,7 +1168,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
@@ -1216,7 +1216,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
@@ -1306,7 +1306,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         if (((string) ($slot->slot_type ?? 'planned')) === 'unplanned') {
@@ -1326,7 +1326,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         if (((string) ($slot->slot_type ?? 'planned')) === 'unplanned') {
@@ -1366,7 +1366,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         $gateNumber = (string) ($slot->actual_gate_number ?? '');
@@ -1388,17 +1388,28 @@ class SlotController extends Controller
             $barcodePng = $barcodeC->getBarcodePNG($slot->ticket_number, 'C128', 2.5, 60);
         }
 
+        // Encode logo as base64 data URI so DomPDF can render it
+        $logoDataUri = null;
+        try {
+            $logoPath = public_path('img/logo-full.png');
+            if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
+                $logoDataUri = 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+            }
+        } catch (\Throwable $e) {
+            $logoDataUri = null;
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
             'slot' => $slot,
             'gateLetter' => $gateLetter,
             'barcodePng' => $barcodePng,
             'barcodeHtml' => null,
             'barcodeSvg' => null,
-        ]);
-
-        // Set paper size to custom small ticket size (approx 80mm x 100mm or similar)
-        // 227pt is approx 80mm, 350pt is approx 123mm
-        $pdf->setPaper([0, 0, 240, 350]);
+            'logoDataUri' => $logoDataUri,
+        ])
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setPaper([0, 0, 252, 396], 'portrait');
 
         return $pdf->stream('ticket-' . ($slot->ticket_number ?? $slot->id) . '.pdf');
     }
@@ -1407,7 +1418,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         $slotType = (string) ($slot->slot_type ?? 'planned');
@@ -1527,7 +1538,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         $slotType = (string) ($slot->slot_type ?? 'planned');
@@ -1607,14 +1618,14 @@ class SlotController extends Controller
                     $this->slotService->logActivity($slotId, 'early_arrival', 'Truck Arrived on Time/Early at ' . $gateName);
                 }
             }
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot Started at ' . $gateName);
+            $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at ' . $gateName);
         });
 
         if ($slotType === 'unplanned') {
-            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned slot started');
+            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned started');
         }
 
-        return redirect()->route('slots.show', ['slotId' => $slotId])->with('success', 'Slot started');
+        return redirect()->route('slots.show', ['slotId' => $slotId])->with('success', 'Booking started');
     }
 
     public function unplannedStart(int $slotId)
@@ -1631,7 +1642,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         $truckTypes = $this->getTruckTypeOptions();
@@ -1647,7 +1658,7 @@ class SlotController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Slot not found');
+            return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         if ((string) ($slot->status ?? '') !== 'in_progress') {
@@ -1655,7 +1666,7 @@ class SlotController extends Controller
         }
 
         if (empty($slot->actual_start)) {
-            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Cannot complete: actual start time is missing. Please start the slot first.');
+            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Cannot complete: actual start time is missing. Please start the booking first.');
         }
 
         $matDoc = trim((string) $request->input('mat_doc', ''));
@@ -1696,10 +1707,10 @@ class SlotController extends Controller
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $slotInfo->actual_finish, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot Completed with MAT DOC ' . $matDoc . ', Truck ' . $truckType . ', Vehicle ' . $vehicleNumber . ', Driver ' . $driverNumber);
+            $this->slotService->logActivity($slotId, 'status_change', 'Data Completed with MAT DOC ' . $matDoc . ', Truck ' . $truckType . ', Vehicle ' . $vehicleNumber . ', Driver ' . $driverNumber);
         });
 
-        return redirect()->route('slots.index')->with('success', 'Slot completed');
+        return redirect()->route('slots.index')->with('success', 'Data completed');
     }
 
     /**
@@ -1782,7 +1793,7 @@ class SlotController extends Controller
 
         // Redirect to unplanned show instead of slots show
         if ($result instanceof \Illuminate\Http\RedirectResponse) {
-            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned slot completed');
+            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned completed');
         }
 
         return $result;
@@ -1874,7 +1885,7 @@ class SlotController extends Controller
         } elseif ($riskLevel === 2) {
             $label = 'High';
             $badge = 'danger';
-            $message = 'High blocking potential. Recommended to change gate or slot time.';
+            $message = 'High blocking potential. Recommended to change gate or e-DCS.';
         }
 
         return response()->json([

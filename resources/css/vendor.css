@@ -28,16 +28,14 @@
 
 /* Global vendor icon style (used outside dashboard) */
 .vendor-icon {
-	font-size: 13px;
-	color: #64748b;
+    font-size: 13px;
+    color: #64748b;
 }
 
 /* Layout */
 .vendor-app {
     min-height: 100vh;
-    background: radial-gradient(1200px 600px at 30% -20%, rgba(37, 99, 235, 0.10), transparent 55%),
-        radial-gradient(900px 500px at 90% 10%, rgba(16, 185, 129, 0.08), transparent 55%),
-        var(--vendor-bg);
+    background: var(--vendor-bg);
 }
 
 .vendor-header {
@@ -69,7 +67,7 @@
     background: #ffffff;
     border-radius: 15px;
     padding: 0px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .vendor-header__title {
@@ -562,17 +560,20 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     max-width: 90vw;
 }
+
 .vendor-picker-toast--visible {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
 .vendor-picker-toast--warning {
     background: #92400e;
     color: #fef3c7;
 }
+
 .vendor-picker-toast--info {
     background: #1e40af;
     color: #dbeafe;
@@ -583,10 +584,12 @@
     color: #ef4444 !important;
     font-weight: 600 !important;
 }
+
 .daterangepicker td.drp-holiday {
     color: #f59e0b !important;
     font-weight: 600 !important;
 }
+
 .daterangepicker td.drp-sunday.drp-holiday {
     color: #ef4444 !important;
 }
@@ -865,7 +868,7 @@
     }
 
     .vendor-header__user-info,
-    .vendor-header__user > form {
+    .vendor-header__user>form {
         display: none;
     }
 
@@ -1037,13 +1040,20 @@
 /* Charts Section - 3 Containers */
 .vendor-page--dashboard .vd-charts-section {
     display: grid;
-    grid-template-columns: 1fr 320px;
+    /* Kolom 1 untuk bar chart, kolom 2 fixed, kolom 3 (Recent Bookings) fleksibel isi sisa lebar */
+    grid-template-columns: minmax(0, 1.05fr) 280px minmax(360px, 1fr);
     gap: 16px;
     padding: 16px 20px 20px;
-    background: var(--standby-bg);
+    /* Dasar putih menyatu dengan status strip dan cards, mirip My Bookings */
+    background: #ffffff;
     flex: 1;
     min-height: 0;
     min-width: 0;
+}
+
+.vendor-page--dashboard .vd-top-filters {
+    padding: 12px 20px 0;
+    background: #ffffff;
 }
 
 .vendor-page--dashboard .vd-chart-card,
@@ -1099,6 +1109,16 @@
     align-items: flex-end;
 }
 
+.vendor-page--dashboard .vd-chart-body--pie {
+    align-items: stretch;
+    min-height: 280px;
+}
+
+#vendor-ontime-react {
+    min-height: 200px;
+    height: 100%;
+}
+
 /* Bar Chart */
 .vendor-page--dashboard .vd-bar-chart {
     display: flex;
@@ -1108,6 +1128,69 @@
     width: 100%;
     gap: 8px;
     padding-bottom: 24px;
+}
+
+/* Recent bookings header filters */
+.vd-recent-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vd-recent-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #e5e7eb40;
+}
+
+.vd-recent-filter-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.vd-recent-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.vd-recent-filter-pill:hover {
+    color: var(--text-primary);
+    background: #f9fafb;
+}
+
+.vd-recent-filter-pill--active {
+    background: #e0f2fe;
+    border-color: #38bdf8;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .vd-recent-filters {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .vd-recent-filter-group {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
 }
 
 /* Date Filter Styles */
@@ -1139,6 +1222,7 @@
 }
 
 @media (max-width: 768px) {
+
     /* Dashboard charts: stack header and controls on small screens */
     .vendor-page--dashboard .vd-chart-header {
         flex-direction: column;
@@ -1291,14 +1375,14 @@
 
 /* Small info/tooltip icon next to headings */
 .vendor-info-pin {
-	font-size: 11px;
-	color: #9ca3af;
-	margin-left: 6px;
-	cursor: help;
+    font-size: 11px;
+    color: #9ca3af;
+    margin-left: 6px;
+    cursor: help;
 }
 
 .vendor-info-pin:hover {
-	color: #6b7280;
+    color: #6b7280;
 }
 
 .vd-date-filter-btn .vd-icon,
@@ -1718,12 +1802,18 @@
     padding: 2px 6px;
 }
 
+@media (max-width: 1400px) {
+    .vendor-page--dashboard .vd-charts-section {
+        grid-template-columns: 1fr 280px 280px;
+    }
+}
+
 @media (max-width: 1280px) {
     .vendor-page--dashboard .vd-charts-section {
         grid-template-columns: 1fr 1fr;
     }
 
-    .vendor-page--dashboard .vd-chart-card {
+    .vendor-page--dashboard .vd-chart-card:first-child {
         grid-column: 1 / -1;
     }
 }
@@ -2874,6 +2964,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+
     .vendor-page--bookings-create .cb-form-row,
     .vendor-page--bookings-create .cb-field-row,
     .vendor-page--bookings-create .cb-field-grid-2x2 {

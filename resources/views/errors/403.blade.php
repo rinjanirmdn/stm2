@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Forbidden - Slot Time Management')
+@section('title', 'Forbidden - e-Docking Control System')
 @section('page_title', 'Forbidden')
 
 @section('content')
@@ -12,7 +12,7 @@
 
                 <div class="st-mt-12 st-flex st-gap-8">
                     <a href="{{ route('dashboard') }}" class="st-btn st-btn--outline-primary">Back to Dashboard</a>
-                    <a href="{{ route('slots.index') }}" class="st-btn st-btn--ghost">Go to Slots</a>
+                    <a href="{{ route('slots.index') }}" class="st-btn st-btn--ghost">Go to Planned</a>
                 </div>
             </div>
         </div>

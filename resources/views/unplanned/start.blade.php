@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Start Slot - Slot Time Management')
-@section('page_title', 'Start Slot')
+@section('title', 'Start Unplanned - e-Docking Control System')
+@section('page_title', 'Start Unplanned')
 
 @section('content')
     @php
@@ -14,7 +14,7 @@
     @endphp
 
     <div class="st-card st-mb-12">
-        <div class="st-text--sm st-text--muted">Slot #{{ $slot->id }}</div>
+        <div class="st-text--sm st-text--muted">Unplanned #{{ $slot->id }}</div>
         <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
         <div class="st-text--sm st-text--muted st-mt-4">
             Estimated Process Duration: {{ (int) $plannedDurationMinutes }} Minutes

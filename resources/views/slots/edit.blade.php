@@ -1,14 +1,14 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Edit Slot - Slot Time Management')
-@section('page_title', 'Edit Slot (Scheduled)')
+@section('title', 'Edit Planned - e-Docking Control System')
+@section('page_title', 'Edit Planned')
 
 @section('content')
     <div class="st-card st-mb-12">
         <div class="st-flex-between st-gap-8 st-flex-wrap">
             <div>
-                <h2 class="st-page-title st-mb-0">Edit Slot #{{ $slot->id }}</h2>
-                <div class="st-text--sm st-text--muted">Only Scheduled Planned Slots Can Be Edited</div>
+                <h2 class="st-page-title st-mb-0">Edit Planned #{{ $slot->id }}</h2>
+                <div class="st-text--sm st-text--muted">Only Scheduled Planned Can Be Edited</div>
             </div>
             <div class="st-flex st-gap-6 st-flex-wrap">
                 <a href="{{ route('slots.show', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--sm">Back</a>

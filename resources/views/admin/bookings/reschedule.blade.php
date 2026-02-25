@@ -208,10 +208,10 @@
                 <div class="reschedule-availability-right">
                     <div class="reschedule-availability-header">
                         <h4 class="reschedule-availability-title">Gate Availability</h4>
-                        <p class="reschedule-availability-subtitle">Inbound & Outbound slots for selected date and gate.</p>
+                        <p class="reschedule-availability-subtitle">Inbound & Outbound planned for selected date and gate.</p>
                     </div>
                     <div id="reschedule_availability_list" class="reschedule-availability-list">
-                        <p class="st-text-12 st-text--muted">Select a date and gate to see existing slots.</p>
+                        <p class="st-text-12 st-text--muted">Select a date and gate to see existing planned/booking.</p>
                     </div>
                 </div>
             </div>

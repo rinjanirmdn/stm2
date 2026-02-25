@@ -7,11 +7,11 @@
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#4285f4">
-    <meta name="description" content="Slot management system for warehouse gate scheduling">
+    <meta name="description" content="e-Docking Control System for warehouse gate scheduling">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="SlotTM">
-    <meta name="application-name" content="SlotTM">
+    <meta name="application-name" content="e-DCS">
     <meta name="msapplication-TileColor" content="#4285f4">
     <meta name="msapplication-config" content="/browserconfig.xml">
 
@@ -28,7 +28,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('icons/icon-16x16.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
 
-    <title>@yield('title', 'Slot Time Management')</title>
+    <title>@yield('title', 'e-Docking Control System')</title>
     <!-- Preconnect untuk performa lebih baik -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,8 +61,8 @@
     <aside class="st-sidebar" id="sidebar">
         <div class="st-sidebar__brand">
             <div class="st-sidebar__brand-main">
-                <img src="{{ asset('img/logo-icon.png') }}" alt="Slot Time" class="st-sidebar__logo st-sidebar__logo--icon">
-                <img src="{{ asset('img/logo-full.png') }}" alt="Slot Time" class="st-sidebar__logo st-sidebar__logo--full">
+                <img src="{{ asset('img/logo-icon.png') }}" alt="e-DCS" class="st-sidebar__logo st-sidebar__logo--icon">
+                <img src="{{ asset('img/logo-full.png') }}" alt="e-DCS" class="st-sidebar__logo st-sidebar__logo--full">
             </div>
         </div>
 
@@ -75,9 +75,9 @@
             @endcan
 
             @can('slots.index')
-            <a href="{{ route('slots.index') }}" title="Slots" class="st-sidebar__link{{ request()->routeIs('slots.index') ? ' st-sidebar__link--active' : '' }}">
+            <a href="{{ route('slots.index') }}" title="Planned" class="st-sidebar__link{{ request()->routeIs('slots.index') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-calendar-days"></i>
-                <span>Slots</span>
+                <span>Planned</span>
             </a>
             @endcan
 
@@ -262,7 +262,7 @@
 
         <footer class="st-footer">
             <div class="st-footer__inner">
-                <span>&copy; {{ date('Y') }} Slot Time Management. All rights reserved.</span>
+                <span>&copy; {{ date('Y') }} e-Docking Control System. All rights reserved.</span>
             </div>
         </footer>
     </div>

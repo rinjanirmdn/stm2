@@ -166,7 +166,7 @@ self.addEventListener('push', event => {
     };
 
     event.waitUntil(
-        self.registration.showNotification('Slot Time Management', options)
+        self.registration.showNotification('e-Docking Control System', options)
     );
 });
 

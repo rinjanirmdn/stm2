@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Activity Logs - Slot Time Management')
+@section('title', 'Activity Logs - e-Docking Control System')
 @section('page_title', 'Activity Logs')
 
 @section('content')

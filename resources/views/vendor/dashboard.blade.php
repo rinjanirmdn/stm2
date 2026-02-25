@@ -9,8 +9,10 @@
 <!-- Status Strip (Clickable) -->
 @if(isset($stats))
 <div class="vd-container">
-    <!-- Status Cards -->
-    <div class="vd-status-strip" title="Summary of your latest booking statuses (from slots & booking requests).">
+    <div class="vd-scroll-container">
+        <div class="vd-content-container">
+            <!-- Status Cards -->
+            <div class="vd-status-strip" title="Summary of your latest booking statuses (from planned & booking requests).">
         <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}" class="vd-status-item vd-status-item--scheduled" title="Scheduled bookings (approved and not yet arrived).">
             <div class="vd-status-item__count">{{ $stats['scheduled'] ?? 0 }}</div>
             <div class="vd-status-item__label">Scheduled</div>
@@ -27,45 +29,61 @@
             <div class="vd-status-item__count">{{ $stats['completed'] ?? 0 }}</div>
             <div class="vd-status-item__label">Completed</div>
         </a>
-        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--all" title="All bookings.">
+        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--total" title="Total bookings.">
             <div class="vd-status-item__count">{{ $stats['total'] ?? 0 }}</div>
-            <div class="vd-status-item__label">All</div>
+            <div class="vd-status-item__label">Total</div>
         </a>
     </div>
 
-    <!-- 3 Containers Section -->
-    <div class="vd-charts-section">
+            <!-- Global Date Range Filter for all charts -->
+            <div class="vd-top-filters">
+                <form method="GET" action="{{ route('vendor.dashboard') }}" class="vd-date-filter-form">
+                    <input type="hidden" name="range_start" id="vd-range-start" value="{{ request('range_start', now()->startOfMonth()->format('Y-m-d')) }}">
+                    <input type="hidden" name="range_end" id="vd-range-end" value="{{ request('range_end', now()->endOfMonth()->format('Y-m-d')) }}">
+                    <input type="hidden" name="date_range" id="vd-date-range" value="{{ request('date_range', 'this_month') }}">
+
+                    <button type="button" class="vd-range-picker" id="vd-range-picker">
+                        <i class="fas fa-calendar vd-icon"></i>
+                        <span id="vd-range-picker-label"></span>
+                    </button>
+                    <button type="submit" class="vd-date-filter-btn">
+						Filter
+						</button>
+						<a href="{{ route('vendor.dashboard') }}" class="vd-date-reset-btn">
+							Reset
+						</a>
+                </form>
+            </div>
+
+            <!-- 3 Containers Section -->
+            <div class="vd-charts-section">
         <!-- Container 1: Bar Chart -->
         <div class="vd-chart-card">
             <div class="vd-chart-header">
                 <h3 class="vd-chart-title">
                     <i class="fas fa-chart-bar vd-icon"></i>
                     Status Overview
-                    <i class="fas fa-info-circle vendor-info-pin" title="Shows counts per status (Scheduled, Waiting, In Progress, Completed) based on your slots in the selected date range."></i>
+                    <i class="fas fa-info-circle vendor-info-pin" title="Shows counts per status (Scheduled, Waiting, In Progress, Completed) based on your planned in the selected date range."></i>
                 </h3>
-                <!-- Date Range Filter -->
-                <div class="vd-date-filter">
-                    <form method="GET" action="{{ route('vendor.dashboard') }}" class="vd-date-filter-form">
-                        <input type="hidden" name="range_start" id="vd-range-start" value="{{ request('range_start', now()->startOfMonth()->format('Y-m-d')) }}">
-                        <input type="hidden" name="range_end" id="vd-range-end" value="{{ request('range_end', now()->endOfMonth()->format('Y-m-d')) }}">
-                        <input type="hidden" name="date_range" id="vd-date-range" value="{{ request('date_range', 'this_month') }}">
-
-                        <button type="button" class="vd-range-picker" id="vd-range-picker">
-                            <i class="fas fa-calendar vd-icon"></i>
-                            <span id="vd-range-picker-label"></span>
-                        </button>
-                        <button type="submit" class="vd-date-filter-btn">
-							Filter
-						</button>
-						<a href="{{ route('vendor.dashboard') }}" class="vd-date-reset-btn">
-							Reset
-						</a>
-                    </form>
-                </div>
             </div>
             <div class="vd-chart-body">
                 <script type="application/json" id="vendor-status-overview-data">{!! json_encode(['stats' => $stats]) !!}</script>
                 <div id="vendor-status-overview-react" class="w-full"></div>
+            </div>
+        </div>
+
+        <!-- Container 2: On Time vs Late Pie Chart -->
+        <div class="vd-chart-card vd-chart-card--ontime">
+            <div class="vd-chart-header">
+                <h3 class="vd-chart-title">
+                    <i class="fas fa-chart-pie vd-icon"></i>
+                    On Time vs Late
+                    <i class="fas fa-info-circle vendor-info-pin" title="Shows on-time vs late arrival ratio for your completed data this month. A truck is considered late if it arrives more than 15 minutes after the scheduled time."></i>
+                </h3>
+            </div>
+            <div class="vd-chart-body vd-chart-body--pie">
+                <script type="application/json" id="vendor-ontime-data">{!! json_encode($performance ?? []) !!}</script>
+                <div id="vendor-ontime-react" class="w-full"></div>
             </div>
         </div>
 
@@ -77,13 +95,37 @@
                     Recent Bookings
                     <i class="fas fa-info-circle vendor-info-pin" title="Latest booking requests and their live status (including converted tickets)."></i>
                 </h3>
-                <a href="{{ route('vendor.bookings.index') }}" class="vd-view-all-link">View All</a>
+                <div class="vd-recent-filters">
+                    @php
+                        $arrivalFilter = $arrivalFilter ?? request('arrival_filter', '');
+                        $baseParams = [
+                            'range_start' => $rangeStart ?? request('range_start'),
+                            'range_end' => $rangeEnd ?? request('range_end'),
+                        ];
+                    @endphp
+                    <div class="vd-recent-filter-group">
+                        <span class="vd-recent-filter-label">Arrival:</span>
+                        <a href="{{ route('vendor.dashboard', array_filter($baseParams)) }}"
+                           class="vd-recent-filter-pill {{ $arrivalFilter === '' ? 'vd-recent-filter-pill--active' : '' }}">
+                            All
+                        </a>
+                        <a href="{{ route('vendor.dashboard', array_merge(array_filter($baseParams), ['arrival_filter' => 'ontime'])) }}"
+                           class="vd-recent-filter-pill {{ $arrivalFilter === 'ontime' ? 'vd-recent-filter-pill--active' : '' }}">
+                            On Time
+                        </a>
+                        <a href="{{ route('vendor.dashboard', array_merge(array_filter($baseParams), ['arrival_filter' => 'late'])) }}"
+                           class="vd-recent-filter-pill {{ $arrivalFilter === 'late' ? 'vd-recent-filter-pill--active' : '' }}">
+                            Late
+                        </a>
+                    </div>
+                    <a href="{{ route('vendor.bookings.index') }}" class="vd-view-all-link">View All</a>
+                </div>
             </div>
             <div class="vd-recent-body">
                 @if($recentBookings->count() > 0)
                     @foreach($recentBookings->take(5) as $booking)
                     @php
-                        // Show real slot status when booking has been converted to a slot
+                        // Show real booking status when booking has been converted to a slot
                         $slot = $booking->convertedSlot;
                         $displayStatus = $slot ? $slot->status : $booking->status;
                         $arrivalLabel = null;
@@ -143,13 +185,15 @@
                 @endif
             </div>
         </div>
+            </div>
+        </div>
     </div>
 </div>
 @endif
 @endsection
 
 @push('scripts')
-    @vite(['resources/js/vendor-dashboard.js', 'resources/js/react/vendor-status-overview.jsx'])
+    @vite(['resources/js/vendor-dashboard.js', 'resources/js/react/vendor-status-overview.jsx', 'resources/js/react/vendor-ontime-chart.jsx'])
 @endpush
 
 

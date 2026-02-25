@@ -1,7 +1,7 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Create Slot - Slot Time Management')
-@section('page_title', 'Create Slot')
+@section('title', 'Create Planned - e-Docking Control System')
+@section('page_title', 'Create Planned')
 
 @section('content')
     <div class="st-card">

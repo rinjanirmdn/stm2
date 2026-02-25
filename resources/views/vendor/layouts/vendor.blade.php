@@ -7,12 +7,12 @@
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#4285f4">
-    <meta name="description" content="Vendor Portal - Slot Time Management">
+    <meta name="description" content="Vendor Portal - e-Docking Control System">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="SlotTM Vendor">
+    <meta name="apple-mobile-web-app-title" content="e-DCS Vendor">
 
-    <title>@yield('title', 'Vendor Portal - Slot Time Management')</title>
+    <title>@yield('title', 'Vendor Portal - e-Docking Control System')</title>
 
     <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,7 +36,7 @@
 <body class="vendor-app @yield('body_class')">
     <header class="vendor-header">
         <div class="vendor-header__brand">
-            <img src="{{ asset('img/logo-icon.png') }}" alt="Slot Time" class="vendor-header__logo">
+            <img src="{{ asset('img/logo-icon.png') }}" alt="e-DCS" class="vendor-header__logo">
             <span class="vendor-header__title">Vendor Portal</span>
 
             <!-- Compact user menu for mobile (three dots) -->
@@ -165,7 +165,7 @@
     <!-- Global Footer -->
     <footer class="vendor-footer">
         <div class="vendor-footer__content">
-            <span>&copy; {{ date('Y') }} Slot Time Management. All rights reserved.</span>
+            <span>&copy; {{ date('Y') }} e-Docking Control System. All rights reserved.</span>
         </div>
     </footer>
 

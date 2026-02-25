@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Start Slot - Slot Time Management')
-@section('page_title', 'Start Slot')
+@section('title', 'Start Planned - e-Docking Control System')
+@section('page_title', 'Start Planned')
 
 @section('content')
     @php
@@ -14,7 +14,7 @@
     @endphp
 
     <div class="st-card st-mb-12">
-        <div class="st-text--sm st-text--muted">Slot #{{ $slot->id }}</div>
+        <div class="st-text--sm st-text--muted">Planned #{{ $slot->id }}</div>
         <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
         <div class="st-text--sm st-text--muted st-mt-4">
             Estimated Process Duration: {{ (int) $plannedDurationMinutes }} Minutes
@@ -71,7 +71,7 @@
                                         if ($isConflict) {
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
-                                            $short = $row ? ('Slot #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Slot #' . $firstId) : 'Occupied');
+                                            $short = $row ? ('Planned #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Planned #' . $firstId) : 'Occupied');
                                             $text .= ' (In Use: ' . $short . ')';
                                         } else {
                                             $text .= ' (Available)';
@@ -93,7 +93,7 @@
                                         if ($isConflict) {
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
-                                            $short = $row ? ('Slot #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Slot #' . $firstId) : 'Occupied');
+                                            $short = $row ? ('Planned #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Planned #' . $firstId) : 'Occupied');
                                             $text .= ' (In Use: ' . $short . ')';
                                         } else {
                                             $text .= ' (Available)';
@@ -140,7 +140,7 @@
             @endif
 
             <div class="st-form-actions">
-                <button type="submit" class="st-btn">Start Slot</button>
+                <button type="submit" class="st-btn">Start Planned</button>
                 <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
             </div>
         </form>

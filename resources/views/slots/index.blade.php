@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Slots - Slot Time Management')
-@section('page_title', 'Slots')
+@section('title', 'Planned - e-Docking Control System')
+@section('page_title', 'Planned')
 @section('body_class', 'st-page--slots')
 
 @push('styles')
@@ -71,7 +71,7 @@
                             <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                             @unless(optional(auth()->user())->hasRole('Operator'))
                             @can('slots.create')
-                            <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary">Create Slot</a>
+                            <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary">Create Planned</a>
                             @endcan
                             @endunless
                         </div>
@@ -616,7 +616,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="15" class="st-table-empty st-text-center st-text--muted st-py-16">No Slots Found</td>
+                                <td colspan="15" class="st-table-empty st-text-center st-text--muted st-py-16">No Data Found</td>
                             </tr>
                         @endforelse
                         </tbody>

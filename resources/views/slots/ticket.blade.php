@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Ticket - {{ $slot->ticket_number ?? '' }}</title>
+    <title>Ticket e-DCS - {{ $slot->ticket_number ?? '' }}</title>
     <style>
         @page {
             margin: 0;
@@ -135,7 +135,7 @@
         <div class="ticket-inner">
             <div class="header">
                 <img src="{{ $logoDataUri ?? asset('img/logo-full.png') }}" alt="Logo" class="ticket-logo" />
-                <div class="title">Slot Ticket Docking</div>
+                <div class="title">Ticket e-Docking</div>
                 <div class="subtitle">
                     {{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}
                 </div>

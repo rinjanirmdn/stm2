@@ -22,11 +22,11 @@ function readJsonFromScriptTag(id) {
   }
 }
 
-const statusAbbr = {
-  scheduled: 'SCH',
-  waiting: 'WAIT',
-  in_progress: 'IN PR',
-  completed: 'CMPLT',
+const statusLabels = {
+  scheduled: 'Scheduled',
+  waiting: 'Waiting',
+  in_progress: 'In Progress',
+  completed: 'Completed',
 };
 
 function tk(name, fallback = '') {
@@ -61,7 +61,11 @@ function VendorStatusOverviewChart({ stats }) {
   return (
     <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 20, right: 2, left: 0, bottom: 0 }}>
+        <BarChart
+          data={data}
+          margin={{ top: 20, right: 2, left: 0, bottom: 0 }}
+          barCategoryGap="45%"
+        >
           <CartesianGrid strokeDasharray="3 3" stroke={tk('--chart-grid', '#f1f5f9')} />
           <XAxis
             dataKey="name"
@@ -71,12 +75,12 @@ function VendorStatusOverviewChart({ stats }) {
               const name = payload?.value || '';
               const item = data.find((d) => d.name === name);
               const clr = item?.fill || tk('--chart-axis', '#94a3b8');
-              const short = statusAbbr[String(name).toLowerCase()] || String(name);
+              const label = statusLabels[String(name).toLowerCase()] || String(name).replace('_', ' ');
               return (
                 <g transform={`translate(${x},${y})`}>
                   <circle cx={0} cy={6} r={3} fill={clr} />
-                  <text x={0} y={16} textAnchor="middle" style={{ fontSize: 9, fontWeight: 500, fill: clr }}>
-                    {short}
+                  <text x={0} y={16} textAnchor="middle" style={{ fontSize: 10, fontWeight: 500, fill: clr }}>
+                    {label}
                   </text>
                 </g>
               );
@@ -84,7 +88,7 @@ function VendorStatusOverviewChart({ stats }) {
           />
           <YAxis tick={{ fontSize: 10, fill: tk('--chart-axis', '#94a3b8') }} width={28} />
           <Tooltip contentStyle={tipStyle()} />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+          <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={18} maxBarSize={20}>
             <LabelList
               dataKey="value"
               position="top"

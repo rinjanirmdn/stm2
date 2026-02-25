@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'View Slot - Slot Time Management')
+@section('title', 'View Unplanned - e-Docking Control System')
 @section('page_title', 'Unplanned Details')
 
 @section('content')
@@ -59,7 +59,7 @@
         <div class="st-p-12">
             <div class="st-mb-10">
                 <span class="st-table__status-badge {{ $isUnplanned ? 'st-status-on-time' : 'st-status-processing' }}">
-                    {{ $isUnplanned ? 'Unplanned Slot' : 'Planned Slot' }}
+                    {{ $isUnplanned ? 'Unplanned' : 'Planned' }}
                 </span>
             </div>
 
@@ -208,7 +208,7 @@
         <div class="st-card st-mb-12">
             <div class="st-card__header">
                 <div>
-                    <h2 class="st-card__title">Slot Log</h2>
+                    <h2 class="st-card__title">Unplanned Log</h2>
                 </div>
             </div>
             <div class="st-table-wrapper">
@@ -242,9 +242,9 @@
 
     <div class="st-form-actions st-flex-wrap st-mb-12">
         @if ($status === 'waiting')
-            <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Slot</a>
+            <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Unplanned</a>
         @elseif ($status === 'in_progress')
-            <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Slot</a>
+            <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Unplanned</a>
         @endif
 
         <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Back</a>

@@ -1,11 +1,11 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Complete Slot - Slot Time Management')
+@section('title', 'Complete - e-Docking Control System')
 @section('page_title', 'Complete Slot')
 
 @section('content')
     <div class="st-card st-mb-12">
-        <div class="st-text--sm st-text--muted">Slot #{{ $slot->id }}</div>
+        <div class="st-text--sm st-text--muted">Planned #{{ $slot->id }}</div>
         <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
     </div>
 

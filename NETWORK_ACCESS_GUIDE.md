@@ -1,4 +1,4 @@
-# Network Access Guide - Slot Time Management
+# Network Access Guide - e-Docking Control System
 
 ## Cara Mengakses Website dari Perangkat Lain
 
