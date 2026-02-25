@@ -20,10 +20,87 @@ function isDisplayOnlyMode() {
   }
 }
 
+const DASHBOARD_FILTER_KEYS = [
+  'range_start', 'range_end',
+  'timeline_date', 'timeline_from', 'timeline_to',
+  'schedule_date', 'schedule_from', 'schedule_to',
+  'activity_date', 'activity_warehouse', 'activity_user',
+];
+const DASHBOARD_FILTER_SYNC_KEY = 'st_dashboard_filter_sync_v1';
+
+function toFilterStateFromParams(params) {
+  const out = {};
+  DASHBOARD_FILTER_KEYS.forEach((k) => {
+    const v = params.get(k);
+    if (v !== null && v !== undefined && String(v).trim() !== '') out[k] = String(v);
+  });
+  return out;
+}
+
+function readFilterStateFromSearch(searchText) {
+  try {
+    const params = new URLSearchParams(searchText || '');
+    return toFilterStateFromParams(params);
+  } catch (e) {
+    return {};
+  }
+}
+
+function isSameFilterState(a, b) {
+  return JSON.stringify(a || {}) === JSON.stringify(b || {});
+}
+
+function publishFilterState(filterState, channelRef) {
+  const payload = {
+    ts: Date.now(),
+    filters: filterState || {},
+  };
+  try {
+    localStorage.setItem(DASHBOARD_FILTER_SYNC_KEY, JSON.stringify(payload));
+  } catch (e) {
+    // ignore storage errors
+  }
+  try {
+    if (channelRef && channelRef.current) {
+      channelRef.current.postMessage(payload);
+    }
+  } catch (e) {
+    // ignore channel errors
+  }
+}
+
+function readPublishedFilterState() {
+  try {
+    const raw = localStorage.getItem(DASHBOARD_FILTER_SYNC_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch (e) {
+    return null;
+  }
+}
+
 /* ── jQuery picker helpers ── */
 const $ = () => window.jQuery;
 const moment = () => window.moment;
 const fmtDisplay = (iso) => { if (!iso) return ''; const p = iso.split('-'); return p.length===3 ? `${p[2]}-${p[1]}-${p[0]}` : iso; };
+const fmtRangeDisplay = (startIso, endIso) => {
+  const s = fmtDisplay(startIso || '');
+  const e = fmtDisplay(endIso || '');
+  if (s && e) return s === e ? s : `${s} — ${e}`;
+  return s || e || '';
+};
+const cardTitleStyle = (isDisplayOnly = false) => ({ fontSize: isDisplayOnly ? 'clamp(16px, 1.45vi, 22px)' : 'var(--ds-title)' });
+const cardDateStyle = (isDisplayOnly = false) => ({ fontSize: isDisplayOnly ? 'clamp(11px, 0.95vi, 14px)' : 'var(--ds-tiny)' });
+function CardTitleWithDate({ title, dateLabel, isDisplayOnly = false }) {
+  return (
+    <div className="flex flex-col leading-tight">
+      <h3 className="font-semibold text-gray-800" style={cardTitleStyle(isDisplayOnly)}>{title}</h3>
+      {!!dateLabel && <span className="text-gray-400 font-medium mt-0.5" style={cardDateStyle(isDisplayOnly)}>{dateLabel}</span>}
+    </div>
+  );
+}
 const getHolidayData = () => {
   try {
     if (typeof window.getIndonesiaHolidays === 'function') return window.getIndonesiaHolidays() || {};
@@ -234,12 +311,15 @@ function Badge({ children, color = 'gray' }) {
   const c = { green:'bg-emerald-50 text-emerald-700 border-emerald-200', red:'bg-red-50 text-red-700 border-red-200', blue:'bg-sky-50 text-sky-700 border-sky-200', orange:'bg-orange-50 text-orange-700 border-orange-200', yellow:'bg-amber-50 text-amber-700 border-amber-200', gray:'bg-gray-50 text-gray-600 border-gray-200', purple:'bg-purple-50 text-purple-700 border-purple-200' };
   return <span className={`inline-flex items-center px-2 py-0.5 font-semibold rounded-md border ${c[color]||c.gray}`} style={{fontSize:'var(--ds-tiny)'}}>{children}</span>;
 }
-function StatCard({ label, value, tip }) {
+function StatCard({ label, value, tip, isDisplayOnly = false }) {
+  const pad = isDisplayOnly ? 'clamp(10px, 0.95vi, 16px)' : 'var(--ds-pad)';
+  const labelSize = isDisplayOnly ? 'clamp(12px, 1.05vi, 16px)' : 'var(--ds-metric-label)';
+  const valueSize = isDisplayOnly ? 'clamp(24px, 2.2vi, 36px)' : 'var(--ds-metric-value)';
   return (
-    <div className="bg-white rounded-lg border border-gray-200 text-center relative group" style={{padding:'var(--ds-pad)'}}>
+    <div className="bg-white rounded-lg border border-gray-200 text-center relative group" style={{padding: pad}}>
       {tip && <div className="absolute top-1 right-1 text-gray-300 group-hover:text-gray-500 cursor-help" title={tip}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>}
-      <div className="text-gray-500 mb-0.5" style={{fontSize:'var(--ds-metric-label)'}}>{label}</div>
-      <div className="font-bold text-gray-900" style={{fontSize:'var(--ds-metric-value)'}}>{typeof value === 'number' ? value.toLocaleString() : value}</div>
+      <div className="text-gray-500 mb-0.5" style={{fontSize: labelSize}}>{label}</div>
+      <div className="font-bold text-gray-900" style={{fontSize: valueSize}}>{typeof value === 'number' ? value.toLocaleString() : value}</div>
     </div>
   );
 }
@@ -306,6 +386,8 @@ function getStatusColors() {
 const COLORS_DIR = () => [tk('--inbound') || '#0284c7', tk('--outbound') || '#ea580c'];
 const COLORS_KPI = () => [tk('--completed') || '#10b981', tk('--cancelled') || '#ef4444'];
 const tipStyle = () => ({ borderRadius: 8, border: `1px solid ${tk('--tooltip-border') || '#e2e8f0'}`, boxShadow: `0 4px 12px ${tk('--tooltip-shadow') || 'rgba(0,0,0,0.08)'}`, fontSize: 11 });
+const CHART_ANIMATION_DURATION = 850;
+const CHART_ANIMATION_EASING = 'ease-out';
 
 /* CSS vars (--ds-*) defined in dashboard-react.css handle responsive font sizing globally */
 const STAT_TIPS = { Pending:'Booking requests awaiting approval.', Scheduled:'Slots scheduled, truck not arrived.', Waiting:'Truck arrived, waiting in queue.', 'In Progress':'Loading/Unloading in progress.', Completed:'Process finished.', Cancel:'Cancelled slots.', Total:'Total slots in selected range.' };
@@ -338,12 +420,21 @@ async function fetchDashboard(currentData, overrides, setData, setLoading, optio
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
-    setData(json);
+    setData((prev) => {
+      try {
+        if (JSON.stringify(prev) === JSON.stringify(json)) return prev;
+      } catch (e) {
+        // fallback: always update when comparison fails
+      }
+      return json;
+    });
     // Update URL silently so refresh/bookmark preserves filters
     const newUrl = window.location.pathname + '?' + params.toString();
     window.history.replaceState(null, '', newUrl);
+    return json;
   } catch (e) {
     console.error('[Dashboard] Fetch error:', e);
+    return null;
   } finally {
     if (!silent) setLoading(false);
   }
@@ -367,9 +458,22 @@ function csVar(name) {
   return parseFloat(v) || 14;
 }
 
-function AnalyticsSlide({ data, isDisplayOnly = false }) {
+function getRealtimeVersionUrl() {
+  try {
+    const cfgEl = document.getElementById('st-app-config');
+    if (!cfgEl) return '/api/realtime/version';
+    const cfg = JSON.parse(cfgEl.textContent || '{}');
+    const u = cfg && cfg.realtime ? String(cfg.realtime.versionUrl || '').trim() : '';
+    return u || '/api/realtime/version';
+  } catch (e) {
+    return '/api/realtime/version';
+  }
+}
+
+function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
   const { pendingRange=0, scheduledRange=0, waitingRange=0, activeRange=0, completedStatusRange=0, cancelledRange=0, totalAllRange=0, inboundRange=0, outboundRange=0, directionByGate={} } = data;
   const trendDays = toArr(data.trendDays), trendCounts = toArr(data.trendCounts), trendInbound = toArr(data.trendInbound), trendOutbound = toArr(data.trendOutbound);
+  const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const [dirGate, setDirGate] = useState('all');
   const stats = [
     { label:'Pending', value:pendingRange }, { label:'Scheduled', value:scheduledRange },
@@ -391,7 +495,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false }) {
     <div className="gap-2 flex flex-col flex-1">
       {/* Stat cards - responsive grid: 2 cols on mobile, 4 on md, 7 on lg */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-        {stats.map(s => <StatCard key={s.label} label={s.label} value={s.value} tip={STAT_TIPS[s.label]} />)}
+        {stats.map(s => <StatCard key={s.label} label={s.label} value={s.value} tip={STAT_TIPS[s.label]} isDisplayOnly={isDisplayOnly} />)}
       </div>
 
       {/* Charts row */}
@@ -399,7 +503,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false }) {
         {/* Completed Trend */}
         <Card className="lg:col-span-2 flex flex-col overflow-hidden">
           <CardH>
-            <h3 className="font-semibold text-gray-800" style={{fontSize:'var(--ds-title)'}}>Completed Trend</h3>
+            <CardTitleWithDate title="Completed Trend" dateLabel={rangeLabel} isDisplayOnly={isDisplayOnly} />
             <div className="flex items-center gap-3 flex-wrap" style={{fontSize:'var(--ds-tiny)'}}>
               <span className="flex items-center gap-1 text-gray-500"><span className="w-2.5 h-2.5 rounded-sm bg-sky-600 inline-block shrink-0"></span> In</span>
               <span className="flex items-center gap-1 text-gray-500"><span className="w-2.5 h-2.5 rounded-sm bg-orange-600 inline-block shrink-0"></span> Out</span>
@@ -418,13 +522,13 @@ function AnalyticsSlide({ data, isDisplayOnly = false }) {
                     <XAxis dataKey="day" tick={{fontSize:csVar('--ds-chart-tick'),fill:tk('--chart-axis')}} interval="preserveStartEnd"/>
                     <YAxis tick={{fontSize:csVar('--ds-chart-tick'),fill:tk('--chart-axis')}} width={28}/>
                     <Tooltip contentStyle={tipStyle()}/>
-                    <Bar dataKey="inbound" stackId="s" fill={tk('--inbound')} radius={[0,0,3,3]} name="Inbound">
+                    <Bar dataKey="inbound" stackId="s" fill={tk('--inbound')} radius={[0,0,3,3]} name="Inbound" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}>
                       <LabelList dataKey="inbound" position="center" style={{fontSize:csVar('--ds-chart-label'),fill:'#fff',fontWeight:600}} formatter={v=>v>0?v:''}/>
                     </Bar>
-                    <Bar dataKey="outbound" stackId="s" fill={tk('--outbound')} radius={[3,3,0,0]} name="Outbound">
+                    <Bar dataKey="outbound" stackId="s" fill={tk('--outbound')} radius={[3,3,0,0]} name="Outbound" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}>
                       <LabelList dataKey="outbound" position="center" style={{fontSize:csVar('--ds-chart-label'),fill:'#fff',fontWeight:600}} formatter={v=>v>0?v:''}/>
                     </Bar>
-                    <Line type="monotone" dataKey="completed" stroke={tk('--chart-line-completed')} strokeWidth={2} dot={{r:2,fill:tk('--chart-line-completed')}} name="Completed">
+                    <Line type="monotone" dataKey="completed" stroke={tk('--chart-line-completed')} strokeWidth={2} dot={{r:2,fill:tk('--chart-line-completed')}} name="Completed" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}>
                       <LabelList dataKey="completed" position="top" style={{fontSize:csVar('--ds-chart-label'),fill:tk('--chart-line-completed'),fontWeight:700}} formatter={v=>v>0?v:''}/>
                     </Line>
                   </ComposedChart>
@@ -438,7 +542,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false }) {
         {/* Direction */}
         <Card className="flex flex-col overflow-hidden">
           <CardH>
-            <h3 className="font-semibold text-gray-800" style={{fontSize:'var(--ds-title)'}}>Direction</h3>
+            <CardTitleWithDate title="Direction" dateLabel={rangeLabel} isDisplayOnly={isDisplayOnly} />
             {!isDisplayOnly && (
               <SelectInput value={dirGate} onChange={setDirGate}>
                 <option value="all">All Gates</option>
@@ -450,7 +554,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false }) {
             <div className="relative w-full" style={{flex:'1 1 0%',minHeight:100}}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={dirData.items} cx="50%" cy="50%" innerRadius="35%" outerRadius="57%" paddingAngle={3} dataKey="value"
+                  <Pie data={dirData.items} cx="50%" cy="50%" innerRadius="35%" outerRadius="57%" paddingAngle={3} dataKey="value" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}
                     label={({value,pct,cx:pcx,cy:pcy,midAngle,outerRadius:or})=>{
                       if(!value) return null;
                       const R=Math.PI/180, r=or+14;
@@ -497,9 +601,10 @@ function AnalyticsSlide({ data, isDisplayOnly = false }) {
 /* ================================================================
    SLIDE 1 — BOTTLENECK & PERFORMANCE
    ================================================================ */
-function BottleneckSlide({ data, isDisplayOnly = false }) {
+function BottleneckSlide({ data, isDisplayOnly = false, animateCharts = true }) {
   const { bottleneckThresholdMinutes=30, avgLeadMinutes=0, avgProcessMinutes=0 } = data;
   const bottleneckLabels = toArr(data.bottleneckLabels), bottleneckValues = toArr(data.bottleneckValues), bottleneckDirections = toArr(data.bottleneckDirections), avgTimesByTruckType = toArr(data.avgTimesByTruckType);
+  const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const bottleneckWarehouseCodes = toArr(data.bottleneckWarehouseCodes), bottleneckGateNumbers = toArr(data.bottleneckGateNumbers);
   const [bnDir, setBnDir] = useState('all');
   const [reasonsModal, setReasonsModal] = useState(null); // {gate, loading, rows}
@@ -530,7 +635,7 @@ function BottleneckSlide({ data, isDisplayOnly = false }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 flex-1">
         <Card className="flex flex-col">
           <CardH>
-            <h3 className="text-sm font-semibold text-gray-800">Bottleneck (Avg Waiting)</h3>
+            <CardTitleWithDate title="Bottleneck (Avg Waiting)" dateLabel={rangeLabel} isDisplayOnly={isDisplayOnly} />
             {!isDisplayOnly && (
               <SelectInput value={bnDir} onChange={setBnDir}>
                 <option value="all">All</option><option value="inbound">Inbound</option><option value="outbound">Outbound</option>
@@ -546,7 +651,7 @@ function BottleneckSlide({ data, isDisplayOnly = false }) {
                   <XAxis type="number" tick={{fontSize:10,fill:tk('--chart-axis')}}/>
                   <YAxis dataKey="name" type="category" tick={{fontSize:9,fill:tk('--text-secondary')}} width={52}/>
                   <Tooltip formatter={v=>`${(+v).toFixed(1)} min`} contentStyle={tipStyle()}/>
-                  <Bar dataKey="value" fill={tk('--chart-bottleneck')} radius={[0,6,6,0]} name="Avg Waiting (min)" style={{cursor: isDisplayOnly ? 'default' : 'pointer'}} onClick={isDisplayOnly ? undefined : handleBarClick}/>
+                  <Bar dataKey="value" fill={tk('--chart-bottleneck')} radius={[0,6,6,0]} name="Avg Waiting (min)" style={{cursor: isDisplayOnly ? 'default' : 'pointer'}} onClick={isDisplayOnly ? undefined : handleBarClick} isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}/>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -560,7 +665,7 @@ function BottleneckSlide({ data, isDisplayOnly = false }) {
         </Card>
 
         <Card className="flex flex-col">
-          <CardH><h3 className="text-sm font-semibold text-gray-800">Performance by Truck Type</h3></CardH>
+          <CardH><CardTitleWithDate title="Performance by Truck Type" dateLabel={rangeLabel} isDisplayOnly={isDisplayOnly} /></CardH>
           <CardB className="flex-1 overflow-y-auto flex flex-col">
             <div className="grid grid-cols-2 gap-2 flex-1" style={{gridAutoRows:'1fr'}}>
               {(avgTimesByTruckType||[]).map((t,i) => {
@@ -642,8 +747,9 @@ function BottleneckSlide({ data, isDisplayOnly = false }) {
 /* ================================================================
    SLIDE 2 — KPI
    ================================================================ */
-function KPISlide({ data, isDisplayOnly = false }) {
+function KPISlide({ data, isDisplayOnly = false, animateCharts = true }) {
   const { onTimeDir={}, targetDir={}, completionRate=0, completionTotalSlots=0, completionCompletedSlots=0 } = data;
+  const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const [kpiDir, setKpiDir] = useState('all');
   const src = kpiDir === 'all' ? (onTimeDir?.all||{}) : (onTimeDir?.[kpiDir]||{});
   const tSrc = kpiDir === 'all' ? (targetDir?.all||{}) : (targetDir?.[kpiDir]||{});
@@ -659,13 +765,13 @@ function KPISlide({ data, isDisplayOnly = false }) {
   function KpiCard({ title, pct, pctColor, chartData, colors, metrics }) {
     return (
       <Card className="flex flex-col">
-        <CardH><h3 style={{fontSize:'var(--ds-title)'}} className="font-semibold text-gray-800">{title}</h3></CardH>
+        <CardH><CardTitleWithDate title={title} dateLabel={rangeLabel} isDisplayOnly={isDisplayOnly} /></CardH>
         <CardB className="flex flex-col" style={{flex:'1 1 0%',gap:'var(--ds-gap)'}}>
           {/* Donut with center pct + outer labels */}
           <div className="relative w-full" style={{flex:'1 1 0%',minHeight:100}}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={chartData} cx="50%" cy="50%" innerRadius="35%" outerRadius="57%" paddingAngle={3} dataKey="value"
+                <Pie data={chartData} cx="50%" cy="50%" innerRadius="35%" outerRadius="57%" paddingAngle={3} dataKey="value" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}
                   label={({value,cx:pcx,cy:pcy,midAngle,outerRadius:or,payload})=>{
                     if(!value) return null;
                     const total = chartData.reduce((s,d)=>s+(+d.value||0),0);
@@ -794,7 +900,7 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
       )}
       <Card className="flex flex-col flex-1">
         <CardH>
-          <h3 className="text-[13px] font-semibold text-gray-800">Timeline — {tlDateLabel}</h3>
+          <CardTitleWithDate title="Timeline" dateLabel={tlDateLabel} isDisplayOnly={isDisplayOnly} />
           <div className="flex items-center gap-3 text-[11px] text-gray-500">
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-gray-400 inline-block"></span> Scheduled</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span> Waiting</span>
@@ -920,7 +1026,7 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
 /* ================================================================
    SLIDE 4 — SCHEDULE
    ================================================================ */
-function ScheduleSlide({ data, onFilter, isDisplayOnly = false }) {
+function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = true }) {
   const { schedule_date='', processStatusCounts={}, today='', schedule_from='', schedule_to='' } = data;
   const schedule = toArr(data.schedule);
   const [schDate, setSchDate] = useState(schedule_date || today);
@@ -1019,7 +1125,7 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 flex-1">
         {/* Left: Status Chart */}
         <Card className="flex flex-col">
-          <CardH><h3 className="text-[13px] font-semibold text-gray-800">Status Overview</h3></CardH>
+          <CardH><CardTitleWithDate title="Status Overview" dateLabel={schDateLabel} isDisplayOnly={isDisplayOnly} /></CardH>
           <CardB className="flex flex-col" style={{flex:'1 1 0%'}}>
             <div style={{flex:'1 1 0%',minHeight:140}}>
             <ResponsiveContainer width="100%" height="100%">
@@ -1040,7 +1146,7 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false }) {
                   }}/>
                 <YAxis tick={{fontSize:csVar('--ds-chart-tick'),fill:tk('--chart-axis')}} width={28}/>
                 <Tooltip contentStyle={tipStyle()}/>
-                <Bar dataKey="value" radius={[4,4,0,0]}>
+                <Bar dataKey="value" radius={[4,4,0,0]} isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}>
                   <LabelList dataKey="value" position="top" style={{fontSize:10,fontWeight:600,fill:tk('--text-secondary')}} formatter={v=>v>0?v:''}/>
                   {statusChartData.map((e,i)=><Cell key={i} fill={e.fill}/>)}
                 </Bar>
@@ -1066,8 +1172,8 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false }) {
           <CardH className="flex-col !items-stretch gap-2">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-[13px] font-semibold text-gray-800">Schedule</h3>
-                <p className="text-[11px] text-gray-400">{schDateLabel} — {rows.length}{!isDisplayOnly ? ` of ${allRows.length}` : ''} entries</p>
+                <CardTitleWithDate title="Schedule" dateLabel={schDateLabel} isDisplayOnly={isDisplayOnly} />
+                <p className="text-[11px] text-gray-400">{rows.length}{!isDisplayOnly ? ` of ${allRows.length}` : ''} entries</p>
               </div>
               {!isDisplayOnly && (
                 <div className="w-48">
@@ -1136,41 +1242,104 @@ const SLIDES = [
   { id:'timeline', label:'Timeline' },
   { id:'schedule', label:'Schedule' },
 ];
+const DISPLAY_ROTATE_MS = 40000;
 
 function Dashboard() {
   const [data, setData] = useState(() => getData());
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(0);
   const isDisplayOnly = useMemo(() => isDisplayOnlyMode(), []);
-  const [isRotationPaused, setIsRotationPaused] = useState(false);
+  const animateCharts = true;
   const dataRef = useRef(data);
+  const syncChannelRef = useRef(null);
+  const lastRealtimeVersionRef = useRef('');
+  const isRealtimeCheckingRef = useRef(false);
   useEffect(() => { dataRef.current = data; }, [data]);
+
+  const refreshDashboard = useCallback(async (params = {}, options = {}) => {
+    await fetchDashboard(dataRef.current || {}, params, setData, setLoading, options);
+  }, []);
 
   const total = SLIDES.length;
   const prev = () => setActive(a => (a - 1 + total) % total);
   const next = () => setActive(a => (a + 1) % total);
 
+  const applySyncedFilters = useCallback((incomingFilters) => {
+    if (!isDisplayOnly) return;
+    const currentFilters = readFilterStateFromSearch(window.location.search || '');
+    if (isSameFilterState(currentFilters, incomingFilters || {})) return;
+    refreshDashboard(incomingFilters || {}, { silent: true });
+  }, [isDisplayOnly, refreshDashboard]);
+
   /** Apply filter params via AJAX (no page reload) */
   const onFilter = useCallback((params) => {
-    fetchDashboard(dataRef.current || {}, params, setData, setLoading);
-  }, []);
+    if (!isDisplayOnly) {
+      const merged = buildParams(dataRef.current || {}, params || {});
+      publishFilterState(toFilterStateFromParams(merged), syncChannelRef);
+    }
+    refreshDashboard(params || {}, { silent: true });
+  }, [isDisplayOnly, refreshDashboard]);
 
-  /** TV/display mode: periodic silent refresh without visual page reload */
+  /**
+   * Refresh is driven by global realtime version sync (main.js -> window.ajaxReload)
+   * to avoid unnecessary polling/fetch cycles when data hasn't changed.
+   */
+
   useEffect(() => {
-    const intervalMs = 5000;
-    const timer = setInterval(() => {
-      if (document.hidden) return;
-      fetchDashboard(dataRef.current || {}, {}, setData, setLoading, { silent: true });
-    }, intervalMs);
+    if (typeof BroadcastChannel === 'function') {
+      syncChannelRef.current = new BroadcastChannel('st_dashboard_filter_sync_channel');
+    }
 
-    return () => clearInterval(timer);
-  }, []);
+    const handleStorage = (e) => {
+      if (!isDisplayOnly) return;
+      if (e.key !== DASHBOARD_FILTER_SYNC_KEY || !e.newValue) return;
+      try {
+        const payload = JSON.parse(e.newValue);
+        if (!payload || typeof payload !== 'object') return;
+        applySyncedFilters(payload.filters || {});
+      } catch (err) {
+        // ignore malformed payloads
+      }
+    };
+
+    const handleChannel = (event) => {
+      if (!isDisplayOnly) return;
+      const payload = event && event.data ? event.data : null;
+      if (!payload || typeof payload !== 'object') return;
+      applySyncedFilters(payload.filters || {});
+    };
+
+    if (syncChannelRef.current) {
+      syncChannelRef.current.addEventListener('message', handleChannel);
+    }
+    window.addEventListener('storage', handleStorage);
+
+    if (isDisplayOnly) {
+      const payload = readPublishedFilterState();
+      if (payload && payload.filters) {
+        applySyncedFilters(payload.filters);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      if (syncChannelRef.current) {
+        try {
+          syncChannelRef.current.removeEventListener('message', handleChannel);
+          syncChannelRef.current.close();
+        } catch (e) {
+          // ignore close errors
+        }
+        syncChannelRef.current = null;
+      }
+    };
+  }, [applySyncedFilters, isDisplayOnly]);
 
   /** Hook global realtime refresh to AJAX data fetch for dashboard */
   useEffect(() => {
     const prevAjaxReload = window.ajaxReload;
     window.ajaxReload = function () {
-      fetchDashboard(dataRef.current || {}, {}, setData, setLoading, { silent: true });
+      refreshDashboard({}, { silent: true });
     };
 
     return () => {
@@ -1184,7 +1353,61 @@ function Dashboard() {
         }
       }
     };
-  }, []);
+  }, [refreshDashboard]);
+
+  /**
+   * Fail-safe watcher for dashboard page: if global main.js hook misses,
+   * this ensures dashboard still updates on realtime version change.
+   */
+  useEffect(() => {
+    const versionUrl = getRealtimeVersionUrl();
+    if (!versionUrl) return;
+
+    const checkRealtimeVersion = async () => {
+      if (document.hidden) return;
+      if (isRealtimeCheckingRef.current) return;
+      isRealtimeCheckingRef.current = true;
+      try {
+        const res = await fetch(versionUrl, {
+          method: 'GET',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) return;
+        const payload = await res.json();
+        if (!payload || !payload.success) return;
+        const nextVersion = String(payload.version || '').trim();
+        if (!nextVersion) return;
+
+        if (!lastRealtimeVersionRef.current) {
+          lastRealtimeVersionRef.current = nextVersion;
+          return;
+        }
+
+        if (lastRealtimeVersionRef.current !== nextVersion) {
+          lastRealtimeVersionRef.current = nextVersion;
+          await refreshDashboard({}, { silent: true });
+        }
+      } catch (e) {
+        // ignore transient realtime errors
+      } finally {
+        isRealtimeCheckingRef.current = false;
+      }
+    };
+
+    checkRealtimeVersion();
+    const timer = setInterval(checkRealtimeVersion, 2000);
+    const onVisible = () => {
+      if (!document.hidden) checkRealtimeVersion();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [refreshDashboard]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -1198,26 +1421,24 @@ function Dashboard() {
 
   useEffect(() => {
     if (!isDisplayOnly) return;
-    if (isRotationPaused) return;
-    const rotateMs = 10000;
     const timer = setInterval(() => {
       setActive((current) => {
         if (total <= 1) return current;
         const nextIndex = (current + 1) % total;
         return nextIndex === current ? ((current + 1) % total) : nextIndex;
       });
-    }, rotateMs);
+    }, DISPLAY_ROTATE_MS);
     return () => clearInterval(timer);
-  }, [isDisplayOnly, isRotationPaused, total]);
+  }, [isDisplayOnly, total]);
 
   const renderSlide = () => {
     try {
       switch(active) {
-        case 0: return <AnalyticsSlide data={data} isDisplayOnly={isDisplayOnly} />;
-        case 1: return <KPISlide data={data} isDisplayOnly={isDisplayOnly} />;
-        case 2: return <BottleneckSlide data={data} isDisplayOnly={isDisplayOnly} />;
+        case 0: return <AnalyticsSlide data={data} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;
+        case 1: return <KPISlide data={data} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;
+        case 2: return <BottleneckSlide data={data} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;
         case 3: return <TimelineSlide data={data} onFilter={onFilter} isDisplayOnly={isDisplayOnly} />;
-        case 4: return <ScheduleSlide data={data} onFilter={onFilter} isDisplayOnly={isDisplayOnly} />;
+        case 4: return <ScheduleSlide data={data} onFilter={onFilter} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;
         default: return null;
       }
     } catch(e) {
@@ -1231,7 +1452,6 @@ function Dashboard() {
   return (
     <div
       className="flex flex-col relative pb-2 flex-1"
-      onPointerUp={isDisplayOnly ? function () { setIsRotationPaused((v) => !v); } : undefined}
     >
       <style>{`@keyframes stSlideFadeIn { 0% { opacity: 0; transform: translateY(10px) scale(0.995); } 100% { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
       {!isDisplayOnly && (
@@ -1261,7 +1481,11 @@ function Dashboard() {
 
       {/* Slide Content */}
       <div className="flex-1 flex flex-col">
-        <div key={`slide-${active}`} className="flex-1 flex flex-col min-h-0" style={{ animation: 'stSlideFadeIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
+        <div
+          key={`slide-${active}`}
+          className="flex-1 flex flex-col min-h-0"
+          style={{ animation: 'stSlideFadeIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1)' }}
+        >
           {renderSlide()}
         </div>
       </div>
