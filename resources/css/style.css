@@ -2180,11 +2180,6 @@
         max-width: 90%;
         max-height: 42px;
     }
-
-    .st-sidebar__logo-stack--edocking .st-sidebar__logo--full {
-        max-width: 98%;
-        max-height: 58px;
-    }
 }
 
 body {
@@ -2682,11 +2677,7 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
 }
 
 .st-sidebar__logo--oneject-full {
-    max-height: 40px;
-}
-
-.st-sidebar__logo--edocking-full {
-    max-height: 54px;
+    max-height: 60px;
 }
 
 .st-sidebar__logo--icon {
@@ -2694,11 +2685,6 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
     height: 30px;
     display: none;
     flex-shrink: 0;
-    object-fit: contain;
-    object-position: center;
-}
-
-.st-sidebar__logo--edocking-icon {
     object-fit: contain;
     object-position: center;
 }
@@ -2821,20 +2807,18 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
 
 .st-app--sidebar-collapsed .st-sidebar__logo--icon {
     display: block;
-    width: 30px;
-    height: 30px;
+    width: 38px;
+    height: 38px;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__logo--oneject-icon {
-    width: 44px;
-    height: 44px;
-    object-fit: cover;
+    width: 52px;
+    height: auto;
+    max-height: 100px;
+    object-fit: contain;
     object-position: center;
-}
-
-.st-app--sidebar-collapsed .st-sidebar__logo--edocking-icon {
-    width: 30px;
-    height: 30px;
+    transform: scale(2);
+    margin: 12px 0;
 }
 
 .st-app--sidebar-collapsed .st-sidebar__brand-main .st-sidebar__title {
@@ -3023,10 +3007,12 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
 }
 
 .st-topbar__brand-logo {
-    height: 100px;
+    height: 70px;
     width: auto;
-    max-width: 230px;
+    max-width: 320px;
     object-fit: contain;
+    transform: scale(1.2);
+    transform-origin: right center;
 }
 
 .st-topbar__menu {
@@ -3152,20 +3138,18 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
 
     .st-sidebar__logo--icon {
         display: block;
-        width: 30px;
-        height: 30px;
+        width: 38px;
+        height: 38px;
     }
 
     .st-sidebar__logo--oneject-icon {
-        width: 42px;
-        height: 42px;
-        object-fit: cover;
+        width: 52px;
+        height: auto;
+        max-height: 100px;
+        object-fit: contain;
         object-position: center;
-    }
-
-    .st-sidebar__logo--edocking-icon {
-        width: 29px;
-        height: 29px;
+        transform: scale(2);
+        margin: 12px 0;
     }
 
     .st-sidebar__brand-main .st-sidebar__title {
