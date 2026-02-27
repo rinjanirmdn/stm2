@@ -36,8 +36,8 @@
 <body class="vendor-app @yield('body_class')">
     <header class="vendor-header">
         <div class="vendor-header__brand">
-            <img src="{{ asset('img/logo-icon.png') }}" alt="e-DCS" class="vendor-header__logo">
-            <span class="vendor-header__title">Vendor Portal</span>
+            <img src="{{ asset('img/logo-icon2.png') }}" alt="e-DCS" class="vendor-header__logo">
+            <img src="{{ asset('img/e-DCS full putih.png') }}" alt="e-Docking Control System" class="vendor-header__logo vendor-header__logo--full">
 
             <!-- Compact user menu for mobile (three dots) -->
             <button type="button" class="vendor-header__user-menu-btn" id="vendor-user-menu-btn" aria-label="Open user menu">

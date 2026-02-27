@@ -272,11 +272,12 @@ class VendorBookingController extends Controller
     private function computeVendorPerformance(int $userId, string $rangeStart, string $rangeEnd): array
     {
         // Hitung on-time vs late untuk semua slot yang sudah punya arrival & planned_start,
-        // terlepas dari statusnya (termasuk in_progress, waiting, dll.)
+        // terlepas dari statusnya (termasuk in_progress, waiting, dll.).
+        // Range tanggal mengikuti planned_start agar konsisten dengan komponen dashboard lain.
         $arrivalSlots = Slot::where('requested_by', $userId)
             ->whereNotNull('arrival_time')
             ->whereNotNull('planned_start')
-            ->whereBetween('arrival_time', [$rangeStart . ' 00:00:00', $rangeEnd . ' 23:59:59'])
+            ->whereBetween('planned_start', [$rangeStart . ' 00:00:00', $rangeEnd . ' 23:59:59'])
             ->get();
 
         // Untuk rata-rata waiting & process, tetap gunakan slot yang sudah completed
