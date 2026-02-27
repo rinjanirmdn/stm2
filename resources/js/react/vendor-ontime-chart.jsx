@@ -37,6 +37,7 @@ function VendorOntimeChart({ performance }) {
   const late = Number(performance?.late || 0);
   const total = onTime + late;
   const onTimePct = total > 0 ? ((onTime / total) * 100).toFixed(1) : '0.0';
+  const latePct = total > 0 ? ((late / total) * 100).toFixed(1) : '0.0';
 
   const chartData = useMemo(() => [
     { name: 'On Time', value: onTime },
@@ -59,6 +60,27 @@ function VendorOntimeChart({ performance }) {
     bad: { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', dot: '#ef4444' },
     neutral: { bg: '#f9fafb', border: '#e5e7eb', text: '#4b5563', dot: '#9ca3af' },
   };
+
+  // Tentukan label dan warna pusat berdasarkan status dominan
+  let centerLabel = 'On Time';
+  let centerPct = onTimePct;
+  let centerColor = tk('--completed', '#10b981');
+
+  if (total === 0) {
+    centerLabel = 'On Time';
+    centerPct = '0.0';
+    centerColor = tk('--completed', '#10b981');
+  } else if (late > 0 && onTime === 0) {
+    // Hanya ada data Late
+    centerLabel = 'Late';
+    centerPct = latePct;
+    centerColor = tk('--cancelled', '#ef4444');
+  } else if (late > onTime) {
+    // Mayoritas Late
+    centerLabel = 'Late';
+    centerPct = latePct;
+    centerColor = tk('--cancelled', '#ef4444');
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 8 }}>
@@ -121,10 +143,10 @@ function VendorOntimeChart({ performance }) {
                 fontWeight: 700,
                 lineHeight: 1.1,
                 fontSize: 'min(clamp(16px, 5cqmin, 30px), 10cqmin)',
-                color: tk('--completed', '#10b981'),
+                color: centerColor,
               }}
             >
-              {onTimePct}%
+              {centerPct}%
             </div>
             <div
               style={{
@@ -135,7 +157,7 @@ function VendorOntimeChart({ performance }) {
                 marginTop: 2,
               }}
             >
-              On Time
+              {centerLabel}
             </div>
           </div>
         </div>
