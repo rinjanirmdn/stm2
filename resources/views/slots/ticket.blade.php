@@ -127,6 +127,15 @@
             display: inline-block;
             max-width: 100%;
         }
+
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+            margin-top: 10px;
+            padding-top: 6px;
+            border-top: 1px solid #eee;
+        }
         /* ... */
     </style>
 </head>

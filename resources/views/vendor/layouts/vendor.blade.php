@@ -49,6 +49,9 @@
                     <div class="vendor-header__user-company">{{ auth()->user()->vendor_code ?? 'Vendor' }}</div>
                 </div>
                 <div class="vendor-header__user-menu-actions">
+                    <a href="{{ route('profile') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm" title="Profile">
+                        <i class="fas fa-user"></i>
+                    </a>
                     <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm vendor-header__user-menu-notif" id="vendor-user-menu-notif" aria-label="Notifications" title="Notifications">
                         <i class="fas fa-bell"></i>
                     </button>
@@ -126,6 +129,9 @@
                 </div>
             </div>
 
+            <a href="{{ route('profile') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm" title="Profile">
+                <i class="fas fa-user"></i>
+            </a>
             <form method="POST" action="{{ route('logout') }}" class="vendor-inline-form">
                 @csrf
                 <button type="submit" class="vendor-btn vendor-btn--secondary vendor-btn--sm" title="Logout">
@@ -146,16 +152,18 @@
             </div>
         </div>
         @if (session('success'))
-            <div class="vendor-alert vendor-alert--success">
+            <div class="vendor-alert vendor-alert--success vendor-alert--autodismiss">
                 <i class="fas fa-check-circle"></i>
                 {{ session('success') }}
+                <button type="button" class="vendor-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
             </div>
         @endif
 
         @if (session('error'))
-            <div class="vendor-alert vendor-alert--error">
+            <div class="vendor-alert vendor-alert--error vendor-alert--autodismiss">
                 <i class="fas fa-exclamation-circle"></i>
                 {{ session('error') }}
+                <button type="button" class="vendor-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
             </div>
         @endif
 

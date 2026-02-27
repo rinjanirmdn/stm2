@@ -427,6 +427,61 @@
     border: 1px solid #bfdbfe;
 }
 
+/* Auto-dismiss alert animation */
+.vendor-alert--autodismiss {
+    position: relative;
+    animation: vendorAlertSlideIn 0.3s ease-out, vendorAlertFadeOut 0.5s ease-in 4.5s forwards;
+}
+
+.vendor-alert__close {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    padding: 4px 8px;
+    line-height: 1;
+    color: inherit;
+}
+
+.vendor-alert__close:hover {
+    opacity: 1;
+}
+
+@keyframes vendorAlertSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes vendorAlertFadeOut {
+    from {
+        opacity: 1;
+        max-height: 100px;
+        margin-bottom: 1rem;
+        padding: 1rem 1.25rem;
+    }
+
+    to {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        padding: 0 1.25rem;
+        overflow: hidden;
+    }
+}
+
 .vendor-badge {
     display: inline-flex;
     align-items: center;
@@ -765,7 +820,7 @@
     display: none;
     position: fixed;
     right: 24px;
-    top: 96px;
+    top: 80px;
     z-index: 1200;
     min-width: 280px;
     max-width: 360px;
@@ -858,7 +913,8 @@
         width: auto;
         object-fit: contain;
         align-self: center;
-        transform: translateY(-2px); /* geser sedikit ke atas supaya sejajar dengan titik tiga */
+        transform: translateY(-2px);
+        /* geser sedikit ke atas supaya sejajar dengan titik tiga */
     }
 
     .vendor-header__user-menu-btn {
@@ -889,7 +945,8 @@
     .vendor-header__logo--full {
         height: 80px;
         max-width: 360px;
-        transform: translateY(-2px); /* samakan offset dengan icon kiri */
+        transform: translateY(-2px);
+        /* samakan offset dengan icon kiri */
         justify-self: start;
         align-self: center;
     }
@@ -1094,7 +1151,8 @@
 .vendor-page--dashboard .vd-top-filters {
     padding: 12px 20px 0;
     background: #ffffff;
-    border-top: 1px solid #d1d5db; /* garis pembatas antara card status dan filter */
+    border-top: 1px solid #d1d5db;
+    /* garis pembatas antara card status dan filter */
 }
 
 .vendor-page--dashboard .vd-chart-card,

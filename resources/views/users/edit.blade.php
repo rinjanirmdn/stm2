@@ -28,7 +28,7 @@
 
                     <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Name</label>
-                        <input type="text" name="name" class="st-input" maxlength="255" value="{{ old('name', $editUser->name) }}" required>
+                        <input type="text" name="name" class="st-input" maxlength="255" value="{{ old('name', $editUser->full_name) }}" required>
                     </div>
 
                     <div class="st-form-field st-form-field--mb">

@@ -701,12 +701,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     format: 'DD-MM-YYYY'
                 },
                 ranges: {
-                   'Today': [window.moment(), window.moment()],
-                   'Yesterday': [window.moment().subtract(1, 'days'), window.moment().subtract(1, 'days')],
-                   'Last 7 Days': [window.moment().subtract(6, 'days'), window.moment()],
-                   'Last 30 Days': [window.moment().subtract(29, 'days'), window.moment()],
-                   'This Month': [window.moment().startOf('month'), window.moment().endOf('month')],
-                   'Last Month': [window.moment().subtract(1, 'month').startOf('month'), window.moment().subtract(1, 'month').endOf('month')]
+                    'Today': [window.moment(), window.moment()],
+                    'Yesterday': [window.moment().subtract(1, 'days'), window.moment().subtract(1, 'days')],
+                    'Last 7 Days': [window.moment().subtract(6, 'days'), window.moment()],
+                    'Last 30 Days': [window.moment().subtract(29, 'days'), window.moment()],
+                    'This Month': [window.moment().startOf('month'), window.moment().endOf('month')],
+                    'Last Month': [window.moment().subtract(1, 'month').startOf('month'), window.moment().subtract(1, 'month').endOf('month')]
                 },
                 isCustomDate: stToDisplayDatePickerClasses
             }, cb);
@@ -751,7 +751,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     minYear: 1901,
                     maxYear: parseInt(window.moment().format('YYYY'), 10) + 5,
                     isCustomDate: stToDisplayDatePickerClasses
-                }, function(start, end, label) {
+                }, function (start, end, label) {
                     // Trigger change event for other listeners
                     var iso = start.format('YYYY-MM-DD');
                     setDisplayValue(input, iso);
@@ -1802,10 +1802,47 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Notification sound using Web Audio API
+    function stPlayNotificationSound() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.setValueAtTime(1047, ctx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(1319, ctx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.5);
+        } catch (e) { /* ignore if AudioContext not available */ }
+    }
+
+    function stUpdateNotificationBadge(delta) {
+        var badge = document.querySelector('.st-notification-badge');
+        if (!badge) return;
+        var current = parseInt(badge.textContent || '0', 10);
+        if (!isFinite(current)) current = 0;
+        var next = Math.max(0, current - (delta || 0));
+        if (next <= 0) {
+            badge.remove();
+            return;
+        }
+        badge.textContent = String(next);
+    }
+
     window.markAsRead = function (id) {
         if (!id) return;
         var base = stNotificationsCfg.readBaseUrl || '/notifications';
         var url = String(base || '').replace(/\/$/, '') + '/' + String(id) + '/read';
+        // Update UI immediately
+        var item = document.querySelector('[data-notification-id="' + id + '"]');
+        if (item && item.classList.contains('st-notification-item--unread')) {
+            item.classList.remove('st-notification-item--unread');
+            stUpdateNotificationBadge(1);
+        }
         fetch(url, {
             method: 'POST',
             headers: {
@@ -1942,7 +1979,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function renderReminder(items) {
-            if (!items || !items.length) {
+            // Only show items within 60 minutes (H-1 hour)
+            var urgentItems = (items || []).filter(function (item) {
+                return typeof item.minutes_to_start === 'number' && item.minutes_to_start <= 60;
+            });
+
+            if (!urgentItems.length) {
                 banner.style.display = 'none';
                 listEl.innerHTML = '';
                 countEl.textContent = '0';
@@ -1950,6 +1992,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            // Replace items with filtered urgent items
+            items = urgentItems;
             countEl.textContent = items.length;
             banner.style.display = 'block';
 
@@ -1988,7 +2032,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         fetchReminders();
-        setInterval(fetchReminders, 30 * 60 * 1000);
+        setInterval(fetchReminders, 5 * 60 * 1000); // Check every 5 minutes
     }
 
     function initNotificationToast() {
@@ -2008,13 +2052,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             toastText.textContent = (notification.title || 'Notification') + ' - ' + (notification.message || '');
             toast.style.display = 'block';
+            stPlayNotificationSound();
 
             if (toastTimer) {
                 clearTimeout(toastTimer);
             }
             toastTimer = setTimeout(function () {
                 toast.style.display = 'none';
-            }, 3000);
+            }, 5000);
         }
 
         function checkLatest() {
@@ -2040,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         checkLatest();
-        setInterval(checkLatest, 60 * 1000);
+        setInterval(checkLatest, 15 * 1000); // Check every 15 seconds
     }
 
     function initPwa() {

@@ -223,16 +223,18 @@
 
         <main class="st-content st-content--layout">
             @if (session('success'))
-                <div class="st-alert st-alert--success">
+                <div class="st-alert st-alert--success st-alert--autodismiss">
                     <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
                     <span class="st-alert__text">{{ session('success') }}</span>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                 </div>
             @endif
 
             @if (session('error'))
-                <div class="st-alert st-alert--error">
+                <div class="st-alert st-alert--error st-alert--autodismiss">
                     <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <span class="st-alert__text">{{ session('error') }}</span>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                 </div>
             @endif
 
@@ -244,6 +246,7 @@
                         <span>Reminder: Pending bookings nearing schedule</span>
                     </div>
                     <span id="st-reminder-count" class="st-reminder-banner__count">0</span>
+                    <button type="button" class="st-reminder-banner__close" onclick="this.closest('.st-reminder-banner').style.display='none'" aria-label="Close">&times;</button>
                 </div>
                 <div id="st-reminder-list" class="st-reminder-banner__list"></div>
             </div>
