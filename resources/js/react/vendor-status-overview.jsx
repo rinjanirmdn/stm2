@@ -43,27 +43,6 @@ function tipStyle() {
   };
 }
 
-// Custom cursor untuk hover: bayangan abu-abu yang lebarnya mendekati lebar bar
-function BarHoverCursor(props) {
-  const { x, y, width, height } = props || {};
-  if (x == null || y == null || width == null || height == null) return null;
-
-  const targetWidth = Math.min(32, Math.max(20, width * 0.4));
-  const offsetX = x + (width - targetWidth) / 2;
-
-  return (
-    <rect
-      x={offsetX}
-      y={y}
-      width={targetWidth}
-      height={height}
-      fill={tk('--bg-hover', 'rgba(148, 163, 184, 0.15)')}
-      rx={6}
-      ry={6}
-    />
-  );
-}
-
 function VendorStatusOverviewChart({ stats }) {
   const data = useMemo(() => {
     const scheduled = Number(stats?.scheduled || 0);
@@ -85,7 +64,7 @@ function VendorStatusOverviewChart({ stats }) {
         <BarChart
           data={data}
           margin={{ top: 20, right: 2, left: 0, bottom: 0 }}
-          barCategoryGap="45%"
+          barCategoryGap="20%"
         >
           <CartesianGrid strokeDasharray="3 3" stroke={tk('--chart-grid', '#f1f5f9')} />
           <XAxis
@@ -108,8 +87,8 @@ function VendorStatusOverviewChart({ stats }) {
             }}
           />
           <YAxis tick={{ fontSize: 10, fill: tk('--chart-axis', '#94a3b8') }} width={28} />
-          <Tooltip contentStyle={tipStyle()} cursor={<BarHoverCursor />} />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={18} maxBarSize={20}>
+          <Tooltip contentStyle={tipStyle()} />
+          <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={60} maxBarSize={60}>
             <LabelList
               dataKey="value"
               position="top"

@@ -602,7 +602,7 @@ class SlotController extends Controller
             'po_number' => 'required|string|max:12',
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
-            'vendor_id' => 'nullable|integer|exists:business_partner,id',
+            'vendor_id' => 'nullable|string|max:255',
             'planned_gate_id' => 'required|integer|exists:md_gates,id',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
@@ -688,20 +688,10 @@ class SlotController extends Controller
         }
 
         DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes) {
-            $truck = DB::table('po')->where('po_number', $truckNumber)->select(['id'])->first();
-            if ($truck) {
-                $truckId = (int) $truck->id;
-            } else {
-                $truckId = (int) DB::table('po')->insertGetId([
-                    'po_number' => $truckNumber,
-                ]);
-            }
-
             DB::table('slots')->where('id', $slotId)->update([
-                'po_id' => $truckId,
+                'po_number' => $truckNumber,
                 'direction' => $direction,
                 'warehouse_id' => $warehouseId,
-                'bp_id' => $vendorId,
                 'planned_gate_id' => $plannedGateId,
                 'planned_start' => $plannedStart,
                 'planned_duration' => $plannedDurationMinutes,
@@ -1180,18 +1170,7 @@ class SlotController extends Controller
             ->orderBy('wh_name')
             ->get();
 
-        $vendorsQ = DB::table('business_partner')
-            ->select([
-                'id',
-                'bp_name as name',
-                'bp_code as code',
-                'bp_type as type',
-            ])
-            ->orderBy('bp_name');
-        if (Schema::hasColumn('business_partner', 'is_active')) {
-            $vendorsQ->where('is_active', true);
-        }
-        $vendors = $vendorsQ->get();
+        $vendors = collect(); // Business partner table removed, vendors now stored in slots
 
         $gates = DB::table('md_gates as g')
             ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
@@ -1226,7 +1205,7 @@ class SlotController extends Controller
         $request->validate([
             'po_number' => 'required|string|max:12',
             'direction' => 'required|in:inbound,outbound',
-            'vendor_id' => 'nullable|integer|exists:business_partner,id',
+            'vendor_id' => 'nullable|string|max:255',
             'actual_gate_id' => 'required|integer|exists:md_gates,id',
             'arrival_time' => 'required|string',
         ]);
@@ -1262,26 +1241,31 @@ class SlotController extends Controller
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
 
+        // Check if any data was actually changed
+        $dataChanged = (
+            $slot->po_number !== $truckNumber ||
+            $slot->direction !== $direction ||
+            $slot->warehouse_id !== $warehouseId ||
+            $slot->actual_gate_id !== $actualGateId ||
+            $slot->arrival_time !== $arrivalTime ||
+            $slot->mat_doc !== $matDoc ||
+            $slot->truck_type !== $truckType ||
+            $slot->vehicle_number_snap !== $vehicleNumber ||
+            $slot->driver_name !== $driverName ||
+            $slot->driver_number !== $driverNumber ||
+            $slot->late_reason !== $notes
+        );
+
         $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
         $status = $setWaiting ? 'waiting' : 'completed';
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
         DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish) {
-            $truck = DB::table('po')->where('po_number', $truckNumber)->select(['id'])->first();
-            if ($truck) {
-                $truckId = (int) $truck->id;
-            } else {
-                $truckId = (int) DB::table('po')->insertGetId([
-                    'po_number' => $truckNumber,
-                ]);
-            }
-
             DB::table('slots')->where('id', $slotId)->update([
-                'po_id' => $truckId,
+                'po_number' => $truckNumber,
                 'direction' => $direction,
                 'warehouse_id' => $warehouseId,
-                'bp_id' => $vendorId,
                 'actual_gate_id' => $actualGateId,
                 'arrival_time' => $arrivalTime,
                 'mat_doc' => $matDoc !== '' ? $matDoc : null,
@@ -1299,7 +1283,21 @@ class SlotController extends Controller
             $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Updated');
         });
 
-        return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned transaction updated successfully');
+        // Smart redirect logic
+        if ($dataChanged) {
+            // Data was changed, go to unplanned index
+            return redirect()->route('unplanned.index')->with('success', 'Unplanned transaction updated successfully');
+        } else {
+            // Data not changed, go back to previous page
+            $referer = $request->header('referer');
+            if ($referer && str_contains($referer, route('unplanned.index'))) {
+                // Came from unplanned menu, go back to unplanned index
+                return redirect()->route('unplanned.index');
+            } else {
+                // Came from other pages (reports, etc.), go back to previous page
+                return redirect()->back();
+            }
+        }
     }
 
     public function arrival(int $slotId)

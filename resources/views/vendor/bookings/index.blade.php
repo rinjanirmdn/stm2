@@ -64,6 +64,9 @@
                     <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
                     <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
                     <button type="submit" class="vendor-btn vendor-btn--primary vendor-btn--sm">Search</button>
+                    <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
+                        <i class="fas fa-plus"></i> New Booking
+                    </a>
                     @if(request()->hasAny(['search', 'date_from', 'date_to']))
                     <a href="{{ route('vendor.bookings.index', ['status' => $currentStatus]) }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm">Reset</a>
                     @endif
@@ -117,6 +120,12 @@
             <span class="mb-row__status mb-row__status--{{ $statusClass }}">{{ $statusLabel }}</span>
             @if($isRescheduled)
                 <span class="mb-row__status-tag vendor-badge vendor-badge--info">Rescheduled</span>
+            @endif
+            @if(in_array($booking->status, ['rejected']) && $booking->approver)
+                <span class="mb-row__info">by {{ $booking->approver->name }}</span>
+            @endif
+            @if(in_array($booking->status, ['cancelled']) && $booking->approval_notes)
+                <span class="mb-row__info">by {{ Str::after($booking->approval_notes, 'by ') ?: 'Vendor' }}</span>
             @endif
             @if($arrivalStatus !== '-')
                 <span class="mb-row__status mb-row__status--{{ $arrivalColor }} mb-row__status--arrival">

@@ -431,6 +431,7 @@ function initVendorBookingCreate(config) {
     function getMinAllowedHour() {
         // 4 hours from now
         var now = new Date();
+        now.setSeconds(0, 0);
         now.setTime(now.getTime() + 4 * 60 * 60 * 1000);
         return now;
     }
@@ -785,6 +786,16 @@ function initVendorAvailability(config) {
                 // Get all available slots sorted by time
                 const availableSlots = data.slots.filter(s => s.is_available).sort((a, b) => a.time.localeCompare(b.time));
 
+                // Load previously toggled inactive times for this date from localStorage
+                const storageKey = 'vendor_availability_inactive_' + date;
+                let inactiveTimes = [];
+                try {
+                    inactiveTimes = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
+                    if (!Array.isArray(inactiveTimes)) inactiveTimes = [];
+                } catch (e) {
+                    inactiveTimes = [];
+                }
+
                 if (availableSlots.length === 0) {
                     container.innerHTML = '<p class="av-empty av-empty--compact">No available times</p>';
                     return;
@@ -805,10 +816,13 @@ function initVendorAvailability(config) {
                 `;
                 col1Slots.forEach(slot => {
                     const isAllowed = isTimeAllowed(date, slot.time);
+                    const isInitiallyInactive = isAllowed && inactiveTimes.includes(slot.time);
+                    const label = isAllowed && !isInitiallyInactive ? 'Available' : 'Not available';
                     html += `
-                        <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
+                        <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}${isInitiallyInactive ? ' av-available-item--inactive' : ''}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
                             <span class="av-available-time">${slot.time}</span>
-                            ${isAllowed ? '' : '<span class="av-available-note">Not available</span>'}
+                            <span class="av-available-note">${label}</span>
+                            ${isAllowed ? '<span class="av-available-toggle" title="Toggle active/inactive"></span>' : ''}
                         </button>
                     `;
                 });
@@ -824,10 +838,13 @@ function initVendorAvailability(config) {
                 } else {
                     col2Slots.forEach(slot => {
                         const isAllowed = isTimeAllowed(date, slot.time);
+                        const isInitiallyInactive = isAllowed && inactiveTimes.includes(slot.time);
+                        const label = isAllowed && !isInitiallyInactive ? 'Available' : 'Not available';
                         html += `
-                            <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
+                            <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}${isInitiallyInactive ? ' av-available-item--inactive' : ''}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
                                 <span class="av-available-time">${slot.time}</span>
-                                ${isAllowed ? '' : '<span class="av-available-note">Not available</span>'}
+                                <span class="av-available-note">${label}</span>
+                                ${isAllowed ? '<span class="av-available-toggle" title="Toggle active/inactive"></span>' : ''}
                             </button>
                         `;
                     });
@@ -837,12 +854,51 @@ function initVendorAvailability(config) {
                 html += '</div>';
                 container.innerHTML = html;
 
-                // Add click handlers
+                // Toggle handler only on the small inner toggle icon, so main button still navigates
+                container.querySelectorAll('.av-available-toggle').forEach(tg => {
+                    tg.addEventListener('click', function (ev) {
+                        ev.stopPropagation();
+                        const btn = this.closest('.av-available-item');
+                        if (!btn || btn.hasAttribute('disabled')) return;
+                        const noteEl = btn.querySelector('.av-available-note');
+                        const nowInactive = btn.classList.toggle('av-available-item--inactive');
+                        if (noteEl) {
+                            noteEl.textContent = nowInactive ? 'Not available' : 'Available';
+                        }
+
+                        // Persist manual inactive times per date in localStorage
+                        const time = btn.dataset.time;
+                        if (!time) return;
+                        let current = [];
+                        try {
+                            current = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
+                            if (!Array.isArray(current)) current = [];
+                        } catch (e) {
+                            current = [];
+                        }
+                        if (nowInactive) {
+                            if (!current.includes(time)) current.push(time);
+                        } else {
+                            current = current.filter(t => t !== time);
+                        }
+                        try {
+                            window.localStorage.setItem(storageKey, JSON.stringify(current));
+                        } catch (e) {
+                            // ignore storage errors
+                        }
+                    });
+                });
+
+                // Add click handlers for navigation to create booking
                 container.querySelectorAll('.av-available-item[data-time]').forEach(btn => {
                     if (btn.hasAttribute('disabled')) {
                         return;
                     }
                     btn.addEventListener('click', () => {
+                        // If slot is manually marked inactive via toggle, do nothing
+                        if (btn.classList.contains('av-available-item--inactive')) {
+                            return;
+                        }
                         const url = new URL(bookingCreateUrl, window.location.origin);
                         url.searchParams.set('date', date);
                         url.searchParams.set('time', btn.dataset.time);

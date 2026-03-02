@@ -51,11 +51,6 @@
                 <span class="av-main__title">
                     {{ \Carbon\Carbon::parse($selectedDate)->format('l, d F Y') }}
                 </span>
-                <div class="av-main__actions">
-                    <a href="{{ route('vendor.bookings.create', ['date' => $selectedDate]) }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
-                        New
-                    </a>
-                </div>
             </div>
 
             <!-- Time Slots Grid -->

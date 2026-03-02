@@ -2211,6 +2211,13 @@
     margin-left: 6px;
 }
 
+.vendor-page--bookings-index .mb-row__info {
+    font-size: 10px;
+    color: var(--vendor-muted);
+    margin-left: 4px;
+    font-style: italic;
+}
+
 .vendor-page--bookings-index .mb-row__status-icon {
     font-size: 10px;
     margin-right: 2px;
@@ -2430,6 +2437,102 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+/* Availability slot buttons (right panel) */
+.vendor-page--availability .av-available-item {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 8px;
+    /* Clear green outline for available slots */
+    border: 1px solid var(--completed-border);
+    background: #f9fffb;
+    color: var(--completed-text);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.vendor-page--availability .av-available-item:hover {
+    background: #ecfdf3;
+    box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.18);
+    transform: translateY(-1px);
+}
+
+.vendor-page--availability .av-available-item.cb-slot-btn--disabled {
+    /* Explicit red outline for not-available slots */
+    border-color: var(--cancelled-border);
+    background: #fef2f2;
+    color: var(--cancelled);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.vendor-page--availability .av-available-item .av-available-time {
+    font-weight: 600;
+}
+
+.vendor-page--availability .av-available-item .av-available-note {
+    font-size: 11px;
+    /* Default: green text for Available */
+    color: var(--completed);
+}
+
+/* Small toggle control on the right side of each availability slot */
+.vendor-page--availability .av-available-toggle {
+    margin-left: 8px;
+    width: 22px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    background: #e5e7eb;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.vendor-page--availability .av-available-toggle::before {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+/* When slot is marked inactive via toggle */
+.vendor-page--availability .av-available-item.av-available-item--inactive {
+    border-color: var(--cancelled-border);
+    background: #fef2f2;
+    color: var(--cancelled);
+}
+
+.vendor-page--availability .av-available-item.av-available-item--inactive .av-available-time {
+    text-decoration: line-through;
+}
+
+.vendor-page--availability .av-available-item.av-available-item--inactive .av-available-toggle {
+    background: #fee2e2;
+    border-color: rgba(220, 38, 38, 0.7);
+}
+
+.vendor-page--availability .av-available-item.av-available-item--inactive .av-available-toggle::before {
+    transform: translateX(8px);
+    background: #fecaca;
+}
+
+/* Force red label for any not-available states */
+.vendor-page--availability .av-available-item.cb-slot-btn--disabled .av-available-note,
+.vendor-page--availability .av-available-item.av-available-item--inactive .av-available-note {
+    color: var(--cancelled);
 }
 
 .vendor-page--availability .av-sidebar__top {
@@ -3549,4 +3652,15 @@
     .vendor-page--availability .av-shifts-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Vendor Dashboard Chart Shadow Effects */
+.vendor-page--dashboard .recharts-wrapper .recharts-bar-rectangle {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+    min-width: 20px;
+}
+
+.vendor-page--dashboard .recharts-wrapper .recharts-bar-rectangle:hover {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+    transition: filter 0.2s ease;
 }
