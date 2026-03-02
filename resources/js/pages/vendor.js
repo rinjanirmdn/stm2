@@ -36,6 +36,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initVendorNotifications();
     initVendorHeaderUserMenu();
+
+    // Auto-dismiss alerts after 5 seconds
+    document.querySelectorAll('.vendor-alert--autodismiss').forEach(function (alert) {
+        setTimeout(function () {
+            alert.remove();
+        }, 5000);
+    });
 });
 
 function initVendorHeaderUserMenu() {
@@ -348,7 +355,7 @@ function initVendorBookingCreate(config) {
         if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.daterangepicker !== 'function') return;
         plannedDate.setAttribute('data-st-datepicker', '1');
 
-        try { plannedDate.type = 'text'; } catch (e) {}
+        try { plannedDate.type = 'text'; } catch (e) { }
         plannedDate.setAttribute('readonly', 'readonly');
 
         var initialIso = plannedDate.value || '';
@@ -411,7 +418,7 @@ function initVendorBookingCreate(config) {
                 var monthText = monthEl.text().trim();
                 var parts = monthText.split(' ');
                 if (parts.length < 2) return;
-                var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 var mi = monthNames.indexOf(parts[0]);
                 var yr = parseInt(parts[1], 10);
                 if (mi < 0 || isNaN(yr)) return;
@@ -950,22 +957,42 @@ function initVendorNotifications() {
         badge.textContent = String(next);
     }
 
+    // Notification sound using Web Audio API
+    function playNotificationSound() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.setValueAtTime(1047, ctx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(1319, ctx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.5);
+        } catch (e) { /* ignore if AudioContext not available */ }
+    }
+
     window.markAsRead = function (id) {
         if (!id) return;
         var base = notificationsCfg.readBaseUrl || '/notifications';
         var url = String(base || '').replace(/\/$/, '') + '/' + String(id) + '/read';
+
+        // Update UI immediately (optimistic UI update)
+        var item = document.querySelector('[data-notification-id="' + id + '"]');
+        if (item && item.classList.contains('notification-item--unread')) {
+            item.classList.remove('notification-item--unread');
+            updateNotificationBadge(1);
+        }
+
         fetch(url, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': getCsrfToken(),
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            }
-        }).then(function () {
-            var item = document.querySelector('[data-notification-id="' + id + '"]');
-            if (item && item.classList.contains('notification-item--unread')) {
-                item.classList.remove('notification-item--unread');
-                updateNotificationBadge(1);
             }
         }).catch(function () { });
     };
@@ -1073,13 +1100,14 @@ function initVendorNotifications() {
             }
             toastText.textContent = (notification.title || 'Notification') + ' - ' + (notification.message || '');
             toast.style.display = 'block';
+            playNotificationSound();
 
             if (toastTimer) {
                 clearTimeout(toastTimer);
             }
             toastTimer = setTimeout(function () {
                 toast.style.display = 'none';
-            }, 3000);
+            }, 5000);
         }
 
         function checkLatest() {
@@ -1105,7 +1133,7 @@ function initVendorNotifications() {
         }
 
         checkLatest();
-        setInterval(checkLatest, 60 * 1000);
+        setInterval(checkLatest, 15 * 1000); // Check every 15 seconds
     }
 
     initNotificationDropdown();

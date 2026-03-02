@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::prefix('slots')->name('slots.')->group(function () {
         Route::get('/', [SlotController::class, 'index'])->name('index');

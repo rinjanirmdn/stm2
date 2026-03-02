@@ -10,6 +10,8 @@ use App\Models\TruckTypeDuration;
 use App\Models\Warehouse;
 use App\Services\BookingApprovalService;
 use App\Services\SlotService;
+use App\Notifications\BookingApproved;
+use App\Notifications\BookingRejected;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -470,6 +472,18 @@ class BookingApprovalController extends Controller
                 \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$approvedDate}");
             }
 
+            // Notify vendor (requester) about approved booking via email + database
+            try {
+                $isRescheduled = ((string) $request->input('approval_action', '')) === Slot::APPROVAL_RESCHEDULED;
+                if ($bookingRequest->requester) {
+                    $bookingRequest->requester->notify(
+                        new BookingApproved($slot, (int) $bookingRequest->id, $isRescheduled)
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send booking approved notification: ' . $e->getMessage());
+            }
+
             return redirect()
                 ->route('bookings.show', $bookingRequest->id)
                 ->with('success', 'Booking approved successfully.');
@@ -489,6 +503,7 @@ class BookingApprovalController extends Controller
 
         $bookingRequest = BookingRequest::where('id', $id)
             ->where('status', BookingRequest::STATUS_PENDING)
+            ->with(['requester'])
             ->firstOrFail();
 
         try {
@@ -498,6 +513,23 @@ class BookingApprovalController extends Controller
                 'approved_at' => now(),
                 'approval_notes' => $request->reason,
             ]);
+
+            // Notify vendor (requester) about rejected booking via email + database
+            try {
+                if ($bookingRequest->requester) {
+                    // Create a temporary Slot object for the notification
+                    $tempSlot = new Slot([
+                        'ticket_number' => $bookingRequest->request_number ?? $bookingRequest->po_number,
+                        'planned_start' => $bookingRequest->planned_start,
+                        'direction' => $bookingRequest->direction,
+                        'approval_notes' => $request->reason,
+                    ]);
+                    $tempSlot->id = $bookingRequest->id;
+                    $bookingRequest->requester->notify(new BookingRejected($tempSlot));
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send booking rejected notification: ' . $e->getMessage());
+            }
 
             return redirect()->route('bookings.index')->with('success', 'Booking rejected.');
         } catch (\Throwable $e) {
