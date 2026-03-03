@@ -69,11 +69,11 @@
                         </div>
                         <div class="st-form-field st-minw-80 st-flex st-flex-0 st-justify-end st-gap-8">
                             <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
-                            @unless(optional(auth()->user())->hasRole('Operator'))
                             @can('slots.create')
+                            @if(!auth()->user()->hasRole('operator'))
                             <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary">Create Planned</a>
+                            @endif
                             @endcan
-                            @endunless
                         </div>
             </div>
         </div>
@@ -577,15 +577,19 @@
                                         <div class="st-action-menu">
                                             @if ($slotTypeVal === 'planned')
                                                 @if ($status === 'scheduled')
-                                                    @unless(optional(auth()->user())->hasRole('Operator'))
                                                     @can('slots.edit')
+                                                    @if(!auth()->user()->hasRole('operator'))
                                                     <a href="{{ route('slots.edit', ['slotId' => $row->id]) }}" class="st-action-item">Edit</a>
+                                                    @endif
                                                     @endcan
-                                                    @endunless
                                                 @endif
 
                                                 @if (!$hasArrival && $status === 'scheduled')
+                                                    @can('slots.arrival')
+                                                    @if(!auth()->user()->hasRole('operator'))
                                                     <a href="{{ route('slots.arrival', ['slotId' => $row->id]) }}" class="st-action-item">Arrival</a>
+                                                    @endif
+                                                    @endcan
                                                 @elseif (in_array($status, ['waiting'], true))
                                                     <a href="{{ route('slots.start', ['slotId' => $row->id]) }}" class="st-action-item">Start</a>
                                                 @endif
@@ -597,16 +601,18 @@
 
                                             @if ($status === 'scheduled')
                                                 @can('slots.cancel')
+                                                @if(!auth()->user()->hasRole('operator'))
                                                 <a href="{{ route('slots.cancel', ['slotId' => $row->id]) }}" class="st-action-item st-action-item--danger btn-cancel-slot">Cancel</a>
+                                                @endif
                                                 @endcan
                                             @endif
 
                                             @if (!empty($row->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
-                                                @unless(optional(auth()->user())->hasRole('Operator'))
                                                 @can('slots.ticket')
+                                                @if(!auth()->user()->hasRole('operator'))
                                                 <a href="{{ route('slots.ticket', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">Print Ticket</a>
+                                                @endif
                                                 @endcan
-                                                @endunless
                                             @endif
 
                                             <a href="{{ route('slots.show', ['slotId' => $row->id]) }}" class="st-action-item">View</a>

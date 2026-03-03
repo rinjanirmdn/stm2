@@ -23,7 +23,7 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $login = $credentials['login'];
+        $login = trim((string) $credentials['login']);
         $password = $credentials['password'];
 
         // Check for failed attempts

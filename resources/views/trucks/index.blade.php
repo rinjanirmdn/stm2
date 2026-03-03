@@ -26,7 +26,9 @@
                     >
                 </div>
                 <div class="st-form-field st-flex-0">
+                    @if(!auth()->user()->hasRole('operator'))
                     <button type="button" id="btn-add-truck" class="st-btn st-btn--primary">Add Truck</button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -74,6 +76,7 @@
                                     <td class="st-td-center">{{ $fmt($row->created_at ?? null) }}</td>
                                     <td class="st-td-center">
                                         <div class="tw-actionbar">
+                                            @if(!auth()->user()->hasRole('operator'))
                                             <button type="button" class="tw-action btn-edit-truck" data-id="{{ $row->id }}" data-truck-type="{{ $row->truck_type }}" data-duration="{{ $row->target_duration_minutes }}" data-tooltip="Edit" aria-label="Edit">
                                                 <i class="fa-solid fa-pencil"></i>
                                             </button>
@@ -83,6 +86,7 @@
                                                     <i class="fa-solid fa-trash"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

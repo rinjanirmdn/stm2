@@ -64,7 +64,7 @@ class UserController extends Controller
         $sort = $sorts[0] ?? '';
         $dir = $dirs[0] ?? 'desc';
 
-        $allowedRoles = ['admin', 'section_head', 'operator', 'vendor'];
+        $allowedRoles = ['admin', 'section_head', 'operator', 'vendor', 'security', 'super_account'];
 
         $usersQ = DB::table('md_users')
             ->leftJoin($modelHasRolesTable . ' as mhr', function ($join) {
@@ -198,12 +198,43 @@ class UserController extends Controller
         // Convert role slug to proper name (admin -> Admin, section_head -> Section Head)
         $roleDisplayName = ucwords(str_replace('_', ' ', $role));
 
+        $normalizeRoleName = static function (string $value): string {
+            $value = strtolower(trim($value));
+            $value = str_replace([' ', '_', '-'], '', $value);
+            return preg_replace('/[^a-z0-9]/', '', $value) ?? '';
+        };
+
+        $roleNeedleA = $normalizeRoleName($role);
+        $roleNeedleB = $normalizeRoleName($roleDisplayName);
+
         // Get role ID
         $allRoles = $this->roleService->getAllRoles();
         $roleRecord = $allRoles->first(function ($r) use ($roleDisplayName) {
             return strtolower($r->roles_name) === strtolower($roleDisplayName);
         });
         $roleId = $roleRecord ? $roleRecord->id : null;
+
+        if (! $roleId) {
+            $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB) {
+                $candidate = $normalizeRoleName((string) ($r->roles_name ?? ''));
+                return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
+            });
+            $roleId = $roleRecord ? $roleRecord->id : null;
+        }
+
+        if (! $roleId) {
+            Cache::forget('users:roles:all');
+            $allRoles = $this->roleService->getAllRoles();
+            $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB, $roleDisplayName) {
+                $name = (string) ($r->roles_name ?? '');
+                if (strtolower($name) === strtolower($roleDisplayName)) {
+                    return true;
+                }
+                $candidate = $normalizeRoleName($name);
+                return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
+            });
+            $roleId = $roleRecord ? $roleRecord->id : null;
+        }
 
         if (!$roleId) {
             return back()->withInput()->with('error', 'Invalid role: ' . $roleDisplayName);
@@ -215,7 +246,6 @@ class UserController extends Controller
             'username' => $nik,
             'email' => $email,
             'full_name' => $name,
-            'role' => $role,
             'role_id' => $roleId,
             'vendor_code' => $role === 'vendor' ? $vendorCode : null,
             'is_active' => true,
@@ -276,7 +306,7 @@ class UserController extends Controller
 
         $user = DB::table('md_users')
             ->where('id', $userId)
-            ->select(['id'])
+            ->select(['id', 'nik', 'email', 'username'])
             ->first();
 
         if (! $user) {
@@ -297,11 +327,42 @@ class UserController extends Controller
         $newRole = $validated['role'];
         $roleDisplayName = ucwords(str_replace('_', ' ', (string) $newRole));
 
+        $normalizeRoleName = static function (string $value): string {
+            $value = strtolower(trim($value));
+            $value = str_replace([' ', '_', '-'], '', $value);
+            return preg_replace('/[^a-z0-9]/', '', $value) ?? '';
+        };
+
+        $roleNeedleA = $normalizeRoleName((string) $newRole);
+        $roleNeedleB = $normalizeRoleName($roleDisplayName);
+
         $allRoles = $this->roleService->getAllRoles();
         $roleRecord = $allRoles->first(function ($r) use ($roleDisplayName) {
             return strtolower((string) ($r->roles_name ?? '')) === strtolower($roleDisplayName);
         });
         $newRoleId = $roleRecord ? $roleRecord->id : null;
+
+        if (! $newRoleId) {
+            $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB) {
+                $candidate = $normalizeRoleName((string) ($r->roles_name ?? ''));
+                return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
+            });
+            $newRoleId = $roleRecord ? $roleRecord->id : null;
+        }
+
+        if (! $newRoleId) {
+            Cache::forget('users:roles:all');
+            $allRoles = $this->roleService->getAllRoles();
+            $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB, $roleDisplayName) {
+                $name = (string) ($r->roles_name ?? '');
+                if (strtolower($name) === strtolower($roleDisplayName)) {
+                    return true;
+                }
+                $candidate = $normalizeRoleName($name);
+                return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
+            });
+            $newRoleId = $roleRecord ? $roleRecord->id : null;
+        }
         $update['role_id'] = $newRoleId;
 
         $password = trim($request->input('password', ''));
@@ -315,18 +376,18 @@ class UserController extends Controller
 
         // Clear login lockout cache for this user so they can log in with the new password immediately
         $loginIdentifiers = [];
-        $loginIdentifiers[] = strtolower(trim($validated['nik']));
-        $loginIdentifiers[] = strtolower(trim($validated['email']));
-
-        // Some systems may still use username separately; include it for safety
-        if (!empty($update['username'])) {
-            $loginIdentifiers[] = strtolower(trim((string) $update['username']));
-        }
+        // Old identifiers (before update)
+        $loginIdentifiers[] = strtolower(trim((string) ($user->nik ?? '')));
+        $loginIdentifiers[] = strtolower(trim((string) ($user->email ?? '')));
+        $loginIdentifiers[] = strtolower(trim((string) ($user->username ?? '')));
+        // New identifiers (after update)
+        $loginIdentifiers[] = strtolower(trim((string) ($update['nik'] ?? '')));
+        $loginIdentifiers[] = strtolower(trim((string) ($update['email'] ?? '')));
+        $loginIdentifiers[] = strtolower(trim((string) ($update['username'] ?? '')));
 
         foreach (array_unique($loginIdentifiers) as $identifier) {
             if ($identifier !== '') {
                 Cache::forget('login_attempts_' . $identifier);
-                Cache::forget('password_reset_request_' . $identifier);
             }
         }
 
@@ -337,7 +398,12 @@ class UserController extends Controller
         }
 
         // Notify user via email when password is changed by admin
-        if ($passwordChanged) {
+        $resetFlagKey = 'password_reset_requested_user_' . (int) $userId;
+        $hadResetRequest = Cache::has($resetFlagKey);
+        $resetEmailSent = false;
+        $resetEmailFailed = false;
+
+        if ($passwordChanged && $hadResetRequest) {
             try {
                 $userEmail = trim($validated['email']);
                 $userName = trim($validated['name']);
@@ -356,18 +422,48 @@ class UserController extends Controller
                         $message->to($userEmail, $userName)
                                 ->subject('[' . $appName . '] Your password has been reset by admin');
                     });
+
+                    $resetEmailSent = true;
                 }
             } catch (\Throwable $e) {
-                // Silent fail: do not block admin flow if email fails
+                $resetEmailFailed = true;
             }
+
+            Cache::forget($resetFlagKey);
         }
 
         $successMessage = 'User updated successfully';
-        if ($passwordChanged) {
-            $successMessage = 'User updated successfully. Password reset email has been sent to the user.';
+        if ($passwordChanged && $hadResetRequest) {
+            if ($resetEmailSent) {
+                $successMessage = 'Password reset completed. Email has been sent to the user.';
+            } elseif ($resetEmailFailed) {
+                $successMessage = 'Password reset completed, but failed to send email to the user.';
+            } else {
+                $successMessage = 'Password reset completed.';
+            }
         }
 
-        return redirect()->route('users.index')->with('success', $successMessage);
+        $canViewIndex = false;
+        if ($request->user()) {
+            try {
+                $canViewIndex = method_exists($request->user(), 'hasPermissionTo')
+                    ? (bool) $request->user()->hasPermissionTo('users.index')
+                    : (bool) $request->user()->can('users.index');
+            } catch (\Throwable $e) {
+                $canViewIndex = false;
+            }
+        }
+
+        if ($canViewIndex) {
+            $routeParams = [];
+            if ($passwordChanged && $hadResetRequest) {
+                $routeParams['_success'] = $successMessage;
+            }
+
+            return redirect()->route('users.index', $routeParams)->with('success', $successMessage);
+        }
+
+        return redirect()->route('users.edit', ['userId' => $userId])->with('success', $successMessage);
     }
 
     public function toggle(Request $request, int $userId)

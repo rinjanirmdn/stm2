@@ -7,6 +7,17 @@ use Illuminate\Validation\Rule;
 
 class UserUpdateRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'nik' => is_string($this->nik) ? trim($this->nik) : $this->nik,
+            'email' => is_string($this->email) ? trim($this->email) : $this->email,
+            'name' => is_string($this->name) ? trim($this->name) : $this->name,
+            'vendor_code' => is_string($this->vendor_code) ? trim($this->vendor_code) : $this->vendor_code,
+            'role' => is_string($this->role) ? trim($this->role) : $this->role,
+        ]);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -20,7 +31,10 @@ class UserUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = $this->route('userId');
+        $userId = $this->route('userId') ?? $this->route('user') ?? $this->route('id');
+        if (is_object($userId) && isset($userId->id)) {
+            $userId = $userId->id;
+        }
 
         return [
             'nik' => [
@@ -49,7 +63,7 @@ class UserUpdateRequest extends FormRequest
             'role' => [
                 'required',
                 'string',
-                'in:admin,operator,section_head,vendor'
+                'in:admin,operator,section_head,vendor,security,super_account'
             ],
             'vendor_code' => [
                 'nullable',

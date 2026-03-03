@@ -13,6 +13,35 @@
                     </div>
                 </div>
 
+                @if (session('success'))
+                    <div class="st-alert st-alert--success st-alert--autodismiss st-mb-12">
+                        <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
+                        <span class="st-alert__text">{{ session('success') }}</span>
+                        <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="st-alert st-alert--error st-alert--autodismiss st-mb-12">
+                        <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        <span class="st-alert__text">{{ session('error') }}</span>
+                        <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                    </div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="st-alert st-alert--error st-mb-12">
+                        <div class="st-alert__title">Please check the form</div>
+                        <div class="st-alert__text">
+                            <ul class="st-ml-16">
+                                @foreach ($errors->all() as $e)
+                                    <li>{{ $e }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('users.store') }}" class="st-form-block">
                     @csrf
 
@@ -37,6 +66,8 @@
                             <option value="operator" {{ old('role', 'operator') === 'operator' ? 'selected' : '' }}>Operator</option>
                             <option value="section_head" {{ old('role', 'operator') === 'section_head' ? 'selected' : '' }}>Section Head</option>
                             <option value="admin" {{ old('role', 'operator') === 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="security" {{ old('role', 'operator') === 'security' ? 'selected' : '' }}>Security</option>
+                            <option value="super_account" {{ old('role', 'operator') === 'super_account' ? 'selected' : '' }}>Super Account</option>
                             <option value="vendor" {{ old('role', 'operator') === 'vendor' ? 'selected' : '' }}>Vendor</option>
                         </select>
                     </div>

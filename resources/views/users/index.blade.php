@@ -4,18 +4,6 @@
 @section('page_title', 'Users')
 
 @section('content')
-    @if (session('success'))
-        <div class="st-alert st-alert--success st-mb-12">
-            <span class="st-alert__text">{{ session('success') }}</span>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="st-alert st-alert--error st-mb-12">
-            <span class="st-alert__text">{{ session('error') }}</span>
-        </div>
-    @endif
-
     <div class="st-card st-mb-12">
         <form method="GET" action="{{ route('users.index') }}">
             <div class="st-p-12">
@@ -26,7 +14,9 @@
                     </div>
                     <div class="st-form-field st-minw-80 st-flex st-flex-0 st-justify-end st-gap-8">
                         <a href="{{ route('users.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
+                        @if(!auth()->user()->hasRole('operator|super account|section head'))
                         <a href="{{ route('users.create') }}" class="st-btn st-btn--primary">Add User</a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -138,8 +128,10 @@
                                             <select name="role" form="user-filter-form" class="st-select">
                                                 <option value="">All Roles</option>
                                                 <option value="admin" {{ ($role ?? '') === 'admin' ? 'selected' : '' }}>Admin</option>
+                                                <option value="super_account" {{ ($role ?? '') === 'super_account' ? 'selected' : '' }}>Super Account</option>
                                                 <option value="section_head" {{ ($role ?? '') === 'section_head' ? 'selected' : '' }}>Section Head</option>
                                                 <option value="operator" {{ ($role ?? '') === 'operator' ? 'selected' : '' }}>Operator</option>
+                                                <option value="security" {{ ($role ?? '') === 'security' ? 'selected' : '' }}>Security</option>
                                                 <option value="vendor" {{ ($role ?? '') === 'vendor' ? 'selected' : '' }}>Vendor</option>
                                             </select>
                                             <div class="st-panel__actions">
@@ -247,17 +239,21 @@
                                 </td>
                                 <td class="st-td-center">
                                     <div class="tw-actionbar">
+                                        @if(!auth()->user()->hasRole('operator|super account|section head'))
                                         <a href="{{ route('users.edit', ['userId' => $u->id]) }}" class="tw-action" data-tooltip="Edit" aria-label="Edit">
                                             <i class="fa-solid fa-pencil"></i>
                                         </a>
+                                        @endif
 
                                         @if (! $isCurrentUser)
+                                            @if(!auth()->user()->hasRole('operator|super account|section head'))
                                             <form method="POST" action="{{ route('users.delete', ['userId' => $u->id]) }}" class="st-inline-form">
                                                 @csrf
                                                 <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('{{ $deleteConfirmMsg }}');">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         @else
                                             <span class="st-text--muted st-text--sm">(current)</span>
                                         @endif

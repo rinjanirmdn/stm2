@@ -31,7 +31,9 @@
                 <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end st-gap-8">
                     <a href="{{ route('unplanned.index') }}?sort=reset" class="st-btn st-btn--outline-primary">Reset</a>
                     @can('unplanned.create')
+                    @if(!auth()->user()->hasRole('operator'))
                     <a href="{{ route('unplanned.create') }}" class="st-btn st-btn--primary">Create Unplanned</a>
+                    @endif
                     @endcan
                 </div>
             </div>
@@ -272,13 +274,13 @@
                                         </a>
                                     @endif
 
-                                    @unless(optional(auth()->user())->hasRole('Operator'))
                                     @can('unplanned.edit')
+                                    @if(!auth()->user()->hasRole('operator'))
                                     <a href="{{ route('unplanned.edit', ['slotId' => $slot->id]) }}" class="tw-action" data-tooltip="Edit" aria-label="Edit">
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
+                                    @endif
                                     @endcan
-                                    @endunless
 
                                     <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
                                         <i class="fa-solid fa-eye"></i>

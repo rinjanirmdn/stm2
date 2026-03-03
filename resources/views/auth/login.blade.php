@@ -25,8 +25,10 @@
             @endphp
 
             @if ($errors->any() && ! $isLocked)
-                <div class="st-alert st-alert--error st-mb-1">
+                <div class="st-alert st-alert--error st-alert--autodismiss st-mb-1">
+                    <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <span class="st-alert__text">{{ $errors->first() }}</span>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                 </div>
             @endif
 

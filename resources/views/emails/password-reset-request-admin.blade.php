@@ -31,8 +31,13 @@
                     <td style="padding:20px 24px 8px;color:#0f172a;font-size:14px;">
                         <p style="margin:0 0 12px;">Dear Administrator,</p>
                         <p style="margin:0 0 12px;">
-                            A vendor user has requested a password reset from the <strong>Vendor Profile</strong> page.
-                            Please review the user details below and proceed to update the password if appropriate.
+                            @if($user->vendor_code)
+                                A vendor user has requested a password reset from the <strong>Vendor Profile</strong> page.
+                                Please review the user details below and proceed to update the password if appropriate.
+                            @else
+                                An internal user has requested a password reset from the <strong>Profile</strong> page.
+                                Please review the user details below and proceed to update the password if appropriate.
+                            @endif
                         </p>
                     </td>
                 </tr>

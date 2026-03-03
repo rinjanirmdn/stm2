@@ -21,18 +21,19 @@
             @csrf
 
             @if ($errors->any())
-                <div class="st-alert st-alert--error">
+                <div class="st-alert st-alert--error st-alert--autodismiss">
                     <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <div class="st-alert__text">
                         <div class="st-font-semibold st-mb-2">Validation Error</div>
                         <div class="st-text--sm">
-                            <ul class="st-list">
-                                @foreach ($errors->all() as $msg)
-                                    <li>{{ $msg }}</li>
+                            <ul class="st-ml-16">
+                                @foreach ($errors->all() as $e)
+                                    <li>{{ $e }}</li>
                                 @endforeach
                             </ul>
                         </div>
                     </div>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                 </div>
             @endif
 

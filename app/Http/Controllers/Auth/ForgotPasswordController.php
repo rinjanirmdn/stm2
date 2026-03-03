@@ -41,6 +41,8 @@ class ForgotPasswordController extends Controller
             return back()->with('error', 'User not found with the provided Email/Username/NIK.');
         }
 
+        $resetFlagKey = 'password_reset_requested_user_' . (int) $user->id;
+
         // Get admin email
         $adminEmail = config('mail.admin_email', 'admin@example.com');
 
@@ -65,9 +67,15 @@ class ForgotPasswordController extends Controller
                         ->subject('[' . $appName . '] Password Reset Request - ' . ($user->full_name ?? $user->username ?? 'Vendor'));
             });
 
+            $resetFlagKey = 'password_reset_requested_user_' . (int) $user->id;
+            Cache::put($resetFlagKey, now()->toDateTimeString(), now()->addHours(6));
+
             // Store request to prevent spam
             $requestKey = 'password_reset_request_' . strtolower($login);
             Cache::put($requestKey, now(), now()->addHours(1));
+
+            // Mark that this user has an active reset request
+            Cache::put($resetFlagKey, now()->toDateTimeString(), now()->addHours(6));
 
             return back()->with('success', 'Password reset request sent to administrator. You will be contacted shortly.');
 

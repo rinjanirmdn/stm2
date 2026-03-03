@@ -89,20 +89,45 @@
                 <span class="st-profile-section-badge">Optional</span>
             </div>
             <div class="st-profile-section-body">
-                <div class="st-profile-field">
-                    <label class="st-profile-label">Current Password</label>
-                    <input type="password" name="current_password" class="st-profile-input" placeholder="Enter current password">
-                </div>
-                <div class="st-profile-field-row">
+                @if ($user->hasRole('admin'))
                     <div class="st-profile-field">
-                        <label class="st-profile-label">New Password</label>
-                        <input type="password" name="new_password" class="st-profile-input" placeholder="Min. 6 characters">
+                        <label class="st-profile-label">Current Password</label>
+                        <input type="password" name="current_password" class="st-profile-input" placeholder="Enter current password">
                     </div>
-                    <div class="st-profile-field">
-                        <label class="st-profile-label">Confirm New Password</label>
-                        <input type="password" name="new_password_confirmation" class="st-profile-input" placeholder="Re-enter new password">
+                    <div class="st-profile-field-row">
+                        <div class="st-profile-field">
+                            <label class="st-profile-label">New Password</label>
+                            <input type="password" name="new_password" class="st-profile-input" placeholder="Min. 6 characters">
+                        </div>
+                        <div class="st-profile-field">
+                            <label class="st-profile-label">Confirm New Password</label>
+                            <input type="password" name="new_password_confirmation" class="st-profile-input" placeholder="Re-enter new password">
+                        </div>
                     </div>
-                </div>
+                @else
+                    <div class="vendor-form__field-group">
+                        <div class="vendor-form__info">
+                            <div class="vendor-form__info-icon">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="vendor-form__info-content">
+                                <h4>Password Change Restricted</h4>
+                                <p>For security reasons, only administrators can change passwords.
+                                   Please contact your admin if you need to update your password.</p>
+                                <button
+                                    type="button"
+                                    class="vendor-btn vendor-btn--outline vendor-btn--sm"
+                                    onclick="event.preventDefault(); document.getElementById('vendor-password-request-form').submit();"
+                                >
+                                    Request Password Change
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -118,262 +143,14 @@
             </button>
         </div>
     </form>
+
+    @if (! $user->hasRole('admin'))
+        <form id="vendor-password-request-form" method="POST" action="{{ route('profile.password-request') }}" style="display:none;">
+            @csrf
+        </form>
+    @endif
 </div>
 
 @push('styles')
-<style>
-.st-profile-container {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 0 0 24px;
-}
-
-.st-profile-header {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 24px;
-    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-    border-radius: 16px;
-    margin-bottom: 20px;
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(2, 132, 199, 0.25);
-}
-
-.st-profile-avatar {
-    font-size: 56px;
-    opacity: 0.9;
-    line-height: 1;
-}
-
-.st-profile-header-info {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.st-profile-name {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1.2;
-}
-
-.st-profile-role-badge,
-.st-profile-vendor-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    background: rgba(255,255,255,0.18);
-    padding: 3px 10px;
-    border-radius: 999px;
-    width: fit-content;
-}
-
-.st-profile-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.st-profile-section {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-
-.st-profile-section--highlight {
-    border-color: #bae6fd;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
-}
-
-.st-profile-section--highlight .st-profile-section-header {
-    background: #f0f9ff;
-    color: #0369a1;
-}
-
-.st-profile-section-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 20px;
-    background: #f8fafc;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
-}
-
-.st-profile-section-header h3 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0;
-    flex: 1;
-}
-
-.st-profile-section-badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: #f1f5f9;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.st-profile-section-body {
-    padding: 16px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.st-profile-field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    flex: 1;
-}
-
-.st-profile-field-row {
-    display: flex;
-    gap: 14px;
-}
-
-.st-profile-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #374151;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.st-profile-label-badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 1px 7px;
-    border-radius: 999px;
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.st-profile-input {
-    padding: 9px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 13px;
-    font-family: inherit;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    background: #fff;
-    color: #1f2937;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.st-profile-input:focus {
-    outline: none;
-    border-color: #0284c7;
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
-}
-
-.st-profile-input--disabled {
-    background: #f3f4f6;
-    color: #6b7280;
-    cursor: not-allowed;
-}
-
-.st-profile-input-group {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.st-profile-input-icon {
-    position: absolute;
-    left: 12px;
-    color: #9ca3af;
-    font-size: 14px;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.st-profile-input--with-icon {
-    padding-left: 36px;
-}
-
-.st-profile-hint {
-    font-size: 11px;
-    color: #9ca3af;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.st-profile-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-top: 4px;
-}
-
-.st-profile-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: inherit;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s ease;
-}
-
-.st-profile-btn--primary {
-    background: #0284c7;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
-}
-
-.st-profile-btn--primary:hover {
-    background: #0369a1;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
-}
-
-.st-profile-btn--secondary {
-    background: #f3f4f6;
-    color: #374151;
-    border: 1px solid #d1d5db;
-}
-
-.st-profile-btn--secondary:hover {
-    background: #e5e7eb;
-}
-
-@media (max-width: 640px) {
-    .st-profile-header {
-        flex-direction: column;
-        text-align: center;
-    }
-    .st-profile-field-row {
-        flex-direction: column;
-    }
-    .st-profile-actions {
-        flex-direction: column-reverse;
-    }
-    .st-profile-btn {
-        width: 100%;
-        justify-content: center;
-    }
-}
-</style>
 @endpush
 @endsection

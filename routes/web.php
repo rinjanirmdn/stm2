@@ -38,21 +38,23 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/password-request', [ForgotPasswordController::class, 'requestFromProfile'])->name('profile.password-request');
 
     Route::prefix('slots')->name('slots.')->group(function () {
-        Route::get('/', [SlotController::class, 'index'])->name('index');
+        Route::get('/', [SlotController::class, 'index'])->name('index')
+            ->middleware('permission:slots.index');
 
         Route::get('/search-suggestions', [SlotController::class, 'searchSuggestions'])->name('search_suggestions');
 
-        Route::middleware('permission:slots.create')->group(function () {
+        // Block operator from create, edit, cancel, ticket
+        Route::middleware(['permission:slots.create', 'role:admin|super account|section head|security'])->group(function () {
             Route::get('/create', [SlotController::class, 'create'])->name('create');
             Route::post('/', [SlotController::class, 'store'])->name('store');
         });
 
         Route::get('/{slotId}/edit', [SlotController::class, 'edit'])->whereNumber('slotId')->name('edit')
-            ->middleware('permission:slots.edit');
+            ->middleware(['permission:slots.edit', 'role:admin|super account|section head|security']);
         Route::post('/{slotId}/edit', [SlotController::class, 'update'])->whereNumber('slotId')->name('update')
-            ->middleware('permission:slots.update');
+            ->middleware(['permission:slots.update', 'role:admin|super account|section head|security']);
         Route::post('/{slotId}/delete', [SlotController::class, 'destroy'])->whereNumber('slotId')->name('delete')
-            ->middleware('permission:slots.delete');
+            ->middleware(['permission:slots.delete', 'role:admin|super account|section head|security']);
 
         Route::prefix('ajax')->name('ajax.')->group(function () {
             Route::post('/check-risk', [SlotController::class, 'ajaxCheckRisk'])->name('check_risk');
@@ -65,12 +67,15 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('/{slotId}/ticket', [SlotController::class, 'ticket'])->whereNumber('slotId')->name('ticket')
-            ->middleware('permission:slots.ticket');
+            ->middleware(['permission:slots.ticket', 'role:admin|super account|section head|security']);
 
-        Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show');
+        Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show')
+            ->middleware('permission:slots.show');
 
-        Route::get('/{slotId}/arrival', [SlotController::class, 'arrival'])->whereNumber('slotId')->name('arrival');
-        Route::post('/{slotId}/arrival', [SlotController::class, 'arrivalStore'])->whereNumber('slotId')->name('arrival.store');
+        Route::get('/{slotId}/arrival', [SlotController::class, 'arrival'])->whereNumber('slotId')->name('arrival')
+            ->middleware(['permission:slots.arrival', 'role:admin|super account|section head|security']);
+        Route::post('/{slotId}/arrival', [SlotController::class, 'arrivalStore'])->whereNumber('slotId')->name('arrival.store')
+            ->middleware(['permission:slots.arrival.store', 'role:admin|super account|section head|security']);
 
         Route::get('/{slotId}/start', [SlotController::class, 'start'])->whereNumber('slotId')->name('start');
         Route::post('/{slotId}/start', [SlotController::class, 'startStore'])->whereNumber('slotId')->name('start.store');
@@ -79,9 +84,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/{slotId}/complete', [SlotController::class, 'completeStore'])->whereNumber('slotId')->name('complete.store');
 
         Route::get('/{slotId}/cancel', [SlotController::class, 'cancel'])->whereNumber('slotId')->name('cancel')
-            ->middleware('permission:slots.cancel');
+            ->middleware(['permission:slots.cancel', 'role:admin|super account|section head|security']);
         Route::post('/{slotId}/cancel', [SlotController::class, 'cancelStore'])->whereNumber('slotId')->name('cancel.store')
-            ->middleware('permission:slots.cancel.store');
+            ->middleware(['permission:slots.cancel.store', 'role:admin|super account|section head|security']);
 
         // Approval Actions (Mapped to BookingApprovalController)
         Route::post('/{id}/approve', [BookingApprovalController::class, 'approve'])->whereNumber('id')->name('approve')
@@ -98,24 +103,30 @@ Route::middleware('auth')->group(function () {
     Route::prefix('unplanned')->name('unplanned.')->group(function () {
         Route::get('/', [SlotController::class, 'unplannedIndex'])->name('index');
 
-        Route::middleware('permission:unplanned.create')->group(function () {
+        // Block operator from create, edit, cancel, ticket
+        Route::middleware(['permission:unplanned.create', 'role:admin|super account|section head|security'])->group(function () {
             Route::get('/create', [SlotController::class, 'unplannedCreate'])->name('create');
             Route::post('/create', [SlotController::class, 'unplannedStore'])->name('store');
         });
 
-        Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show');
         Route::get('/{slotId}/edit', [SlotController::class, 'unplannedEdit'])->whereNumber('slotId')->name('edit')
-            ->middleware('permission:unplanned.edit');
+            ->middleware(['permission:unplanned.edit', 'role:admin|super account|section head|security']);
         Route::post('/{slotId}/edit', [SlotController::class, 'unplannedUpdate'])->whereNumber('slotId')->name('update')
-            ->middleware('permission:unplanned.update');
+            ->middleware(['permission:unplanned.update', 'role:admin|super account|section head|security']);
         Route::post('/{slotId}/delete', [SlotController::class, 'unplannedDestroy'])->whereNumber('slotId')->name('delete')
-            ->middleware('permission:unplanned.delete');
+            ->middleware(['permission:unplanned.delete', 'role:admin|super account|section head|security']);
 
-        // Unplanned specific actions
+        // Allow operator to use ticket (but not create/edit/cancel)
+        Route::get('/{slotId}/ticket', [SlotController::class, 'ticket'])->whereNumber('slotId')->name('ticket')
+            ->middleware(['permission:slots.ticket', 'role:admin|super account|section head|security']);
+
+        // Unplanned specific actions (operator can use these)
         Route::get('/{slotId}/start', [SlotController::class, 'unplannedStart'])->whereNumber('slotId')->name('start');
         Route::post('/{slotId}/start', [SlotController::class, 'unplannedStartStore'])->whereNumber('slotId')->name('start.store');
         Route::get('/{slotId}/complete', [SlotController::class, 'unplannedComplete'])->whereNumber('slotId')->name('complete');
         Route::post('/{slotId}/complete', [SlotController::class, 'unplannedCompleteStore'])->whereNumber('slotId')->name('complete.store');
+
+        Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show');
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {
@@ -172,19 +183,27 @@ Route::middleware('auth')->group(function () {
     Route::prefix('trucks')->name('trucks.')->group(function () {
         Route::get('/', [TruckTypeDurationController::class, 'index'])->name('index');
 
-        Route::get('/create', [TruckTypeDurationController::class, 'create'])->name('create');
-        Route::post('/', [TruckTypeDurationController::class, 'store'])->name('store');
-
-        Route::get('/{truckTypeDurationId}/edit', [TruckTypeDurationController::class, 'edit'])->whereNumber('truckTypeDurationId')->name('edit');
-        Route::post('/{truckTypeDurationId}/edit', [TruckTypeDurationController::class, 'update'])->whereNumber('truckTypeDurationId')->name('update');
-
-        Route::post('/{truckTypeDurationId}/delete', [TruckTypeDurationController::class, 'destroy'])->whereNumber('truckTypeDurationId')->name('delete');
+        // Operator: only view, no create/edit/delete
+        Route::middleware(['role:admin|super account|section head|security'])->group(function () {
+            Route::get('/create', [TruckTypeDurationController::class, 'create'])->name('create');
+            Route::post('/', [TruckTypeDurationController::class, 'store'])->name('store');
+            Route::get('/{truckTypeDurationId}/edit', [TruckTypeDurationController::class, 'edit'])->whereNumber('truckTypeDurationId')->name('edit');
+            Route::post('/{truckTypeDurationId}/edit', [TruckTypeDurationController::class, 'update'])->whereNumber('truckTypeDurationId')->name('update');
+            Route::post('/{truckTypeDurationId}/delete', [TruckTypeDurationController::class, 'destroy'])->whereNumber('truckTypeDurationId')->name('delete');
+        });
     });
 
     Route::prefix('gates')->name('gates.')->group(function () {
-        Route::get('/', [ReportController::class, 'gatesIndex'])->name('index');
-        Route::get('/monitor', [GateStatusController::class, 'index'])->name('monitor');
-        Route::middleware('permission:gates.toggle')->group(function () {
+        Route::get('/', [ReportController::class, 'gatesIndex'])->name('index')
+            ->middleware('permission:gates.index');
+        Route::get('/monitor', [GateStatusController::class, 'index'])->name('monitor')
+            ->middleware('permission:gates.index');
+        // Operator: only toggle C
+        Route::middleware(['role:operator'])->group(function () {
+            Route::post('/{gateId}/toggle', [ReportController::class, 'toggleGate'])->whereNumber('gateId')->name('toggle');
+        });
+        // Non-operators: full toggle permissions
+        Route::middleware(['permission:gates.toggle', 'role:admin|super account|section head|security'])->group(function () {
             Route::post('/{gateId}/toggle', [ReportController::class, 'toggleGate'])->whereNumber('gateId')->name('toggle');
         });
     });
@@ -193,7 +212,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [LogController::class, 'index'])->name('index');
     });
 
-    Route::middleware('permission:users.index')->prefix('users')->name('users.')->group(function () {
+    Route::middleware(['permission:users.index', 'role:admin|security'])->prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
 
         Route::middleware('permission:users.create')->group(function () {
@@ -250,7 +269,7 @@ Route::middleware('auth')->group(function () {
     // ========================================
     // ADMIN BOOKING APPROVAL ROUTES
     // ========================================
-    Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('bookings.')->group(function () {
+    Route::middleware(['permission:bookings.index', 'role:admin|super account|section head|security'])->prefix('bookings')->name('bookings.')->group(function () {
         Route::get('/', [BookingApprovalController::class, 'index'])->name('index');
         Route::get('/{id}', [BookingApprovalController::class, 'show'])->whereNumber('id')->name('show');
 

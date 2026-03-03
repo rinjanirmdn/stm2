@@ -156,10 +156,43 @@ class RolePermissionSeeder extends Seeder
             'unplanned.index',
             'reports.transactions',
             'reports.search_suggestions',
+            'trucks.index',
             'gates.index',
+            'gates.toggle',
+            'logs.index',
+            'logs.filter',
             'profile.index',
             'checkin.show',
             'checkin.store',
+        ]);
+
+        // Create super account role (no users access)
+        $superAccountRole = Role::findOrCreate('Super Account');
+        $superAccountPermissions = array_values(array_filter($permissions, function ($perm) {
+            if (str_starts_with($perm, 'users.')) {
+                return false;
+            }
+            return true;
+        }));
+        $superAccountRole->givePermissionTo($superAccountPermissions);
+
+        // Create security role (only planned and gates)
+        $securityRole = Role::findOrCreate('Security');
+        $securityRole->givePermissionTo([
+            'dashboard.view',
+            'dashboard.range_filter',
+            'slots.index',
+            'slots.show',
+            'slots.search_suggestions',
+            'slots.ajax.po_search',
+            'slots.ajax.po_detail',
+            'slots.ajax.check_risk',
+            'slots.ajax.check_slot_time',
+            'slots.ajax.recommend_gate',
+            'slots.ajax.schedule_preview',
+            'gates.index',
+            'gates.toggle',
+            'profile.index',
         ]);
 
         // Assign admin role to user with username admin or first user

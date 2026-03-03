@@ -19,20 +19,26 @@
             </div>
 
             @if (session('success'))
-                <div class="st-alert st-alert--success st-mb-1">
+                <div class="st-alert st-alert--success st-alert--autodismiss st-mb-1">
+                    <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
                     <span class="st-alert__text">{{ session('success') }}</span>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                 </div>
             @endif
 
             @if (session('error'))
-                <div class="st-alert st-alert--error st-mb-1">
+                <div class="st-alert st-alert--error st-alert--autodismiss st-mb-1">
+                    <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <span class="st-alert__text">{{ session('error') }}</span>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                 </div>
             @endif
 
             @if ($errors->any())
-                <div class="st-alert st-alert--error st-mb-1">
+                <div class="st-alert st-alert--error st-alert--autodismiss st-mb-1">
+                    <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <span class="st-alert__text">{{ $errors->first() }}</span>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                 </div>
             @endif
 

@@ -77,10 +77,16 @@
             @endcan
 
             @can('slots.index')
+            @php
+                $user = auth()->user();
+                $hideSlotsMenu = $user && $user->hasRole('operator');
+            @endphp
+            @if(!$hideSlotsMenu)
             <a href="{{ route('slots.index') }}" title="Planned" class="st-sidebar__link{{ request()->routeIs('slots.index') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-calendar-days"></i>
                 <span>Planned</span>
             </a>
+            @endif
             @endcan
 
             @can('gates.index')
@@ -91,17 +97,29 @@
             @endcan
 
             @can('bookings.index')
+            @php
+                $user = auth()->user();
+                $hideBookingsMenu = $user && $user->hasRole('operator');
+            @endphp
+            @if(!$hideBookingsMenu)
             <a href="{{ route('bookings.index') }}" title="Booking Requests" class="st-sidebar__link{{ request()->routeIs('bookings.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-clipboard-list"></i>
                 <span>Booking Requests</span>
             </a>
+            @endif
             @endcan
 
             @can('unplanned.index')
+            @php
+                $user = auth()->user();
+                $hideUnplannedMenu = $user && $user->hasRole('operator');
+            @endphp
+            @if(!$hideUnplannedMenu)
             <a href="{{ route('unplanned.index') }}" title="Unplanned" class="st-sidebar__link{{ request()->routeIs('unplanned.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-calendar-plus"></i>
                 <span>Unplanned</span>
             </a>
+            @endif
             @endcan
 
             @can('reports.transactions')
@@ -119,10 +137,16 @@
             @endcan
 
             @can('users.index')
+            @php
+                $user = auth()->user();
+                $hideUserMenu = $user && ($user->hasRole('operator') || $user->hasRole('super account') || $user->hasRole('section head'));
+            @endphp
+            @if(!$hideUserMenu)
             <a href="{{ route('users.index') }}" title="Users" class="st-sidebar__link{{ request()->routeIs('users.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-users"></i>
                 <span>Users</span>
             </a>
+            @endif
             @endcan
 
             @can('logs.index')
@@ -149,8 +173,6 @@
                     <h1 class="st-topbar__title">{{ $pageTitle ?? trim($__env->yieldContent('page_title')) ?: 'Dashboard' }}</h1>
                 </div>
                 <div class="st-topbar__user">
-                    <img src="{{ asset('img/e-Docking Control System.png') }}" alt="e-Docking Control System" class="st-topbar__brand-logo">
-
                     <!-- Notification Component -->
                     @if(auth()->check())
                         <div class="st-notification">
@@ -224,20 +246,45 @@
         </header>
 
         <main class="st-content st-content--layout">
-            @if (session('success'))
-                <div class="st-alert st-alert--success st-alert--autodismiss">
-                    <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
-                    <span class="st-alert__text">{{ session('success') }}</span>
-                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
-                </div>
+            @php
+                $stIsProfileRestricted = request()->routeIs('profile')
+                    && auth()->check()
+                    && method_exists(auth()->user(), 'hasRole')
+                    && !auth()->user()->hasRole('admin');
+                $stSuccessMessage = session('success') ?: (string) request()->query('_success', '');
+                $stErrorMessage = (string) session('error', '');
+            @endphp
+
+            @if ($stSuccessMessage)
+                @if ($stIsProfileRestricted)
+                    <div class="vendor-alert vendor-alert--success vendor-alert--autodismiss">
+                        <i class="fas fa-check-circle"></i>
+                        {{ $stSuccessMessage }}
+                        <button type="button" class="vendor-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                    </div>
+                @else
+                    <div class="st-alert st-alert--success st-alert--autodismiss">
+                        <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
+                        <span class="st-alert__text">{{ $stSuccessMessage }}</span>
+                        <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                    </div>
+                @endif
             @endif
 
-            @if (session('error'))
-                <div class="st-alert st-alert--error st-alert--autodismiss">
-                    <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
-                    <span class="st-alert__text">{{ session('error') }}</span>
-                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
-                </div>
+            @if ($stErrorMessage)
+                @if ($stIsProfileRestricted)
+                    <div class="vendor-alert vendor-alert--error vendor-alert--autodismiss">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ $stErrorMessage }}
+                        <button type="button" class="vendor-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                    </div>
+                @else
+                    <div class="st-alert st-alert--error st-alert--autodismiss">
+                        <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        <span class="st-alert__text">{{ $stErrorMessage }}</span>
+                        <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                    </div>
+                @endif
             @endif
 
             @can('bookings.index')
@@ -290,6 +337,41 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 @vite(['resources/js/pages/main.js', 'resources/js/pages/gate-status.js'])
 <div id="st-modal-container"></div>
+
+<script>
+    (function () {
+        try {
+            var url = new URL(window.location.href);
+            if (!url.searchParams.has('_success')) return;
+            url.searchParams.delete('_success');
+            window.history.replaceState({}, document.title, url.toString());
+        } catch (e) {
+            // no-op
+        }
+    })();
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Auto-dismiss internal alerts after 5 seconds
+        document.querySelectorAll('.st-alert--autodismiss').forEach(function (alert) {
+            setTimeout(function () {
+                if (alert && alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        });
+
+        // Auto-dismiss vendor alerts on profile page after 5 seconds
+        document.querySelectorAll('.vendor-alert--autodismiss').forEach(function (alert) {
+            setTimeout(function () {
+                if (alert && alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        });
+    });
+</script>
 
 @php
     $stReminderUrl = null;

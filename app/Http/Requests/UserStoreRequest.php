@@ -47,7 +47,7 @@ class UserStoreRequest extends FormRequest
             'role' => [
                 'required',
                 'string',
-                'in:admin,section_head,operator,vendor'
+                'in:admin,section_head,operator,vendor,security,super_account'
             ],
             'vendor_code' => [
                 'nullable',
