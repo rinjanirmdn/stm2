@@ -49,6 +49,10 @@ class RolePermissionSeeder extends Seeder
             'slots.ajax.schedule_preview',
 
             'unplanned.index',
+            'unplanned.create',
+            'unplanned.store',
+            'unplanned.edit',
+            'unplanned.update',
 
             'reports.transactions',
             'reports.search_suggestions',
@@ -110,15 +114,38 @@ class RolePermissionSeeder extends Seeder
 
         // Create admin role with all permissions
         $adminRole = Role::findOrCreate('Admin');
-        $adminRole->givePermissionTo(Permission::all());
+        $adminRole->syncPermissions(Permission::all());
 
-        // Create vendor role (access vendor portal). Vendor route currently protected by role:vendor.
-        // Give minimum permissions so common menu can still be accessed if needed.
-        $vendorRole = Role::findOrCreate('vendor');
-        $vendorRole->givePermissionTo([
+        // Super Admin from master roles also gets full access
+        $superAdminRole = Role::findOrCreate('Super Admin');
+        $superAdminRole->syncPermissions(Permission::all());
+
+        // Create vendor role based on master role name
+        $vendorRole = Role::findOrCreate('Vendor');
+        $vendorRole->syncPermissions([
             'dashboard.view',
             'profile.index',
         ]);
+
+        // Access-level mapping with existing master role: Viewer = view-only
+        $viewerRole = Role::findOrCreate('Viewer');
+
+        $viewPermissions = array_values(array_filter($permissions, function ($perm) {
+            if (in_array($perm, ['profile.index', 'dashboard.range_filter'], true)) {
+                return true;
+            }
+            return preg_match('/(\.view|\.index|\.show|\.search_suggestions|\.api_index|\.stream)$/', $perm) === 1;
+        }));
+
+        $createPermissions = array_values(array_filter($permissions, function ($perm) {
+            return preg_match('/(\.create|\.store)$/', $perm) === 1;
+        }));
+
+        $editPermissions = array_values(array_filter($permissions, function ($perm) {
+            return preg_match('/(\.edit|\.update)$/', $perm) === 1;
+        }));
+
+        $viewerRole->syncPermissions($viewPermissions);
 
         // Create section_head role with permissions as needed
         $sectionHeadRole = Role::findOrCreate('Section Head');
@@ -131,11 +158,27 @@ class RolePermissionSeeder extends Seeder
             }
             return true;
         }));
-        $sectionHeadRole->givePermissionTo($sectionHeadPermissions);
+        $sectionHeadRole->syncPermissions($sectionHeadPermissions);
+
+        // Optional mappings for existing master roles
+        // Security (satpam): only ticket scanning flow at truck arrival
+        $securityRole = Role::findOrCreate('Security');
+        $securityRole->syncPermissions([
+            'dashboard.view',
+            'profile.index',
+            'slots.index',
+            'slots.show',
+            'slots.arrival',
+            'slots.arrival.store',
+        ]);
+
+        // Super Account: same as Admin by default (can be narrowed later)
+        $superAccountRole = Role::findOrCreate('Super Account');
+        $superAccountRole->syncPermissions(Permission::all());
 
         // Create operator role with limited permissions (only arrival, start, complete)
         $operatorRole = Role::findOrCreate('Operator');
-        $operatorRole->givePermissionTo([
+        $operatorRole->syncPermissions([
             'dashboard.view',
             'dashboard.range_filter',
             'slots.index',

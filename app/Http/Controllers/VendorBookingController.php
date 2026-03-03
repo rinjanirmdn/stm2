@@ -693,6 +693,24 @@ class VendorBookingController extends Controller
             ]);
 
             $date = $request->date;
+            $disabledTimes = Cache::get('admin_gates_disabled_times_' . $date, []);
+            $forcedTimes = Cache::get('admin_gates_forced_times_' . $date, []);
+            if (!is_array($disabledTimes)) {
+                $disabledTimes = [];
+            }
+            if (!is_array($forcedTimes)) {
+                $forcedTimes = [];
+            }
+            $disabledTimes = array_values(array_unique(array_filter(array_map(function ($time) {
+                $val = trim((string) $time);
+                return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
+            }, $disabledTimes))));
+            $forcedTimes = array_values(array_unique(array_filter(array_map(function ($time) {
+                $val = trim((string) $time);
+                return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
+            }, $forcedTimes))));
+            $disabledMap = array_fill_keys($disabledTimes, true);
+            $forcedMap = array_fill_keys($forcedTimes, true);
 
             // Use cache for 5 minutes to improve performance
             $cacheKey = "vendor_availability_{$date}";
@@ -770,22 +788,38 @@ class VendorBookingController extends Controller
             // Check availability for each time slot
             $availableSlots = [];
             foreach ($timeSlots as $time) {
+                $blockedByAdmin = !empty($disabledMap[$time]);
+                $forcedByAdmin = !empty($forcedMap[$time]);
                 if (! empty($globalBlocked[$time])) {
+                    $isAvailable = !$blockedByAdmin && $forcedByAdmin;
                     $availableSlots[] = [
                         'time' => $time,
-                        'is_available' => false,
-                        'available_gates' => 0,
+                        'is_available' => $isAvailable,
+                        'available_gates' => $isAvailable ? max(1, $totalGates) : 0,
+                        'disabled_by_admin' => $blockedByAdmin,
+                        'forced_by_admin' => $forcedByAdmin,
                     ];
                     continue;
                 }
 
                 $conflictedGates = $timeConflicts[$time] ?? [];
                 $availableGates = $totalGates - count(array_unique($conflictedGates));
+                $isAvailable = $availableGates > 0;
+                if ($blockedByAdmin) {
+                    $isAvailable = false;
+                    $availableGates = 0;
+                }
+                if ($forcedByAdmin) {
+                    $isAvailable = true;
+                    $availableGates = max(1, $availableGates);
+                }
 
                 $availableSlots[] = [
                     'time' => $time,
-                    'is_available' => $availableGates > 0,
-                    'available_gates' => $availableGates
+                    'is_available' => $isAvailable,
+                    'available_gates' => $availableGates,
+                    'disabled_by_admin' => $blockedByAdmin,
+                    'forced_by_admin' => $forcedByAdmin,
                 ];
             }
 

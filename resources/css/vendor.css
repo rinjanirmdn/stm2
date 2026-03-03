@@ -36,6 +36,8 @@
 .vendor-app {
     min-height: 100vh;
     background: var(--vendor-bg);
+    display: flex;
+    flex-direction: column;
 }
 
 .vendor-header {
@@ -212,6 +214,8 @@
 }
 
 .vendor-main {
+    flex: 1;
+    width: 100%;
     max-width: 1400px;
     margin: 0 auto;
     padding: 18px 20px 28px;
@@ -2675,6 +2679,22 @@
  * Vendor Profile Page Layout
  * ========================== */
 
+.vendor-page--profile .vendor-page-header {
+    margin-bottom: 14px;
+    padding: 8px 18px;
+    background: linear-gradient(180deg, #5fc5e7 0%, #4fa8c6 34%, #3f8e97 58%, #2f766f 78%, #1f5e53 100%);
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 14px rgba(15, 23, 42, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.vendor-page--profile .vendor-page-header__title {
+    margin: 0;
+    color: inherit;
+}
+
 .vendor-page--profile .vendor-card__body {
     padding: 20px 20px 24px;
 }
@@ -2804,6 +2824,10 @@
 }
 
 @media (max-width: 768px) {
+    .vendor-page--profile .vendor-page-header {
+        padding: 8px 14px;
+    }
+
     .vendor-page--profile .vendor-card__body {
         padding: 16px;
     }

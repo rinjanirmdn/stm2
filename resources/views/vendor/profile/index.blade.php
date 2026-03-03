@@ -5,8 +5,8 @@
 @section('content')
 <div class="vendor-page vendor-page--profile">
     <div class="vendor-container">
-        <div class="vendor-header">
-            <div class="vendor-header__title">
+        <div class="vendor-page-header">
+            <div class="vendor-page-header__title">
                 <h2 class="vendor-title">Profile Settings</h2>
                 <p class="vendor-subtitle">Manage your account information</p>
             </div>

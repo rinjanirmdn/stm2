@@ -135,7 +135,7 @@ class LoginController extends Controller
             }
         }
 
-        if ($user->hasRole('vendor')) {
+        if ($user && $user->isVendor()) {
             return redirect()->intended(route('vendor.dashboard'));
         }
 

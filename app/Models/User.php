@@ -71,7 +71,7 @@ class User extends Authenticatable
      */
     public function isVendor(): bool
     {
-        return $this->hasRole('vendor');
+        return $this->hasAnyRole(['Vendor', 'vendor']);
     }
 
     /**

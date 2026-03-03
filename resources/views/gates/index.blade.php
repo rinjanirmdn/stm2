@@ -98,14 +98,14 @@
                 <button class="st-dock-shift-btn" data-shift="shift3">Shift 3 <span class="st-dock-shift-range">(23-07)</span></button>
             </div>
 
-            <div class="st-flex st-gap-12 st-align-center">
-                <button class="st-btn st-btn--primary st-btn--sm" onclick="window.location.href='{{ route('slots.create') }}'">
-                    Create Planned
-                </button>
+            <div class="st-dock-view-tabs" id="gate_view_tabs">
+                <button type="button" class="st-dock-view-tab st-dock-view-tab--active" data-view="schedule">Schedule</button>
+                <button type="button" class="st-dock-view-tab" data-view="availability">Availability</button>
             </div>
         </header>
 
         <!-- Scheduler Grid -->
+        <div class="st-dock-view-panel st-dock-view-panel--active" id="gate_schedule_panel">
         <div class="st-dock-scheduler">
             <!-- Grid Header -->
             <div class="st-dock-grid-header">
@@ -127,7 +127,7 @@
                         <form method="POST" action="{{ route('gates.toggle', ['gateId' => $g->id]) }}" id="toggle-gate-{{ $g->id }}">
                             @csrf
                             <label class="st-dock-toggle">
-                                <input type="checkbox" {{ $isActive ? 'checked' : '' }} onchange="document.getElementById('toggle-gate-{{ $g->id }}').submit()">
+                                <input type="checkbox" class="st-gate-active-toggle" data-form-id="toggle-gate-{{ $g->id }}" {{ $isActive ? 'checked' : '' }}>
                                 <span class="st-dock-toggle-slider"></span>
                             </label>
                         </form>
@@ -313,17 +313,23 @@
 
                                 <!-- Dynamic Status Icons -->
                                 @if($slot->status === 'scheduled')
+                                    @can('slots.arrival')
                                     <div class="st-dock-icon-circle st-dock-icon-circle--green" onclick="event.stopPropagation(); window.location.href='{{ route('slots.arrival', $slot->id) }}'" title="Click to mark arrival">
                                         <i class="fas fa-sign-in-alt st-text-10"></i>
                                     </div>
+                                    @endcan
                                 @elseif($slot->status === 'waiting')
+                                    @can('slots.start')
                                     <div class="st-dock-icon-circle st-dock-icon-circle--orange" onclick="event.stopPropagation(); window.location.href='{{ route('slots.start', $slot->id) }}'" title="Click to start">
                                         <i class="fas fa-play st-text-10"></i>
                                     </div>
+                                    @endcan
                                 @elseif($slot->status === 'in_progress')
+                                    @can('slots.complete')
                                     <div class="st-dock-icon-circle st-dock-icon-circle--teal" onclick="event.stopPropagation(); window.location.href='{{ route('slots.complete', $slot->id) }}'" title="Click to complete">
                                         <i class="fas fa-check st-text-10"></i>
                                     </div>
+                                    @endcan
                                 @endif
 
                                 @if($slot->status === 'pending_approval')
@@ -365,6 +371,23 @@
                 @if($showLine)
                     <div class="st-dock-time-line" data-top="{{ $currentPx }}" title="Current Time: {{ $now->format('H:i') }}"></div>
                 @endif
+            </div>
+        </div>
+
+        </div>
+
+        <div class="st-dock-view-panel" id="gate_availability_panel">
+            <div class="st-dock-availability">
+                <div class="st-dock-availability__header">
+                    <span class="st-dock-availability__title">Availability</span>
+                    <span class="st-dock-availability__date" id="gate_availability_date_label">{{ \Carbon\Carbon::parse($paramDate)->format('l, d F Y') }}</span>
+                </div>
+                <div id="gate-availability-list" class="st-dock-availability__list">
+                    <div class="st-dock-availability__empty">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading availability...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -422,6 +445,9 @@
 <script type="application/json" id="gates_index_config">{!! json_encode([
     'paramDate' => $paramDate,
     'gatesIndexUrl' => route('gates.index'),
+    'availabilityUrl' => route('gates.ajax.available_slots'),
+    'disabledTimesUrl' => route('gates.ajax.disabled_times'),
+    'selectedWarehouseIds' => (array) ($warehouse_id ?? []),
     'bookingsBaseUrl' => url('/bookings'),
 ]) !!}</script>
 @vite(['resources/js/pages/gates-index.js'])

@@ -1,7 +1,7 @@
 @php
     $isVendor = auth()->user()
-        && method_exists(auth()->user(), 'hasRole')
-        && auth()->user()->hasRole('vendor');
+        && method_exists(auth()->user(), 'hasAnyRole')
+        && auth()->user()->hasAnyRole(['Vendor', 'vendor']);
 @endphp
 @extends($isVendor ? 'vendor.layouts.vendor' : 'layouts.app')
 
