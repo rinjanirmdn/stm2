@@ -8,6 +8,15 @@
     }
 }
 
+function stEscapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function stNormalizeUrl(u) {
     try {
         var s = String(u || '');
@@ -27,6 +36,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
     var paramDate = config.paramDate || '';
     var gatesIndexUrl = stNormalizeUrl(config.gatesIndexUrl || window.location.pathname);
+    var availabilityUrl = stNormalizeUrl(config.availabilityUrl || '');
+    var disabledTimesUrl = stNormalizeUrl(config.disabledTimesUrl || '');
+    var selectedWarehouseIds = Array.isArray(config.selectedWarehouseIds) ? config.selectedWarehouseIds : [];
     var currentDate = paramDate ? new Date(paramDate) : new Date();
     var today = new Date();
     var todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -111,6 +123,300 @@ document.addEventListener('DOMContentLoaded', function () {
 
     renderMiniCalendar();
 
+    var gateViewTabs = document.getElementById('gate_view_tabs');
+    var gateShiftFilter = document.getElementById('gate_shift_filter');
+    var schedulePanel = document.getElementById('gate_schedule_panel');
+    var availabilityPanel = document.getElementById('gate_availability_panel');
+    var availabilityList = document.getElementById('gate-availability-list');
+    var availabilityLoaded = false;
+
+    function getMinAllowedDateTime() {
+        var now = new Date();
+        now.setSeconds(0, 0);
+        return new Date(now.getTime() + 4 * 60 * 60 * 1000);
+    }
+
+    function isTimeAllowed(dateStr, time) {
+        if (!dateStr || !time) return true;
+        if (time < '07:00' || time > '19:00') return false;
+        var minAllowed = getMinAllowedDateTime();
+        var selected = new Date(String(dateStr) + 'T' + String(time) + ':00');
+        return selected.getTime() >= minAllowed.getTime();
+    }
+
+    function slotsHash(slots) {
+        return JSON.stringify((slots || []).map(function (s) {
+            var rawTime = String((s && s.time) || '');
+            return [
+                rawTime,
+                !!(s && s.is_available),
+                Number((s && s.available_gates) || 0),
+                !!(s && s.disabled_by_admin),
+                !!(s && s.forced_by_admin),
+                isTimeAllowed(String(paramDate || ''), rawTime)
+            ];
+        }));
+    }
+
+    function getCsrfToken() {
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? String(meta.getAttribute('content') || '') : '';
+    }
+
+    function renderAvailabilityLoading() {
+        if (!availabilityList) return;
+        availabilityList.innerHTML = '<div class="st-dock-availability__empty"><i class="fas fa-spinner fa-spin"></i><p>Loading availability...</p></div>';
+    }
+
+    function renderAvailabilityError(message) {
+        if (!availabilityList) return;
+        availabilityList.innerHTML = '<div class="st-dock-availability__empty st-dock-availability__empty--error"><i class="fas fa-exclamation-triangle"></i><p>' + stEscapeHtml(message || 'Failed to load availability.') + '</p></div>';
+    }
+
+    function renderAvailabilitySlots(slots) {
+        if (!availabilityList) return;
+        if (!Array.isArray(slots) || slots.length === 0) {
+            availabilityList.innerHTML = '<div class="st-dock-availability__empty"><p>No availability data.</p></div>';
+            return;
+        }
+
+        var normalizedSlots = slots.slice().sort(function (a, b) {
+            return String((a && a.time) || '').localeCompare(String((b && b.time) || ''));
+        });
+
+        var visibleSlots = normalizedSlots;
+
+        if (visibleSlots.length === 0) {
+            availabilityList.innerHTML = '<div class="st-dock-availability__empty"><p>No available times.</p></div>';
+            return;
+        }
+
+        var midPoint = Math.ceil(visibleSlots.length / 2);
+        var col1Slots = visibleSlots.slice(0, midPoint);
+        var col2Slots = visibleSlots.slice(midPoint);
+
+        function renderSlotButton(slot) {
+            var rawTime = String((slot && slot.time) || '');
+            var time = stEscapeHtml(rawTime);
+            var gates = Number((slot && slot.available_gates) || 0);
+            var isServerAvailable = !!(slot && slot.is_available);
+            var disabledByAdmin = !!(slot && slot.disabled_by_admin);
+            var forcedByAdmin = !!(slot && slot.forced_by_admin);
+            var timeAllowed = isTimeAllowed(String(paramDate || ''), rawTime);
+            var isAvailable = forcedByAdmin || (isServerAvailable && timeAllowed);
+            var isInactive = !isAvailable;
+            var canToggle = true;
+            var label = isInactive ? 'Not available' : ('Available (' + gates + ' gates)');
+
+            return '<button type="button" class="st-dock-available-item' + (isInactive ? ' st-dock-available-item--inactive' : '') + (canToggle ? '' : ' st-dock-available-item--readonly') + '" data-time="' + time + '" data-gates="' + gates + '" data-can-toggle="' + (canToggle ? '1' : '0') + '" data-server-available="' + (isServerAvailable ? '1' : '0') + '" data-disabled-by-admin="' + (disabledByAdmin ? '1' : '0') + '" data-forced-by-admin="' + (forcedByAdmin ? '1' : '0') + '" data-time-allowed="' + (timeAllowed ? '1' : '0') + '">'
+                + '<span class="st-dock-available-item__time">' + time + '</span>'
+                + '<span class="st-dock-available-item__note">' + label + '</span>'
+                + '<span class="st-dock-available-item__toggle" aria-hidden="true"></span>'
+                + '</button>';
+        }
+
+        var html = '<div class="st-dock-availability-grid">';
+        html += '<div class="st-dock-availability-col"><div class="st-dock-availability-col__slots">';
+        col1Slots.forEach(function (slot) { html += renderSlotButton(slot); });
+        html += '</div></div>';
+
+        html += '<div class="st-dock-availability-col"><div class="st-dock-availability-col__slots">';
+        if (col2Slots.length === 0) {
+            html += '<div class="st-dock-availability__empty st-dock-availability__empty--compact"><p>No slots</p></div>';
+        } else {
+            col2Slots.forEach(function (slot) { html += renderSlotButton(slot); });
+        }
+        html += '</div></div>';
+        html += '</div>';
+
+        availabilityList.innerHTML = html;
+
+        availabilityList.querySelectorAll('.st-dock-available-item__toggle').forEach(function (toggleEl) {
+            toggleEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                var row = this.closest('.st-dock-available-item');
+                if (!row) return;
+
+                var time = String(row.getAttribute('data-time') || '').trim();
+                if (!time) return;
+                if (String(row.getAttribute('data-can-toggle') || '0') !== '1') return;
+
+                var note = row.querySelector('.st-dock-available-item__note');
+                var gatesText = row.getAttribute('data-gates') || '0';
+                var isCurrentlyInactive = row.classList.contains('st-dock-available-item--inactive');
+                var disabledByAdmin = String(row.getAttribute('data-disabled-by-admin') || '0') === '1';
+                var isServerAvailable = String(row.getAttribute('data-server-available') || '0') === '1';
+                var timeAllowed = String(row.getAttribute('data-time-allowed') || '0') === '1';
+
+                // OFF -> ON on default-not-available uses force_available
+                // ON -> OFF always writes disabled=true
+                var payload = {
+                    date: String(paramDate),
+                    time: time,
+                    disabled: false,
+                    force_available: false
+                };
+                if (!isCurrentlyInactive) {
+                    payload.disabled = true;
+                } else if (disabledByAdmin) {
+                    payload.disabled = false;
+                    payload.force_available = false;
+                } else if (!isServerAvailable || !timeAllowed) {
+                    payload.disabled = false;
+                    payload.force_available = true;
+                }
+
+                row.setAttribute('disabled', 'disabled');
+
+                var token = getCsrfToken();
+                if (!disabledTimesUrl || token === '') {
+                    row.removeAttribute('disabled');
+                    return;
+                }
+
+                fetch(disabledTimesUrl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        date: payload.date,
+                        time: payload.time,
+                        disabled: payload.disabled,
+                        force_available: payload.force_available
+                    })
+                })
+                    .then(function (res) {
+                        if (!res.ok) {
+                            throw new Error('Failed to update disabled time');
+                        }
+                        return res.json();
+                    })
+                    .then(function (data) {
+                        if (!data || !data.success) {
+                            throw new Error('Invalid response');
+                        }
+                        loadGateAvailability({ silent: true, force: true });
+                    })
+                    .catch(function () {
+                        if (note) {
+                            note.textContent = row.classList.contains('st-dock-available-item--inactive') ? 'Not available' : ('Available (' + gatesText + ' gates)');
+                        }
+                    })
+                    .finally(function () {
+                        row.removeAttribute('disabled');
+                    });
+            });
+        });
+    }
+
+    function loadGateAvailability(options) {
+        options = options || {};
+        var silent = !!options.silent;
+        var force = !!options.force;
+        if (!availabilityList || !availabilityUrl || !paramDate) return;
+
+        if (!silent || !availabilityList.dataset.rendered) {
+            renderAvailabilityLoading();
+        }
+
+        var query = new URLSearchParams();
+        query.set('date', String(paramDate));
+        selectedWarehouseIds.forEach(function (id) {
+            if (String(id || '').trim() !== '') {
+                query.append('warehouse_id[]', String(id));
+            }
+        });
+
+        fetch(availabilityUrl + '?' + query.toString(), {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error('Failed to load availability.');
+                }
+                return res.json();
+            })
+            .then(function (data) {
+                if (!data || !data.success || !Array.isArray(data.slots)) {
+                    if (!silent) {
+                        renderAvailabilityError('Availability data is not valid.');
+                    }
+                    return;
+                }
+
+                var nextHash = slotsHash(data.slots);
+                if (!force && silent && availabilityList.dataset.slotsHash === nextHash) {
+                    return;
+                }
+
+                availabilityList.dataset.slotsHash = nextHash;
+                renderAvailabilitySlots(data.slots);
+                availabilityList.dataset.rendered = '1';
+                availabilityLoaded = true;
+            })
+            .catch(function () {
+                if (!silent) {
+                    renderAvailabilityError('Failed to load availability.');
+                }
+            });
+    }
+
+    // Hook for global realtime sync in main.js to avoid full page reload on gates page
+    window.ajaxReload = function (silent) {
+        if (availabilityPanel && availabilityPanel.classList.contains('st-dock-view-panel--active')) {
+            loadGateAvailability({ silent: !!silent, force: true });
+        }
+    };
+
+    var availabilityAutoRefreshTimer = null;
+    function startAvailabilityAutoRefresh() {
+        if (availabilityAutoRefreshTimer) return;
+        availabilityAutoRefreshTimer = window.setInterval(function () {
+            if (document.hidden) return;
+            if (!availabilityPanel || !availabilityPanel.classList.contains('st-dock-view-panel--active')) return;
+            loadGateAvailability({ silent: true });
+        }, 2000);
+    }
+
+    startAvailabilityAutoRefresh();
+
+    if (gateViewTabs && schedulePanel && availabilityPanel) {
+        gateViewTabs.addEventListener('click', function (event) {
+            var tabBtn = event.target.closest('.st-dock-view-tab');
+            if (!tabBtn) return;
+            var view = tabBtn.getAttribute('data-view');
+            if (!view) return;
+
+            gateViewTabs.querySelectorAll('.st-dock-view-tab').forEach(function (btn) {
+                btn.classList.remove('st-dock-view-tab--active');
+            });
+            tabBtn.classList.add('st-dock-view-tab--active');
+
+            var isAvailability = view === 'availability';
+            schedulePanel.classList.toggle('st-dock-view-panel--active', !isAvailability);
+            availabilityPanel.classList.toggle('st-dock-view-panel--active', isAvailability);
+            if (gateShiftFilter) {
+                gateShiftFilter.style.visibility = isAvailability ? 'hidden' : 'visible';
+                gateShiftFilter.style.pointerEvents = isAvailability ? 'none' : 'auto';
+            }
+
+            if (isAvailability && !availabilityLoaded) {
+                loadGateAvailability();
+            }
+        });
+    }
+
     // Legend collapsible toggle
     document.querySelectorAll('.st-legend-toggle').forEach(function(toggle) {
         toggle.addEventListener('click', function() {
@@ -121,19 +427,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Interactive toggles demo
-    const toggles = document.querySelectorAll('.st-dock-toggle input');
-    toggles.forEach(t => {
-        t.addEventListener('change', function() {
-            const col = this.closest('.st-dock-col-header');
-            const idx = Array.from(col.parentNode.children).indexOf(col);
+    // Gate active toggles (backup gates) - AJAX, no full page reload
+    const gateToggles = document.querySelectorAll('.st-gate-active-toggle');
+    gateToggles.forEach(t => {
+        t.addEventListener('change', function () {
+            const input = this;
+            const formId = String(input.getAttribute('data-form-id') || '');
+            const form = formId ? document.getElementById(formId) : null;
+            if (!form) return;
+
+            const col = input.closest('.st-dock-col-header');
+            const idx = col && col.parentNode ? Array.from(col.parentNode.children).indexOf(col) : -1;
             if (idx >= 0) {
                 const body = document.querySelector('.st-dock-grid-body');
                 const gateCols = body ? body.querySelectorAll('.st-dock-gate-col') : [];
                 if (gateCols[idx - 1]) {
-                    gateCols[idx - 1].classList.toggle('st-hidden', !this.checked);
+                    gateCols[idx - 1].classList.toggle('st-hidden', !input.checked);
                 }
             }
+
+            const previous = !input.checked;
+            input.disabled = true;
+
+            fetch(form.getAttribute('action') || '', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(function (res) {
+                    if (!res.ok) {
+                        throw new Error('Failed to toggle gate');
+                    }
+                    return res.json();
+                })
+                .then(function (data) {
+                    if (!data || data.success !== true) {
+                        throw new Error('Invalid toggle response');
+                    }
+                })
+                .catch(function () {
+                    input.checked = previous;
+                    if (idx >= 0) {
+                        const body = document.querySelector('.st-dock-grid-body');
+                        const gateCols = body ? body.querySelectorAll('.st-dock-gate-col') : [];
+                        if (gateCols[idx - 1]) {
+                            gateCols[idx - 1].classList.toggle('st-hidden', !input.checked);
+                        }
+                    }
+                })
+                .finally(function () {
+                    input.disabled = false;
+                });
         });
     });
 

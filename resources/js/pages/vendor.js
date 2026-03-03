@@ -752,15 +752,32 @@ function initVendorAvailability(config) {
     };
 
     function loadAvailability() {
+        const options = arguments[0] || {};
+        const silent = !!options.silent;
         const container = document.getElementById('availability-list');
         const date = selectedDate;
         if (!container) return;
 
-        container.innerHTML = '<div class="av-empty"><i class="fas fa-spinner fa-spin av-empty__icon av-empty__icon--spinner"></i><p>Loading availability...</p></div>';
+        if (!silent || !container.dataset.rendered) {
+            container.innerHTML = '<div class="av-empty"><i class="fas fa-spinner fa-spin av-empty__icon av-empty__icon--spinner"></i><p>Loading availability...</p></div>';
+        }
 
         const timeout = setTimeout(() => {
-            container.innerHTML = '<div class="av-empty av-empty--error"><i class="fas fa-exclamation-triangle av-empty__icon av-empty__icon--alert"></i><p>Loading is taking longer than expected. Please try again.</p></div>';
+            if (!silent) {
+                container.innerHTML = '<div class="av-empty av-empty--error"><i class="fas fa-exclamation-triangle av-empty__icon av-empty__icon--alert"></i><p>Loading is taking longer than expected. Please try again.</p></div>';
+            }
         }, 10000);
+
+        function slotsHash(slots) {
+            return JSON.stringify((slots || []).map(s => [
+                String(s.time || ''),
+                !!s.is_available,
+                Number(s.available_gates || 0),
+                !!s.disabled_by_admin,
+                !!s.forced_by_admin,
+                isTimeAllowed(date, s.time)
+            ]));
+        }
 
         fetch(availableSlotsUrl + '?date=' + date, {
             headers: {
@@ -786,32 +803,30 @@ function initVendorAvailability(config) {
                 clearTimeout(timeout);
 
                 if (!data.success || !data.slots) {
-                    container.innerHTML = '<p class="av-empty av-empty--error av-empty--compact">Failed to load</p>';
+                    if (!silent) {
+                        container.innerHTML = '<p class="av-empty av-empty--error av-empty--compact">Failed to load</p>';
+                    }
                     return;
                 }
 
-                // Get all available slots sorted by time
-                const availableSlots = data.slots.filter(s => s.is_available).sort((a, b) => a.time.localeCompare(b.time));
-
-                // Load previously toggled inactive times for this date from localStorage
-                const storageKey = 'vendor_availability_inactive_' + date;
-                let inactiveTimes = [];
-                try {
-                    inactiveTimes = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
-                    if (!Array.isArray(inactiveTimes)) inactiveTimes = [];
-                } catch (e) {
-                    inactiveTimes = [];
+                const nextHash = slotsHash(data.slots);
+                if (silent && container.dataset.slotsHash === nextHash) {
+                    return;
                 }
+                container.dataset.slotsHash = nextHash;
 
-                if (availableSlots.length === 0) {
-                    container.innerHTML = '<p class="av-empty av-empty--compact">No available times</p>';
+                const allSlots = data.slots.slice().sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
+
+                if (allSlots.length === 0) {
+                    container.innerHTML = '<p class="av-empty av-empty--compact">No slots</p>';
+                    container.dataset.rendered = '1';
                     return;
                 }
 
                 // Split into two equal columns
-                const midPoint = Math.ceil(availableSlots.length / 2);
-                const col1Slots = availableSlots.slice(0, midPoint);
-                const col2Slots = availableSlots.slice(midPoint);
+                const midPoint = Math.ceil(allSlots.length / 2);
+                const col1Slots = allSlots.slice(0, midPoint);
+                const col2Slots = allSlots.slice(midPoint);
 
                 // Build 2-column layout (split equally)
                 let html = '<div class="av-shifts-grid">';
@@ -822,14 +837,13 @@ function initVendorAvailability(config) {
                         <div class="av-shift__slots">
                 `;
                 col1Slots.forEach(slot => {
-                    const isAllowed = isTimeAllowed(date, slot.time);
-                    const isInitiallyInactive = isAllowed && inactiveTimes.includes(slot.time);
-                    const label = isAllowed && !isInitiallyInactive ? 'Available' : 'Not available';
+                    const forcedByAdmin = !!(slot && slot.forced_by_admin);
+                    const isAllowed = forcedByAdmin || (!!(slot && slot.is_available) && isTimeAllowed(date, slot.time));
+                    const label = isAllowed ? 'Available' : 'Not available';
                     html += `
-                        <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}${isInitiallyInactive ? ' av-available-item--inactive' : ''}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
+                        <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
                             <span class="av-available-time">${slot.time}</span>
                             <span class="av-available-note">${label}</span>
-                            ${isAllowed ? '<span class="av-available-toggle" title="Toggle active/inactive"></span>' : ''}
                         </button>
                     `;
                 });
@@ -844,14 +858,13 @@ function initVendorAvailability(config) {
                     html += '<div class="av-empty av-empty--compact">No slots</div>';
                 } else {
                     col2Slots.forEach(slot => {
-                        const isAllowed = isTimeAllowed(date, slot.time);
-                        const isInitiallyInactive = isAllowed && inactiveTimes.includes(slot.time);
-                        const label = isAllowed && !isInitiallyInactive ? 'Available' : 'Not available';
+                        const forcedByAdmin = !!(slot && slot.forced_by_admin);
+                        const isAllowed = forcedByAdmin || (!!(slot && slot.is_available) && isTimeAllowed(date, slot.time));
+                        const label = isAllowed ? 'Available' : 'Not available';
                         html += `
-                            <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}${isInitiallyInactive ? ' av-available-item--inactive' : ''}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
+                            <button type="button" class="av-available-item${isAllowed ? '' : ' cb-slot-btn--disabled'}" data-time="${slot.time}" ${isAllowed ? '' : 'disabled'}>
                                 <span class="av-available-time">${slot.time}</span>
                                 <span class="av-available-note">${label}</span>
-                                ${isAllowed ? '<span class="av-available-toggle" title="Toggle active/inactive"></span>' : ''}
                             </button>
                         `;
                     });
@@ -860,41 +873,7 @@ function initVendorAvailability(config) {
 
                 html += '</div>';
                 container.innerHTML = html;
-
-                // Toggle handler only on the small inner toggle icon, so main button still navigates
-                container.querySelectorAll('.av-available-toggle').forEach(tg => {
-                    tg.addEventListener('click', function (ev) {
-                        ev.stopPropagation();
-                        const btn = this.closest('.av-available-item');
-                        if (!btn || btn.hasAttribute('disabled')) return;
-                        const noteEl = btn.querySelector('.av-available-note');
-                        const nowInactive = btn.classList.toggle('av-available-item--inactive');
-                        if (noteEl) {
-                            noteEl.textContent = nowInactive ? 'Not available' : 'Available';
-                        }
-
-                        // Persist manual inactive times per date in localStorage
-                        const time = btn.dataset.time;
-                        if (!time) return;
-                        let current = [];
-                        try {
-                            current = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
-                            if (!Array.isArray(current)) current = [];
-                        } catch (e) {
-                            current = [];
-                        }
-                        if (nowInactive) {
-                            if (!current.includes(time)) current.push(time);
-                        } else {
-                            current = current.filter(t => t !== time);
-                        }
-                        try {
-                            window.localStorage.setItem(storageKey, JSON.stringify(current));
-                        } catch (e) {
-                            // ignore storage errors
-                        }
-                    });
-                });
+                container.dataset.rendered = '1';
 
                 // Add click handlers for navigation to create booking
                 container.querySelectorAll('.av-available-item[data-time]').forEach(btn => {
@@ -902,10 +881,6 @@ function initVendorAvailability(config) {
                         return;
                     }
                     btn.addEventListener('click', () => {
-                        // If slot is manually marked inactive via toggle, do nothing
-                        if (btn.classList.contains('av-available-item--inactive')) {
-                            return;
-                        }
                         const url = new URL(bookingCreateUrl, window.location.origin);
                         url.searchParams.set('date', date);
                         url.searchParams.set('time', btn.dataset.time);
@@ -916,9 +891,22 @@ function initVendorAvailability(config) {
             .catch(error => {
                 clearTimeout(timeout);
                 console.error('Error loading availability:', error);
-                container.innerHTML = `<p class="av-empty av-empty--error av-empty--compact">Error loading availability: ${error.message}</p>`;
+                if (!silent) {
+                    container.innerHTML = `<p class="av-empty av-empty--error av-empty--compact">Error loading availability: ${error.message}</p>`;
+                }
             });
     }
+
+    let availabilityAutoRefreshTimer = null;
+    function startAvailabilityAutoRefresh() {
+        if (availabilityAutoRefreshTimer) return;
+        availabilityAutoRefreshTimer = window.setInterval(() => {
+            if (document.hidden) return;
+            loadAvailability({ silent: true });
+        }, 2000);
+    }
+
+    startAvailabilityAutoRefresh();
 }
 
 function initVendorNotifications() {

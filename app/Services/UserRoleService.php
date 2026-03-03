@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 
 class UserRoleService
@@ -69,8 +70,13 @@ class UserRoleService
      */
     private function getRoleIdByName(string $role): ?int
     {
+        $normalized = trim((string) $role);
+        if ($normalized === '') {
+            return null;
+        }
+
         $roleRecord = DB::table('md_roles')
-            ->where('roles_name', $role)
+            ->whereRaw('LOWER(roles_name) = ?', [strtolower($normalized)])
             ->first();
 
         return $roleRecord ? (int) $roleRecord->id : null;
@@ -177,7 +183,9 @@ class UserRoleService
      */
     public function validateRoleName(string $role): bool
     {
-        return in_array($role, ['admin', 'user', 'manager', 'operator'], true);
+        return DB::table('md_roles')
+            ->whereRaw('LOWER(roles_name) = ?', [strtolower(trim((string) $role))])
+            ->exists();
     }
 
     /**
@@ -186,7 +194,7 @@ class UserRoleService
     public function canDeactivateUser(int $userId): bool
     {
         // Check if user is admin
-        if (!$this->userHasRole($userId, 'admin')) {
+        if (!$this->userHasRole($userId, 'Admin')) {
             return true;
         }
 
@@ -195,7 +203,7 @@ class UserRoleService
             ->join('md_users as u', 'mhr.model_id', '=', 'u.id')
             ->join('md_roles as r', 'mhr.role_id', '=', 'r.id')
             ->where('mhr.model_type', 'App\\Models\\User')
-            ->where('r.roles_name', 'admin')
+            ->whereRaw('LOWER(r.roles_name) = ?', ['admin'])
             ->where('u.is_active', 1)
             ->where('u.id', '<>', $userId)
             ->count();
@@ -210,9 +218,10 @@ class UserRoleService
     {
         $roles = $this->getUserRoles($userId);
         $permissions = [];
+        $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
 
         foreach ($roles as $role) {
-            $rolePermissions = DB::table('md_role_has_permissions as rhp')
+            $rolePermissions = DB::table($roleHasPermissionsTable . ' as rhp')
                 ->join('md_permissions as p', 'rhp.permission_id', '=', 'p.id')
                 ->where('rhp.role_id', $role->id)
                 ->pluck('p.perm_name')

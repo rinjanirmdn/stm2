@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BookingRequest;
 use App\Models\Slot;
 use App\Services\SlotService;
 use App\Services\TransactionReportService;
 use App\Services\ExportService;
 use App\Exports\TransactionsExport;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -15,6 +17,72 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
+    private function adminDisabledTimesCacheKey(string $date): string
+    {
+        return 'admin_gates_disabled_times_' . $date;
+    }
+
+    private function adminForcedTimesCacheKey(string $date): string
+    {
+        return 'admin_gates_forced_times_' . $date;
+    }
+
+    private function getAdminDisabledTimes(string $date): array
+    {
+        $rows = Cache::get($this->adminDisabledTimesCacheKey($date), []);
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        $normalized = array_values(array_unique(array_filter(array_map(function ($time) {
+            $val = trim((string) $time);
+            return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
+        }, $rows))));
+
+        sort($normalized);
+        return $normalized;
+    }
+
+    private function putAdminDisabledTimes(string $date, array $times): void
+    {
+        $normalized = array_values(array_unique(array_filter(array_map(function ($time) {
+            $val = trim((string) $time);
+            return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
+        }, $times))));
+
+        sort($normalized);
+
+        Cache::forever($this->adminDisabledTimesCacheKey($date), $normalized);
+    }
+
+    private function getAdminForcedTimes(string $date): array
+    {
+        $rows = Cache::get($this->adminForcedTimesCacheKey($date), []);
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        $normalized = array_values(array_unique(array_filter(array_map(function ($time) {
+            $val = trim((string) $time);
+            return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
+        }, $rows))));
+
+        sort($normalized);
+        return $normalized;
+    }
+
+    private function putAdminForcedTimes(string $date, array $times): void
+    {
+        $normalized = array_values(array_unique(array_filter(array_map(function ($time) {
+            $val = trim((string) $time);
+            return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
+        }, $times))));
+
+        sort($normalized);
+
+        Cache::forever($this->adminForcedTimesCacheKey($date), $normalized);
+    }
+
     public function __construct(
         private readonly TransactionReportService $transactionService,
         private readonly ExportService $exportService
@@ -406,6 +474,8 @@ class ReportController extends Controller
 
     public function toggleGate(Request $request, int $gateId)
     {
+        $expectsJson = $request->expectsJson() || $request->ajax();
+
         $gate = DB::table('md_gates as g')
             ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->where('g.id', $gateId)
@@ -419,10 +489,22 @@ class ReportController extends Controller
             ->first();
 
         if (! $gate) {
+            if ($expectsJson) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gate not found',
+                ], 404);
+            }
             return redirect()->back()->with('error', 'Gate not found');
         }
 
         if ((int) ($gate->is_backup ?? 0) !== 1) {
+            if ($expectsJson) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only standby/backup gates can be toggled.',
+                ], 422);
+            }
             return redirect()->back()->with('error', 'Only standby/backup gates can be toggled.');
         }
 
@@ -436,6 +518,191 @@ class ReportController extends Controller
         $desc = $new === 1 ? "Gate Activated: {$label}" : "Gate Deactivated: {$label}";
         $slotService->logActivity(null, $activityType, $desc, $old, $new);
 
+        if ($expectsJson) {
+            return response()->json([
+                'success' => true,
+                'gate_id' => $gateId,
+                'is_active' => $new === 1,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Gate status updated');
+    }
+
+    public function ajaxAvailableSlots(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'warehouse_id' => 'nullable|array',
+            'warehouse_id.*' => 'nullable|integer',
+        ]);
+
+        $date = (string) $request->query('date');
+        $warehouseValues = array_values(array_filter((array) $request->query('warehouse_id', []), fn ($v) => (string) $v !== ''));
+        $warehouseIds = array_map('intval', $warehouseValues);
+        $disabledTimes = $this->getAdminDisabledTimes($date);
+        $forcedTimes = $this->getAdminForcedTimes($date);
+        $disabledMap = array_fill_keys($disabledTimes, true);
+        $forcedMap = array_fill_keys($forcedTimes, true);
+        $disabledSig = sha1(json_encode($disabledTimes));
+        $forcedSig = sha1(json_encode($forcedTimes));
+
+        $cacheKey = 'admin_gates_availability_' . $date . '_' . sha1(json_encode($warehouseIds)) . '_' . $disabledSig . '_' . $forcedSig;
+        $cached = Cache::get($cacheKey);
+        if ($cached) {
+            return response()->json($cached);
+        }
+
+        $timeSlots = [];
+        $startTime = strtotime('07:00');
+        $endTime = strtotime('19:00');
+        while ($startTime <= $endTime) {
+            $timeSlots[] = date('H:i', $startTime);
+            $startTime = strtotime('+30 minutes', $startTime);
+        }
+
+        $pendingRequests = BookingRequest::query()
+            ->whereDate('planned_start', $date)
+            ->where('status', BookingRequest::STATUS_PENDING)
+            ->select(['planned_start', 'planned_duration'])
+            ->get();
+
+        $globalBlocked = [];
+        foreach ($pendingRequests as $requestRow) {
+            $start = Carbon::parse($requestRow->planned_start);
+            $slotStart = strtotime($start->format('H:i'));
+            $slotEnd = strtotime('+' . (int) $requestRow->planned_duration . ' minutes', $slotStart);
+            for ($currentTime = $slotStart; $currentTime < $slotEnd; $currentTime = strtotime('+30 minutes', $currentTime)) {
+                $timeKey = date('H:i', $currentTime);
+                $globalBlocked[$timeKey] = true;
+            }
+        }
+
+        $existingSlotsQ = Slot::query()
+            ->whereDate('planned_start', $date)
+            ->whereIn('status', [
+                Slot::STATUS_PENDING_APPROVAL,
+                Slot::STATUS_SCHEDULED,
+                Slot::STATUS_ARRIVED,
+                Slot::STATUS_WAITING,
+                Slot::STATUS_IN_PROGRESS,
+            ])
+            ->select(['planned_start', 'planned_duration', 'planned_gate_id']);
+
+        if (!empty($warehouseIds)) {
+            $existingSlotsQ->whereIn('warehouse_id', $warehouseIds);
+        }
+
+        $existingSlots = $existingSlotsQ->get();
+
+        $timeConflicts = [];
+        foreach ($existingSlots as $slot) {
+            $slotStart = strtotime($slot->planned_start->format('H:i'));
+            $slotEnd = strtotime('+' . (int) $slot->planned_duration . ' minutes', $slotStart);
+            $currentTime = $slotStart;
+            while ($currentTime < $slotEnd) {
+                $timeKey = date('H:i', $currentTime);
+                if (!isset($timeConflicts[$timeKey])) {
+                    $timeConflicts[$timeKey] = [];
+                }
+                $timeConflicts[$timeKey][] = $slot->planned_gate_id;
+                $currentTime = strtotime('+30 minutes', $currentTime);
+            }
+        }
+
+        $totalGatesQ = DB::table('md_gates')->where('is_active', true);
+        if (!empty($warehouseIds)) {
+            $totalGatesQ->whereIn('warehouse_id', $warehouseIds);
+        }
+        $totalGates = (int) $totalGatesQ->count();
+
+        $availableSlots = [];
+        foreach ($timeSlots as $time) {
+            $blockedByAdmin = !empty($disabledMap[$time]);
+            $forcedByAdmin = !empty($forcedMap[$time]);
+            if (!empty($globalBlocked[$time])) {
+                $isAvailable = !$blockedByAdmin && $forcedByAdmin;
+                $availableSlots[] = [
+                    'time' => $time,
+                    'is_available' => $isAvailable,
+                    'available_gates' => $isAvailable ? max(1, $totalGates) : 0,
+                    'disabled_by_admin' => $blockedByAdmin,
+                    'forced_by_admin' => $forcedByAdmin,
+                ];
+                continue;
+            }
+
+            $conflictedGates = $timeConflicts[$time] ?? [];
+            $availableGates = max(0, $totalGates - count(array_unique($conflictedGates)));
+            $isAvailable = $availableGates > 0;
+            if ($blockedByAdmin) {
+                $isAvailable = false;
+                $availableGates = 0;
+            }
+            if ($forcedByAdmin) {
+                $isAvailable = true;
+                $availableGates = max(1, $availableGates);
+            }
+
+            $availableSlots[] = [
+                'time' => $time,
+                'is_available' => $isAvailable,
+                'available_gates' => $availableGates,
+                'disabled_by_admin' => $blockedByAdmin,
+                'forced_by_admin' => $forcedByAdmin,
+            ];
+        }
+
+        $response = [
+            'success' => true,
+            'slots' => $availableSlots,
+        ];
+
+        Cache::put($cacheKey, $response, 300);
+
+        return response()->json($response);
+    }
+
+    public function ajaxToggleDisabledTime(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'time' => ['required', 'regex:/^\d{2}:\d{2}$/'],
+            'disabled' => 'required|boolean',
+            'force_available' => 'nullable|boolean',
+        ]);
+
+        $date = (string) $request->input('date');
+        $time = (string) $request->input('time');
+        $disabled = (bool) $request->boolean('disabled');
+        $forceAvailable = (bool) $request->boolean('force_available');
+
+        $current = $this->getAdminDisabledTimes($date);
+        $forced = $this->getAdminForcedTimes($date);
+
+        // Keep states mutually exclusive
+        $current = array_values(array_filter($current, fn ($t) => (string) $t !== $time));
+        $forced = array_values(array_filter($forced, fn ($t) => (string) $t !== $time));
+
+        if ($disabled) {
+            $current[] = $time;
+        } elseif ($forceAvailable) {
+            $forced[] = $time;
+        }
+
+        $this->putAdminDisabledTimes($date, $current);
+        $this->putAdminForcedTimes($date, $forced);
+
+        Cache::forget('vendor_availability_' . $date);
+
+        return response()->json([
+            'success' => true,
+            'date' => $date,
+            'time' => $time,
+            'disabled' => $disabled,
+            'force_available' => $forceAvailable,
+            'disabled_times' => $this->getAdminDisabledTimes($date),
+            'forced_times' => $this->getAdminForcedTimes($date),
+        ]);
     }
 }

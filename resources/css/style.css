@@ -312,7 +312,8 @@
 .st-main-layout {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    flex: 1;
+    min-height: 0;
 }
 
 .st-topbar--fixed {
@@ -3049,9 +3050,9 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
 }
 
 .st-topbar__brand-logo {
-    height: 70px;
+    height: 40px;
     width: auto;
-    max-width: 320px;
+    max-width: 220px;
     object-fit: contain;
     transform: scale(1.2);
     transform-origin: right center;
