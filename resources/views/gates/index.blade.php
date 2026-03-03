@@ -123,7 +123,7 @@
                 <div class="st-dock-col-header">
                     <span>{{ $label }}</span>
                     <!-- Active Toggle for Backup Gates Only -->
-                    @if($isBackup)
+                    @if($isBackup && !auth()->user()->hasRole('operator|security'))
                         <form method="POST" action="{{ route('gates.toggle', ['gateId' => $g->id]) }}" id="toggle-gate-{{ $g->id }}">
                             @csrf
                             <label class="st-dock-toggle">
