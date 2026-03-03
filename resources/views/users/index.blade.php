@@ -4,6 +4,18 @@
 @section('page_title', 'Users')
 
 @section('content')
+    @if (session('success'))
+        <div class="st-alert st-alert--success st-mb-12">
+            <span class="st-alert__text">{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="st-alert st-alert--error st-mb-12">
+            <span class="st-alert__text">{{ session('error') }}</span>
+        </div>
+    @endif
+
     <div class="st-card st-mb-12">
         <form method="GET" action="{{ route('users.index') }}">
             <div class="st-p-12">

@@ -13,6 +13,12 @@
                     </div>
                 </div>
 
+                @if ($errors->any())
+                    <div class="st-alert st-alert--error st-mb-12">
+                        <span class="st-alert__text">{{ $errors->first() }}</span>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('users.update', ['userId' => $editUser->id]) }}" class="st-form-block">
                     @csrf
 
@@ -57,7 +63,7 @@
 
                     <div class="st-form-field st-form-field--mb-14">
                         <label class="st-label">Confirm New Password</label>
-                        <input type="password" name="password_confirm" class="st-input">
+                        <input type="password" name="password_confirmation" class="st-input">
                     </div>
 
                     <div class="st-form-actions">

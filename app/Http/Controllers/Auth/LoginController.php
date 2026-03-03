@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -24,6 +25,19 @@ class LoginController extends Controller
 
         $login = $credentials['login'];
         $password = $credentials['password'];
+
+        // Check for failed attempts
+        $attemptsKey = 'login_attempts_' . strtolower($login);
+        $attempts = Cache::get($attemptsKey, 0);
+
+        // Lock user after 3 failed attempts
+        if ($attempts >= 3) {
+            return redirect()
+                ->route('forgot-password')
+                ->with('error', 'Your account is locked due to too many failed login attempts. Please request a password reset to regain access.')
+                ->withInput(['login' => $login]);
+        }
+
         $fields = filter_var($login, FILTER_VALIDATE_EMAIL)
             ? ['email', 'username', 'nik']
             : ['username', 'nik', 'email'];
@@ -37,15 +51,35 @@ class LoginController extends Controller
         }
 
         if (! $authed) {
+            // Increment failed attempts
+            Cache::put($attemptsKey, $attempts + 1, now()->addMinutes(30)); // Lock for 30 minutes
+
+            $remainingAttempts = 3 - ($attempts + 1);
+            $message = 'Invalid Email/NIK/username or password';
+
+            if ($remainingAttempts > 0) {
+                $message .= ". {$remainingAttempts} attempts remaining.";
+            } else {
+                // When the user just reached the lock threshold, redirect them straight
+                // to the password reset request form instead of showing the login form.
+                return redirect()
+                    ->route('forgot-password')
+                    ->with('error', 'Your account has been locked after too many failed login attempts. Please request a password reset to regain access.')
+                    ->withInput(['login' => $login]);
+            }
+
             return back()
-                ->withErrors(['login' => 'Invalid Email/NIK/username or password'])
+                ->withErrors(['login' => $message])
                 ->onlyInput('login');
         }
+
+        // Clear failed attempts on successful login
+        Cache::forget($attemptsKey);
 
         $request->session()->regenerate();
 
         $user = $request->user();
-        
+
         if ($user && $user->is_active === false) {
             Auth::logout();
             $request->session()->invalidate();

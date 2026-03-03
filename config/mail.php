@@ -115,4 +115,16 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Email Address
+    |--------------------------------------------------------------------------
+    |
+    | This email address will receive password reset requests from users.
+    | Make sure to set this in your .env file.
+    |
+    */
+
+    'admin_email' => env('ADMIN_EMAIL', 'adm.edockingcs@gmail.com'),
+
 ];

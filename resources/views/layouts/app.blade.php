@@ -152,16 +152,17 @@
                     <img src="{{ asset('img/e-Docking Control System.png') }}" alt="e-Docking Control System" class="st-topbar__brand-logo">
 
                     <!-- Notification Component -->
-                    <div class="st-notification">
-                        <button type="button" class="st-notification-btn" id="st-notification-btn">
-                            <i class="fas fa-bell"></i>
-                            @if(auth()->user()->unreadNotifications->count() > 0)
-                                <span class="st-notification-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
-                            @endif
-                        </button>
+                    @if(auth()->check())
+                        <div class="st-notification">
+                            <button type="button" class="st-notification-btn" id="st-notification-btn">
+                                <i class="fas fa-bell"></i>
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <span class="st-notification-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
+                                @endif
+                            </button>
 
-                        <div class="st-notification-dropdown" id="st-notification-dropdown">
-                            <div class="st-notification-header">
+                            <div class="st-notification-dropdown" id="st-notification-dropdown">
+                                <div class="st-notification-header">
                                 <span>Notifications</span>
                                 <div class="st-notification-actions">
                                     <button type="button" class="st-notification-link" id="st-notification-clear">Clear</button>
@@ -186,9 +187,10 @@
                                         <p class="st-notification-empty__text">No notifications yet</p>
                                     </div>
                                 @endforelse
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
 
                     <details class="st-topbar__menu">
                         <summary class="st-icon-button st-topbar__menu-toggle" title="User menu" aria-label="User menu">

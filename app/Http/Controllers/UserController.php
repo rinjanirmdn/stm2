@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
@@ -76,6 +77,7 @@ class UserController extends Controller
             ->select([
                 'md_users.id',
                 'md_users.nik',
+                'md_users.email',
                 'md_users.full_name',
                 'md_users.role',
                 'md_users.role_id',
@@ -290,12 +292,11 @@ class UserController extends Controller
             'username' => trim($validated['nik']),
             'email' => trim($validated['email']),
             'full_name' => trim($validated['name']),
-            'role' => $validated['role'],
             'vendor_code' => $validated['role'] === 'vendor' ? trim((string) ($validated['vendor_code'] ?? '')) : null,
         ];
-
         $newRole = $validated['role'];
         $roleDisplayName = ucwords(str_replace('_', ' ', (string) $newRole));
+
         $allRoles = $this->roleService->getAllRoles();
         $roleRecord = $allRoles->first(function ($r) use ($roleDisplayName) {
             return strtolower((string) ($r->roles_name ?? '')) === strtolower($roleDisplayName);
@@ -304,11 +305,30 @@ class UserController extends Controller
         $update['role_id'] = $newRoleId;
 
         $password = trim($request->input('password', ''));
+        $passwordChanged = false;
         if ($password !== '') {
             $update['password'] = Hash::make($password);
+            $passwordChanged = true;
         }
 
         DB::table('md_users')->where('id', $userId)->update($update);
+
+        // Clear login lockout cache for this user so they can log in with the new password immediately
+        $loginIdentifiers = [];
+        $loginIdentifiers[] = strtolower(trim($validated['nik']));
+        $loginIdentifiers[] = strtolower(trim($validated['email']));
+
+        // Some systems may still use username separately; include it for safety
+        if (!empty($update['username'])) {
+            $loginIdentifiers[] = strtolower(trim((string) $update['username']));
+        }
+
+        foreach (array_unique($loginIdentifiers) as $identifier) {
+            if ($identifier !== '') {
+                Cache::forget('login_attempts_' . $identifier);
+                Cache::forget('password_reset_request_' . $identifier);
+            }
+        }
 
         // Update role using service
         if ($newRoleId) {
@@ -316,7 +336,38 @@ class UserController extends Controller
             $this->roleService->assignRole($userId, (string) $roleRecord->roles_name);
         }
 
-        return redirect()->route('users.index')->with('success', 'User updated successfully');
+        // Notify user via email when password is changed by admin
+        if ($passwordChanged) {
+            try {
+                $userEmail = trim($validated['email']);
+                $userName = trim($validated['name']);
+
+                if ($userEmail !== '') {
+                    $appName = 'e-Docking Control System';
+
+                    $html = view('emails.password-reset-user', [
+                        'appName'       => $appName,
+                        'userName'      => $userName,
+                        'userEmail'     => $userEmail,
+                        'plainPassword' => $password,
+                    ])->render();
+
+                    Mail::html($html, function ($message) use ($userEmail, $userName, $appName) {
+                        $message->to($userEmail, $userName)
+                                ->subject('[' . $appName . '] Your password has been reset by admin');
+                    });
+                }
+            } catch (\Throwable $e) {
+                // Silent fail: do not block admin flow if email fails
+            }
+        }
+
+        $successMessage = 'User updated successfully';
+        if ($passwordChanged) {
+            $successMessage = 'User updated successfully. Password reset email has been sent to the user.';
+        }
+
+        return redirect()->route('users.index')->with('success', $successMessage);
     }
 
     public function toggle(Request $request, int $userId)
