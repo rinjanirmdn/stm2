@@ -39,11 +39,13 @@ Dokumen ini menjelaskan:
 - **Admin**: full access (semua permission).
 - **Section Head**: mayoritas operasional, tanpa user management/logs.
 - **Operator**: operasional terbatas (process flow lapangan).
+- **Security (Satpam)**: hanya untuk proses scan ticket saat truck arrival.
 - **Vendor**: akses portal vendor (role-based route).
 
 ## Mapping level akses pada master roles
 - **Viewer**: view-only lintas modul.
 - **Operator**: dominan view + aksi proses operasional (arrival/start/complete), bukan full edit master data.
+- **Security (Satpam)**: akses minimal untuk arrival check (lihat slot + submit arrival), tidak untuk start/complete/edit.
 - **Section Head**: mayoritas create/edit operasional (kecuali user management/logs).
 - **Admin / Super Admin / Super Account**: full access.
 
@@ -109,6 +111,12 @@ Level akses create/edit/view-only tetap dipetakan lewat permission set pada role
 2. Akses list/detail operasional yang diizinkan.
 3. Dapat menjalankan flow proses (`arrival/start/complete`) sesuai permission.
 4. Jika memaksa akses create/edit yang tidak diizinkan -> 403 Forbidden.
+
+## Security (Satpam)
+1. Login.
+2. Akses halaman planned yang diperlukan untuk mencari data truk/slot.
+3. Buka halaman arrival dan lakukan scan/submit ticket arrival.
+4. Tidak dapat menjalankan start/complete/cancel/edit/create (403 jika dipaksa).
 
 ## Section Head
 1. Login.

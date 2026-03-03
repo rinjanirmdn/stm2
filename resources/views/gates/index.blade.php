@@ -313,17 +313,23 @@
 
                                 <!-- Dynamic Status Icons -->
                                 @if($slot->status === 'scheduled')
+                                    @can('slots.arrival')
                                     <div class="st-dock-icon-circle st-dock-icon-circle--green" onclick="event.stopPropagation(); window.location.href='{{ route('slots.arrival', $slot->id) }}'" title="Click to mark arrival">
                                         <i class="fas fa-sign-in-alt st-text-10"></i>
                                     </div>
+                                    @endcan
                                 @elseif($slot->status === 'waiting')
+                                    @can('slots.start')
                                     <div class="st-dock-icon-circle st-dock-icon-circle--orange" onclick="event.stopPropagation(); window.location.href='{{ route('slots.start', $slot->id) }}'" title="Click to start">
                                         <i class="fas fa-play st-text-10"></i>
                                     </div>
+                                    @endcan
                                 @elseif($slot->status === 'in_progress')
+                                    @can('slots.complete')
                                     <div class="st-dock-icon-circle st-dock-icon-circle--teal" onclick="event.stopPropagation(); window.location.href='{{ route('slots.complete', $slot->id) }}'" title="Click to complete">
                                         <i class="fas fa-check st-text-10"></i>
                                     </div>
+                                    @endcan
                                 @endif
 
                                 @if($slot->status === 'pending_approval')

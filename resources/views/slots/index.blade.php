@@ -585,14 +585,20 @@
                                                 @endif
 
                                                 @if (!$hasArrival && $status === 'scheduled')
+                                                    @can('slots.arrival')
                                                     <a href="{{ route('slots.arrival', ['slotId' => $row->id]) }}" class="st-action-item">Arrival</a>
+                                                    @endcan
                                                 @elseif (in_array($status, ['waiting'], true))
+                                                    @can('slots.start')
                                                     <a href="{{ route('slots.start', ['slotId' => $row->id]) }}" class="st-action-item">Start</a>
+                                                    @endcan
                                                 @endif
                                             @endif
 
                                             @if ($status === 'in_progress')
+                                                @can('slots.complete')
                                                 <a href="{{ route('slots.complete', ['slotId' => $row->id]) }}" class="st-action-item">Complete</a>
+                                                @endcan
                                             @endif
 
                                             @if ($status === 'scheduled')

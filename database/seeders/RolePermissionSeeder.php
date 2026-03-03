@@ -161,13 +161,16 @@ class RolePermissionSeeder extends Seeder
         $sectionHeadRole->syncPermissions($sectionHeadPermissions);
 
         // Optional mappings for existing master roles
-        // Security: read-only visibility + logs filtering
+        // Security (satpam): only ticket scanning flow at truck arrival
         $securityRole = Role::findOrCreate('Security');
-        $securityRole->syncPermissions(array_values(array_unique(array_merge($viewPermissions, [
-            'logs.index',
-            'logs.filter',
+        $securityRole->syncPermissions([
+            'dashboard.view',
             'profile.index',
-        ]))));
+            'slots.index',
+            'slots.show',
+            'slots.arrival',
+            'slots.arrival.store',
+        ]);
 
         // Super Account: same as Admin by default (can be narrowed later)
         $superAccountRole = Role::findOrCreate('Super Account');

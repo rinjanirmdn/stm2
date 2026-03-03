@@ -329,17 +329,27 @@
 
                 @if (! $isUnplanned)
                     @if (in_array($status, ['scheduled'], true))
+                        @can('slots.arrival')
                         <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs">Arrival</a>
+                        @endcan
                     @elseif ($status === 'waiting')
+                        @can('slots.start')
                         <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Start Slot</a>
+                        @endcan
                     @elseif ($status === 'in_progress')
+                        @can('slots.complete')
                         <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Complete Slot</a>
+                        @endcan
                     @endif
                 @else
                     @if ($status === 'waiting')
+                        @can('slots.start')
                         <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Start Slot</a>
+                        @endcan
                     @elseif ($status === 'in_progress')
+                        @can('slots.complete')
                         <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Complete Slot</a>
+                        @endcan
                     @endif
                 @endif
 
