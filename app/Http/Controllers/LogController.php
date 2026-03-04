@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class LogController extends Controller
 {
@@ -33,6 +34,7 @@ class LogController extends Controller
             'status_change',
             'gate_activation',
             'gate_deactivation',
+            'crud',
         ];
 
         $allowedSorts = [
@@ -43,6 +45,22 @@ class LogController extends Controller
             'po' => 's.po_number',
             'user' => DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)'),
         ];
+
+        $activityTypeCol = Schema::hasColumn('activity_logs', 'activity_type') ? 'activity_type' : 'type';
+        $createdByCol = Schema::hasColumn('activity_logs', 'created_by') ? 'created_by' : 'user_id';
+
+        $usersTable = Schema::hasTable('md_users') ? 'md_users' : 'users';
+        $userNameExpr = $usersTable === 'md_users'
+            ? DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)')
+            : DB::raw('COALESCE(u.name, u.email)');
+
+        $hasNik = Schema::hasColumn($usersTable, 'nik');
+        $hasFullName = Schema::hasColumn($usersTable, 'full_name');
+        $hasName = Schema::hasColumn($usersTable, 'name');
+        $hasEmail = Schema::hasColumn($usersTable, 'email');
+
+        $allowedSorts['activity_type'] = 'al.' . $activityTypeCol;
+        $allowedSorts['user'] = $userNameExpr;
 
         $sorts = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $sorts), fn ($v) => $v !== ''));
         $dirs = array_values(array_map(function ($v) {
@@ -67,23 +85,30 @@ class LogController extends Controller
         $dir = $dirs[0] ?? 'desc';
 
         $logsQ = DB::table('activity_logs as al')
-            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id')
+            ->leftJoin($usersTable . ' as u', 'al.' . $createdByCol, '=', 'u.id')
             ->leftJoin('slots as s', 'al.slot_id', '=', 's.id')
             ->select([
                 'al.id',
                 'al.slot_id',
-                'al.activity_type',
+                DB::raw('al.' . $activityTypeCol . ' as activity_type'),
                 'al.description',
-                'al.old_value',
-                'al.new_value',
-                'al.created_by',
+                DB::raw("NULL as old_value"),
+                DB::raw("NULL as new_value"),
+                DB::raw('al.' . $createdByCol . ' as created_by'),
                 'al.created_at',
-                'u.nik as created_by_nik',
-                'u.full_name as created_by_name',
-                'u.email as created_by_email',
+                DB::raw(($hasNik ? 'u.nik' : 'NULL') . ' as created_by_nik'),
+                DB::raw(($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : ($hasEmail ? 'u.email' : 'NULL'))) . ' as created_by_name'),
+                DB::raw(($hasEmail ? 'u.email' : 'NULL') . ' as created_by_email'),
                 's.mat_doc as slot_mat_doc',
                 's.po_number as slot_po_number',
             ]);
+
+        if (Schema::hasColumn('activity_logs', 'old_value')) {
+            $logsQ->addSelect('al.old_value');
+        }
+        if (Schema::hasColumn('activity_logs', 'new_value')) {
+            $logsQ->addSelect('al.new_value');
+        }
 
         if ($q !== '') {
             $like = '%' . $q . '%';
@@ -96,7 +121,7 @@ class LogController extends Controller
         }
 
         if ($type !== '' && in_array($type, $allowedTypes, true)) {
-            $logsQ->where('al.activity_type', $type);
+            $logsQ->where('al.' . $activityTypeCol, $type);
         } else {
             $type = '';
         }

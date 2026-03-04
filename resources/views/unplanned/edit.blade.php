@@ -61,7 +61,7 @@
                             @php
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
                             @endphp
-                            <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ $slot->actual_gate_id == $gate->id ? 'selected' : '' }}">
+                            <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string) old('actual_gate_id', $slot->actual_gate_id ?? '') === (string) $gate->id ? 'selected' : '' }}>
                                 {{ $gateLabel }}
                             </option>
                         @endforeach

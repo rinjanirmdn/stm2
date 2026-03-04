@@ -15,7 +15,7 @@
                             name="q"
                             form="unplanned-filter-form"
                             class="st-input"
-                            placeholder="PO/DO, MAT DOC, Vendor, Etc"
+                            placeholder="PO, MAT DOC, Vendor, Etc"
                             value="{{ request('q') }}"
                         >
                     </div>
@@ -31,9 +31,7 @@
                 <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end st-gap-8">
                     <a href="{{ route('unplanned.index') }}?sort=reset" class="st-btn st-btn--outline-primary">Reset</a>
                     @can('unplanned.create')
-                    @if(!auth()->user()->hasRole('operator'))
                     <a href="{{ route('unplanned.create') }}" class="st-btn st-btn--primary">Create Unplanned</a>
-                    @endif
                     @endcan
                 </div>
             </div>
@@ -275,11 +273,9 @@
                                     @endif
 
                                     @can('unplanned.edit')
-                                    @if(!auth()->user()->hasRole('operator'))
                                     <a href="{{ route('unplanned.edit', ['slotId' => $slot->id]) }}" class="tw-action" data-tooltip="Edit" aria-label="Edit">
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
-                                    @endif
                                     @endcan
 
                                     <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">

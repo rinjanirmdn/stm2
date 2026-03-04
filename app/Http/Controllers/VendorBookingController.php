@@ -109,14 +109,11 @@ class VendorBookingController extends Controller
     private function notifyAdminsBookingRequest(BookingRequest $bookingRequest): void
     {
         try {
-            $admins = User::whereHas('roles', function ($q) {
-                $q->whereIn(DB::raw('LOWER(roles_name)'), [
-                    'admin',
-                    'section head',
-                    'super admin',
-                    'super administrator',
-                ]);
-            })->get();
+            $admins = User::where('is_active', true)
+                ->whereHas('roles', function ($q) {
+                    $q->whereRaw('LOWER(roles_name) = ?', ['section head']);
+                })
+                ->get();
 
             if ($admins->isEmpty()) {
                 Log::warning('No admin recipients found for booking request notification', [

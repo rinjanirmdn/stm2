@@ -63,7 +63,7 @@ class UserUpdateRequest extends FormRequest
             'role' => [
                 'required',
                 'string',
-                'in:admin,operator,section_head,vendor,security,super_account'
+                'in:admin,operator,section_head,vendor,security,super_account,display_account'
             ],
             'vendor_code' => [
                 'nullable',

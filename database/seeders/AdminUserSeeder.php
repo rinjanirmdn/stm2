@@ -45,11 +45,9 @@ class AdminUserSeeder extends Seeder
 
             if ($user && !empty($userData['role']) && method_exists($user, 'assignRole')) {
                 try {
-                    if (! $user->hasRole($userData['role'])) {
-                        $user->assignRole($userData['role']);
-                    }
+                    $user->assignRole($userData['role']);
                 } catch (\Throwable $e) {
-                    // ignore if role not seeded yet
+                    // no-op
                 }
             }
         }

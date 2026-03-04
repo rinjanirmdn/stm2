@@ -29,13 +29,11 @@
                             <i class="fas fa-camera"></i>
                         </button>
                         @if (!empty($slot->ticket_number) && in_array((string) ($slot->status ?? ''), ['scheduled', 'waiting', 'in_progress'], true))
-                            @unless(optional(auth()->user())->hasRole('Operator'))
                             @can('slots.ticket')
                             <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--pad-md" title="Print Ticket" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
                                 <i class="fas fa-print"></i>
                             </a>
                             @endcan
-                            @endunless
                         @endif
                     </div>
                     <div id="ticket_match_hint" class="st-text--small st-text--danger st-mt-6 st-hidden-soft"></div>

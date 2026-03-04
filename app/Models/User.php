@@ -29,7 +29,6 @@ class User extends Authenticatable
         'vendor_code',
         'password',
         'is_active',
-        'role',
         'role_id',
     ];
 
@@ -71,7 +70,7 @@ class User extends Authenticatable
      */
     public function isVendor(): bool
     {
-        return $this->hasAnyRole(['Vendor', 'vendor']);
+        return !empty($this->vendor_code);
     }
 
     /**

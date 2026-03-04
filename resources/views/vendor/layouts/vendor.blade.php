@@ -66,22 +66,30 @@
         </div>
 
         <nav class="vendor-header__nav">
-            <a href="{{ route('vendor.dashboard') }}" class="vendor-nav-link{{ request()->routeIs('vendor.dashboard') ? ' active' : '' }}">
-                Dashboard
-            </a>
-            <a href="{{ route('vendor.bookings.index') }}" class="vendor-nav-link{{ request()->routeIs('vendor.bookings.*') ? ' active' : '' }}">
-                My Bookings
-            </a>
-            <a href="{{ route('vendor.availability') }}" class="vendor-nav-link{{ request()->routeIs('vendor.availability') ? ' active' : '' }}">
-                Availability
-            </a>
+            @can('vendor.dashboard')
+                <a href="{{ route('vendor.dashboard') }}" class="vendor-nav-link{{ request()->routeIs('vendor.dashboard') ? ' active' : '' }}">
+                    Dashboard
+                </a>
+            @endcan
+            @can('vendor.bookings.index')
+                <a href="{{ route('vendor.bookings.index') }}" class="vendor-nav-link{{ request()->routeIs('vendor.bookings.*') ? ' active' : '' }}">
+                    My Bookings
+                </a>
+            @endcan
+            @can('vendor.availability')
+                <a href="{{ route('vendor.availability') }}" class="vendor-nav-link{{ request()->routeIs('vendor.availability') ? ' active' : '' }}">
+                    Availability
+                </a>
+            @endcan
 
             <span class="vendor-nav-divider" aria-hidden="true"></span>
 
-            <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--nav">
-                <i class="fas fa-plus"></i>
-                New Booking
-            </a>
+            @can('vendor.bookings.create')
+                <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--nav">
+                    <i class="fas fa-plus"></i>
+                    New Booking
+                </a>
+            @endcan
         </nav>
 
         <div class="vendor-header__user">
@@ -91,43 +99,45 @@
             </div>
 
             <!-- Notification Component -->
-            <div class="vendor-notification">
-                <button type="button" class="vendor-nav-link vendor-notification__toggle" id="notification-btn">
-                    <i class="fas fa-bell"></i>
-                    @if(auth()->user()->unreadNotifications->count() > 0)
-                        <span class="notification-badge" id="notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
-                    @endif
-                </button>
+            @can('notifications.index')
+                <div class="vendor-notification">
+                    <button type="button" class="vendor-nav-link vendor-notification__toggle" id="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        @if(auth()->user()->unreadNotifications->count() > 0)
+                            <span class="notification-badge" id="notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
+                        @endif
+                    </button>
 
-                <div class="notification-dropdown" id="notification-dropdown">
-                    <div class="notification-header">
-                        <span>Notifications</span>
-                        <div class="notification-actions">
-                            <button type="button" id="notification-clear" class="notification-action-btn notification-action-btn--ghost">Clear</button>
-                            <button type="button" id="notification-mark-all" class="notification-action-btn">Mark all read</button>
+                    <div class="notification-dropdown" id="notification-dropdown">
+                        <div class="notification-header">
+                            <span>Notifications</span>
+                            <div class="notification-actions">
+                                <button type="button" id="notification-clear" class="notification-action-btn notification-action-btn--ghost">Clear</button>
+                                <button type="button" id="notification-mark-all" class="notification-action-btn">Mark all read</button>
+                            </div>
+                        </div>
+                        <div class="notification-list">
+                            @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
+                                <a href="{{ $notification->data['action_url'] ?? '#' }}" class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}" data-notification-id="{{ $notification->id }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                    <div class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
+                                        <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
+                                    </div>
+                                    <div class="notification-content">
+                                        <p><strong>{{ $notification->data['title'] ?? 'Notification' }}</strong></p>
+                                        <p>{{ $notification->data['message'] ?? '' }}</p>
+                                        <span class="notification-time">{{ $notification->created_at->diffForHumans() }}</span>
+                                    </div>
+                                </a>
+                            @empty
+                                <div class="notification-empty">
+                                    <i class="fas fa-bell-slash notification-empty__icon"></i>
+                                    <p>No notifications yet</p>
+                                </div>
+                            @endforelse
                         </div>
                     </div>
-                    <div class="notification-list">
-                        @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
-                            <a href="{{ $notification->data['action_url'] ?? '#' }}" class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}" data-notification-id="{{ $notification->id }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
-                                <div class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
-                                    <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
-                                </div>
-                                <div class="notification-content">
-                                    <p><strong>{{ $notification->data['title'] ?? 'Notification' }}</strong></p>
-                                    <p>{{ $notification->data['message'] ?? '' }}</p>
-                                    <span class="notification-time">{{ $notification->created_at->diffForHumans() }}</span>
-                                </div>
-                            </a>
-                        @empty
-                            <div class="notification-empty">
-                                <i class="fas fa-bell-slash notification-empty__icon"></i>
-                                <p>No notifications yet</p>
-                            </div>
-                        @endforelse
-                    </div>
                 </div>
-            </div>
+            @endcan
 
             <a href="{{ route('profile') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm" title="Profile">
                 <i class="fas fa-user"></i>
@@ -185,13 +195,13 @@
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-date-range-picker@0.21.1/dist/jquery.daterangepicker.min.js"></script>
     @php
-        $stVendorLatestUrl = \Illuminate\Support\Facades\Route::has('notifications.latest')
+        $stVendorLatestUrl = (auth()->check() && auth()->user()->can('notifications.latest') && \Illuminate\Support\Facades\Route::has('notifications.latest'))
             ? route('notifications.latest')
             : null;
-        $stVendorMarkAllUrl = \Illuminate\Support\Facades\Route::has('notifications.markAllRead')
+        $stVendorMarkAllUrl = (auth()->check() && auth()->user()->can('notifications.readAll') && \Illuminate\Support\Facades\Route::has('notifications.markAllRead'))
             ? route('notifications.markAllRead')
             : null;
-        $stVendorClearUrl = \Illuminate\Support\Facades\Route::has('notifications.clearAll')
+        $stVendorClearUrl = (auth()->check() && auth()->user()->can('notifications.clearAll') && \Illuminate\Support\Facades\Route::has('notifications.clearAll'))
             ? route('notifications.clearAll')
             : null;
     @endphp

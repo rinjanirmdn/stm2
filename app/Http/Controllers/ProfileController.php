@@ -13,7 +13,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         // Check if user is vendor (by role or vendor_code) and return vendor-specific view
-        if ($user->hasAnyRole(['Vendor', 'vendor']) || !empty($user->vendor_code)) {
+        if (!empty($user->vendor_code)) {
             return view('vendor.profile.index', [
                 'user' => $user,
             ]);
@@ -45,8 +45,8 @@ class ProfileController extends Controller
 
         // Update password if provided (ADMIN ONLY)
         if ($request->filled('new_password')) {
-            // Only allow admin users to update password
-            if (!$user->hasAnyRole(['Admin', 'Super Admin', 'Super Account', 'admin'])) {
+            // Only allow users with explicit permission to update password
+            if (! $user->can('profile.change_password')) {
                 return back()->with('error', 'Only administrators can change passwords. Please contact your admin for password assistance.');
             }
 

@@ -89,7 +89,7 @@
                 <span class="st-profile-section-badge">Optional</span>
             </div>
             <div class="st-profile-section-body">
-                @if ($user->hasRole('admin'))
+                @if ($user->can('profile.change_password'))
                     <div class="st-profile-field">
                         <label class="st-profile-label">Current Password</label>
                         <input type="password" name="current_password" class="st-profile-input" placeholder="Enter current password">
@@ -144,7 +144,7 @@
         </div>
     </form>
 
-    @if (! $user->hasRole('admin'))
+    @if (! $user->can('profile.change_password'))
         <form id="vendor-password-request-form" method="POST" action="{{ route('profile.password-request') }}" style="display:none;">
             @csrf
         </form>

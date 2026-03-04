@@ -193,7 +193,6 @@
     </div>
 
     @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
-        @unless(optional(auth()->user())->hasRole('Operator'))
         @can('slots.ticket')
         <div class="st-form-actions st-justify-end st-mb-12">
             <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
@@ -201,7 +200,6 @@
             </a>
         </div>
         @endcan
-        @endunless
     @endif
 
     @if ($logs && count($logs) > 0)

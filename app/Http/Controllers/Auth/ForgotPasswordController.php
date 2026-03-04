@@ -49,7 +49,7 @@ class ForgotPasswordController extends Controller
         $appName = 'e-Docking Control System';
         $companyName = 'PT Oneject Indonesia';
         $logoUrl = url('/img/e-Docking Control System.png');
-        $adminEditUrl = route('users.edit', $user->id);
+        $adminEditUrl = route('users.edit', ['userId' => $user->id, 'from_reset_email' => 1]);
 
         try {
             $html = view('emails.password-reset-request-admin', [
@@ -107,7 +107,7 @@ class ForgotPasswordController extends Controller
         $appName = 'e-Docking Control System';
         $companyName = 'PT Oneject Indonesia';
         $logoUrl = url('/img/e-Docking Control System.png');
-        $adminEditUrl = route('users.edit', $user->id);
+        $adminEditUrl = route('users.edit', ['userId' => $user->id, 'from_reset_email' => 1]);
 
         try {
             $html = view('emails.password-reset-request-admin', [

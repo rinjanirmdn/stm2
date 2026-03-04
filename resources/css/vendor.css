@@ -71,9 +71,9 @@
 }
 
 .vendor-header__logo--full {
-    height: 150px;
-
-    transform: translateY(2px);
+    height: 40px;
+    max-width: 420px;
+    transform: none;
 }
 
 .vendor-header__title {

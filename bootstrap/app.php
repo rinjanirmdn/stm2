@@ -21,9 +21,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\TouchRealtimeVersion::class,
         ]);
 
+        $middleware->web(append: [
+            \App\Http\Middleware\ActivityLogMiddleware::class,
+        ]);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'vendor.portal' => \App\Http\Middleware\VendorPortalMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

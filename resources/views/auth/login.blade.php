@@ -11,15 +11,15 @@
         url('{{ asset('img/bg_login.jpg') }}') center center / cover no-repeat fixed;">
     <div class="st-minh-screen st-flex st-items-center st-justify-center">
         <div class="st-card st-w-full st-maxw-420 st-p-18">
-            <div class="st-flex st-justify-center st-items-center st-mb-16">
-                <img src="{{ asset('img/e-Docking Control System.png') }}" alt="e-DCS" class="st-login-logo">
+            <div class="st-flex st-justify-center st-items-center st-mb-8">
+                <img src="{{ asset('img/logo-full.png') }}" alt="e-DCS" class="st-login-logo">
             </div>
 
             <div class="st-text-center">
                 <div class="st-text-16 st-font-bold">Sign in</div>
                 <div class="st-text--sm st-text--muted">Please sign in to continue</div>
             </div>
-
+            <br>
             @php
                 $isLocked = $errors->any() && (str_contains($errors->first(), 'locked') || str_contains($errors->first(), 'Account locked'));
             @endphp

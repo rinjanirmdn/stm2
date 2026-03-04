@@ -269,7 +269,7 @@
 
 /* Login page: logo sizing */
 .st-login-logo {
-    max-height: 48px;
+    max-height: 60px;
     width: auto;
     display: block;
 }
@@ -2221,7 +2221,7 @@
     /* Tablet and desktop logo adjustments */
     .st-sidebar__logo-stack--oneject .st-sidebar__logo--full {
         max-width: 90%;
-        max-height: 42px;
+        max-height: 110px;
     }
 }
 
@@ -2720,7 +2720,7 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
 }
 
 .st-sidebar__logo--oneject-full {
-    max-height: 60px;
+    max-height: 84px;
 }
 
 .st-sidebar__logo--icon {
@@ -3028,6 +3028,55 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
     gap: 10px;
 }
 
+.st-topbar__center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.st-topbar__center-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.st-topbar__center-logo {
+    height: 34px;
+    width: auto;
+    max-width: min(360px, 40vw);
+    object-fit: contain;
+    filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.22)) drop-shadow(0 1px 2px rgba(15, 23, 42, 0.2));
+    opacity: 0.95;
+}
+
+.st-topbar__center-logo--gradient {
+    display: inline-block;
+    height: 34px;
+    width: min(360px, 40vw);
+    background: linear-gradient(90deg, #ff6a3d 0%, #f59e0b 35%, #a78bfa 70%, #22c55e 100%);
+    -webkit-mask-image: url('/img/e-Docking%20Control%20System.png');
+    mask-image: url('/img/e-Docking%20Control%20System.png');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.22)) drop-shadow(0 1px 2px rgba(15, 23, 42, 0.2));
+    opacity: 0.98;
+}
+
+@supports not ((-webkit-mask-image: url("")) or (mask-image: url(""))) {
+    .st-topbar__center-logo--gradient {
+        background: url('/img/e-Docking%20Control%20System.png') center / contain no-repeat;
+    }
+}
+
 .st-topbar__user-info {
     display: flex;
     flex-direction: column;
@@ -3296,6 +3345,10 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
         padding: 0 16px;
     }
 
+    .st-topbar__center {
+        display: none;
+    }
+
     .st-content {
         padding: 12px 12px 20px;
     }
@@ -3468,8 +3521,8 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
 
     .st-sidebar__logo--full {
         display: block;
-        max-width: 120px;
-        height: 32px;
+        max-width: 190px;
+        height: 44px;
     }
 
     .st-sidebar__logo--icon {

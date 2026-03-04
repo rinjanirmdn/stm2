@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Role;
 use App\Models\Permission;
+use Illuminate\Support\Facades\DB;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -23,6 +24,10 @@ class RolePermissionSeeder extends Seeder
             'bookings.approve',
             'bookings.reject',
             'bookings.reschedule',
+            'bookings.ajax.calendar',
+            'bookings.ajax.pending_count',
+            'bookings.ajax.reminders',
+            'bookings.ajax.check_gate',
 
             'slots.index',
             'slots.create',
@@ -53,6 +58,12 @@ class RolePermissionSeeder extends Seeder
             'unplanned.store',
             'unplanned.edit',
             'unplanned.update',
+            'unplanned.delete',
+            'unplanned.show',
+            'unplanned.start',
+            'unplanned.start.store',
+            'unplanned.complete',
+            'unplanned.complete.store',
 
             'reports.transactions',
             'reports.search_suggestions',
@@ -89,6 +100,9 @@ class RolePermissionSeeder extends Seeder
             'gates.stream',
             'gates.api_index',
             'gates.toggle',
+            'gates.availability',
+            'gates.ajax.available_slots',
+            'gates.ajax.disabled_times',
 
             'logs.index',
             'logs.filter',
@@ -99,6 +113,28 @@ class RolePermissionSeeder extends Seeder
             'sap.health',
 
             'profile.index',
+            'profile.change_password',
+
+            'vendor.dashboard',
+            'vendor.bookings.index',
+            'vendor.bookings.create',
+            'vendor.bookings.store',
+            'vendor.bookings.show',
+            'vendor.bookings.ticket',
+            'vendor.bookings.cancel',
+            'vendor.availability',
+            'vendor.ajax.available_slots',
+            'vendor.ajax.check_availability',
+            'vendor.ajax.truck_type_duration',
+            'vendor.ajax.calendar_slots',
+            'vendor.ajax.po_search',
+            'vendor.ajax.po_detail',
+
+            'notifications.index',
+            'notifications.markAsRead',
+            'notifications.readAll',
+            'notifications.clearAll',
+            'notifications.latest',
 
             'checkin.show',
             'checkin.store',
@@ -112,48 +148,61 @@ class RolePermissionSeeder extends Seeder
             Permission::findOrCreate($permission);
         }
 
+        // Cleanup obsolete permissions: remove anything not declared above
+        try {
+            $toDelete = Permission::query()->whereNotIn('name', $permissions)->get();
+            foreach ($toDelete as $perm) {
+                try {
+                    $perm->roles()->detach();
+                } catch (\Throwable $e) {
+                    // no-op
+                }
+                $perm->delete();
+            }
+        } catch (\Throwable $e) {
+            // no-op
+        }
+
         // Create admin role with all permissions
         $adminRole = Role::findOrCreate('Admin');
         $adminRole->syncPermissions(Permission::all());
 
-        // Super Admin from master roles also gets full access
-        $superAdminRole = Role::findOrCreate('Super Admin');
-        $superAdminRole->syncPermissions(Permission::all());
-
         // Create vendor role based on master role name
         $vendorRole = Role::findOrCreate('Vendor');
         $vendorRole->syncPermissions([
+            'profile.index',
+            'vendor.dashboard',
+            'vendor.bookings.index',
+            'vendor.bookings.create',
+            'vendor.bookings.store',
+            'vendor.bookings.show',
+            'vendor.bookings.ticket',
+            'vendor.bookings.cancel',
+            'vendor.availability',
+            'vendor.ajax.available_slots',
+            'vendor.ajax.check_availability',
+            'vendor.ajax.truck_type_duration',
+            'vendor.ajax.calendar_slots',
+            'vendor.ajax.po_search',
+            'vendor.ajax.po_detail',
+            'notifications.index',
+            'notifications.markAsRead',
+            'notifications.readAll',
+            'notifications.clearAll',
+            'notifications.latest',
+        ]);
+
+        // Display Account: dashboard menu only + profile
+        $displayAccountRole = Role::findOrCreate('Display Account');
+        $displayAccountRole->syncPermissions([
             'dashboard.view',
             'profile.index',
         ]);
-
-        // Access-level mapping with existing master role: Viewer = view-only
-        $viewerRole = Role::findOrCreate('Viewer');
-
-        $viewPermissions = array_values(array_filter($permissions, function ($perm) {
-            if (in_array($perm, ['profile.index', 'dashboard.range_filter'], true)) {
-                return true;
-            }
-            return preg_match('/(\.view|\.index|\.show|\.search_suggestions|\.api_index|\.stream)$/', $perm) === 1;
-        }));
-
-        $createPermissions = array_values(array_filter($permissions, function ($perm) {
-            return preg_match('/(\.create|\.store)$/', $perm) === 1;
-        }));
-
-        $editPermissions = array_values(array_filter($permissions, function ($perm) {
-            return preg_match('/(\.edit|\.update)$/', $perm) === 1;
-        }));
-
-        $viewerRole->syncPermissions($viewPermissions);
 
         // Create section_head role with permissions as needed
         $sectionHeadRole = Role::findOrCreate('Section Head');
         $sectionHeadPermissions = array_values(array_filter($permissions, function ($perm) {
             if (str_starts_with($perm, 'users.')) {
-                return false;
-            }
-            if (str_starts_with($perm, 'logs.')) {
                 return false;
             }
             return true;
@@ -164,17 +213,17 @@ class RolePermissionSeeder extends Seeder
         // Security (satpam): only ticket scanning flow at truck arrival
         $securityRole = Role::findOrCreate('Security');
         $securityRole->syncPermissions([
-            'dashboard.view',
             'profile.index',
             'slots.index',
             'slots.show',
             'slots.arrival',
             'slots.arrival.store',
+            'gates.index',
+            'gates.api_index',
+            'gates.stream',
+            'gates.ajax.available_slots',
+            'gates.ajax.disabled_times',
         ]);
-
-        // Super Account: same as Admin by default (can be narrowed later)
-        $superAccountRole = Role::findOrCreate('Super Account');
-        $superAccountRole->syncPermissions(Permission::all());
 
         // Create operator role with limited permissions (only arrival, start, complete)
         $operatorRole = Role::findOrCreate('Operator');
@@ -197,11 +246,15 @@ class RolePermissionSeeder extends Seeder
             'slots.ajax.recommend_gate',
             'slots.ajax.schedule_preview',
             'unplanned.index',
+            'unplanned.show',
+            'unplanned.start',
+            'unplanned.start.store',
+            'unplanned.complete',
+            'unplanned.complete.store',
             'reports.transactions',
             'reports.search_suggestions',
             'trucks.index',
             'gates.index',
-            'gates.toggle',
             'logs.index',
             'logs.filter',
             'profile.index',
@@ -209,34 +262,54 @@ class RolePermissionSeeder extends Seeder
             'checkin.store',
         ]);
 
-        // Create super account role (no users access)
+        // Super Account: all permissions except users.*
         $superAccountRole = Role::findOrCreate('Super Account');
         $superAccountPermissions = array_values(array_filter($permissions, function ($perm) {
-            if (str_starts_with($perm, 'users.')) {
-                return false;
-            }
-            return true;
+            return !str_starts_with($perm, 'users.');
         }));
-        $superAccountRole->givePermissionTo($superAccountPermissions);
+        $superAccountRole->syncPermissions($superAccountPermissions);
 
-        // Create security role (only planned and gates)
-        $securityRole = Role::findOrCreate('Security');
-        $securityRole->givePermissionTo([
-            'dashboard.view',
-            'dashboard.range_filter',
-            'slots.index',
-            'slots.show',
-            'slots.search_suggestions',
-            'slots.ajax.po_search',
-            'slots.ajax.po_detail',
-            'slots.ajax.check_risk',
-            'slots.ajax.check_slot_time',
-            'slots.ajax.recommend_gate',
-            'slots.ajax.schedule_preview',
-            'gates.index',
-            'gates.toggle',
-            'profile.index',
-        ]);
+        // Enforce role whitelist: keep only required roles
+        $rolesToKeep = [
+            'Admin',
+            'Section Head',
+            'Operator',
+            'Security',
+            'Vendor',
+            'Display Account',
+            'Super Account',
+        ];
+
+        $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
+        $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
+        $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
+
+        $keepRoleIds = Role::query()->whereIn('roles_name', $rolesToKeep)->pluck('id')->all();
+        $rolesToDelete = Role::query()->whereNotIn('roles_name', $rolesToKeep)->pluck('id')->all();
+
+        // Migrate known legacy roles
+        $adminRoleId = Role::query()->where('roles_name', 'Admin')->value('id');
+        $displayRoleId = Role::query()->where('roles_name', 'Display Account')->value('id');
+
+        $superAdminRoleId = Role::query()->where('roles_name', 'Super Admin')->value('id');
+        if ($superAdminRoleId && $adminRoleId) {
+            DB::table($modelHasRolesTable)->where('role_id', $superAdminRoleId)->update(['role_id' => $adminRoleId]);
+        }
+
+        $viewerRoleId = Role::query()->where('roles_name', 'Viewer')->value('id');
+        if ($viewerRoleId && $displayRoleId) {
+            DB::table($modelHasRolesTable)->where('role_id', $viewerRoleId)->update(['role_id' => $displayRoleId]);
+        }
+
+        // For any remaining deleted roles, fallback migrate to Display Account (minimal access)
+        if (!empty($rolesToDelete) && $displayRoleId) {
+            DB::table($modelHasRolesTable)->whereIn('role_id', $rolesToDelete)->update(['role_id' => $displayRoleId]);
+        }
+
+        if (!empty($rolesToDelete)) {
+            DB::table($roleHasPermissionsTable)->whereIn('role_id', $rolesToDelete)->delete();
+            Role::query()->whereIn('id', $rolesToDelete)->delete();
+        }
 
         // Assign admin role to user with username admin or first user
         $adminUser = \App\Models\User::where('nik', 'admin')->first();

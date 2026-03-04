@@ -20,7 +20,7 @@
                     <select name="type" class="st-select">
                         <option value="">All</option>
                         @foreach ($allowedTypes as $t)
-                            <option value="{{ $t }}" {{ ($type ?? '') === $t ? 'selected' : '' }}>{{ ucwords(str_replace('_', ' ', $t)) }}</option>
+                            <option value="{{ $t }}" {{ ($type ?? '') === $t ? 'selected' : '' }}>{{ strtolower((string) $t) === 'crud' ? 'CRUD' : ucwords(str_replace('_', ' ', $t)) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -124,8 +124,14 @@
                                     if ($i > 0 && in_array($lower, $conjunctions)) {
                                         $words[$i] = $lower;
                                     } else {
-                                        // Capitalize first letter, keep existing case for the rest (preserves abbreviations like PO)
-                                        $words[$i] = ucfirst($w);
+                                        // Preserve casing for tokens with digits or already-uppercase codes (e.g. WH2, B26b0002)
+                                        $hasDigit = preg_match('/\d/', $w) === 1;
+                                        $isUpper = $w !== '' && strtoupper($w) === $w;
+                                        if ($hasDigit || $isUpper) {
+                                            $words[$i] = $w;
+                                        } else {
+                                            $words[$i] = ucfirst($w);
+                                        }
                                     }
                                 }
                                 return implode(' ', $words);
@@ -155,7 +161,7 @@
                                         }
                                     @endphp
                                     <span class="st-table__status-badge {{ $typeClass }}">
-                                        {{ ucwords(str_replace('_', ' ', $t)) }}
+                                        {{ strtolower((string) $t) === 'crud' ? 'CRUD' : ucwords(str_replace('_', ' ', $t)) }}
                                     </span>
                                 </td>
                                 <td>{{ $formatDescription($row->description ?? '') }}</td>
