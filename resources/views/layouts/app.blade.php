@@ -151,7 +151,7 @@
 
                 <div class="st-topbar__center" aria-hidden="true">
                     <a href="{{ route('dashboard') }}" class="st-topbar__center-link" tabindex="-1">
-                        <span class="st-topbar__center-logo st-topbar__center-logo--gradient" aria-label="e-Docking Control System"></span>
+                        <img src="{{ asset('img/e-Docking Control System.png') }}" alt="e-Docking Control System" class="st-topbar__center-logo">
                     </a>
                 </div>
 
