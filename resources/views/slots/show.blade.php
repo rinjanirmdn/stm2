@@ -309,7 +309,7 @@
                     @endcan
 
                     @can('bookings.approve')
-                        <form action="{{ route('slots.approve', $slot->id) }}" method="POST" class="st-inline-block">
+                        <form action="{{ route('bookings.approve', $slot->id) }}" method="POST" class="st-inline-block">
                             @csrf
                             @method('POST')
                             <button type="submit" class="st-btn st-btn--primary st-btn--xs" onclick="return confirm('Are You Sure You Want to Approve This Booking?')">
@@ -396,7 +396,7 @@
     <div id="reject-dialog" class="st-dialog-overlay st-dialog-overlay--hidden">
         <div class="st-card st-w-full st-maxw-400 st-p-20">
             <h3 class="st-card__title">Reject Booking</h3>
-            <form action="{{ route('slots.reject', $slot->id) }}" method="POST">
+            <form action="{{ route('bookings.reject', $slot->id) }}" method="POST">
                 @csrf
                 <div class="st-form-field">
                     <label class="st-label">Reason</label>

@@ -88,8 +88,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isSunday) dayDiv.classList.add('av-calendar__day--sunday');
             if (isHoliday) dayDiv.classList.add('av-calendar__day--holiday');
 
-            dayDiv.addEventListener('click', function(ds) {
-                return function() {
+            dayDiv.addEventListener('click', function (ds) {
+                return function () {
                     document.getElementById('selected_date_display').innerText = new Date(ds).toLocaleDateString('en-GB').replace(/\//g, '.');
                     var baseUrl = gatesIndexUrl || window.location.pathname;
                     window.location.href = baseUrl + '?date_from=' + encodeURIComponent(ds);
@@ -109,13 +109,13 @@ document.addEventListener('DOMContentLoaded', function () {
     var prevBtn = document.getElementById('dock_calendar_prev');
     var nextBtn = document.getElementById('dock_calendar_next');
     if (prevBtn) {
-        prevBtn.addEventListener('click', function() {
+        prevBtn.addEventListener('click', function () {
             currentDate.setMonth(currentDate.getMonth() - 1);
             renderMiniCalendar();
         });
     }
     if (nextBtn) {
-        nextBtn.addEventListener('click', function() {
+        nextBtn.addEventListener('click', function () {
             currentDate.setMonth(currentDate.getMonth() + 1);
             renderMiniCalendar();
         });
@@ -418,8 +418,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Legend collapsible toggle
-    document.querySelectorAll('.st-legend-toggle').forEach(function(toggle) {
-        toggle.addEventListener('click', function() {
+    document.querySelectorAll('.st-legend-toggle').forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
             var group = this.closest('.st-legend-group');
             if (group) {
                 group.classList.toggle('st-legend-group--collapsed');
@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    document.querySelectorAll('.st-dock-card').forEach(function(card) {
+    document.querySelectorAll('.st-dock-card').forEach(function (card) {
         var top = card.dataset.top;
         var height = card.dataset.height;
         if (top) {
@@ -496,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    document.querySelectorAll('.st-dock-time-line[data-top]').forEach(function(line) {
+    document.querySelectorAll('.st-dock-time-line[data-top]').forEach(function (line) {
         var top = line.dataset.top;
         if (top) {
             line.style.top = top + 'px';
@@ -539,10 +539,10 @@ window.closeRejectModal = function () {
 var shiftFilter = document.getElementById('gate_shift_filter');
 if (shiftFilter) {
     var shiftRanges = {
-        full:   { start: 0, end: 23 },
-        shift1: { start: 7, end: 14 },
-        shift2: { start: 15, end: 22 },
-        shift3: { start: 23, end: 6, wrap: true }
+        full: { start: 0, end: 23 },
+        shift1: { start: 7, end: 15 },
+        shift2: { start: 15, end: 23 },
+        shift3: { start: 23, end: 7, wrap: true }
     };
 
     // Build ordered list of hours for a shift
@@ -574,11 +574,12 @@ if (shiftFilter) {
         var hours = getShiftHours(range);
         var hourMap = buildHourToSlotIndex(hours);
         var slotHeight = 60; // px per hour slot
+        var colHeight = hours.length * slotHeight;
 
         // Rebuild time column with correct hour order
         if (timeCol) {
             timeCol.innerHTML = '';
-            hours.forEach(function(h) {
+            hours.forEach(function (h) {
                 var div = document.createElement('div');
                 div.className = 'st-dock-time-slot';
                 div.setAttribute('data-hour', h);
@@ -588,15 +589,14 @@ if (shiftFilter) {
         }
 
         // Adjust gate column heights
-        var colHeight = hours.length * slotHeight;
-        document.querySelectorAll('.st-dock-gate-col').forEach(function(col) {
+        document.querySelectorAll('.st-dock-gate-col').forEach(function (col) {
             col.style.height = colHeight + 'px';
             // Update background grid lines to match
             col.style.backgroundSize = '100% ' + slotHeight + 'px';
         });
 
         // Reposition slot cards
-        document.querySelectorAll('.st-dock-card').forEach(function(card) {
+        document.querySelectorAll('.st-dock-card').forEach(function (card) {
             var origTop = parseInt(card.dataset.top, 10) || 0;
             var origHeight = parseInt(card.dataset.height, 10) || 60;
             var cardHour = Math.floor(origTop / 60);
@@ -606,15 +606,18 @@ if (shiftFilter) {
             if (typeof hourMap[cardHour] !== 'undefined') {
                 card.style.display = '';
                 var newTop = hourMap[cardHour] * slotHeight + minuteInHour;
+                // Clamp card height so it doesn't overflow beyond the grid
+                var maxHeight = colHeight - newTop;
+                var clampedHeight = Math.min(origHeight, Math.max(maxHeight, 20));
                 card.style.top = newTop + 'px';
-                card.style.height = origHeight + 'px';
+                card.style.height = clampedHeight + 'px';
             } else {
                 card.style.display = 'none';
             }
         });
 
         // Reposition current time line
-        document.querySelectorAll('.st-dock-time-line').forEach(function(line) {
+        document.querySelectorAll('.st-dock-time-line').forEach(function (line) {
             var origTop = parseInt(line.dataset.top, 10) || 0;
             var lineHour = Math.floor(origTop / 60);
             var minuteInHour = origTop % 60;
@@ -633,13 +636,13 @@ if (shiftFilter) {
         }
     }
 
-    shiftFilter.addEventListener('click', function(e) {
+    shiftFilter.addEventListener('click', function (e) {
         var btn = e.target.closest('.st-dock-shift-btn');
         if (!btn) return;
         var shift = btn.getAttribute('data-shift');
 
         // Update active state
-        shiftFilter.querySelectorAll('.st-dock-shift-btn').forEach(function(b) {
+        shiftFilter.querySelectorAll('.st-dock-shift-btn').forEach(function (b) {
             b.classList.remove('st-dock-shift-btn--active');
         });
         btn.classList.add('st-dock-shift-btn--active');
@@ -647,12 +650,14 @@ if (shiftFilter) {
         applyShiftFilter(shift);
     });
 
-    // Default: scroll to current hour on load
+    // Default: apply the active shift on load
+    var activeShiftBtn = shiftFilter.querySelector('.st-dock-shift-btn--active');
+    var defaultShift = activeShiftBtn ? (activeShiftBtn.getAttribute('data-shift') || 'shift1') : 'shift1';
+    applyShiftFilter(defaultShift);
+
     var gridBody = document.querySelector('.st-dock-grid-body');
     if (gridBody) {
-        var nowHour = new Date().getHours();
-        var scrollTo = (nowHour >= 7 ? nowHour : 7) * 60;
-        setTimeout(function() { gridBody.scrollTop = scrollTo; }, 100);
+        setTimeout(function () { gridBody.scrollTop = 0; }, 100);
     }
 }
 

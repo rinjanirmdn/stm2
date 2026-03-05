@@ -89,7 +89,7 @@ class SlotController extends Controller
 
         return view('slots.index', [
             'slots' => $slots,
-            'pageTitle' => 'Slots',
+            'pageTitle' => 'Planned',
             'search' => trim($request->query('q', '')),
             'truck' => trim($request->query('truck', '')),
             'vendor' => trim($request->query('vendor', '')),

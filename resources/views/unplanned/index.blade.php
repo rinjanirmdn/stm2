@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Unplanned Transactions - e-Docking Control System')
-@section('page_title', 'Unplanned Transactions')
+@section('page_title', 'Unplanned')
 
 @section('content')
     <div class="st-card st-mb-12">

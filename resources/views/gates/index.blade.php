@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Gates Management - e-Docking Control System')
-@section('page_title', 'Gates Management')
+@section('page_title', 'Gates')
 
 @push('styles')
     @vite(['resources/css/gates.css'])
@@ -279,35 +279,37 @@
                              ondblclick="window.location.href='{{ $targetRoute }}'"
                              title="{{ $slot->ticket_number }} ({{ $slot->status }}) - {{ $slot->vendor->name ?? '' }}">
 
-                            <!-- Header: Ticket & Time -->
-                            <div class="st-dock-card__header">
-                                <div class="st-dock-card__title {{ $titleClass }}">
-                                    {{ $slot->ticket_number ?? '-' }}
+                            <div class="st-dock-card__main-content">
+                                <!-- Header: Ticket & Time -->
+                                <div class="st-dock-card__header">
+                                    <div class="st-dock-card__title {{ $titleClass }}">
+                                        {{ $slot->ticket_number ?? '-' }}
+                                    </div>
+                                    <div class="st-dock-card__time {{ $vendorClass }}">
+                                        {{ $timeLabel }}
+                                    </div>
                                 </div>
-                                <div class="st-dock-card__time {{ $vendorClass }}">
-                                    {{ $timeLabel }}
-                                </div>
-                            </div>
 
-                            <!-- Body: Vendor (Hide if too small) -->
-                            @if($h >= 35)
-                            <div class="st-dock-card__vendor {{ $vendorClass }} st-mt-auto st-mb-auto">
-                                {{ $slot->vendor->name ?? '-' }}
+                                <!-- Body: Vendor (Hide if too small) -->
+                                @if($h >= 35)
+                                <div class="st-dock-card__vendor {{ $vendorClass }}" style="white-space: normal; overflow: visible; display: -webkit-box; -webkit-line-clamp: {{ $h < 60 ? 1 : ($h < 120 ? 3 : 10) }}; -webkit-box-orient: vertical; margin-top: 4px; line-height: 1.2;">
+                                    {{ $slot->vendor->name ?? '-' }}
 
-                                @php
-                                    $activeStatuses = ['scheduled', 'arrived', 'waiting', 'in_progress', 'completed'];
-                                @endphp
-                                @if($slot->original_planned_start && !empty($slot->approval_notes) && $h >= 60 && in_array($slot->status, $activeStatuses))
-                                <div class="st-dock-approval-note">
-                                    <i class="fas fa-sticky-note st-dock-approval-note__icon"></i>
-                                    <span class="st-truncate">{{ $slot->approval_notes }}</span>
+                                    @php
+                                        $activeStatuses = ['scheduled', 'arrived', 'waiting', 'in_progress', 'completed'];
+                                    @endphp
+                                    @if($slot->original_planned_start && !empty($slot->approval_notes) && $h >= 60 && in_array($slot->status, $activeStatuses))
+                                    <div class="st-dock-approval-note">
+                                        <i class="fas fa-sticky-note st-dock-approval-note__icon"></i>
+                                        <span class="st-truncate">{{ $slot->approval_notes }}</span>
+                                    </div>
+                                    @endif
                                 </div>
                                 @endif
                             </div>
-                            @endif
 
                             <!-- Footer: Status & Actions -->
-                            <div class="st-dock-card__footer">
+                            <div class="st-dock-card__footer st-mt-auto">
                                 <div class="st-dock-card-cat st-dock-card-cat--tight {{ $statusClass }}">
                                     {{ $slot->status_label ?? $slot->status }}
                                     @if($slot->original_planned_start)

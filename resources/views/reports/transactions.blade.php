@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Transactions - e-Docking Control System')
-@section('page_title', 'Transactions')
+@section('page_title', 'Reports')
 
 @section('content')
     <div class="st-card st-mb-12">
