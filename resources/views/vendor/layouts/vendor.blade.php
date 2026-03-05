@@ -198,8 +198,8 @@
         $stVendorLatestUrl = (auth()->check() && auth()->user()->can('notifications.latest') && \Illuminate\Support\Facades\Route::has('notifications.latest'))
             ? route('notifications.latest')
             : null;
-        $stVendorMarkAllUrl = (auth()->check() && auth()->user()->can('notifications.readAll') && \Illuminate\Support\Facades\Route::has('notifications.markAllRead'))
-            ? route('notifications.markAllRead')
+        $stVendorMarkAllUrl = (auth()->check() && auth()->user()->can('notifications.readAll') && \Illuminate\Support\Facades\Route::has('notifications.readAll'))
+            ? route('notifications.readAll')
             : null;
         $stVendorClearUrl = (auth()->check() && auth()->user()->can('notifications.clearAll') && \Illuminate\Support\Facades\Route::has('notifications.clearAll'))
             ? route('notifications.clearAll')
