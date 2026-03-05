@@ -5,7 +5,6 @@
 @section('body_class', 'st-page--slots')
 
 @push('styles')
-    @vite(['resources/css/slots.css'])
 @endpush
 
 @section('content')
