@@ -2220,8 +2220,8 @@
 
     /* Tablet and desktop logo adjustments */
     .st-sidebar__logo-stack--oneject .st-sidebar__logo--full {
-        max-width: 90%;
-        max-height: 110px;
+        max-width: 100%;
+        max-height: 140px;
     }
 }
 
@@ -2720,7 +2720,7 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
 }
 
 .st-sidebar__logo--oneject-full {
-    max-height: 84px;
+    max-height: 120px;
 }
 
 .st-sidebar__logo--icon {

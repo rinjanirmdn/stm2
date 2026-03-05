@@ -153,7 +153,6 @@
                     <button class="st-sidebar__toggle--mobile" id="mobile-menu-toggle" aria-label="Toggle menu">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <img src="{{ asset('img/logo-icon.png') }}" alt="e-DCS" class="st-topbar__logo">
                     <h1 class="st-topbar__title">{{ $pageTitle ?? trim($__env->yieldContent('page_title')) ?: 'Dashboard' }}</h1>
                 </div>
 
