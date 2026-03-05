@@ -39,21 +39,10 @@ class Permission extends SpatiePermission
         return $query->where('perm_name', $name);
     }
 
-    public static function findByName(string $name, $guardName = null): self
-    {
-        $guardName = $guardName ?? config('auth.defaults.guard');
-
-        $permission = static::query()
-            ->where('perm_name', $name)
-            ->where('perm_guard_name', $guardName)
-            ->first();
-
-        if (! $permission) {
-            throw static::getPermissionDoesNotExistException($name, $guardName);
-        }
-
-        return $permission;
-    }
+    // findByName is intentionally NOT overridden here.
+    // The parent Spatie method uses the PermissionRegistrar cache (in-memory),
+    // which avoids a DB query on every @can / hasPermissionTo check.
+    // The getNameAttribute/getGuardNameAttribute accessors handle the column mapping.
 
     public static function findOrCreate(string $name, $guardName = null): self
     {

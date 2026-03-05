@@ -347,7 +347,7 @@ class ReportController extends Controller
 
         $daySlots = Slot::query()
             ->whereDate('planned_start', $paramDate)
-            ->whereNotIn('status', [Slot::STATUS_CANCELLED, Slot::STATUS_REJECTED])
+            ->whereNotIn('status', [Slot::STATUS_CANCELLED, 'rejected'])
             ->where(function($q) {
                 $q->whereNull('slot_type')->orWhere('slot_type', 'planned');
             })

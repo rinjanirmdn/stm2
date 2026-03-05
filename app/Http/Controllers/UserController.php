@@ -466,7 +466,7 @@ class UserController extends Controller
 
     public function destroy(Request $request, int $userId)
     {
-        $user = DB::table('md_users')->where('id', $userId)->select(['id', 'role'])->first();
+        $user = DB::table('md_users')->where('id', $userId)->select(['id', 'role_id'])->first();
         if (!$user) {
             return redirect()->route('users.index')->with('error', 'User not found');
         }
@@ -477,10 +477,21 @@ class UserController extends Controller
         }
 
         // Check if user is admin and if it's the last admin
-        if (($user->role ?? '') === 'admin') {
-            $remainingAdmins = DB::table('md_users')
-                ->where('role', 'admin')
-                ->where('id', '<>', $userId)
+        // Look up role via Spatie model_has_roles table
+        $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
+        $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
+        $userRoleName = DB::table($modelHasRolesTable . ' as mhr')
+            ->join($rolesTable . ' as r', 'r.id', '=', 'mhr.role_id')
+            ->where('mhr.model_id', $userId)
+            ->where('mhr.model_type', 'App\\Models\\User')
+            ->value('r.roles_name');
+
+        if ($userRoleName && strtolower($userRoleName) === 'admin') {
+            $remainingAdmins = DB::table($modelHasRolesTable . ' as mhr')
+                ->join($rolesTable . ' as r', 'r.id', '=', 'mhr.role_id')
+                ->where('mhr.model_type', 'App\\Models\\User')
+                ->whereRaw('LOWER(r.roles_name) = ?', ['admin'])
+                ->where('mhr.model_id', '<>', $userId)
                 ->count();
             if ($remainingAdmins === 0) {
                 return redirect()->route('users.index')->with('error', 'You cannot delete the last admin user.');

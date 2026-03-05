@@ -27,7 +27,7 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request)
     {
-        // FORCE CHECK: Direct DB query to bypass Permission Cache
+        // Redirect vendor users to vendor dashboard
         if (Auth::check()) {
             $isVendor = DB::table('model_has_roles')
                 ->join('md_roles', 'model_has_roles.role_id', '=', 'md_roles.id')
@@ -37,17 +37,6 @@ class DashboardController extends Controller
 
             if ($isVendor) {
                 return redirect()->route('vendor.dashboard');
-            }
-
-            $u = Auth::user();
-            if ($u && is_callable([$u, 'hasRole'])) {
-                try {
-                    if ((bool) call_user_func([$u, 'hasRole'], ['Vendor', 'vendor'])) {
-                        return redirect()->route('vendor.dashboard');
-                    }
-                } catch (\Throwable $e) {
-                    // ignore
-                }
             }
         }
 
@@ -338,13 +327,7 @@ class DashboardController extends Controller
      */
     private function getHolidaysForYear(string $date): array
     {
-        try {
-            $year = date('Y', strtotime($date));
-            $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
-            return collect($holidayData)->pluck('name', 'date')->toArray();
-        } catch (\Exception $e) {
-            return [];
-        }
+        return \App\Helpers\HolidayHelper::getHolidayMap($date);
     }
 
     private function buildProcessStatusCounts(string $scheduleDate, string $scheduleFrom, string $scheduleTo): array

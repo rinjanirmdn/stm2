@@ -8,32 +8,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
+    | as SAP integrations. Unused default Laravel service configs have been
+    | removed per audit #46.
     |
     */
-
-    'postmark' => [
-        'key' => env('POSTMARK_API_KEY'),
-    ],
-
-    'resend' => [
-        'key' => env('RESEND_API_KEY'),
-    ],
-
-    'ses' => [
-        'key' => env('AWS_ACCESS_KEY_ID'),
-        'secret' => env('AWS_SECRET_ACCESS_KEY'),
-        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-    ],
-
-    'slack' => [
-        'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
-        ],
-    ],
 
     'sap_po' => [
         'base_url' => env('SAP_PO_BASE_URL', ''),
@@ -47,8 +25,8 @@ return [
         'verify_ssl' => env('SAP_PO_VERIFY_SSL', false),
 
         // OData v4 support (when SAP exposes PO items via entity path)
-        // Example: /ZPOA_DTL_LIST(po_no='4170005027')/Set
-        'odata_detail_endpoint' => env('SAP_PO_ODATA_DETAIL_ENDPOINT', "/ZPOA_DTL_LIST(po_no='{po}')/Set"),
+        // Example: /ZPO_HDR_VNAME(po_no='4110002539')/Set
+        'odata_detail_endpoint' => env('SAP_PO_ODATA_DETAIL_ENDPOINT', "/ZPO_HDR_VNAME(po_no='{po}')/Set"),
         'timeout' => (int) env('SAP_PO_TIMEOUT', 15),
     ],
 

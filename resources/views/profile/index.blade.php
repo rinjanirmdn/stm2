@@ -4,6 +4,9 @@
 @section('page_title', 'Profile')
 
 @section('content')
+@php
+    $canSelfChangePassword = $user->hasAnyRole(['Admin', 'Super Admin', 'Super Account', 'admin']);
+@endphp
 <div class="st-profile-container">
     {{-- Profile Header --}}
     <div class="st-profile-header">

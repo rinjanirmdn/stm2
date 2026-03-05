@@ -10,6 +10,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SapController;
 use App\Http\Controllers\SlotController;
+use App\Http\Controllers\SlotAjaxController;
+use App\Http\Controllers\SlotLifecycleController;
+use App\Http\Controllers\UnplannedSlotController;
 use App\Http\Controllers\TruckTypeDurationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorBookingController;
@@ -58,7 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('slots')->name('slots.')->group(function () {
         Route::get('/', [SlotController::class, 'index'])->name('index')->middleware('permission:slots.index');
 
-        Route::get('/search-suggestions', [SlotController::class, 'searchSuggestions'])->name('search_suggestions')->middleware('permission:slots.search_suggestions');
+        Route::get('/search-suggestions', [SlotAjaxController::class, 'searchSuggestions'])->name('search_suggestions')->middleware('permission:slots.search_suggestions');
 
         Route::middleware(['permission:slots.create'])->group(function () {
             Route::get('/create', [SlotController::class, 'create'])->name('create');
@@ -70,15 +73,37 @@ Route::middleware('auth')->group(function () {
         Route::post('/{slotId}/delete', [SlotController::class, 'destroy'])->whereNumber('slotId')->name('delete')->middleware('permission:slots.delete');
 
         Route::prefix('ajax')->name('ajax.')->group(function () {
-            Route::post('/check-risk', [SlotController::class, 'ajaxCheckRisk'])->name('check_risk')->middleware('permission:slots.ajax.check_risk');
-            Route::post('/check-slot-time', [SlotController::class, 'ajaxCheckSlotTime'])->name('check_slot_time')->middleware('permission:slots.ajax.check_slot_time');
-            Route::post('/recommend-gate', [SlotController::class, 'ajaxRecommendGate'])->name('recommend_gate')->middleware('permission:slots.ajax.recommend_gate');
-            Route::post('/schedule-preview', [SlotController::class, 'ajaxSchedulePreview'])->name('schedule_preview')->middleware('permission:slots.ajax.schedule_preview');
+            Route::post('/check-risk', [SlotAjaxController::class, 'ajaxCheckRisk'])->name('check_risk')->middleware('permission:slots.ajax.check_risk');
+            Route::post('/check-slot-time', [SlotAjaxController::class, 'ajaxCheckSlotTime'])->name('check_slot_time')->middleware('permission:slots.ajax.check_slot_time');
+            Route::post('/recommend-gate', [SlotAjaxController::class, 'ajaxRecommendGate'])->name('recommend_gate')->middleware('permission:slots.ajax.recommend_gate');
+            Route::post('/schedule-preview', [SlotAjaxController::class, 'ajaxSchedulePreview'])->name('schedule_preview')->middleware('permission:slots.ajax.schedule_preview');
 
-            Route::get('/po-search', [SlotController::class, 'ajaxPoSearch'])->name('po_search')->middleware('permission:slots.ajax.po_search');
-            Route::get('/po/{poNumber}', [SlotController::class, 'ajaxPoDetail'])->where('poNumber', '[A-Za-z0-9\-]+')->name('po_detail')->middleware('permission:slots.ajax.po_detail');
+            Route::get('/po-search', [SlotAjaxController::class, 'ajaxPoSearch'])->name('po_search')->middleware('permission:slots.ajax.po_search');
+            Route::get('/po/{poNumber}', [SlotAjaxController::class, 'ajaxPoDetail'])->where('poNumber', '[A-Za-z0-9\-]+')->name('po_detail')->middleware('permission:slots.ajax.po_detail');
         });
 
+<<<<<<< HEAD
+        Route::get('/{slotId}/ticket', [SlotLifecycleController::class, 'ticket'])->whereNumber('slotId')->name('ticket')
+            ->middleware(['permission:slots.ticket', 'role:admin|super account|section head|security']);
+
+        Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show')
+            ->middleware('permission:slots.show');
+
+        Route::get('/{slotId}/arrival', [SlotLifecycleController::class, 'arrival'])->whereNumber('slotId')->name('arrival')
+            ->middleware(['permission:slots.arrival', 'role:admin|super account|section head|security']);
+        Route::post('/{slotId}/arrival', [SlotLifecycleController::class, 'arrivalStore'])->whereNumber('slotId')->name('arrival.store')
+            ->middleware(['permission:slots.arrival.store', 'role:admin|super account|section head|security']);
+
+        Route::get('/{slotId}/start', [SlotLifecycleController::class, 'start'])->whereNumber('slotId')->name('start')
+            ->middleware('permission:slots.start');
+        Route::post('/{slotId}/start', [SlotLifecycleController::class, 'startStore'])->whereNumber('slotId')->name('start.store')
+            ->middleware('permission:slots.start.store');
+
+        Route::get('/{slotId}/complete', [SlotLifecycleController::class, 'complete'])->whereNumber('slotId')->name('complete')
+            ->middleware('permission:slots.complete');
+        Route::post('/{slotId}/complete', [SlotLifecycleController::class, 'completeStore'])->whereNumber('slotId')->name('complete.store')
+            ->middleware('permission:slots.complete.store');
+=======
         Route::get('/{slotId}/ticket', [SlotController::class, 'ticket'])->whereNumber('slotId')->name('ticket')->middleware('permission:slots.ticket');
 
         Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show')->middleware('permission:slots.show');
@@ -91,14 +116,18 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/{slotId}/complete', [SlotController::class, 'complete'])->whereNumber('slotId')->name('complete')->middleware('permission:slots.complete');
         Route::post('/{slotId}/complete', [SlotController::class, 'completeStore'])->whereNumber('slotId')->name('complete.store')->middleware('permission:slots.complete.store');
+>>>>>>> 035778f3e157560f3f6ededa8f643a964567e84d
 
         Route::get('/{slotId}/cancel', [SlotController::class, 'cancel'])->whereNumber('slotId')->name('cancel')->middleware('permission:slots.cancel');
         Route::post('/{slotId}/cancel', [SlotController::class, 'cancelStore'])->whereNumber('slotId')->name('cancel.store')->middleware('permission:slots.cancel.store');
 
+<<<<<<< HEAD
+=======
         // Approval Actions (Mapped to BookingApprovalController)
         Route::post('/{id}/approve', [BookingApprovalController::class, 'approve'])->whereNumber('id')->name('approve')->middleware('permission:bookings.approve');
         Route::post('/{id}/reject', [BookingApprovalController::class, 'reject'])->whereNumber('id')->name('reject')->middleware('permission:bookings.reject');
 
+>>>>>>> 035778f3e157560f3f6ededa8f643a964567e84d
         // Report routes
         Route::get('/report', [ReportController::class, 'index'])->name('report.index')->middleware('permission:reports.transactions');
         Route::get('/export', [SlotController::class, 'export'])->name('export')->middleware('permission:reports.export');
@@ -106,8 +135,36 @@ Route::middleware('auth')->group(function () {
 
     // Unplanned routes (separate from slots)
     Route::prefix('unplanned')->name('unplanned.')->group(function () {
-        Route::get('/', [SlotController::class, 'unplannedIndex'])->name('index')->middleware('permission:unplanned.index');
+        Route::get('/', [UnplannedSlotController::class, 'index'])->name('index')->middleware('permission:unplanned.index');
 
+<<<<<<< HEAD
+        // Block operator from create, edit, cancel, ticket
+        Route::middleware(['permission:unplanned.create', 'role:admin|super account|section head|security'])->group(function () {
+            Route::get('/create', [UnplannedSlotController::class, 'create'])->name('create');
+            Route::post('/create', [UnplannedSlotController::class, 'store'])->name('store');
+        });
+
+        Route::get('/{slotId}/edit', [UnplannedSlotController::class, 'edit'])->whereNumber('slotId')->name('edit')
+            ->middleware(['permission:unplanned.edit', 'role:admin|super account|section head|security']);
+        Route::post('/{slotId}/edit', [UnplannedSlotController::class, 'update'])->whereNumber('slotId')->name('update')
+            ->middleware(['permission:unplanned.update', 'role:admin|super account|section head|security']);
+        Route::post('/{slotId}/delete', [UnplannedSlotController::class, 'destroy'])->whereNumber('slotId')->name('delete')
+            ->middleware(['permission:unplanned.delete', 'role:admin|super account|section head|security']);
+
+        // Allow operator to use ticket (but not create/edit/cancel)
+        Route::get('/{slotId}/ticket', [SlotLifecycleController::class, 'ticket'])->whereNumber('slotId')->name('ticket')
+            ->middleware(['permission:slots.ticket', 'role:admin|super account|section head|security']);
+
+        // Unplanned specific actions (operator can use these)
+        Route::get('/{slotId}/start', [SlotLifecycleController::class, 'unplannedStart'])->whereNumber('slotId')->name('start')
+            ->middleware('permission:unplanned.start');
+        Route::post('/{slotId}/start', [SlotLifecycleController::class, 'unplannedStartStore'])->whereNumber('slotId')->name('start.store')
+            ->middleware('permission:unplanned.start.store');
+        Route::get('/{slotId}/complete', [SlotLifecycleController::class, 'unplannedComplete'])->whereNumber('slotId')->name('complete')
+            ->middleware('permission:unplanned.complete');
+        Route::post('/{slotId}/complete', [SlotLifecycleController::class, 'unplannedCompleteStore'])->whereNumber('slotId')->name('complete.store')
+            ->middleware('permission:unplanned.complete.store');
+=======
         Route::middleware(['permission:unplanned.create'])->group(function () {
             Route::get('/create', [SlotController::class, 'unplannedCreate'])->name('create');
             Route::post('/create', [SlotController::class, 'unplannedStore'])->name('store');
@@ -124,6 +181,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{slotId}/start', [SlotController::class, 'unplannedStartStore'])->whereNumber('slotId')->name('start.store')->middleware('permission:unplanned.start.store');
         Route::get('/{slotId}/complete', [SlotController::class, 'unplannedComplete'])->whereNumber('slotId')->name('complete')->middleware('permission:unplanned.complete');
         Route::post('/{slotId}/complete', [SlotController::class, 'unplannedCompleteStore'])->whereNumber('slotId')->name('complete.store')->middleware('permission:unplanned.complete.store');
+>>>>>>> 035778f3e157560f3f6ededa8f643a964567e84d
 
         Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show')->middleware('permission:unplanned.show');
     });
@@ -173,10 +231,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/vendor/search', [SapController::class, 'searchVendor'])->name('vendor.search')->middleware('permission:sap.search_po');
         Route::get('/vendor/{vendorCode}', [SapController::class, 'getVendor'])->name('vendor.show')->middleware('permission:sap.search_po');
 
+<<<<<<< HEAD
+=======
         // Health check & testing
         Route::get('/health', [SapController::class, 'health'])->name('health')->middleware('permission:sap.health');
         Route::get('/metadata', [SapController::class, 'metadata']);
         Route::get('/test-po', [SapController::class, 'testPoConnection'])->name('test.po');
+>>>>>>> 035778f3e157560f3f6ededa8f643a964567e84d
     });
 
     Route::prefix('trucks')->name('trucks.')->group(function () {
@@ -191,6 +252,18 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('gates')->name('gates.')->group(function () {
+<<<<<<< HEAD
+        Route::get('/', [ReportController::class, 'gatesIndex'])->name('index')
+            ->middleware('permission:gates.index');
+        Route::get('/monitor', [GateStatusController::class, 'index'])->name('monitor')
+            ->middleware('permission:gates.index');
+
+        Route::prefix('ajax')->name('ajax.')->group(function () {
+            Route::get('/available-slots', [ReportController::class, 'ajaxAvailableSlots'])->name('available_slots')
+                ->middleware('permission:gates.index');
+            Route::post('/disabled-times', [ReportController::class, 'ajaxToggleDisabledTime'])->name('disabled_times')
+                ->middleware('permission:gates.index');
+=======
         Route::get('/', [ReportController::class, 'gatesIndex'])->name('index')->middleware('permission:gates.index');
         Route::get('/monitor', [GateStatusController::class, 'index'])->name('monitor')->middleware('permission:gates.index');
 
@@ -202,7 +275,12 @@ Route::middleware('auth')->group(function () {
         // Non-operators: full toggle permissions
         Route::middleware(['permission:gates.toggle'])->group(function () {
             Route::post('/{gateId}/toggle', [ReportController::class, 'toggleGate'])->whereNumber('gateId')->name('toggle');
+>>>>>>> 035778f3e157560f3f6ededa8f643a964567e84d
         });
+
+        // Gate toggle: all authorized roles (operator limited to Gate C in controller)
+        Route::post('/{gateId}/toggle', [ReportController::class, 'toggleGate'])->whereNumber('gateId')->name('toggle')
+            ->middleware(['permission:gates.toggle', 'role:admin|super account|section head|security|operator']);
     });
 
     Route::middleware('permission:logs.index')->prefix('logs')->name('logs.')->group(function () {

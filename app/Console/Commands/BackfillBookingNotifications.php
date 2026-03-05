@@ -4,21 +4,25 @@ namespace App\Console\Commands;
 
 use App\Models\Slot;
 use App\Models\User;
-use App\Notifications\BookingRequested;
-use App\Notifications\BookingSubmitted;
 use Illuminate\Console\Command;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class BackfillBookingNotifications extends Command
 {
-    protected $signature = 'notifications:backfill-bookings {--vendor : Also create vendor submission notifications} {--limit=0 : Max number of slots to process (0 = unlimited)} {--dry-run : Do not write notifications}';
+    protected $signature = 'notifications:backfill-bookings {--vendor : Also create vendor submission notifications} {--limit=0 : Max number of slots to process (0 = unlimited)} {--dry-run : Do not write notifications} {--force : Skip confirmation prompt}';
 
-    protected $description = 'Backfill database notifications for existing booking requests (admin, optionally vendor)';
+    protected $description = 'Backfill database notifications for existing booking requests (one-time command)';
 
     public function handle(): int
     {
+        if (!$this->option('force') && !$this->confirm('This is a one-time backfill command. Are you sure you want to run it?')) {
+            $this->info('Cancelled.');
+            return 0;
+        }
+
         $limit = (int) $this->option('limit');
         $dryRun = (bool) $this->option('dry-run');
         $withVendor = (bool) $this->option('vendor');
@@ -42,7 +46,7 @@ class BackfillBookingNotifications extends Command
         })->get();
 
         if ($admins->isEmpty()) {
-            $this->warn('No admin users found (roles_name in admin/section_head/super_admin/super_administrator).');
+            $this->warn('No admin users found.');
         } else {
             $this->info('Admin recipients: ' . $admins->count());
         }
@@ -52,12 +56,12 @@ class BackfillBookingNotifications extends Command
         $skipped = 0;
 
         foreach ($slots as $slot) {
-            $adminUrl = route('bookings.show', $slot->id);
-            $vendorUrl = route('vendor.bookings.show', $slot->id);
+            $adminUrl = route('bookings.show', $slot->id, false);
+            $vendorUrl = route('vendor.bookings.show', $slot->id, false);
 
-            // Admin notifications
+            // Admin notifications (inline — no separate notification class needed)
             foreach ($admins as $admin) {
-                if ($this->notificationExists($admin, BookingRequested::class, $adminUrl)) {
+                if ($this->notificationExists($admin, $adminUrl)) {
                     $skipped++;
                     continue;
                 }
@@ -65,7 +69,21 @@ class BackfillBookingNotifications extends Command
                 $createdAdmin++;
                 if (!$dryRun) {
                     try {
-                        $admin->notify(new BookingRequested($slot));
+                        DB::table('notifications')->insert([
+                            'id' => Str::uuid()->toString(),
+                            'type' => 'App\\Notifications\\BookingRequestSubmitted',
+                            'notifiable_type' => get_class($admin),
+                            'notifiable_id' => $admin->id,
+                            'data' => json_encode([
+                                'title' => 'New Booking Request',
+                                'message' => 'Request from ' . ($slot->vendor_name ?? 'Vendor') . ' for ' . ($slot->ticket_number ?? '-'),
+                                'action_url' => $adminUrl,
+                                'icon' => 'fas fa-plus-circle',
+                                'color' => 'blue',
+                            ]),
+                            'created_at' => $slot->created_at ?? now(),
+                            'updated_at' => $slot->created_at ?? now(),
+                        ]);
                     } catch (\Throwable $e) {
                         Log::warning('Backfill admin notify failed: ' . $e->getMessage(), [
                             'admin_id' => $admin->id,
@@ -78,13 +96,27 @@ class BackfillBookingNotifications extends Command
             if ($withVendor) {
                 $vendor = $slot->requester;
                 if ($vendor) {
-                    if ($this->notificationExists($vendor, BookingSubmitted::class, $vendorUrl)) {
+                    if ($this->notificationExists($vendor, $vendorUrl)) {
                         $skipped++;
                     } else {
                         $createdVendor++;
                         if (!$dryRun) {
                             try {
-                                $vendor->notify(new BookingSubmitted($slot));
+                                DB::table('notifications')->insert([
+                                    'id' => Str::uuid()->toString(),
+                                    'type' => 'App\\Notifications\\BookingApproved',
+                                    'notifiable_type' => get_class($vendor),
+                                    'notifiable_id' => $vendor->id,
+                                    'data' => json_encode([
+                                        'title' => 'Booking Submitted',
+                                        'message' => 'Your booking request ' . ($slot->ticket_number ?? '-') . ' has been submitted.',
+                                        'action_url' => $vendorUrl,
+                                        'icon' => 'fas fa-paper-plane',
+                                        'color' => 'blue',
+                                    ]),
+                                    'created_at' => $slot->created_at ?? now(),
+                                    'updated_at' => $slot->created_at ?? now(),
+                                ]);
                             } catch (\Throwable $e) {
                                 Log::warning('Backfill vendor notify failed: ' . $e->getMessage(), [
                                     'vendor_user_id' => $vendor->id,
@@ -109,16 +141,11 @@ class BackfillBookingNotifications extends Command
         return 0;
     }
 
-    private function notificationExists(User $user, string $type, string $actionUrl): bool
+    private function notificationExists(User $user, string $actionUrl): bool
     {
-        $actionUrl = (string) $actionUrl;
-
-        // notifications table is polymorphic (notifiable_type, notifiable_id)
-        // data is stored as JSON text. We use a LIKE check on action_url for idempotency.
         return DatabaseNotification::query()
             ->where('notifiable_type', get_class($user))
             ->where('notifiable_id', $user->id)
-            ->where('type', $type)
             ->where('data', 'like', '%"action_url":"' . addcslashes($actionUrl, '"\\') . '"%')
             ->exists();
     }

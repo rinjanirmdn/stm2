@@ -99,6 +99,10 @@ class ForgotPasswordController extends Controller
             abort(403);
         }
 
+        if ($user->hasAnyRole(['Admin', 'Super Admin', 'Super Account', 'admin'])) {
+            return back()->with('error', 'Administrator dapat mengganti password langsung dari form profile.');
+        }
+
         $adminEmail = config('mail.admin_email', 'admin@example.com');
 
         $reason = 'Password change requested from profile page.';
