@@ -193,18 +193,51 @@ class SlotService
             $activityType = 'status_change';
         }
 
-        $payload = [
-            'description' => $description,
-            'created_at' => now(),
-            'updated_at' => now(),
-            'mat_doc' => null,
-            'po_number' => null,
-            'slot_id' => $slotId,
-            'activity_type' => $activityType,
-            'created_by' => $createdBy,
-            'old_value' => $oldValue,
-            'new_value' => $newValue,
-        ];
+        $payload = [];
+
+        if (Schema::hasColumn('activity_logs', 'description')) {
+            $payload['description'] = $description;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'mat_doc')) {
+            $payload['mat_doc'] = null;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'po_number')) {
+            $payload['po_number'] = null;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'slot_id')) {
+            $payload['slot_id'] = $slotId;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'activity_type')) {
+            $payload['activity_type'] = $activityType;
+        } elseif (Schema::hasColumn('activity_logs', 'type')) {
+            $payload['type'] = $activityType;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'created_by')) {
+            $payload['created_by'] = $createdBy;
+        } elseif (Schema::hasColumn('activity_logs', 'user_id')) {
+            $payload['user_id'] = $createdBy;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'old_value')) {
+            $payload['old_value'] = $oldValue;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'new_value')) {
+            $payload['new_value'] = $newValue;
+        }
+
+        // Some environments (especially older/manual DB schemas) may not have Laravel timestamps.
+        if (Schema::hasColumn('activity_logs', 'created_at')) {
+            $payload['created_at'] = now();
+        }
+        if (Schema::hasColumn('activity_logs', 'updated_at')) {
+            $payload['updated_at'] = now();
+        }
 
         return DB::table('activity_logs')->insert($payload);
     }
