@@ -37,9 +37,6 @@ class BookingHistory extends Model
     public const ACTION_APPROVED = 'approved';
     public const ACTION_REJECTED = 'rejected';
     public const ACTION_RESCHEDULED = 'rescheduled';
-    public const ACTION_VENDOR_CONFIRMED = 'vendor_confirmed';
-    public const ACTION_VENDOR_REJECTED = 'vendor_rejected';
-    public const ACTION_VENDOR_PROPOSED = 'vendor_proposed';
     public const ACTION_CANCELLED = 'cancelled';
 
     /**
@@ -52,9 +49,6 @@ class BookingHistory extends Model
             self::ACTION_APPROVED,
             self::ACTION_REJECTED,
             self::ACTION_RESCHEDULED,
-            self::ACTION_VENDOR_CONFIRMED,
-            self::ACTION_VENDOR_REJECTED,
-            self::ACTION_VENDOR_PROPOSED,
             self::ACTION_CANCELLED,
         ];
     }
@@ -69,9 +63,10 @@ class BookingHistory extends Model
             self::ACTION_APPROVED => 'Approved',
             self::ACTION_REJECTED => 'Rejected',
             self::ACTION_RESCHEDULED => 'Rescheduled by Admin',
-            self::ACTION_VENDOR_CONFIRMED => 'Confirmed by Vendor',
-            self::ACTION_VENDOR_REJECTED => 'Rejected by Vendor',
-            self::ACTION_VENDOR_PROPOSED => 'New Schedule Proposed',
+            // Backward compatibility for historical data (constants removed per audit #19)
+            'vendor_confirmed' => 'Confirmed by Vendor',
+            'vendor_rejected' => 'Rejected by Vendor',
+            'vendor_proposed' => 'New Schedule Proposed',
             self::ACTION_CANCELLED => 'Cancelled',
             default => ucfirst(str_replace('_', ' ', $this->action)),
         };
@@ -84,9 +79,9 @@ class BookingHistory extends Model
     {
         return match ($this->action) {
             self::ACTION_REQUESTED => 'warning',
-            self::ACTION_APPROVED, self::ACTION_VENDOR_CONFIRMED => 'success',
-            self::ACTION_REJECTED, self::ACTION_VENDOR_REJECTED, self::ACTION_CANCELLED => 'danger',
-            self::ACTION_RESCHEDULED, self::ACTION_VENDOR_PROPOSED => 'info',
+            self::ACTION_APPROVED, 'vendor_confirmed' => 'success',
+            self::ACTION_REJECTED, 'vendor_rejected', self::ACTION_CANCELLED => 'danger',
+            self::ACTION_RESCHEDULED, 'vendor_proposed' => 'info',
             default => 'secondary',
         };
     }

@@ -2,15 +2,27 @@
 
 namespace App\Notifications;
 
+use App\Models\BookingRequest;
 use App\Models\Slot;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class BookingRejected extends Notification
 {
-    public function __construct(
-        public Slot $slot
-    ) {}
+    private ?Slot $slot;
+    private ?BookingRequest $bookingRequest;
+    private string $reason;
+
+    /**
+     * Accept either a Slot (from BookingApprovalService) or a BookingRequest (from controller reject).
+     * This eliminates the need for fake Slot objects (#32).
+     */
+    public function __construct(?Slot $slot = null, ?BookingRequest $bookingRequest = null, ?string $reason = null)
+    {
+        $this->slot = $slot;
+        $this->bookingRequest = $bookingRequest;
+        $this->reason = $reason ?? '';
+    }
 
     public function via(object $notifiable): array
     {
@@ -21,16 +33,47 @@ class BookingRejected extends Notification
         return ['database'];
     }
 
+    private function getTicketNumber(): string
+    {
+        if ($this->slot) {
+            return $this->slot->ticket_number ?? '-';
+        }
+        return $this->bookingRequest->request_number ?? $this->bookingRequest->po_number ?? '-';
+    }
+
+    private function getPlannedDate(): string
+    {
+        $start = $this->slot?->planned_start ?? $this->bookingRequest?->planned_start;
+        return $start?->format('d M Y H:i') ?? '-';
+    }
+
+    private function getReason(): string
+    {
+        if ($this->reason !== '') {
+            return $this->reason;
+        }
+        return $this->slot?->approval_notes ?? 'No reason provided';
+    }
+
+    private function getNotificationId(): int
+    {
+        if ($this->slot) {
+            return (int) $this->slot->id;
+        }
+        return (int) $this->bookingRequest->id;
+    }
+
     public function toMail(object $notifiable): MailMessage
     {
-        $plannedDate = $this->slot->planned_start?->format('d M Y H:i') ?? '-';
-        $reason = $this->slot->approval_notes ?? 'No reason provided';
+        $ticketNumber = $this->getTicketNumber();
+        $plannedDate = $this->getPlannedDate();
+        $reason = $this->getReason();
 
         return (new MailMessage)
-            ->subject('Booking Rejected - ' . $this->slot->ticket_number)
+            ->subject('Booking Rejected - ' . $ticketNumber)
             ->greeting('Hello ' . $notifiable->name . ',')
             ->line('Unfortunately, your booking request has been rejected.')
-            ->line('**Ticket:** ' . $this->slot->ticket_number)
+            ->line('**Ticket:** ' . $ticketNumber)
             ->line('**Requested Time:** ' . $plannedDate)
             ->line('**Reason:** ' . $reason)
             ->action('Submit New Booking', url('/vendor/bookings/create'))
@@ -39,10 +82,13 @@ class BookingRejected extends Notification
 
     public function toArray(object $notifiable): array
     {
+        $id = $this->getNotificationId();
+        $ticketNumber = $this->getTicketNumber();
+
         return [
             'title' => 'Booking Rejected',
-            'message' => 'Your booking ' . $this->slot->ticket_number . ' has been rejected.',
-            'action_url' => route('vendor.bookings.show', $this->slot->id, false),
+            'message' => 'Your booking ' . $ticketNumber . ' has been rejected.',
+            'action_url' => route('vendor.bookings.show', $id, false),
             'icon' => 'fas fa-times-circle',
             'color' => 'red',
         ];

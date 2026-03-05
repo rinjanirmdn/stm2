@@ -11,17 +11,98 @@ class GateStatusService
     ) {}
 
     /**
-     * Get gate cards with current and next slot information
+     * Get gate cards with current and next slot information.
+     * Optimized: batch-fetches all current and next slots in 2 queries
+     * instead of per-gate (was 6 queries × N gates).
      */
     public function getGateCards(string $today): array
     {
         $gates = $this->getActiveGates();
-        $gateCards = [];
+        $allGateIds = $gates->pluck('id')->map(fn($id) => (int)$id)->all();
 
+        if (empty($allGateIds)) {
+            return [];
+        }
+
+        // Build lane-group map in PHP from already-fetched gate data (0 extra queries)
+        $laneGroupMap = []; // gateId => [gateIds in same lane group]
+        $gateMeta = [];
         foreach ($gates as $gate) {
-            $gateId = (int) ($gate->id ?? 0);
-            $gateCard = $this->buildGateCard($gate, $gateId, $today);
-            $gateCards[] = $gateCard;
+            $gid = (int)$gate->id;
+            $wc = strtoupper(trim((string)($gate->warehouse_code ?? '')));
+            $gn = (string)($gate->gate_number ?? '');
+            $group = $this->slotService->buildLaneGroupFromMeta($wc, $gn, $gid);
+            $gateMeta[$gid] = ['warehouse_code' => $wc, 'gate_number' => $gn, 'group' => $group];
+        }
+        // Map each gate to its lane group peers
+        foreach ($gateMeta as $gid => $meta) {
+            $group = $meta['group'];
+            if (!$group) {
+                $laneGroupMap[$gid] = [$gid];
+                continue;
+            }
+            $peers = [];
+            foreach ($gateMeta as $peerId => $peerMeta) {
+                if ($peerMeta['group'] === $group) {
+                    $peers[] = $peerId;
+                }
+            }
+            $laneGroupMap[$gid] = $peers;
+        }
+
+        // Batch-fetch ALL in-progress slots for today (1 query instead of N)
+        $currentSlots = DB::table('slots as s')
+            ->where('s.status', 'in_progress')
+            ->whereIn('s.actual_gate_id', $allGateIds)
+            ->whereDate('s.actual_start', $today)
+            ->where(function($q) {
+                $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+            })
+            ->orderByDesc('s.actual_start')
+            ->select(['s.id', 's.po_number', 's.actual_start', 's.actual_gate_id'])
+            ->get();
+
+        // Batch-fetch ALL next-scheduled slots for today (1 query instead of N)
+        $nextSlots = DB::table('slots as s')
+            ->whereIn('s.planned_gate_id', $allGateIds)
+            ->whereIn('s.status', ['scheduled', 'arrived', 'waiting'])
+            ->whereDate('s.planned_start', $today)
+            ->where(function($q) {
+                $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+            })
+            ->orderBy('s.planned_start', 'asc')
+            ->select(['s.id', 's.po_number', 's.planned_start', 's.status', 's.planned_gate_id'])
+            ->get();
+
+        // Build gate cards using in-memory matching
+        $gateCards = [];
+        foreach ($gates as $gate) {
+            $gateId = (int)($gate->id ?? 0);
+            $laneIds = $laneGroupMap[$gateId] ?? [$gateId];
+
+            // Match current slot from batch (first in-progress slot for this lane group)
+            $currentSlot = $currentSlots->first(fn($s) => in_array((int)$s->actual_gate_id, $laneIds));
+            // Match next slot from batch (first scheduled/arrived/waiting slot for this lane group)
+            $nextSlot = $nextSlots->first(fn($s) => in_array((int)$s->planned_gate_id, $laneIds));
+
+            $warehouseCode = (string)($gate->warehouse_code ?? '');
+            $gateNumber = (string)($gate->gate_number ?? '');
+            $gateDisplay = $this->slotService->getGateDisplayName($warehouseCode, $gateNumber);
+            $gateTitle = $gateDisplay === '-' ? (string)($gate->warehouse_name ?? '-') : ((string)($gate->warehouse_name ?? '-') . ' - ' . $gateDisplay);
+
+            $gateCards[] = [
+                'gate_id' => $gateId,
+                'warehouse_code' => $warehouseCode,
+                'warehouse_name' => (string)($gate->warehouse_name ?? ''),
+                'gate_number' => $gateNumber,
+                'title' => $gateTitle,
+                'is_backup' => (int)($gate->is_backup ?? 0) === 1,
+                'is_active' => (int)($gate->is_active ?? 0) === 1,
+                'status_label' => $this->getGateStatusLabel($currentSlot, $nextSlot),
+                'status_class' => $this->getGateStatusClass($currentSlot, $nextSlot),
+                'current_text' => $this->formatCurrentSlotText($currentSlot),
+                'next_text' => $this->formatNextSlotText($nextSlot),
+            ];
         }
 
         return $gateCards;

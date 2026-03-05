@@ -15,14 +15,12 @@ class SapService
     
     public function __construct()
     {
-        $this->baseUrl = config('services.sap.base_url', env('SAP_PO_BASE_URL'));
-        $this->token = config('services.sap.token', env('SAP_PO_TOKEN'));
-        $this->timeout = config('services.sap.timeout', env('SAP_PO_TIMEOUT', 10));
+        $this->baseUrl = trim((string) config('services.sap_po.base_url', ''));
+        $this->token = trim((string) config('services.sap_po.token', ''));
+        $this->timeout = (int) config('services.sap_po.timeout', 15);
         
-        // Demo mode if in local environment or no token configured
-        $this->isDemo = config('app.env') === 'local' || 
-                       config('app.env') === 'testing' || 
-                       empty($this->token);
+        // Demo mode if no base URL configured
+        $this->isDemo = $this->baseUrl === '' || (empty($this->token) && empty(config('services.sap_po.username', '')));
     }
     
     /**
@@ -40,7 +38,7 @@ class SapService
                     'Authorization' => 'Bearer ' . $this->token,
                     'Content-Type' => 'application/json'
                 ])
-                ->get($this->baseUrl . env('SAP_PO_SEARCH_ENDPOINT'), [
+                ->get($this->baseUrl . config('services.sap_po.search_endpoint', '/po/search'), [
                     'po_number' => $poNumber,
                     'vendor_code' => $vendorCode
                 ]);
@@ -75,7 +73,7 @@ class SapService
         }
         
         try {
-            $endpoint = str_replace('{po}', $poNumber, env('SAP_PO_DETAIL_ENDPOINT'));
+            $endpoint = str_replace('{po}', $poNumber, config('services.sap_po.detail_endpoint', '/po/{po}'));
             
             $response = Http::timeout($this->timeout)
                 ->withHeaders([
@@ -148,9 +146,6 @@ class SapService
             'vendor_code' => $vendorCode
         ]);
         
-        // Simulate API delay
-        usleep(500000); // 0.5 second
-        
         // Mock response based on PO number pattern
         if (str_starts_with($poNumber, 'PO')) {
             return [
@@ -185,9 +180,6 @@ class SapService
             'po_number' => $poNumber
         ]);
         
-        // Simulate API delay
-        usleep(750000); // 0.75 second
-        
         return [
             'po_number' => $poNumber,
             'vendor_code' => 'V' . rand(1000, 9999),
@@ -219,11 +211,7 @@ class SapService
             'data' => $data
         ]);
         
-        // Simulate API delay
-        usleep(300000); // 0.3 second
-        
-        // 90% success rate for demo
-        return rand(1, 100) <= 90;
+        return true;
     }
     
     /**

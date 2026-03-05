@@ -33,7 +33,7 @@ class BookingApprovalService
      */
     public function createBookingRequest(array $data, User $vendor): Slot
     {
-        // NOTE: Intentionally not wrapped in a transaction due to prior persistence issue.
+        return DB::transaction(function () use ($data, $vendor) {
         // Calculate planned finish
         $plannedFinish = $this->slotService->computePlannedFinish(
             $data['planned_start'],
@@ -63,7 +63,7 @@ class BookingApprovalService
             'vehicle_number_snap' => $data['vehicle_number'] ?? null,
             'driver_name' => $data['driver_name'] ?? null,
             'driver_number' => $data['driver_number'] ?? null,
-            'late_reason' => $notes !== '' ? $notes : null,
+            'approval_notes' => $notes !== '' ? $notes : null,
             'status' => Slot::STATUS_PENDING_APPROVAL,
             'slot_type' => 'planned',
             'created_by' => $vendor->id,
@@ -113,6 +113,7 @@ class BookingApprovalService
         }
 
         return $slot;
+        }); // end DB::transaction
     }
 
     /**
@@ -198,11 +199,10 @@ class BookingApprovalService
             return;
         }
 
-        $gatesQ = Gate::where('warehouse_id', $warehouseId);
-        if (Schema::hasColumn('md_gates', 'is_active')) {
-            $gatesQ->where('is_active', true);
-        }
-        $candidateGates = $gatesQ->orderBy('gate_number')->get();
+        $candidateGates = Gate::where('warehouse_id', $warehouseId)
+            ->where('is_active', true)
+            ->orderBy('gate_number')
+            ->get();
 
         $bestGateId = null;
         $bestRisk = null;

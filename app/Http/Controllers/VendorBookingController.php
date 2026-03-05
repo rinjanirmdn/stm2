@@ -355,7 +355,7 @@ class VendorBookingController extends Controller
 
         // Search by ticket number
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
             $baseQuery->where(function ($q) use ($search) {
                 $q->where('request_number', 'like', "%{$search}%")
                     ->orWhere('po_number', 'like', "%{$search}%")
@@ -397,11 +397,7 @@ class VendorBookingController extends Controller
         $truckTypes = TruckTypeDuration::orderBy('truck_type')->get();
 
         // Get all gates for gate-only selection
-        $gatesQ = Gate::query();
-        if (Schema::hasColumn('md_gates', 'is_active')) {
-            $gatesQ->where('is_active', true);
-        }
-        $gates = $gatesQ->with('warehouse')->get();
+        $gates = Gate::where('is_active', true)->with('warehouse')->get();
 
         return view('vendor.bookings.create', compact('truckTypes', 'gates'));
     }
@@ -660,24 +656,12 @@ class VendorBookingController extends Controller
     public function availability(Request $request)
     {
         // Get all active gates for display
-        $gatesQ = Gate::query();
-        if (Schema::hasColumn('md_gates', 'is_active')) {
-            $gatesQ->where('is_active', true);
-        }
-        $gates = $gatesQ->with('warehouse')->get();
+        $gates = Gate::where('is_active', true)->with('warehouse')->get();
 
         $selectedDate = $request->date ?? now()->format('Y-m-d');
 
         // Get holidays for calendar using HolidayHelper
-        $holidays = [];
-        try {
-            $year = date('Y', strtotime($selectedDate));
-            $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
-            $holidays = collect($holidayData)->pluck('name', 'date')->toArray();
-        } catch (\Exception $e) {
-            // If holiday helper fails, use empty array
-            $holidays = [];
-        }
+        $holidays = \App\Helpers\HolidayHelper::getHolidayMap($selectedDate);
 
         return view('vendor.bookings.availability', compact('gates', 'selectedDate', 'holidays'));
     }
@@ -916,11 +900,7 @@ class VendorBookingController extends Controller
         $date = $request->date;
 
         // Get all active gates
-        $gatesQ = Gate::query();
-        if (Schema::hasColumn('md_gates', 'is_active')) {
-            $gatesQ->where('is_active', true);
-        }
-        $gates = $gatesQ
+        $gates = Gate::where('is_active', true)
             ->with(['warehouse'])
             ->orderBy('warehouse_id')
             ->orderBy('gate_number')

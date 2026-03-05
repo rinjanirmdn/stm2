@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Fonts loaded async from layout — no @import needed here */
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -3016,6 +3016,13 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
     z-index: 100;
 }
 
+.st-topbar__logo {
+    height: 28px;
+    width: auto;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
 .st-topbar__title {
     font-size: 18px;
     font-weight: 600;
@@ -4469,7 +4476,7 @@ table.st-table tbody td .st-btn--sm {
     gap: 6px;
     font-size: 12px;
     font-weight: 500;
-    background: rgba(255,255,255,0.18);
+    background: rgba(255, 255, 255, 0.18);
     padding: 3px 10px;
     border-radius: 999px;
     width: fit-content;
@@ -4486,7 +4493,7 @@ table.st-table tbody td .st-btn--sm {
     border: 1px solid #e5e7eb;
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .st-profile-section--highlight {
@@ -4731,12 +4738,15 @@ table.st-table tbody td .st-btn--sm {
         flex-direction: column;
         text-align: center;
     }
+
     .st-profile-field-row {
         flex-direction: column;
     }
+
     .st-profile-actions {
         flex-direction: column-reverse;
     }
+
     .st-profile-btn {
         width: 100%;
         justify-content: center;

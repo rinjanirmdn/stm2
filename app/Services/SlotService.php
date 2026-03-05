@@ -195,43 +195,16 @@ class SlotService
 
         $payload = [
             'description' => $description,
+            'created_at' => now(),
+            'updated_at' => now(),
+            'mat_doc' => null,
+            'po_number' => null,
+            'slot_id' => $slotId,
+            'activity_type' => $activityType,
+            'created_by' => $createdBy,
+            'old_value' => $oldValue,
+            'new_value' => $newValue,
         ];
-
-        if (Schema::hasColumn('activity_logs', 'created_at')) {
-            $payload['created_at'] = now();
-        }
-        if (Schema::hasColumn('activity_logs', 'updated_at')) {
-            $payload['updated_at'] = now();
-        }
-
-        if (Schema::hasColumn('activity_logs', 'mat_doc')) {
-            $payload['mat_doc'] = null;
-        }
-        if (Schema::hasColumn('activity_logs', 'po_number')) {
-            $payload['po_number'] = null;
-        }
-        if (Schema::hasColumn('activity_logs', 'slot_id')) {
-            $payload['slot_id'] = $slotId;
-        }
-
-        if (Schema::hasColumn('activity_logs', 'activity_type')) {
-            $payload['activity_type'] = $activityType;
-        } else {
-            $payload['type'] = $activityType;
-        }
-
-        if (Schema::hasColumn('activity_logs', 'created_by')) {
-            $payload['created_by'] = $createdBy;
-        } else {
-            $payload['user_id'] = $createdBy;
-        }
-
-        if (Schema::hasColumn('activity_logs', 'old_value')) {
-            $payload['old_value'] = $oldValue;
-        }
-        if (Schema::hasColumn('activity_logs', 'new_value')) {
-            $payload['new_value'] = $newValue;
-        }
 
         return DB::table('activity_logs')->insert($payload);
     }
@@ -842,47 +815,4 @@ class SlotService
         return 2;      // High
     }
 
-    /**
-     * Check if a date is a holiday using HolidayHelper
-     *
-     * @param \DateTime|string $date
-     * @return bool
-     */
-    public function isHoliday($date): bool
-    {
-        return HolidayHelper::isHoliday($date);
-    }
-
-    /**
-     * Check if a date is a working day (not weekend and not holiday)
-     *
-     * @param \DateTime|string $date
-     * @return bool
-     */
-    public function isWorkingDay($date): bool
-    {
-        return HolidayHelper::isWorkingDay($date);
-    }
-
-    /**
-     * Get holiday name for a specific date
-     *
-     * @param \DateTime|string $date
-     * @return string|null
-     */
-    public function getHolidayName($date): ?string
-    {
-        return HolidayHelper::getHolidayName($date);
-    }
-
-    /**
-     * Get all holidays for a year
-     *
-     * @param int $year
-     * @return array
-     */
-    public function getHolidaysByYear(int $year): array
-    {
-        return HolidayHelper::getHolidaysByYear($year);
-    }
 }

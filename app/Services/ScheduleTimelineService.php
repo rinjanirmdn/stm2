@@ -47,30 +47,6 @@ class ScheduleTimelineService
     }
 
     /**
-     * Check if date is holiday
-     */
-    public function isHoliday(string $date): bool
-    {
-        return HolidayHelper::isHoliday($date);
-    }
-
-    /**
-     * Check if date is working day
-     */
-    public function isWorkingDay(string $date): bool
-    {
-        return HolidayHelper::isWorkingDay($date);
-    }
-
-    /**
-     * Get holiday name for date
-     */
-    public function getHolidayName(string $date): ?string
-    {
-        return HolidayHelper::getHolidayName($date);
-    }
-
-    /**
      * Get timeline blocks for visualization
      */
     public function getTimelineBlocks(string $date): array

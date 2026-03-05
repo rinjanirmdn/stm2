@@ -4,6 +4,9 @@
 @section('page_title', 'Profile')
 
 @section('content')
+@php
+    $canSelfChangePassword = $user->hasAnyRole(['Admin', 'Super Admin', 'Super Account', 'admin']);
+@endphp
 <div class="st-profile-container">
     {{-- Profile Header --}}
     <div class="st-profile-header">
@@ -89,7 +92,7 @@
                 <span class="st-profile-section-badge">Optional</span>
             </div>
             <div class="st-profile-section-body">
-                @if ($user->hasRole('admin'))
+                @if ($canSelfChangePassword)
                     <div class="st-profile-field">
                         <label class="st-profile-label">Current Password</label>
                         <input type="password" name="current_password" class="st-profile-input" placeholder="Enter current password">
@@ -144,7 +147,7 @@
         </div>
     </form>
 
-    @if (! $user->hasRole('admin'))
+    @if (! $canSelfChangePassword)
         <form id="vendor-password-request-form" method="POST" action="{{ route('profile.password-request') }}" style="display:none;">
             @csrf
         </form>

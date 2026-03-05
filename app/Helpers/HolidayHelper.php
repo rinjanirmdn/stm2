@@ -179,6 +179,21 @@ class HolidayHelper
     }
 
     /**
+     * Get holiday map (date => name) for the year of a given date.
+     * Consolidates logic previously duplicated in multiple controllers.
+     */
+    public static function getHolidayMap(string $date): array
+    {
+        try {
+            $year = (int) date('Y', strtotime($date));
+            $holidayData = self::getHolidaysByYear($year);
+            return collect($holidayData)->pluck('name', 'date')->toArray();
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
      * Check if date is weekend (Saturday/Sunday)
      *
      * @param \DateTime|string $date

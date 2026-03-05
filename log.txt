@@ -1,0 +1,18 @@
+PAGE LOAD PROFILING
+============================================================
+
+✓ PASS  Dashboard
+  Total: 680ms | DB: 542.22ms | PHP: 137.78ms | Queries: 35
+
+✓ PASS  Slots
+  Total: 150ms | DB: 61.83ms | PHP: 88.17ms | Queries: 4
+
+✓ PASS  Booking Requests
+  Total: 234ms | DB: 138.95ms | PHP: 95.05ms | Queries: 11
+
+✓ PASS  Reports
+  Total: 104ms | DB: 63.66ms | PHP: 40.34ms | Queries: 3
+
+✓ PASS  Users
+  Total: 66ms | DB: 21.8ms | PHP: 44.2ms | Queries: 2
+

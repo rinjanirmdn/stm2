@@ -19,7 +19,6 @@ class Slot extends Model
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_PENDING_APPROVAL = 'pending_approval';
-    public const STATUS_REJECTED = 'rejected';
 
     /**
      * Approval action constants
@@ -96,16 +95,7 @@ class Slot extends Model
             self::STATUS_COMPLETED,
             self::STATUS_CANCELLED,
             self::STATUS_PENDING_APPROVAL,
-            self::STATUS_REJECTED,
         ];
-    }
-
-    /**
-     * Get statuses that require vendor action
-     */
-    public static function vendorActionStatuses(): array
-    {
-        return [];
     }
 
     /**
@@ -155,16 +145,13 @@ class Slot extends Model
      */
     public function getStatusLabelAttribute(): string
     {
-        if ($this->status === 'rejected') {
-            return 'Cancelled';
-        }
         return match ($this->status) {
             self::STATUS_SCHEDULED => 'Scheduled',
-            self::STATUS_ARRIVED => 'Waiting',
+            self::STATUS_ARRIVED => 'Arrived',
             self::STATUS_WAITING => 'Waiting',
             self::STATUS_IN_PROGRESS => 'In Progress',
             self::STATUS_COMPLETED => 'Completed',
-            self::STATUS_CANCELLED => 'Cancelled',
+            self::STATUS_CANCELLED, 'rejected' => 'Cancelled',
             self::STATUS_PENDING_APPROVAL => 'Pending Approval',
             default => ucfirst(str_replace('_', ' ', $this->status)),
         };
@@ -175,18 +162,14 @@ class Slot extends Model
      */
     public function getStatusBadgeColorAttribute(): string
     {
-        if ($this->status === 'rejected') {
-            return 'dark';
-        }
         return match ($this->status) {
             self::STATUS_SCHEDULED => 'secondary',
-            self::STATUS_ARRIVED => 'warning',
+            self::STATUS_ARRIVED => 'info',
             self::STATUS_WAITING => 'warning',
             self::STATUS_IN_PROGRESS => 'primary',
             self::STATUS_COMPLETED => 'success',
-            self::STATUS_CANCELLED => 'dark',
+            self::STATUS_CANCELLED, 'rejected' => 'dark',
             self::STATUS_PENDING_APPROVAL => 'pending_approval',
-            self::STATUS_REJECTED => 'danger',
             default => 'secondary',
         };
     }

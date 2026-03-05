@@ -24,7 +24,6 @@ export default defineConfig({
                 'resources/css/dashboard-react.css',
                 'resources/css/gates.css',
                 'resources/css/bookings.css',
-                'resources/css/slots.css',
                 'resources/js/app.js',
                 'resources/js/react/dashboard.jsx',
                 'resources/js/pages/main.js',

@@ -65,21 +65,25 @@ class BookingApprovalController extends Controller
         // Column filters
         $requestNumber = trim((string) $request->query('request_number', ''));
         if ($requestNumber !== '') {
+            $requestNumber = str_replace(['%', '_'], ['\%', '\_'], $requestNumber);
             $query->where('booking_requests.request_number', 'like', '%' . $requestNumber . '%');
         }
 
         $poNumber = trim((string) $request->query('po_number', ''));
         if ($poNumber !== '') {
+            $poNumber = str_replace(['%', '_'], ['\%', '\_'], $poNumber);
             $query->where('booking_requests.po_number', 'like', '%' . $poNumber . '%');
         }
 
         $supplierName = trim((string) $request->query('supplier_name', ''));
         if ($supplierName !== '') {
+            $supplierName = str_replace(['%', '_'], ['\%', '\_'], $supplierName);
             $query->where('booking_requests.supplier_name', 'like', '%' . $supplierName . '%');
         }
 
         $requestedBy = trim((string) $request->query('requested_by', ''));
         if ($requestedBy !== '') {
+            $requestedBy = str_replace(['%', '_'], ['\%', '\_'], $requestedBy);
             $query->where(function ($q) use ($requestedBy) {
                 $q->where('u_requester.full_name', 'like', '%' . $requestedBy . '%')
                     ->orWhere('u_requester.name', 'like', '%' . $requestedBy . '%')
@@ -94,11 +98,13 @@ class BookingApprovalController extends Controller
 
         $convertedTicket = trim((string) $request->query('converted_ticket', ''));
         if ($convertedTicket !== '') {
+            $convertedTicket = str_replace(['%', '_'], ['\%', '\_'], $convertedTicket);
             $query->where('s_converted.ticket_number', 'like', '%' . $convertedTicket . '%');
         }
 
         $gate = trim((string) $request->query('gate', ''));
         if ($gate !== '') {
+            $gate = str_replace(['%', '_'], ['\%', '\_'], $gate);
             $query->where(function ($q) use ($gate) {
                 $q->where('g_planned.name', 'like', '%' . $gate . '%')
                     ->orWhere('g_planned.gate_number', 'like', '%' . $gate . '%');
@@ -127,7 +133,7 @@ class BookingApprovalController extends Controller
 
         // Search
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('request_number', 'like', "%{$search}%")
                     ->orWhere('po_number', 'like', "%{$search}%")
@@ -199,17 +205,13 @@ class BookingApprovalController extends Controller
             'all' => $pendingCount + $approvedCount + $cancelledCount + $rejectedCount,
         ];
 
-        $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('md_warehouse', 'is_active')) {
-            $warehousesQ->where('is_active', true);
-        }
-        $warehouses = $warehousesQ->get();
+        $warehouses = Warehouse::all();
 
         $gateOptions = Cache::remember('bookings:index:gate_options', now()->addMinutes(10), function () {
             return Gate::query()
                 ->from('md_gates', 'g')
                 ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
-                ->when(Schema::hasColumn('md_gates', 'is_active'), fn ($q) => $q->where('g.is_active', true))
+                ->where('g.is_active', true)
                 ->orderBy('w.wh_code')
                 ->orderBy('g.gate_number')
                 ->get(['g.id', 'g.gate_number', 'w.wh_code'])
@@ -241,7 +243,7 @@ class BookingApprovalController extends Controller
 
         $plannedGateId = (int) $request->planned_gate_id;
         $gate = Gate::where('id', $plannedGateId)
-            ->when(Schema::hasColumn('md_gates', 'is_active'), fn ($q) => $q->where('is_active', true))
+            ->where('is_active', true)
             ->with('warehouse')
             ->first();
 
@@ -331,17 +333,9 @@ class BookingApprovalController extends Controller
             'convertedSlot.actualGate',
         ])->findOrFail($id);
 
-        $warehousesQ = Warehouse::query();
-        if (Schema::hasColumn('md_warehouse', 'is_active')) {
-            $warehousesQ->where('is_active', true);
-        }
-        $warehouses = $warehousesQ->get();
+        $warehouses = Warehouse::all();
 
-        $gatesQ = Gate::query();
-        if (Schema::hasColumn('md_gates', 'is_active')) {
-            $gatesQ->where('is_active', true);
-        }
-        $gates = $gatesQ
+        $gates = Gate::where('is_active', true)
             ->with('warehouse')
             ->get()
             ->groupBy('warehouse_id');
@@ -416,7 +410,7 @@ class BookingApprovalController extends Controller
                     'vehicle_number_snap' => $bookingRequest->vehicle_number,
                     'driver_name' => $bookingRequest->driver_name,
                     'driver_number' => $bookingRequest->driver_number,
-                    'late_reason' => $bookingRequest->notes,
+                    'approval_notes' => $bookingRequest->notes,
                     'status' => Slot::STATUS_PENDING_APPROVAL,
                     'slot_type' => 'planned',
                     'created_by' => $bookingRequest->requested_by,
@@ -450,21 +444,6 @@ class BookingApprovalController extends Controller
                 return $slot;
             });
 
-            // Test direct ActivityLog creation
-            try {
-                ActivityLog::create([
-                    'type' => 'test_booking_approved',
-                    'description' => "Test: Approved booking request for PO: {$bookingRequest->po_number}",
-                    'po_number' => $bookingRequest->po_number,
-                    'mat_doc' => null,
-                    'slot_id' => $slot->id,
-                    'user_id' => Auth::id(),
-                ]);
-                Log::info('Test ActivityLog created successfully');
-            } catch (\Throwable $e) {
-                Log::error('Test ActivityLog creation failed: ' . $e->getMessage());
-            }
-
             if (! empty($bookingRequest->planned_start)) {
                 $approvedDate = $bookingRequest->planned_start instanceof \DateTimeInterface
                     ? $bookingRequest->planned_start->format('Y-m-d')
@@ -472,17 +451,8 @@ class BookingApprovalController extends Controller
                 \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$approvedDate}");
             }
 
-            // Notify vendor (requester) about approved booking via email + database
-            try {
-                $isRescheduled = ((string) $request->input('approval_action', '')) === Slot::APPROVAL_RESCHEDULED;
-                if ($bookingRequest->requester) {
-                    $bookingRequest->requester->notify(
-                        new BookingApproved($slot, (int) $bookingRequest->id, $isRescheduled)
-                    );
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Failed to send booking approved notification: ' . $e->getMessage());
-            }
+            // Notification is dispatched by BookingApprovalService::approveBooking()
+            // Do NOT dispatch again here to avoid double notification (#31/#32)
 
             return redirect()
                 ->route('bookings.show', $bookingRequest->id)
@@ -517,15 +487,7 @@ class BookingApprovalController extends Controller
             // Notify vendor (requester) about rejected booking via email + database
             try {
                 if ($bookingRequest->requester) {
-                    // Create a temporary Slot object for the notification
-                    $tempSlot = new Slot([
-                        'ticket_number' => $bookingRequest->request_number ?? $bookingRequest->po_number,
-                        'planned_start' => $bookingRequest->planned_start,
-                        'direction' => $bookingRequest->direction,
-                        'approval_notes' => $request->reason,
-                    ]);
-                    $tempSlot->id = $bookingRequest->id;
-                    $bookingRequest->requester->notify(new BookingRejected($tempSlot));
+                    $bookingRequest->requester->notify(new BookingRejected(null, $bookingRequest, $request->reason));
                 }
             } catch (\Throwable $e) {
                 Log::warning('Failed to send booking rejected notification: ' . $e->getMessage());
@@ -548,11 +510,7 @@ class BookingApprovalController extends Controller
             ->findOrFail($id);
 
         // Get all gates for gate-only selection
-        $gatesQ = Gate::query();
-        if (Schema::hasColumn('md_gates', 'is_active')) {
-            $gatesQ->where('is_active', true);
-        }
-        $gates = $gatesQ->with('warehouse')->get();
+        $gates = Gate::where('is_active', true)->with('warehouse')->get();
         $truckTypes = TruckTypeDuration::orderBy('truck_type')->get();
 
         return view('admin.bookings.reschedule', compact('booking', 'gates', 'truckTypes'));
@@ -692,13 +650,7 @@ class BookingApprovalController extends Controller
      */
     private function getHolidaysForDate(string $date): array
     {
-        try {
-            $year = date('Y', strtotime($date));
-            $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
-            return collect($holidayData)->pluck('name', 'date')->toArray();
-        } catch (\Exception $e) {
-            return [];
-        }
+        return \App\Helpers\HolidayHelper::getHolidayMap($date);
     }
 
     /**

@@ -519,7 +519,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={trendData} margin={{top:16,right:8,left:0,bottom:0}}>
                     <CartesianGrid strokeDasharray="3 3" stroke={tk('--chart-grid')}/>
-                    <XAxis dataKey="day" tick={{fontSize:csVar('--ds-chart-tick'),fill:tk('--chart-axis')}} interval="preserveStartEnd"/>
+                    <XAxis dataKey="day" tick={{fontSize:csVar('--ds-chart-tick'),fill:tk('--chart-axis')}} interval={0} minTickGap={0} tickMargin={6}/>
                     <YAxis tick={{fontSize:csVar('--ds-chart-tick'),fill:tk('--chart-axis')}} width={28}/>
                     <Tooltip contentStyle={tipStyle()}/>
                     <Bar dataKey="inbound" stackId="s" fill={tk('--inbound')} radius={[0,0,3,3]} name="Inbound" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}>

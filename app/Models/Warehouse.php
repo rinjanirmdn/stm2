@@ -16,6 +16,8 @@ class Warehouse extends Model
         'wh_name',
     ];
 
-    protected $casts = [
-    ];
+    public function gates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Gate::class);
+    }
 }
