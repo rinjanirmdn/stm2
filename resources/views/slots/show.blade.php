@@ -292,25 +292,23 @@
 
             <div class="st-flex st-gap-6 st-flex-wrap st-align-center st-justify-end st-mb-8">
                 @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
-                    @unless(optional(auth()->user())->hasRole('Operator'))
                     @can('slots.ticket')
                     <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
                         Print Ticket
                     </a>
                     @endcan
-                    @endunless
                 @endif
 
                 @if($status === 'pending_approval')
-                    @if(auth()->user()->hasRole(['Admin', 'admin', 'Super Administrator', 'Section Head']))
-                        @can('bookings.reschedule')
+                    @can('bookings.reschedule')
                         @if (!empty($slot->requested_by) && in_array($status, ['pending_approval', 'scheduled'], true))
                             <a href="{{ route('bookings.reschedule', ['id' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
                                 <i class="fa-solid fa-calendar st-mr-4"></i> Reschedule
                             </a>
                         @endif
-                        @endcan
+                    @endcan
 
+                    @can('bookings.approve')
                         <form action="{{ route('slots.approve', $slot->id) }}" method="POST" class="st-inline-block">
                             @csrf
                             @method('POST')
@@ -318,13 +316,13 @@
                                 <i class="fa-solid fa-check st-mr-4"></i> Approve
                             </button>
                         </form>
+                    @endcan
 
+                    @can('bookings.reject')
                         <button type="button" class="st-btn st-btn--danger st-btn--xs" onclick="document.getElementById('reject-dialog').style.display='flex'">
                             <i class="fa-solid fa-xmark st-mr-4"></i> Reject
                         </button>
-                    @else
-                        <button type="button" class="st-btn st-btn--outline-primary st-btn--xs" disabled>Waiting for Approval</button>
-                    @endif
+                    @endcan
                 @endif
 
                 @if (! $isUnplanned)

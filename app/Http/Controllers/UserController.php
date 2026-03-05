@@ -64,7 +64,7 @@ class UserController extends Controller
         $sort = $sorts[0] ?? '';
         $dir = $dirs[0] ?? 'desc';
 
-        $allowedRoles = ['admin', 'section_head', 'operator', 'vendor', 'security', 'super_account'];
+        $allowedRoles = ['admin', 'section_head', 'operator', 'vendor', 'security', 'super_account', 'display_account'];
 
         $usersQ = DB::table('md_users')
             ->leftJoin($modelHasRolesTable . ' as mhr', function ($join) {
@@ -398,70 +398,44 @@ class UserController extends Controller
         // Notify user via email when password is changed by admin
         $resetFlagKey = 'password_reset_requested_user_' . (int) $userId;
         $hadResetRequest = Cache::has($resetFlagKey);
-        $resetEmailSent = false;
-        $resetEmailFailed = false;
+        $sendResetEmailAfterResponse = $passwordChanged && $hadResetRequest;
 
-        if ($passwordChanged && $hadResetRequest) {
-            try {
-                $userEmail = trim($validated['email']);
-                $userName = trim($validated['name']);
+        if ($sendResetEmailAfterResponse) {
+            $userEmail = trim((string) ($validated['email'] ?? ''));
+            $userName = trim((string) ($validated['name'] ?? ''));
+            $plainPassword = $password;
 
-                if ($userEmail !== '') {
-                    $appName = 'e-Docking Control System';
+            app()->terminating(function () use ($userEmail, $userName, $plainPassword, $resetFlagKey) {
+                try {
+                    if ($userEmail !== '') {
+                        $appName = 'e-Docking Control System';
 
-                    $html = view('emails.password-reset-user', [
-                        'appName'       => $appName,
-                        'userName'      => $userName,
-                        'userEmail'     => $userEmail,
-                        'plainPassword' => $password,
-                    ])->render();
+                        $html = view('emails.password-reset-user', [
+                            'appName'       => $appName,
+                            'userName'      => $userName,
+                            'userEmail'     => $userEmail,
+                            'plainPassword' => $plainPassword,
+                        ])->render();
 
-                    Mail::html($html, function ($message) use ($userEmail, $userName, $appName) {
-                        $message->to($userEmail, $userName)
-                                ->subject('[' . $appName . '] Your password has been reset by admin');
-                    });
-
-                    $resetEmailSent = true;
+                        Mail::html($html, function ($message) use ($userEmail, $userName, $appName) {
+                            $message->to($userEmail, $userName)
+                                    ->subject('[' . $appName . '] Your password has been reset by admin');
+                        });
+                    }
+                } catch (\Throwable $e) {
+                    // Intentionally swallow to avoid breaking response lifecycle.
+                } finally {
+                    Cache::forget($resetFlagKey);
                 }
-            } catch (\Throwable $e) {
-                $resetEmailFailed = true;
-            }
-
-            Cache::forget($resetFlagKey);
+            });
         }
 
         $successMessage = 'User updated successfully';
-        if ($passwordChanged && $hadResetRequest) {
-            if ($resetEmailSent) {
-                $successMessage = 'Password reset completed. Email has been sent to the user.';
-            } elseif ($resetEmailFailed) {
-                $successMessage = 'Password reset completed, but failed to send email to the user.';
-            } else {
-                $successMessage = 'Password reset completed.';
-            }
+        if ($sendResetEmailAfterResponse) {
+            $successMessage = 'Password reset completed. Email will be sent to the user.';
         }
 
-        $canViewIndex = false;
-        if ($request->user()) {
-            try {
-                $canViewIndex = method_exists($request->user(), 'hasPermissionTo')
-                    ? (bool) $request->user()->hasPermissionTo('users.index')
-                    : (bool) $request->user()->can('users.index');
-            } catch (\Throwable $e) {
-                $canViewIndex = false;
-            }
-        }
-
-        if ($canViewIndex) {
-            $routeParams = [];
-            if ($passwordChanged && $hadResetRequest) {
-                $routeParams['_success'] = $successMessage;
-            }
-
-            return redirect()->route('users.index', $routeParams)->with('success', $successMessage);
-        }
-
-        return redirect()->route('users.edit', ['userId' => $userId])->with('success', $successMessage);
+        return redirect()->route('users.index')->with('success', $successMessage);
     }
 
     public function toggle(Request $request, int $userId)

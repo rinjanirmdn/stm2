@@ -13,21 +13,9 @@
                     </div>
                 </div>
 
-                @if (session('success'))
-                    <div class="st-alert st-alert--success st-alert--autodismiss st-mb-12">
-                        <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
-                        <span class="st-alert__text">{{ session('success') }}</span>
-                        <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
-                    </div>
-                @endif
-
-                @if (session('error'))
-                    <div class="st-alert st-alert--error st-alert--autodismiss st-mb-12">
-                        <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
-                        <span class="st-alert__text">{{ session('error') }}</span>
-                        <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
-                    </div>
-                @endif
+                @php
+                    $fromResetEmail = (string) request()->query('from_reset_email', '') === '1';
+                @endphp
 
                 @if ($errors->any())
                     <div class="st-alert st-alert--error st-mb-12">
@@ -42,7 +30,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('users.update', ['userId' => $editUser->id]) }}" class="st-form-block">
+                <form method="POST" action="{{ route('users.update', ['userId' => $editUser->id, 'from_reset_email' => $fromResetEmail ? 1 : null]) }}" class="st-form-block">
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
@@ -70,6 +58,7 @@
                             <option value="security" {{ old('role', $currentRole) === 'security' ? 'selected' : '' }}>Security</option>
                             <option value="super_account" {{ old('role', $currentRole) === 'super_account' ? 'selected' : '' }}>Super Account</option>
                             <option value="vendor" {{ old('role', $currentRole) === 'vendor' ? 'selected' : '' }}>Vendor</option>
+                            <option value="display_account" {{ old('role', $currentRole) === 'display_account' ? 'selected' : '' }}>Display Account</option>
                         </select>
                     </div>
 
@@ -92,7 +81,7 @@
                     </div>
 
                     <div class="st-form-actions">
-                        <button type="submit" class="st-btn st-btn--primary">Save</button>
+                        <button type="submit" class="st-btn st-btn--primary">{{ $fromResetEmail ? 'Save and Send Email' : 'Save' }}</button>
                         <a href="{{ route('users.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
                     </div>
                 </form>

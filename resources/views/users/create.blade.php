@@ -69,6 +69,7 @@
                             <option value="security" {{ old('role', 'operator') === 'security' ? 'selected' : '' }}>Security</option>
                             <option value="super_account" {{ old('role', 'operator') === 'super_account' ? 'selected' : '' }}>Super Account</option>
                             <option value="vendor" {{ old('role', 'operator') === 'vendor' ? 'selected' : '' }}>Vendor</option>
+                            <option value="display_account" {{ old('role', 'operator') === 'display_account' ? 'selected' : '' }}>Display Account</option>
                         </select>
                     </div>
 

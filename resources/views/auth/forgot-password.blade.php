@@ -10,7 +10,7 @@
     <div class="st-minh-screen st-flex st-items-center st-justify-center">
         <div class="st-card st-w-full st-maxw-420 st-p-18">
             <div class="st-flex st-justify-center st-items-center st-mb-15 st-minh-70">
-                <img src="{{ asset('img/logo-full.png') }}" alt="e-DCS" class="st-h-auto st-w-auto st-maxw-240 st-object-contain">
+                <img src="{{ asset('img/logo-full.png') }}" alt="Oneject" class="st-h-auto st-w-auto st-maxw-250 st-object-contain">
             </div>
 
             <div class="st-text-center st-mb-14">

@@ -14,9 +14,9 @@
                     </div>
                     <div class="st-form-field st-minw-80 st-flex st-flex-0 st-justify-end st-gap-8">
                         <a href="{{ route('users.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
-                        @if(!auth()->user()->hasRole('operator|super account|section head'))
-                        <a href="{{ route('users.create') }}" class="st-btn st-btn--primary">Add User</a>
-                        @endif
+                        @can('users.create')
+                            <a href="{{ route('users.create') }}" class="st-btn st-btn--primary">Add User</a>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -133,6 +133,7 @@
                                                 <option value="operator" {{ ($role ?? '') === 'operator' ? 'selected' : '' }}>Operator</option>
                                                 <option value="security" {{ ($role ?? '') === 'security' ? 'selected' : '' }}>Security</option>
                                                 <option value="vendor" {{ ($role ?? '') === 'vendor' ? 'selected' : '' }}>Vendor</option>
+                                                <option value="display_account" {{ ($role ?? '') === 'display_account' ? 'selected' : '' }}>Display Account</option>
                                             </select>
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="role">Clear</button>
@@ -202,9 +203,9 @@
                         @forelse ($users as $u)
                             @php
                                 $isCurrentUser = auth()->check() && (int)(auth()->user()->id ?? 0) === (int)$u->id;
-                                $roleText = (string) ($u->role_name ?? '');
-                                $roleVal = $roleText !== '' ? strtolower(str_replace(' ', '_', $roleText)) : (string) ($u->role ?? 'operator');
-                                $roleText = $roleText !== '' ? $roleText : ($roleVal === 'admin' ? 'Admin' : ($roleVal === 'section_head' ? 'Section Head' : 'Operator'));
+                                $roleTextRaw = (string) ($u->role_name ?? '');
+                                $roleVal = $roleTextRaw !== '' ? strtolower(str_replace(' ', '_', $roleTextRaw)) : 'operator';
+                                $roleText = ucwords(str_replace('_', ' ', $roleVal));
                                 $deleteConfirmMsg = 'Are you sure you want to delete this user?';
                             @endphp
                             <tr>
@@ -213,7 +214,7 @@
                                 <td>{{ $u->full_name ?? '-' }}</td>
                                 <td class="st-td-center">{{ $u->email ?? '-' }}</td>
                                 <td class="st-td-center">
-                                    <span class="st-badge st-badge--{{ $roleVal }}">{{ $roleText }}</span>
+                                    <span class="st-font-semibold">{{ $roleText }}</span>
                                 </td>
                                 <td class="st-td-center">
                                     @if($u->is_active)
@@ -239,22 +240,23 @@
                                 </td>
                                 <td class="st-td-center">
                                     <div class="tw-actionbar">
-                                        @if(!auth()->user()->hasRole('operator|super account|section head'))
-                                        <a href="{{ route('users.edit', ['userId' => $u->id]) }}" class="tw-action" data-tooltip="Edit" aria-label="Edit">
-                                            <i class="fa-solid fa-pencil"></i>
-                                        </a>
-                                        @endif
+                                        @can('users.edit')
+                                            <a href="{{ route('users.edit', ['userId' => $u->id]) }}" class="tw-action" data-tooltip="Edit" aria-label="Edit">
+                                                <i class="fa-solid fa-pencil"></i>
+                                            </a>
+                                        @endcan
 
                                         @if (! $isCurrentUser)
-                                            @if(!auth()->user()->hasRole('operator|super account|section head'))
-                                            <form method="POST" action="{{ route('users.delete', ['userId' => $u->id]) }}" class="st-inline-form">
-                                                @csrf
-                                                <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('{{ $deleteConfirmMsg }}');">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                </button>
-                                            </form>
-                                            @endif
-                                        @else
+                                            @can('users.delete')
+                                                <form method="POST" action="{{ route('users.delete', ['userId' => $u->id]) }}" class="st-inline-form">
+                                                    @csrf
+                                                    <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('{{ $deleteConfirmMsg }}');">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endcan
+                                        @endif
+                                        @if ($isCurrentUser)
                                             <span class="st-text--muted st-text--sm">(current)</span>
                                         @endif
                                     </div>

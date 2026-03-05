@@ -1,7 +1,5 @@
 @php
-    $isVendor = auth()->user()
-        && method_exists(auth()->user(), 'hasAnyRole')
-        && auth()->user()->hasAnyRole(['Vendor', 'vendor']);
+    $isVendor = auth()->check() && auth()->user()->can('vendor.dashboard');
 @endphp
 @extends($isVendor ? 'vendor.layouts.vendor' : 'layouts.app')
 

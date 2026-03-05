@@ -31,10 +31,10 @@
                         <div class="cb-section">
                             <h3 class="cb-section__title">
                                 <i class="fas fa-file-invoice"></i>
-                                PO/DO Selection
+                                PO Selection
                             </h3>
                             <div class="cb-field">
-                                <label class="cb-label cb-label--required">PO/DO Number</label>
+                                <label class="cb-label cb-label--required">PO Number</label>
                                 <div class="cb-po-search">
                                     <input type="text"
                                            id="po-search"
@@ -209,9 +209,9 @@
 
 @push('scripts')
 <script type="application/json" id="vendor_booking_create_config">{!! json_encode([
-    'poSearchUrl' => route('vendor.ajax.po_search'),
-    'poDetailUrl' => url('vendor/ajax/po'),
-    'availableSlotsUrl' => route('vendor.ajax.available_slots'),
+    'poSearchUrl' => auth()->user()->can('vendor.ajax.po_search') ? route('vendor.ajax.po_search') : null,
+    'poDetailUrl' => auth()->user()->can('vendor.ajax.po_detail') ? url('vendor/ajax/po') : null,
+    'availableSlotsUrl' => auth()->user()->can('vendor.ajax.available_slots') ? route('vendor.ajax.available_slots') : null,
 ]) !!}</script>
 @endpush
 @endsection

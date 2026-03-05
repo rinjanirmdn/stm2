@@ -69,8 +69,8 @@
 <script type="application/json" id="vendor_availability_config">{!! json_encode([
     'selectedDate' => $selectedDate,
     'holidays' => $holidays ?? [],
-    'availableSlotsUrl' => route('vendor.ajax.available_slots'),
-    'bookingCreateUrl' => route('vendor.bookings.create'),
+    'availableSlotsUrl' => auth()->user()->can('vendor.ajax.available_slots') ? route('vendor.ajax.available_slots') : null,
+    'bookingCreateUrl' => auth()->user()->can('vendor.bookings.create') ? route('vendor.bookings.create') : null,
 ]) !!}</script>
 @endpush
 

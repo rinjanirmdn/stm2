@@ -26,9 +26,9 @@
                     >
                 </div>
                 <div class="st-form-field st-flex-0">
-                    @if(!auth()->user()->hasRole('operator'))
-                    <button type="button" id="btn-add-truck" class="st-btn st-btn--primary">Add Truck</button>
-                    @endif
+                    @can('trucks.create')
+                        <button type="button" id="btn-add-truck" class="st-btn st-btn--primary">Add Truck</button>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -76,17 +76,20 @@
                                     <td class="st-td-center">{{ $fmt($row->created_at ?? null) }}</td>
                                     <td class="st-td-center">
                                         <div class="tw-actionbar">
-                                            @if(!auth()->user()->hasRole('operator'))
-                                            <button type="button" class="tw-action btn-edit-truck" data-id="{{ $row->id }}" data-truck-type="{{ $row->truck_type }}" data-duration="{{ $row->target_duration_minutes }}" data-tooltip="Edit" aria-label="Edit">
-                                                <i class="fa-solid fa-pencil"></i>
-                                            </button>
-                                            <form method="POST" action="{{ route('trucks.delete', ['truckTypeDurationId' => $row->id]) }}" class="st-inline-form">
-                                                @csrf
-                                                <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('Delete this truck type?');">
-                                                    <i class="fa-solid fa-trash"></i>
+                                            @can('trucks.edit')
+                                                <button type="button" class="tw-action btn-edit-truck" data-id="{{ $row->id }}" data-truck-type="{{ $row->truck_type }}" data-duration="{{ $row->target_duration_minutes }}" data-tooltip="Edit" aria-label="Edit">
+                                                    <i class="fa-solid fa-pencil"></i>
                                                 </button>
-                                            </form>
-                                            @endif
+                                            @endcan
+
+                                            @can('trucks.delete')
+                                                <form method="POST" action="{{ route('trucks.delete', ['truckTypeDurationId' => $row->id]) }}" class="st-inline-form">
+                                                    @csrf
+                                                    <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('Delete this truck type?');">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
@@ -98,36 +101,38 @@
             </div>
         </div>
     </section>
-    <!-- Modal Add/Edit Truck -->
-    <div id="truck-modal" class="st-modal st-modal--hidden">
-        <div class="st-modal__content st-modal__content--sm">
-            <div class="st-modal__header">
-                <h3 class="st-modal__title" id="truck-modal-title">Add Truck</h3>
-                <button type="button" id="truck-modal-close" class="st-btn st-btn--outline-primary st-btn--sm">&times;</button>
-            </div>
-            <div class="st-modal__body">
-                <form id="truck-form" method="POST" action="{{ route('trucks.store') }}">
-                    @csrf
-                    <input type="hidden" id="truck-id" name="truck_id" value="">
+    @can('trucks.create')
+        <!-- Modal Add/Edit Truck -->
+        <div id="truck-modal" class="st-modal st-modal--hidden">
+            <div class="st-modal__content st-modal__content--sm">
+                <div class="st-modal__header">
+                    <h3 class="st-modal__title" id="truck-modal-title">Add Truck</h3>
+                    <button type="button" id="truck-modal-close" class="st-btn st-btn--outline-primary st-btn--sm">&times;</button>
+                </div>
+                <div class="st-modal__body">
+                    <form id="truck-form" method="POST" action="{{ route('trucks.store') }}">
+                        @csrf
+                        <input type="hidden" id="truck-id" name="truck_id" value="">
 
-                    <div class="st-form-field st-mb-12">
-                        <label class="st-label">Truck Type <span class="st-text--danger-dark">*</span></label>
-                        <input type="text" id="truck-type-input" name="truck_type" class="st-input" maxlength="100" required>
-                    </div>
+                        <div class="st-form-field st-mb-12">
+                            <label class="st-label">Truck Type <span class="st-text--danger-dark">*</span></label>
+                            <input type="text" id="truck-type-input" name="truck_type" class="st-input" maxlength="100" required>
+                        </div>
 
-                    <div class="st-form-field st-mb-16">
-                        <label class="st-label">Duration (minutes) <span class="st-text--danger-dark">*</span></label>
-                        <input type="number" id="truck-duration-input" name="target_duration_minutes" class="st-input" min="0" max="1440" required>
-                    </div>
+                        <div class="st-form-field st-mb-16">
+                            <label class="st-label">Duration (minutes) <span class="st-text--danger-dark">*</span></label>
+                            <input type="number" id="truck-duration-input" name="target_duration_minutes" class="st-input" min="0" max="1440" required>
+                        </div>
 
-                    <div class="st-flex st-gap-8 st-justify-end">
-                        <button type="button" id="truck-modal-cancel" class="st-btn st-btn--outline-primary">Cancel</button>
-                        <button type="submit" class="st-btn st-btn--primary">Save</button>
-                    </div>
-                </form>
+                        <div class="st-flex st-gap-8 st-justify-end">
+                            <button type="button" id="truck-modal-cancel" class="st-btn st-btn--outline-primary">Cancel</button>
+                            <button type="submit" class="st-btn st-btn--primary">Save</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    @endcan
 @endsection
 
 @push('scripts')

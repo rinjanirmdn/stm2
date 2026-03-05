@@ -84,16 +84,10 @@
             @endcan
 
             @can('slots.index')
-            @php
-                $user = auth()->user();
-                $hideSlotsMenu = $user && $user->hasRole('operator');
-            @endphp
-            @if(!$hideSlotsMenu)
             <a href="{{ route('slots.index') }}" title="Planned" class="st-sidebar__link{{ request()->routeIs('slots.index') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-calendar-days"></i>
                 <span>Planned</span>
             </a>
-            @endif
             @endcan
 
             @can('gates.index')
@@ -104,29 +98,17 @@
             @endcan
 
             @can('bookings.index')
-            @php
-                $user = auth()->user();
-                $hideBookingsMenu = $user && $user->hasRole('operator');
-            @endphp
-            @if(!$hideBookingsMenu)
             <a href="{{ route('bookings.index') }}" title="Booking Requests" class="st-sidebar__link{{ request()->routeIs('bookings.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-clipboard-list"></i>
                 <span>Booking Requests</span>
             </a>
-            @endif
             @endcan
 
             @can('unplanned.index')
-            @php
-                $user = auth()->user();
-                $hideUnplannedMenu = $user && $user->hasRole('operator');
-            @endphp
-            @if(!$hideUnplannedMenu)
             <a href="{{ route('unplanned.index') }}" title="Unplanned" class="st-sidebar__link{{ request()->routeIs('unplanned.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-calendar-plus"></i>
                 <span>Unplanned</span>
             </a>
-            @endif
             @endcan
 
             @can('reports.transactions')
@@ -144,16 +126,10 @@
             @endcan
 
             @can('users.index')
-            @php
-                $user = auth()->user();
-                $hideUserMenu = $user && ($user->hasRole('operator') || $user->hasRole('super account') || $user->hasRole('section head'));
-            @endphp
-            @if(!$hideUserMenu)
             <a href="{{ route('users.index') }}" title="Users" class="st-sidebar__link{{ request()->routeIs('users.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-users"></i>
                 <span>Users</span>
             </a>
-            @endif
             @endcan
 
             @can('logs.index')
@@ -180,9 +156,17 @@
                     <img src="{{ asset('img/logo-icon.png') }}" alt="e-DCS" class="st-topbar__logo">
                     <h1 class="st-topbar__title">{{ $pageTitle ?? trim($__env->yieldContent('page_title')) ?: 'Dashboard' }}</h1>
                 </div>
+
+                <div class="st-topbar__center" aria-hidden="true">
+                    <a href="{{ route('dashboard') }}" class="st-topbar__center-link" tabindex="-1">
+                        <img src="{{ asset('img/e-Docking Control System.png') }}" alt="e-Docking Control System" class="st-topbar__center-logo">
+                    </a>
+                </div>
+
                 <div class="st-topbar__user">
                     <!-- Notification Component -->
                     @if(auth()->check())
+                        @can('notifications.index')
                         <div class="st-notification">
                             <button type="button" class="st-notification-btn" id="st-notification-btn">
                                 <i class="fas fa-bell"></i>
@@ -220,6 +204,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endcan
                     @endif
 
                     <details class="st-topbar__menu">
@@ -235,11 +220,13 @@
                                 <a href="{{ route('profile') }}" class="st-icon-button" title="Profile" aria-label="Profile">
                                     <i class="fas fa-user"></i>
                                 </a>
-                                @if($stIsDashboardRoute && !$stIsDisplayOnly)
-                                    <a href="{{ request()->fullUrlWithQuery(['display' => '1']) }}" class="st-icon-button" title="Presentation Only" aria-label="Presentation Only" target="_blank" rel="noopener">
-                                        <i class="fas fa-display"></i>
-                                    </a>
-                                @endif
+                                @can('dashboard.view')
+                                    @if(!$stIsDisplayOnly)
+                                        <a href="{{ $stIsDashboardRoute ? request()->fullUrlWithQuery(['display' => '1']) : route('dashboard', ['display' => '1']) }}" class="st-icon-button" title="Presentation Only" aria-label="Presentation Only" target="_blank" rel="noopener">
+                                            <i class="fas fa-display"></i>
+                                        </a>
+                                    @endif
+                                @endcan
                                 <form method="POST" action="{{ route('logout') }}" class="st-inline-form">
                                     @csrf
                                     <button type="submit" class="st-icon-button st-icon-button--ghost" title="Logout" aria-label="Logout">
@@ -257,8 +244,7 @@
             @php
                 $stIsProfileRestricted = request()->routeIs('profile')
                     && auth()->check()
-                    && method_exists(auth()->user(), 'hasRole')
-                    && !auth()->user()->hasAnyRole(['Admin', 'Super Admin', 'Super Account', 'admin']);
+                    && !auth()->user()->can('profile.change_password');
                 $stSuccessMessage = session('success') ?: (string) request()->query('_success', '');
                 $stErrorMessage = (string) session('error', '');
             @endphp
@@ -383,16 +369,16 @@
 
 @php
     $stReminderUrl = null;
-    if (auth()->check() && auth()->user()->can('bookings.index') && \Illuminate\Support\Facades\Route::has('bookings.ajax.reminders')) {
+    if (auth()->check() && auth()->user()->can('bookings.ajax.reminders') && \Illuminate\Support\Facades\Route::has('bookings.ajax.reminders')) {
         $stReminderUrl = route('bookings.ajax.reminders');
     }
-    $stLatestUrl = \Illuminate\Support\Facades\Route::has('notifications.latest')
+    $stLatestUrl = (auth()->check() && auth()->user()->can('notifications.latest') && \Illuminate\Support\Facades\Route::has('notifications.latest'))
         ? route('notifications.latest')
         : null;
-    $stMarkAllUrl = \Illuminate\Support\Facades\Route::has('notifications.markAllRead')
+    $stMarkAllUrl = (auth()->check() && auth()->user()->can('notifications.readAll') && \Illuminate\Support\Facades\Route::has('notifications.markAllRead'))
         ? route('notifications.markAllRead')
         : null;
-    $stClearUrl = \Illuminate\Support\Facades\Route::has('notifications.clearAll')
+    $stClearUrl = (auth()->check() && auth()->user()->can('notifications.clearAll') && \Illuminate\Support\Facades\Route::has('notifications.clearAll'))
         ? route('notifications.clearAll')
         : null;
 @endphp

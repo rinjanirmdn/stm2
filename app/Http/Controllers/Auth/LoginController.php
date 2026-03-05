@@ -98,21 +98,6 @@ class LoginController extends Controller
                 if (Schema::hasTable('md_users') && Schema::hasTable($rolesTable) && Schema::hasTable($modelHasRolesTable) && Schema::hasColumn('md_users', 'role_id')) {
                     $roleId = (int) ($user->role_id ?? 0);
 
-                    if ($roleId <= 0) {
-                        $roleStr = (string) ($user->role ?? '');
-                        if ($roleStr !== '') {
-                            $roleFilter = str_replace('_', ' ', strtolower($roleStr));
-                            $roleId = (int) DB::table($rolesTable)
-                                ->whereRaw('LOWER(roles_name) = ?', [$roleFilter])
-                                ->value('id');
-
-                            if ($roleId > 0) {
-                                DB::table('md_users')->where('id', (int) $user->id)->update(['role_id' => $roleId]);
-                                $user->role_id = $roleId;
-                            }
-                        }
-                    }
-
                     if ($roleId > 0) {
                         DB::table($modelHasRolesTable)
                             ->where('model_type', 'App\\Models\\User')
@@ -139,7 +124,15 @@ class LoginController extends Controller
             return redirect()->intended(route('vendor.dashboard'));
         }
 
-        return redirect()->intended(route('dashboard'));
+        if ($user && $user->can('dashboard.view')) {
+            return redirect()->intended(route('dashboard'));
+        }
+
+        if ($user && $user->can('slots.index')) {
+            return redirect()->route('slots.index');
+        }
+
+        return redirect()->route('profile');
     }
 
     public function destroy(Request $request)
