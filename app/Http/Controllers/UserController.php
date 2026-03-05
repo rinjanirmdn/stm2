@@ -248,6 +248,7 @@ class UserController extends Controller
             'role_id' => $roleId,
             'vendor_code' => $role === 'vendor' ? $vendorCode : null,
             'is_active' => true,
+            'must_change_password' => true,
             'password' => Hash::make($password),
             'created_at' => now(),
             'updated_at' => now(),

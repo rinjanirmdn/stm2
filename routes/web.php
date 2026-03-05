@@ -58,6 +58,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update')->middleware('permission:profile.index');
     Route::post('/profile/password-request', [ForgotPasswordController::class, 'requestFromProfile'])->name('profile.password-request')->middleware('permission:profile.index');
 
+    Route::get('/force-change-password', [\App\Http\Controllers\Auth\ForcePasswordChangeController::class, 'show'])->name('password.force-change');
+    Route::post('/force-change-password', [\App\Http\Controllers\Auth\ForcePasswordChangeController::class, 'store'])->name('password.force-change.store');
+
+
     Route::prefix('slots')->name('slots.')->group(function () {
         Route::get('/', [SlotController::class, 'index'])->name('index')->middleware('permission:slots.index');
 
