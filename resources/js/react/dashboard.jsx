@@ -1056,9 +1056,9 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
   const [search, setSearch] = useState('');
 
   const scMap = getStatusColors();
-  const statusAbbr = { pending: 'PND', scheduled: 'SCH', waiting: 'WAIT', 'in progress': 'IN PR', completed: 'CMPLT', cancelled: 'CXL' };
-  const statusChartData = useMemo(() => Object.entries(processStatusCounts || {}).map(([k, v]) => ({ name: k.replace(/_/g, ' '), key: k, value: +v, fill: (scMap[k] || scMap.scheduled).accent })), [processStatusCounts]);
-  const badgeMap = { scheduled: 'blue', waiting: 'yellow', arrived: 'yellow', active: 'purple', in_progress: 'purple', completed: 'green', cancelled: 'red', pending: 'orange', pending_approval: 'orange' };
+  const statusAbbr = { pending:'PND', scheduled:'SCH', waiting:'WAIT', 'in progress':'IN PR', completed:'CMPLT', cancelled:'CXL' };
+  const statusChartData = useMemo(() => Object.entries(processStatusCounts||{}).map(([k,v])=>({name:k.replace(/_/g,' '),key:k,value:+v,fill:(scMap[k]||scMap.scheduled).accent})), [processStatusCounts]);
+  const badgeMap = { scheduled:'blue', waiting:'yellow', arrived:'yellow', active:'purple', in_progress:'purple', completed:'green', cancelled:'red', pending:'orange', pending_approval:'orange' };
 
   const allRows = useMemo(() => schedule.filter(r => r.id || r.is_pending_booking || r.po_number || r.ticket_number || r.request_number), [schedule]);
 
@@ -1100,7 +1100,7 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
     return filtered;
   }, [allRows, statusFilter, search, isDisplayOnly]);
 
-  const statuses = ['pending', 'scheduled', 'waiting', 'in_progress', 'completed', 'cancelled'];
+  const statuses = ['pending','scheduled','waiting','in_progress','completed','cancelled'];
 
   return (
     <div className="flex flex-col gap-2 flex-1">
@@ -1190,7 +1190,7 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
                 {statuses.map(s => {
                   const cnt = statusCounts[s] || 0;
                   if (cnt === 0) return null;
-                  return <FilterPill key={s} label={s.replace(/_/g, ' ')} active={statusFilter === s} onClick={() => setStatusFilter(s)} count={cnt} />;
+                  return <FilterPill key={s} label={s.replace(/_/g,' ')} active={statusFilter===s} onClick={()=>setStatusFilter(s)} count={cnt} />;
                 })}
               </div>
             )}
@@ -1208,17 +1208,17 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
                 </tr>
               </thead>
               <tbody>
-                {rows.length > 0 ? rows.map((row, i) => {
-                  const st = row.status || 'scheduled';
-                  const label = st === 'arrived' ? 'waiting' : st;
+                {rows.length > 0 ? rows.map((row,i) => {
+                  const st = row.status||'scheduled';
+                  const label = st==='arrived'?'waiting':st;
                   return (
                     <tr key={i} className="border-b border-gray-100 hover:bg-sky-50/30 transition-colors">
-                      <td className="py-2 px-3 font-medium text-gray-800">{row.po_number || row.ticket_number || row.request_number || '-'}</td>
-                      <td className="py-2 px-3 text-gray-600 max-w-[160px] truncate">{row.vendor_name || row.supplier_name || '-'}</td>
-                      <td className="py-2 px-3 text-gray-600 hidden lg:table-cell">{row.warehouse_name || '-'}</td>
-                      <td className="py-2 px-3 text-gray-600 hidden md:table-cell">{row.gate_label || '-'}</td>
-                      <td className="py-2 px-3 text-gray-600 font-mono">{row.eta || '-'}</td>
-                      <td className="py-2 px-3"><Badge color={badgeMap[label] || 'gray'}>{label.replace(/_/g, ' ')}</Badge></td>
+                      <td className="py-2 px-3 font-medium text-gray-800">{row.po_number||row.ticket_number||row.request_number||'-'}</td>
+                      <td className="py-2 px-3 text-gray-600 max-w-[160px] truncate">{row.vendor_name||row.supplier_name||'-'}</td>
+                      <td className="py-2 px-3 text-gray-600 hidden lg:table-cell">{row.warehouse_name||'-'}</td>
+                      <td className="py-2 px-3 text-gray-600 hidden md:table-cell">{row.gate_label||'-'}</td>
+                      <td className="py-2 px-3 text-gray-600 font-mono">{row.eta||'-'}</td>
+                      <td className="py-2 px-3"><Badge color={badgeMap[label]||'gray'}>{label.replace(/_/g,' ')}</Badge></td>
                     </tr>
                   );
                 }) : (

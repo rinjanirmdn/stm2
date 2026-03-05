@@ -26,6 +26,7 @@ export default defineConfig({
                 'resources/css/bookings.css',
                 'resources/js/app.js',
                 'resources/js/react/dashboard.jsx',
+                'resources/js/react/vendor-dashboard.jsx',
                 'resources/js/pages/main.js',
                 'resources/js/pages/gate-status.js',
                 'resources/js/pages/gates-monitor.js',
