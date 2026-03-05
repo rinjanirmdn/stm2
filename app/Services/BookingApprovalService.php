@@ -12,6 +12,9 @@ use App\Notifications\BookingRejected;
 use App\Notifications\BookingRequested;
 use App\Notifications\BookingSubmitted;
 use DateTime;
+use Illuminate\Notifications\Channels\DatabaseChannel;
+use Illuminate\Notifications\Channels\MailChannel;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -151,6 +154,13 @@ class BookingApprovalService
                 'approved_at' => now(),
             ]);
 
+            // Ensure relations needed by notifications are loaded via eager-loading (avoid lazy-load failures)
+            try {
+                $slot->loadMissing(['plannedGate']);
+            } catch (\Throwable $e) {
+                // ignore, notification code will handle missing relation gracefully
+            }
+
             // Log booking history
             BookingHistory::logAction(
                 $slot->id,
@@ -160,6 +170,9 @@ class BookingApprovalService
                 $oldStatus,
                 $notes
             );
+
+            // Notify vendor immediately (avoid relying solely on afterCommit which may not fire in some setups)
+            $this->notifyVendorApproved($slot, $bookingRequestId, $action === Slot::APPROVAL_RESCHEDULED);
 
             $slotId = (int) $slot->id;
             $poNumber = (string) ($slot->po_number ?? '');
@@ -178,8 +191,6 @@ class BookingApprovalService
                     'po_number' => $poNumber,
                     'admin_id' => $adminId,
                 ]);
-
-                $this->notifyVendorApproved($slot, $bookingRequestId, $action === Slot::APPROVAL_RESCHEDULED);
             });
 
             return $slot->fresh();
@@ -231,6 +242,52 @@ class BookingApprovalService
         if ($bestGateId !== null) {
             $slot->planned_gate_id = $bestGateId;
             $slot->save();
+        }
+    }
+
+    private function vendorAlreadyNotifiedApproved(User $vendor, Slot $slot, string $actionUrl): bool
+    {
+        // IMPORTANT: In Postgres, if notifications.data is TEXT, JSON operators (-> / ->>) will raise an error
+        // and abort the surrounding transaction. So we must avoid executing JSON-operator queries in that case.
+        $dataType = $this->getNotificationsDataColumnType();
+        $isJsonColumn = in_array($dataType, ['json', 'jsonb'], true);
+
+        if ($isJsonColumn) {
+            return $vendor->notifications()
+                ->where('type', BookingApproved::class)
+                ->where(function ($q) use ($slot, $actionUrl) {
+                    $q->where('data->slot_id', $slot->id)
+                        ->orWhere('data->action_url', $actionUrl);
+                })
+                ->exists();
+        }
+
+        $slotIdNeedle = '"slot_id":' . (int) $slot->id;
+        $urlNeedle = '"action_url":"' . str_replace('"', '\\"', $actionUrl) . '"';
+
+        return $vendor->notifications()
+            ->where('type', BookingApproved::class)
+            ->where(function ($q) use ($slotIdNeedle, $urlNeedle) {
+                $q->where('data', 'like', '%' . $slotIdNeedle . '%')
+                    ->orWhere('data', 'like', '%' . $urlNeedle . '%');
+            })
+            ->exists();
+    }
+
+    private function getNotificationsDataColumnType(): string
+    {
+        static $cached = null;
+        if (is_string($cached) && $cached !== '') {
+            return $cached;
+        }
+
+        try {
+            $type = Schema::getColumnType('notifications', 'data');
+            $cached = is_string($type) && $type !== '' ? strtolower($type) : 'unknown';
+            return $cached;
+        } catch (\Throwable $e) {
+            $cached = 'unknown';
+            return $cached;
         }
     }
 
@@ -541,24 +598,109 @@ class BookingApprovalService
     protected function notifyVendorApproved(Slot $slot, ?int $bookingRequestId = null, bool $isRescheduled = false): void
     {
         try {
-            $vendor = $slot->requester;
+            Log::info('Dispatching vendor approval notification', [
+                'slot_id' => $slot->id,
+                'ticket_number' => $slot->ticket_number,
+                'requested_by' => $slot->requested_by,
+                'booking_request_id' => $bookingRequestId,
+                'is_rescheduled' => $isRescheduled,
+            ]);
+
+            $vendorId = (int) ($slot->requested_by ?? 0);
+            if ($vendorId <= 0) {
+                Log::warning('Approval notification skipped: slot has no requested_by', [
+                    'slot_id' => $slot->id,
+                    'ticket_number' => $slot->ticket_number,
+                ]);
+                return;
+            }
+
+            $vendor = User::find($vendorId);
+            if (!$vendor) {
+                Log::warning('Approval notification skipped: vendor user not found', [
+                    'slot_id' => $slot->id,
+                    'ticket_number' => $slot->ticket_number,
+                    'vendor_id' => $vendorId,
+                ]);
+                return;
+            }
+
             if ($vendor) {
                 $targetId = $bookingRequestId ?: $slot->id;
-                $actionUrl = route('vendor.bookings.show', $targetId, false);
-                $alreadyNotified = $vendor->notifications()
-                    ->where('type', BookingApproved::class)
-                    ->where(function ($q) use ($slot, $actionUrl) {
-                        $q->where('data->slot_id', $slot->id)
-                            ->orWhere('data->action_url', $actionUrl);
-                    })
-                    ->exists();
+                $actionUrl = url('/vendor/bookings/' . $targetId);
+
+                Log::info('Resolved vendor recipient for approval notification', [
+                    'slot_id' => $slot->id,
+                    'vendor_id' => $vendor->id,
+                    'vendor_email' => $vendor->email,
+                    'action_url' => $actionUrl,
+                ]);
+
+                $alreadyNotified = $this->vendorAlreadyNotifiedApproved($vendor, $slot, $actionUrl);
                 if ($alreadyNotified) {
+                    Log::info('Approval notification skipped: already notified', [
+                        'slot_id' => $slot->id,
+                        'vendor_id' => $vendor->id,
+                        'action_url' => $actionUrl,
+                    ]);
                     return;
                 }
-                $vendor->notify(new BookingApproved($slot, $targetId, $isRescheduled));
+
+                $notification = new BookingApproved($slot, $targetId, $isRescheduled);
+
+                // When calling channels directly (DatabaseChannel/MailChannel), Laravel's NotificationSender
+                // does not auto-assign the UUID notification id. Ensure it's set so DB insert won't fail.
+                if (empty($notification->id)) {
+                    $notification->id = (string) Str::uuid();
+                }
+
+                // Always try to store database notification even if email fails.
+                $storedDatabase = false;
+                try {
+                    app(DatabaseChannel::class)->send($vendor, $notification);
+                    $storedDatabase = true;
+
+                    Log::info('Stored approval notification (database)', [
+                        'slot_id' => $slot->id,
+                        'vendor_id' => $vendor->id,
+                        'type' => BookingApproved::class,
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to store approval notification (database): ' . $e->getMessage(), [
+                        'slot_id' => $slot->id,
+                        'vendor_id' => $vendor->id,
+                    ]);
+                }
+
+                // Send email only AFTER successful DB commit so it is guaranteed the approval succeeded.
+                if ($storedDatabase && !empty($vendor->email)) {
+                    $slotId = (int) $slot->id;
+                    $vendorId = (int) $vendor->id;
+                    $email = (string) $vendor->email;
+                    DB::afterCommit(function () use ($vendor, $notification, $slotId, $vendorId, $email) {
+                        try {
+                            app(MailChannel::class)->send($vendor, $notification);
+
+                            Log::info('Sent approval notification (mail)', [
+                                'slot_id' => $slotId,
+                                'vendor_id' => $vendorId,
+                                'email' => $email,
+                            ]);
+                        } catch (\Throwable $e) {
+                            Log::warning('Failed to send approval notification (mail): ' . $e->getMessage(), [
+                                'slot_id' => $slotId,
+                                'vendor_id' => $vendorId,
+                                'email' => $email,
+                            ]);
+                        }
+                    });
+                }
             }
         } catch (\Throwable $e) {
-            Log::warning('Failed to send approval notification: ' . $e->getMessage());
+            Log::warning('Failed to send approval notification: ' . $e->getMessage(), [
+                'slot_id' => $slot->id,
+                'requested_by' => $slot->requested_by,
+            ]);
         }
     }
 

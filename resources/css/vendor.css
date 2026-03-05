@@ -127,7 +127,7 @@
 .vendor-header__user {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 6px;
     flex-shrink: 0;
 }
 
@@ -358,24 +358,24 @@
 }
 
 .vendor-header .vendor-notification__toggle {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: transparent;
+    border: none;
     border-radius: 10px;
     width: 44px;
     height: 44px;
     padding: 0;
     justify-content: center;
-    color: #4b5563;
+    color: #ffffff;
 }
 
 .vendor-header .vendor-notification__toggle:hover {
-    background: #f3f4f6;
+    background: rgba(255, 255, 255, 0.12);
 }
 
 .vendor-header .vendor-btn--secondary {
-    background: #ffffff;
-    color: #374151;
-    border: 1px solid #e5e7eb;
+    background: transparent;
+    color: #ffffff;
+    border: none;
     width: 44px;
     height: 44px;
     padding: 0;
@@ -384,8 +384,8 @@
 }
 
 .vendor-header .vendor-btn--secondary:hover {
-    background: #f3f4f6;
-    color: #111827;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
 }
 
 .vendor-header .vendor-notification__toggle,
@@ -399,6 +399,7 @@
 .vendor-header .vendor-notification__toggle i,
 .vendor-header .vendor-btn--secondary i {
     font-size: 16px;
+    color: inherit;
 }
 
 .vendor-btn--sm {
@@ -586,7 +587,7 @@
 
 .vendor-notification {
     position: relative;
-    margin-right: 0.5rem;
+    margin-right: 0;
 }
 
 .vendor-notification__toggle {
@@ -945,7 +946,7 @@
         width: 100%;
         justify-content: space-between;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
     }
 
     .vendor-header__nav {
@@ -977,7 +978,7 @@
     .vendor-header__user {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
 
     .vendor-header__user-info,
@@ -1229,6 +1230,128 @@
 .vendor-page--dashboard .vd-chart-body--pie {
     align-items: stretch;
     min-height: 280px;
+}
+
+.vendor-page--dashboard .vd-mini-bar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+    height: 220px;
+    align-items: end;
+}
+
+.vendor-page--dashboard .vd-mini-bar__col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    height: 100%;
+}
+
+.vendor-page--dashboard .vd-mini-bar__val {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.vendor-page--dashboard .vd-mini-bar__barwrap {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 10px;
+}
+
+.vendor-page--dashboard .vd-mini-bar__bar {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+}
+
+.vendor-page--dashboard .vd-mini-bar__label {
+    margin-top: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.15;
+}
+
+.vendor-page--dashboard .vd-donut {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+    align-content: start;
+}
+
+.vendor-page--dashboard .vd-donut__ring {
+    width: 180px;
+    height: 180px;
+    border-radius: 9999px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.vendor-page--dashboard .vd-donut__center {
+    position: absolute;
+    inset: 14px;
+    border-radius: 9999px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.vendor-page--dashboard .vd-donut__pct {
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.vendor-page--dashboard .vd-donut__sub {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.vendor-page--dashboard .vd-donut__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vendor-page--dashboard .vd-donut__li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.vendor-page--dashboard .vd-donut__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+}
+
+.vendor-page--dashboard .vd-donut__txt {
+    font-weight: 600;
+}
+
+.vendor-page--dashboard .vd-donut__num {
+    margin-left: auto;
+    font-weight: 800;
+    color: var(--text-primary);
 }
 
 #vendor-ontime-react {

@@ -22,6 +22,112 @@ function stGetVendorConfig() {
     return stReadJson('st-vendor-config', {});
 }
 
+function initVendorDashboardCharts() {
+    const statusMount = document.getElementById('vendor-status-overview-react');
+    const ontimeMount = document.getElementById('vendor-ontime-react');
+    const hasAny = !!statusMount || !!ontimeMount;
+    if (!hasAny) return;
+
+    function cssVar(name, fallback) {
+        try {
+            const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            return v || fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function clamp(n, min, max) {
+        const x = Number(n);
+        if (!Number.isFinite(x)) return min;
+        return Math.min(max, Math.max(min, x));
+    }
+
+    if (statusMount) {
+        const raw = stReadJson('vendor-status-overview-data', {});
+        const s = (raw && raw.stats) ? raw.stats : {};
+        const items = [
+            { key: 'scheduled', label: 'Scheduled', value: +(s.scheduled || 0), color: cssVar('--scheduled', '#0ea5e9') },
+            { key: 'waiting', label: 'Waiting', value: +(s.waiting || 0), color: cssVar('--waiting', '#f59e0b') },
+            { key: 'in_progress', label: 'In Progress', value: +(s.in_progress || 0), color: cssVar('--in-progress', '#8b5cf6') },
+            { key: 'completed', label: 'Completed', value: +(s.completed || 0), color: cssVar('--completed', '#10b981') },
+        ];
+
+        const maxV = Math.max(1, ...items.map((i) => i.value));
+        const wrap = document.createElement('div');
+        wrap.className = 'vd-mini-bar';
+
+        items.forEach((it) => {
+            const col = document.createElement('div');
+            col.className = 'vd-mini-bar__col';
+
+            const val = document.createElement('div');
+            val.className = 'vd-mini-bar__val';
+            val.textContent = String(it.value);
+            val.style.color = it.color;
+
+            const barWrap = document.createElement('div');
+            barWrap.className = 'vd-mini-bar__barwrap';
+
+            const bar = document.createElement('div');
+            bar.className = 'vd-mini-bar__bar';
+            bar.style.backgroundColor = it.color;
+            bar.style.height = clamp((it.value / maxV) * 100, 4, 100) + '%';
+
+            const label = document.createElement('div');
+            label.className = 'vd-mini-bar__label';
+            label.textContent = it.label;
+
+            barWrap.appendChild(bar);
+            col.appendChild(val);
+            col.appendChild(barWrap);
+            col.appendChild(label);
+            wrap.appendChild(col);
+        });
+
+        statusMount.innerHTML = '';
+        statusMount.appendChild(wrap);
+    }
+
+    if (ontimeMount) {
+        const perf = stReadJson('vendor-ontime-data', {});
+        const onTime = +(perf.on_time || 0);
+        const late = +(perf.late || 0);
+        const total = onTime + late;
+        const pct = total > 0 ? (onTime / total) * 100 : 0;
+
+        const onClr = cssVar('--completed', '#10b981');
+        const lateClr = cssVar('--cancelled', '#ef4444');
+
+        const wrap = document.createElement('div');
+        wrap.className = 'vd-donut';
+
+        const donut = document.createElement('div');
+        donut.className = 'vd-donut__ring';
+        donut.style.background = `conic-gradient(${onClr} 0 ${pct}%, ${lateClr} ${pct}% 100%)`;
+
+        const center = document.createElement('div');
+        center.className = 'vd-donut__center';
+        center.innerHTML = `<div class="vd-donut__pct">${pct.toFixed(1)}%</div><div class="vd-donut__sub">On Time</div>`;
+
+        donut.appendChild(center);
+
+        const legend = document.createElement('div');
+        legend.className = 'vd-donut__legend';
+        legend.innerHTML = `
+            <div class="vd-donut__li"><span class="vd-donut__dot" style="background:${onClr}"></span><span class="vd-donut__txt">On Time</span><span class="vd-donut__num">${onTime}</span></div>
+            <div class="vd-donut__li"><span class="vd-donut__dot" style="background:${lateClr}"></span><span class="vd-donut__txt">Late</span><span class="vd-donut__num">${late}</span></div>
+            <div class="vd-donut__li"><span class="vd-donut__dot" style="background:${cssVar('--text-secondary', '#94a3b8')}"></span><span class="vd-donut__txt">Total</span><span class="vd-donut__num">${total}</span></div>
+        `;
+
+        wrap.appendChild(donut);
+        wrap.appendChild(legend);
+
+        ontimeMount.innerHTML = '';
+        ontimeMount.appendChild(wrap);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const bookingConfig = window.vendorBookingCreateConfig || stReadJson('vendor_booking_create_config', null);
     const availabilityConfig = window.vendorAvailabilityConfig || stReadJson('vendor_availability_config', null);

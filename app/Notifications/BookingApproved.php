@@ -56,7 +56,7 @@ class BookingApproved extends Notification
             'slot_id' => $this->slot->id,
             'title' => $title,
             'message' => $message,
-            'action_url' => route('vendor.bookings.show', $targetId, false),
+            'action_url' => url('/vendor/bookings/' . $targetId),
             'icon' => 'fas fa-check-circle',
             'color' => 'green',
         ];
