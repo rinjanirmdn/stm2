@@ -10,6 +10,12 @@ class DashboardStatsService
         private readonly SlotService $slotService
     ) {}
 
+    private function getArrivalLateExpression(string $plannedStartExpr, string $arrivalExpr): string
+    {
+        $thresholdExpr = $this->slotService->getDateAddExpression($plannedStartExpr, 15);
+        return "({$arrivalExpr} > {$thresholdExpr})";
+    }
+
     public function getDirectionByGate(string $start, string $end): array
     {
         $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
@@ -78,6 +84,9 @@ class DashboardStatsService
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
+        $arrivalLateExpr = $this->getArrivalLateExpression('s.planned_start', 's.arrival_time');
+        $lateCaseExpr = "CASE WHEN s.slot_type = 'planned' AND s.arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (s.is_late = true) END";
+
         $rows = DB::table('slots as s')
             ->leftJoin('md_gates as g', function ($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
@@ -89,8 +98,8 @@ class DashboardStatsService
             ->select([
                 's.direction',
                 'g.gate_number',
-                DB::raw("SUM(CASE WHEN s.is_late = true THEN 0 ELSE 1 END) AS on_time"),
-                DB::raw("SUM(CASE WHEN s.is_late = true THEN 1 ELSE 0 END) AS late"),
+                DB::raw("SUM(CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time"),
+                DB::raw("SUM(CASE WHEN ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late"),
             ])
             ->get();
 
@@ -288,6 +297,9 @@ class DashboardStatsService
             ->whereBetween(DB::raw('DATE(planned_start)'), [$start, $end])
             ->count();
 
+        $arrivalLateExpr = $this->getArrivalLateExpression('planned_start', 'arrival_time');
+        $lateCaseExpr = "CASE WHEN slot_type = 'planned' AND arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (is_late = true) END";
+
         // Single query with conditional aggregation for other stats (from slots)
         $stats = DB::table('slots')
             ->whereBetween($rangeDate, [$start, $end])
@@ -300,7 +312,7 @@ class DashboardStatsService
                 SUM(CASE WHEN status IN ('arrived', 'waiting') THEN 1 ELSE 0 END) AS waiting,
                 SUM(CASE WHEN status IN ('pending_approval') THEN 1 ELSE 0 END) AS pending,
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
-                SUM(CASE WHEN status = 'completed' AND is_late = true THEN 1 ELSE 0 END) AS late,
+                SUM(CASE WHEN status = 'completed' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late,
                 SUM(CASE WHEN direction = 'inbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS inbound,
                 SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound
             ")
@@ -329,17 +341,20 @@ class DashboardStatsService
     {
         $rangeDate = DB::raw('DATE(planned_start)');
 
+        $arrivalLateExpr = $this->getArrivalLateExpression('planned_start', 'arrival_time');
+        $lateCaseExpr = "CASE WHEN slot_type = 'planned' AND arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (is_late = true) END";
+
         // Single query for all stats
         $stats = DB::table('slots')
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->selectRaw("
-                SUM(CASE WHEN is_late = false OR is_late IS NULL THEN 1 ELSE 0 END) AS on_time_all,
-                SUM(CASE WHEN is_late = true THEN 1 ELSE 0 END) AS late_all,
-                SUM(CASE WHEN direction = 'inbound' AND (is_late = false OR is_late IS NULL) THEN 1 ELSE 0 END) AS on_time_in,
-                SUM(CASE WHEN direction = 'inbound' AND is_late = true THEN 1 ELSE 0 END) AS late_in,
-                SUM(CASE WHEN direction = 'outbound' AND (is_late = false OR is_late IS NULL) THEN 1 ELSE 0 END) AS on_time_out,
-                SUM(CASE WHEN direction = 'outbound' AND is_late = true THEN 1 ELSE 0 END) AS late_out
+                SUM(CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_all,
+                SUM(CASE WHEN ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_all,
+                SUM(CASE WHEN direction = 'inbound' AND ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_in,
+                SUM(CASE WHEN direction = 'inbound' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_in,
+                SUM(CASE WHEN direction = 'outbound' AND ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_out,
+                SUM(CASE WHEN direction = 'outbound' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_out
             ")
             ->first();
 
@@ -653,6 +668,9 @@ class DashboardStatsService
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
+        $arrivalLateExpr = $this->getArrivalLateExpression('s.planned_start', 's.arrival_time');
+        $lateCaseExpr = "CASE WHEN s.slot_type = 'planned' AND s.arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (s.is_late = true) END";
+
         $rows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->where('s.status', 'completed')
@@ -661,8 +679,8 @@ class DashboardStatsService
             ->select([
                 's.direction',
                 'w.wh_code as warehouse_code',
-                DB::raw("SUM(CASE WHEN s.is_late = true THEN 0 ELSE 1 END) AS on_time"),
-                DB::raw("SUM(CASE WHEN s.is_late = true THEN 1 ELSE 0 END) AS late"),
+                DB::raw("SUM(CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time"),
+                DB::raw("SUM(CASE WHEN ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late"),
             ])
             ->get();
 
