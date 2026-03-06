@@ -368,6 +368,7 @@ class UserController extends Controller
         $passwordChanged = false;
         if ($password !== '') {
             $update['password'] = Hash::make($password);
+            $update['must_change_password'] = true;
             $passwordChanged = true;
         }
 

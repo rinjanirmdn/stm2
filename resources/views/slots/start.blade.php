@@ -13,11 +13,44 @@
         $conflictLines = session('conflict_lines');
     @endphp
 
-    <div class="st-card st-mb-12">
-        <div class="st-text--sm st-text--muted">Planned #{{ $slot->id }}</div>
-        <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
-        <div class="st-text--sm st-text--muted st-mt-4">
-            Estimated Process Duration: {{ (int) $plannedDurationMinutes }} Minutes
+    <div class="st-card st-mb-16 st-border-l-4" style="border-left-color: var(--primary);">
+        <div class="st-flex st-justify-between st-align-center st-mb-12">
+            <h3 class="st-m-0 st-text-16">Start Process</h3>
+            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id }}</span>
+        </div>
+        <div class="st-form-row--grid-3 st-text--sm">
+            <div class="st-flex st-align-center st-gap-8">
+                <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-truck"></i></div>
+                <div>
+                    <div class="st-text--xs st-text--muted">PO / DO</div>
+                    <div class="st-font-semibold">{{ $slot->truck_number ?? '-' }}</div>
+                </div>
+            </div>
+            <div class="st-flex st-align-center st-gap-8">
+                <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-warehouse"></i></div>
+                <div>
+                    <div class="st-text--xs st-text--muted">Warehouse</div>
+                    <div class="st-font-semibold">{{ $slot->warehouse_name ?? '-' }}</div>
+                </div>
+            </div>
+            <div class="st-flex st-align-center st-gap-8">
+                <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-clock"></i></div>
+                <div>
+                    <div class="st-text--xs st-text--muted">Planned ETA</div>
+                    <div class="st-flex st-flex-col st-gap-2 st-mt-2">
+                        @if(isset($slot->planned_start))
+                            @php $eta = \Carbon\Carbon::parse($slot->planned_start); @endphp
+                            <div class="st-font-semibold st-flex st-align-center st-gap-6"><i class="far fa-calendar-alt st-text--slate st-text-12"></i> {{ $eta->format('d-m-Y') }}</div>
+                            <div class="st-font-semibold st-flex st-align-center st-gap-6"><i class="far fa-clock st-text--slate st-text-12"></i> {{ $eta->format('H:i') }}</div>
+                        @else
+                            <div class="st-font-semibold">-</div>
+                        @endif
+                        <div class="st-text--xs st-text--muted st-mt-4">
+                            Duration: {{ (int) $plannedDurationMinutes }} Min
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -140,8 +173,14 @@
             @endif
 
             <div class="st-form-actions">
-                <button type="submit" class="st-btn">Start Planned</button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
+                <button type="submit" class="st-btn st-btn--pad-lg">
+                    <i class="fas fa-play"></i>
+                    <span class="st-ml-6">Start Process</span>
+                </button>
+                <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary st-btn--pad-lg">
+                    <i class="fas fa-times"></i>
+                    <span class="st-ml-6">Cancel</span>
+                </a>
             </div>
         </form>
     </div>

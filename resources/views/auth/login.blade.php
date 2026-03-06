@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - e-Docking Control System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     @vite(['resources/css/style.css', 'resources/js/app.js'])
 </head>
 <body style="min-height:100vh;margin:0;background:
@@ -60,7 +61,12 @@
 
                     <div class="st-form-field">
                         <label class="st-label" for="password">Password</label>
-                        <input type="password" class="st-input" id="password" name="password" required>
+                        <div class="st-input-wrap">
+                            <input type="password" class="st-input st-input--pr-40" id="password" name="password" required>
+                            <button type="button" class="btn-toggle-password st-btn-toggle-password" data-target="password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="st-btn st-w-full st-justify-center">Sign in</button>
@@ -70,5 +76,26 @@
             <div class="st-mt-12 st-text-center st-text--sm st-text--muted">&copy; {{ date('Y') }} e-Docking Control System</div>
         </div>
     </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-toggle-password').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var targetId = this.getAttribute('data-target');
+                var input = document.getElementById(targetId);
+                var icon = this.querySelector('i');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

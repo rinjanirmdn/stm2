@@ -4,9 +4,42 @@
 @section('page_title', 'Arrival')
 
 @section('content')
-    <div class="st-card st-mb-12">
-        <div class="st-text--sm st-text--muted">Slot #{{ $slot->id }}</div>
-        <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
+    <div class="st-card st-mb-16 st-border-l-4" style="border-left-color: var(--primary);">
+        <div class="st-flex st-justify-between st-align-center st-mb-12">
+            <h3 class="st-m-0 st-text-16">Arrival Registration</h3>
+            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id }}</span>
+        </div>
+        <div class="st-form-row--grid-3 st-text--sm">
+            <div class="st-flex st-align-center st-gap-8">
+                <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-truck"></i></div>
+                <div>
+                    <div class="st-text--xs st-text--muted">PO / DO</div>
+                    <div class="st-font-semibold">{{ $slot->truck_number ?? '-' }}</div>
+                </div>
+            </div>
+            <div class="st-flex st-align-center st-gap-8">
+                <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-warehouse"></i></div>
+                <div>
+                    <div class="st-text--xs st-text--muted">Warehouse</div>
+                    <div class="st-font-semibold">{{ $slot->warehouse_name ?? '-' }}</div>
+                </div>
+            </div>
+            <div class="st-flex st-align-center st-gap-8">
+                <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-clock"></i></div>
+                <div>
+                    <div class="st-text--xs st-text--muted">Planned ETA</div>
+                    <div class="st-flex st-flex-col st-gap-2 st-mt-2">
+                        @if(isset($slot->planned_start))
+                            @php $eta = \Carbon\Carbon::parse($slot->planned_start); @endphp
+                            <div class="st-font-semibold st-flex st-align-center st-gap-6"><i class="far fa-calendar-alt st-text--slate st-text-12"></i> {{ $eta->format('d-m-Y') }}</div>
+                            <div class="st-font-semibold st-flex st-align-center st-gap-6"><i class="far fa-clock st-text--slate st-text-12"></i> {{ $eta->format('H:i') }}</div>
+                        @else
+                            <div class="st-font-semibold">-</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="st-card">
@@ -54,15 +87,47 @@
 
             <div id="arrival_details" class="st-hidden-soft">
 
-                <div class="st-border st-rounded-8 st-p-12 st-bg-slate-50 st-mb-12">
-                    <div class="st-font-semibold st-mb-8">Slot Details</div>
-                    <div class="st-text--sm st-text--slate st-grid-auto-200">
-                        <div><strong>PO/DO:</strong> {{ $slot->po_number ?? $slot->truck_number ?? '-' }}</div>
-                        <div><strong>Supplier:</strong> {{ $slot->vendor_name ?? '-' }}</div>
-                        <div><strong>Warehouse:</strong> {{ $slot->warehouse_name ?? '-' }}</div>
-                        <div><strong>Direction:</strong> {{ ucfirst($slot->direction ?? '-') }}</div>
-                        <div><strong>Planned Start:</strong> {{ $slot->planned_start ?? '-' }}</div>
-                        <div><strong>Planned Gate:</strong> {{ app(\App\Services\SlotService::class)->getGateDisplayName($slot->planned_gate_warehouse_code ?? '', $slot->planned_gate_number ?? '') }}</div>
+                <div class="st-border st-border-slate-200 st-rounded-10 st-p-20 st-mb-16 st-bg-white st-shadow-sm">
+                    <div class="st-font-semibold st-mb-16 st-text-16 st-border-b st-border-slate-100 st-pb-10">
+                        <i class="fas fa-list-alt st-text--muted st-mr-8"></i> Booking Information
+                    </div>
+                    <div class="st-form-row--grid-2 st-gap-24">
+                        <div class="st-flex st-flex-col st-gap-16">
+                            <div>
+                                <div class="st-text--sm st-text--muted st-mb-4">Supplier / Vendor</div>
+                                <div class="st-font-semibold st-text-15">{{ $slot->vendor_name ?? '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="st-text--sm st-text--muted st-mb-4">PO/DO Number</div>
+                                <div class="st-font-semibold st-text-15">{{ $slot->po_number ?? $slot->truck_number ?? '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="st-text--sm st-text--muted st-mb-4">Activity Direction</div>
+                                <div class="st-font-semibold st-text-15 st-text--primary">{{ ucfirst($slot->direction ?? '-') }}</div>
+                            </div>
+                        </div>
+                        <div class="st-flex st-flex-col st-gap-16">
+                            <div>
+                                <div class="st-text--sm st-text--muted st-mb-4">Warehouse</div>
+                                <div class="st-font-semibold st-text-15">{{ $slot->warehouse_name ?? '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="st-text--sm st-text--muted st-mb-4">Assigned Gate</div>
+                                <div class="st-font-semibold st-text-15">{{ app(\App\Services\SlotService::class)->getGateDisplayName($slot->planned_gate_warehouse_code ?? '', $slot->planned_gate_number ?? '') }}</div>
+                            </div>
+                            <div>
+                                <div class="st-text--sm st-text--muted st-mb-4">Planned ETA</div>
+                                <div class="st-flex st-flex-col st-gap-4">
+                                    @if(isset($slot->planned_start))
+                                        @php $etaDetail = \Carbon\Carbon::parse($slot->planned_start); @endphp
+                                        <div class="st-font-semibold st-text-15 st-flex st-align-center st-gap-8"><i class="far fa-calendar-alt st-text--muted st-text-14"></i> {{ $etaDetail->format('d-m-Y') }}</div>
+                                        <div class="st-font-semibold st-text-15 st-flex st-align-center st-gap-8"><i class="far fa-clock st-text--muted st-text-14"></i> {{ $etaDetail->format('H:i') }}</div>
+                                    @else
+                                        <div class="st-font-semibold st-text-15">-</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
