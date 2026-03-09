@@ -71,13 +71,12 @@ class BookingRejected extends Notification
 
         return (new MailMessage)
             ->subject('Booking Rejected - ' . $ticketNumber)
-            ->greeting('Hello ' . $notifiable->name . ',')
-            ->line('Unfortunately, your booking request has been rejected.')
-            ->line('**Ticket:** ' . $ticketNumber)
-            ->line('**Requested Time:** ' . $plannedDate)
-            ->line('**Reason:** ' . $reason)
-            ->action('Submit New Booking', url('/vendor/bookings/create'))
-            ->line('You can submit a new booking request with a different time slot.');
+            ->view('emails.booking-rejected', [
+                'ticketNumber' => $ticketNumber,
+                'plannedDate' => $plannedDate,
+                'reason' => $reason,
+                'notifiable' => $notifiable,
+            ]);
     }
 
     public function toArray(object $notifiable): array
