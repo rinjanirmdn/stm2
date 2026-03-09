@@ -298,7 +298,7 @@ function bootVendorDashboardDateRange() {
                 setTimeout(showPicker, 0);
             });
         }
-    } catch (e) {}
+    } catch (e) { }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initDashboardDateRange);
@@ -1541,7 +1541,7 @@ function initVendorNotifications() {
         desktopNotifBtn.parentNode.replaceChild(newBtn, desktopNotifBtn);
 
         // Add fresh event listener
-        newBtn.addEventListener('click', function(e) {
+        newBtn.addEventListener('click', function (e) {
             console.log('Desktop notification clicked');
             e.preventDefault();
             e.stopPropagation();
@@ -1567,7 +1567,7 @@ function initVendorNotifications() {
         var newMobileBtn = mobileNotifBtn.cloneNode(true);
         mobileNotifBtn.parentNode.replaceChild(newMobileBtn, mobileNotifBtn);
 
-        newMobileBtn.addEventListener('click', function(e) {
+        newMobileBtn.addEventListener('click', function (e) {
             console.log('Mobile notification clicked');
             e.preventDefault();
             e.stopPropagation();
@@ -1578,7 +1578,7 @@ function initVendorNotifications() {
     }
 
     // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         // Close desktop dropdown
         if (desktopNotifDropdown && !desktopNotifDropdown.contains(e.target) && !desktopNotifBtn?.contains(e.target)) {
             desktopNotifDropdown.style.display = 'none';
@@ -1596,7 +1596,7 @@ function initVendorNotifications() {
     var userMenu = document.getElementById('vendor-user-menu');
 
     if (userMenuBtn && userMenu) {
-        userMenuBtn.addEventListener('click', function(e) {
+        userMenuBtn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
             userMenu.classList.toggle('show');
@@ -1604,7 +1604,7 @@ function initVendorNotifications() {
     }
 
     // Close user menu when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (userMenu && !userMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
             userMenu.classList.remove('show');
             // Also close mobile notification dropdown when user menu closes
@@ -1670,7 +1670,7 @@ function initVendorNotifications() {
     window.addEventListener('resize', forceHideMobileNav);
 
     // Run every 100ms untuk double check
-    setInterval(forceHideMobileNav, 100);
+    // Polling removed — CSS + inline script in vendor.blade.php handles mobile nav hiding
 
     function normalizeUrl(u) {
         try {
@@ -1881,11 +1881,11 @@ function initVendorNotifications() {
                 });
         }
 
-        checkLatest();
-        setInterval(checkLatest, 15 * 1000); // Check every 15 seconds
+        // Polling removed — notifications now arrive via WebSocket (echo.js private user channel)
+        // checkLatest(); — no longer needed
     }
 
     initNotificationDropdown();
     initNotificationActions();
-    initNotificationToast();
+    // initNotificationToast() — removed, replaced by WebSocket (echo.js private user channel)
 }

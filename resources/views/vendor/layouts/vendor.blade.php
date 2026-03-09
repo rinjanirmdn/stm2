@@ -346,6 +346,7 @@
             : null;
     @endphp
     <script type="application/json" id="st-vendor-config">{!! json_encode([
+        'userId' => auth()->id(),
         'latestUrl' => $stVendorLatestUrl,
         'notifications' => [
             'markAllUrl' => $stVendorMarkAllUrl,

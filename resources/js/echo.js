@@ -54,7 +54,8 @@ document.addEventListener('visibilitychange', function () {
 // ──────────────────────────────────────────
 var stAppConfigEcho = null;
 try {
-    var el = document.getElementById('st-app-config');
+    // Try admin config first, then vendor config
+    var el = document.getElementById('st-app-config') || document.getElementById('st-vendor-config');
     if (el) stAppConfigEcho = JSON.parse(el.textContent || '{}');
 } catch (e) { }
 
