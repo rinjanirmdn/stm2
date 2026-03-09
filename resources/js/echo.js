@@ -18,26 +18,26 @@ window.Echo = new Echo({
 // ──────────────────────────────────────────
 window.Echo.channel('data-updates')
     .listen('.data.changed', function (event) {
-        // If the page has an AJAX reload function, use it (no full page reload)
+        // Only auto-refresh pages that explicitly support AJAX reload
+        // (e.g., dashboard, slots index, gates index)
+        // Pages without ajaxReload will NOT auto-reload to prevent infinite loops
         if (typeof window.ajaxReload === 'function') {
             try {
                 window.ajaxReload(false);
-                return;
             } catch (e) {
-                // fallback to full reload
+                // silently fail
             }
+            return;
         }
 
-        // Full page reload for pages without AJAX reload
-        if (!document.hidden) {
-            window.location.reload();
-        } else {
-            // Mark as pending — will refresh when tab becomes visible
-            window.__stPendingRealtimeRefresh = true;
-        }
+        // For pages without ajaxReload: dispatch a DOM event so components
+        // can optionally react (without full page reload)
+        try {
+            window.dispatchEvent(new CustomEvent('st:data-changed', { detail: event }));
+        } catch (e) { }
     });
 
-// Handle tab visibility change — refresh if pending
+// Handle tab visibility change — refresh if pending (only for ajaxReload pages)
 document.addEventListener('visibilitychange', function () {
     if (!document.hidden && window.__stPendingRealtimeRefresh) {
         window.__stPendingRealtimeRefresh = false;
@@ -45,7 +45,7 @@ document.addEventListener('visibilitychange', function () {
         if (typeof window.ajaxReload === 'function') {
             try { window.ajaxReload(false); return; } catch (e) { }
         }
-        window.location.reload();
+        // Do NOT call window.location.reload() here — prevents infinite loop
     }
 });
 
