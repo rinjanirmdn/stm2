@@ -387,8 +387,7 @@
     'latestUrl' => $stLatestUrl,
     'realtime' => [
         'enabled' => true,
-        'versionUrl' => \Illuminate\Support\Facades\Route::has('api.realtime.version') ? route('api.realtime.version') : null,
-        'pollMs' => 10000,
+        // versionUrl + pollMs removed — updates arrive via WebSocket (echo.js data-updates channel)
     ],
     'notifications' => [
         'markAllUrl' => $stMarkAllUrl,
