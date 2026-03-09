@@ -1,0 +1,354 @@
+/* Auto-generated from style.css split — section: alerts */
+
+.st-alert--lock {
+    border-radius: 10px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #facc15;
+    background: #fffbeb;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.10);
+}
+
+.st-notification-icon--red {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.st-notification-icon--green {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.st-notification-icon--blue {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.st-notification-empty__icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.st-notification-empty__text {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.st-reminder-banner {
+    display: none;
+    margin-bottom: 16px;
+    border: 1px solid #f59e0b;
+    background: #fffbeb;
+    color: #92400e;
+    border-radius: 12px;
+    padding: 12px 16px;
+}
+
+.st-reminder-banner__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.st-reminder-banner__label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.st-reminder-banner__count {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #fde68a;
+    color: #92400e;
+}
+
+.st-reminder-banner__list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.st-reminder-toast {
+    display: none;
+    position: fixed;
+    right: 24px;
+    top: 80px;
+    z-index: 1200;
+    min-width: 280px;
+    max-width: 360px;
+    background: #92400e;
+    color: #fffbeb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);
+}
+
+.st-notification-toast {
+    display: none;
+    position: fixed;
+    right: 24px;
+    top: 80px;
+    z-index: 1200;
+    min-width: 280px;
+    max-width: 360px;
+    background: #1e40af;
+    color: #eff6ff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);
+}
+
+.st-toast__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.st-toast__icon {
+    margin-top: 2px;
+}
+
+.st-toast__content {
+    flex: 1;
+}
+
+.st-toast__title {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.st-toast__text {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.st-reminder-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #fef3c7;
+    color: #92400e;
+    text-decoration: none;
+}
+
+.st-reminder-item__label {
+    font-weight: 600;
+}
+
+.st-reminder-item__time {
+    font-size: 12px;
+}
+
+.st-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.st-alert__icon {
+    font-size: 14px;
+}
+
+.st-alert__text {
+    flex: 1;
+}
+
+.st-alert--autodismiss {
+    position: sticky;
+    top: 8px;
+    z-index: 200;
+}
+
+.st-alert__close {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    color: currentColor;
+}
+
+.st-alert--success {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.st-alert--error {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.st-alert--pending_approval {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.st-notification {
+    position: relative;
+    margin-right: 8px;
+}
+
+.st-notification-btn {
+    position: relative;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+    font-size: 1.125rem;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.st-notification-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.st-notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.625rem;
+    padding: 0 4px;
+    height: 14px;
+    min-width: 14px;
+    border-radius: 7px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid white;
+}
+
+.st-notification-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    z-index: 1100;
+    border: 1px solid #e2e8f0;
+    margin-top: 8px;
+    display: none;
+    overflow: hidden;
+}
+
+.st-notification-dropdown.show {
+    display: block;
+}
+
+.st-notification-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.st-notification-list {
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.st-notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.2s;
+    align-items: flex-start;
+}
+
+.st-notification-item:hover {
+    background: #f8fafc;
+}
+
+.st-notification-item--unread {
+    background: #eff6ff;
+}
+
+.st-notification-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-size: 0.875rem;
+}
+
+.st-notification-content {
+    flex: 1;
+}
+
+.st-notification-title {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 2px;
+}
+
+.st-notification-message {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: #64748b;
+    display: block;
+}
+
+.st-notification-time {
+    display: block;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.st-notification-empty {
+    padding: 32px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.st-notification-link {
+    font-size: 0.75rem;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.st-notification-link:hover {
+    text-decoration: underline;
+}

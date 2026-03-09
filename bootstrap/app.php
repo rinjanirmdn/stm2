@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
             \App\Http\Middleware\ActivityLogMiddleware::class,
             \App\Http\Middleware\EnsurePasswordIsChanged::class,
         ]);

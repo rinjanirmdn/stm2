@@ -78,6 +78,13 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
+        // Enforce single device login: logout all other sessions for this user
+        try {
+            Auth::logoutOtherDevices($credentials['password']);
+        } catch (\Throwable $e) {
+            // Silently fail if password hash mismatch edge case
+        }
+
         $user = $request->user();
 
         if ($user && $user->is_active === false) {

@@ -212,50 +212,61 @@ class ActivityLogMiddleware
                 }
             }
 
+            // Cache column list once per process to avoid ~10 DB queries per request
+            static $columns = null;
+            if ($columns === null) {
+                try {
+                    $columns = Schema::getColumnListing('activity_logs');
+                } catch (\Throwable $e) {
+                    $columns = [];
+                }
+            }
+
+            $has = static fn(string $col): bool => in_array($col, $columns, true);
+
             $insert = [];
 
-            // schema-flexible mapping
-            if (Schema::hasColumn('activity_logs', 'activity_type')) {
+            if ($has('activity_type')) {
                 $insert['activity_type'] = 'crud';
-            } elseif (Schema::hasColumn('activity_logs', 'type')) {
+            } elseif ($has('type')) {
                 $insert['type'] = 'crud';
             }
 
-            if (Schema::hasColumn('activity_logs', 'description')) {
+            if ($has('description')) {
                 $insert['description'] = $description;
             }
 
-            if (Schema::hasColumn('activity_logs', 'slot_id')) {
+            if ($has('slot_id')) {
                 $insert['slot_id'] = $slotId;
             }
 
-            if (Schema::hasColumn('activity_logs', 'created_by')) {
+            if ($has('created_by')) {
                 $insert['created_by'] = (int) $userId;
-            } elseif (Schema::hasColumn('activity_logs', 'user_id')) {
+            } elseif ($has('user_id')) {
                 $insert['user_id'] = (int) $userId;
             }
 
-            if (Schema::hasColumn('activity_logs', 'mat_doc')) {
+            if ($has('mat_doc')) {
                 $insert['mat_doc'] = null;
             }
 
-            if (Schema::hasColumn('activity_logs', 'po_number')) {
+            if ($has('po_number')) {
                 $insert['po_number'] = null;
             }
 
-            if (Schema::hasColumn('activity_logs', 'old_value')) {
+            if ($has('old_value')) {
                 $insert['old_value'] = null;
             }
 
-            if (Schema::hasColumn('activity_logs', 'new_value')) {
+            if ($has('new_value')) {
                 $insert['new_value'] = null;
             }
 
-            if (Schema::hasColumn('activity_logs', 'created_at')) {
+            if ($has('created_at')) {
                 $insert['created_at'] = now();
             }
 
-            if (Schema::hasColumn('activity_logs', 'updated_at')) {
+            if ($has('updated_at')) {
                 $insert['updated_at'] = now();
             }
 

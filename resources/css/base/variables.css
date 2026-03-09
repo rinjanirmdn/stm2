@@ -1,0 +1,120 @@
+/* Auto-generated from style.css split — section: variables */
+
+:root {
+    /* --- BRANDING & BASE --- */
+    --primary: #0284c7;
+    --primary-bg: #f0f9ff;
+    --standby: #475569;
+    --standby-bg: #f1f5f9;
+
+    /* --- SYSTEM CHANGES (NEW) --- */
+    --gate-change: #6366f1;
+    /* Indigo - Kesan sistematis */
+    --gate-change-bg: #eef2ff;
+    --status-change: #0ea5e9;
+    /* Light Blue - Informatif */
+    --status-change-bg: #f0f9ff;
+
+    /* --- ARRIVAL STATUS (NEW) --- */
+    --late-arrival: #dc2626;
+    /* Red - Urgent */
+    --late-arrival-bg: #fef2f2;
+    --early-arrival: #15803d;
+    /* Green - Proaktif/Bagus */
+    --early-arrival-bg: #dcfce7;
+    --waiting-time: #d97706;
+    /* Amber - Antrean/Pending */
+    --waiting-time-bg: #fffbeb;
+
+    /* --- GATE OPERATIONS (NEW) --- */
+    --gate-activation: #059669;
+    /* Emerald - Aktif/Buka */
+    --gate-activation-bg: #ecfdf5;
+    --gate-deactivation: #4b5563;
+    /* Slate - Tutup/Off */
+    --gate-deactivation-bg: #f3f4f6;
+
+    /* --- PLANNING & PROGRESS --- */
+    --planned: #1d4ed8;
+    --planned-bg: #eff6ff;
+    --unplanned: #ea580c;
+    /* Orange - Dadakan */
+    --unplanned-bg: #fff7ed;
+    --pending: #f59e0b;
+    --pending-bg: #fffbeb;
+    --pending-border: #fde68a;
+    --pending-text: #92400e;
+    --pending-label: #b45309;
+    --scheduled: #6b7280;
+    --scheduled-bg: #f9fafb;
+    --scheduled-border: #e5e7eb;
+    --scheduled-text: #374151;
+    --scheduled-label: #6b7280;
+    --waiting: #d97706;
+    --waiting-bg: #fffbeb;
+    --waiting-border: #fde68a;
+    --waiting-text: #92400e;
+    --waiting-label: #b45309;
+    --in-progress: #0284c7;
+    --in-progress-bg: #f0f9ff;
+    --in-progress-border: #bae6fd;
+    --in-progress-text: #0c4a6e;
+    --in-progress-label: #0369a1;
+    --completed: #059669;
+    --completed-bg: #ecfdf5;
+    --completed-border: #a7f3d0;
+    --completed-text: #064e3b;
+    --completed-label: #047857;
+    --cancelled: #dc2626;
+    --cancelled-bg: #fef2f2;
+    --cancelled-border: #fecaca;
+    --cancelled-text: #7f1d1d;
+    --cancelled-label: #b91c1c;
+    --cancel: var(--cancelled);
+    --cancel-bg: var(--cancelled-bg);
+
+    /* --- WAREHOUSE ENTITIES --- */
+    --inbound: #0284c7;
+    --inbound-bg: #f0f9ff;
+    --outbound: #ea580c;
+    --outbound-bg: #fff7ed;
+    --customer: #0369a1;
+    --customer-bg: #f0f9ff;
+    --supplier: #854d0e;
+    --supplier-bg: #fefce8;
+
+    /* --- PERFORMANCE --- */
+    --achieve: var(--early-arrival);
+    --achieve-bg: var(--early-arrival-bg);
+    --not-achieve: #e11d48;
+    --not-achieve-bg: #fff1f2;
+    --remaining: #6366f1;
+    --remaining-bg: #eef2ff;
+
+    /* --- CHART & UI --- */
+    --chart-grid: #f1f5f9;
+    --chart-axis: #94a3b8;
+    --chart-line-completed: #16a34a;
+    --chart-bottleneck: #f59e0b;
+    --tooltip-border: #e2e8f0;
+    --tooltip-shadow: rgba(0, 0, 0, 0.08);
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border-light: #e5e7eb;
+    --bg-hover: #f8fafc;
+
+    /* --- TYPOGRAPHY SCALE --- */
+    --st-font-title: 14px;
+    --st-font-subtitle: 12px;
+    --st-font-body: 12px;
+    --st-font-small: 11px;
+    --st-font-table: 11px;
+    --st-font-table-head: 9px;
+}
+
+:root {
+    --st-text-secondary: #6b7280;
+    --st-primary-color: var(--primary);
+    --st-bg-hover: #f3f4f6;
+}

@@ -382,6 +382,7 @@
         : null;
 @endphp
 <script type="application/json" id="st-app-config">{!! json_encode([
+    'userId' => auth()->id(),
     'reminderUrl' => $stReminderUrl,
     'latestUrl' => $stLatestUrl,
     'realtime' => [
