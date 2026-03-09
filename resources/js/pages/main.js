@@ -2039,7 +2039,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         fetchReminders();
-        setInterval(fetchReminders, 5 * 60 * 1000); // Check every 5 minutes
+        // Polling removed — reminders now refresh via WebSocket (echo.js) triggered by SlotDataChanged event
     }
 
     function initNotificationToast() {
@@ -2092,7 +2092,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         checkLatest();
-        setInterval(checkLatest, 15 * 1000); // Check every 15 seconds
+        // Polling removed — notifications now arrive instantly via WebSocket (echo.js)
     }
 
     function initPwa() {
@@ -2352,15 +2352,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         checkVersion();
-        setInterval(checkVersion, pollMs);
+        // Polling removed — data changes now arrive via WebSocket (echo.js) on 'data-updates' channel
     }
 
     initNotificationDropdown();
     initNotificationActions();
     initReminderBanner();
-    initNotificationToast();
+    // initNotificationToast() — removed, replaced by WebSocket (echo.js private user channel)
     initBfcacheResync();
-    initGlobalRealtimeSync();
+    // initGlobalRealtimeSync() — removed, replaced by WebSocket (echo.js data-updates channel)
     initPwa();
     initAppInstalledHandler();
     initSidebarToggle();

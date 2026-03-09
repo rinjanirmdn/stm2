@@ -1,0 +1,149 @@
+/* Auto-generated from style.css split — section: badges */
+
+.st-badge--xs {
+    font-size: 9px;
+    margin-left: 4px;
+}
+
+.st-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 12px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    line-height: 1.2;
+}
+
+.st-badge--active {
+    background: var(--gate-activation-bg);
+    color: var(--gate-activation);
+}
+
+.st-badge--inactive {
+    background: var(--gate-deactivation-bg);
+    color: var(--gate-deactivation);
+}
+
+.st-badge--admin {
+    background: var(--late-arrival-bg);
+    color: var(--late-arrival);
+}
+
+.st-badge--section_head {
+    background: var(--status-change-bg);
+    color: var(--status-change);
+}
+
+.st-badge--operator {
+    background: var(--standby-bg);
+    color: var(--standby);
+}
+
+.st-badge--pending_approval {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.st-badge--secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.st-badge--success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.st-badge--info,
+
+.st-badge--inbound {
+    background: var(--inbound-bg);
+    color: var(--inbound);
+}
+
+.st-badge--warning,
+
+.st-badge--outbound {
+    background: var(--outbound-bg);
+    color: var(--outbound);
+}
+
+.st-badge--pending {
+    background: var(--waiting-time-bg);
+    color: var(--waiting-time);
+}
+
+.st-badge--danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.st-badge--primary {
+    background: #dbeafe;
+    /* Use Info/Blue or Purple? Let's use Blue to align with general Primary */
+    color: #1e40af;
+}
+
+.st-badge--dark {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+.st-badge-modern {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: normal;
+    /* st-table__status-badge doesn't set LH, but this is safe */
+    border-width: 0;
+    /* Remove border to match status badge */
+    border-style: none;
+    font-family: inherit;
+}
+
+.st-badge-modern--inbound {
+    background-color: var(--inbound-bg);
+    color: var(--inbound);
+    border-color: #bae6fd;
+}
+
+.st-badge-modern--outbound {
+    background-color: var(--outbound-bg);
+    color: var(--outbound);
+    border-color: #fed7aa;
+}
+
+.st-badge-dot {
+    display: none;
+}
+
+.st-badge-modern--inbound .st-badge-dot {
+    background-color: var(--inbound);
+}
+
+.st-badge-modern--outbound .st-badge-dot {
+    background-color: var(--outbound);
+}
+
+.st-badge-modern--scheduled {
+    background-color: #f8fafc;
+    /* slate-50 */
+    color: #334155;
+    /* slate-700 */
+    border-color: #e2e8f0;
+    /* slate-200 */
+}
+
+.st-badge-modern--scheduled .st-badge-dot {
+    background-color: #64748b;
+    /* slate-500 */
+}

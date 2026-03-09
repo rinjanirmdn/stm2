@@ -1,23 +1,18 @@
 <?php
+/*
+ * Web Routes — Entry Point
+ * Route definitions are split into modular files for maintainability.
+ */
 
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\BookingApprovalController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\GateStatusController;
-use App\Http\Controllers\LogController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\SapController;
-use App\Http\Controllers\SlotController;
-use App\Http\Controllers\SlotAjaxController;
-use App\Http\Controllers\SlotLifecycleController;
-use App\Http\Controllers\UnplannedSlotController;
-use App\Http\Controllers\TruckTypeDurationController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\VendorBookingController;
 use Illuminate\Support\Facades\Route;
 
+// ──────────────────────────────────────────
+// Root redirect
+// ──────────────────────────────────────────
 Route::get('/', function () {
     if (auth()->check()) {
         $user = auth()->user();
@@ -40,6 +35,9 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// ──────────────────────────────────────────
+// Guest routes (login, forgot password)
+// ──────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
@@ -47,17 +45,22 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetEmail'])->name('forgot-password.send');
 });
 
-
+// ──────────────────────────────────────────
+// Authenticated routes
+// ──────────────────────────────────────────
 Route::middleware('auth')->group(function () {
+    // Dashboard
     Route::get('/dashboard', DashboardController::class)->name('dashboard')->middleware('permission:dashboard.view');
     Route::get('/dashboard/data', [DashboardController::class, 'data'])->name('dashboard.data')->middleware('permission:dashboard.view');
     Route::get('/dashboard/waiting-reasons', [DashboardController::class, 'waitingReasons'])->name('dashboard.waitingReasons')->middleware('permission:dashboard.range_filter');
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
+    // Profile
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile')->middleware('permission:profile.index');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update')->middleware('permission:profile.index');
     Route::post('/profile/password-request', [ForgotPasswordController::class, 'requestFromProfile'])->name('profile.password-request')->middleware('permission:profile.index');
 
+    // Force password change
     Route::get('/force-change-password', [\App\Http\Controllers\Auth\ForcePasswordChangeController::class, 'show'])->name('password.force-change');
     Route::post('/force-change-password', [\App\Http\Controllers\Auth\ForcePasswordChangeController::class, 'store'])->name('password.force-change.store');
 
@@ -267,7 +270,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [VendorBookingController::class, 'create'])->name('create')->middleware('permission:vendor.bookings.create');
             Route::post('/', [VendorBookingController::class, 'store'])->name('store')->middleware('permission:vendor.bookings.store');
             Route::get('/{id}', [VendorBookingController::class, 'show'])->whereNumber('id')->name('show')->middleware('permission:vendor.bookings.show');
-            Route::get('/{slotId}/ticket', [VendorBookingController::class, 'ticket'])->whereNumber('slotId')->name('ticket')->middleware('permission:vendor.bookings.ticket');
+            Route::get('/{slotId}/ticket', [SlotController::class, 'ticket'])->whereNumber('slotId')->name('ticket')->middleware('permission:vendor.bookings.ticket');
             Route::post('/{id}/cancel', [VendorBookingController::class, 'cancel'])->whereNumber('id')->name('cancel')->middleware('permission:vendor.bookings.cancel');
         });
 
