@@ -486,8 +486,11 @@ function initVendorBookingCreate(config) {
     const plannedTime = document.getElementById('planned-time');
     const plannedDurationInput = document.getElementById('planned-duration');
     const plannedStartInput = document.getElementById('planned-start');
-    const truckTypeSelect = document.querySelector('select[name="truck_type"]');
+    const truckTypeSelect = document.getElementById('truck-type-select');
     const miniAvailability = document.getElementById('mini-availability');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitWarning = document.getElementById('submit-warning');
+    const availabilityWarning = document.getElementById('availability-warning');
     const holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
     if (!poSearch || !plannedDate || !plannedTime) {
@@ -626,11 +629,33 @@ function initVendorBookingCreate(config) {
                     return false;
                 }
             }
+
+            // Check if selected time is available
+            const selectedTime = plannedTime.value.trim();
+            if (selectedTime && miniAvailability) {
+                const selectedSlot = miniAvailability.querySelector('.cb-availability-mini__slot.selected');
+                if (selectedSlot && selectedSlot.classList.contains('unavailable')) {
+                    e.preventDefault();
+                    if (alertBox) {
+                        alertBox.textContent = 'Selected time is not available. Please choose a different time slot.';
+                        alertBox.hidden = false;
+                    }
+                    plannedTime.focus();
+                    return false;
+                }
+            }
         });
     }
 
     function loadMiniAvailability() {
         if (!miniAvailability) return;
+
+        // Check if truck type is selected
+        if (!truckTypeSelect || !truckTypeSelect.value) {
+            miniAvailability.innerHTML = '<div class="cb-availability-mini__placeholder">Select truck type first, then date to see available hours</div>';
+            return;
+        }
+
         var rawDate = plannedDate.dataset.isoValue || plannedDate.value || '';
         // Normalize DD-MM-YYYY to YYYY-MM-DD if needed
         if (rawDate && rawDate.indexOf('-') === 2) {
@@ -664,58 +689,97 @@ function initVendorBookingCreate(config) {
                     return;
                 }
 
-                const hours = data.slots.filter(slot => slot.time.endsWith(':00'));
-                if (!hours.length) {
-                    miniAvailability.innerHTML = '<div class="cb-availability-mini__placeholder">No available hours</div>';
-                    return;
+                // Check if selected time is available
+                const selectedTime = plannedTime.value;
+                let selectedSlotAvailable = false;
+                let selectedSlotGates = 0;
+
+                if (selectedTime) {
+                    const selectedSlot = data.slots.find(s => s.time === selectedTime);
+                    if (selectedSlot) {
+                        selectedSlotAvailable = selectedSlot.is_available;
+                        selectedSlotGates = selectedSlot.available_gates;
+                    }
                 }
 
-                const minAllowed = new Date();
-                minAllowed.setSeconds(0, 0);
-                minAllowed.setTime(minAllowed.getTime() + 4 * 60 * 60 * 1000);
-
-                const selectedTime = (plannedTime.value || '').trim();
-                let html = '<div class="cb-availability-mini__grid">';
-                hours.forEach(slot => {
-                    const slotDateTime = new Date(`${date}T${slot.time}:00`);
-                    const meetsMin = slotDateTime.getTime() >= minAllowed.getTime();
-                    const isAvailable = slot.is_available && meetsMin;
-                    const isSelected = selectedTime === slot.time;
-                    const classes = [
-                        'cb-availability-mini__item',
-                        isAvailable ? 'cb-availability-mini__item--available' : 'cb-availability-mini__item--busy',
-                        isSelected ? 'cb-availability-mini__item--selected' : ''
-                    ].join(' ').trim();
-                    const statusLabel = isAvailable ? 'Available' : (meetsMin ? 'Not available' : 'Min 4 hours');
-                    html += `
-                        <button type="button" class="${classes}" data-time="${slot.time}" ${isAvailable ? '' : 'disabled'}>
-                            <span class="cb-availability-mini__item-time">${slot.time}</span>
-                            <span class="cb-availability-mini__item-status">${statusLabel}</span>
-                        </button>
-                    `;
-                });
-                html += '</div>';
-                miniAvailability.innerHTML = html;
-
-                miniAvailability.querySelectorAll('.cb-availability-mini__item[data-time]').forEach(btn => {
-                    if (btn.hasAttribute('disabled')) return;
-                    btn.addEventListener('click', () => {
-                        plannedTime.value = btn.dataset.time;
-                        syncPlannedStart();
-                        loadMiniAvailability();
-                    });
-                });
+                // Render availability with status
+                renderMiniAvailability(data.slots, selectedTime, selectedSlotAvailable, selectedSlotGates);
             })
             .catch(() => {
                 miniAvailability.innerHTML = '<div class="cb-availability-mini__placeholder">Error loading availability</div>';
             });
     }
 
+    function renderMiniAvailability(slots, selectedTime, isAvailable, availableGates) {
+        let html = '<div class="cb-availability-mini__grid">';
+
+        slots.forEach(slot => {
+            const isSelected = slot.time === selectedTime;
+            const statusClass = slot.is_available ? 'available' : 'unavailable';
+            const selectedClass = isSelected ? 'selected' : '';
+
+            html += `<div class="cb-availability-mini__slot ${statusClass} ${selectedClass}" data-time="${slot.time}">
+                <div class="cb-availability-mini__time">${slot.time}</div>
+                <div class="cb-availability-mini__status">
+                    ${slot.is_available ?
+                        '<i class="fas fa-check-circle"></i> Available' :
+                        '<i class="fas fa-times-circle"></i> Unavailable'
+                    }
+                </div>
+            </div>`;
+        });
+
+        html += '</div>';
+
+        miniAvailability.innerHTML = html;
+
+        // Add click handlers for slots
+        miniAvailability.querySelectorAll('.cb-availability-mini__slot').forEach(slotEl => {
+            slotEl.addEventListener('click', function() {
+                const time = this.dataset.time;
+                if (plannedTime) {
+                    plannedTime.value = time;
+                    syncPlannedStart();
+                    loadMiniAvailability(); // Refresh to show updated selection
+                }
+            });
+        });
+    }
+
     function syncPlannedDuration() {
         if (!plannedDurationInput || !truckTypeSelect) return;
         const selected = truckTypeSelect.options[truckTypeSelect.selectedIndex];
         const duration = selected ? selected.getAttribute('data-duration') : '';
-        plannedDurationInput.value = duration ? duration : 60;
+        const durationValue = duration ? parseInt(duration) : 60;
+
+        plannedDurationInput.value = durationValue;
+
+        // Update form state
+        updateFormState();
+    }
+
+    function updateFormState() {
+        const hasTruckType = truckTypeSelect && truckTypeSelect.value;
+        const hasDate = plannedDate && plannedDate.value;
+        const hasTime = plannedTime && plannedTime.value;
+        const canSubmit = hasTruckType && hasDate && hasTime;
+
+        if (submitBtn) {
+            submitBtn.disabled = !canSubmit;
+        }
+
+        if (submitWarning) {
+            submitWarning.hidden = canSubmit;
+        }
+
+        if (availabilityWarning) {
+            availabilityWarning.hidden = hasTruckType;
+        }
+
+        // Update mini availability placeholder
+        if (miniAvailability && !hasTruckType) {
+            miniAvailability.innerHTML = '<div class="cb-availability-mini__placeholder">Select truck type first, then date to see available hours</div>';
+        }
     }
 
     function syncPlannedStart() {
@@ -1006,11 +1070,13 @@ function initVendorBookingCreate(config) {
 
     plannedDate.addEventListener('change', function () {
         syncPlannedStart();
+        updateFormState();
         loadMiniAvailability();
     });
 
     plannedTime.addEventListener('change', function () {
         syncPlannedStart();
+        updateFormState();
         loadMiniAvailability();
     });
 

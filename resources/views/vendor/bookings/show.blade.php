@@ -236,7 +236,7 @@
             </a>
             @endif
 
-            @if($booking->status === 'pending')
+            @if($booking->status === 'pending' && auth()->user()->hasRole('vendor'))
                 <button type="button"
                         class="vendor-btn vendor-btn--danger"
                         onclick="openVendorCancelModal('{{ route('vendor.bookings.cancel', $booking->id) }}', '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">

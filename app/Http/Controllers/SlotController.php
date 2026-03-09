@@ -618,11 +618,29 @@ class SlotController extends Controller
 
         DB::transaction(function () use ($slotId, $reason) {
             $now = date('Y-m-d H:i:s');
+
+            // Get slot info before updating for cache clearing
+            $slot = DB::table('slots')->where('id', $slotId)->first();
+
             DB::table('slots')->where('id', $slotId)->update([
                 'status' => 'cancelled',
                 'cancelled_reason' => $reason,
                 'cancelled_at' => $now,
             ]);
+
+            // Clear availability cache to restore slot availability
+            if ($slot && !empty($slot->planned_start)) {
+                $cancelDate = $slot->planned_start instanceof \DateTimeInterface
+                    ? $slot->planned_start->format('Y-m-d')
+                    : date('Y-m-d', strtotime((string) $slot->planned_start));
+
+                // Clear all cached availability variants (duration-specific)
+                $durations = [30, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720];
+                foreach ($durations as $d) {
+                    Cache::forget("vendor_availability_{$cancelDate}_{$d}");
+                }
+            }
+
             $this->slotService->logActivity($slotId, 'status_change', 'Slot Cancelled', null, ['reason' => $reason, 'cancelled_at' => $now]);
         });
 

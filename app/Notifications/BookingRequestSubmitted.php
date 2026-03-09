@@ -33,7 +33,7 @@ class BookingRequestSubmitted extends Notification
 
         $appName = 'e-Docking Control System';
         $companyName = 'PT Oneject Indonesia';
-        $logoUrl = url('/img/e-Docking Control System.png');
+        $logoUrl = url('/img/logo-full.png');
 
         try {
             $viewData = [
