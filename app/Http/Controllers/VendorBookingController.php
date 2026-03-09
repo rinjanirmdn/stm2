@@ -469,7 +469,7 @@ class VendorBookingController extends Controller
             'planned_date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'nullable|string|max:50',
-            'vehicle_number' => 'nullable|string|max:50',
+            'vehicle_number' => 'required|string|max:50',
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
             'notes' => 'nullable|string|max:500',
@@ -627,16 +627,27 @@ class VendorBookingController extends Controller
             ->firstOrFail();
 
         try {
+            $reason = trim((string) $request->reason);
+            $actorName = trim((string) ($user->name ?? $user->full_name ?? $user->username ?? 'Vendor'));
+            $notes = 'Cancelled by ' . $actorName;
+            if ($reason !== '') {
+                $notes .= ': ' . $reason;
+            }
+
             $booking->update([
                 'status' => BookingRequest::STATUS_CANCELLED,
-                'approval_notes' => $request->reason,
+                'approval_notes' => $notes,
             ]);
 
             if (! empty($booking->planned_start)) {
                 $cancelDate = $booking->planned_start instanceof \DateTimeInterface
                     ? $booking->planned_start->format('Y-m-d')
                     : date('Y-m-d', strtotime((string) $booking->planned_start));
-                Cache::forget("vendor_availability_{$cancelDate}");
+                // Clear all cached availability variants (duration-specific)
+                $durations = [30, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720];
+                foreach ($durations as $d) {
+                    Cache::forget("vendor_availability_{$cancelDate}_{$d}");
+                }
             }
 
             return redirect()
@@ -671,9 +682,14 @@ class VendorBookingController extends Controller
         try {
             $request->validate([
                 'date' => 'required|date',
+                'planned_duration' => 'nullable|integer|min:30|max:720',
             ]);
 
             $date = $request->date;
+            $plannedDuration = (int) ($request->input('planned_duration') ?? 60);
+            if ($plannedDuration <= 0) {
+                $plannedDuration = 60;
+            }
             $disabledTimes = Cache::get('admin_gates_disabled_times_' . $date, []);
             $forcedTimes = Cache::get('admin_gates_forced_times_' . $date, []);
             if (!is_array($disabledTimes)) {
@@ -694,7 +710,7 @@ class VendorBookingController extends Controller
             $forcedMap = array_fill_keys($forcedTimes, true);
 
             // Use cache for 5 minutes to improve performance
-            $cacheKey = "vendor_availability_{$date}";
+            $cacheKey = "vendor_availability_{$date}_{$plannedDuration}";
             $cached = cache()->get($cacheKey);
 
             if ($cached) {
@@ -766,12 +782,28 @@ class VendorBookingController extends Controller
                 return Gate::where('is_active', true)->count();
             });
 
-            // Check availability for each time slot
+            // Check availability for each time slot (for the whole duration window)
             $availableSlots = [];
             foreach ($timeSlots as $time) {
+                $durationSlices = [];
+                $windowStart = strtotime($time);
+                $windowEnd = strtotime('+' . $plannedDuration . ' minutes', $windowStart);
+                for ($t = $windowStart; $t < $windowEnd; $t = strtotime('+30 minutes', $t)) {
+                    $durationSlices[] = date('H:i', $t);
+                }
+
                 $blockedByAdmin = !empty($disabledMap[$time]);
                 $forcedByAdmin = !empty($forcedMap[$time]);
-                if (! empty($globalBlocked[$time])) {
+
+                $windowGloballyBlocked = false;
+                foreach ($durationSlices as $sliceTime) {
+                    if (!empty($globalBlocked[$sliceTime])) {
+                        $windowGloballyBlocked = true;
+                        break;
+                    }
+                }
+
+                if ($windowGloballyBlocked) {
                     $isAvailable = !$blockedByAdmin && $forcedByAdmin;
                     $availableSlots[] = [
                         'time' => $time,
@@ -783,7 +815,12 @@ class VendorBookingController extends Controller
                     continue;
                 }
 
-                $conflictedGates = $timeConflicts[$time] ?? [];
+                $conflictedGates = [];
+                foreach ($durationSlices as $sliceTime) {
+                    if (!empty($timeConflicts[$sliceTime])) {
+                        $conflictedGates = array_merge($conflictedGates, $timeConflicts[$sliceTime]);
+                    }
+                }
                 $availableGates = $totalGates - count(array_unique($conflictedGates));
                 $isAvailable = $availableGates > 0;
                 if ($blockedByAdmin) {
@@ -993,27 +1030,14 @@ class VendorBookingController extends Controller
             $gateLetter = '-';
         }
 
-        $barcodePng = null;
-        $barcodeSvg = null;
-        $barcodeHtml = null;
-
+        $barcodePng = '';
         if (! empty($slot->ticket_number)) {
             try {
-                $ticketNumber = (string) $slot->ticket_number;
-                $cacheKey = 'vendor_ticket_barcode_svg_' . md5($ticketNumber);
-
-                $barcodeSvg = Cache::remember($cacheKey, now()->addDays(30), function () use ($ticketNumber) {
-                    $dns1d = new \Milon\Barcode\DNS1D();
-                    $svg = $dns1d->getBarcodeSVG($ticketNumber, 'C128', 2, 60);
-                    if (! is_string($svg) || $svg === '') {
-                        return null;
-                    }
-                    return preg_replace('/^<\?xml[^>]*>\s*/', '', $svg);
-                });
+                $barcodeC = new \Milon\Barcode\DNS1D();
+                $barcodeC->setStorPath(storage_path('app/public/'));
+                $barcodePng = $barcodeC->getBarcodePNG((string) $slot->ticket_number, 'C128', 2.5, 60);
             } catch (\Throwable $e) {
-                $barcodePng = null;
-                $barcodeSvg = null;
-                $barcodeHtml = null;
+                $barcodePng = '';
                 Log::warning('Barcode generation failed', [
                     'slot_id' => $slotId,
                     'ticket_number' => $slot->ticket_number,
@@ -1036,8 +1060,8 @@ class VendorBookingController extends Controller
             'slot' => $slot,
             'gateLetter' => $gateLetter,
             'barcodePng' => $barcodePng,
-            'barcodeSvg' => $barcodeSvg,
-            'barcodeHtml' => $barcodeHtml,
+            'barcodeSvg' => null,
+            'barcodeHtml' => null,
             'logoDataUri' => $logoDataUri,
         ])
             ->setOption('isRemoteEnabled', true)

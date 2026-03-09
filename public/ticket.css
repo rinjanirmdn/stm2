@@ -1,0 +1,152 @@
+@page {
+    margin: 0;
+    size: 240pt 300pt;
+}
+
+* {
+    margin: 1;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+.ticket-container {
+    width: 90%;
+    background: white;
+    position: relative;
+    page-break-inside: avoid;
+}
+
+.ticket-inner {
+    width: 100%;
+    border: 0px solid transparent;
+    padding: 10pt;
+    box-sizing: border-box;
+    position: relative;
+    page-break-inside: avoid;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.ticket-logo {
+    display: block;
+    margin: 0 auto 6px;
+    max-width: 150px;
+    height: auto;
+}
+
+.title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 10px;
+    color: #666;
+}
+
+.ticket-number {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+    padding: 8px;
+    border: 2px solid #000;
+    background: transparent;
+}
+
+.info-table {
+    width: 100%;
+    margin: 10px 0;
+    border-collapse: collapse;
+}
+
+.info-table td {
+    vertical-align: top;
+    padding: 2px 0;
+    font-size: 11px;
+}
+
+.label-col {
+    width: 85px;
+    font-weight: bold;
+}
+
+.colon-col {
+    width: 10px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.value-col {
+    text-align: left;
+    padding-left: 5px;
+}
+
+/* ... existing styles ... */
+.barcode-container {
+    text-align: center;
+    margin: 6pt 0;
+}
+
+.barcode-note {
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.security-note {
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #eee;
+}
+
+.st-barcode-img {
+    display: block;
+    margin: 0 auto;
+    width: 180px;
+    max-width: 100%;
+    height: auto;
+}
+
+.barcode-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.st-barcode-center {
+    display: inline-block;
+    max-width: 100%;
+}
+
+.footer {
+    text-align: center;
+    font-size: 10px;
+    color: #999;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #eee;
+}
+
+/* ... */

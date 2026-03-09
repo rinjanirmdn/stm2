@@ -1859,14 +1859,21 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(url, {
             method: 'GET',
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        }).then(function () {
-            document.querySelectorAll('.st-notification-item--unread').forEach(function (item) {
-                item.classList.remove('st-notification-item--unread');
-            });
-            var badge = document.querySelector('.st-notification-badge');
-            if (badge) badge.remove();
+        }).then(function (response) {
+            if (response.ok) {
+                document.querySelectorAll('.st-notification-item--unread').forEach(function (item) {
+                    item.classList.remove('st-notification-item--unread');
+                });
+                // Update notification count
+                var countBadge = document.getElementById('st-notification-count');
+                if (countBadge) {
+                    countBadge.textContent = '0';
+                    countBadge.style.display = 'none';
+                }
+            }
         }).catch(function () { });
     };
 

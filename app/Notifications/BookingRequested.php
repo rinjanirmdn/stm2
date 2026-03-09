@@ -36,7 +36,8 @@ class BookingRequested extends Notification
             ->line('**Scheduled Time:** ' . $plannedDate)
             ->line('**Direction:** ' . ucfirst((string) ($this->slot->direction ?? '')))
             ->action('Review Booking', url('/unplanned/approval/' . $this->slot->id))
-            ->line('Please review and approve or reject this booking request.');
+            ->line('Please review and approve or reject this booking request.')
+            ->salutation('Regards,\nWarehouse – SCM – PT Oneject Indonesia');
     }
 
     public function toArray(object $notifiable): array

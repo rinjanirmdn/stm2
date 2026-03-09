@@ -237,15 +237,12 @@
             @endif
 
             @if($booking->status === 'pending')
-                <form method="POST" action="{{ route('vendor.bookings.cancel', $booking->id) }}"
-                      onsubmit="return confirm('Are you sure you want to cancel this booking?');" class="vendor-inline-form">
-                    @csrf
-                    <input type="hidden" name="reason" value="Cancelled by vendor">
-                    <button type="submit" class="vendor-btn vendor-btn--danger">
-                        <i class="fas fa-times"></i>
-                        Cancel Booking
-                    </button>
-                </form>
+                <button type="button"
+                        class="vendor-btn vendor-btn--danger"
+                        onclick="openVendorCancelModal('{{ route('vendor.bookings.cancel', $booking->id) }}', '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+                    <i class="fas fa-times"></i>
+                    Cancel Booking
+                </button>
             @endif
         </div>
     </div>

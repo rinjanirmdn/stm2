@@ -646,6 +646,17 @@ class BookingApprovalService
                     return;
                 }
 
+                // Ensure gate/warehouse relations are loaded for email content (avoid TBD due to missing relations)
+                try {
+                    $slot->loadMissing([
+                        'plannedGate.warehouse',
+                        'actualGate.warehouse',
+                        'warehouse',
+                    ]);
+                } catch (\Throwable $e) {
+                    // ignore; email template has fallbacks
+                }
+
                 $notification = new BookingApproved($slot, $targetId, $isRescheduled);
 
                 // When calling channels directly (DatabaseChannel/MailChannel), Laravel's NotificationSender

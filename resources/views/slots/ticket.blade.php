@@ -3,148 +3,14 @@
 <head>
     <meta charset="utf-8">
     <title>Ticket e-DCS - {{ $slot->ticket_number ?? '' }}</title>
-    <style>
-        @page {
-            margin: 0;
-            size: 240pt 300pt;
-        }
-
-        * {
-            margin: 1;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: auto;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-        }
-
-        .ticket-container {
-            width: 90%;
-            background: white;
-            position: relative;
-        }
-
-        .ticket-inner {
-            width: 100%;
-            border: 0px solid transparent;
-            padding: 10pt;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
-        .ticket-logo {
-            display: block;
-            margin: 0 auto 6px;
-            max-width: 150px;
-            height: auto;
-        }
-
-        .title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            font-size: 10px;
-            color: #666;
-        }
-
-        .ticket-number {
-            font-size: 20px;
-            font-weight: bold;
-            text-align: center;
-            margin: 10px 0;
-            padding: 8px;
-            border: 2px solid #000;
-            background: transparent;
-        }
-
-        .info-table {
-            width: 100%;
-            margin: 10px 0;
-            border-collapse: collapse;
-        }
-
-        .info-table td {
-            vertical-align: top;
-            padding: 2px 0;
-            font-size: 11px;
-        }
-
-        .label-col {
-            width: 85px;
-            font-weight: bold;
-        }
-
-        .colon-col {
-            width: 10px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .value-col {
-            text-align: left;
-            padding-left: 5px;
-        }
-
-        /* ... existing styles ... */
-        .barcode-container {
-            text-align: center;
-            margin: 10pt 0;
-        }
-
-        .st-barcode-img {
-            display: block;
-            margin: 0 auto;
-            width: 180px;
-            max-width: 100%;
-            height: auto;
-        }
-
-        .barcode-wrap {
-            display: flex;
-            justify-content: center;
-        }
-
-        .st-barcode-center {
-            display: inline-block;
-            max-width: 100%;
-        }
-
-        .footer {
-            text-align: center;
-            font-size: 10px;
-            color: #999;
-            margin-top: 10px;
-            padding-top: 6px;
-            border-top: 1px solid #eee;
-        }
-        /* ... */
-    </style>
+    <link rel="stylesheet" href="{{ asset('ticket.css') }}">
 </head>
 <body>
     <div class="ticket-container">
         <div class="ticket-inner">
             <div class="header">
                 <img src="{{ $logoDataUri ?? asset('img/logo-full.png') }}" alt="Logo" class="ticket-logo" />
-                <div class="title">Ticket e-Docking</div>
+                <div class="title">Tiket e-Docking</div>
                 <div class="subtitle">
                     {{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}
                 </div>
@@ -156,7 +22,7 @@
 
             <table class="info-table">
                 <tr>
-                    <td class="label-col">PO/DO Number</td>
+                    <td class="label-col">Nomor PO/DO</td>
                     <td class="colon-col">:</td>
                     <td class="value-col">{{ $slot->truck_number ?? '-' }}</td>
                 </tr>
@@ -166,7 +32,7 @@
                     <td class="value-col">{{ $slot->vendor_name ?? '-' }}</td>
                 </tr>
                 <tr>
-                    <td class="label-col">Activity</td>
+                    <td class="label-col">Aktivitas</td>
                     <td class="colon-col">:</td>
                     <td class="value-col">{{ strtoupper((string) ($slot->direction ?? '')) }}</td>
                 </tr>
@@ -178,7 +44,7 @@
                 <tr>
                     <td class="label-col">ETA</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ $slot->planned_start ?? '-' }}</td>
+                    <td class="value-col">{{ \Carbon\Carbon::parse($slot->planned_start)->format('d m Y H:i') }}</td>
                 </tr>
             </table>
 
@@ -209,11 +75,14 @@
                         <div class="st-barcode-ticket st-text--muted-light">No Ticket Number</div>
                     @endif
                 </div>
-                <div class="barcode-note">Scan This Ticket Number with a Barcode Scanner.</div>
+                <div class="barcode-note">Scan Nomor Tiket ini dengan Barcode Scanner.</div>
             </div>
 
+            <div class="security-note">
+               <strong>Harap serahkan tiket ini kepada petugas keamanan</strong>
+            </div>
             <div class="footer st-footer-barcode">
-               Generated: {{ now()->format('Y-m-d H:i:s') }}
+               Dibuat: {{ now()->format('d m Y H:i') }}
             </div>
         </div>
     </div>
