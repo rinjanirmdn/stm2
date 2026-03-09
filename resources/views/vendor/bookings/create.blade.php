@@ -109,7 +109,7 @@
                             <div class="cb-field-grid-2x2">
                                 <div class="cb-field">
                                     <label class="cb-label cb-label--required">Truck Type</label>
-                                    <select name="truck_type" class="cb-select" required>
+                                    <select name="truck_type" class="cb-select" id="truck-type-select" required>
                                         <option value="">-- Select Truck Type --</option>
                                         @foreach($truckTypes as $type)
                                             <option value="{{ $type->truck_type }}" data-duration="{{ $type->target_duration_minutes }}" {{ old('truck_type') == $type->truck_type ? 'selected' : '' }}>
@@ -117,6 +117,7 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    <div class="cb-hint"></div>
                                     @error('truck_type')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror
@@ -168,7 +169,11 @@
                                 Live Availability
                             </h3>
                             <div class="cb-availability-mini" id="mini-availability">
-                                <div class="cb-availability-mini__placeholder">Select date to see available hours</div>
+                                <div class="cb-availability-mini__placeholder">Select truck type first, then date to see available hours</div>
+                            </div>
+                            <div class="cb-hint cb-hint--warning" id="availability-warning" hidden>
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Please select truck type first to check accurate availability
                             </div>
                         </div>
                     </div>
@@ -199,9 +204,13 @@
                             <a href="{{ route('vendor.bookings.index') }}" class="cb-btn cb-btn--secondary">
                                 Cancel
                             </a>
-                            <button type="submit" class="cb-btn cb-btn--primary" id="submit-btn">
+                            <button type="submit" class="cb-btn cb-btn--primary" id="submit-btn" disabled>
                                 Submit
                             </button>
+                            <div class="cb-hint cb-hint--warning" id="submit-warning" hidden>
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Please select truck type and ensure time is available before submitting
+                            </div>
                         </div>
                     </div>
                 </div>

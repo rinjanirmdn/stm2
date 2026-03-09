@@ -14,18 +14,22 @@
                         <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td align="left" style="display:flex;align-items:center;gap:12px;">
-                                    <img src="{{ $logoUrl }}" alt="{{ $appName }}" style="height:36px;width:auto;border-radius:4px;display:block;">
+                                    <img src="{{ url('/img/logo-full.png') }}" alt="{{ $appName }}" style="height:36px;width:auto;border-radius:4px;display:block;">
                                 </td>
                             </tr>
                             <tr>
                                 <td style="padding-top:12px;">
                                     <div style="font-size:18px;font-weight:600;">New Booking Request</div>
-                                    <div style="font-size:13px;opacity:0.9;">{{ $notifiable->name ?? 'Section Head' }} &mdash; {{ $appName }}</div>
+                                    <div style="font-size:13px;opacity:0.9;">{{ $notifiable->name ?? 'Section Head' }}</div>
+                                    <div style="font-size:13px;opacity:0.9;">
+                                        <img src="{{ url('/img/e-Docking Control System.png') }}" alt="e-Docking Control System" style="height:20px;width:auto;display:block;margin-top:4px;">
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
                                 <td style="padding-top:8px;">
                                     <div style="font-size:14px;">Dear {{ $notifiable->name ?? 'Section Head' }},</div>
+                                    <div style="font-size:12px;opacity:0.8;margin-top:4px;">Role Warehouse - PT Oneject Indonesia</div>
                                 </td>
                             </tr>
                         </table>
@@ -60,7 +64,7 @@
                         <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td align="center" style="padding:16px 0;">
-                                    <a href="{{ url('/bookings/' . $bookingRequest->id) }}"
+                                    <a href="{{ url('/admin/bookings/' . $bookingRequest->id) }}"
                                        style="display:inline-block;background-color:#0284c7;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:500;">
                                         Review Booking
                                     </a>
@@ -72,7 +76,7 @@
                                         If you're having trouble clicking the "Review Booking" button, copy and paste the URL below into your web browser:
                                     </p>
                                     <p style="margin:8px 0 0 0;color:#374151;font-size:12px;font-family:monospace;background-color:#f1f5f9;padding:8px;border-radius:4px;word-break:break-all;">
-                                        {{ url('/bookings/' . $bookingRequest->id) }}
+                                        {{ url('/admin/bookings/' . $bookingRequest->id) }}
                                     </p>
                                 </td>
                             </tr>

@@ -4257,7 +4257,7 @@
     gap: 8px;
 }
 
-.vendor-page--bookings-create .cb-availability-mini__item {
+.vendor-page--bookings-create .cb-availability-mini__slot {
     border-radius: 6px;
     padding: 6px 8px;
     font-size: 12px;
@@ -4268,32 +4268,41 @@
     background: #f8fafc;
     color: #475569;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.vendor-page--bookings-create .cb-availability-mini__item--available {
+.vendor-page--bookings-create .cb-availability-mini__slot:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.vendor-page--bookings-create .cb-availability-mini__slot.available {
     background: #ecfdf5;
     border-color: #a7f3d0;
     color: #065f46;
 }
 
-.vendor-page--bookings-create .cb-availability-mini__item--busy {
+.vendor-page--bookings-create .cb-availability-mini__slot.unavailable {
     background: #fef2f2;
     border-color: #fecaca;
     color: #991b1b;
     cursor: not-allowed;
 }
 
-.vendor-page--bookings-create .cb-availability-mini__item--selected {
+.vendor-page--bookings-create .cb-availability-mini__slot.selected {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    background: #eff6ff;
+    color: #1e40af;
 }
 
-.vendor-page--bookings-create .cb-availability-mini__item-time {
+.vendor-page--bookings-create .cb-availability-mini__time {
     font-weight: 600;
+    font-size: 13px;
 }
 
-.vendor-page--bookings-create .cb-availability-mini__item-status {
-    font-size: 11px;
+.vendor-page--bookings-create .cb-availability-mini__status {
+    font-size: 10px;
     opacity: 0.8;
 }
 
@@ -4307,11 +4316,11 @@
         gap: 6px;
     }
 
-    .vendor-page--bookings-create .cb-availability-mini__item {
+    .vendor-page--bookings-create .cb-availability-mini__slot {
         padding: 8px 10px;
     }
 
-    .vendor-page--bookings-create .cb-availability-mini__item-status {
+    .vendor-page--bookings-create .cb-availability-mini__status {
         font-size: 12px;
         opacity: 0.9;
         white-space: nowrap;

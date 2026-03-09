@@ -122,6 +122,7 @@ class VendorBookingController extends Controller
             }
 
             foreach ($admins as $admin) {
+                /** @var User $admin */
                 $admin->notify(new BookingRequestSubmitted($bookingRequest));
             }
         } catch (\Throwable $e) {
@@ -468,7 +469,7 @@ class VendorBookingController extends Controller
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
             'planned_date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
-            'truck_type' => 'nullable|string|max:50',
+            'truck_type' => 'required|string|max:50',
             'vehicle_number' => 'required|string|max:50',
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
@@ -476,10 +477,11 @@ class VendorBookingController extends Controller
         ]);
 
         // Auto-assign gate based on availability
-        $plannedGateId = $this->assignAvailableGate($request->planned_date, $request->planned_time);
+        $plannedDuration = $this->resolvePlannedDuration($request->truck_type);
+        $plannedGateId = $this->assignAvailableGate($request->planned_date, $request->planned_time, $plannedDuration);
 
         if (!$plannedGateId) {
-            return back()->withInput()->with('error', 'No available gates at the selected time. Please choose a different time.');
+            return back()->withInput()->with('error', 'No available gates at the selected time for the selected truck type. Please choose a different time or truck type.');
         }
 
         $gate = Gate::where('id', $plannedGateId)
@@ -1074,7 +1076,7 @@ class VendorBookingController extends Controller
     /**
      * Assign an available gate based on the planned date and time
      */
-    private function assignAvailableGate($date, $time)
+    private function assignAvailableGate($date, $time, $plannedDuration = 60)
     {
         $plannedStart = $date . ' ' . $time . ':00';
 
@@ -1091,7 +1093,7 @@ class VendorBookingController extends Controller
                 $gate->warehouse_id,
                 $gate->id,
                 $plannedStart,
-                60, // Default duration check
+                $plannedDuration, // Use actual planned duration
                 null
             );
 

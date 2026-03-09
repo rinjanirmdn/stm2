@@ -484,6 +484,10 @@ class BookingApprovalController extends Controller
                 'approval_notes' => $request->reason,
             ]);
 
+            // Clear availability cache to restore slot availability
+            $plannedStart = Carbon::parse($bookingRequest->planned_start);
+            Cache::forget("vendor_availability_{$plannedStart->format('Y-m-d')}");
+
             // Notify vendor (requester) about rejected booking via email + database
             try {
                 if ($bookingRequest->requester) {
@@ -620,6 +624,7 @@ class BookingApprovalController extends Controller
                     'name' => $gate->name ?? ($gate->warehouse->wh_code . '-' . $gate->gate_number),
                 ],
                 'slots' => $gateSlots->map(fn($s) => [
+                    /** @var Slot $s */
                     'id' => $s->id,
                     'ticket_number' => $s->ticket_number,
                     'vendor_name' => $s->vendor_name ?? '-',
