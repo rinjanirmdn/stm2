@@ -5,7 +5,6 @@ namespace App\Notifications;
 use App\Models\BookingRequest;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
 class BookingRequestSubmitted extends Notification
@@ -37,7 +36,7 @@ class BookingRequestSubmitted extends Notification
         $logoUrl = url('/img/e-Docking Control System.png');
 
         try {
-            $html = view('emails.booking-request-submitted-new', [
+            $viewData = [
                 'appName' => $appName,
                 'companyName' => $companyName,
                 'logoUrl' => $logoUrl,
@@ -47,14 +46,11 @@ class BookingRequestSubmitted extends Notification
                 'plannedDate' => $plannedDate,
                 'direction' => $direction,
                 'bookingRequest' => $this->bookingRequest,
-            ])->render();
+            ];
 
-            Mail::html($html, function ($message) use ($notifiable, $poNumber, $appName) {
-                $message->to($notifiable->email)
-                        ->subject('[' . $appName . '] New Booking Request - PO ' . $poNumber);
-            });
-
-            return (new MailMessage); // dummy to satisfy interface
+            return (new MailMessage)
+                ->subject('[' . $appName . '] New Booking Request - PO ' . $poNumber)
+                ->view('emails.booking-request-submitted-new', $viewData);
         } catch (\Throwable $e) {
             Log::error('Failed to send booking request notification: ' . $e->getMessage(), [
                 'exception' => $e,
