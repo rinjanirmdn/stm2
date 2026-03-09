@@ -72,12 +72,22 @@
 
                     <div class="st-form-field st-form-field--mb">
                         <label class="st-label">New Password (optional)</label>
-                        <input type="password" name="password" class="st-input">
+                        <div class="st-input-wrap">
+                            <input type="password" name="password" id="password" class="st-input st-input--pr-40">
+                            <button type="button" class="btn-toggle-password st-btn-toggle-password" data-target="password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="st-form-field st-form-field--mb-14">
                         <label class="st-label">Confirm New Password</label>
-                        <input type="password" name="password_confirmation" class="st-input">
+                        <div class="st-input-wrap">
+                            <input type="password" name="password_confirmation" id="password_confirmation" class="st-input st-input--pr-40">
+                            <button type="button" class="btn-toggle-password st-btn-toggle-password" data-target="password_confirmation">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="st-form-actions">

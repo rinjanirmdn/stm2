@@ -95,16 +95,31 @@
                 @if ($user->can('profile.change_password'))
                     <div class="st-profile-field">
                         <label class="st-profile-label">Current Password</label>
-                        <input type="password" name="current_password" class="st-profile-input" placeholder="Enter current password">
+                        <div style="position: relative;">
+                            <input type="password" name="current_password" id="current_password" class="st-profile-input" placeholder="Enter current password" style="padding-right: 40px; width: 100%; box-sizing: border-box;">
+                            <button type="button" onclick="togglePasswordVisibility('current_password', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b; padding: 0;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="st-profile-field-row">
                         <div class="st-profile-field">
                             <label class="st-profile-label">New Password</label>
-                            <input type="password" name="new_password" class="st-profile-input" placeholder="Min. 6 characters">
+                            <div style="position: relative;">
+                                <input type="password" name="new_password" id="new_password" class="st-profile-input" placeholder="Min. 6 characters" style="padding-right: 40px; width: 100%; box-sizing: border-box;">
+                                <button type="button" onclick="togglePasswordVisibility('new_password', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b; padding: 0;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="st-profile-field">
                             <label class="st-profile-label">Confirm New Password</label>
-                            <input type="password" name="new_password_confirmation" class="st-profile-input" placeholder="Re-enter new password">
+                            <div style="position: relative;">
+                                <input type="password" name="new_password_confirmation" id="new_password_confirmation" class="st-profile-input" placeholder="Re-enter new password" style="padding-right: 40px; width: 100%; box-sizing: border-box;">
+                                <button type="button" onclick="togglePasswordVisibility('new_password_confirmation', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b; padding: 0;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 @else
@@ -156,4 +171,21 @@
 
 @push('styles')
 @endpush
+
+<script>
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
 @endsection
