@@ -41,7 +41,7 @@
 }
 
 .vendor-header {
-    background: linear-gradient(180deg, #5fc5e7 0%, #4fa8c6 34%, #3f8e97 58%, #2f766f 78%, #1f5e53 100%);
+    background: linear-gradient(90deg, #f8fbff 0%, #89cee5 10%, #67c4e3 25%, #5fc5e7 40%, #4fa8c6 55%, #3f8e97 70%, #2f766f 85%, #1f5e53 100%);
     color: #ffffff;
     height: 72px;
     padding: 0 20px;
@@ -58,22 +58,23 @@
 .vendor-header__brand {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
     flex-shrink: 0;
 }
 
 .vendor-header__logo {
-
     height: 52px;
     width: auto;
     object-fit: contain;
     padding: 0px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .vendor-header__logo--full {
     height: 40px;
     max-width: 420px;
     transform: none;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .vendor-header__title {
@@ -909,148 +910,541 @@
     .vendor-header {
         height: auto;
         padding: 12px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
     }
 
-    /* Order: brand (top), user info, then nav menu */
     .vendor-header__brand {
-        order: 0;
-        width: 100%;
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        align-items: center;
-        column-gap: 10px;
+        gap: 8px;
+        flex: 1;
+        justify-content: space-between;
     }
 
-    /* Biar logo-icon2 nggak “gede sendiri” di mobile */
+    /* Perbaikan responsive logo - ukuran lebih kecil dan proporsional */
     .vendor-header__logo {
-        height: 34px;
+        height: 36px !important;
         width: auto;
         object-fit: contain;
-        align-self: center;
-        transform: translateY(-2px);
-        /* geser sedikit ke atas supaya sejajar dengan titik tiga */
+        flex-shrink: 0;
     }
 
-    .vendor-header__user-menu-btn {
-        display: inline-flex;
-        justify-self: end;
-        align-self: center;
-        margin-left: 0;
+    .vendor-header__logo--full {
+        height: 28px !important;
+        max-width: 180px !important;
+        transform: none;
     }
 
-    .vendor-header__user {
-        order: 1;
-        width: 100%;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-
-    .vendor-header__nav {
-        order: 2;
-        flex-wrap: wrap;
+    /* Mobile menu toggle button */
+    .vendor-header__mobile-menu-btn {
+        display: flex;
+        align-items: center;
         justify-content: center;
-        width: 100%;
-        margin-top: 4px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .vendor-header__mobile-menu-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .vendor-header__mobile-menu-icon {
+        font-size: 16px;
+    }
+
+    /* Hide desktop navigation and user section on mobile */
+    .vendor-header__nav,
+    .vendor-header__user {
+        display: none;
+    }
+
+    /* Hide mobile menu button (removed) */
+    .vendor-header__mobile-menu-btn {
+        display: none;
+    }
+
+    /* User menu button styling */
+    .vendor-header__user-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .vendor-header__user-menu-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* SUPER AGGRESSIVE HIDE - Desktop dan Laptop */
+@media (min-width: 769px) {
+    .vendor-mobile-nav {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-height: 0 !important;
+        max-width: 0 !important;
+        min-height: 0 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        top: -99999px !important;
+        left: -99999px !important;
+        right: auto !important;
+        bottom: auto !important;
+        z-index: -9999 !important;
+        transform: scale(0) !important;
+        pointer-events: none !important;
+    }
+
+    /* Hide all child elements */
+    .vendor-mobile-nav * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
+/* SUPER AGGRESSIVE HIDE - Tablet Landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    .vendor-mobile-nav {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-height: 0 !important;
+        max-width: 0 !important;
+        min-height: 0 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        top: -99999px !important;
+        left: -99999px !important;
+        right: auto !important;
+        bottom: auto !important;
+        z-index: -9999 !important;
+        transform: scale(0) !important;
+        pointer-events: none !important;
+    }
+
+    /* Hide all child elements */
+    .vendor-mobile-nav * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
+/* INITIAL HIDE - Hide mobile navigation secara default di desktop */
+.vendor-mobile-nav {
+    display: none;
+    visibility: hidden;
+    opacity: 0;
+    height: 0;
+    width: 0;
+    overflow: hidden;
+    position: absolute;
+    top: -99999px;
+    left: -99999px;
+    z-index: -9999;
+}
+
+/* Show HANYA di mobile - override semua */
+@media (max-width: 768px) {
+    .vendor-mobile-nav {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        width: 100% !important;
+        max-height: none !important;
+        max-width: none !important;
+        min-height: auto !important;
+        min-width: 100% !important;
+        overflow: visible !important;
+        position: fixed !important;
+        top: auto !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 1000 !important;
+        transform: scale(1) !important;
+        pointer-events: auto !important;
+        background: linear-gradient(90deg, #f8fbff 0%, #89cee5 10%, #67c4e3 25%, #5fc5e7 40%, #4fa8c6 55%, #3f8e97 70%, #2f766f 85%, #1f5e53 100%);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.1);
+        padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    }
+}
+
+/* SUPER AGGRESSIVE HIDE - Desktop dan Laptop */
+@media (min-width: 769px) {
+    .vendor-mobile-nav {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-height: 0 !important;
+        max-width: 0 !important;
+        min-height: 0 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        top: -99999px !important;
+        left: -99999px !important;
+        right: auto !important;
+        bottom: auto !important;
+        z-index: -9999 !important;
+        transform: scale(0) !important;
+        pointer-events: none !important;
+    }
+
+    /* Hide all child elements */
+    .vendor-mobile-nav * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
+/* SUPER AGGRESSIVE HIDE - Tablet Landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    .vendor-mobile-nav {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-height: 0 !important;
+        max-width: 0 !important;
+        min-height: 0 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        top: -99999px !important;
+        left: -99999px !important;
+        right: auto !important;
+        bottom: auto !important;
+        z-index: -9999 !important;
+        transform: scale(0) !important;
+        pointer-events: none !important;
+    }
+
+    /* Hide all child elements */
+    .vendor-mobile-nav * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
+    .vendor-mobile-nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        padding: 8px 4px;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        min-height: 50px;
+    }
+
+    .vendor-mobile-nav-link:hover,
+    .vendor-mobile-nav-link.active {
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .vendor-mobile-nav-link i {
+        font-size: 18px;
+        margin-bottom: 2px;
+    }
+
+    .vendor-mobile-nav-link--primary {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        border-radius: 8px;
+        margin: 0 4px;
+    }
+
+    .vendor-mobile-nav-link--primary:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .vendor-mobile-nav-badge {
+        position: absolute;
+        top: 4px;
+        right: 8px;
+        background: #ef4444;
+        color: white;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 5px;
+        border-radius: 10px;
+        min-width: 16px;
         text-align: center;
     }
 
-    /* Kecilkan logo full di mobile agar header tetap proporsional dan sejajar dengan tombol titik tiga */
-    .vendor-header__logo--full {
-        height: 80px;
-        max-width: 360px;
-        transform: translateY(-2px);
-        /* samakan offset dengan icon kiri */
-        justify-self: start;
-        align-self: center;
+    /* Adjust main content to account for bottom nav HANYA di mobile */
+    .vendor-main {
+        padding-bottom: 70px;
     }
 
-    /* Samakan ukuran tombol New Booking dengan menu header lain di mobile */
-    .vendor-btn--nav {
-        padding: 8px 12px;
-        font-size: 13px;
+    /* Reset padding untuk desktop, laptop, dan tablet landscape */
+@media (min-width: 769px) {
+    .vendor-main {
+        padding-bottom: 0 !important;
     }
 
-    /* On small screens, keep notification bell visible but hide user text + desktop logout */
-    .vendor-header__user {
-        display: flex;
-        align-items: center;
-        gap: 6px;
+    /* Double check - hide any mobile elements */
+    .vendor-mobile-nav,
+    .vendor-mobile-nav * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    .vendor-main {
+        padding-bottom: 0 !important;
     }
 
-    .vendor-header__user-info,
-    .vendor-header__user>form {
-        display: none;
+    /* Double check - hide any mobile elements */
+    .vendor-mobile-nav,
+    .vendor-mobile-nav * {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
     }
+}
 
-    /* Hide header bell button on mobile, but keep its dropdown usable */
-    #notification-btn {
-        display: none;
+    /* Desktop notification dropdown - force show */
+.notification-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    color: var(--vendor-text);
+    border-radius: var(--vendor-radius-sm);
+    box-shadow: var(--vendor-shadow);
+    border: 1px solid var(--vendor-border);
+    min-width: 320px;
+    max-width: 400px;
+    max-height: 450px;
+    padding: 0;
+    margin-top: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1002;
+    overflow: hidden;
+    display: none;
+}
+
+.notification-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    display: block !important;
+}
+
+/* Force desktop dropdown visibility */
+@media (min-width: 769px) {
+    .notification-dropdown.show {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(0) !important;
     }
+}
 
-    .vendor-header__user-menu-btn {
-        display: inline-flex;
+    .vendor-header__user-menu {
         position: absolute;
+        top: 100%;
         right: 12px;
-        top: 12px;
+        background: white;
+        color: var(--vendor-text);
+        border-radius: var(--vendor-radius-sm);
+        box-shadow: var(--vendor-shadow);
+        border: 1px solid var(--vendor-border);
+        min-width: 200px;
+        padding: 12px;
+        margin-top: 4px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.2s ease;
+        z-index: 1001;
     }
 
-    /* On small screens, show notification dropdown just below the header, near the top-right */
-    .notification-dropdown {
-        position: fixed;
-        top: 72px;
-        right: 8px;
-        left: 8px;
-        transform: none;
-        width: auto;
-        max-width: 420px;
-        margin: 0 auto;
-        z-index: 1100;
+    .vendor-header__user-menu.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
     }
 
-    .vendor-header__user-info {
-        flex: 1;
-        min-width: 0;
-        text-align: left;
+    .vendor-header__user-menu-info {
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--vendor-border);
+        margin-bottom: 8px;
     }
 
     .vendor-header__user-name {
-        white-space: nowrap;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--vendor-text);
+    }
+
+    .vendor-header__user-company {
+        font-size: 12px;
+        color: var(--vendor-muted);
+    }
+
+    .vendor-header__user-menu-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .vendor-header__user-menu-actions .vendor-btn {
+        background: var(--vendor-surface-2);
+        color: var(--vendor-text);
+        border: 1px solid var(--vendor-border);
+    }
+
+    .vendor-header__user-menu-actions .vendor-btn:hover {
+        background: var(--vendor-brand);
+        color: white;
+    }
+
+    /* Badge untuk notifikasi di user menu */
+    .vendor-user-menu-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #ef4444;
+        color: white;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 5px;
+        border-radius: 10px;
+        min-width: 16px;
+        text-align: center;
+    }
+
+    /* Dropdown notifikasi di mobile user menu */
+    .vendor-user-menu-notification-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        color: var(--vendor-text);
+        border-radius: var(--vendor-radius-sm);
+        box-shadow: var(--vendor-shadow);
+        border: 1px solid var(--vendor-border);
+        min-width: 280px;
+        max-width: 350px;
+        max-height: 400px;
+        padding: 0;
+        margin-top: 4px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.2s ease;
+        z-index: 1002;
         overflow: hidden;
-        text-overflow: ellipsis;
     }
 
-    .vendor-main {
-        padding: 12px;
+    .vendor-user-menu-notification-dropdown.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
     }
-}
 
+    .vendor-user-menu-notification-dropdown .notification-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--vendor-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--vendor-surface-2);
+    }
 
-/* Pages: Vendor Dashboard */
-.vendor-page--dashboard .vd-container {
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100vh - 72px - 48px - 52px);
-    width: 100%;
-    margin: 0;
-    background: var(--standby-bg);
-    border-radius: 12px;
-    overflow: hidden;
-}
+    .vendor-user-menu-notification-dropdown .notification-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
 
-.vendor-page--dashboard .vd-scroll-container {
-    flex: 1;
-    overflow-y: auto;
-    background: var(--standby-bg);
-}
+    .vendor-user-menu-notification-dropdown .notification-item {
+        display: flex;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--vendor-border);
+        text-decoration: none;
+        color: var(--vendor-text);
+        transition: background-color 0.2s ease;
+    }
 
-.vendor-page--dashboard .vd-content-container {
-    background: #ffffff;
-    margin: 0;
-    min-height: 100%;
+    .vendor-user-menu-notification-dropdown .notification-item:hover {
+        background: var(--vendor-surface-2);
+    }
+
+    .vendor-user-menu-notification-dropdown .notification-item--unread {
+        background: rgba(37, 99, 235, 0.05);
+        border-left: 3px solid var(--vendor-brand);
+    }
+
+    .vendor-user-menu-notification-dropdown .notification-empty {
+        padding: 24px 16px;
+        text-align: center;
+        color: var(--vendor-muted);
+    }
 }
 
 .vendor-page--dashboard .vd-footer-container {
@@ -1111,12 +1505,30 @@
     font-size: 12px;
     color: var(--text-secondary);
     font-weight: 500;
-    text-transform: uppercase;
     letter-spacing: 0.03em;
 }
 
 .vendor-page--dashboard .vd-status-item__unit {
     font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .vendor-page--dashboard .vd-status-strip {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-radius: 12px;
+    }
+
+    .vendor-page--dashboard .vd-status-item {
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        padding: 14px 12px;
+    }
+
+    .vendor-page--dashboard .vd-status-item:last-child {
+        grid-column: 1 / -1;
+        border-bottom: none;
+    }
 }
 
 .vendor-page--dashboard .vd-status-item--pending .vd-status-item__count {
@@ -1449,7 +1861,7 @@
 }
 
 .vd-range-picker {
-    padding: 6px 10px;
+    padding: 8px 12px;
     border-radius: 10px;
     border: 1px solid #d1d5db;
     background: #ffffff;
@@ -1457,8 +1869,37 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 13px;
+    gap: 8px;
+    font-size: 14px;
+    min-width: 200px;
+    flex: 1;
+    transition: all 0.2s ease;
+}
+
+.vd-range-picker:hover {
+    background: #f8fafc;
+    border-color: #9ca3af;
+}
+
+.vd-range-picker:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.vd-range-picker span {
+    white-space: nowrap;
+    flex: 1;
+    text-align: left;
+}
+
+.vd-range-picker i {
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.daterangepicker {
+    z-index: 2005 !important;
 }
 
 @media (max-width: 768px) {
@@ -2092,12 +2533,27 @@
 
     .vendor-page--dashboard .vd-status-strip {
         flex-wrap: wrap;
+        gap: 8px;
     }
 
     .vendor-page--dashboard .vd-status-item {
         flex: 1 1 50%;
         border-bottom: 1px solid var(--border-light);
         padding: 12px 10px;
+        border-right: none;
+        border-radius: 10px;
+        background: var(--bg-hover);
+        margin-bottom: 8px;
+        transition: all 0.15s;
+    }
+
+    .vendor-page--dashboard .vd-status-item:hover {
+        background: var(--standby-bg);
+        transform: translateX(2px);
+    }
+
+    .vendor-page--dashboard .vd-status-item:nth-child(5) {
+        flex: 1 1 100%;
     }
 }
 
@@ -2159,7 +2615,7 @@
     text-decoration: none;
     color: var(--text-secondary);
     font-weight: 500;
-    font-size: 14px;
+    font-size: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2184,8 +2640,8 @@
 }
 
 .vendor-page--bookings-index .mb-tab__count {
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 28px;
+    font-weight: 800;
     line-height: 1;
 }
 
@@ -2270,19 +2726,30 @@
     gap: 12px;
 }
 
-.vendor-page--bookings-index .date-range-input__left {
+.vendor-page--dashboard .date-range-input {
+    padding-right: 40px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vendor-page--bookings-index .date-range-input__left,
+.vendor-page--dashboard .date-range-input__left {
     display: inline-flex;
     align-items: center;
     gap: 10px;
     min-width: 0;
 }
 
-.vendor-page--bookings-index .date-range-icon {
-    color: #64748b;
+.date-range-icon {
+    opacity: 0.9;
     pointer-events: none;
 }
 
-.vendor-page--bookings-index .date-range-input .fa-caret-down {
+.vendor-page--bookings-index .date-range-input .fa-caret-down,
+.vendor-page--dashboard .date-range-input .fa-caret-down {
     color: #64748b;
 }
 
@@ -2955,8 +3422,76 @@
         padding: 16px;
     }
 
+    /* Ubah grid menjadi 3 baris seperti my bookings */
     .vendor-form__grid--3 {
-        grid-template-columns: minmax(0, 1fr);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .vendor-form__section {
+        background: var(--vendor-surface);
+        border-radius: 10px;
+        border: 1px solid var(--vendor-border);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .vendor-form__section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--vendor-text);
+        margin-bottom: 4px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--vendor-border);
+    }
+
+    .vendor-form__field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .vendor-form__field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .vendor-form__label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--vendor-muted);
+    }
+
+    .vendor-form__input {
+        padding: 8px 12px;
+        border: 1px solid var(--vendor-border);
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        color: var(--vendor-text);
+    }
+
+    .vendor-form__input:focus {
+        outline: none;
+        border-color: var(--vendor-brand);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .vendor-form__actions {
+        margin-top: 12px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .vendor-form__actions .vendor-btn {
+        flex: 1;
+        min-width: 100px;
     }
 }
 
@@ -3767,6 +4302,21 @@
         grid-template-columns: 1fr;
     }
 
+    .vendor-page--bookings-create .cb-availability-mini__grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .vendor-page--bookings-create .cb-availability-mini__item {
+        padding: 8px 10px;
+    }
+
+    .vendor-page--bookings-create .cb-availability-mini__item-status {
+        font-size: 12px;
+        opacity: 0.9;
+        white-space: nowrap;
+    }
+
     .vendor-page--bookings-create .cb-row {
         grid-template-columns: 1fr;
     }
@@ -3833,6 +4383,72 @@
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .vendor-page--bookings-show .vb-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .vendor-page--bookings-show .vb-table {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    /* Override global st-table mobile min-width (style.css sets 900px) to prevent horizontal overflow */
+    .vendor-page--bookings-show table.st-table {
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .vendor-page--bookings-show table.st-table,
+    .vendor-page--bookings-show table.st-table * {
+        box-sizing: border-box;
+        max-width: 100% !important;
+    }
+
+    .vendor-page--bookings-show .vb-table td {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .vendor-page--bookings-show .vb-table tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        padding: 10px 0;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .vendor-page--bookings-show .vb-table tr:last-child {
+        border-bottom: none;
+    }
+
+    .vendor-page--bookings-show .vb-table td {
+        padding: 0;
+    }
+
+    .vendor-page--bookings-show .vb-table__label {
+        width: auto;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .vendor-page--bookings-show .vb-actions__row {
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+
+    .vendor-page--bookings-show .vb-actions__row .vendor-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        justify-content: center;
+        padding-left: 10px;
+        padding-right: 10px;
+        white-space: nowrap;
+    }
 }
 
 /* Pages: Vendor Booking Confirm */

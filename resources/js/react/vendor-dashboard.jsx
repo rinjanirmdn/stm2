@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   BarChart,
@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LabelList,
   PieChart,
   Pie,
   Cell,
@@ -42,9 +43,46 @@ function fmtTitle(s) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function useIsNarrow(breakpoint = 420) {
+  const [isNarrow, setIsNarrow] = useState(() => {
+    try {
+      return typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false;
+    } catch (e) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    function onResize() {
+      try {
+        setIsNarrow(window.innerWidth <= breakpoint);
+      } catch (e) {}
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [breakpoint]);
+
+  return isNarrow;
+}
+
+function BarValueLabel({ x, y, width, value, index, data }) {
+  const v = Number(value);
+  if (!Number.isFinite(v)) return null;
+  const fill = (data && data[index] && data[index].color) ? data[index].color : tk('--text-primary', '#0f172a');
+  const cx = (Number(x) || 0) + (Number(width) || 0) / 2;
+  const cy = (Number(y) || 0) - 6;
+  const text = String(v);
+  return (
+    <text x={cx} y={cy} textAnchor="middle" fontSize={11} fontWeight={700} fill={fill}>
+      {text}
+    </text>
+  );
+}
+
 function StatusOverviewChart() {
   const raw = readJson('vendor-status-overview-data', {});
   const s = raw && raw.stats ? raw.stats : {};
+  const isNarrow = useIsNarrow(420);
 
   const data = useMemo(() => {
     const items = [
@@ -61,13 +99,22 @@ function StatusOverviewChart() {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 12, right: 6, left: 0, bottom: 6 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={tk('--chart-grid', '#e2e8f0')} />
-          <XAxis dataKey="label" tick={{ fontSize: 11, fill: tk('--text-secondary', '#64748b') }} interval={0} />
+          <XAxis
+            dataKey="label"
+            interval={0}
+            tick={{ fontSize: isNarrow ? 9 : 11, fill: tk('--text-secondary', '#64748b') }}
+            tickMargin={6}
+            angle={isNarrow ? -18 : 0}
+            textAnchor={isNarrow ? 'end' : 'middle'}
+            height={isNarrow ? 34 : 22}
+          />
           <YAxis tick={{ fontSize: 11, fill: tk('--text-secondary', '#64748b') }} width={28} allowDecimals={false} />
           <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${tk('--border-light', '#e2e8f0')}`, boxShadow: '0 6px 16px rgba(15,23,42,0.12)', fontSize: 12 }} />
           <Bar dataKey="value" radius={[8, 8, 0, 0]}>
             {data.map((d) => (
               <Cell key={d.key} fill={d.color} />
             ))}
+            <LabelList dataKey="value" content={(p) => <BarValueLabel {...p} data={data} />} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

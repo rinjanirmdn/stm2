@@ -26,7 +26,17 @@ class BookingApproved extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $plannedDate = $this->slot->planned_start?->format('d M Y H:i') ?? '-';
-        $gateName = $this->slot->plannedGate?->name ?? 'TBD';
+        $gateName = (string) ($this->slot->actualGate?->name ?? $this->slot->plannedGate?->name ?? '');
+        if ($gateName === '') {
+            $gateWh = (string) ($this->slot->actualGate?->warehouse?->wh_code ?? $this->slot->plannedGate?->warehouse?->wh_code ?? $this->slot->warehouse?->wh_code ?? '');
+            $gateNo = (string) ($this->slot->actualGate?->gate_number ?? $this->slot->plannedGate?->gate_number ?? '');
+            if ($gateWh !== '' && $gateNo !== '') {
+                $gateName = $gateWh . '-' . $gateNo;
+            }
+        }
+        if ($gateName === '') {
+            $gateName = 'TBD';
+        }
         $subjectPrefix = $this->isRescheduled ? 'Booking Rescheduled & Approved' : 'Booking Approved';
         $messageLine = $this->isRescheduled
             ? 'Your booking has been rescheduled and approved.'
@@ -35,14 +45,15 @@ class BookingApproved extends Notification
 
         return (new MailMessage)
             ->subject($subjectPrefix . ' - ' . $this->slot->ticket_number)
-            ->greeting('Hello ' . $notifiable->name . ',')
-            ->line($messageLine)
-            ->line('**Ticket:** ' . $this->slot->ticket_number)
-            ->line('**Scheduled Time:** ' . $plannedDate)
-            ->line('**Gate:** ' . $gateName)
-            ->line('**Direction:** ' . ucfirst($this->slot->direction))
-            ->action('View Booking Details', url('/vendor/bookings/' . $targetId))
-            ->line('Please make sure to arrive on time. Thank you for using our service.');
+            ->view('emails.booking-approved', [
+                'subjectPrefix' => $subjectPrefix,
+                'messageLine' => $messageLine,
+                'plannedDate' => $plannedDate,
+                'gateName' => $gateName,
+                'targetId' => $targetId,
+                'slot' => $this->slot,
+                'notifiable' => $notifiable,
+            ]);
     }
 
     public function toArray(object $notifiable): array

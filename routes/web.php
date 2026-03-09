@@ -263,7 +263,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', [VendorBookingController::class, 'create'])->name('create')->middleware('permission:vendor.bookings.create');
             Route::post('/', [VendorBookingController::class, 'store'])->name('store')->middleware('permission:vendor.bookings.store');
             Route::get('/{id}', [VendorBookingController::class, 'show'])->whereNumber('id')->name('show')->middleware('permission:vendor.bookings.show');
-            Route::get('/{slotId}/ticket', [SlotController::class, 'ticket'])->whereNumber('slotId')->name('ticket')->middleware('permission:vendor.bookings.ticket');
+            Route::get('/{slotId}/ticket', [VendorBookingController::class, 'ticket'])->whereNumber('slotId')->name('ticket')->middleware('permission:vendor.bookings.ticket');
             Route::post('/{id}/cancel', [VendorBookingController::class, 'cancel'])->whereNumber('id')->name('cancel')->middleware('permission:vendor.bookings.cancel');
         });
 

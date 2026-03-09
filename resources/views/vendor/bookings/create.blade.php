@@ -24,6 +24,8 @@
             <form method="POST" action="{{ route('vendor.bookings.store') }}" enctype="multipart/form-data" id="booking-form">
                 @csrf
 
+                <div class="vendor-alert vendor-alert--warning" id="booking-form-alert" hidden></div>
+
                 <div class="cb-form-layout">
                     <!-- Row 1: PO Selection + Schedule -->
                     <div class="cb-form-row">
@@ -120,13 +122,14 @@
                                     @enderror
                                 </div>
                                 <div class="cb-field">
-                                    <label class="cb-label">Vehicle Number</label>
+                                    <label class="cb-label cb-label--required">Vehicle Number</label>
                                     <input type="text"
                                            name="vehicle_number"
                                            class="cb-input"
                                            placeholder="e.g., B 1234 ABC"
                                            value="{{ old('vehicle_number') }}"
-                                           maxlength="50">
+                                           maxlength="50"
+                                           required>
                                     @error('vehicle_number')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror

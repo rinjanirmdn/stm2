@@ -22,6 +22,295 @@ function stGetVendorConfig() {
     return stReadJson('st-vendor-config', {});
 }
 
+function bootVendorDashboardDateRange() {
+    // Same UI as My Bookings: jQuery daterangepicker w/ presets
+    var rangePicker = document.getElementById('vd_reportrange');
+    if (!rangePicker) return;
+
+    var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+    // Prevent double boot
+    if (rangePicker.getAttribute('data-st-daterange-boot') === '1') return;
+    rangePicker.setAttribute('data-st-daterange-boot', '1');
+
+    function dateClassForMoment(m) {
+        if (!m) return '';
+        var classes = [];
+        try {
+            if (typeof m.day === 'function' && m.day() === 0) classes.push('drp-sunday');
+            if (holidayData) {
+                var iso = (typeof m.format === 'function') ? m.format('YYYY-MM-DD') : '';
+                if (iso && holidayData[iso]) classes.push('drp-holiday');
+            }
+        } catch (e) { }
+        return classes.join(' ');
+    }
+
+    function resolvePickerCellIso(cellEl) {
+        if (!cellEl || !window.jQuery || typeof window.moment !== 'function') return '';
+        var cell = window.jQuery(cellEl);
+        var day = parseInt(cell.text().trim(), 10);
+        if (!Number.isFinite(day)) return '';
+
+        var monthText = cell.closest('table').find('.month').first().text().trim();
+        if (!monthText) return '';
+
+        var baseMonth = window.moment(monthText, ['MMM YYYY', 'MMMM YYYY'], true);
+        if (!baseMonth.isValid()) baseMonth = window.moment(monthText, ['MMM YYYY', 'MMMM YYYY'], false);
+        if (!baseMonth.isValid()) return '';
+
+        var month = baseMonth.month();
+        var year = baseMonth.year();
+        if (cell.hasClass('off')) {
+            if (day >= 20) month -= 1;
+            else month += 1;
+            if (month < 0) { month = 11; year -= 1; }
+            if (month > 11) { month = 0; year += 1; }
+        }
+
+        return String(year) + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    }
+
+    function decoratePickerDays(picker) {
+        if (!picker || !picker.container || !window.jQuery) return;
+        picker.container.find('td.available').each(function () {
+            var td = window.jQuery(this);
+            var hasSunday = td.hasClass('drp-sunday');
+            var hasHoliday = td.hasClass('drp-holiday');
+            var tooltipText = '';
+
+            if (hasHoliday) {
+                var iso = resolvePickerCellIso(this);
+                tooltipText = (iso && holidayData && holidayData[iso]) ? holidayData[iso] : 'Holiday';
+            } else if (hasSunday) {
+                tooltipText = 'Sunday';
+            }
+
+            if (tooltipText) {
+                td.attr('data-tooltip', tooltipText);
+                td.find('a, span').attr('data-tooltip', tooltipText);
+            } else {
+                td.removeAttr('data-tooltip');
+                td.find('a, span').removeAttr('data-tooltip');
+            }
+        });
+    }
+
+    function bindPickerDecorators($el) {
+        if (!$el || !$el.length) return;
+        $el.off('show.daterangepicker.st-dateinfo showCalendar.daterangepicker.st-dateinfo');
+        $el.on('show.daterangepicker.st-dateinfo showCalendar.daterangepicker.st-dateinfo', function (_ev, picker) {
+            decoratePickerDays(picker);
+        });
+        var picker = $el.data('daterangepicker');
+        if (picker) {
+            setTimeout(function () { decoratePickerDays(picker); }, 0);
+        }
+    }
+
+    function initDashboardDateRange() {
+        var rangePicker = document.getElementById('vd_reportrange');
+        var rangeStart = document.getElementById('vd-range-start');
+        var rangeEnd = document.getElementById('vd-range-end');
+        var dateRange = document.getElementById('vd-date-range');
+
+        if (!rangePicker || !rangeStart || !rangeEnd) {
+            return;
+        }
+
+        // Prevent double-init
+        if (rangePicker.getAttribute('data-st-daterange-init') === '1') {
+            return;
+        }
+
+        function depsReady() {
+            return !!(
+                window.jQuery &&
+                window.jQuery.fn &&
+                typeof window.jQuery.fn.daterangepicker === 'function' &&
+                window.moment
+            );
+        }
+
+        if (!depsReady()) {
+            var attempts = parseInt(rangePicker.getAttribute('data-st-daterange-attempts') || '0', 10);
+            if (attempts >= 100) {
+                return;
+            }
+            rangePicker.setAttribute('data-st-daterange-attempts', String(attempts + 1));
+            setTimeout(initDashboardDateRange, 50);
+            return;
+        }
+
+        var $ = window.jQuery;
+        var moment = window.moment;
+
+        var startDate = moment();
+        var endDate = moment();
+        var hasInitial = false;
+
+        if (rangeStart.value && moment(rangeStart.value, 'YYYY-MM-DD').isValid()) {
+            startDate = moment(rangeStart.value, 'YYYY-MM-DD');
+            hasInitial = true;
+        }
+        if (rangeEnd.value && moment(rangeEnd.value, 'YYYY-MM-DD').isValid()) {
+            endDate = moment(rangeEnd.value, 'YYYY-MM-DD');
+            hasInitial = true;
+        }
+
+        function updateRange(s, e) {
+            $(rangePicker).find('span').first().html(s.format('DD-MM-YYYY') + ' - ' + e.format('DD-MM-YYYY'));
+            rangeStart.value = s.format('YYYY-MM-DD');
+            rangeEnd.value = e.format('YYYY-MM-DD');
+        }
+
+        try {
+            rangePicker.setAttribute('data-st-daterange-init', '1');
+
+            $(rangePicker).daterangepicker({
+                startDate: startDate,
+                endDate: endDate,
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                },
+                locale: { format: 'DD-MM-YYYY' },
+                alwaysShowCalendars: true,
+                opens: 'left',
+                isCustomDate: dateClassForMoment
+            }, function (s, e, label) {
+                updateRange(s, e);
+                if (dateRange) {
+                    var presetMap = {
+                        'Today': 'today',
+                        'Yesterday': 'yesterday',
+                        'Last 7 Days': 'last_7_days',
+                        'Last 30 Days': 'last_30_days',
+                        'This Month': 'this_month',
+                        'Last Month': 'last_month'
+                    };
+                    dateRange.value = presetMap[label] || 'custom';
+                }
+            });
+
+            bindPickerDecorators($(rangePicker));
+
+            if (hasInitial) {
+                updateRange(startDate, endDate);
+            } else {
+                $(rangePicker).find('span').first().html('Select range');
+            }
+
+            // If user clicked before init completed, open immediately
+            if (rangePicker.getAttribute('data-st-daterange-open') === '1') {
+                rangePicker.removeAttribute('data-st-daterange-open');
+                var drp = window.jQuery(rangePicker).data('daterangepicker');
+                if (drp && typeof drp.show === 'function') drp.show();
+            }
+        } catch (error) {
+        }
+    }
+
+    function openPicker() {
+        if (rangePicker.getAttribute('data-st-daterange-init') !== '1') {
+            rangePicker.setAttribute('data-st-daterange-open', '1');
+            initDashboardDateRange();
+            return;
+        }
+
+        try {
+            var drp = window.jQuery(rangePicker).data('daterangepicker');
+            if (drp && typeof drp.show === 'function') drp.show();
+        } catch (ex) { }
+    }
+
+    var lastToggleAt = 0;
+    function showPicker() {
+        var now = Date.now();
+        if (now - lastToggleAt < 250) return;
+        lastToggleAt = now;
+
+        if (rangePicker.getAttribute('data-st-daterange-init') !== '1') {
+            rangePicker.setAttribute('data-st-daterange-open', '1');
+            initDashboardDateRange();
+            return;
+        }
+
+        try {
+            var drp = window.jQuery(rangePicker).data('daterangepicker');
+            if (!drp) return;
+            if (drp.isShowing) return;
+            if (typeof drp.show === 'function') drp.show();
+        } catch (ex) { }
+    }
+
+    rangePicker.addEventListener('click', function (e) {
+        // Prevent the same click from being treated as an outside-click by the plugin
+        try {
+            e.preventDefault();
+            e.stopPropagation();
+        } catch (ex) { }
+        setTimeout(showPicker, 0);
+    });
+
+    rangePicker.addEventListener('mousedown', function (e) {
+        // Prevent double-trigger (mousedown + click) from causing blink
+        try {
+            e.preventDefault();
+            e.stopPropagation();
+        } catch (ex) { }
+    });
+
+    rangePicker.addEventListener('touchstart', function (e) {
+        try {
+            e.stopPropagation();
+        } catch (ex) { }
+        setTimeout(showPicker, 0);
+    }, { passive: true });
+
+    rangePicker.style.pointerEvents = 'auto';
+
+    // Backward compatibility: some browsers may swallow click on nested elements
+    try {
+        var left = rangePicker.querySelector('.date-range-input__left');
+        if (left) {
+            left.addEventListener('click', function (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch (ex) { }
+                setTimeout(showPicker, 0);
+            });
+            left.addEventListener('mousedown', function (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch (ex) { }
+                setTimeout(showPicker, 0);
+            });
+        }
+        var span = rangePicker.querySelector('span');
+        if (span) {
+            span.addEventListener('click', function (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch (ex) { }
+                setTimeout(showPicker, 0);
+            });
+            span.addEventListener('mousedown', function (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch (ex) { }
+                setTimeout(showPicker, 0);
+            });
+        }
+    } catch (e) {}
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDashboardDateRange);
+    } else {
+        initDashboardDateRange();
+    }
+    window.addEventListener('load', initDashboardDateRange);
+    setTimeout(initDashboardDateRange, 250);
+    setTimeout(initDashboardDateRange, 750);
+    setTimeout(initDashboardDateRange, 1500);
+}
+
 function initVendorDashboardCharts() {
     const statusMount = document.getElementById('vendor-status-overview-react');
     const ontimeMount = document.getElementById('vendor-ontime-react');
@@ -140,6 +429,7 @@ document.addEventListener('DOMContentLoaded', function () {
         initVendorAvailability(availabilityConfig);
     }
 
+    bootVendorDashboardDateRange();
     initVendorNotifications();
     initVendorHeaderUserMenu();
 
@@ -282,12 +572,59 @@ function initVendorBookingCreate(config) {
     const bookingForm = document.getElementById('booking-form');
     if (bookingForm) {
         bookingForm.addEventListener('submit', function (e) {
+            const alertBox = document.getElementById('booking-form-alert');
+            if (alertBox) {
+                alertBox.hidden = true;
+                alertBox.textContent = '';
+            }
+
             const poNumber = poHidden.value.trim();
             if (!poNumber) {
                 e.preventDefault();
-                alert('Please select a PO/DO number');
+                if (alertBox) {
+                    alertBox.textContent = 'Mohon lengkapi data: pilih PO/DO number.';
+                    alertBox.hidden = false;
+                }
                 poSearch.focus();
                 return false;
+            }
+
+            const requiredFields = [
+                {
+                    el: plannedDate,
+                    value: (plannedDate.value || '').trim(),
+                    message: 'Please select a date'
+                },
+                {
+                    el: plannedTime,
+                    value: (plannedTime.value || '').trim(),
+                    message: 'Please select a time'
+                },
+                {
+                    el: truckTypeSelect,
+                    value: (truckTypeSelect && truckTypeSelect.value ? truckTypeSelect.value : '').trim(),
+                    message: 'Please select a truck type'
+                },
+                {
+                    el: bookingForm.querySelector('input[name="vehicle_number"]'),
+                    value: ((bookingForm.querySelector('input[name="vehicle_number"]') || {}).value || '').trim(),
+                    message: 'Please fill vehicle number'
+                }
+            ];
+
+            for (let i = 0; i < requiredFields.length; i++) {
+                const f = requiredFields[i];
+                if (!f.value) {
+                    e.preventDefault();
+                    if (alertBox) {
+                        alertBox.textContent = 'Mohon lengkapi data: ' + f.message;
+                        alertBox.hidden = false;
+                    }
+                    if (f.el && typeof f.el.focus === 'function') {
+                        f.el.focus();
+                    }
+                    return false;
+                }
             }
         });
     }
@@ -309,7 +646,12 @@ function initVendorBookingCreate(config) {
 
         miniAvailability.innerHTML = '<div class="cb-availability-mini__placeholder"><i class="fas fa-spinner fa-spin"></i> Loading availability...</div>';
 
-        fetch(availableSlotsUrl + '?date=' + encodeURIComponent(date), {
+        var plannedDuration = (plannedDurationInput && plannedDurationInput.value) ? String(plannedDurationInput.value).trim() : '';
+        if (!plannedDuration) {
+            plannedDuration = '60';
+        }
+
+        fetch(availableSlotsUrl + '?date=' + encodeURIComponent(date) + '&planned_duration=' + encodeURIComponent(plannedDuration), {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'Accept': 'application/json'
@@ -676,6 +1018,7 @@ function initVendorBookingCreate(config) {
         truckTypeSelect.addEventListener('change', function () {
             syncPlannedDuration();
             syncPlannedStart();
+            loadMiniAvailability();
         });
     }
 
@@ -1024,6 +1367,311 @@ function initVendorNotifications() {
         return meta ? meta.getAttribute('content') : '';
     }
 
+    // Initialize Dashboard Date Range Picker
+    function initDashboardDateRange() {
+        var rangePicker = document.getElementById('vd_reportrange');
+        var rangeStart = document.getElementById('vd-range-start');
+        var rangeEnd = document.getElementById('vd-range-end');
+        var dateRange = document.getElementById('vd-date-range');
+
+        if (!rangePicker || !rangeStart || !rangeEnd) {
+            console.warn('Date range picker elements not found', {
+                rangePicker: !!rangePicker,
+                rangeStart: !!rangeStart,
+                rangeEnd: !!rangeEnd,
+                dateRange: !!dateRange
+            });
+            return;
+        }
+
+        // Prevent double-init
+        if (rangePicker.getAttribute('data-st-daterange-init') === '1') {
+            return;
+        }
+
+        // Helper: check deps (vendor.js is loaded via Vite in <head>, deps are loaded later in <body>)
+        function depsReady() {
+            return !!(
+                window.jQuery &&
+                window.jQuery.fn &&
+                typeof window.jQuery.fn.daterangepicker === 'function' &&
+                window.moment
+            );
+        }
+
+        // If deps not ready yet, keep retrying for a short time.
+        if (!depsReady()) {
+            var attempts = parseInt(rangePicker.getAttribute('data-st-daterange-attempts') || '0', 10);
+            if (attempts >= 100) {
+                console.error('Date range picker deps not ready after retries.');
+                return;
+            }
+            rangePicker.setAttribute('data-st-daterange-attempts', String(attempts + 1));
+            setTimeout(initDashboardDateRange, 50);
+            return;
+        }
+
+        console.log('Initializing date range picker...');
+
+        var $ = window.jQuery;
+        var moment = window.moment;
+
+        var startDate = moment();
+        var endDate = moment();
+        var hasInitial = false;
+
+        if (rangeStart.value && moment(rangeStart.value, 'YYYY-MM-DD').isValid()) {
+            startDate = moment(rangeStart.value, 'YYYY-MM-DD');
+            hasInitial = true;
+        }
+        if (rangeEnd.value && moment(rangeEnd.value, 'YYYY-MM-DD').isValid()) {
+            endDate = moment(rangeEnd.value, 'YYYY-MM-DD');
+            hasInitial = true;
+        }
+
+        function updateRange(s, e) {
+            // Match My Bookings display format
+            $(rangePicker).find('span').first().html(s.format('DD-MM-YYYY') + ' - ' + e.format('DD-MM-YYYY'));
+            rangeStart.value = s.format('YYYY-MM-DD');
+            rangeEnd.value = e.format('YYYY-MM-DD');
+        }
+
+        // Initialize daterangepicker
+        try {
+            rangePicker.setAttribute('data-st-daterange-init', '1');
+
+            $(rangePicker).daterangepicker({
+                startDate: startDate,
+                endDate: endDate,
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                },
+                locale: { format: 'DD-MM-YYYY' },
+                alwaysShowCalendars: true,
+                opens: 'left'
+            }, function (s, e, label) {
+                updateRange(s, e);
+
+                // Keep date_range param behavior (optional)
+                if (dateRange) {
+                    var presetMap = {
+                        'Today': 'today',
+                        'Yesterday': 'yesterday',
+                        'Last 7 Days': 'last_7_days',
+                        'Last 30 Days': 'last_30_days',
+                        'This Month': 'this_month',
+                        'Last Month': 'last_month'
+                    };
+                    dateRange.value = presetMap[label] || 'custom';
+                }
+            });
+
+            console.log('Date range picker initialized successfully');
+
+            if (hasInitial) {
+                updateRange(startDate, endDate);
+            } else {
+                $(rangePicker).find('span').first().html('Select range');
+            }
+
+            // If user clicked before init completed, open immediately
+            if (rangePicker.getAttribute('data-st-daterange-open') === '1') {
+                rangePicker.removeAttribute('data-st-daterange-open');
+                var drp = window.jQuery(rangePicker).data('daterangepicker');
+                if (drp && typeof drp.show === 'function') drp.show();
+            }
+        } catch (error) {
+            console.error('Error initializing date range picker:', error);
+        }
+    }
+
+    // Init strategy:
+    // - bind click first (so user click during load won't be ignored)
+    // - run init on DOMContentLoaded + window load + short retries
+    (function bindDashboardDateRangeBoot() {
+        var rangePicker = document.getElementById('vd_reportrange');
+        if (!rangePicker) return;
+
+        if (rangePicker.getAttribute('data-st-daterange-boot') === '1') return;
+        rangePicker.setAttribute('data-st-daterange-boot', '1');
+
+        rangePicker.addEventListener('click', function (e) {
+            // Ensure init has run; if not, mark to open once ready
+            if (rangePicker.getAttribute('data-st-daterange-init') !== '1') {
+                rangePicker.setAttribute('data-st-daterange-open', '1');
+                initDashboardDateRange();
+                return;
+            }
+
+            // If already initialized, force open
+            try {
+                var drp = window.jQuery(rangePicker).data('daterangepicker');
+                if (drp && typeof drp.show === 'function') drp.show();
+            } catch (ex) { }
+        });
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDashboardDateRange);
+        } else {
+            initDashboardDateRange();
+        }
+
+        window.addEventListener('load', initDashboardDateRange);
+        setTimeout(initDashboardDateRange, 250);
+        setTimeout(initDashboardDateRange, 750);
+        setTimeout(initDashboardDateRange, 1500);
+    })();
+
+    // Desktop notification handler - force rebind
+    var desktopNotifBtn = document.getElementById('notification-btn');
+    var desktopNotifDropdown = document.getElementById('notification-dropdown');
+
+    console.log('Desktop notification btn:', desktopNotifBtn);
+    console.log('Desktop notification dropdown:', desktopNotifDropdown);
+
+    // Remove existing listeners and add new ones
+    if (desktopNotifBtn && desktopNotifDropdown) {
+        // Clone button to remove all existing event listeners
+        var newBtn = desktopNotifBtn.cloneNode(true);
+        desktopNotifBtn.parentNode.replaceChild(newBtn, desktopNotifBtn);
+
+        // Add fresh event listener
+        newBtn.addEventListener('click', function(e) {
+            console.log('Desktop notification clicked');
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Toggle dropdown
+            var isVisible = desktopNotifDropdown.style.display === 'block';
+            desktopNotifDropdown.style.display = isVisible ? 'none' : 'block';
+            desktopNotifDropdown.classList.toggle('show');
+
+            console.log('Dropdown toggled:', !isVisible);
+        });
+
+        // Update reference
+        desktopNotifBtn = newBtn;
+    }
+
+    // Mobile notification handler (dalam user menu)
+    var mobileNotifBtn = document.getElementById('vendor-user-menu-notif');
+    var mobileNotifDropdown = document.getElementById('vendor-user-menu-notification-dropdown');
+
+    if (mobileNotifBtn && mobileNotifDropdown) {
+        // Clone button to remove existing listeners
+        var newMobileBtn = mobileNotifBtn.cloneNode(true);
+        mobileNotifBtn.parentNode.replaceChild(newMobileBtn, mobileNotifBtn);
+
+        newMobileBtn.addEventListener('click', function(e) {
+            console.log('Mobile notification clicked');
+            e.preventDefault();
+            e.stopPropagation();
+            mobileNotifDropdown.classList.toggle('show');
+        });
+
+        mobileNotifBtn = newMobileBtn;
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        // Close desktop dropdown
+        if (desktopNotifDropdown && !desktopNotifDropdown.contains(e.target) && !desktopNotifBtn?.contains(e.target)) {
+            desktopNotifDropdown.style.display = 'none';
+            desktopNotifDropdown.classList.remove('show');
+        }
+
+        // Close mobile dropdown
+        if (mobileNotifDropdown && !mobileNotifDropdown.contains(e.target) && !mobileNotifBtn?.contains(e.target)) {
+            mobileNotifDropdown.classList.remove('show');
+        }
+    });
+
+    // User menu handler
+    var userMenuBtn = document.getElementById('vendor-user-menu-btn');
+    var userMenu = document.getElementById('vendor-user-menu');
+
+    if (userMenuBtn && userMenu) {
+        userMenuBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            userMenu.classList.toggle('show');
+        });
+    }
+
+    // Close user menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (userMenu && !userMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
+            userMenu.classList.remove('show');
+            // Also close mobile notification dropdown when user menu closes
+            if (mobileNotifDropdown) {
+                mobileNotifDropdown.classList.remove('show');
+            }
+        }
+    });
+
+    // Desktop notification actions
+    var desktopMarkAllBtn = document.getElementById('notification-mark-all');
+    var desktopClearBtn = document.getElementById('notification-clear');
+    if (desktopMarkAllBtn) {
+        desktopMarkAllBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.markAllAsRead();
+        });
+    }
+    if (desktopClearBtn) {
+        desktopClearBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.clearAllNotifications();
+        });
+    }
+
+    // Mobile notification actions
+    var mobileMarkAllBtn = document.getElementById('user-menu-notification-mark-all');
+    var mobileClearBtn = document.getElementById('user-menu-notification-clear');
+    if (mobileMarkAllBtn) {
+        mobileMarkAllBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.markAllAsRead();
+        });
+    }
+    if (mobileClearBtn) {
+        mobileClearBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            window.clearAllNotifications();
+        });
+    }
+
+    // Force hide mobile navigation di desktop
+    function forceHideMobileNav() {
+        var mobileNav = document.getElementById('vendor-mobile-nav');
+        if (mobileNav && window.innerWidth >= 769) {
+            mobileNav.style.display = 'none';
+            mobileNav.style.visibility = 'hidden';
+            mobileNav.style.opacity = '0';
+            mobileNav.style.height = '0';
+            mobileNav.style.width = '0';
+            mobileNav.style.overflow = 'hidden';
+            mobileNav.style.position = 'absolute';
+            mobileNav.style.top = '-99999px';
+            mobileNav.style.left = '-99999px';
+            mobileNav.style.zIndex = '-9999';
+        }
+    }
+
+    // Run on load
+    forceHideMobileNav();
+
+    // Run on resize
+    window.addEventListener('resize', forceHideMobileNav);
+
+    // Run every 100ms untuk double check
+    setInterval(forceHideMobileNav, 100);
+
     function normalizeUrl(u) {
         try {
             var s = String(u || '');
@@ -1097,14 +1745,21 @@ function initVendorNotifications() {
         fetch(url, {
             method: 'GET',
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        }).then(function () {
-            document.querySelectorAll('.notification-item--unread').forEach(function (item) {
-                item.classList.remove('notification-item--unread');
-            });
-            var badge = document.getElementById('notification-count');
-            if (badge) badge.remove();
+        }).then(function (response) {
+            if (response.ok) {
+                document.querySelectorAll('.notification-item--unread').forEach(function (item) {
+                    item.classList.remove('notification-item--unread');
+                });
+                // Update notification count
+                var countBadge = document.getElementById('notification-count');
+                if (countBadge) {
+                    countBadge.textContent = '0';
+                    countBadge.style.display = 'none';
+                }
+            }
         }).catch(function () { });
     };
 

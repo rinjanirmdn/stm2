@@ -23,7 +23,7 @@
         </a>
         <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--inprogress" title="Loading/Unloading in progress.">
             <div class="vd-status-item__count">{{ $stats['in_progress'] ?? 0 }}</div>
-            <div class="vd-status-item__label">In Progress</div>
+            <div class="vd-status-item__label">In progress</div>
         </a>
         <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--completed" title="Process finished.">
             <div class="vd-status-item__count">{{ $stats['completed'] ?? 0 }}</div>
@@ -42,10 +42,13 @@
                     <input type="hidden" name="range_end" id="vd-range-end" value="{{ request('range_end', now()->endOfMonth()->format('Y-m-d')) }}">
                     <input type="hidden" name="date_range" id="vd-date-range" value="{{ request('date_range', 'this_month') }}">
 
-                    <button type="button" class="vd-range-picker" id="vd-range-picker">
-                        <i class="fas fa-calendar vd-icon"></i>
-                        <span id="vd-range-picker-label"></span>
-                    </button>
+                    <div id="vd_reportrange" class="date-range-input vd-range-picker" data-auto-submit="false">
+                        <div class="date-range-input__left">
+                            <i class="fas fa-calendar date-range-icon vendor-icon"></i>
+                            <span></span>
+                        </div>
+                        <i class="fa fa-caret-down"></i>
+                    </div>
                     <button type="submit" class="vd-date-filter-btn">
 						Filter
 						</button>

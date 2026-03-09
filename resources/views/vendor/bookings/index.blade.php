@@ -125,7 +125,15 @@
                 <span class="mb-row__info">by {{ $booking->approver->name }}</span>
             @endif
             @if(in_array($booking->status, ['cancelled']) && $booking->approval_notes)
-                <span class="mb-row__info">by {{ Str::after($booking->approval_notes, 'by ') ?: 'Vendor' }}</span>
+                @php
+                    $cancelBy = 'Vendor';
+                    $rawNotes = (string) ($booking->approval_notes ?? '');
+                    if (Str::startsWith($rawNotes, 'Cancelled by ')) {
+                        $after = Str::after($rawNotes, 'Cancelled by ');
+                        $cancelBy = trim(Str::before($after, ':')) !== '' ? trim(Str::before($after, ':')) : trim($after);
+                    }
+                @endphp
+                <span class="mb-row__info">by {{ $cancelBy }}</span>
             @endif
             @if($arrivalStatus !== '-')
                 <span class="mb-row__status mb-row__status--{{ $arrivalColor }} mb-row__status--arrival">
@@ -137,13 +145,12 @@
 					<i class="fas fa-eye"></i>
 				</a>
 				@if(in_array($booking->status, ['pending']))
-				<form method="POST" action="{{ route('vendor.bookings.cancel', $booking->id) }}" class="vendor-inline-form" onsubmit="return confirm('Cancel this booking?');">
-					@csrf
-					<input type="hidden" name="reason" value="Cancelled by vendor">
-					<button type="submit" class="mb-row__btn mb-row__btn--cancel" title="Cancel">
-						<i class="fas fa-times"></i>
-					</button>
-				</form>
+				<button type="button"
+				        class="mb-row__btn mb-row__btn--cancel"
+				        title="Cancel"
+				        onclick="openVendorCancelModal('{{ route('vendor.bookings.cancel', $booking->id) }}', '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+					<i class="fas fa-times"></i>
+				</button>
 				@endif
 			</div>
         </div>
