@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     <title>Ticket e-DCS - {{ $slot->ticket_number ?? '' }}</title>
-    <link rel="stylesheet" href="{{ asset('ticket.css') }}">
+    <link rel="stylesheet" href="{{ public_path('ticket.css') }}">
 </head>
 <body>
     <div class="ticket-container">
         <div class="ticket-inner">
             <div class="header">
-                <img src="{{ $logoDataUri ?? asset('img/logo-full.png') }}" alt="Logo" class="ticket-logo" />
+                <img src="{{ !empty($logoDataUri) ? $logoDataUri : 'file:///' . str_replace('\\', '/', public_path('img/logo-full.png')) }}" alt="Logo" class="ticket-logo" />
                 <div class="title">Tiket e-Docking</div>
                 <div class="subtitle">
                     {{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}
