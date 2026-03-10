@@ -23,7 +23,7 @@ class BookingRequested extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $plannedDate = $this->slot->planned_start?->format('d M Y H:i') ?? '-';
+        $plannedDate = $this->slot->planned_start?->format('d-m-Y H:i') ?? '-';
         $poNumber = $this->slot->po_number ?? '-';
         $vendorName = $this->slot->vendor_name ?? $this->slot->requester?->name ?? 'Vendor';
 

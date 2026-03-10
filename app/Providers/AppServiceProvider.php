@@ -24,29 +24,31 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Share holidays once for all views instead of View::composer('*') (#27)
-        try {
-            $holidays = Cache::remember('public_holidays_v2', 86400, function () {
-                $years = [now()->year, now()->year + 1];
-                $holidayMap = [];
+        // Load holidays lazily — only when views that use them are rendered
+        View::composer(['layouts.app', 'vendor.layouts.vendor', 'vendor.bookings.availability'], function ($view) {
+            try {
+                $holidays = Cache::remember('public_holidays_v2', 86400, function () {
+                    $years = [now()->year, now()->year + 1];
+                    $holidayMap = [];
 
-                foreach ($years as $year) {
-                    $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
-                    foreach ($holidayData as $holiday) {
-                        $date = $holiday['date'] ?? null;
-                        if (!$date) {
-                            continue;
+                    foreach ($years as $year) {
+                        $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
+                        foreach ($holidayData as $holiday) {
+                            $date = $holiday['date'] ?? null;
+                            if (!$date) {
+                                continue;
+                            }
+                            $holidayMap[$date] = $holiday['name'] ?? 'Holiday';
                         }
-                        $holidayMap[$date] = $holiday['name'] ?? 'Holiday';
                     }
-                }
 
-                return $holidayMap;
-            });
-            View::share('holidays', $holidays);
-        } catch (\Exception $e) {
-            View::share('holidays', []);
-        }
+                    return $holidayMap;
+                });
+                $view->with('holidays', $holidays);
+            } catch (\Exception $e) {
+                $view->with('holidays', []);
+            }
+        });
 
         // Register Slot observer
         Slot::observe(SlotObserver::class);

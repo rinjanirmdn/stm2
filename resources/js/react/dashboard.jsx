@@ -390,7 +390,7 @@ const CHART_ANIMATION_DURATION = 850;
 const CHART_ANIMATION_EASING = 'ease-out';
 
 /* CSS vars (--ds-*) defined in dashboard-react.css handle responsive font sizing globally */
-const STAT_TIPS = { Pending: 'Booking requests awaiting approval.', Scheduled: 'Slots scheduled, truck not arrived.', Waiting: 'Truck arrived, waiting in queue.', 'In Progress': 'Loading/Unloading in progress.', Completed: 'Process finished.', Cancel: 'Cancelled slots.', Total: 'Total slots in selected range.' };
+const STAT_TIPS = { Pending: 'Booking requests awaiting approval.', Scheduled: 'Bookings scheduled, truck not arrived.', Waiting: 'Truck arrived, waiting in queue.', 'In Progress': 'Loading/Unloading in progress.', Completed: 'Process finished.', Cancel: 'Cancelled bookings.', Total: 'Total bookings in selected range.' };
 /** Build current URL params from data + overrides (for history state) */
 function buildParams(currentData, overrides) {
   const params = new URLSearchParams();

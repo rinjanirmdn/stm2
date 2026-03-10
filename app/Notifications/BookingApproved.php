@@ -25,7 +25,7 @@ class BookingApproved extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $plannedDate = $this->slot->planned_start?->format('d M Y H:i') ?? '-';
+        $plannedDate = $this->slot->planned_start?->format('d-m-Y H:i') ?? '-';
         $gateName = (string) ($this->slot->actualGate?->name ?? $this->slot->plannedGate?->name ?? '');
         if ($gateName === '') {
             $gateWh = (string) ($this->slot->actualGate?->warehouse?->wh_code ?? $this->slot->plannedGate?->warehouse?->wh_code ?? $this->slot->warehouse?->wh_code ?? '');

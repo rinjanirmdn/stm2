@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'View Slot - e-Docking Control System')
-@section('page_title', 'Slot Detail')
+@section('title', 'View Booking - e-Docking Control System')
+@section('page_title', 'Booking Detail')
 
 @section('content')
     @php
@@ -15,7 +15,7 @@
         $fmt = function ($v) {
             if (empty($v)) return '-';
             try {
-                return \Carbon\Carbon::parse((string) $v)->format('d M Y H:i');
+                return \Carbon\Carbon::parse((string) $v)->format('d-m-Y H:i');
             } catch (\Throwable $e) {
                 return (string) $v;
             }
@@ -332,21 +332,21 @@
                         @endcan
                     @elseif ($status === 'waiting')
                         @can('slots.start')
-                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Start Slot</a>
+                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Start</a>
                         @endcan
                     @elseif ($status === 'in_progress')
                         @can('slots.complete')
-                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Complete Slot</a>
+                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Complete</a>
                         @endcan
                     @endif
                 @else
                     @if ($status === 'waiting')
                         @can('slots.start')
-                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Start Slot</a>
+                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Start</a>
                         @endcan
                     @elseif ($status === 'in_progress')
                         @can('slots.complete')
-                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Complete Slot</a>
+                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Complete</a>
                         @endcan
                     @endif
                 @endif
@@ -360,7 +360,7 @@
         <div class="st-card st-mb-12">
             <div class="st-card__header">
                 <div>
-                    <h2 class="st-card__title">Slot Log</h2>
+                    <h2 class="st-card__title">Activity Log</h2>
                 </div>
             </div>
             <div class="st-table-wrapper">

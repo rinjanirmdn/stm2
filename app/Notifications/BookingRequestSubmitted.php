@@ -28,7 +28,7 @@ class BookingRequestSubmitted extends Notification
             ?? $this->bookingRequest->requester?->name
             ?? 'Vendor';
         $poNumber = $this->bookingRequest->po_number ?? '-';
-        $plannedDate = $this->bookingRequest->planned_start?->format('d M Y H:i') ?? '-';
+        $plannedDate = $this->bookingRequest->planned_start?->format('d-m-Y H:i') ?? '-';
         $direction = ucfirst((string) ($this->bookingRequest->direction ?? '-'));
 
         $appName = 'e-Docking Control System';

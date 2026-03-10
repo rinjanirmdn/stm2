@@ -229,7 +229,7 @@
                                         if ($createdAt) {
                                             try {
                                                 $date = new \DateTime($createdAt);
-                                                echo $date->format('d M Y H:i');
+                                                echo $date->format('d-m-Y H:i');
                                             } catch (\Exception $e) {
                                                 echo '-';
                                             }

@@ -122,7 +122,7 @@
                 @endif
                 <tr>
                     <td class="vb-table__label">Scheduled Date</td>
-                    <td class="vb-table__value--strong">{{ $booking->planned_start?->format('d M Y') ?? '-' }}</td>
+                    <td class="vb-table__value--strong">{{ $booking->planned_start?->format('d-m-Y') ?? '-' }}</td>
                 </tr>
                 <tr>
                     <td class="vb-table__label">Scheduled Time</td>
@@ -162,12 +162,12 @@
                 @endif
                 <tr>
                     <td class="vb-table__label">Requested At</td>
-                    <td>{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>
+                    <td>{{ $booking->created_at?->format('d-m-Y H:i') ?? '-' }}</td>
                 </tr>
                 @if($booking->approved_at)
                 <tr>
                     <td class="vb-table__label">Processed At</td>
-                    <td>{{ $booking->approved_at->format('d M Y H:i') }}</td>
+                    <td>{{ $booking->approved_at->format('d-m-Y H:i') }}</td>
                 </tr>
                 @endif
             </table>

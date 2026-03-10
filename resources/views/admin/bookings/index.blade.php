@@ -261,7 +261,7 @@
                                             <td class="st-text-center">{{ $booking->po_number ?? '-' }}</td>
                                             <td class="st-text-center">{{ $booking->supplier_name ?? '-' }}</td>
                                             <td class="st-text-center">
-                                                {{ $booking->planned_start?->format('d M Y') ?? '-' }}
+                                                {{ $booking->planned_start?->format('d-m-Y') ?? '-' }}
                                                 <br><small class="st-text-muted">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>
                                             </td>
                                             @if($showConvertedTicket)
@@ -302,7 +302,7 @@
                                                 @endphp
                                                 <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
                                             </td>
-                                            <td class="st-td-center">{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</td>
+                                            <td class="st-td-center">{{ $booking->created_at?->format('d-m-Y H:i') ?? '-' }}</td>
                                             <td class="st-td-center">
                                                 <div class="st-action-dropdown">
                                                     <button type="button" class="st-btn st-btn--ghost st-action-trigger st-action-trigger--compact">

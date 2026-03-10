@@ -255,7 +255,7 @@
                             </td>
                             <td class="st-td-center">
                                 @if (!empty($slot->arrival_time))
-                                    {{ \Carbon\Carbon::parse((string) $slot->arrival_time)->format('d M Y H:i') }}
+                                    {{ \Carbon\Carbon::parse((string) $slot->arrival_time)->format('d-m-Y H:i') }}
                                 @else
                                     -
                                 @endif

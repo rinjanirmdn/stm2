@@ -60,7 +60,7 @@
             <div class="st-alert__text">
                 <div class="st-font-semibold st-mb-2">Lane Conflict</div>
                 <div class="st-text--sm st-text--dark">
-                    <div class="st-mb-6">Conflicting Active Slots:</div>
+                    <div class="st-mb-6">Conflicting Active Bookings:</div>
                     <ul class="st-list">
                         @foreach ($conflictLines as $line)
                             <li>{{ $line }}</li>

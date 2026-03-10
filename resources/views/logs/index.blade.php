@@ -141,7 +141,7 @@
                             <tr>
                                 <td class="st-td-center">
                                     @if (!empty($row->created_at))
-                                        {{ \Carbon\Carbon::parse((string) $row->created_at)->format('d M Y H:i') }}
+                                        {{ \Carbon\Carbon::parse((string) $row->created_at)->format('d-m-Y H:i') }}
                                     @else
                                         -
                                     @endif

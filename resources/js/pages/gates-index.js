@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         html += '<div class="st-dock-availability-col"><div class="st-dock-availability-col__slots">';
         if (col2Slots.length === 0) {
-            html += '<div class="st-dock-availability__empty st-dock-availability__empty--compact"><p>No slots</p></div>';
+            html += '<div class="st-dock-availability__empty st-dock-availability__empty--compact"><p>No available times</p></div>';
         } else {
             col2Slots.forEach(function (slot) { html += renderSlotButton(slot); });
         }

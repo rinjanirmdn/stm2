@@ -19,7 +19,7 @@
             <div class="booking-detail__subtitle">
                 <span>{{ $booking->supplier_name ?? '-' }}</span>
                 <span class="booking-detail__dot">:</span>
-                <span>{{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}</span>
+                <span>{{ $booking->planned_start?->format('d-m-Y H:i') ?? '-' }}</span>
             </div>
         </div>
     </div>
@@ -129,7 +129,7 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Date</label>
-                        <div class="detail-value">{{ $booking->planned_start?->format('d M Y') ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->planned_start?->format('d-m-Y') ?? '-' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Time</label>
@@ -141,7 +141,7 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Requested At</label>
-                        <div class="detail-value">{{ $booking->created_at?->format('d M Y H:i') ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->created_at?->format('d-m-Y H:i') ?? '-' }}</div>
                     </div>
                 </div>
             </div>
@@ -168,7 +168,7 @@
                     @if($booking->approved_at)
                     <div class="detail-item">
                         <label class="detail-label">Processed At</label>
-                        <div class="detail-value">{{ $booking->approved_at->format('d M Y H:i') }}</div>
+                        <div class="detail-value">{{ $booking->approved_at->format('d-m-Y H:i') }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Processed By</label>

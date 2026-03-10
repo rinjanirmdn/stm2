@@ -25,7 +25,7 @@
                 <td>{{ $transaction->vendor_name ?? '-' }}</td>
                 <td>{{ $transaction->warehouse_name ?? '-' }}</td>
                 <td>{{ ucfirst($transaction->direction ?? '-') }}</td>
-                <td>{{ $transaction->arrival_time ? \Carbon\Carbon::parse($transaction->arrival_time)->format('d M Y H:i') : '-' }}</td>
+                <td>{{ $transaction->arrival_time ? \Carbon\Carbon::parse($transaction->arrival_time)->format('d-m-Y H:i') : '-' }}</td>
                 <td>{{ $transaction->lead_time ?? '-' }}</td>
                 <td>{{ ucfirst($transaction->target_status ?? '-') }}</td>
                 <td>{{ $transaction->is_late ? 'Late' : 'On Time' }}</td>

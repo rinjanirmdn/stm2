@@ -1971,7 +1971,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var first = items[0];
             var label = first.request_number || first.po_number || ('Request #' + first.id);
             var minutes = typeof first.minutes_to_start === 'number'
-                ? Math.max(first.minutes_to_start, 0)
+                ? Math.floor(Math.max(first.minutes_to_start, 0))
                 : null;
             var countdown = minutes !== null ? (minutes + ' minutes to start') : 'Starts soon';
             toastText.textContent = items.length + ' pending booking(s). Nearest: ' + label + ' - ' + countdown + '.';
@@ -2008,7 +2008,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var label = item.request_number || item.po_number || ('Request #' + item.id);
                 var supplier = item.supplier_name ? (' - ' + item.supplier_name) : '';
                 var minutes = typeof item.minutes_to_start === 'number'
-                    ? Math.max(item.minutes_to_start, 0)
+                    ? Math.floor(Math.max(item.minutes_to_start, 0))
                     : null;
                 var countdown = minutes !== null ? (' (' + minutes + ' min)') : '';
                 var timeText = item.planned_start ? ('Planned: ' + item.planned_start) : 'Planned: -';

@@ -27,7 +27,7 @@
             <div class="st-alert__text">
                 <div class="st-font-semibold st-mb-2">Lane Conflict</div>
                 <div class="st-text--sm st-text--dark">
-                    <div class="st-mb-6">Conflicting Active Slots:</div>
+                    <div class="st-mb-6">Conflicting Active Bookings:</div>
                     <ul class="st-list">
                         @foreach ($conflictLines as $line)
                             <li>{{ $line }}</li>
@@ -71,7 +71,7 @@
                                         if ($isConflict) {
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
-                                            $short = $row ? ('Slot #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Slot #' . $firstId) : 'Occupied');
+                                            $short = $row ? ('Booking #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Booking #' . $firstId) : 'Occupied');
                                             $text .= ' (In Use: ' . $short . ')';
                                         } else {
                                             $text .= ' (Available)';
@@ -93,7 +93,7 @@
                                         if ($isConflict) {
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
-                                            $short = $row ? ('Slot #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Slot #' . $firstId) : 'Occupied');
+                                            $short = $row ? ('Booking #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Booking #' . $firstId) : 'Occupied');
                                             $text .= ' (In Use: ' . $short . ')';
                                         } else {
                                             $text .= ' (Available)';
@@ -140,7 +140,7 @@
             @endif
 
             <div class="st-form-actions">
-                <button type="submit" class="st-btn">Start Slot</button>
+                <button type="submit" class="st-btn">Start</button>
                 <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
             </div>
         </form>
