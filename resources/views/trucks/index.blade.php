@@ -53,7 +53,7 @@
                             $fmt = function ($v) {
                                 if (empty($v)) return '-';
                                 try {
-                                    return \Carbon\Carbon::parse((string) $v)->format('d M Y H:i');
+                                    return \Carbon\Carbon::parse((string) $v)->format('d-m-Y H:i');
                                 } catch (\Throwable $e) {
                                     return (string) $v;
                                 }

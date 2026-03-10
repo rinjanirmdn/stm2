@@ -115,7 +115,7 @@
             <span class="mb-row__ticket">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</span>
             <span class="mb-row__time">
                 <i class="fas fa-calendar mb-row__icon vendor-icon"></i>
-                {{ $booking->planned_start?->format('d M Y H:i') ?? '-' }}
+                {{ $booking->planned_start?->format('d-m-Y H:i') ?? '-' }}
             </span>
             <span class="mb-row__status mb-row__status--{{ $statusClass }}">{{ $statusLabel }}</span>
             @if($isRescheduled)

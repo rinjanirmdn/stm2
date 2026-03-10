@@ -44,7 +44,7 @@ class BookingRejected extends Notification
     private function getPlannedDate(): string
     {
         $start = $this->slot?->planned_start ?? $this->bookingRequest?->planned_start;
-        return $start?->format('d M Y H:i') ?? '-';
+        return $start?->format('d-m-Y H:i') ?? '-';
     }
 
     private function getReason(): string

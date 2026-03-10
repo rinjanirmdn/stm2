@@ -1,7 +1,7 @@
 {
     "name": "e-Docking Control System",
-    "short_name": "SlotTM",
-    "description": "Sistem manajemen slot untuk warehouse gate scheduling",
+    "short_name": "e-DCS",
+    "description": "Sistem manajemen docking untuk warehouse gate scheduling",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
@@ -66,9 +66,9 @@
     ],
     "shortcuts": [
         {
-            "name": "Daftar Slot",
-            "short_name": "Slots",
-            "description": "Lihat semua slot",
+            "name": "Daftar Booking",
+            "short_name": "Bookings",
+            "description": "Lihat semua booking",
             "url": "/slots",
             "icons": [
                 {
@@ -78,9 +78,9 @@
             ]
         },
         {
-            "name": "Buat Slot",
+            "name": "Buat Booking",
             "short_name": "Buat",
-            "description": "Buat slot baru",
+            "description": "Buat booking baru",
             "url": "/slots/create",
             "icons": [
                 {
@@ -96,14 +96,14 @@
             "sizes": "1280x720",
             "type": "image/png",
             "form_factor": "wide",
-            "label": "Desktop view - Daftar slot dengan filter"
+            "label": "Desktop view - Daftar booking dengan filter"
         },
         {
             "src": "/screenshots/mobile-1.png",
             "sizes": "375x667",
             "type": "image/png",
             "form_factor": "narrow",
-            "label": "Mobile view - Daftar slot"
+            "label": "Mobile view - Daftar booking"
         }
     ]
 }

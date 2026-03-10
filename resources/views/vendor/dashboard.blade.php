@@ -170,7 +170,7 @@
                     <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vd-recent-item">
                         <div class="vd-recent-main">
                             <span class="vd-recent-ticket">{{ $ticketLabel }}</span>
-                            <span class="vd-recent-time">{{ $booking->planned_start->format('d M H:i') }}</span>
+                            <span class="vd-recent-time">{{ $booking->planned_start->format('d-m-Y H:i') }}</span>
                         </div>
                         <div class="vd-recent-meta">
                             <span class="vendor-badge vendor-badge--{{ $badgeColor }} vd-badge--xs">{{ $displayLabel }}</span>

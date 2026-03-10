@@ -44,7 +44,7 @@
                 <tr>
                     <td class="label-col">ETA</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ \Carbon\Carbon::parse($slot->planned_start)->format('d m Y H:i') }}</td>
+                    <td class="value-col">{{ \Carbon\Carbon::parse($slot->planned_start)->format('d-m-Y H:i') }}</td>
                 </tr>
             </table>
 
@@ -82,7 +82,7 @@
                <strong>Harap serahkan tiket ini kepada petugas keamanan</strong>
             </div>
             <div class="footer st-footer-barcode">
-               Dibuat: {{ now()->format('d m Y H:i') }}
+               Dibuat: {{ now()->format('d-m-Y H:i') }}
             </div>
         </div>
     </div>

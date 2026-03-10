@@ -91,7 +91,7 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Date</label>
-                        <div class="detail-value">{{ $booking->planned_start?->format('d M Y') ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->planned_start?->format('d-m-Y') ?? '-' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Time</label>

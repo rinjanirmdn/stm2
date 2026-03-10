@@ -689,14 +689,14 @@ class BookingApprovalController extends Controller
 
         $items = $pending->map(function (BookingRequest $booking) use ($now) {
             $plannedStart = $booking->planned_start;
-            $minutesToStart = $plannedStart ? $now->diffInMinutes($plannedStart, false) : null;
+            $minutesToStart = $plannedStart ? (int) $now->diffInMinutes($plannedStart, false) : null;
 
             return [
                 'id' => $booking->id,
                 'request_number' => $booking->request_number,
                 'po_number' => $booking->po_number,
                 'supplier_name' => $booking->supplier_name,
-                'planned_start' => $plannedStart ? $plannedStart->format('Y-m-d H:i') : null,
+                'planned_start' => $plannedStart ? $plannedStart->format('d-m-Y H:i') : null,
                 'minutes_to_start' => $minutesToStart,
                 'show_url' => route('bookings.show', $booking->id, false),
             ];

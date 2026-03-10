@@ -347,7 +347,7 @@ class ExportService
         }
 
         try {
-            return \Carbon\Carbon::parse((string) $dateTime)->format('d M Y H:i');
+            return \Carbon\Carbon::parse((string) $dateTime)->format('d-m-Y H:i');
         } catch (\Throwable $e) {
             return (string) $dateTime;
         }

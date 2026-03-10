@@ -235,7 +235,7 @@
             directionSelect.value = data.direction;
             try {
                 directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
-            } catch (e) {}
+            } catch (e) { }
             onDirectionChanged();
         }
     }
@@ -320,9 +320,9 @@
                         var sourceBadge = (item.source === 'sap') ? '<span class="st-badge st-badge--info st-badge--xs">SAP</span>' : '';
 
                         html += '<div class="vendor-suggestion-item" data-id="' + item.id + '" data-name="' + safeName + '" data-code="' + safeCode + '">'
-                             + '<div>' + safeName + sourceBadge + '</div>'
-                             + '<div class="st-suggestion-code">' + safeCode + '</div>'
-                             + '</div>';
+                            + '<div>' + safeName + sourceBadge + '</div>'
+                            + '<div class="st-suggestion-code">' + safeCode + '</div>'
+                            + '</div>';
                     });
 
                     vendorSuggestions.innerHTML = html;
@@ -364,7 +364,7 @@
         if (!inst || !inst.dpDiv) return;
         const dp = window.jQuery(inst.dpDiv);
 
-        dp.find('td.is-holiday').each(function() {
+        dp.find('td.is-holiday').each(function () {
             const cell = window.jQuery(this);
             const dayText = cell.find('a, span').first().text();
             if (!dayText) return;
@@ -397,7 +397,7 @@
         }
 
         dp.off('mouseenter.st-tooltip mousemove.st-tooltip mouseleave.st-tooltip', 'td.is-holiday');
-        dp.on('mouseenter.st-tooltip', 'td.is-holiday', function(event) {
+        dp.on('mouseenter.st-tooltip', 'td.is-holiday', function (event) {
             const text = window.jQuery(this).attr('data-st-tooltip') || '';
             if (!text) return;
             if (hideTimer) {
@@ -409,12 +409,12 @@
             tooltip.style.left = `${event.clientX + 12}px`;
             tooltip.style.top = `${event.clientY + 12}px`;
         });
-        dp.on('mousemove.st-tooltip', 'td.is-holiday', function(event) {
+        dp.on('mousemove.st-tooltip', 'td.is-holiday', function (event) {
             tooltip.style.left = `${event.clientX + 12}px`;
             tooltip.style.top = `${event.clientY + 12}px`;
         });
-        dp.on('mouseleave.st-tooltip', 'td.is-holiday', function() {
-            hideTimer = setTimeout(function() {
+        dp.on('mouseleave.st-tooltip', 'td.is-holiday', function () {
+            hideTimer = setTimeout(function () {
                 tooltip.classList.remove('st-datepicker-tooltip--visible');
             }, 300);
         });
@@ -705,7 +705,7 @@
 
                 var items = data.items || [];
                 if (items.length === 0) {
-                    scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">No scheduled / in-progress slots on this date.</td></tr>';
+                    scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">No scheduled / in-progress bookings on this date.</td></tr>';
                     return;
                 }
 
@@ -903,7 +903,7 @@
             var val = (poInput.value || '').trim();
             if (val.length >= 10) {
                 // Delay slightly to avoid conflict with suggestion click
-                setTimeout(function() {
+                setTimeout(function () {
                     fetchPoDetail(val, function (data) {
                         if (data.success && data.data) {
                             applyPoDetail(data.data);

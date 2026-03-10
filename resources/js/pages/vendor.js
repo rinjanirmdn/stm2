@@ -849,9 +849,9 @@ function initVendorBookingCreate(config) {
                 <div class="cb-availability-mini__time">${slot.time}</div>
                 <div class="cb-availability-mini__status">
                     ${slot.is_available ?
-                        '<i class="fas fa-check-circle"></i> Available' :
-                        '<i class="fas fa-times-circle"></i> Unavailable'
-                    }
+                    '<i class="fas fa-check-circle"></i> Available' :
+                    '<i class="fas fa-times-circle"></i> Unavailable'
+                }
                 </div>
             </div>`;
         });
@@ -862,7 +862,7 @@ function initVendorBookingCreate(config) {
 
         // Add click handlers for slots
         miniAvailability.querySelectorAll('.cb-availability-mini__slot').forEach(slotEl => {
-            slotEl.addEventListener('click', function() {
+            slotEl.addEventListener('click', function () {
                 const time = this.dataset.time;
                 if (plannedTime) {
                     plannedTime.value = time;
@@ -1460,7 +1460,7 @@ function initVendorAvailability(config) {
                 const allSlots = data.slots.slice().sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
 
                 if (allSlots.length === 0) {
-                    container.innerHTML = '<p class="av-empty av-empty--compact">No slots</p>';
+                    container.innerHTML = '<p class="av-empty av-empty--compact">No available times</p>';
                     container.dataset.rendered = '1';
                     return;
                 }
@@ -1497,7 +1497,7 @@ function initVendorAvailability(config) {
                         <div class="av-shift__slots">
                 `;
                 if (col2Slots.length === 0) {
-                    html += '<div class="av-empty av-empty--compact">No slots</div>';
+                    html += '<div class="av-empty av-empty--compact">No available times</div>';
                 } else {
                     col2Slots.forEach(slot => {
                         const forcedByAdmin = !!(slot && slot.forced_by_admin);

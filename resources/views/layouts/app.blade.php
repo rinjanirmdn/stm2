@@ -10,7 +10,7 @@
     <meta name="description" content="e-Docking Control System for warehouse gate scheduling">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="SlotTM">
+    <meta name="apple-mobile-web-app-title" content="e-DCS">
     <meta name="application-name" content="e-DCS">
     <meta name="msapplication-TileColor" content="#4285f4">
     <meta name="msapplication-config" content="/browserconfig.xml">

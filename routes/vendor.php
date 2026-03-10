@@ -1,7 +1,6 @@
 <?php
 /* Vendor Portal Routes */
 
-use App\Http\Controllers\SlotController;
 use App\Http\Controllers\VendorBookingController;
 
 Route::middleware('vendor.portal')->prefix('vendor')->name('vendor.')->group(function () {
