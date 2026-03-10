@@ -446,15 +446,122 @@ function initVendorHeaderUserMenu() {
     const menu = document.getElementById('vendor-user-menu');
     const notifProxy = document.getElementById('vendor-user-menu-notif');
     const notifDropdown = document.getElementById('notification-dropdown');
+    const mobileMenuBadge = document.getElementById('mobile-menu-notification-count');
+    const notifBtn = document.getElementById('notification-btn');
+    const notifCount = document.getElementById('notification-count');
     if (!menuBtn || !menu) return;
+
+    const userMenuBellBadge = notifProxy ? notifProxy.querySelector('.vendor-user-menu-badge') : null;
+
+    function isMobileViewport() {
+        return window.innerWidth < 769;
+    }
 
     function closeMenu() {
         menu.classList.remove('vendor-header__user-menu--open');
+        menu.classList.remove('show');
+        // When menu closes (mobile): show badge on three-dots again
+        moveCountToThreeDots();
+    }
+
+    // Mobile behavior:
+    // - menu closed  => badge on three-dots
+    // - menu opened  => badge on bell inside menu
+    // Desktop badge (notification-count) should not be shown on mobile.
+
+    function parseCount(s) {
+        const n = parseInt(String(s || '').trim() || '0', 10);
+        return isFinite(n) ? n : 0;
+    }
+
+    function getCurrentCount() {
+        // Prefer the canonical desktop badge if present
+        const fromDesktop = notifCount ? parseCount(notifCount.textContent) : 0;
+        if (fromDesktop > 0) return fromDesktop;
+
+        // Fallback: bell badge inside the user-menu
+        const fromBell = userMenuBellBadge ? parseCount(userMenuBellBadge.textContent) : 0;
+        if (fromBell > 0) return fromBell;
+
+        // Fallback: three-dots badge
+        const fromDots = mobileMenuBadge ? parseCount(mobileMenuBadge.textContent) : 0;
+        return fromDots;
+    }
+
+    function moveCountToThreeDots() {
+        if (!isMobileViewport()) return;
+        const count = getCurrentCount();
+
+        // Hide desktop badge on mobile
+        if (notifCount) notifCount.style.display = 'none';
+
+        // Hide bell badge in user menu when menu is closed
+        if (userMenuBellBadge) userMenuBellBadge.style.display = 'none';
+
+        // Show badge on three dots
+        if (mobileMenuBadge) {
+            if (count > 0) {
+                mobileMenuBadge.textContent = String(count);
+                mobileMenuBadge.style.display = 'flex';
+            } else {
+                mobileMenuBadge.style.display = 'none';
+            }
+        }
+    }
+
+    function moveCountToBellInMenu() {
+        if (!isMobileViewport()) return;
+        const count = getCurrentCount();
+
+        // Hide desktop badge on mobile
+        if (notifCount) notifCount.style.display = 'none';
+
+        // Hide badge on three dots when menu is opened
+        if (mobileMenuBadge) mobileMenuBadge.style.display = 'none';
+
+        // Show badge on bell button inside menu
+        if (userMenuBellBadge) {
+            if (count > 0) {
+                userMenuBellBadge.textContent = String(count);
+                userMenuBellBadge.style.display = 'inline-block';
+            } else {
+                userMenuBellBadge.style.display = 'none';
+            }
+        }
     }
 
     menuBtn.addEventListener('click', function (e) {
         e.stopPropagation();
+        const isOpening = !menu.classList.contains('vendor-header__user-menu--open') && !menu.classList.contains('show');
         menu.classList.toggle('vendor-header__user-menu--open');
+        menu.classList.toggle('show');
+
+        if (isOpening) {
+            moveCountToBellInMenu();
+        } else {
+            moveCountToThreeDots();
+        }
+    });
+
+    // Initialize badge states based on viewport
+    if (isMobileViewport()) {
+        moveCountToThreeDots();
+    } else {
+        // Desktop: keep normal badge (notification-count)
+        if (mobileMenuBadge) mobileMenuBadge.style.display = 'none';
+        if (userMenuBellBadge) userMenuBellBadge.style.display = 'none';
+        if (notifCount && notifCount.textContent && notifCount.textContent !== '0') {
+            notifCount.style.display = 'flex';
+        }
+    }
+
+    // Keep badge placement correct on resize
+    window.addEventListener('resize', function () {
+        if (menu.classList.contains('vendor-header__user-menu--open') || menu.classList.contains('show')) {
+            moveCountToBellInMenu();
+        } else {
+            moveCountToThreeDots();
+        }
     });
 
     if (notifProxy && notifDropdown) {
@@ -466,7 +573,7 @@ function initVendorHeaderUserMenu() {
     }
 
     document.addEventListener('click', function (e) {
-        if (!menu.classList.contains('vendor-header__user-menu--open')) return;
+        if (!menu.classList.contains('vendor-header__user-menu--open') && !menu.classList.contains('show')) return;
         if (menu.contains(e.target) || menuBtn.contains(e.target)) return;
         closeMenu();
     });
@@ -671,9 +778,29 @@ function initVendorBookingCreate(config) {
 
         miniAvailability.innerHTML = '<div class="cb-availability-mini__placeholder"><i class="fas fa-spinner fa-spin"></i> Loading availability...</div>';
 
-        var plannedDuration = (plannedDurationInput && plannedDurationInput.value) ? String(plannedDurationInput.value).trim() : '';
+        // Source of truth: selected truck type duration
+        var plannedDuration = '';
+        try {
+            var selectedOpt = truckTypeSelect && truckTypeSelect.options ? truckTypeSelect.options[truckTypeSelect.selectedIndex] : null;
+            var optDuration = selectedOpt ? selectedOpt.getAttribute('data-duration') : '';
+            if (optDuration) {
+                plannedDuration = String(parseInt(optDuration, 10));
+            }
+        } catch (e) { }
+
+        // Fallback to hidden input (should already be synced)
         if (!plannedDuration) {
+            plannedDuration = (plannedDurationInput && plannedDurationInput.value) ? String(plannedDurationInput.value).trim() : '';
+        }
+
+        // Final fallback
+        if (!plannedDuration || plannedDuration === 'NaN' || parseInt(plannedDuration, 10) <= 0) {
             plannedDuration = '60';
+        }
+
+        // Ensure hidden input stays in sync
+        if (plannedDurationInput) {
+            plannedDurationInput.value = parseInt(plannedDuration, 10);
         }
 
         fetch(availableSlotsUrl + '?date=' + encodeURIComponent(date) + '&planned_duration=' + encodeURIComponent(plannedDuration), {
@@ -1657,28 +1784,7 @@ function initVendorNotifications() {
         }
     });
 
-    // User menu handler
-    var userMenuBtn = document.getElementById('vendor-user-menu-btn');
-    var userMenu = document.getElementById('vendor-user-menu');
-
-    if (userMenuBtn && userMenu) {
-        userMenuBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            userMenu.classList.toggle('show');
-        });
-    }
-
-    // Close user menu when clicking outside
-    document.addEventListener('click', function (e) {
-        if (userMenu && !userMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
-            userMenu.classList.remove('show');
-            // Also close mobile notification dropdown when user menu closes
-            if (mobileNotifDropdown) {
-                mobileNotifDropdown.classList.remove('show');
-            }
-        }
-    });
+    // User menu handler is handled by initVendorHeaderUserMenu()
 
     // Desktop notification actions
     var desktopMarkAllBtn = document.getElementById('notification-mark-all');
@@ -1754,15 +1860,18 @@ function initVendorNotifications() {
 
     function updateNotificationBadge(deltaToRemove) {
         var badge = document.getElementById('notification-count');
+        var mobileBadge = document.getElementById('mobile-menu-notification-count');
         if (!badge) return;
         var current = parseInt(badge.textContent || '0', 10);
         if (!isFinite(current)) current = 0;
         var next = Math.max(0, current - (deltaToRemove || 0));
         if (next <= 0) {
             badge.remove();
+            if (mobileBadge) mobileBadge.remove();
             return;
         }
         badge.textContent = String(next);
+        if (mobileBadge) mobileBadge.textContent = String(next);
     }
 
     // Notification sound using Web Audio API
@@ -1821,9 +1930,14 @@ function initVendorNotifications() {
                 });
                 // Update notification count
                 var countBadge = document.getElementById('notification-count');
+                var mobileCountBadge = document.getElementById('mobile-menu-notification-count');
                 if (countBadge) {
                     countBadge.textContent = '0';
                     countBadge.style.display = 'none';
+                }
+                if (mobileCountBadge) {
+                    mobileCountBadge.textContent = '0';
+                    mobileCountBadge.style.display = 'none';
                 }
             }
         }).catch(function () { });
@@ -1845,6 +1959,8 @@ function initVendorNotifications() {
             }
             var badge = document.getElementById('notification-count');
             if (badge) badge.remove();
+            var mobileBadge = document.getElementById('mobile-menu-notification-count');
+            if (mobileBadge) mobileBadge.remove();
         }).catch(function () { });
     };
 
