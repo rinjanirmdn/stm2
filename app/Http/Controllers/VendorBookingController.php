@@ -17,9 +17,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Log;
 
 class VendorBookingController extends Controller
 {
@@ -1071,9 +1071,12 @@ class VendorBookingController extends Controller
         $barcodePng = '';
         if (! empty($slot->ticket_number)) {
             try {
-                $barcodeC = new \Milon\Barcode\DNS1D();
-                $barcodeC->setStorPath(storage_path('app/public/'));
-                $barcodePng = $barcodeC->getBarcodePNG((string) $slot->ticket_number, 'C128', 2.5, 60);
+                $ticketNumber = (string) $slot->ticket_number;
+                $barcodePng = (string) Cache::remember('ticket_barcode_png_' . sha1($ticketNumber), 86400, function () use ($ticketNumber) {
+                    $barcodeC = new \Milon\Barcode\DNS1D();
+                    $barcodeC->setStorPath(storage_path('app/public/'));
+                    return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
+                });
             } catch (\Throwable $e) {
                 $barcodePng = '';
                 Log::warning('Barcode generation failed', [
@@ -1084,15 +1087,27 @@ class VendorBookingController extends Controller
             }
         }
 
-        $logoDataUri = null;
-        try {
-            $logoPath = public_path('img/logo-full.png');
-            if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
-                $logoDataUri = 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+        $logoDataUri = Cache::rememberForever('ticket_logo_data_uri', function () {
+            try {
+                $logoPath = public_path('img/logo-full.png');
+                if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
+                    return 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+                }
+            } catch (\Throwable $e) {
             }
-        } catch (\Throwable $e) {
-            $logoDataUri = null;
-        }
+            return null;
+        });
+
+        $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
+            try {
+                $cssPath = public_path('ticket.css');
+                if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
+                    return (string) file_get_contents($cssPath);
+                }
+            } catch (\Throwable $e) {
+            }
+            return '';
+        });
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
             'slot' => $slot,
@@ -1101,8 +1116,9 @@ class VendorBookingController extends Controller
             'barcodeSvg' => null,
             'barcodeHtml' => null,
             'logoDataUri' => $logoDataUri,
+            'ticketCss' => $ticketCss,
         ])
-            ->setOption('isRemoteEnabled', true)
+            ->setOption('isRemoteEnabled', false)
             ->setOption('isHtml5ParserEnabled', true)
             ->setPaper([0, 0, 252, 396], 'portrait');
 

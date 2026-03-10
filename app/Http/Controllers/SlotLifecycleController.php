@@ -11,6 +11,7 @@ use App\Services\SlotFilterService;
 use App\Services\TimeCalculationService;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class SlotLifecycleController extends Controller
@@ -109,19 +110,34 @@ class SlotLifecycleController extends Controller
         $barcodeC->setStorPath(storage_path('app/public/'));
         $barcodePng = '';
         if (!empty($slot->ticket_number)) {
-            $barcodePng = $barcodeC->getBarcodePNG($slot->ticket_number, 'C128', 2.5, 60);
+            $ticketNumber = (string) $slot->ticket_number;
+            $barcodePng = (string) Cache::remember('ticket_barcode_png_' . sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
+                return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
+            });
         }
 
         // Encode logo as base64 data URI so DomPDF can render it
-        $logoDataUri = null;
-        try {
-            $logoPath = public_path('img/logo-full.png');
-            if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
-                $logoDataUri = 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+        $logoDataUri = Cache::rememberForever('ticket_logo_data_uri', function () {
+            try {
+                $logoPath = public_path('img/logo-full.png');
+                if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
+                    return 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+                }
+            } catch (\Throwable $e) {
             }
-        } catch (\Throwable $e) {
-            $logoDataUri = null;
-        }
+            return null;
+        });
+
+        $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
+            try {
+                $cssPath = public_path('ticket.css');
+                if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
+                    return (string) file_get_contents($cssPath);
+                }
+            } catch (\Throwable $e) {
+            }
+            return '';
+        });
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
             'slot' => $slot,
@@ -130,8 +146,9 @@ class SlotLifecycleController extends Controller
             'barcodeHtml' => null,
             'barcodeSvg' => null,
             'logoDataUri' => $logoDataUri,
+            'ticketCss' => $ticketCss,
         ])
-            ->setOption('isRemoteEnabled', true)
+            ->setOption('isRemoteEnabled', false)
             ->setOption('isHtml5ParserEnabled', true)
             ->setPaper([0, 0, 252, 396], 'portrait');
 

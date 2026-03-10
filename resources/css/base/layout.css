@@ -108,7 +108,7 @@
 .st-sidebar {
     width: var(--st-sidebar-width);
     flex: 0 0 var(--st-sidebar-width);
-    background: linear-gradient(180deg, #5fc5e7 0%, #4fa8c6 34%, #3f8e97 58%, #2f766f 78%, #1f5e53 100%);
+    background: linear-gradient(180deg, #f8fbff 0%, #89cee5 10%, #67c4e3 25%, #5fc5e7 40%, #4fa8c6 55%, #3f8e97 70%, #2f766f 85%, #1f5e53 100%);
     color: #f8fafc;
     display: flex;
     flex-direction: column;
@@ -685,7 +685,7 @@
         height: 100vh;
         /* fallback */
         z-index: 1000;
-        background: #38bdf8;
+        background: linear-gradient(180deg, #f8fbff 0%, #89cee5 10%, #67c4e3 25%, #5fc5e7 40%, #4fa8c6 55%, #3f8e97 70%, #2f766f 85%, #1f5e53 100%);
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: none;
         border-right: 1px solid #7dd3fc;

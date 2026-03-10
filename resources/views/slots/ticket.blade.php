@@ -3,7 +3,11 @@
 <head>
     <meta charset="utf-8">
     <title>Ticket e-DCS - {{ $slot->ticket_number ?? '' }}</title>
-    <link rel="stylesheet" href="{{ asset('ticket.css') }}">
+    @if(!empty($ticketCss))
+        <style type="text/css">{!! $ticketCss !!}</style>
+    @else
+        <link rel="stylesheet" href="{{ asset('ticket.css') }}">
+    @endif
 </head>
 <body>
     <div class="ticket-container">
