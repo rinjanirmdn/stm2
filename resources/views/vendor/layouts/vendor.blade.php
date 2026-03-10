@@ -89,6 +89,9 @@
             <!-- Compact user menu for mobile (three dots) -->
             <button type="button" class="vendor-header__user-menu-btn" id="vendor-user-menu-btn" aria-label="Open user menu">
                 <i class="fas fa-ellipsis-v vendor-header__user-menu-icon"></i>
+                @if(auth()->user()->unreadNotifications->count() > 0)
+                    <span class="vendor-header__user-menu-badge" id="mobile-menu-notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
+                @endif
             </button>
             <div class="vendor-header__user-menu" id="vendor-user-menu">
                 <div class="vendor-header__user-menu-info">

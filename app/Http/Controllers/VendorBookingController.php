@@ -692,6 +692,9 @@ class VendorBookingController extends Controller
             if ($plannedDuration <= 0) {
                 $plannedDuration = 60;
             }
+
+            $isToday = $date === now()->format('Y-m-d');
+            $minAllowed = now()->addHours(4)->seconds(0);
             $disabledTimes = Cache::get('admin_gates_disabled_times_' . $date, []);
             $forcedTimes = Cache::get('admin_gates_forced_times_' . $date, []);
             if (!is_array($disabledTimes)) {
@@ -713,10 +716,12 @@ class VendorBookingController extends Controller
 
             // Use cache for 5 minutes to improve performance
             $cacheKey = "vendor_availability_{$date}_{$plannedDuration}";
-            $cached = cache()->get($cacheKey);
-
-            if ($cached) {
-                return response()->json($cached);
+            // Do not cache today's availability because it depends on current time (min 4 hours rule).
+            if (! $isToday) {
+                $cached = cache()->get($cacheKey);
+                if ($cached) {
+                    return response()->json($cached);
+                }
             }
 
             // Get all time slots from 07:00 to 19:00 with 30-minute intervals
@@ -787,6 +792,26 @@ class VendorBookingController extends Controller
             // Check availability for each time slot (for the whole duration window)
             $availableSlots = [];
             foreach ($timeSlots as $time) {
+                // Min 4 hours rule: times earlier than now+4h (only for today) should never show as available.
+                if ($isToday) {
+                    try {
+                        $slotStartAt = Carbon::parse($date . ' ' . $time);
+                        if ($slotStartAt->lessThan($minAllowed)) {
+                            $availableSlots[] = [
+                                'time' => $time,
+                                'is_available' => false,
+                                'available_gates' => 0,
+                                'disabled_by_admin' => false,
+                                'forced_by_admin' => false,
+                                'too_soon' => true,
+                            ];
+                            continue;
+                        }
+                    } catch (\Throwable $e) {
+                        // If parsing fails, continue with normal logic.
+                    }
+                }
+
                 $durationSlices = [];
                 $windowStart = strtotime($time);
                 $windowEnd = strtotime('+' . $plannedDuration . ' minutes', $windowStart);
@@ -794,7 +819,16 @@ class VendorBookingController extends Controller
                     $durationSlices[] = date('H:i', $t);
                 }
 
-                $blockedByAdmin = !empty($disabledMap[$time]);
+                // Admin disable/force rules must apply to the whole duration window.
+                // If ANY slice is disabled by admin, the start time should be unavailable (unless forced on the start time).
+                $blockedByAdmin = false;
+                foreach ($durationSlices as $sliceTime) {
+                    if (!empty($disabledMap[$sliceTime])) {
+                        $blockedByAdmin = true;
+                        break;
+                    }
+                }
+                // Force is only evaluated on the selected start time.
                 $forcedByAdmin = !empty($forcedMap[$time]);
 
                 $windowGloballyBlocked = false;
@@ -849,7 +883,9 @@ class VendorBookingController extends Controller
             ];
 
             // Cache for 5 minutes
-            cache()->put($cacheKey, $response, 300);
+            if (! $isToday) {
+                cache()->put($cacheKey, $response, 300);
+            }
 
             return response()->json($response);
 
