@@ -13,14 +13,13 @@
                     <td style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#0284c7);color:#ffffff;">
                         <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td align="left" style="display:flex;align-items:center;gap:12px;">
-                                    <img src="{{ url('/img/logo-full.png') }}" alt="{{ $appName }}" style="height:36px;width:auto;border-radius:4px;display:block;">
+                                <td align="left">
+                                    <div style="font-size:20px;font-weight:700;color:#ffffff;">{{ $appName }}</div>
                                 </td>
                             </tr>
                             <tr>
                                 <td style="padding-top:12px;">
                                     <div style="font-size:18px;font-weight:600;">New Booking Request</div>
-                                    <div style="font-size:13px;opacity:0.9;">{{ $notifiable->name ?? 'Section Head' }}</div>
                                     <div style="font-size:13px;opacity:0.9;">
                                         <img src="{{ url('/img/e-Docking Control System.png') }}" alt="e-Docking Control System" style="height:20px;width:auto;display:block;margin-top:4px;">
                                     </div>
@@ -29,7 +28,7 @@
                             <tr>
                                 <td style="padding-top:8px;">
                                     <div style="font-size:14px;">Dear {{ $notifiable->name ?? 'Section Head' }},</div>
-                                    <div style="font-size:12px;opacity:0.8;margin-top:4px;">Role Warehouse - PT Oneject Indonesia</div>
+                                    <div style="font-size:12px;opacity:0.8;margin-top:4px;">{{ $notifiable->roles->first()->name ?? 'Approver' }} Warehouse - PT Oneject Indonesia</div>
                                 </td>
                             </tr>
                         </table>
