@@ -150,6 +150,7 @@ class SlotLifecycleController extends Controller
         ])
             ->setOption('isRemoteEnabled', false)
             ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('chroot', public_path())
             ->setPaper([0, 0, 252, 396], 'portrait');
 
         return $pdf->stream('ticket-' . ($slot->ticket_number ?? $slot->id) . '.pdf');

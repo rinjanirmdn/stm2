@@ -13,11 +13,8 @@
     <div class="ticket-container">
         <div class="ticket-inner">
             <div class="header">
-                <img src="{{ $logoDataUri ?? asset('img/logo-full.png') }}" alt="Logo" class="ticket-logo" />
+                <img src="{{ !empty($logoDataUri) ? $logoDataUri : 'file:///' . str_replace('\\', '/', public_path('img/logo-full.png')) }}" alt="Logo" class="ticket-logo" />
                 <div class="title">Tiket e-Docking</div>
-                <div class="subtitle">
-                    {{ ($slot->warehouse_code ?? '') . ' - ' . ($slot->warehouse_name ?? '') }}
-                </div>
             </div>
 
             <div class="ticket-number">
@@ -26,7 +23,7 @@
 
             <table class="info-table">
                 <tr>
-                    <td class="label-col">Nomor PO/DO</td>
+                    <td class="label-col">Nomor PO</td>
                     <td class="colon-col">:</td>
                     <td class="value-col">{{ $slot->truck_number ?? '-' }}</td>
                 </tr>
@@ -35,6 +32,12 @@
                     <td class="colon-col">:</td>
                     <td class="value-col">{{ $slot->vendor_name ?? '-' }}</td>
                 </tr>
+                <tr>
+                    <td class="label-col">Vehicle Number</td>
+                    <td class="colon-col">:</td>
+                    <td class="value-col">{{ $slot->vehicle_number_snap ?? '-' }}</td>
+                </tr>
+
                 <tr>
                     <td class="label-col">Aktivitas</td>
                     <td class="colon-col">:</td>

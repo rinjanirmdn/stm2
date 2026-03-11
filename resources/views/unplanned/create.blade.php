@@ -31,7 +31,7 @@
 
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
+                    <label class="st-label">PO Number <span class="st-text--danger-dark">*</span></label>
                     <div class="st-relative">
                         <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off" class="st-input st-input--pr-40{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
                         <span class="st-input-loader" id="po_loading" aria-hidden="true"></span>

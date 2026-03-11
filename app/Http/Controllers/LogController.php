@@ -34,6 +34,7 @@ class LogController extends Controller
             'status_change',
             'gate_activation',
             'gate_deactivation',
+            'auth',
             'crud',
         ];
 

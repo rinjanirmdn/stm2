@@ -21,7 +21,6 @@
                                 <td style="padding-top:12px;">
                                     <div style="font-size:18px;font-weight:600;">{{ $subjectPrefix }}</div>
                                     <div style="font-size:13px;opacity:0.9;">
-                                        <img src="{{ url('/img/e-Docking Control System.png') }}" alt="e-Docking Control System" style="height:20px;width:auto;display:block;margin-top:4px;">
                                     </div>
                                 </td>
                             </tr>
@@ -66,7 +65,7 @@
                         <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td align="center" style="padding:16px 0;">
-                                    <a href="{{ url('/vendor/bookings/' . $targetId) }}"
+                                    <a href="{{ route('vendor.bookings.show', $targetId) }}"
                                        style="display:inline-block;background-color:#0284c7;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:500;">
                                         View Booking Details
                                     </a>
@@ -78,7 +77,7 @@
                                         If you're having trouble clicking the "View Booking Details" button, copy and paste the URL below into your web browser:
                                     </p>
                                     <p style="margin:8px 0 0 0;color:#374151;font-size:12px;font-family:monospace;background-color:#f1f5f9;padding:8px;border-radius:4px;word-break:break-all;">
-                                        {{ url('/vendor/bookings/' . $targetId) }}
+                                        {{ route('vendor.bookings.show', $targetId) }}
                                     </p>
                                 </td>
                             </tr>

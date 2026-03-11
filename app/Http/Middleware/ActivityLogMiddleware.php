@@ -25,8 +25,8 @@ class ActivityLogMiddleware
             if (!$userId) {
                 // Allow guest logging for forgot-password request by resolving user id from login
                 $routeNameGuest = (string) ($request->route()?->getName() ?? '');
-                if ($method === 'POST' && $routeNameGuest === 'forgot-password.send') {
-                    $login = trim((string) $request->input('login', ''));
+                if ($method === 'POST' && in_array($routeNameGuest, ['forgot-password.send', 'login.store'], true)) {
+                    $login = trim((string) $request->input('login', $request->input('email', '')));
                     if ($login !== '') {
                         try {
                             $user = DB::table('md_users')
@@ -114,6 +114,8 @@ class ActivityLogMiddleware
                 'bookings.reject' => 'Booking rejected',
                 'vendor.bookings.store' => 'Booking created',
                 'vendor.bookings.cancel' => 'Booking cancelled',
+                'login.store' => 'User login',
+                'logout' => 'User logout',
             ];
 
             if ($routeName !== '' && array_key_exists($routeName, $templates)) {
@@ -182,18 +184,67 @@ class ActivityLogMiddleware
                     } elseif ($po !== '') {
                         $description = 'Booking created (PO/DO ' . $po . ')';
                     }
+                } elseif ($routeName === 'login.store') {
+                    $login = trim((string) $request->input('login', $request->input('email', '')));
+                    if ($login !== '') {
+                        $description = 'User login (' . $login . ')';
+                    }
                 }
             }
 
             if ($description === '') {
+                $action = '';
                 if ($method === 'POST') {
-                    $description = 'Data created';
+                    $action = 'created';
                 } elseif (in_array($method, ['PUT', 'PATCH'], true)) {
-                    $description = 'Data updated';
+                    $action = 'updated';
                 } elseif ($method === 'DELETE') {
-                    $description = 'Data deleted';
+                    $action = 'deleted';
                 } else {
-                    $description = 'Data changed';
+                    $action = 'changed';
+                }
+
+                $entity = '';
+                if ($routeName !== '') {
+                    $parts = explode('.', $routeName);
+                    $entity = trim((string) ($parts[0] ?? ''));
+                }
+                if ($entity !== '') {
+                    $entity = str_replace(['-', '_'], ' ', $entity);
+                    if (strlen($entity) > 1 && substr($entity, -1) === 's') {
+                        $entity = substr($entity, 0, -1);
+                    }
+                    $entity = ucwords($entity);
+                    $description = $entity . ' ' . $action;
+                } else {
+                    $description = 'Data ' . $action;
+                }
+
+                $detailKeys = [
+                    'ticket_number',
+                    'request_number',
+                    'po_number',
+                    'mat_doc',
+                    'vendor_name',
+                    'name',
+                    'email',
+                    'nik',
+                    'gate_number',
+                ];
+                $details = [];
+                foreach ($detailKeys as $k) {
+                    $v = $getString($payload, $k);
+                    if ($v === '') {
+                        continue;
+                    }
+                    $label = ucwords(str_replace('_', ' ', $k));
+                    $details[] = $label . ' ' . $v;
+                    if (count($details) >= 2) {
+                        break;
+                    }
+                }
+                if (!empty($details)) {
+                    $description .= ' (' . implode(' - ', $details) . ')';
                 }
             }
 
@@ -226,10 +277,15 @@ class ActivityLogMiddleware
 
             $insert = [];
 
+            $logType = 'crud';
+            if (in_array($routeName, ['login.store', 'logout'], true)) {
+                $logType = 'auth';
+            }
+
             if ($has('activity_type')) {
-                $insert['activity_type'] = 'crud';
+                $insert['activity_type'] = $logType;
             } elseif ($has('type')) {
-                $insert['type'] = 'crud';
+                $insert['type'] = $logType;
             }
 
             if ($has('description')) {
@@ -247,11 +303,27 @@ class ActivityLogMiddleware
             }
 
             if ($has('mat_doc')) {
-                $insert['mat_doc'] = null;
+                $insert['mat_doc'] = $getString($payload, 'mat_doc') ?: null;
             }
 
             if ($has('po_number')) {
-                $insert['po_number'] = null;
+                $insert['po_number'] = $getString($payload, 'po_number') ?: null;
+            }
+
+            if (($has('mat_doc') || $has('po_number')) && $slotId !== null && ($insert['mat_doc'] ?? null) === null && ($insert['po_number'] ?? null) === null) {
+                try {
+                    $slotRow = DB::table('slots')->where('id', $slotId)->select(['mat_doc', 'po_number'])->first();
+                    if ($slotRow) {
+                        if ($has('mat_doc') && ($insert['mat_doc'] ?? null) === null) {
+                            $insert['mat_doc'] = $slotRow->mat_doc ?? null;
+                        }
+                        if ($has('po_number') && ($insert['po_number'] ?? null) === null) {
+                            $insert['po_number'] = $slotRow->po_number ?? null;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // no-op
+                }
             }
 
             if ($has('old_value')) {

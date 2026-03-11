@@ -63,7 +63,7 @@
                         <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td align="center" style="padding:16px 0;">
-                                    <a href="{{ url('/admin/bookings/' . $bookingRequest->id) }}"
+                                    <a href="{{ route('bookings.show', $bookingRequest->id) }}"
                                        style="display:inline-block;background-color:#0284c7;color:#ffffff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:500;">
                                         Review Booking
                                     </a>
@@ -75,7 +75,7 @@
                                         If you're having trouble clicking the "Review Booking" button, copy and paste the URL below into your web browser:
                                     </p>
                                     <p style="margin:8px 0 0 0;color:#374151;font-size:12px;font-family:monospace;background-color:#f1f5f9;padding:8px;border-radius:4px;word-break:break-all;">
-                                        {{ url('/admin/bookings/' . $bookingRequest->id) }}
+                                        {{ route('bookings.show', $bookingRequest->id) }}
                                     </p>
                                 </td>
                             </tr>

@@ -13,8 +13,15 @@
             <div class="st-flex st-align-center st-gap-8">
                 <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-truck"></i></div>
                 <div>
-                    <div class="st-text--xs st-text--muted">PO / DO</div>
+                    <div class="st-text--xs st-text--muted">PO</div>
                     <div class="st-font-semibold">{{ $slot->truck_number ?? '-' }}</div>
+                </div>
+            </div>
+            <div class="st-flex st-align-center st-gap-8">
+                <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-id-card"></i></div>
+                <div>
+                    <div class="st-text--xs st-text--muted">Vehicle Number</div>
+                    <div class="st-font-semibold">{{ $slot->vehicle_number_snap ?? '-' }}</div>
                 </div>
             </div>
             <div class="st-flex st-align-center st-gap-8">
@@ -94,12 +101,16 @@
                     <div class="st-form-row--grid-2 st-gap-24">
                         <div class="st-flex st-flex-col st-gap-16">
                             <div>
-                                <div class="st-text--sm st-text--muted st-mb-4">Supplier / Vendor</div>
+                                <div class="st-text--sm st-text--muted st-mb-4">Customer/Vendor</div>
                                 <div class="st-font-semibold st-text-15">{{ $slot->vendor_name ?? '-' }}</div>
                             </div>
                             <div>
-                                <div class="st-text--sm st-text--muted st-mb-4">PO/DO Number</div>
+                                <div class="st-text--sm st-text--muted st-mb-4">PO Number</div>
                                 <div class="st-font-semibold st-text-15">{{ $slot->po_number ?? $slot->truck_number ?? '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="st-text--sm st-text--muted st-mb-4">Vehicle Number</div>
+                                <div class="st-font-semibold st-text-15">{{ $slot->vehicle_number_snap ?? '-' }}</div>
                             </div>
                             <div>
                                 <div class="st-text--sm st-text--muted st-mb-4">Activity Direction</div>

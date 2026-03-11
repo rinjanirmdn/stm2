@@ -41,7 +41,7 @@
                                     <input type="text"
                                            id="po-search"
                                            class="cb-input cb-input--pr-40"
-                                           placeholder="Search PO/DO number..."
+                                           placeholder="Search PO number..."
                                            autocomplete="off"
                                            value="{{ old('po_number') }}">
                                     <input type="hidden" name="po_number" id="po-number-hidden" value="{{ old('po_number') }}">
