@@ -2152,12 +2152,45 @@ document.addEventListener('DOMContentLoaded', function () {
         var overlay = document.getElementById('mobile-menu-overlay');
         var body = document.body;
 
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
+        function isTablet() {
+            return window.innerWidth > 768 && window.innerWidth <= 1200;
+        }
+
+        function closeMobileDrawer() {
+            if (sidebar) sidebar.classList.remove('st-sidebar--mobile-open');
+            if (overlay) overlay.classList.remove('st-sidebar__overlay--active');
+            document.body.style.overflow = '';
+        }
+
+        function closeTabletOverlay() {
+            if (sidebar) sidebar.classList.remove('st-sidebar--tablet-open');
+            if (overlay) overlay.classList.remove('st-sidebar__overlay--active');
+            document.body.style.overflow = '';
+        }
+
+        function toggleTabletOverlay() {
+            if (!sidebar || !overlay) return;
+            sidebar.classList.toggle('st-sidebar--tablet-open');
+            overlay.classList.toggle('st-sidebar__overlay--active');
+            document.body.style.overflow = sidebar.classList.contains('st-sidebar--tablet-open') ? 'hidden' : '';
+        }
+
         function checkScreenSize() {
             if (window.innerWidth > 768) {
-                // Clean up mobile sidebar state when resizing to desktop
-                if (sidebar) sidebar.classList.remove('st-sidebar--mobile-open');
-                if (overlay) overlay.classList.remove('st-sidebar__overlay--active');
-                document.body.style.overflow = '';
+                // Leaving mobile
+                closeMobileDrawer();
+            }
+            if (isMobile()) {
+                // Leaving tablet
+                closeTabletOverlay();
+            }
+            if (window.innerWidth > 1200) {
+                // Leaving tablet to full desktop
+                closeTabletOverlay();
             }
         }
 
@@ -2167,7 +2200,11 @@ document.addEventListener('DOMContentLoaded', function () {
             desktopToggle.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
-                toggleSidebar();
+                if (isTablet()) {
+                    toggleTabletOverlay();
+                } else {
+                    toggleSidebar();
+                }
             });
         }
 
@@ -2179,17 +2216,16 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             overlay.addEventListener('click', function () {
-                sidebar.classList.remove('st-sidebar--mobile-open');
-                overlay.classList.remove('st-sidebar__overlay--active');
-                document.body.style.overflow = '';
+                closeMobileDrawer();
+                closeTabletOverlay();
             });
 
             var sidebarLinks = sidebar.querySelectorAll('.st-sidebar__link');
             sidebarLinks.forEach(function (link) {
                 link.addEventListener('click', function () {
-                    sidebar.classList.remove('st-sidebar--mobile-open');
-                    overlay.classList.remove('st-sidebar__overlay--active');
-                    document.body.style.overflow = '';
+                    // Close overlays/drawers when navigating on smaller screens
+                    closeMobileDrawer();
+                    closeTabletOverlay();
                 });
             });
         }
