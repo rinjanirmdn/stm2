@@ -22,7 +22,7 @@ return new class extends Migration
             // Add vendor_id to link user account to vendor company
             if (! Schema::hasColumn('users', 'vendor_id')) {
                 $table->unsignedBigInteger('vendor_id')->nullable()->after('role');
-                $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('set null');
+                // vendors FK removed — vendors table is managed externally (SAP)
             }
         });
     }

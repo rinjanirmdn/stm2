@@ -55,9 +55,9 @@ return new class extends Migration
                 $table->enum('slot_type', ['planned', 'unplanned'])->default('planned');
                 $table->timestamps();
 
-                $table->foreign('po_id')->references('id')->on('po');
+                // po FK removed — po table was dropped in a later migration
                 $table->foreign('warehouse_id')->references('id')->on('warehouses');
-                $table->foreign('vendor_id')->references('id')->on('vendors');
+                // vendors FK removed — vendors table is managed externally (SAP)
                 $table->foreign('planned_gate_id')->references('id')->on('gates');
                 $table->foreign('actual_gate_id')->references('id')->on('gates');
                 $table->foreign('created_by')->references('id')->on('users');

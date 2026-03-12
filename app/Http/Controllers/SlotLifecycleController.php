@@ -123,7 +123,6 @@ class SlotLifecycleController extends Controller
                 }
             } catch (\Throwable $e) {
             }
-
         });
 
         $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
