@@ -17,9 +17,13 @@ class NewNotification implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public int $userId;
+
     public string $title;
+
     public string $message;
+
     public ?string $url;
+
     public ?string $notificationId;
 
     public function __construct(int $userId, string $title, string $message, ?string $url = null, ?string $notificationId = null)
@@ -37,7 +41,7 @@ class NewNotification implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('user.' . $this->userId),
+            new PrivateChannel('user.'.$this->userId),
         ];
     }
 

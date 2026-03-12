@@ -2,14 +2,11 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
-
 class PoSearchService
 {
     public function __construct(
         private readonly SapPoService $sapPoService
-    ) {
-    }
+    ) {}
 
     /**
      * Search PO/DO numbers with priority to SAP, fallback to local DB
@@ -51,16 +48,13 @@ class PoSearchService
                         'doc_date' => $poDetail['doc_date'] ?? '',
                         'warehouse_name' => $poDetail['warehouse_name'] ?? '',
                         'direction' => $direction,
-                        'source' => 'sap'
+                        'source' => 'sap',
                     ];
                 }
             } catch (\Exception $e) {
                 // Silent fail
             }
         }
-
-
-
 
         return $results;
     }
@@ -127,7 +121,7 @@ class PoSearchService
                 // Data found in SAP!
                 $vendorCode = (string) ($api['vendor_code'] ?? '');
                 $vendorName = (string) ($api['vendor_name'] ?? '');
-                
+
                 // Determine direction based on SAP fields:
                 // - If CustomerCode exists => outbound
                 // - Else SupplierCode exists => inbound
@@ -162,17 +156,16 @@ class PoSearchService
                     'customer_code' => (string) ($api['customer_code'] ?? ''),
                     'customer_name' => (string) ($api['customer_name'] ?? ''),
                     'direction' => $direction,
-                    'source' => 'sap'
+                    'source' => 'sap',
                 ];
             }
         } catch (\Exception $e) {
             // Log warning
-            \Illuminate\Support\Facades\Log::warning("SAP PO lookup failed for $poNumber (lookup=$lookupPo): " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning("SAP PO lookup failed for $poNumber (lookup=$lookupPo): ".$e->getMessage());
         }
 
         // 2. No Fallback
         // Strict SAP mode means if it's not in SAP, it doesn't exist.
         return null;
     }
-
 }

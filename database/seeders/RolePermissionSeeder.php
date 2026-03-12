@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class RolePermissionSeeder extends Seeder
@@ -205,6 +205,7 @@ class RolePermissionSeeder extends Seeder
             if (str_starts_with($perm, 'users.')) {
                 return false;
             }
+
             return true;
         }));
         $sectionHeadRole->syncPermissions($sectionHeadPermissions);
@@ -265,7 +266,7 @@ class RolePermissionSeeder extends Seeder
         // Super Account: all permissions except users.*
         $superAccountRole = Role::findOrCreate('Super Account');
         $superAccountPermissions = array_values(array_filter($permissions, function ($perm) {
-            return !str_starts_with($perm, 'users.');
+            return ! str_starts_with($perm, 'users.');
         }));
         $superAccountRole->syncPermissions($superAccountPermissions);
 
@@ -302,18 +303,18 @@ class RolePermissionSeeder extends Seeder
         }
 
         // For any remaining deleted roles, fallback migrate to Display Account (minimal access)
-        if (!empty($rolesToDelete) && $displayRoleId) {
+        if (! empty($rolesToDelete) && $displayRoleId) {
             DB::table($modelHasRolesTable)->whereIn('role_id', $rolesToDelete)->update(['role_id' => $displayRoleId]);
         }
 
-        if (!empty($rolesToDelete)) {
+        if (! empty($rolesToDelete)) {
             DB::table($roleHasPermissionsTable)->whereIn('role_id', $rolesToDelete)->delete();
             Role::query()->whereIn('id', $rolesToDelete)->delete();
         }
 
         // Assign admin role to user with username admin or first user
         $adminUser = \App\Models\User::where('nik', 'admin')->first();
-        if (!$adminUser) {
+        if (! $adminUser) {
             $adminUser = \App\Models\User::first();
         }
 

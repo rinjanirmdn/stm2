@@ -14,7 +14,7 @@ class BookingRequested extends Notification
 
     public function via(object $notifiable): array
     {
-        if (!empty($notifiable->email)) {
+        if (! empty($notifiable->email)) {
             return ['mail', 'database'];
         }
 
@@ -27,15 +27,15 @@ class BookingRequested extends Notification
         $poNumber = $this->slot->po_number ?? '-';
         $vendorName = $this->slot->vendor_name ?? $this->slot->requester?->name ?? 'Vendor';
 
-        return (new MailMessage)
-            ->subject('New Booking Request - PO ' . $poNumber)
-            ->greeting('Hello ' . $notifiable->name . ',')
+        return (new MailMessage())
+            ->subject('New Booking Request - PO '.$poNumber)
+            ->greeting('Hello '.$notifiable->name.',')
             ->line('A new booking request has been submitted and requires your review.')
-            ->line('**Vendor:** ' . $vendorName)
-            ->line('**PO/DO Number:** ' . $poNumber)
-            ->line('**Scheduled Time:** ' . $plannedDate)
-            ->line('**Direction:** ' . ucfirst((string) ($this->slot->direction ?? '')))
-            ->action('Review Booking', url('/unplanned/approval/' . $this->slot->id))
+            ->line('**Vendor:** '.$vendorName)
+            ->line('**PO/DO Number:** '.$poNumber)
+            ->line('**Scheduled Time:** '.$plannedDate)
+            ->line('**Direction:** '.ucfirst((string) ($this->slot->direction ?? '')))
+            ->action('Review Booking', url('/unplanned/approval/'.$this->slot->id))
             ->line('Please review and approve or reject this booking request.')
             ->salutation('Regards,\nWarehouse – SCM – PT Oneject Indonesia');
     }
@@ -48,8 +48,8 @@ class BookingRequested extends Notification
         return [
             'slot_id' => $this->slot->id,
             'title' => 'New Booking Request',
-            'message' => 'Request from ' . $vendorName . ' for PO ' . $poNumber,
-            'action_url' => url('/unplanned/approval/' . $this->slot->id),
+            'message' => 'Request from '.$vendorName.' for PO '.$poNumber,
+            'action_url' => url('/unplanned/approval/'.$this->slot->id),
             'icon' => 'fas fa-plus-circle',
             'color' => 'blue',
         ];

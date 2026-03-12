@@ -13,6 +13,7 @@ class RecalculateBlockingRiskJob implements ShouldQueue
     use Queueable;
 
     public int $tries = 1;
+
     public int $timeout = 300; // 5 minutes max
 
     public function __construct()
@@ -63,7 +64,7 @@ class RecalculateBlockingRiskJob implements ShouldQueue
                 }
             } catch (\Throwable $e) {
                 $errors++;
-                Log::warning('Failed to recalculate blocking risk for slot ' . $slot->id . ': ' . $e->getMessage());
+                Log::warning('Failed to recalculate blocking risk for slot '.$slot->id.': '.$e->getMessage());
             }
         }
 

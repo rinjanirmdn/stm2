@@ -32,13 +32,14 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
     private function calculateLeadTime($transaction): string
     {
         try {
-            $end = !empty($transaction->actual_finish) ? new \DateTime($transaction->actual_finish) : null;
-            $startStr = !empty($transaction->actual_start) ? $transaction->actual_start : (!empty($transaction->arrival_time) ? $transaction->arrival_time : '');
+            $end = ! empty($transaction->actual_finish) ? new \DateTime($transaction->actual_finish) : null;
+            $startStr = ! empty($transaction->actual_start) ? $transaction->actual_start : (! empty($transaction->arrival_time) ? $transaction->arrival_time : '');
             $start = $startStr !== '' ? new \DateTime($startStr) : null;
 
             if ($start && $end) {
                 $diff = $start->diff($end);
                 $minutes = (int) $diff->days * 24 * 60 + (int) $diff->h * 60 + (int) $diff->i;
+
                 return $this->formatDuration($minutes);
             }
         } catch (\Throwable $e) {
@@ -63,12 +64,13 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
     private function getLeadTimeMinutes($transaction): int
     {
         try {
-            $end = !empty($transaction->actual_finish) ? new \DateTime($transaction->actual_finish) : null;
-            $startStr = !empty($transaction->actual_start) ? $transaction->actual_start : (!empty($transaction->arrival_time) ? $transaction->arrival_time : '');
+            $end = ! empty($transaction->actual_finish) ? new \DateTime($transaction->actual_finish) : null;
+            $startStr = ! empty($transaction->actual_start) ? $transaction->actual_start : (! empty($transaction->arrival_time) ? $transaction->arrival_time : '');
             $start = $startStr !== '' ? new \DateTime($startStr) : null;
 
             if ($start && $end) {
                 $diff = $start->diff($end);
+
                 return (int) $diff->days * 24 * 60 + (int) $diff->h * 60 + (int) $diff->i;
             }
         } catch (\Throwable $e) {
@@ -86,10 +88,10 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
 
         $m = $minutes;
         $h = $m / 60;
-        $out = $m . ' min';
+        $out = $m.' min';
 
         if ($h >= 1) {
-            $out .= ' (' . rtrim(rtrim(number_format($h, 2), '0'), '.') . ' h)';
+            $out .= ' ('.rtrim(rtrim(number_format($h, 2), '0'), '.').' h)';
         }
 
         return $out;
@@ -98,7 +100,7 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
     public function view(): View
     {
         return view('exports.transactions', [
-            'transactions' => $this->transactions
+            'transactions' => $this->transactions,
         ]);
     }
 

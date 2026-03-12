@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Helpers\HolidayHelper;
 use DateTime;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class SlotService
@@ -99,12 +97,13 @@ class SlotService
      */
     public function computePlannedFinish(?string $plannedStart, ?int $plannedDurationMinutes): ?string
     {
-        if ($plannedStart === null || $plannedStart === '' || !$plannedDurationMinutes || $plannedDurationMinutes <= 0) {
+        if ($plannedStart === null || $plannedStart === '' || ! $plannedDurationMinutes || $plannedDurationMinutes <= 0) {
             return null;
         }
         try {
             $dt = new DateTime($plannedStart);
-            $dt->modify('+' . (int) $plannedDurationMinutes . ' minutes');
+            $dt->modify('+'.(int) $plannedDurationMinutes.' minutes');
+
             return $dt->format('Y-m-d H:i:s');
         } catch (\Throwable $e) {
             return null;
@@ -129,7 +128,7 @@ class SlotService
             ->orderBy('planned_start')
             ->first();
 
-        if (!$conflict) {
+        if (! $conflict) {
             return $startTime;
         }
 
@@ -257,12 +256,14 @@ class SlotService
             // Skip empty words
             if (trim($word) === '') {
                 $capitalized[] = $word;
+
                 continue;
             }
 
             // Always capitalize first word
             if ($index === 0) {
                 $capitalized[] = ucfirst(strtolower($word));
+
                 continue;
             }
 
@@ -313,10 +314,10 @@ class SlotService
 
         $letter = $this->getGateLetterByWarehouseAndNumber((string) $warehouseCode, (string) $gateNorm);
         if ($letter !== null) {
-            return 'Gate ' . $letter;
+            return 'Gate '.$letter;
         }
 
-        return 'Gate ' . strtoupper($gateNorm);
+        return 'Gate '.strtoupper($gateNorm);
     }
 
     public function buildLaneGroupFromMeta(string $warehouseCode, string $gateNumber, ?int $fallbackId = null): ?string
@@ -331,10 +332,10 @@ class SlotService
         $gateKey = $letter !== null ? $letter : $gateNorm;
 
         if ($warehouseCode !== '' && $gateKey !== '') {
-            return $warehouseCode . '_GATE_' . $gateKey;
+            return $warehouseCode.'_GATE_'.$gateKey;
         }
 
-        return $fallbackId !== null ? 'GATE_' . $fallbackId : null;
+        return $fallbackId !== null ? 'GATE_'.$fallbackId : null;
     }
 
     public function getGateMetaById(int $gateId): ?array
@@ -474,7 +475,7 @@ class SlotService
                 continue;
             }
             $otherEnd = clone $otherStart;
-            $otherEnd->modify('+' . (int) ($row->planned_duration ?? 0) . ' minutes');
+            $otherEnd->modify('+'.(int) ($row->planned_duration ?? 0).' minutes');
 
             $otherStartTs = $otherStart->getTimestamp();
             $otherEndTs = $otherEnd->getTimestamp();
@@ -555,10 +556,10 @@ class SlotService
         $monthNum = (int) date('n');
         $monthLetter = chr(ord('A') + max(0, $monthNum - 1));
 
-        $prefix = $groupLetter . $yearPart . $monthLetter;
+        $prefix = $groupLetter.$yearPart.$monthLetter;
 
         $lastTicket = DB::table('slots')
-            ->where('ticket_number', 'like', $prefix . '%')
+            ->where('ticket_number', 'like', $prefix.'%')
             ->orderByDesc('ticket_number')
             ->value('ticket_number');
 
@@ -567,7 +568,7 @@ class SlotService
             $seq = ((int) $m[1]) + 1;
         }
 
-        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -575,7 +576,7 @@ class SlotService
      */
     private function getAllSlotsForGateOnSameDay(?int $gateId, string $start, ?int $excludeSlotId = null): \Illuminate\Support\Collection
     {
-        if (!$gateId) {
+        if (! $gateId) {
             return collect([]);
         }
 
@@ -599,7 +600,7 @@ class SlotService
      */
     private function getExistingSlotsForGate(?int $gateId, string $start, string $end, ?int $excludeSlotId = null): \Illuminate\Support\Collection
     {
-        if (!$gateId) {
+        if (! $gateId) {
             return collect([]);
         }
 
@@ -635,7 +636,7 @@ class SlotService
         }
 
         $endDt = clone $startDt;
-        $endDt->modify('+' . (int) $plannedDurationMinutes . ' minutes');
+        $endDt->modify('+'.(int) $plannedDurationMinutes.' minutes');
 
         $start = $startDt->format('Y-m-d H:i:s');
         $end = $endDt->format('Y-m-d H:i:s');
@@ -670,7 +671,7 @@ class SlotService
                     foreach ($existingBSlots as $bSlot) {
                         $bStart = new DateTime($bSlot->planned_start);
                         $bEnd = clone $bStart;
-                        $bEnd->modify('+' . (int) $bSlot->planned_duration . ' minutes');
+                        $bEnd->modify('+'.(int) $bSlot->planned_duration.' minutes');
 
                         // Condition 2 & 3: same entry/exit time
                         if (($bStart->format('H:i') === $startDt->format('H:i')) ||
@@ -701,7 +702,7 @@ class SlotService
                     foreach ($existingCSlots as $cSlot) {
                         $cStart = new DateTime($cSlot->planned_start);
                         $cEnd = clone $cStart;
-                        $cEnd->modify('+' . (int) $cSlot->planned_duration . ' minutes');
+                        $cEnd->modify('+'.(int) $cSlot->planned_duration.' minutes');
 
                         // Condition 2 & 3: same entry/exit time
                         if (($cStart->format('H:i') === $startDt->format('H:i')) ||
@@ -736,7 +737,7 @@ class SlotService
                     foreach ($existingASlots as $aSlot) {
                         $aStart = new DateTime($aSlot->planned_start);
                         $aEnd = clone $aStart;
-                        $aEnd->modify('+' . (int) $aSlot->planned_duration . ' minutes');
+                        $aEnd->modify('+'.(int) $aSlot->planned_duration.' minutes');
 
                         $newEntryTime = $startDt->format('H:i');
                         $newExitTime = $endDt->format('H:i');
@@ -799,10 +800,10 @@ class SlotService
                 ->whereIn('o.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
                 ->where(function ($q) use ($start, $end, $otherDateAddExpr) {
                     $q->whereRaw("{$otherDateAddExpr} = ?", [$start]) // Gate B finishes when Gate C starts
-                      ->orWhere(function ($q2) use ($start, $end, $otherDateAddExpr) {
-                          $q2->where('o.planned_start', '=', $start)
-                             ->whereRaw("{$otherDateAddExpr} = ?", [$end]);
-                      });
+                        ->orWhere(function ($q2) use ($start, $end, $otherDateAddExpr) {
+                            $q2->where('o.planned_start', '=', $start)
+                                ->whereRaw("{$otherDateAddExpr} = ?", [$end]);
+                        });
                 })
                 ->count();
 
@@ -845,7 +846,7 @@ class SlotService
         if ($raw <= 3) {
             return 1;  // Medium
         }
+
         return 2;      // High
     }
-
 }

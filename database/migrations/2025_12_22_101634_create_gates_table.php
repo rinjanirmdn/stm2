@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('lane_group')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->foreign('warehouse_id')->references('id')->on('warehouses');
             $table->unique(['warehouse_id', 'gate_number']);
         });

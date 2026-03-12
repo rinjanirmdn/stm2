@@ -8,11 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('slots') || !Schema::hasTable('gates')) {
+        if (! Schema::hasTable('slots') || ! Schema::hasTable('gates')) {
             return;
         }
 
-        if (!Schema::hasColumn('slots', 'planned_gate_id')) {
+        if (! Schema::hasColumn('slots', 'planned_gate_id')) {
             return;
         }
 
@@ -47,7 +47,7 @@ return new class extends Migration
             }
 
             $finishDt = clone $startDt;
-            $finishDt->modify('+' . $durationMinutes . ' minutes');
+            $finishDt->modify('+'.$durationMinutes.' minutes');
             $plannedFinish = $finishDt->format('Y-m-d H:i:s');
 
             $gatesQ = DB::table('md_gates')->where('warehouse_id', $warehouseId);

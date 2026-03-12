@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ForgotPasswordController extends Controller
 {
@@ -37,11 +36,11 @@ class ForgotPasswordController extends Controller
             }
         }
 
-        if (!$user) {
+        if (! $user) {
             return back()->with('error', 'User not found with the provided Email/Username/NIK.');
         }
 
-        $resetFlagKey = 'password_reset_requested_user_' . (int) $user->id;
+        $resetFlagKey = 'password_reset_requested_user_'.(int) $user->id;
 
         // Get admin email
         $adminEmail = config('mail.admin_email', 'admin@example.com');
@@ -53,38 +52,37 @@ class ForgotPasswordController extends Controller
 
         try {
             $html = view('emails.password-reset-request-admin', [
-                'appName'      => $appName,
-                'companyName'  => $companyName,
-                'logoUrl'      => $logoUrl,
-                'user'         => $user,
-                'reason'       => $reason,
+                'appName' => $appName,
+                'companyName' => $companyName,
+                'logoUrl' => $logoUrl,
+                'user' => $user,
+                'reason' => $reason,
                 'adminEditUrl' => $adminEditUrl,
             ])->render();
 
             // Send email to admin using the shared HTML template
             Mail::html($html, function ($message) use ($adminEmail, $user, $appName) {
                 $message->to($adminEmail)
-                        ->subject('[' . $appName . '] Password Reset Request - ' . ($user->full_name ?? $user->username ?? 'Vendor'));
+                    ->subject('['.$appName.'] Password Reset Request - '.($user->full_name ?? $user->username ?? 'Vendor'));
             });
 
-            $resetFlagKey = 'password_reset_requested_user_' . (int) $user->id;
+            $resetFlagKey = 'password_reset_requested_user_'.(int) $user->id;
             Cache::put($resetFlagKey, now()->toDateTimeString(), now()->addHours(6));
 
             // Store request to prevent spam
-            $requestKey = 'password_reset_request_' . strtolower($login);
+            $requestKey = 'password_reset_request_'.strtolower($login);
             Cache::put($requestKey, now(), now()->addHours(1));
 
             // Mark that this user has an active reset request
             Cache::put($resetFlagKey, now()->toDateTimeString(), now()->addHours(6));
 
             return back()->with('success', 'Password reset request sent to administrator. You will be contacted shortly.');
-
         } catch (\Exception $e) {
-            Log::error('Password reset request (forgot-password form) failed: ' . $e->getMessage(), [
+            Log::error('Password reset request (forgot-password form) failed: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
-            return back()->with('error', 'Failed to send reset request. Please try again later. Error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to send reset request. Please try again later. Error: '.$e->getMessage());
         }
     }
 
@@ -125,17 +123,16 @@ class ForgotPasswordController extends Controller
 
             Mail::html($html, function ($message) use ($adminEmail, $user, $appName) {
                 $message->to($adminEmail)
-                        ->subject('[' . $appName . '] Password Reset Request - ' . ($user->full_name ?? $user->username ?? 'Vendor'));
+                    ->subject('['.$appName.'] Password Reset Request - '.($user->full_name ?? $user->username ?? 'Vendor'));
             });
 
             return back()->with('success', 'Password reset request sent to administrator. You will be contacted shortly.');
-
         } catch (\Exception $e) {
-            Log::error('Password reset request (from profile) failed: ' . $e->getMessage(), [
+            Log::error('Password reset request (from profile) failed: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
-            return back()->with('error', 'Failed to send reset request. Please try again later. Error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to send reset request. Please try again later. Error: '.$e->getMessage());
         }
     }
 }

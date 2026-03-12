@@ -11,12 +11,12 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             // Drop constraint lama yang salah (asumsi nama constraint generated oleh Laravel)
             $table->dropForeign(['vendor_id']);
-            
+
             // Buat constraint baru ke business_partner
             $table->foreign('vendor_id')
-                  ->references('id')
-                  ->on('business_partner')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('business_partner')
+                ->onDelete('set null');
         });
     }
 
@@ -26,9 +26,9 @@ return new class extends Migration
             $table->dropForeign(['vendor_id']);
             // Kembalikan ke vendors (meskipun salah, untuk rollback purpose)
             $table->foreign('vendor_id')
-                  ->references('id')
-                  ->on('vendors')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('vendors')
+                ->onDelete('set null');
         });
     }
 };

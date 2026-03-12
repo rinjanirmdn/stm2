@@ -17,8 +17,9 @@ class VendorSeeder extends Seeder
             $table = 'business_partner';
         }
 
-        if (!$table) {
+        if (! $table) {
             $this->command->warn('VendorSeeder skipped: vendors table not found.');
+
             return;
         }
 

@@ -15,7 +15,7 @@ class HolidayHelper
     {
         $allHolidays = self::getGoogleCalendarHolidays();
 
-        if (!$allHolidays) {
+        if (! $allHolidays) {
             return [];
         }
 
@@ -37,7 +37,7 @@ class HolidayHelper
                     ->connectTimeout(1)
                     ->get('https://calendar.google.com/calendar/ical/en.indonesian%23holiday%40group.v.calendar.google.com/public/basic.ics');
 
-                if (!$response->ok()) {
+                if (! $response->ok()) {
                     return [];
                 }
 
@@ -47,7 +47,7 @@ class HolidayHelper
                 }
 
                 $lines = preg_split("/\r\n|\n|\r/", $ics);
-                if (!$lines) {
+                if (! $lines) {
                     return [];
                 }
 
@@ -55,6 +55,7 @@ class HolidayHelper
                 foreach ($lines as $line) {
                     if ($line === '') {
                         $unfolded[] = $line;
+
                         continue;
                     }
 
@@ -73,6 +74,7 @@ class HolidayHelper
                     if ($line === 'BEGIN:VEVENT') {
                         $currentDate = null;
                         $currentName = null;
+
                         continue;
                     }
 
@@ -82,6 +84,7 @@ class HolidayHelper
                         }
                         $currentDate = null;
                         $currentName = null;
+
                         continue;
                     }
 
@@ -91,11 +94,13 @@ class HolidayHelper
                         if (preg_match('/^(\d{4})(\d{2})(\d{2})/', $value, $matches)) {
                             $currentDate = sprintf('%04d-%02d-%02d', (int) $matches[1], (int) $matches[2], (int) $matches[3]);
                         }
+
                         continue;
                     }
 
                     if (str_starts_with($line, 'SUMMARY:')) {
                         $currentName = trim(substr($line, 8));
+
                         continue;
                     }
                 }
@@ -110,8 +115,7 @@ class HolidayHelper
     /**
      * Check if a date is a holiday in Indonesia
      *
-     * @param \DateTime|string $date
-     * @return bool
+     * @param  \DateTime|string  $date
      */
     public static function isHoliday($date): bool
     {
@@ -121,6 +125,7 @@ class HolidayHelper
             $dateStr = $date->format('Y-m-d');
 
             $holidays = self::getIndonesianHolidays($year);
+
             return isset($holidays[$dateStr]);
         } catch (\Exception $e) {
             return false;
@@ -130,8 +135,7 @@ class HolidayHelper
     /**
      * Get holiday name for a specific date
      *
-     * @param \DateTime|string $date
-     * @return string|null
+     * @param  \DateTime|string  $date
      */
     public static function getHolidayName($date): ?string
     {
@@ -141,6 +145,7 @@ class HolidayHelper
             $dateStr = $date->format('Y-m-d');
 
             $holidays = self::getIndonesianHolidays($year);
+
             return $holidays[$dateStr] ?? null;
         } catch (\Exception $e) {
             return null;
@@ -149,9 +154,6 @@ class HolidayHelper
 
     /**
      * Get all holidays for a year
-     *
-     * @param int $year
-     * @return array
      */
     public static function getHolidaysByYear(int $year): array
     {
@@ -163,12 +165,12 @@ class HolidayHelper
                 $result[] = [
                     'name' => $name,
                     'date' => $date,
-                    'type' => 'national'
+                    'type' => 'national',
                 ];
             }
 
             // Sort by date
-            usort($result, function($a, $b) {
+            usort($result, function ($a, $b) {
                 return strcmp($a['date'], $b['date']);
             });
 
@@ -187,6 +189,7 @@ class HolidayHelper
         try {
             $year = (int) date('Y', strtotime($date));
             $holidayData = self::getHolidaysByYear($year);
+
             return collect($holidayData)->pluck('name', 'date')->toArray();
         } catch (\Exception $e) {
             return [];
@@ -196,23 +199,22 @@ class HolidayHelper
     /**
      * Check if date is weekend (Saturday/Sunday)
      *
-     * @param \DateTime|string $date
-     * @return bool
+     * @param  \DateTime|string  $date
      */
     public static function isWeekend($date): bool
     {
         $date = is_string($date) ? Carbon::parse($date) : Carbon::instance($date);
+
         return in_array($date->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY]);
     }
 
     /**
      * Check if date is working day (not weekend and not holiday)
      *
-     * @param \DateTime|string $date
-     * @return bool
+     * @param  \DateTime|string  $date
      */
     public static function isWorkingDay($date): bool
     {
-        return !self::isWeekend($date) && !self::isHoliday($date);
+        return ! self::isWeekend($date) && ! self::isHoliday($date);
     }
 }

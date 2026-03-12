@@ -17,12 +17,12 @@ class ActivityLogMiddleware
 
         try {
             $method = strtoupper((string) $request->getMethod());
-            if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+            if (! in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
                 return $response;
             }
 
             $userId = Auth::id();
-            if (!$userId) {
+            if (! $userId) {
                 // Allow guest logging for forgot-password request by resolving user id from login
                 $routeNameGuest = (string) ($request->route()?->getName() ?? '');
                 if ($method === 'POST' && in_array($routeNameGuest, ['forgot-password.send', 'login.store'], true)) {
@@ -42,7 +42,7 @@ class ActivityLogMiddleware
                     }
                 }
 
-                if (!$userId) {
+                if (! $userId) {
                     return $response;
                 }
             }
@@ -58,7 +58,7 @@ class ActivityLogMiddleware
                 return $response;
             }
 
-            $path = '/' . ltrim((string) $request->path(), '/');
+            $path = '/'.ltrim((string) $request->path(), '/');
 
             $routeParams = [];
             try {
@@ -131,17 +131,19 @@ class ActivityLogMiddleware
                 if (preg_match('/(\d+)(?:\/)?$/', $path, $m) !== 1) {
                     return null;
                 }
+
                 return (int) $m[1];
             };
 
             $getString = static function (array $arr, string $key): string {
-                if (!array_key_exists($key, $arr)) {
+                if (! array_key_exists($key, $arr)) {
                     return '';
                 }
                 $v = $arr[$key];
                 if (is_array($v) || is_object($v)) {
                     return '';
                 }
+
                 return trim((string) $v);
             };
 
@@ -153,7 +155,7 @@ class ActivityLogMiddleware
 
                     $parts = [];
                     if ($nik !== '') {
-                        $parts[] = 'NIK ' . $nik;
+                        $parts[] = 'NIK '.$nik;
                     }
                     if ($email !== '') {
                         $parts[] = $email;
@@ -161,33 +163,33 @@ class ActivityLogMiddleware
                     if ($name !== '') {
                         $parts[] = $name;
                     }
-                    if (!empty($parts)) {
-                        $description = 'User created (' . implode(' - ', $parts) . ')';
+                    if (! empty($parts)) {
+                        $description = 'User created ('.implode(' - ', $parts).')';
                     }
                 } elseif ($routeName === 'slots.store') {
                     $po = $getString($payload, 'po_number');
                     if ($po !== '') {
-                        $description = 'Slot created (PO/DO ' . $po . ')';
+                        $description = 'Slot created (PO/DO '.$po.')';
                     }
                 } elseif ($routeName === 'unplanned.store') {
                     $po = $getString($payload, 'po_number');
                     if ($po !== '') {
-                        $description = 'Unplanned slot created (PO/DO ' . $po . ')';
+                        $description = 'Unplanned slot created (PO/DO '.$po.')';
                     }
                 } elseif ($routeName === 'vendor.bookings.store') {
                     $po = $getString($payload, 'po_number');
                     $createdId = $extractTrailingId($location);
                     if ($po !== '' && $createdId) {
-                        $description = 'Booking created (Request #' . $createdId . ' - PO/DO ' . $po . ')';
+                        $description = 'Booking created (Request #'.$createdId.' - PO/DO '.$po.')';
                     } elseif ($createdId) {
-                        $description = 'Booking created (Request #' . $createdId . ')';
+                        $description = 'Booking created (Request #'.$createdId.')';
                     } elseif ($po !== '') {
-                        $description = 'Booking created (PO/DO ' . $po . ')';
+                        $description = 'Booking created (PO/DO '.$po.')';
                     }
                 } elseif ($routeName === 'login.store') {
                     $login = trim((string) $request->input('login', $request->input('email', '')));
                     if ($login !== '') {
-                        $description = 'User login (' . $login . ')';
+                        $description = 'User login ('.$login.')';
                     }
                 }
             }
@@ -215,9 +217,9 @@ class ActivityLogMiddleware
                         $entity = substr($entity, 0, -1);
                     }
                     $entity = ucwords($entity);
-                    $description = $entity . ' ' . $action;
+                    $description = $entity.' '.$action;
                 } else {
-                    $description = 'Data ' . $action;
+                    $description = 'Data '.$action;
                 }
 
                 $detailKeys = [
@@ -238,21 +240,21 @@ class ActivityLogMiddleware
                         continue;
                     }
                     $label = ucwords(str_replace('_', ' ', $k));
-                    $details[] = $label . ' ' . $v;
+                    $details[] = $label.' '.$v;
                     if (count($details) >= 2) {
                         break;
                     }
                 }
-                if (!empty($details)) {
-                    $description .= ' (' . implode(' - ', $details) . ')';
+                if (! empty($details)) {
+                    $description .= ' ('.implode(' - ', $details).')';
                 }
             }
 
             if ($targetId !== null) {
-                $description .= ' (ID: ' . $targetId . ')';
+                $description .= ' (ID: '.$targetId.')';
             }
             if (strlen($description) > 1900) {
-                $description = substr($description, 0, 1900) . '...';
+                $description = substr($description, 0, 1900).'...';
             }
 
             $slotId = null;
@@ -273,7 +275,7 @@ class ActivityLogMiddleware
                 }
             }
 
-            $has = static fn(string $col): bool => in_array($col, $columns, true);
+            $has = static fn (string $col): bool => in_array($col, $columns, true);
 
             $insert = [];
 
@@ -343,7 +345,7 @@ class ActivityLogMiddleware
             }
 
             // Insert only if minimum fields exist
-            if (!empty($insert) && isset($insert['description'])) {
+            if (! empty($insert) && isset($insert['description'])) {
                 DB::table('activity_logs')->insert($insert);
             }
         } catch (\Throwable $e) {

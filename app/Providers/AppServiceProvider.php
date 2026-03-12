@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Cache;
 use App\Models\Slot;
 use App\Observers\SlotObserver;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
                         $holidayData = \App\Helpers\HolidayHelper::getHolidaysByYear($year);
                         foreach ($holidayData as $holiday) {
                             $date = $holiday['date'] ?? null;
-                            if (!$date) {
+                            if (! $date) {
                                 continue;
                             }
                             $holidayMap[$date] = $holiday['name'] ?? 'Holiday';

@@ -21,7 +21,7 @@ class SlotObserver
     public function updated(Slot $slot): void
     {
         $this->clearAvailabilityCache($slot->planned_start);
-        
+
         // Also clear old date if planned_start changed
         if ($slot->isDirty('planned_start')) {
             $this->clearAvailabilityCache($slot->getOriginal('planned_start'));

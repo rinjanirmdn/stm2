@@ -8,25 +8,37 @@ return new class extends Migration
 {
     private function getRoleNameColumn(): string
     {
-        if (Schema::hasColumn('md_roles', 'roles_name')) return 'roles_name';
+        if (Schema::hasColumn('md_roles', 'roles_name')) {
+            return 'roles_name';
+        }
+
         return 'name';
     }
 
     private function getRoleGuardColumn(): string
     {
-        if (Schema::hasColumn('md_roles', 'roles_guard_name')) return 'roles_guard_name';
+        if (Schema::hasColumn('md_roles', 'roles_guard_name')) {
+            return 'roles_guard_name';
+        }
+
         return 'guard_name';
     }
 
     private function getPermNameColumn(): string
     {
-        if (Schema::hasColumn('md_permissions', 'perm_name')) return 'perm_name';
+        if (Schema::hasColumn('md_permissions', 'perm_name')) {
+            return 'perm_name';
+        }
+
         return 'name';
     }
 
     private function getPermGuardColumn(): string
     {
-        if (Schema::hasColumn('md_permissions', 'perm_guard_name')) return 'perm_guard_name';
+        if (Schema::hasColumn('md_permissions', 'perm_guard_name')) {
+            return 'perm_guard_name';
+        }
+
         return 'guard_name';
     }
 
@@ -41,7 +53,7 @@ return new class extends Migration
 
         $permissionId = DB::table('md_permissions')
             ->where($permNameCol, 'gates.toggle')
-            ->when(Schema::hasColumn('md_permissions', $permGuardCol), fn($q) => $q->where($permGuardCol, $guardName))
+            ->when(Schema::hasColumn('md_permissions', $permGuardCol), fn ($q) => $q->where($permGuardCol, $guardName))
             ->value('id');
 
         if (! $permissionId) {
@@ -58,7 +70,7 @@ return new class extends Migration
 
         $adminRoleId = DB::table('md_roles')
             ->where($roleNameCol, 'Admin')
-            ->when(Schema::hasColumn('md_roles', $roleGuardCol), fn($q) => $q->where($roleGuardCol, $guardName))
+            ->when(Schema::hasColumn('md_roles', $roleGuardCol), fn ($q) => $q->where($roleGuardCol, $guardName))
             ->value('id');
 
         if ($adminRoleId) {
@@ -92,7 +104,7 @@ return new class extends Migration
 
         $permissionId = DB::table('md_permissions')
             ->where($permNameCol, 'gates.toggle')
-            ->when(Schema::hasColumn('md_permissions', $permGuardCol), fn($q) => $q->where($permGuardCol, $guardName))
+            ->when(Schema::hasColumn('md_permissions', $permGuardCol), fn ($q) => $q->where($permGuardCol, $guardName))
             ->value('id');
 
         if ($permissionId) {
@@ -108,5 +120,3 @@ return new class extends Migration
         }
     }
 };
-
-

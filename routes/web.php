@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Web Routes — Entry Point
  * Route definitions are split into modular files for maintainability.

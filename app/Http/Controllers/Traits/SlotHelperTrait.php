@@ -9,8 +9,9 @@ trait SlotHelperTrait
         $wh = strtoupper(trim((string) $warehouseCode));
         $gateLabel = $this->slotService->getGateDisplayName($wh, (string) $gateNumber);
         if ($wh !== '' && $gateLabel !== '-') {
-            return $wh . ' - ' . $gateLabel;
+            return $wh.' - '.$gateLabel;
         }
+
         return $gateLabel;
     }
 

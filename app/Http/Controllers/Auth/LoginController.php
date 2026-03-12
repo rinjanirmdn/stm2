@@ -27,7 +27,7 @@ class LoginController extends Controller
         $password = $credentials['password'];
 
         // Check for failed attempts
-        $attemptsKey = 'login_attempts_' . strtolower($login);
+        $attemptsKey = 'login_attempts_'.strtolower($login);
         $attempts = Cache::get($attemptsKey, 0);
 
         // Lock user after 3 failed attempts

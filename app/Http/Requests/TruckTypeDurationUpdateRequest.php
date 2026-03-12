@@ -27,14 +27,14 @@ class TruckTypeDurationUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('md_truck', 'truck_type')->ignore($truckTypeDurationId)
+                Rule::unique('md_truck', 'truck_type')->ignore($truckTypeDurationId),
             ],
             'target_duration_minutes' => [
                 'required',
                 'integer',
                 'min:0',
-                'max:1440' // Max 24 hours
-            ]
+                'max:1440', // Max 24 hours
+            ],
         ];
     }
 
@@ -50,7 +50,7 @@ class TruckTypeDurationUpdateRequest extends FormRequest
             'target_duration_minutes.required' => 'Target duration is required.',
             'target_duration_minutes.integer' => 'Target duration must be a number.',
             'target_duration_minutes.min' => 'Target duration minimum 0 minutes.',
-            'target_duration_minutes.max' => 'Target duration maximum 1440 minutes (24 hours).'
+            'target_duration_minutes.max' => 'Target duration maximum 1440 minutes (24 hours).',
         ];
     }
 }

@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('slots') || !Schema::hasTable('po')) {
+        if (! Schema::hasTable('slots') || ! Schema::hasTable('po')) {
             return;
         }
 
-        if (!Schema::hasColumn('slots', 'bp_id') || !Schema::hasColumn('slots', 'po_id')) {
+        if (! Schema::hasColumn('slots', 'bp_id') || ! Schema::hasColumn('slots', 'po_id')) {
             return;
         }
 
-        if (!Schema::hasColumn('po', 'bp_id')) {
+        if (! Schema::hasColumn('po', 'bp_id')) {
             return;
         }
 
@@ -24,20 +24,20 @@ return new class extends Migration
 
         if ($driver === 'pgsql') {
             DB::statement(
-                "UPDATE slots s\n" .
-                "SET bp_id = p.bp_id\n" .
-                "FROM po p\n" .
-                "WHERE s.bp_id IS NULL\n" .
-                "  AND s.po_id = p.id\n" .
-                "  AND p.bp_id IS NOT NULL"
+                "UPDATE slots s\n".
+                "SET bp_id = p.bp_id\n".
+                "FROM po p\n".
+                "WHERE s.bp_id IS NULL\n".
+                "  AND s.po_id = p.id\n".
+                '  AND p.bp_id IS NOT NULL'
             );
         } else {
             DB::statement(
-                "UPDATE slots s\n" .
-                "JOIN po p ON p.id = s.po_id\n" .
-                "SET s.bp_id = p.bp_id\n" .
-                "WHERE s.bp_id IS NULL\n" .
-                "  AND p.bp_id IS NOT NULL"
+                "UPDATE slots s\n".
+                "JOIN po p ON p.id = s.po_id\n".
+                "SET s.bp_id = p.bp_id\n".
+                "WHERE s.bp_id IS NULL\n".
+                '  AND p.bp_id IS NOT NULL'
             );
         }
     }

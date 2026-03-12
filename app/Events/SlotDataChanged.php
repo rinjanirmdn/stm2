@@ -18,7 +18,9 @@ class SlotDataChanged implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public string $type;    // e.g. 'slot', 'booking', 'gate'
+
     public string $action;  // e.g. 'created', 'updated', 'deleted'
+
     public ?int $recordId;
 
     public function __construct(string $type = 'slot', string $action = 'updated', ?int $recordId = null)

@@ -56,7 +56,7 @@ class SlotFilterService
             $col = $sortMap[$sort];
 
             if ($col instanceof \Illuminate\Database\Query\Expression) {
-                $query->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()) . ' ' . strtoupper($dir));
+                $query->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()).' '.strtoupper($dir));
             } else {
                 $query->orderBy($col, $dir);
             }
@@ -119,9 +119,9 @@ class SlotFilterService
                 'td.target_duration_minutes',
             ])
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as g', function($join) {
+            ->leftJoin('md_gates as g', function ($join) {
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
-                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
+                    ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->whereRaw("COALESCE(s.slot_type, 'planned') <> 'unplanned'");
@@ -147,7 +147,7 @@ class SlotFilterService
             $allTokens = array_values(array_unique(array_merge($tokens, $moreTokens)));
 
             foreach ($allTokens as $tok) {
-                $like = '%' . $tok . '%';
+                $like = '%'.$tok.'%';
                 $query->where(function ($sub) use ($like) {
                     $sub->where('s.po_number', 'like', $like)
                         ->orWhere('s.mat_doc', 'like', $like)
@@ -162,17 +162,17 @@ class SlotFilterService
         // Specific field searches
         $truckSearch = trim($request->query('truck', ''));
         if ($truckSearch !== '') {
-            $query->where('s.po_number', 'like', '%' . $truckSearch . '%');
+            $query->where('s.po_number', 'like', '%'.$truckSearch.'%');
         }
 
         $vendorSearch = trim($request->query('vendor', ''));
         if ($vendorSearch !== '') {
-            $query->where('s.vendor_name', 'like', '%' . $vendorSearch . '%');
+            $query->where('s.vendor_name', 'like', '%'.$vendorSearch.'%');
         }
 
         $matDocSearch = trim($request->query('mat_doc', ''));
         if ($matDocSearch !== '') {
-            $query->where('s.mat_doc', 'like', '%' . $matDocSearch . '%');
+            $query->where('s.mat_doc', 'like', '%'.$matDocSearch.'%');
         }
     }
 
@@ -198,11 +198,11 @@ class SlotFilterService
         $leadExpr = $this->slotService->getTimestampDiffMinutesExpression('COALESCE(s.actual_start, s.arrival_time)', 's.actual_finish');
 
         if ($leadTimeMin !== '' && is_numeric($leadTimeMin)) {
-            $query->whereRaw($leadExpr . ' >= ?', [(int) $leadTimeMin]);
+            $query->whereRaw($leadExpr.' >= ?', [(int) $leadTimeMin]);
         }
 
         if ($leadTimeMax !== '' && is_numeric($leadTimeMax)) {
-            $query->whereRaw($leadExpr . ' <= ?', [(int) $leadTimeMax]);
+            $query->whereRaw($leadExpr.' <= ?', [(int) $leadTimeMax]);
         }
     }
 
@@ -215,7 +215,7 @@ class SlotFilterService
         $dateTo = trim($request->query('date_to', ''));
 
         if ($dateFrom !== '' && $dateTo !== '') {
-            $query->whereBetween('s.planned_start', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
+            $query->whereBetween('s.planned_start', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59']);
         } elseif ($dateFrom !== '') {
             $query->whereDate('s.planned_start', '>=', $dateFrom);
         } elseif ($dateTo !== '') {
@@ -233,17 +233,17 @@ class SlotFilterService
         $directionFilter = (array) $request->query('direction', []);
 
         $gateValues = array_values(array_filter($gateFilter, fn ($v) => (string) $v !== ''));
-        if (!empty($gateValues)) {
+        if (! empty($gateValues)) {
             $query->whereIn('g.gate_number', $gateValues);
         }
 
         $statusValues = array_values(array_filter($statusFilter, fn ($v) => (string) $v !== ''));
-        if (!empty($statusValues)) {
+        if (! empty($statusValues)) {
             $query->whereIn('s.status', $statusValues);
         }
 
         $dirValues = array_values(array_filter($directionFilter, fn ($v) => (string) $v !== ''));
-        if (!empty($dirValues)) {
+        if (! empty($dirValues)) {
             $query->whereIn('s.direction', $dirValues);
         }
     }
@@ -256,7 +256,7 @@ class SlotFilterService
         $warehouseFilter = (array) $request->query('warehouse_id', []);
         $warehouseValues = array_values(array_filter($warehouseFilter, fn ($v) => (string) $v !== ''));
 
-        if (!empty($warehouseValues)) {
+        if (! empty($warehouseValues)) {
             $query->whereIn('s.warehouse_id', array_map('intval', $warehouseValues));
         }
     }
@@ -277,24 +277,24 @@ class SlotFilterService
                 $query->where(function ($sub) {
                     $sub->where(function ($a) {
                         $a->whereNotNull('s.arrival_time')
-                          ->whereRaw('s.arrival_time > ' . $this->slotService->getDateAddExpression('s.planned_start', 15));
+                            ->whereRaw('s.arrival_time > '.$this->slotService->getDateAddExpression('s.planned_start', 15));
                     })->orWhere(function ($b) {
                         $b->whereNull('s.arrival_time')
-                          ->where('s.status', 'completed')
-                          ->where('s.is_late', true);
+                            ->where('s.status', 'completed')
+                            ->where('s.is_late', true);
                     });
                 });
             } else {
                 $query->where(function ($sub) {
                     $sub->where(function ($a) {
                         $a->whereNotNull('s.arrival_time')
-                          ->whereRaw('s.arrival_time <= ' . $this->slotService->getDateAddExpression('s.planned_start', 15));
+                            ->whereRaw('s.arrival_time <= '.$this->slotService->getDateAddExpression('s.planned_start', 15));
                     })->orWhere(function ($b) {
                         $b->whereNull('s.arrival_time')
-                          ->where('s.status', 'completed')
-                          ->where(function ($c) {
-                              $c->where('s.is_late', false)->orWhereNull('s.is_late');
-                          });
+                            ->where('s.status', 'completed')
+                            ->where(function ($c) {
+                                $c->where('s.is_late', false)->orWhereNull('s.is_late');
+                            });
                     });
                 });
             }
@@ -336,7 +336,7 @@ class SlotFilterService
         $targetStatusArr = (array) $request->query('target_status', []);
         $targetValues = array_values(array_filter($targetStatusArr, fn ($v) => (string) $v !== ''));
 
-        if (!empty($targetValues)) {
+        if (! empty($targetValues)) {
             $needAchieve = in_array('achieve', $targetValues, true);
             $needNotAchieve = in_array('not_achieve', $targetValues, true);
 
@@ -379,7 +379,7 @@ class SlotFilterService
         $pageSizeAllowed = ['10', '25', '50', '100', 'all'];
 
         // Default to '10' for better performance instead of loading all records
-        if (!in_array($pageSize, $pageSizeAllowed, true)) {
+        if (! in_array($pageSize, $pageSizeAllowed, true)) {
             return '10';
         }
 
@@ -391,7 +391,7 @@ class SlotFilterService
      */
     public function validateSortDirection(string $dir): string
     {
-        if (!in_array($dir, ['asc', 'desc'], true)) {
+        if (! in_array($dir, ['asc', 'desc'], true)) {
             return 'desc';
         }
 

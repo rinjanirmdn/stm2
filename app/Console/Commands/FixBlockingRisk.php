@@ -2,19 +2,21 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Services\SlotService;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class FixBlockingRisk extends Command
 {
     protected $signature = 'fix:blocking-risk {--force : Skip confirmation prompt}';
+
     protected $description = 'Fix all blocking risk values (one-time command)';
 
     public function handle()
     {
-        if (!$this->option('force') && !$this->confirm('This is a one-time fix command. Are you sure you want to run it?')) {
+        if (! $this->option('force') && ! $this->confirm('This is a one-time fix command. Are you sure you want to run it?')) {
             $this->info('Cancelled.');
+
             return 0;
         }
 
@@ -39,6 +41,7 @@ class FixBlockingRisk extends Command
         }
 
         $this->info('Done!');
+
         return 0;
     }
 }

@@ -8,19 +8,19 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Add vendor_id and email columns to users table for vendor role support.
      */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
             // Add email column for vendor notifications
-            if (!Schema::hasColumn('users', 'email')) {
+            if (! Schema::hasColumn('users', 'email')) {
                 $table->string('email')->nullable()->after('full_name');
             }
-            
+
             // Add vendor_id to link user account to vendor company
-            if (!Schema::hasColumn('users', 'vendor_id')) {
+            if (! Schema::hasColumn('users', 'vendor_id')) {
                 $table->unsignedBigInteger('vendor_id')->nullable()->after('role');
                 $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('set null');
             }
@@ -37,7 +37,7 @@ return new class extends Migration
                 $table->dropForeign(['vendor_id']);
                 $table->dropColumn('vendor_id');
             }
-            
+
             if (Schema::hasColumn('users', 'email')) {
                 $table->dropColumn('email');
             }

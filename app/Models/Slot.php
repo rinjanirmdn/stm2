@@ -13,18 +13,26 @@ class Slot extends Model
      * Status constants
      */
     public const STATUS_SCHEDULED = 'scheduled';
+
     public const STATUS_ARRIVED = 'arrived';
+
     public const STATUS_WAITING = 'waiting';
+
     public const STATUS_IN_PROGRESS = 'in_progress';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_CANCELLED = 'cancelled';
+
     public const STATUS_PENDING_APPROVAL = 'pending_approval';
 
     /**
      * Approval action constants
      */
     public const APPROVAL_APPROVED = 'approved';
+
     public const APPROVAL_REJECTED = 'rejected';
+
     public const APPROVAL_RESCHEDULED = 'rescheduled';
 
     protected $fillable = [
@@ -175,7 +183,7 @@ class Slot extends Model
     }
 
     // Relationships
-    
+
     public function warehouse()
     {
         return $this->belongsTo(Warehouse::class);

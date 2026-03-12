@@ -4,12 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
 use App\Models\Slot;
-use App\Services\SlotService;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
+use App\Services\SlotService;
 use App\Services\TimeCalculationService;
-use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +23,7 @@ class SlotLifecycleController extends Controller
         private readonly SlotConflictService $conflictService,
         private readonly SlotFilterService $filterService,
         private readonly TimeCalculationService $timeService
-    ) {
-    }
+    ) {}
 
     public function arrival(int $slotId)
     {
@@ -81,7 +79,7 @@ class SlotLifecycleController extends Controller
             ]);
 
             $this->slotService->logActivity($slotId, 'status_change', 'Status Changed to Waiting After Arrival');
-            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket ' . $ticketNumber);
+            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket '.$ticketNumber);
         });
 
         return redirect()->route('slots.show', ['slotId' => $slotId])->with('success', 'Arrival recorded');
@@ -109,9 +107,9 @@ class SlotLifecycleController extends Controller
         $barcodeC = new \Milon\Barcode\DNS1D();
         $barcodeC->setStorPath(storage_path('app/public/'));
         $barcodePng = '';
-        if (!empty($slot->ticket_number)) {
+        if (! empty($slot->ticket_number)) {
             $ticketNumber = (string) $slot->ticket_number;
-            $barcodePng = (string) Cache::remember('ticket_barcode_png_' . sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
+            $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
                 return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
             });
         }
@@ -121,11 +119,11 @@ class SlotLifecycleController extends Controller
             try {
                 $logoPath = public_path('img/logo-full.png');
                 if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
-                    return 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+                    return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
                 }
             } catch (\Throwable $e) {
             }
-            return null;
+
         });
 
         $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
@@ -136,6 +134,7 @@ class SlotLifecycleController extends Controller
                 }
             } catch (\Throwable $e) {
             }
+
             return '';
         });
 
@@ -153,7 +152,7 @@ class SlotLifecycleController extends Controller
             ->setOption('chroot', public_path())
             ->setPaper([0, 0, 252, 396], 'portrait');
 
-        return $pdf->stream('ticket-' . ($slot->ticket_number ?? $slot->id) . '.pdf');
+        return $pdf->stream('ticket-'.($slot->ticket_number ?? $slot->id).'.pdf');
     }
 
     public function start(int $slotId)
@@ -212,20 +211,22 @@ class SlotLifecycleController extends Controller
 
         $conflictSlotIds = array_keys($allConflict);
         $conflictDetails = [];
-        if (!empty($conflictSlotIds)) {
+        if (! empty($conflictSlotIds)) {
             $rows = DB::table('slots')
                 ->whereIn('id', $conflictSlotIds)
                 ->select(['id', 'ticket_number'])
                 ->get();
             foreach ($rows as $r) {
                 $rid = (int) ($r->id ?? 0);
-                if ($rid <= 0) continue;
+                if ($rid <= 0) {
+                    continue;
+                }
                 $conflictDetails[$rid] = $r;
             }
         }
 
         $recommendedGateId = null;
-        if (!empty($slot->planned_gate_id)) {
+        if (! empty($slot->planned_gate_id)) {
             $pgid = (int) $slot->planned_gate_id;
             if (empty(($gateStatuses[$pgid] ?? [])['is_conflict'])) {
                 $recommendedGateId = $pgid;
@@ -234,8 +235,12 @@ class SlotLifecycleController extends Controller
         if ($recommendedGateId === null) {
             foreach ($gates as $g) {
                 $gid = (int) ($g->id ?? 0);
-                if ($gid <= 0) continue;
-                if ((int) ($g->warehouse_id ?? 0) !== (int) ($slot->warehouse_id ?? 0)) continue;
+                if ($gid <= 0) {
+                    continue;
+                }
+                if ((int) ($g->warehouse_id ?? 0) !== (int) ($slot->warehouse_id ?? 0)) {
+                    continue;
+                }
                 if (empty(($gateStatuses[$gid] ?? [])['is_conflict'])) {
                     $recommendedGateId = $gid;
                     break;
@@ -245,7 +250,9 @@ class SlotLifecycleController extends Controller
         if ($recommendedGateId === null) {
             foreach ($gates as $g) {
                 $gid = (int) ($g->id ?? 0);
-                if ($gid <= 0) continue;
+                if ($gid <= 0) {
+                    continue;
+                }
                 if (empty(($gateStatuses[$gid] ?? [])['is_conflict'])) {
                     $recommendedGateId = $gid;
                     break;
@@ -257,7 +264,7 @@ class SlotLifecycleController extends Controller
 
         // Compute waiting minutes (time since arrival) for waiting_reason requirement
         $waitingMinutes = 0;
-        if (!empty($slot->arrival_time)) {
+        if (! empty($slot->arrival_time)) {
             $arrivalDt = \Carbon\Carbon::parse($slot->arrival_time);
             $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
         }
@@ -313,6 +320,7 @@ class SlotLifecycleController extends Controller
         $conflicts = $this->findInProgressConflicts($actualGateId, $slotId);
         if (! empty($conflicts)) {
             $lines = $this->buildConflictLines($conflicts);
+
             return back()
                 ->withInput()
                 ->with('conflict_lines', $lines);
@@ -320,7 +328,7 @@ class SlotLifecycleController extends Controller
 
         // Check if waiting > 60 min → require waiting_reason
         $waitingMinutes = 0;
-        if (!empty($slot->arrival_time)) {
+        if (! empty($slot->arrival_time)) {
             $arrivalDt = \Carbon\Carbon::parse($slot->arrival_time);
             $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
         }
@@ -355,12 +363,12 @@ class SlotLifecycleController extends Controller
 
             if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
                 if ($isLate) {
-                    $this->slotService->logActivity($slotId, 'late_arrival', 'Truck Arrived Late at ' . $gateName);
+                    $this->slotService->logActivity($slotId, 'late_arrival', 'Truck Arrived Late at '.$gateName);
                 } else {
-                    $this->slotService->logActivity($slotId, 'early_arrival', 'Truck Arrived on Time/Early at ' . $gateName);
+                    $this->slotService->logActivity($slotId, 'early_arrival', 'Truck Arrived on Time/Early at '.$gateName);
                 }
             }
-            $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at ' . $gateName);
+            $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at '.$gateName);
         });
 
         if ($slotType === 'unplanned') {
@@ -449,7 +457,7 @@ class SlotLifecycleController extends Controller
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $slotInfo->actual_finish, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Data Completed with MAT DOC ' . $matDoc . ', Truck ' . $truckType . ', Vehicle ' . $vehicleNumber . ', Driver ' . $driverNumber);
+            $this->slotService->logActivity($slotId, 'status_change', 'Data Completed with MAT DOC '.$matDoc.', Truck '.$truckType.', Vehicle '.$vehicleNumber.', Driver '.$driverNumber);
         });
 
         return redirect()->route('slots.index')->with('success', 'Data completed');
@@ -470,7 +478,7 @@ class SlotLifecycleController extends Controller
             $currentSlot = DB::table('slots')->where('id', $excludeSlotId)->first();
             if ($currentSlot && $currentSlot->planned_duration) {
                 $finishTime = new \DateTime($actualStart);
-                $finishTime->modify('+' . (int) $currentSlot->planned_duration . ' minutes');
+                $finishTime->modify('+'.(int) $currentSlot->planned_duration.' minutes');
                 $estimatedFinish = $finishTime->format('Y-m-d H:i:s');
             } else {
                 $finishTime = new \DateTime($actualStart);
@@ -484,13 +492,13 @@ class SlotLifecycleController extends Controller
             ->whereIn('actual_gate_id', $laneGateIds)
             ->where('status', 'scheduled')
             ->where('id', '<>', $excludeSlotId)
-            ->where(function($query) use ($actualStart, $estimatedFinish) {
-                $query->where(function($sub) use ($actualStart, $estimatedFinish) {
+            ->where(function ($query) use ($actualStart, $estimatedFinish) {
+                $query->where(function ($sub) use ($actualStart, $estimatedFinish) {
                     $sub->where('planned_start', '>=', $actualStart)
                         ->where('planned_start', '<=', $estimatedFinish);
-                })->orWhere(function($sub) use ($actualStart, $estimatedFinish) {
+                })->orWhere(function ($sub) use ($actualStart) {
                     $sub->where('planned_start', '<=', $actualStart)
-                        ->whereRaw('(' . $this->slotService->getDateAddExpression('planned_start', 'planned_duration') . ') >= ?', [$actualStart]);
+                        ->whereRaw('('.$this->slotService->getDateAddExpression('planned_start', 'planned_duration').') >= ?', [$actualStart]);
                 });
             })
             ->get();
@@ -507,7 +515,7 @@ class SlotLifecycleController extends Controller
                     'status' => 'cancelled',
                     'blocking_risk' => 0,
                     'cancelled_reason' => 'Auto-cancelled: Truck started operation earlier at same gate',
-                    'cancelled_at' => now()
+                    'cancelled_at' => now(),
                 ]);
 
             $this->slotService->logActivity(

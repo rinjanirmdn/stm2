@@ -25,29 +25,29 @@ class UserStoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                'unique:md_users,nik'
+                'unique:md_users,nik',
             ],
             'email' => [
                 'required',
                 'string',
                 'max:50',
-                'unique:md_users,email'
+                'unique:md_users,email',
             ],
             'name' => [
                 'required',
                 'string',
-                'max:255'
+                'max:255',
             ],
             'password' => [
                 'required',
                 'string',
                 'min:8',
-                'confirmed'
+                'confirmed',
             ],
             'role' => [
                 'required',
                 'string',
-                'in:admin,section_head,operator,vendor,security,super_account,display_account'
+                'in:admin,section_head,operator,vendor,security,super_account,display_account',
             ],
             'vendor_code' => [
                 'nullable',

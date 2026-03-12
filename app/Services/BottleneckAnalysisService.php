@@ -28,7 +28,7 @@ class BottleneckAnalysisService
                 ->whereNotNull('s.arrival_time')
                 ->whereNotNull('s.actual_start')
                 ->whereIn('s.status', ['in_progress', 'completed'])
-                ->whereBetween('s.arrival_time', [$start . ' 00:00:00', $end . ' 23:59:59'])
+                ->whereBetween('s.arrival_time', [$start.' 00:00:00', $end.' 23:59:59'])
                 ->groupBy(['w.wh_code', 'g.gate_number', 's.direction'])
                 ->havingRaw("AVG({$waitExpr}) > ?", [0])
                 ->orderByDesc('avg_wait_minutes')
@@ -37,9 +37,9 @@ class BottleneckAnalysisService
                     g.gate_number,
                     s.direction,
                     COUNT(*) AS slot_count,
-                    AVG(' . $waitExpr . ') AS avg_wait_minutes,
-                    SUM(' . $waitExpr . ') AS total_wait_minutes,
-                    SUM(CASE WHEN ' . $waitExpr . ' > ? THEN 1 ELSE 0 END) AS long_wait_count
+                    AVG('.$waitExpr.') AS avg_wait_minutes,
+                    SUM('.$waitExpr.') AS total_wait_minutes,
+                    SUM(CASE WHEN '.$waitExpr.' > ? THEN 1 ELSE 0 END) AS long_wait_count
                 ', [$thresholdMinutes])
                 ->limit(20)
                 ->get();
@@ -73,9 +73,9 @@ class BottleneckAnalysisService
             $dirShort = $dir === 'inbound' ? 'In' : ($dir === 'outbound' ? 'Out' : ucfirst($dir));
 
             $labelParts = [];
-            $labelParts[] = $gateNo !== '' ? ('Gate ' . $gateNo) : 'Gate ?';
+            $labelParts[] = $gateNo !== '' ? ('Gate '.$gateNo) : 'Gate ?';
             if ($whCode !== '') {
-                $labelParts[] = '(' . $whCode . ')';
+                $labelParts[] = '('.$whCode.')';
             }
             if ($dirShort !== '') {
                 $labelParts[] = $dirShort;
@@ -130,7 +130,7 @@ class BottleneckAnalysisService
                 ->whereNotNull('s.arrival_time')
                 ->whereNotNull('s.actual_start')
                 ->whereIn('s.status', ['in_progress', 'completed'])
-                ->whereBetween('s.arrival_time', [$start . ' 00:00:00', $end . ' 23:59:59'])
+                ->whereBetween('s.arrival_time', [$start.' 00:00:00', $end.' 23:59:59'])
                 ->where('w.wh_code', $warehouseCode)
                 ->where('g.gate_number', $gateNumber)
                 ->where('s.direction', $direction)
@@ -166,7 +166,8 @@ class BottleneckAnalysisService
 
             return $result;
         } catch (\Throwable $e) {
-            \Log::error('Error fetching waiting reasons: ' . $e->getMessage());
+            \Log::error('Error fetching waiting reasons: '.$e->getMessage());
+
             return [];
         }
     }
@@ -184,7 +185,7 @@ class BottleneckAnalysisService
                 'g.gate_number',
                 'g.is_active',
                 'w.wh_name as warehouse_name',
-                'w.wh_code as warehouse_code'
+                'w.wh_code as warehouse_code',
             ])
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
@@ -262,13 +263,13 @@ class BottleneckAnalysisService
                 ->whereDate('s.planned_start', $date)
                 ->whereNotNull('s.arrival_time')
                 ->whereNotNull('s.actual_start')
-                ->selectRaw('AVG(' . $diffExpr . ') as avg_wait')
+                ->selectRaw('AVG('.$diffExpr.') as avg_wait')
                 ->value('avg_wait');
 
             $stats['avg_wait_time'] = $avgWait ? round((float) $avgWait, 2) : 0;
 
             // Get peak hour
-            $hourExpr = "EXTRACT(HOUR FROM COALESCE(s.actual_start, s.planned_start))";
+            $hourExpr = 'EXTRACT(HOUR FROM COALESCE(s.actual_start, s.planned_start))';
             if (DB::getDriverName() !== 'pgsql') {
                 $hourExpr = 'HOUR(COALESCE(s.actual_start, s.planned_start))';
             }
@@ -279,7 +280,7 @@ class BottleneckAnalysisService
                 })
                 ->where('g.id', $gateId)
                 ->whereDate('s.planned_start', $date)
-                ->selectRaw($hourExpr . ' as hour, COUNT(*) as slot_count')
+                ->selectRaw($hourExpr.' as hour, COUNT(*) as slot_count')
                 ->groupBy('hour')
                 ->orderByDesc('slot_count')
                 ->limit(1)
@@ -288,7 +289,6 @@ class BottleneckAnalysisService
             if ($peakHour) {
                 $stats['peak_hour'] = (int) ($peakHour->hour ?? 0);
             }
-
         } catch (\Throwable $e) {
             // Return default stats on error
         }
@@ -315,7 +315,7 @@ class BottleneckAnalysisService
                 ->whereDate('s.arrival_time', $date)
                 ->whereNotNull('s.arrival_time')
                 ->whereNotNull('s.actual_start')
-                ->selectRaw($diffExpr . ' as wait_minutes')
+                ->selectRaw($diffExpr.' as wait_minutes')
                 ->pluck('wait_minutes')
                 ->filter()
                 ->map(fn ($time) => (int) $time);
@@ -356,7 +356,7 @@ class BottleneckAnalysisService
                 ->whereDate('s.arrival_time', $date)
                 ->whereNotNull('s.arrival_time')
                 ->whereNotNull('s.actual_start')
-                ->whereRaw($diffExpr . ' > ?', [$thresholdMinutes])
+                ->whereRaw($diffExpr.' > ?', [$thresholdMinutes])
                 ->select([
                     'w.wh_code as warehouse_code',
                     'w.wh_name as warehouse_name',
@@ -366,7 +366,7 @@ class BottleneckAnalysisService
                     's.actual_start',
                     's.actual_finish',
                 ])
-                ->selectRaw($diffExpr . ' as wait_minutes')
+                ->selectRaw($diffExpr.' as wait_minutes')
                 ->orderByDesc('wait_minutes')
                 ->limit(10)
                 ->get();
@@ -399,7 +399,7 @@ class BottleneckAnalysisService
             $endDt = new \DateTime($end);
 
             while ($startDt <= $endDt) {
-                $periodEnd = (clone $startDt)->modify('+' . ($daysInterval - 1) . ' days');
+                $periodEnd = (clone $startDt)->modify('+'.($daysInterval - 1).' days');
                 if ($periodEnd > $endDt) {
                     $periodEnd = $endDt;
                 }
@@ -408,18 +408,18 @@ class BottleneckAnalysisService
                 $periodEndStr = $periodEnd->format('Y-m-d');
 
                 $avgWait = DB::table('slots as s')
-                    ->whereBetween('s.arrival_time', [$periodStart . ' 00:00:00', $periodEndStr . ' 23:59:59'])
+                    ->whereBetween('s.arrival_time', [$periodStart.' 00:00:00', $periodEndStr.' 23:59:59'])
                     ->whereNotNull('s.arrival_time')
                     ->whereNotNull('s.actual_start')
-                    ->selectRaw('AVG(' . $this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_start') . ') as avg_wait')
+                    ->selectRaw('AVG('.$this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_start').') as avg_wait')
                     ->value('avg_wait');
 
                 $trends[] = [
-                    'period' => $periodStart . ' - ' . $periodEndStr,
+                    'period' => $periodStart.' - '.$periodEndStr,
                     'avg_wait_minutes' => $avgWait ? round((float) $avgWait, 2) : 0,
                 ];
 
-                $startDt->modify('+' . $daysInterval . ' days');
+                $startDt->modify('+'.$daysInterval.' days');
             }
         } catch (\Throwable $e) {
             // Return empty trends on error
@@ -441,10 +441,10 @@ class BottleneckAnalysisService
                 ->whereNotNull('s.actual_start')
                 ->selectRaw('
                     COUNT(*) as total_slots,
-                    AVG(' . $diffExpr . ') as avg_wait,
-                    MIN(' . $diffExpr . ') as min_wait,
-                    MAX(' . $diffExpr . ') as max_wait,
-                    SUM(CASE WHEN ' . $diffExpr . ' > 30 THEN 1 ELSE 0 END) as long_wait_count
+                    AVG('.$diffExpr.') as avg_wait,
+                    MIN('.$diffExpr.') as min_wait,
+                    MAX('.$diffExpr.') as max_wait,
+                    SUM(CASE WHEN '.$diffExpr.' > 30 THEN 1 ELSE 0 END) as long_wait_count
                 ')
                 ->first();
 

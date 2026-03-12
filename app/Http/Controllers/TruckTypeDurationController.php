@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\TruckTypeDurationStoreRequest;
 use App\Http\Requests\TruckTypeDurationUpdateRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TruckTypeDurationController extends Controller
 {
@@ -91,6 +90,7 @@ class TruckTypeDurationController extends Controller
         }
 
         DB::table('md_truck')->where('id', $truckTypeDurationId)->delete();
+
         return redirect()->route('trucks.index')->with('success', 'Truck Type duration deleted successfully');
     }
 }

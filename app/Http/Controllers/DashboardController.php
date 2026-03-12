@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\DashboardStatsService;
 use App\Services\BottleneckAnalysisService;
+use App\Services\DashboardStatsService;
 use App\Services\GateStatusService;
 use App\Services\ScheduleTimelineService;
 use Carbon\Carbon;
-use DateInterval;
-use DatePeriod;
 use DateTime;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -22,8 +20,7 @@ class DashboardController extends Controller
         private readonly BottleneckAnalysisService $bottleneckService,
         private readonly GateStatusService $gateService,
         private readonly ScheduleTimelineService $timelineService
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request)
     {
@@ -56,7 +53,7 @@ class DashboardController extends Controller
     private function getDashboardDataCached(Request $request): array
     {
         $version = (string) Cache::get('st_realtime_version', '0');
-        $cacheKey = 'dashboard:data:' . sha1(json_encode([
+        $cacheKey = 'dashboard:data:'.sha1(json_encode([
             'uid' => Auth::id(),
             'path' => $request->path(),
             'query' => $request->query(),
@@ -156,13 +153,13 @@ class DashboardController extends Controller
 
         $pendingBookings = \App\Models\BookingRequest::query()
             ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
-            ->when($scheduleHasRange && $scheduleFromDt && $scheduleToDt, function($q) use ($scheduleFromDt, $scheduleToDt) {
+            ->when($scheduleHasRange && $scheduleFromDt && $scheduleToDt, function ($q) use ($scheduleFromDt, $scheduleToDt) {
                 return $q->whereBetween('planned_start', [$scheduleFromDt, $scheduleToDt]);
-            }, function($q) use ($scheduleDate) {
+            }, function ($q) use ($scheduleDate) {
                 return $q->whereDate('planned_start', $scheduleDate);
             })
             ->get(['id', 'status', 'direction', 'planned_start', 'supplier_name', 'po_number', 'request_number'])
-            ->map(function($booking) {
+            ->map(function ($booking) {
                 return [
                     'id' => null,
                     'status' => $booking->status,
@@ -216,7 +213,7 @@ class DashboardController extends Controller
             + (int) ($rangeStats['completed'] ?? 0)
             + (int) ($rangeStats['cancelled'] ?? 0);
 
-        $avgTimesByTruckTypeFormatted = (function() use ($avgTimesByTruckType) {
+        $avgTimesByTruckTypeFormatted = (function () use ($avgTimesByTruckType) {
             $master = [
                 'Container 40ft (Loose)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
                 'Container 40ft (Paletize)' => ['avg_lead_minutes' => null, 'avg_process_minutes' => null, 'total_count' => 0],
@@ -232,7 +229,7 @@ class DashboardController extends Controller
                     $master[$item->truck_type] = [
                         'avg_lead_minutes' => $item->avg_lead_minutes,
                         'avg_process_minutes' => $item->avg_process_minutes,
-                        'total_count' => (int)$item->total_count,
+                        'total_count' => (int) $item->total_count,
                     ];
                 }
             }
@@ -240,6 +237,7 @@ class DashboardController extends Controller
             foreach ($master as $name => $data) {
                 $result[] = array_merge(['truck_type' => $name], $data);
             }
+
             return $result;
         })();
 
@@ -344,11 +342,11 @@ class DashboardController extends Controller
         $dateFilter = $scheduleDate !== '' ? $scheduleDate : date('Y-m-d');
 
         $slotStats = DB::table('slots')
-            ->where(function($q) use ($dateFilter) {
+            ->where(function ($q) use ($dateFilter) {
                 $q->whereDate('actual_start', $dateFilter)
                     ->orWhereDate('planned_start', $dateFilter);
             })
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('slot_type')
                     ->orWhere('slot_type', '!=', 'unplanned');
             })
@@ -379,9 +377,9 @@ class DashboardController extends Controller
 
         $pendingCount = \App\Models\BookingRequest::query()
             ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
-            ->when($scheduleHasRange && $scheduleFromDt && $scheduleToDt, function($q) use ($scheduleFromDt, $scheduleToDt) {
+            ->when($scheduleHasRange && $scheduleFromDt && $scheduleToDt, function ($q) use ($scheduleFromDt, $scheduleToDt) {
                 return $q->whereBetween('planned_start', [$scheduleFromDt, $scheduleToDt]);
-            }, function($q) use ($dateFilter) {
+            }, function ($q) use ($dateFilter) {
                 return $q->whereDate('planned_start', $dateFilter);
             })
             ->count();
@@ -417,7 +415,7 @@ class DashboardController extends Controller
         foreach (['rangeStart', 'rangeEnd'] as $var) {
             $val = $$var;
             $dt = DateTime::createFromFormat('Y-m-d', $val);
-            if (!$dt || $dt->format('Y-m-d') !== $val) {
+            if (! $dt || $dt->format('Y-m-d') !== $val) {
                 $$var = $today;
             }
         }
@@ -447,15 +445,19 @@ class DashboardController extends Controller
         }
 
         $today = date('Y-m-d');
-        if ($dateFrom === '') $dateFrom = date('Y-m-d', strtotime('-30 days'));
-        if ($dateTo === '') $dateTo = $today;
+        if ($dateFrom === '') {
+            $dateFrom = date('Y-m-d', strtotime('-30 days'));
+        }
+        if ($dateTo === '') {
+            $dateTo = $today;
+        }
 
         $reasons = $this->bottleneckService->getWaitingReasons($dateFrom, $dateTo, $warehouseCode, $gateNumber, $direction);
 
         return response()->json([
             'success' => true,
             'data' => $reasons,
-            'gate' => "Gate {$gateNumber} ({$warehouseCode}) - " . ucfirst($direction),
+            'gate' => "Gate {$gateNumber} ({$warehouseCode}) - ".ucfirst($direction),
         ]);
     }
 }

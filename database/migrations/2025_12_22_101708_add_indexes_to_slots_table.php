@@ -68,15 +68,42 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('slots', function (Blueprint $table) {
-            try { $table->dropIndex('slots_actual_gate_status_index'); } catch (\Throwable $e) {}
-            try { $table->dropIndex('slots_vendor_id_index'); } catch (\Throwable $e) {}
-            try { $table->dropIndex('slots_po_id_index'); } catch (\Throwable $e) {}
-            try { $table->dropIndex('slots_slot_type_index'); } catch (\Throwable $e) {}
-            try { $table->dropIndex('slots_mat_doc_index'); } catch (\Throwable $e) {}
-            try { $table->dropIndex('slots_sj_number_index'); } catch (\Throwable $e) {}
-            try { $table->dropIndex('slots_created_by_index'); } catch (\Throwable $e) {}
-            try { $table->dropIndex('slots_status_warehouse_planned_start_index'); } catch (\Throwable $e) {}
-            try { $table->dropIndex('slots_gate_start_status_index'); } catch (\Throwable $e) {}
+            try {
+                $table->dropIndex('slots_actual_gate_status_index');
+            } catch (\Throwable $e) {
+            }
+            try {
+                $table->dropIndex('slots_vendor_id_index');
+            } catch (\Throwable $e) {
+            }
+            try {
+                $table->dropIndex('slots_po_id_index');
+            } catch (\Throwable $e) {
+            }
+            try {
+                $table->dropIndex('slots_slot_type_index');
+            } catch (\Throwable $e) {
+            }
+            try {
+                $table->dropIndex('slots_mat_doc_index');
+            } catch (\Throwable $e) {
+            }
+            try {
+                $table->dropIndex('slots_sj_number_index');
+            } catch (\Throwable $e) {
+            }
+            try {
+                $table->dropIndex('slots_created_by_index');
+            } catch (\Throwable $e) {
+            }
+            try {
+                $table->dropIndex('slots_status_warehouse_planned_start_index');
+            } catch (\Throwable $e) {
+            }
+            try {
+                $table->dropIndex('slots_gate_start_status_index');
+            } catch (\Throwable $e) {
+            }
         });
     }
 };

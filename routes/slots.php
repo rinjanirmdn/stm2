@@ -1,9 +1,10 @@
 <?php
+
 /* Slot (Planned) Routes */
 
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\SlotController;
 use App\Http\Controllers\SlotAjaxController;
+use App\Http\Controllers\SlotController;
 use App\Http\Controllers\SlotLifecycleController;
 
 Route::prefix('slots')->name('slots.')->group(function () {

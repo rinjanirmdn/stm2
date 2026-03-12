@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 class TouchRealtimeVersion
 {
     private const VERSION_CACHE_KEY = 'st_realtime_version';
+
     private const THROTTLE_MS = 1000;
 
     public function handle(Request $request, Closure $next): Response
@@ -56,11 +57,21 @@ class TouchRealtimeVersion
     {
         $path = strtolower($request->path());
 
-        if (str_contains($path, 'booking')) return 'booking';
-        if (str_contains($path, 'unplanned')) return 'unplanned';
-        if (str_contains($path, 'slot')) return 'slot';
-        if (str_contains($path, 'gate')) return 'gate';
-        if (str_contains($path, 'user')) return 'user';
+        if (str_contains($path, 'booking')) {
+            return 'booking';
+        }
+        if (str_contains($path, 'unplanned')) {
+            return 'unplanned';
+        }
+        if (str_contains($path, 'slot')) {
+            return 'slot';
+        }
+        if (str_contains($path, 'gate')) {
+            return 'gate';
+        }
+        if (str_contains($path, 'user')) {
+            return 'user';
+        }
 
         return 'slot';
     }
@@ -72,11 +83,21 @@ class TouchRealtimeVersion
     {
         $path = strtolower($request->path());
 
-        if (str_contains($path, 'create') || str_contains($path, 'store')) return 'created';
-        if (str_contains($path, 'delete')) return 'deleted';
-        if (str_contains($path, 'approve')) return 'approved';
-        if (str_contains($path, 'reject')) return 'rejected';
-        if (str_contains($path, 'cancel')) return 'cancelled';
+        if (str_contains($path, 'create') || str_contains($path, 'store')) {
+            return 'created';
+        }
+        if (str_contains($path, 'delete')) {
+            return 'deleted';
+        }
+        if (str_contains($path, 'approve')) {
+            return 'approved';
+        }
+        if (str_contains($path, 'reject')) {
+            return 'rejected';
+        }
+        if (str_contains($path, 'cancel')) {
+            return 'cancelled';
+        }
 
         return 'updated';
     }
