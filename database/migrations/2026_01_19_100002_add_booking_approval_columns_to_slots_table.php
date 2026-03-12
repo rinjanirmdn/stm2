@@ -22,9 +22,28 @@ return new class extends Migration
             DB::statement("ALTER TABLE slots MODIFY COLUMN status ENUM('scheduled', 'arrived', 'waiting', 'in_progress', 'completed', 'cancelled', 'pending_approval', 'rejected', 'pending_vendor_confirmation') DEFAULT 'scheduled'");
         } elseif ($driver === 'pgsql') {
             // PostgreSQL: Add new values to enum type
-            DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'pending_approval'");
-            DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'rejected'");
-            DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'pending_vendor_confirmation'");
+            try {
+                DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'pending_approval'");
+                DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'rejected'");
+                DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'pending_vendor_confirmation'");
+            } catch (\Exception $e) {
+                try {
+                    // Modern Laravel often uses check constraints instead of native enum types for Postgres
+                    $constraint = DB::selectOne("
+                        SELECT conname 
+                        FROM pg_constraint 
+                        JOIN pg_class ON conrelid = pg_class.oid 
+                        JOIN pg_attribute ON attrelid = pg_class.oid AND attnum = ANY(conkey) 
+                        WHERE pg_class.relname = 'slots' AND attname = 'status'
+                    ");
+                    if ($constraint && isset($constraint->conname)) {
+                        DB::statement("ALTER TABLE slots DROP CONSTRAINT {$constraint->conname}");
+                    }
+                    DB::statement("ALTER TABLE slots ADD CONSTRAINT slots_status_check CHECK (status::text = ANY (ARRAY['scheduled', 'arrived', 'waiting', 'in_progress', 'completed', 'cancelled', 'pending_approval', 'rejected', 'pending_vendor_confirmation']::text[]))");
+                } catch (\Exception $e2) {
+                    // Catch fallback errors
+                }
+            }
         }
         // SQLite doesn't enforce enum types, so no change needed
 
