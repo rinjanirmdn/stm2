@@ -1,0 +1,159 @@
+# =============================================================================
+# CI Pipeline — e-Docking Control System (STM2)
+# =============================================================================
+# Triggered on every push and pull request.
+# Jobs:
+#   1. lint        → PHP code style check (Laravel Pint)
+#   2. test        → PHPUnit tests with PostgreSQL
+#   3. build-assets→ Verify Vite/React/Tailwind build succeeds
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'hotfix/**']
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.2'
+  NODE_VERSION: '20'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Lint — PHP Code Style
+  # ---------------------------------------------------------------------------
+  lint:
+    name: 🎨 Lint (Pint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run Pint (dry-run)
+        run: vendor/bin/pint --test
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Test — PHPUnit with PostgreSQL
+  # ---------------------------------------------------------------------------
+  test:
+    name: 🧪 Tests (PHPUnit)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pdo_pgsql, pgsql, mbstring, xml, ctype, json, bcmath, gd
+          tools: composer:v2
+          coverage: xdebug
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Configure test environment
+        run: |
+          cat >> .env <<EOF
+          APP_ENV=testing
+          DB_CONNECTION=pgsql
+          DB_HOST=127.0.0.1
+          DB_PORT=5432
+          DB_DATABASE=testing
+          DB_USERNAME=postgres
+          DB_PASSWORD=postgres
+          DB_SCHEMA=public
+          CACHE_STORE=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          MAIL_MAILER=log
+          EOF
+
+      - name: Create database schema & run migrations
+        run: |
+          php artisan migrate --force
+
+      - name: Run PHPUnit tests
+        run: php artisan test --parallel --coverage-text
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Build Assets — Vite + React + Tailwind
+  # ---------------------------------------------------------------------------
+  build-assets:
+    name: 🏗️ Build Assets (Vite)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          echo "✅ Build output:"
+          ls -la public/build/
+          echo ""
+          echo "📦 Manifest:"
+          cat public/build/manifest.json | head -20

@@ -1,0 +1,120 @@
+# =============================================================================
+# CD Pipeline — Deploy to Production/Staging
+# =============================================================================
+# Triggered when CI passes on the main branch.
+# This is a template — enable the deployment strategy you use:
+#   • SSH deploy (rsync to VPS/server)
+#   • Docker deploy
+#   • Cloud platform (AWS, GCP, etc.)
+#
+# Currently configured for SSH/rsync deployment.
+# Uncomment and configure the appropriate section for your setup.
+# =============================================================================
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PHP_VERSION: '8.2'
+  NODE_VERSION: '20'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Deploy — Only runs if CI passed on main
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pdo_pgsql, pgsql, mbstring, xml, ctype, json, bcmath, gd
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Composer dependencies (production)
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Install Node dependencies & build assets
+        run: |
+          npm ci
+          npm run build
+
+      # =====================================================================
+      # OPTION A: SSH/Rsync Deploy (most common for VPS/dedicated servers)
+      # =====================================================================
+      # To use this, add these secrets in GitHub repo Settings > Secrets:
+      #   - SSH_PRIVATE_KEY  : your server's SSH private key
+      #   - SSH_HOST         : server IP/hostname
+      #   - SSH_USER         : SSH username  
+      #   - DEPLOY_PATH      : path on server (e.g. /var/www/stm2)
+      # =====================================================================
+      
+      # - name: Deploy via SSH
+      #   uses: easingthemes/ssh-deploy@v5
+      #   with:
+      #     SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     REMOTE_HOST: ${{ secrets.SSH_HOST }}
+      #     REMOTE_USER: ${{ secrets.SSH_USER }}
+      #     TARGET: ${{ secrets.DEPLOY_PATH }}
+      #     EXCLUDE: >-
+      #       .git/
+      #       .github/
+      #       node_modules/
+      #       tests/
+      #       storage/logs/
+      #       .env
+      #     SCRIPT_AFTER: |
+      #       cd ${{ secrets.DEPLOY_PATH }}
+      #       php artisan migrate --force
+      #       php artisan config:cache
+      #       php artisan route:cache
+      #       php artisan view:cache
+      #       php artisan queue:restart
+      #       echo "✅ Deployed successfully!"
+
+      # =====================================================================
+      # OPTION B: Docker Build & Push
+      # =====================================================================
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: ghcr.io/${{ github.repository }}:latest
+
+      - name: Deployment placeholder
+        run: |
+          echo "============================================"
+          echo "🚀 DEPLOYMENT READY"
+          echo "============================================"
+          echo ""
+          echo "CI passed! Assets are built and ready."
+          echo "To enable automatic deployment, configure one"
+          echo "of the deployment options in this workflow."
+          echo ""
+          echo "See: .github/workflows/deploy.yml"
+          echo "============================================"
