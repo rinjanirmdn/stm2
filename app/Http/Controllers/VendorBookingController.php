@@ -2,24 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Gate;
 use App\Models\BookingRequest;
+use App\Models\Gate;
 use App\Models\Slot;
 use App\Models\TruckTypeDuration;
 use App\Models\User;
-use App\Models\Warehouse;
+use App\Notifications\BookingRequestSubmitted;
 use App\Services\BookingApprovalService;
 use App\Services\PoSearchService;
 use App\Services\SlotService;
-use App\Notifications\BookingRequestSubmitted;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Schema;
 
 class VendorBookingController extends Controller
 {
@@ -48,8 +45,13 @@ class VendorBookingController extends Controller
         if ($aDigits !== '' && $bDigits !== '') {
             $aNorm = ltrim($aDigits, '0');
             $bNorm = ltrim($bDigits, '0');
-            if ($aNorm === '') $aNorm = '0';
-            if ($bNorm === '') $bNorm = '0';
+            if ($aNorm === '') {
+                $aNorm = '0';
+            }
+            if ($bNorm === '') {
+                $bNorm = '0';
+            }
+
             return $aNorm === $bNorm;
         }
 
@@ -126,7 +128,7 @@ class VendorBookingController extends Controller
                 $admin->notify(new BookingRequestSubmitted($bookingRequest));
             }
         } catch (\Throwable $e) {
-            Log::warning('Failed to send booking request notification: ' . $e->getMessage());
+            Log::warning('Failed to send booking request notification: '.$e->getMessage());
         }
     }
 
@@ -134,6 +136,7 @@ class VendorBookingController extends Controller
     {
         $user = Auth::user();
         $vendorCode = $user?->vendor_code;
+
         return trim((string) ($vendorCode ?? ''));
     }
 
@@ -205,25 +208,25 @@ class VendorBookingController extends Controller
             ->whereDate('planned_start', '>=', $rangeStart)
             ->whereDate('planned_start', '<=', $rangeEnd);
 
-        $pendingCount   = (clone $brBase)->where('status', BookingRequest::STATUS_PENDING)->count();
+        $pendingCount = (clone $brBase)->where('status', BookingRequest::STATUS_PENDING)->count();
         $scheduledCount = (clone $slotBase)->where('status', Slot::STATUS_SCHEDULED)->count();
-        $waitingCount   = (clone $slotBase)->where('status', Slot::STATUS_WAITING)->count();
-        $inProgCount    = (clone $slotBase)->where('status', Slot::STATUS_IN_PROGRESS)->count();
+        $waitingCount = (clone $slotBase)->where('status', Slot::STATUS_WAITING)->count();
+        $inProgCount = (clone $slotBase)->where('status', Slot::STATUS_IN_PROGRESS)->count();
         $completedCount = (clone $slotBase)->where('status', Slot::STATUS_COMPLETED)->count();
-        $rejectedCount  = (clone $brBase)->where('status', BookingRequest::STATUS_REJECTED)->count();
+        $rejectedCount = (clone $brBase)->where('status', BookingRequest::STATUS_REJECTED)->count();
         $cancelledCount = (clone $brBase)->where('status', BookingRequest::STATUS_CANCELLED)->count()
                         + (clone $slotBase)->where('status', Slot::STATUS_CANCELLED)->count();
 
         $stats = [
-            'pending'     => $pendingCount,
-            'scheduled'   => $scheduledCount,
-            'waiting'     => $waitingCount,
+            'pending' => $pendingCount,
+            'scheduled' => $scheduledCount,
+            'waiting' => $waitingCount,
             'in_progress' => $inProgCount,
-            'completed'   => $completedCount,
-            'rejected'    => $rejectedCount,
-            'cancelled'   => $cancelledCount,
+            'completed' => $completedCount,
+            'rejected' => $rejectedCount,
+            'cancelled' => $cancelledCount,
             // Dashboard "Total" card should only show core operational statuses
-            'total'       => $scheduledCount + $waitingCount + $inProgCount + $completedCount,
+            'total' => $scheduledCount + $waitingCount + $inProgCount + $completedCount,
         ];
 
         // Get recent bookings (show both pending BR and converted slots)
@@ -275,14 +278,14 @@ class VendorBookingController extends Controller
         $arrivalSlots = Slot::where('requested_by', $userId)
             ->whereNotNull('arrival_time')
             ->whereNotNull('planned_start')
-            ->whereBetween('planned_start', [$rangeStart . ' 00:00:00', $rangeEnd . ' 23:59:59'])
+            ->whereBetween('planned_start', [$rangeStart.' 00:00:00', $rangeEnd.' 23:59:59'])
             ->get();
 
         // Untuk rata-rata waiting & process, tetap gunakan slot yang sudah completed
         $completedSlots = Slot::where('requested_by', $userId)
             ->where('status', Slot::STATUS_COMPLETED)
             ->whereNotNull('actual_finish')
-            ->whereBetween('actual_finish', [$rangeStart . ' 00:00:00', $rangeEnd . ' 23:59:59'])
+            ->whereBetween('actual_finish', [$rangeStart.' 00:00:00', $rangeEnd.' 23:59:59'])
             ->get();
 
         $onTime = 0;
@@ -324,9 +327,9 @@ class VendorBookingController extends Controller
         }
 
         return [
-            'on_time'     => $onTime,
-            'late'        => $late,
-            'avg_late'    => $lateArrivalCount > 0 ? round($totalLateArrival / $lateArrivalCount) : null,
+            'on_time' => $onTime,
+            'late' => $late,
+            'avg_late' => $lateArrivalCount > 0 ? round($totalLateArrival / $lateArrivalCount) : null,
             'avg_waiting' => $waitingCount > 0 ? round($totalWaiting / $waitingCount) : null,
             'avg_process' => $processCount > 0 ? round($totalProcess / $processCount) : null,
             'waiting_count' => $waitingCount,
@@ -453,15 +456,15 @@ class VendorBookingController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        if (!$user->vendor_code) {
-             return back()->withInput()->with('error', 'Account Configuration Error: Your user account is not linked to a Vendor profile.');
+        if (! $user->vendor_code) {
+            return back()->withInput()->with('error', 'Account Configuration Error: Your user account is not linked to a Vendor profile.');
         }
 
         // Normalize DD-MM-YYYY → Y-m-d (daterangepicker submits display format)
         $rawDate = $request->input('planned_date', '');
         if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $rawDate)) {
             $parts = explode('-', $rawDate);
-            $request->merge(['planned_date' => $parts[2] . '-' . $parts[1] . '-' . $parts[0]]);
+            $request->merge(['planned_date' => $parts[2].'-'.$parts[1].'-'.$parts[0]]);
         }
 
         $request->validate([
@@ -480,7 +483,7 @@ class VendorBookingController extends Controller
         $plannedDuration = $this->resolvePlannedDuration($request->truck_type);
         $plannedGateId = $this->assignAvailableGate($request->planned_date, $request->planned_time, $plannedDuration);
 
-        if (!$plannedGateId) {
+        if (! $plannedGateId) {
             return back()->withInput()->with('error', 'No available gates at the selected time for the selected truck type. Please choose a different time or truck type.');
         }
 
@@ -489,12 +492,12 @@ class VendorBookingController extends Controller
             ->with('warehouse')
             ->first();
 
-        if (!$gate) {
+        if (! $gate) {
             return back()->withInput()->with('error', 'Unable to assign an active gate.');
         }
 
         $warehouseId = $gate->warehouse_id;
-        $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
+        $plannedStart = $request->planned_date.' '.$request->planned_time.':00';
         try {
             $plannedStartAt = Carbon::createFromFormat('Y-m-d H:i:s', $plannedStart);
         } catch (\Throwable $e) {
@@ -510,6 +513,7 @@ class VendorBookingController extends Controller
             if (\App\Helpers\HolidayHelper::isHoliday($plannedStartAt)) {
                 $holidayName = \App\Helpers\HolidayHelper::getHolidayName($plannedStartAt);
                 $msg = $holidayName ? "Booking date is a holiday: {$holidayName}." : 'Booking date cannot be on a holiday.';
+
                 return back()->withInput()->with('error', $msg);
             }
         } catch (\Exception $e) {
@@ -547,11 +551,11 @@ class VendorBookingController extends Controller
         // Validate against SAP remaining quantities
         $vendorCode = $this->getVendorCodeForUser();
         $poDetail = $this->poSearchService->getPoDetail($poNumber);
-        if (!$poDetail) {
+        if (! $poDetail) {
             return back()->withInput()->with('error', 'PO/DO not found in SAP.');
         }
         $poVendorCode = trim((string) ($poDetail['vendor_code'] ?? ''));
-        if ($poVendorCode === '' || !$this->vendorCodesMatch($poVendorCode, $vendorCode)) {
+        if ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode)) {
             return back()->withInput()->with('error', 'PO/DO is not assigned to your vendor.');
         }
         $direction = $this->resolveDirection($poDetail);
@@ -566,7 +570,7 @@ class VendorBookingController extends Controller
                 'po_number' => $poNumber,
                 'supplier_code' => $poDetail['supplier_code'] ?? null,
                 'supplier_name' => $poDetail['supplier_name'] ?? ($poDetail['vendor_name'] ?? null),
-                'doc_date' => !empty($poDetail['doc_date']) ? $poDetail['doc_date'] : null,
+                'doc_date' => ! empty($poDetail['doc_date']) ? $poDetail['doc_date'] : null,
                 'direction' => $direction,
                 'planned_start' => $plannedStart,
                 'planned_duration' => $plannedDuration,
@@ -589,7 +593,7 @@ class VendorBookingController extends Controller
         } catch (\Throwable $e) {
             return back()
                 ->withInput()
-                ->with('error', 'Failed to submit booking: ' . $e->getMessage());
+                ->with('error', 'Failed to submit booking: '.$e->getMessage());
         }
     }
 
@@ -631,9 +635,9 @@ class VendorBookingController extends Controller
         try {
             $reason = trim((string) $request->reason);
             $actorName = trim((string) ($user->name ?? $user->full_name ?? $user->username ?? 'Vendor'));
-            $notes = 'Cancelled by ' . $actorName;
+            $notes = 'Cancelled by '.$actorName;
             if ($reason !== '') {
-                $notes .= ': ' . $reason;
+                $notes .= ': '.$reason;
             }
 
             $booking->update([
@@ -656,7 +660,7 @@ class VendorBookingController extends Controller
                 ->route('vendor.bookings.index')
                 ->with('success', 'Booking cancelled successfully.');
         } catch (\Throwable $e) {
-            return back()->with('error', 'Failed to cancel booking: ' . $e->getMessage());
+            return back()->with('error', 'Failed to cancel booking: '.$e->getMessage());
         }
     }
 
@@ -695,20 +699,22 @@ class VendorBookingController extends Controller
 
             $isToday = $date === now()->format('Y-m-d');
             $minAllowed = now()->addHours(4)->seconds(0);
-            $disabledTimes = Cache::get('admin_gates_disabled_times_' . $date, []);
-            $forcedTimes = Cache::get('admin_gates_forced_times_' . $date, []);
-            if (!is_array($disabledTimes)) {
+            $disabledTimes = Cache::get('admin_gates_disabled_times_'.$date, []);
+            $forcedTimes = Cache::get('admin_gates_forced_times_'.$date, []);
+            if (! is_array($disabledTimes)) {
                 $disabledTimes = [];
             }
-            if (!is_array($forcedTimes)) {
+            if (! is_array($forcedTimes)) {
                 $forcedTimes = [];
             }
             $disabledTimes = array_values(array_unique(array_filter(array_map(function ($time) {
                 $val = trim((string) $time);
+
                 return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
             }, $disabledTimes))));
             $forcedTimes = array_values(array_unique(array_filter(array_map(function ($time) {
                 $val = trim((string) $time);
+
                 return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
             }, $forcedTimes))));
             $disabledMap = array_fill_keys($disabledTimes, true);
@@ -744,7 +750,7 @@ class VendorBookingController extends Controller
             foreach ($pendingRequests as $requestRow) {
                 $start = Carbon::parse($requestRow->planned_start);
                 $slotStart = strtotime($start->format('H:i'));
-                $slotEnd = strtotime('+' . (int) $requestRow->planned_duration . ' minutes', $slotStart);
+                $slotEnd = strtotime('+'.(int) $requestRow->planned_duration.' minutes', $slotStart);
                 for ($currentTime = $slotStart; $currentTime < $slotEnd; $currentTime = strtotime('+30 minutes', $currentTime)) {
                     $timeKey = date('H:i', $currentTime);
                     $globalBlocked[$timeKey] = true;
@@ -752,7 +758,7 @@ class VendorBookingController extends Controller
             }
 
             // Get all existing slots for the date - optimized query
-            Log::info('Getting slots for date: ' . $date);
+            Log::info('Getting slots for date: '.$date);
             $existingSlots = Slot::whereDate('planned_start', $date)
                 ->whereIn('status', [
                     Slot::STATUS_PENDING_APPROVAL,
@@ -764,19 +770,19 @@ class VendorBookingController extends Controller
                 ->select('planned_start', 'planned_duration', 'planned_gate_id')
                 ->get();
 
-            Log::info('Found ' . $existingSlots->count() . ' slots');
+            Log::info('Found '.$existingSlots->count().' slots');
 
             // Build time conflicts map
             $timeConflicts = [];
             foreach ($existingSlots as $slot) {
                 $slotStart = strtotime($slot->planned_start->format('H:i'));
                 // Calculate end time based on duration
-                $slotEnd = strtotime('+ ' . $slot->planned_duration . ' minutes', $slotStart);
+                $slotEnd = strtotime('+ '.$slot->planned_duration.' minutes', $slotStart);
 
                 $currentTime = $slotStart;
                 while ($currentTime < $slotEnd) {
                     $timeKey = date('H:i', $currentTime);
-                    if (!isset($timeConflicts[$timeKey])) {
+                    if (! isset($timeConflicts[$timeKey])) {
                         $timeConflicts[$timeKey] = [];
                     }
                     $timeConflicts[$timeKey][] = $slot->planned_gate_id;
@@ -795,7 +801,7 @@ class VendorBookingController extends Controller
                 // Min 4 hours rule: times earlier than now+4h (only for today) should never show as available.
                 if ($isToday) {
                     try {
-                        $slotStartAt = Carbon::parse($date . ' ' . $time);
+                        $slotStartAt = Carbon::parse($date.' '.$time);
                         if ($slotStartAt->lessThan($minAllowed)) {
                             $availableSlots[] = [
                                 'time' => $time,
@@ -805,6 +811,7 @@ class VendorBookingController extends Controller
                                 'forced_by_admin' => false,
                                 'too_soon' => true,
                             ];
+
                             continue;
                         }
                     } catch (\Throwable $e) {
@@ -814,7 +821,7 @@ class VendorBookingController extends Controller
 
                 $durationSlices = [];
                 $windowStart = strtotime($time);
-                $windowEnd = strtotime('+' . $plannedDuration . ' minutes', $windowStart);
+                $windowEnd = strtotime('+'.$plannedDuration.' minutes', $windowStart);
                 for ($t = $windowStart; $t < $windowEnd; $t = strtotime('+30 minutes', $t)) {
                     $durationSlices[] = date('H:i', $t);
                 }
@@ -823,24 +830,24 @@ class VendorBookingController extends Controller
                 // If ANY slice is disabled by admin, the start time should be unavailable (unless forced on the start time).
                 $blockedByAdmin = false;
                 foreach ($durationSlices as $sliceTime) {
-                    if (!empty($disabledMap[$sliceTime])) {
+                    if (! empty($disabledMap[$sliceTime])) {
                         $blockedByAdmin = true;
                         break;
                     }
                 }
                 // Force is only evaluated on the selected start time.
-                $forcedByAdmin = !empty($forcedMap[$time]);
+                $forcedByAdmin = ! empty($forcedMap[$time]);
 
                 $windowGloballyBlocked = false;
                 foreach ($durationSlices as $sliceTime) {
-                    if (!empty($globalBlocked[$sliceTime])) {
+                    if (! empty($globalBlocked[$sliceTime])) {
                         $windowGloballyBlocked = true;
                         break;
                     }
                 }
 
                 if ($windowGloballyBlocked) {
-                    $isAvailable = !$blockedByAdmin && $forcedByAdmin;
+                    $isAvailable = ! $blockedByAdmin && $forcedByAdmin;
                     $availableSlots[] = [
                         'time' => $time,
                         'is_available' => $isAvailable,
@@ -848,12 +855,13 @@ class VendorBookingController extends Controller
                         'disabled_by_admin' => $blockedByAdmin,
                         'forced_by_admin' => $forcedByAdmin,
                     ];
+
                     continue;
                 }
 
                 $conflictedGates = [];
                 foreach ($durationSlices as $sliceTime) {
-                    if (!empty($timeConflicts[$sliceTime])) {
+                    if (! empty($timeConflicts[$sliceTime])) {
                         $conflictedGates = array_merge($conflictedGates, $timeConflicts[$sliceTime]);
                     }
                 }
@@ -888,17 +896,17 @@ class VendorBookingController extends Controller
             }
 
             return response()->json($response);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'Validation failed: ' . $e->getMessage()
+                'error' => 'Validation failed: '.$e->getMessage(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error in getAvailableSlots: ' . $e->getMessage());
+            Log::error('Error in getAvailableSlots: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to load availability: ' . $e->getMessage()
+                'error' => 'Failed to load availability: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -941,7 +949,7 @@ class VendorBookingController extends Controller
             'available_gates' => $availableGates,
             'message' => count($availableGates) > 0 ?
                 sprintf('%d gate(s) available', count($availableGates)) :
-                'No gates available at this time'
+                'No gates available at this time',
         ]);
     }
 
@@ -991,9 +999,9 @@ class VendorBookingController extends Controller
             $calendarData[] = [
                 'gate' => [
                     'id' => $gate->id,
-                    'name' => $gate->name ?? ($gate->warehouse->wh_code . '-' . $gate->gate_number),
+                    'name' => $gate->name ?? ($gate->warehouse->wh_code.'-'.$gate->gate_number),
                 ],
-                'slots' => $gateSlots->map(fn($s) => [
+                'slots' => $gateSlots->map(fn ($s) => [
                     'id' => $s->id,
                     'ticket_number' => $s->ticket_number,
                     'vendor_name' => $s->vendor_name ?? '-',
@@ -1072,9 +1080,10 @@ class VendorBookingController extends Controller
         if (! empty($slot->ticket_number)) {
             try {
                 $ticketNumber = (string) $slot->ticket_number;
-                $barcodePng = (string) Cache::remember('ticket_barcode_png_' . sha1($ticketNumber), 86400, function () use ($ticketNumber) {
+                $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($ticketNumber) {
                     $barcodeC = new \Milon\Barcode\DNS1D();
                     $barcodeC->setStorPath(storage_path('app/public/'));
+
                     return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
                 });
             } catch (\Throwable $e) {
@@ -1091,11 +1100,10 @@ class VendorBookingController extends Controller
             try {
                 $logoPath = public_path('img/logo-full.png');
                 if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
-                    return 'data:image/png;base64,' . base64_encode((string) file_get_contents($logoPath));
+                    return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
                 }
             } catch (\Throwable $e) {
             }
-            return null;
         });
 
         $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
@@ -1106,6 +1114,7 @@ class VendorBookingController extends Controller
                 }
             } catch (\Throwable $e) {
             }
+
             return '';
         });
 
@@ -1123,7 +1132,7 @@ class VendorBookingController extends Controller
             ->setOption('chroot', public_path())
             ->setPaper([0, 0, 252, 396], 'portrait');
 
-        return $pdf->stream('ticket-' . ($slot->ticket_number ?? 'unknown') . '.pdf');
+        return $pdf->stream('ticket-'.($slot->ticket_number ?? 'unknown').'.pdf');
     }
 
     /**
@@ -1131,7 +1140,7 @@ class VendorBookingController extends Controller
      */
     private function assignAvailableGate($date, $time, $plannedDuration = 60)
     {
-        $plannedStart = $date . ' ' . $time . ':00';
+        $plannedStart = $date.' '.$time.':00';
 
         // Get all active gates
         $gates = Gate::where('is_active', true)
@@ -1154,7 +1163,5 @@ class VendorBookingController extends Controller
                 return $gate->id;
             }
         }
-
-        return null;
     }
 }

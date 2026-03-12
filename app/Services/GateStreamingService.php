@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class GateStreamingService
 {
@@ -22,12 +21,12 @@ class GateStreamingService
             ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->leftJoin('slots as s', function ($join) {
                 $join->on('g.id', '=', 's.planned_gate_id')
-                     ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
-                     ->where(function($q) {
-                         $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
-                     })
-                     ->where('s.planned_start', '<=', now())
-                     ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)') . ' >= ?', [now()]);
+                    ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
+                    ->where(function ($q) {
+                        $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+                    })
+                    ->where('s.planned_start', '<=', now())
+                    ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)').' >= ?', [now()]);
             })
             ->select([
                 'g.id',
@@ -39,7 +38,7 @@ class GateStreamingService
                 's.status as slot_status',
                 's.planned_start',
                 's.planned_duration',
-                DB::raw($endExpr . ' as planned_finish'),
+                DB::raw($endExpr.' as planned_finish'),
                 's.actual_start',
                 's.actual_finish',
                 DB::raw("CASE
@@ -47,11 +46,11 @@ class GateStreamingService
                     WHEN s.status = 'arrived' OR s.status = 'waiting' THEN 'occupied'
                     WHEN COUNT(s.id) > 0 THEN 'reserved'
                     ELSE 'available'
-                END as gate_status")
+                END as gate_status"),
             ])
             ->groupBy('g.id', 'g.gate_number', 'g.is_active', 'w.wh_name', 'w.wh_code',
-                     's.po_number', 's.status', 's.planned_start', 's.planned_duration',
-                     's.actual_start', 's.actual_finish')
+                's.po_number', 's.status', 's.planned_start', 's.planned_duration',
+                's.actual_start', 's.actual_finish')
             ->get();
     }
 
@@ -76,7 +75,7 @@ class GateStreamingService
                     'actual_start' => $gate->actual_start,
                     'actual_finish' => $gate->actual_finish,
                 ] : null,
-                'timestamp' => now()->timestamp
+                'timestamp' => now()->timestamp,
             ];
 
             $data[] = $gateData;
@@ -112,7 +111,7 @@ class GateStreamingService
                 $callback([
                     'type' => 'gate_status',
                     'data' => $data,
-                    'timestamp' => now()->timestamp
+                    'timestamp' => now()->timestamp,
                 ]);
                 $lastUpdate = time();
             }
@@ -128,6 +127,7 @@ class GateStreamingService
     public function getCurrentGateStatuses(): array
     {
         $gates = $this->getGateStatuses();
+
         return $this->transformGateData($gates);
     }
 
@@ -142,12 +142,12 @@ class GateStreamingService
             ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
             ->leftJoin('slots as s', function ($join) {
                 $join->on('g.id', '=', 's.planned_gate_id')
-                     ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
-                     ->where(function($q) {
-                         $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
-                     })
-                     ->where('s.planned_start', '<=', now())
-                     ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)') . ' >= ?', [now()]);
+                    ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
+                    ->where(function ($q) {
+                        $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
+                    })
+                    ->where('s.planned_start', '<=', now())
+                    ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)').' >= ?', [now()]);
             })
             ->where('g.id', $gateId)
             ->select([
@@ -160,21 +160,21 @@ class GateStreamingService
                 's.status as slot_status',
                 's.planned_start',
                 's.planned_duration',
-                DB::raw($plannedFinishExpr . ' as planned_finish'),
+                DB::raw($plannedFinishExpr.' as planned_finish'),
                 's.actual_start',
                 's.actual_finish',
                 DB::raw("CASE
                     WHEN s.status = 'in_progress' THEN 'active'
                     WHEN s.status IN ('scheduled', 'arrived', 'waiting') THEN 'upcoming'
                     ELSE 'available'
-                END as gate_status")
+                END as gate_status"),
             ])
             ->groupBy('g.id', 'g.gate_number', 'g.is_active', 'w.wh_name', 'w.wh_code',
-                     's.po_number', 's.status', 's.planned_start', 's.planned_duration',
-                     's.actual_start', 's.actual_finish')
+                's.po_number', 's.status', 's.planned_start', 's.planned_duration',
+                's.actual_start', 's.actual_finish')
             ->first();
 
-        if (!$gate) {
+        if (! $gate) {
             return null;
         }
 
@@ -228,12 +228,12 @@ class GateStreamingService
             ->where('s.planned_gate_id', $gateId)
             ->where('s.id', '<>', $excludeSlotId)
             ->where('s.status', '!=', 'cancelled')
-            ->where(function($query) use ($startTime, $endTime) {
-                $query->where(function($sub) use ($startTime, $endTime) {
+            ->where(function ($query) use ($startTime, $endTime) {
+                $query->where(function ($sub) use ($startTime) {
                     // Slot starts during another slot's time
                     $sub->where('s.planned_start', '<=', $startTime)
-                        ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 60)') . ' >= ?', [$startTime]);
-                })->orWhere(function($sub) use ($startTime, $endTime) {
+                        ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 60)').' >= ?', [$startTime]);
+                })->orWhere(function ($sub) use ($startTime, $endTime) {
                     // Slot ends during another slot's time
                     $sub->where('s.planned_start', '<', $endTime)
                         ->where('s.planned_start', '>=', $startTime);

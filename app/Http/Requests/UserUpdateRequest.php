@@ -41,29 +41,29 @@ class UserUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('md_users', 'nik')->ignore($userId)
+                Rule::unique('md_users', 'nik')->ignore($userId),
             ],
             'email' => [
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('md_users', 'email')->ignore($userId)
+                Rule::unique('md_users', 'email')->ignore($userId),
             ],
             'name' => [
                 'required',
                 'string',
-                'max:255'
+                'max:255',
             ],
             'password' => [
                 'nullable',
                 'string',
                 'min:8',
-                'confirmed'
+                'confirmed',
             ],
             'role' => [
                 'required',
                 'string',
-                'in:admin,operator,section_head,vendor,security,super_account,display_account'
+                'in:admin,operator,section_head,vendor,security,super_account,display_account',
             ],
             'vendor_code' => [
                 'nullable',

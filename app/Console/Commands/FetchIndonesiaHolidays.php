@@ -3,12 +3,13 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class FetchIndonesiaHolidays extends Command
 {
     protected $signature = 'holidays:fetch {year?}';
+
     protected $description = 'Fetch Indonesia public holidays from API';
 
     public function handle()
@@ -22,7 +23,7 @@ class FetchIndonesiaHolidays extends Command
 
             if ($response->successful()) {
                 $holidays = $response->json();
-                
+
                 foreach ($holidays as $holiday) {
                     if (isset($holiday['holiday_date'])) {
                         DB::table('holidays')->updateOrInsert(
@@ -36,13 +37,13 @@ class FetchIndonesiaHolidays extends Command
                         );
                     }
                 }
-                
-                $this->info("Successfully synced " . count($holidays) . " holidays.");
+
+                $this->info('Successfully synced '.count($holidays).' holidays.');
             } else {
-                $this->error("Failed to fetch holidays from API.");
+                $this->error('Failed to fetch holidays from API.');
             }
         } catch (\Exception $e) {
-            $this->error("Error: " . $e->getMessage());
+            $this->error('Error: '.$e->getMessage());
         }
     }
 }

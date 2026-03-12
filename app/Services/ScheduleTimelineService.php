@@ -26,10 +26,10 @@ class ScheduleTimelineService
         }
 
         if ($from !== '') {
-            $scheduleQ->whereRaw($timeExpr . ' >= ?', [$from]);
+            $scheduleQ->whereRaw($timeExpr.' >= ?', [$from]);
         }
         if ($to !== '') {
-            $scheduleQ->whereRaw($timeExpr . ' <= ?', [$to]);
+            $scheduleQ->whereRaw($timeExpr.' <= ?', [$to]);
         }
 
         $scheduleRows = $scheduleQ
@@ -107,7 +107,7 @@ class ScheduleTimelineService
                     continue;
                 }
 
-                $groupKey = $whCode . '|' . $plannedStart;
+                $groupKey = $whCode.'|'.$plannedStart;
                 $wh2PlannedGroups[$groupKey][] = [$gateId, $idx];
             }
         }
@@ -120,11 +120,17 @@ class ScheduleTimelineService
             foreach ($refs as $ref) {
                 [$gateId, $idx] = $ref;
                 $b = $timelineBlocksByGate[$gateId][$idx] ?? null;
-                if (!$b) continue;
+                if (! $b) {
+                    continue;
+                }
 
                 $gateNum = strtoupper(trim((string) ($b['gate_number'] ?? '')));
-                if ($gateNum === 'B') $hasB = true;
-                if ($gateNum === 'C') $hasC = true;
+                if ($gateNum === 'B') {
+                    $hasB = true;
+                }
+                if ($gateNum === 'C') {
+                    $hasC = true;
+                }
 
                 $slotStatus = (string) ($b['slot_status'] ?? '');
                 $arrival = (string) ($b['arrival_time'] ?? '');
@@ -142,7 +148,9 @@ class ScheduleTimelineService
                 foreach ($refs as $ref) {
                     [$gateId, $idx] = $ref;
                     $b = $timelineBlocksByGate[$gateId][$idx] ?? null;
-                    if (!$b) continue;
+                    if (! $b) {
+                        continue;
+                    }
                     $gateNum = strtoupper(trim((string) ($b['gate_number'] ?? '')));
                     if ($gateNum === 'C') {
                         $timelineBlocksByGate[$gateId][$idx]['priority'] = $this->priorityMax(
@@ -177,15 +185,25 @@ class ScheduleTimelineService
     private function priorityRank(string $p): int
     {
         $t = strtolower(trim($p));
-        if ($t === 'high') return 3;
-        if ($t === 'medium') return 2;
+        if ($t === 'high') {
+            return 3;
+        }
+        if ($t === 'medium') {
+            return 2;
+        }
+
         return 1;
     }
 
     private function priorityFromRank(int $r): string
     {
-        if ($r >= 3) return 'High';
-        if ($r === 2) return 'Medium';
+        if ($r >= 3) {
+            return 'High';
+        }
+        if ($r === 2) {
+            return 'Medium';
+        }
+
         return 'Low';
     }
 
@@ -197,6 +215,7 @@ class ScheduleTimelineService
     private function priorityBump(string $p, int $delta): string
     {
         $r = $this->priorityRank($p) + (int) $delta;
+
         return $this->priorityFromRank(min(3, max(1, $r)));
     }
 
@@ -223,9 +242,9 @@ class ScheduleTimelineService
                     $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
-                ->where(function($q) use ($date) {
+                ->where(function ($q) use ($date) {
                     $q->whereDate('s.actual_start', $date)
-                      ->orWhereDate('s.planned_start', $date);
+                        ->orWhereDate('s.planned_start', $date);
                 })
                 ->selectRaw('
                     COUNT(*) as total_slots,
@@ -277,12 +296,12 @@ class ScheduleTimelineService
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
-            ->where(function($q) use ($date) {
+            ->where(function ($q) use ($date) {
                 $q->whereDate('s.actual_start', $date)
-                  ->orWhereDate('s.planned_start', $date);
+                    ->orWhereDate('s.planned_start', $date);
             })
             ->whereIn('s.status', ['scheduled', 'arrived', 'waiting'])
-            ->whereRaw($timeExpr . ' BETWEEN ? AND ?', [$currentTime, $endTime])
+            ->whereRaw($timeExpr.' BETWEEN ? AND ?', [$currentTime, $endTime])
             ->orderByRaw('COALESCE(s.actual_start, s.planned_start) ASC')
             ->select([
                 's.id',
@@ -314,9 +333,9 @@ class ScheduleTimelineService
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
-            ->where(function($q) use ($date) {
+            ->where(function ($q) use ($date) {
                 $q->whereDate('s.actual_start', $date)
-                  ->orWhereDate('s.planned_start', $date);
+                    ->orWhereDate('s.planned_start', $date);
             })
             ->whereRaw("s.arrival_time > {$lateExpr}")
             ->orderBy('s.arrival_time', 'desc')
@@ -349,13 +368,13 @@ class ScheduleTimelineService
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
-            ->where(function($q) use ($date) {
+            ->where(function ($q) use ($date) {
                 $q->whereDate('s.actual_start', $date)
-                  ->orWhereDate('s.planned_start', $date);
+                    ->orWhereDate('s.planned_start', $date);
             })
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('s.slot_type')
-                  ->orWhere('s.slot_type', '!=', 'unplanned');
+                    ->orWhere('s.slot_type', '!=', 'unplanned');
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
             ->whereNotNull('s.id')
@@ -386,13 +405,13 @@ class ScheduleTimelineService
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
-            ->where(function($q) use ($date) {
+            ->where(function ($q) use ($date) {
                 $q->whereDate('s.actual_start', $date)
-                  ->orWhereDate('s.planned_start', $date);
+                    ->orWhereDate('s.planned_start', $date);
             })
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('s.slot_type')
-                  ->orWhere('s.slot_type', '!=', 'unplanned');
+                    ->orWhere('s.slot_type', '!=', 'unplanned');
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
             ->whereNotNull('s.id')
@@ -435,18 +454,19 @@ class ScheduleTimelineService
                     'po_number' => $r->po_number,
                     'vendor_name' => $r->vendor_name,
                     'planned_start' => $r->planned_start,
-                    'data' => (array)$r
+                    'data' => (array) $r,
                 ]);
+
                 continue;
             }
 
-            $eta = !empty($r->planned_start) ? date('H:i', strtotime((string) $r->planned_start)) : '-';
+            $eta = ! empty($r->planned_start) ? date('H:i', strtotime((string) $r->planned_start)) : '-';
             $estFinish = '-';
 
-            if (!empty($r->planned_start) && !empty($r->planned_duration)) {
+            if (! empty($r->planned_start) && ! empty($r->planned_duration)) {
                 try {
                     $dt = new \DateTime((string) $r->planned_start);
-                    $dt->modify('+' . (int) $r->planned_duration . ' minutes');
+                    $dt->modify('+'.(int) $r->planned_duration.' minutes');
                     $estFinish = $dt->format('H:i');
                 } catch (\Throwable $e) {
                     $estFinish = '-';
@@ -458,7 +478,7 @@ class ScheduleTimelineService
             if ($status === 'in_progress') {
                 $statusClass = 'st-status-processing';
             } elseif ($status === 'completed') {
-                $statusClass = !empty($r->is_late) ? 'st-status-late' : 'st-status-on-time';
+                $statusClass = ! empty($r->is_late) ? 'st-status-late' : 'st-status-on-time';
             }
 
             $gateLabel = $this->slotService->getGateDisplayName((string) ($r->warehouse_code ?? ''), (string) ($r->gate_number ?? ''));
@@ -494,7 +514,7 @@ class ScheduleTimelineService
 
         foreach ($rows as $r) {
             $delayMinutes = 0;
-            if (!empty($r->planned_start) && !empty($r->arrival_time)) {
+            if (! empty($r->planned_start) && ! empty($r->arrival_time)) {
                 try {
                     $planned = new \DateTime((string) $r->planned_start);
                     $arrival = new \DateTime((string) $r->arrival_time);
@@ -513,8 +533,8 @@ class ScheduleTimelineService
                 'vendor_name' => (string) ($r->vendor_name ?? '-'),
                 'warehouse_name' => (string) ($r->warehouse_name ?? ''),
                 'gate_label' => $gateLabel,
-                'planned_time' => !empty($r->planned_start) ? date('H:i', strtotime((string) $r->planned_start)) : '-',
-                'arrival_time' => !empty($r->arrival_time) ? date('H:i', strtotime((string) $r->arrival_time)) : '-',
+                'planned_time' => ! empty($r->planned_start) ? date('H:i', strtotime((string) $r->planned_start)) : '-',
+                'arrival_time' => ! empty($r->arrival_time) ? date('H:i', strtotime((string) $r->arrival_time)) : '-',
                 'delay_minutes' => $delayMinutes,
                 'status' => (string) ($r->status ?? ''),
             ];
@@ -535,7 +555,7 @@ class ScheduleTimelineService
         $gateLabel = $this->slotService->getGateDisplayName((string) ($r->warehouse_code ?? ''), (string) ($r->gate_number ?? ''));
 
         $plannedEndStr = '';
-        if (!empty($r->planned_start) && (int) ($r->planned_duration ?? 0) > 0) {
+        if (! empty($r->planned_start) && (int) ($r->planned_duration ?? 0) > 0) {
             $plannedEndStr = (string) ($this->timeService->calculateEstimatedFinish(
                 (string) $r->planned_start,
                 (int) ($r->planned_duration ?? 0)
@@ -543,7 +563,7 @@ class ScheduleTimelineService
         }
 
         $waitingMinutes = 0;
-        if (!empty($r->arrival_time) && !empty($r->actual_start)) {
+        if (! empty($r->arrival_time) && ! empty($r->actual_start)) {
             try {
                 $adt = new \DateTime((string) $r->arrival_time);
                 $sdt = new \DateTime((string) $r->actual_start);
@@ -551,7 +571,7 @@ class ScheduleTimelineService
             } catch (\Throwable $e) {
                 $waitingMinutes = 0;
             }
-        } elseif ($status === 'waiting' && !empty($r->arrival_time) && empty($r->actual_start)) {
+        } elseif ($status === 'waiting' && ! empty($r->arrival_time) && empty($r->actual_start)) {
             try {
                 $adt = new \DateTime((string) $r->arrival_time);
                 $now = new \DateTime();
@@ -578,19 +598,19 @@ class ScheduleTimelineService
             'gate_id' => (int) ($r->gate_id ?? 0),
             'gate_number' => (string) ($r->gate_number ?? ''),
             'gate_label' => $gateLabel,
-            'planned_start' => !empty($r->planned_start) ? (string) $r->planned_start : '',
+            'planned_start' => ! empty($r->planned_start) ? (string) $r->planned_start : '',
             'planned_duration' => (int) ($r->planned_duration ?? 0),
             'planned_end' => $plannedEndStr,
-            'arrival_time' => !empty($r->arrival_time) ? (string) $r->arrival_time : '',
-            'actual_start' => !empty($r->actual_start) ? (string) $r->actual_start : '',
-            'actual_finish' => !empty($r->actual_finish) ? (string) $r->actual_finish : '',
+            'arrival_time' => ! empty($r->arrival_time) ? (string) $r->arrival_time : '',
+            'actual_start' => ! empty($r->actual_start) ? (string) $r->actual_start : '',
+            'actual_finish' => ! empty($r->actual_finish) ? (string) $r->actual_finish : '',
             'priority' => $priority,
             'performance' => $performance,
             'waiting_minutes' => $waitingMinutes,
             'achieve_label' => $achieveLabel,
         ];
 
-        if ($status !== 'cancelled' && !empty($r->planned_start) && (int) ($r->planned_duration ?? 0) > 0) {
+        if ($status !== 'cancelled' && ! empty($r->planned_start) && (int) ($r->planned_duration ?? 0) > 0) {
             $plannedDuration = (int) ($r->planned_duration ?? 0);
             $plannedPos = $this->timeService->getTimeSlotPosition((string) $r->planned_start, $plannedDuration);
             $blocks[] = array_merge($base, [
@@ -606,7 +626,7 @@ class ScheduleTimelineService
         $now = new \DateTime();
         $slotDateStr = '';
         foreach (['planned_start', 'actual_start', 'arrival_time'] as $f) {
-            if (!empty($r->{$f})) {
+            if (! empty($r->{$f})) {
                 try {
                     $slotDateStr = (new \DateTime((string) $r->{$f}))->format('Y-m-d');
                     break;
@@ -622,33 +642,33 @@ class ScheduleTimelineService
         $actualEndStr = '';
 
         if (in_array($status, ['waiting', 'arrived'], true)) {
-            if (!empty($r->arrival_time)) {
+            if (! empty($r->arrival_time)) {
                 $actualLaneStatus = 'waiting';
                 $actualStartStr = (string) $r->arrival_time;
                 if ($plannedEndStr !== '') {
                     $actualEndStr = $plannedEndStr;
-                } elseif (!empty($r->actual_start)) {
+                } elseif (! empty($r->actual_start)) {
                     $actualEndStr = (string) $r->actual_start;
-                } elseif (!empty($r->actual_finish)) {
+                } elseif (! empty($r->actual_finish)) {
                     $actualEndStr = (string) $r->actual_finish;
                 } elseif ($isToday) {
                     $actualEndStr = $now->format('Y-m-d H:i:s');
                 }
             }
         } elseif ($status === 'in_progress') {
-            if (!empty($r->actual_start)) {
+            if (! empty($r->actual_start)) {
                 $actualLaneStatus = 'in_progress';
                 $actualStartStr = (string) $r->actual_start;
                 if ($plannedEndStr !== '') {
                     $actualEndStr = $plannedEndStr;
-                } elseif (!empty($r->actual_finish)) {
+                } elseif (! empty($r->actual_finish)) {
                     $actualEndStr = (string) $r->actual_finish;
                 } elseif ($isToday) {
                     $actualEndStr = $now->format('Y-m-d H:i:s');
                 }
             }
         } elseif ($status === 'completed') {
-            if (!empty($r->arrival_time) && !empty($r->actual_finish)) {
+            if (! empty($r->arrival_time) && ! empty($r->actual_finish)) {
                 $actualLaneStatus = 'completed';
                 $actualStartStr = (string) $r->arrival_time;
                 $actualEndStr = (string) $r->actual_finish;
@@ -660,7 +680,7 @@ class ScheduleTimelineService
 
             $plannedDurationForEnd = (int) ($r->planned_duration ?? 0);
             $usePlannedEndForDuration = in_array($actualLaneStatus, ['waiting', 'in_progress'], true)
-                && !empty($r->planned_start)
+                && ! empty($r->planned_start)
                 && $plannedDurationForEnd > 0;
 
             if ($usePlannedEndForDuration) {
@@ -711,6 +731,7 @@ class ScheduleTimelineService
         } elseif ($blockingRisk === 1) {
             return 'Medium';
         }
+
         return 'Low';
     }
 
@@ -721,18 +742,21 @@ class ScheduleTimelineService
     {
         $status = (string) ($r->status ?? '');
         if ($status === 'completed') {
-            if (!empty($r->planned_start) && (int) ($r->planned_duration ?? 0) > 0 && !empty($r->actual_finish)) {
+            if (! empty($r->planned_start) && (int) ($r->planned_duration ?? 0) > 0 && ! empty($r->actual_finish)) {
                 try {
                     $pStart = new \DateTime((string) $r->planned_start);
-                    $pEnd = (clone $pStart)->modify('+' . (int) $r->planned_duration . ' minutes');
+                    $pEnd = (clone $pStart)->modify('+'.(int) $r->planned_duration.' minutes');
                     $aEnd = new \DateTime((string) $r->actual_finish);
+
                     return ($aEnd->getTimestamp() > $pEnd->getTimestamp()) ? 'late' : 'ontime';
                 } catch (\Throwable $e) {
                     // fallback below
                 }
             }
-            return !empty($r->is_late) ? 'late' : 'ontime';
+
+            return ! empty($r->is_late) ? 'late' : 'ontime';
         }
+
         return '';
     }
 

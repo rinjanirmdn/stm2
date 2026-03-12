@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use DateTime;
+use Illuminate\Support\Facades\DB;
 
 class TimeCalculationService
 {
@@ -12,7 +12,7 @@ class TimeCalculationService
      */
     public function minutesDiff(?string $start, ?string $end): ?int
     {
-        if (!$start || !$end) {
+        if (! $start || ! $end) {
             return null;
         }
 
@@ -20,6 +20,7 @@ class TimeCalculationService
             $s = new DateTime($start);
             $e = new DateTime($end);
             $diff = $s->diff($e);
+
             return ($diff->days * 24 * 60) + ($diff->h * 60) + $diff->i;
         } catch (\Throwable $e) {
             return null;
@@ -31,7 +32,7 @@ class TimeCalculationService
      */
     public function isLateByPlannedStart(?string $plannedStart, string $actualTime): bool
     {
-        if (!$plannedStart) {
+        if (! $plannedStart) {
             return false;
         }
 
@@ -39,6 +40,7 @@ class TimeCalculationService
             $p = new DateTime($plannedStart);
             $p->modify('+15 minutes');
             $a = new DateTime($actualTime);
+
             return $a > $p;
         } catch (\Throwable $e) {
             return false;
@@ -154,7 +156,7 @@ class TimeCalculationService
         }
 
         // Fallback to is_late flag
-        return !empty($isLateFlag) ? 'late' : 'on_time';
+        return ! empty($isLateFlag) ? 'late' : 'on_time';
     }
 
     /**
@@ -168,10 +170,10 @@ class TimeCalculationService
 
         $m = (int) $minutes;
         $h = $m / 60;
-        $out = $m . ' min';
+        $out = $m.' min';
 
         if ($h >= 1) {
-            $out .= ' (' . rtrim(rtrim(number_format($h, 2), '0'), '.') . ' h)';
+            $out .= ' ('.rtrim(rtrim(number_format($h, 2), '0'), '.').' h)';
         }
 
         return $out;
@@ -182,13 +184,14 @@ class TimeCalculationService
      */
     public function calculateEstimatedFinish(?string $startTime, ?int $durationMinutes): ?string
     {
-        if (!$startTime || !$durationMinutes) {
+        if (! $startTime || ! $durationMinutes) {
             return null;
         }
 
         try {
             $start = new DateTime($startTime);
-            $start->modify('+' . $durationMinutes . ' minutes');
+            $start->modify('+'.$durationMinutes.' minutes');
+
             return $start->format('Y-m-d H:i:s');
         } catch (\Throwable $e) {
             return null;
@@ -215,7 +218,7 @@ class TimeCalculationService
                     $width = $durationMinutes;
                     try {
                         $dtFinish = clone $dt;
-                        $dtFinish->modify('+' . (int) $durationMinutes . ' minutes');
+                        $dtFinish->modify('+'.(int) $durationMinutes.' minutes');
                         $estFinish = $dtFinish->format('H:i');
                     } catch (\Throwable $e) {
                         $estFinish = '-';
@@ -241,7 +244,7 @@ class TimeCalculationService
         ?string $start1, ?string $end1,
         ?string $start2, ?string $end2
     ): bool {
-        if (!$start1 || !$end1 || !$start2 || !$end2) {
+        if (! $start1 || ! $end1 || ! $start2 || ! $end2) {
             return false;
         }
 
@@ -284,7 +287,7 @@ class TimeCalculationService
     {
         $fromDb = DB::table('md_truck')->orderBy('truck_type')->pluck('truck_type')->all();
 
-        if (!empty($fromDb)) {
+        if (! empty($fromDb)) {
             return array_values(array_filter(array_map('strval', $fromDb)));
         }
 
@@ -309,6 +312,7 @@ class TimeCalculationService
     {
         try {
             $dt = new DateTime($time);
+
             return $dt->format('Y-m-d H:i:s');
         } catch (\Throwable $e) {
             return null;
@@ -328,13 +332,14 @@ class TimeCalculationService
      */
     public function addMinutes(?string $time, int $minutes): ?string
     {
-        if (!$time) {
+        if (! $time) {
             return null;
         }
 
         try {
             $dt = new DateTime($time);
-            $dt->modify('+' . $minutes . ' minutes');
+            $dt->modify('+'.$minutes.' minutes');
+
             return $dt->format('Y-m-d H:i:s');
         } catch (\Throwable $e) {
             return null;
@@ -346,13 +351,14 @@ class TimeCalculationService
      */
     public function isWithinBusinessHours(?string $time): bool
     {
-        if (!$time) {
+        if (! $time) {
             return false;
         }
 
         try {
             $dt = new DateTime($time);
             $hour = (int) $dt->format('H');
+
             return $hour >= 8 && $hour < 17;
         } catch (\Throwable $e) {
             return false;

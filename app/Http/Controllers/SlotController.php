@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
-use App\Services\SlotService;
+use App\Models\Slot;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
+use App\Services\SlotService;
 use App\Services\TimeCalculationService;
-use App\Models\Slot;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,8 +25,7 @@ class SlotController extends Controller
         private readonly SlotConflictService $conflictService,
         private readonly SlotFilterService $filterService,
         private readonly TimeCalculationService $timeService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -54,7 +53,7 @@ class SlotController extends Controller
         // Apply page size limit
         $query = $this->filterService->applyPageSize($query, $pageSize);
 
-        $slotsCacheKey = 'slots:index:data:' . sha1(json_encode([
+        $slotsCacheKey = 'slots:index:data:'.sha1(json_encode([
             'uid' => Auth::id(),
             'query' => $request->query(),
             'version' => (string) Cache::get('st_realtime_version', '0'),
@@ -73,7 +72,7 @@ class SlotController extends Controller
 
         $warehouses = $filterOptions['warehouses'] ?? [];
         foreach ($warehouses as $wh) {
-            if (is_object($wh) && !isset($wh->name) && isset($wh->wh_name)) {
+            if (is_object($wh) && ! isset($wh->name) && isset($wh->wh_name)) {
                 $wh->name = $wh->wh_name;
             }
         }
@@ -115,7 +114,6 @@ class SlotController extends Controller
             'warehouses' => $warehouses,
             'gates' => $filterOptions['gates'],
         ]);
-
     }
 
     public function create()
@@ -192,7 +190,7 @@ class SlotController extends Controller
 
         $poNumber = $truckNumber;
         $poDetail = $this->poSearchService->getPoDetail($poNumber);
-        if (!$poDetail) {
+        if (! $poDetail) {
             return back()->withInput()->with('error', 'PO/DO not found in SAP.');
         }
 
@@ -211,7 +209,7 @@ class SlotController extends Controller
         }
 
         $plannedEndDt = clone $plannedStartDt;
-        $plannedEndDt->modify('+' . (int) $plannedDurationMinutes . ' minutes');
+        $plannedEndDt->modify('+'.(int) $plannedDurationMinutes.' minutes');
 
         if ($plannedGateId !== null) {
             $laneGroup = $this->slotService->getGateLaneGroup($plannedGateId);
@@ -226,7 +224,7 @@ class SlotController extends Controller
             $overlapCount = (int) DB::table('slots')
                 ->whereIn('planned_gate_id', $laneGateIds)
                 ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
-                ->whereRaw('? < ' . $this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
+                ->whereRaw('? < '.$this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
                 ->whereRaw('? > planned_start', [$endStr])
                 ->count();
 
@@ -279,7 +277,6 @@ class SlotController extends Controller
         if ($slotId <= 0) {
             return back()->withInput()->with('error', 'Failed to create dat');
         }
-
 
         // Calculate blocking risk immediately after creation (real-time accuracy)
         $blockingRisk = $this->slotService->calculateBlockingRisk(
@@ -409,7 +406,7 @@ class SlotController extends Controller
         }
 
         $plannedEndDt = clone $plannedStartDt;
-        $plannedEndDt->modify('+' . (int) $plannedDurationMinutes . ' minutes');
+        $plannedEndDt->modify('+'.(int) $plannedDurationMinutes.' minutes');
 
         if ($plannedGateId !== null) {
             $laneGroup = $this->slotService->getGateLaneGroup($plannedGateId);
@@ -425,7 +422,7 @@ class SlotController extends Controller
                 ->where('id', '<>', $slotId)
                 ->whereIn('planned_gate_id', $laneGateIds)
                 ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
-                ->whereRaw('? < ' . $this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
+                ->whereRaw('? < '.$this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
                 ->whereRaw('? > planned_start', [$endStr])
                 ->count();
 
@@ -439,7 +436,7 @@ class SlotController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes) {
+        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes) {
             DB::table('slots')->where('id', $slotId)->update([
                 'po_number' => $truckNumber,
                 'direction' => $direction,
@@ -500,7 +497,7 @@ class SlotController extends Controller
         $isUnplanned = $slotType === 'unplanned';
 
         // Calculate blocking risk in real-time for detail page (always accurate)
-        if ((string) ($slot->status ?? '') !== 'cancelled' && !$isUnplanned) {
+        if ((string) ($slot->status ?? '') !== 'cancelled' && ! $isUnplanned) {
             $currentRiskLevel = $this->slotService->calculateBlockingRisk(
                 (int) $slot->warehouse_id,
                 $slot->planned_gate_id ? (int) $slot->planned_gate_id : null,
@@ -521,7 +518,7 @@ class SlotController extends Controller
             $st = (string) ($slot->status ?? '');
             if (in_array($st, ['scheduled', 'arrived', 'waiting', 'in_progress', 'completed'], true)) {
                 $warehouseId = (int) ($slot->warehouse_id ?? 0);
-                $gateId = !empty($slot->planned_gate_id) ? (int) $slot->planned_gate_id : null;
+                $gateId = ! empty($slot->planned_gate_id) ? (int) $slot->planned_gate_id : null;
                 $ticket = $this->slotService->generateTicketNumber($warehouseId, $gateId);
                 DB::table('slots')->where('id', $slotId)->update([
                     'ticket_number' => $ticket,
@@ -545,7 +542,7 @@ class SlotController extends Controller
             $totalLeadTimeMinutes = $leadMinutes + $processMinutes;
         } elseif ($processMinutes !== null) {
             $totalLeadTimeMinutes = $processMinutes;
-        } elseif (!empty($slot->arrival_time) && !empty($slot->actual_finish)) {
+        } elseif (! empty($slot->arrival_time) && ! empty($slot->actual_finish)) {
             $totalLeadTimeMinutes = $this->minutesDiff($slot->arrival_time, $slot->actual_finish);
         }
 
@@ -629,7 +626,7 @@ class SlotController extends Controller
             ]);
 
             // Clear availability cache to restore slot availability
-            if ($slot && !empty($slot->planned_start)) {
+            if ($slot && ! empty($slot->planned_start)) {
                 $cancelDate = $slot->planned_start instanceof \DateTimeInterface
                     ? $slot->planned_start->format('Y-m-d')
                     : date('Y-m-d', strtotime((string) $slot->planned_start));

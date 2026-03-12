@@ -10,7 +10,9 @@ use Illuminate\Notifications\Notification;
 class BookingRejected extends Notification
 {
     private ?Slot $slot;
+
     private ?BookingRequest $bookingRequest;
+
     private string $reason;
 
     /**
@@ -26,7 +28,7 @@ class BookingRejected extends Notification
 
     public function via(object $notifiable): array
     {
-        if (!empty($notifiable->email)) {
+        if (! empty($notifiable->email)) {
             return ['mail', 'database'];
         }
 
@@ -38,12 +40,14 @@ class BookingRejected extends Notification
         if ($this->slot) {
             return $this->slot->ticket_number ?? '-';
         }
+
         return $this->bookingRequest->request_number ?? $this->bookingRequest->po_number ?? '-';
     }
 
     private function getPlannedDate(): string
     {
         $start = $this->slot?->planned_start ?? $this->bookingRequest?->planned_start;
+
         return $start?->format('d-m-Y H:i') ?? '-';
     }
 
@@ -52,6 +56,7 @@ class BookingRejected extends Notification
         if ($this->reason !== '') {
             return $this->reason;
         }
+
         return $this->slot?->approval_notes ?? 'No reason provided';
     }
 
@@ -60,6 +65,7 @@ class BookingRejected extends Notification
         if ($this->slot) {
             return (int) $this->slot->id;
         }
+
         return (int) $this->bookingRequest->id;
     }
 
@@ -69,8 +75,8 @@ class BookingRejected extends Notification
         $plannedDate = $this->getPlannedDate();
         $reason = $this->getReason();
 
-        return (new MailMessage)
-            ->subject('Booking Rejected - ' . $ticketNumber)
+        return (new MailMessage())
+            ->subject('Booking Rejected - '.$ticketNumber)
             ->view('emails.booking-rejected', [
                 'ticketNumber' => $ticketNumber,
                 'plannedDate' => $plannedDate,
@@ -86,7 +92,7 @@ class BookingRejected extends Notification
 
         return [
             'title' => 'Booking Rejected',
-            'message' => 'Your booking ' . $ticketNumber . ' has been rejected.',
+            'message' => 'Your booking '.$ticketNumber.' has been rejected.',
             'action_url' => route('vendor.bookings.show', $id, false),
             'icon' => 'fas fa-times-circle',
             'color' => 'red',

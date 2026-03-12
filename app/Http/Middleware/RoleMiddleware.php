@@ -32,7 +32,7 @@ class RoleMiddleware
         }
 
         // 2. Fallback: Check via DB role_id (only if Spatie check didn't match)
-        if (!$hasRole && $user->role_id) {
+        if (! $hasRole && $user->role_id) {
             $userRoleName = \Illuminate\Support\Facades\DB::table('md_roles')
                 ->where('id', $user->role_id)
                 ->value('roles_name');

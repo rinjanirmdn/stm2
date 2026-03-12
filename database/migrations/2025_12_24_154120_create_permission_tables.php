@@ -23,6 +23,7 @@ return new class extends Migration
                 app('cache')
                     ->store(config('permission.cache.store') != 'default' ? config('permission.cache.store') : null)
                     ->forget(config('permission.cache.key'));
+
                 return;
             }
         } catch (\Throwable $e) {
@@ -80,7 +81,6 @@ return new class extends Migration
                 $table->primary([$pivotPermission, $columnNames['model_morph_key'], 'model_type'],
                     'model_has_permissions_permission_model_type_primary');
             }
-
         });
 
         Schema::create($tableNames['model_has_roles'], static function (Blueprint $table) use ($tableNames, $columnNames, $pivotRole, $teams) {

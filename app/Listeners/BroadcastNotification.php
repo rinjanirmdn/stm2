@@ -19,7 +19,7 @@ class BroadcastNotification
         }
 
         $notifiable = $event->notifiable;
-        if (!$notifiable || !isset($notifiable->id)) {
+        if (! $notifiable || ! isset($notifiable->id)) {
             return;
         }
 

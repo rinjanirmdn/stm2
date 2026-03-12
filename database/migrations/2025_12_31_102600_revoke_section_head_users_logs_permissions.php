@@ -8,13 +8,19 @@ return new class extends Migration
 {
     private function getRoleNameColumn(): string
     {
-        if (Schema::hasColumn('roles', 'roles_name')) return 'roles_name';
+        if (Schema::hasColumn('roles', 'roles_name')) {
+            return 'roles_name';
+        }
+
         return 'name';
     }
 
     private function getPermNameColumn(): string
     {
-        if (Schema::hasColumn('permissions', 'perm_name')) return 'perm_name';
+        if (Schema::hasColumn('permissions', 'perm_name')) {
+            return 'perm_name';
+        }
+
         return 'name';
     }
 
@@ -92,8 +98,5 @@ return new class extends Migration
         }
     }
 
-    public function down(): void
-    {
-    }
+    public function down(): void {}
 };
-

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\TransactionsExport;
 use App\Models\BookingRequest;
 use App\Models\Slot;
+use App\Services\ExportService;
 use App\Services\SlotService;
 use App\Services\TransactionReportService;
-use App\Services\ExportService;
-use App\Exports\TransactionsExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,27 +19,29 @@ class ReportController extends Controller
 {
     private function adminDisabledTimesCacheKey(string $date): string
     {
-        return 'admin_gates_disabled_times_' . $date;
+        return 'admin_gates_disabled_times_'.$date;
     }
 
     private function adminForcedTimesCacheKey(string $date): string
     {
-        return 'admin_gates_forced_times_' . $date;
+        return 'admin_gates_forced_times_'.$date;
     }
 
     private function getAdminDisabledTimes(string $date): array
     {
         $rows = Cache::get($this->adminDisabledTimesCacheKey($date), []);
-        if (!is_array($rows)) {
+        if (! is_array($rows)) {
             return [];
         }
 
         $normalized = array_values(array_unique(array_filter(array_map(function ($time) {
             $val = trim((string) $time);
+
             return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
         }, $rows))));
 
         sort($normalized);
+
         return $normalized;
     }
 
@@ -47,6 +49,7 @@ class ReportController extends Controller
     {
         $normalized = array_values(array_unique(array_filter(array_map(function ($time) {
             $val = trim((string) $time);
+
             return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
         }, $times))));
 
@@ -58,16 +61,18 @@ class ReportController extends Controller
     private function getAdminForcedTimes(string $date): array
     {
         $rows = Cache::get($this->adminForcedTimesCacheKey($date), []);
-        if (!is_array($rows)) {
+        if (! is_array($rows)) {
             return [];
         }
 
         $normalized = array_values(array_unique(array_filter(array_map(function ($time) {
             $val = trim((string) $time);
+
             return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
         }, $rows))));
 
         sort($normalized);
+
         return $normalized;
     }
 
@@ -75,6 +80,7 @@ class ReportController extends Controller
     {
         $normalized = array_values(array_unique(array_filter(array_map(function ($time) {
             $val = trim((string) $time);
+
             return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
         }, $times))));
 
@@ -86,8 +92,8 @@ class ReportController extends Controller
     public function __construct(
         private readonly TransactionReportService $transactionService,
         private readonly ExportService $exportService
-    ) {
-    }
+    ) {}
+
     public function searchSuggestions(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
@@ -95,7 +101,7 @@ class ReportController extends Controller
             return response()->json([]);
         }
 
-        $like = '%' . $q . '%';
+        $like = '%'.$q.'%';
 
         $rows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -121,7 +127,7 @@ class ReportController extends Controller
                 WHEN s.vendor_name LIKE ? THEN 4
                 WHEN w.wh_name LIKE ? THEN 5
                 ELSE 6
-            END", [$q . '%', $q . '%', $q . '%', $q . '%', $q . '%'])
+            END", [$q.'%', $q.'%', $q.'%', $q.'%', $q.'%'])
             ->orderBy('s.po_number')
             ->limit(10)
             ->get();
@@ -142,8 +148,8 @@ class ReportController extends Controller
             $after = substr($text, $pos + strlen($q));
 
             return htmlspecialchars($before, ENT_QUOTES, 'UTF-8')
-                . '<strong>' . htmlspecialchars($match, ENT_QUOTES, 'UTF-8') . '</strong>'
-                . htmlspecialchars($after, ENT_QUOTES, 'UTF-8');
+                .'<strong>'.htmlspecialchars($match, ENT_QUOTES, 'UTF-8').'</strong>'
+                .htmlspecialchars($after, ENT_QUOTES, 'UTF-8');
         };
 
         $results = [];
@@ -157,7 +163,7 @@ class ReportController extends Controller
             $warehouse = trim((string) ($row->warehouse_name ?? ''));
 
             if ($truck !== '' && $vendor !== '') {
-                $text = $truck . ' - ' . $vendor;
+                $text = $truck.' - '.$vendor;
                 if (! in_array($text, $seen, true)) {
                     $seen[] = $text;
                     $results[] = ['text' => $text, 'highlighted' => $highlight($text)];
@@ -209,6 +215,7 @@ class ReportController extends Controller
         $sorts = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $sorts), fn ($v) => $v !== ''));
         $dirs = array_values(array_map(function ($v) {
             $v = strtolower(trim((string) $v));
+
             return in_array($v, ['asc', 'desc'], true) ? $v : 'desc';
         }, $dirs));
 
@@ -240,7 +247,7 @@ class ReportController extends Controller
             $d = $dirs[$i] ?? 'desc';
             $col = $sortMap[$s];
             if ($col instanceof \Illuminate\Database\Query\Expression) {
-                $rowsQ->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()) . ' ' . strtoupper($d));
+                $rowsQ->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()).' '.strtoupper($d));
             } else {
                 $rowsQ->orderBy($col, $d);
             }
@@ -255,7 +262,7 @@ class ReportController extends Controller
             $rowsQ->limit((int) $pageSize);
         }
 
-        $rowsCacheKey = 'reports:transactions:rows:' . sha1(json_encode([
+        $rowsCacheKey = 'reports:transactions:rows:'.sha1(json_encode([
             'uid' => Auth::id(),
             'query' => $request->query(),
             'version' => (string) Cache::get('st_realtime_version', '0'),
@@ -306,11 +313,13 @@ class ReportController extends Controller
 
         if ($type === 'excel') {
             $filename = "transactions_report_{$timestamp}.xlsx";
+
             return Excel::download(new TransactionsExport($rows), $filename);
         }
 
         // For CSV, keep using the existing service
         $filename = $this->exportService->generateFilename('transactions', 'csv');
+
         return $this->exportService->exportToCsv($rows, $filename);
     }
 
@@ -348,7 +357,7 @@ class ReportController extends Controller
         $daySlots = Slot::query()
             ->whereDate('planned_start', $paramDate)
             ->whereNotIn('status', [Slot::STATUS_CANCELLED, 'rejected'])
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('slot_type')->orWhere('slot_type', 'planned');
             })
             ->get();
@@ -410,7 +419,7 @@ class ReportController extends Controller
                 DB::raw("SUM(CASE WHEN s.status = 'in_progress' THEN 1 ELSE 0 END) as in_progress_count"),
                 DB::raw("SUM(CASE WHEN s.status = 'completed' THEN 1 ELSE 0 END) as completed_count"),
                 DB::raw("SUM(CASE WHEN s.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_count"),
-                DB::raw("COUNT(*) as total_count"),
+                DB::raw('COUNT(*) as total_count'),
             ])
             ->groupBy('w.wh_code', 'g.gate_number')
             ->orderBy('w.wh_code')
@@ -421,7 +430,7 @@ class ReportController extends Controller
                 ->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '<=', $dateTo);
         }
 
-        if (!empty($warehouseValues)) {
+        if (! empty($warehouseValues)) {
             $rowsQ->whereIn('s.warehouse_id', array_map('intval', $warehouseValues));
         }
 
@@ -439,7 +448,7 @@ class ReportController extends Controller
             ];
         })->all();
 
-        $gateCacheKey = 'reports:gate_status:gates:' . sha1(json_encode(array_map('intval', $warehouseValues)));
+        $gateCacheKey = 'reports:gate_status:gates:'.sha1(json_encode(array_map('intval', $warehouseValues)));
         $gates = Cache::remember($gateCacheKey, now()->addSeconds(30), function () use ($warehouseValues) {
             $gatesQ = DB::table('md_gates as g')
                 ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
@@ -455,7 +464,7 @@ class ReportController extends Controller
                 ->orderBy('w.wh_code')
                 ->orderBy('g.gate_number');
 
-            if (!empty($warehouseValues)) {
+            if (! empty($warehouseValues)) {
                 $gatesQ->whereIn('g.warehouse_id', array_map('intval', $warehouseValues));
             }
 
@@ -495,6 +504,7 @@ class ReportController extends Controller
                     'message' => 'Gate not found',
                 ], 404);
             }
+
             return redirect()->back()->with('error', 'Gate not found');
         }
 
@@ -505,6 +515,7 @@ class ReportController extends Controller
                     'message' => 'Only standby/backup gates can be toggled.',
                 ], 422);
             }
+
             return redirect()->back()->with('error', 'Only standby/backup gates can be toggled.');
         }
 
@@ -547,7 +558,7 @@ class ReportController extends Controller
         $disabledSig = sha1(json_encode($disabledTimes));
         $forcedSig = sha1(json_encode($forcedTimes));
 
-        $cacheKey = 'admin_gates_availability_' . $date . '_' . sha1(json_encode($warehouseIds)) . '_' . $disabledSig . '_' . $forcedSig;
+        $cacheKey = 'admin_gates_availability_'.$date.'_'.sha1(json_encode($warehouseIds)).'_'.$disabledSig.'_'.$forcedSig;
         $cached = Cache::get($cacheKey);
         if ($cached) {
             return response()->json($cached);
@@ -571,7 +582,7 @@ class ReportController extends Controller
         foreach ($pendingRequests as $requestRow) {
             $start = Carbon::parse($requestRow->planned_start);
             $slotStart = strtotime($start->format('H:i'));
-            $slotEnd = strtotime('+' . (int) $requestRow->planned_duration . ' minutes', $slotStart);
+            $slotEnd = strtotime('+'.(int) $requestRow->planned_duration.' minutes', $slotStart);
             for ($currentTime = $slotStart; $currentTime < $slotEnd; $currentTime = strtotime('+30 minutes', $currentTime)) {
                 $timeKey = date('H:i', $currentTime);
                 $globalBlocked[$timeKey] = true;
@@ -589,7 +600,7 @@ class ReportController extends Controller
             ])
             ->select(['planned_start', 'planned_duration', 'planned_gate_id']);
 
-        if (!empty($warehouseIds)) {
+        if (! empty($warehouseIds)) {
             $existingSlotsQ->whereIn('warehouse_id', $warehouseIds);
         }
 
@@ -598,11 +609,11 @@ class ReportController extends Controller
         $timeConflicts = [];
         foreach ($existingSlots as $slot) {
             $slotStart = strtotime($slot->planned_start->format('H:i'));
-            $slotEnd = strtotime('+' . (int) $slot->planned_duration . ' minutes', $slotStart);
+            $slotEnd = strtotime('+'.(int) $slot->planned_duration.' minutes', $slotStart);
             $currentTime = $slotStart;
             while ($currentTime < $slotEnd) {
                 $timeKey = date('H:i', $currentTime);
-                if (!isset($timeConflicts[$timeKey])) {
+                if (! isset($timeConflicts[$timeKey])) {
                     $timeConflicts[$timeKey] = [];
                 }
                 $timeConflicts[$timeKey][] = $slot->planned_gate_id;
@@ -611,17 +622,17 @@ class ReportController extends Controller
         }
 
         $totalGatesQ = DB::table('md_gates')->where('is_active', true);
-        if (!empty($warehouseIds)) {
+        if (! empty($warehouseIds)) {
             $totalGatesQ->whereIn('warehouse_id', $warehouseIds);
         }
         $totalGates = (int) $totalGatesQ->count();
 
         $availableSlots = [];
         foreach ($timeSlots as $time) {
-            $blockedByAdmin = !empty($disabledMap[$time]);
-            $forcedByAdmin = !empty($forcedMap[$time]);
-            if (!empty($globalBlocked[$time])) {
-                $isAvailable = !$blockedByAdmin && $forcedByAdmin;
+            $blockedByAdmin = ! empty($disabledMap[$time]);
+            $forcedByAdmin = ! empty($forcedMap[$time]);
+            if (! empty($globalBlocked[$time])) {
+                $isAvailable = ! $blockedByAdmin && $forcedByAdmin;
                 $availableSlots[] = [
                     'time' => $time,
                     'is_available' => $isAvailable,
@@ -629,6 +640,7 @@ class ReportController extends Controller
                     'disabled_by_admin' => $blockedByAdmin,
                     'forced_by_admin' => $forcedByAdmin,
                 ];
+
                 continue;
             }
 
@@ -693,7 +705,7 @@ class ReportController extends Controller
         $this->putAdminDisabledTimes($date, $current);
         $this->putAdminForcedTimes($date, $forced);
 
-        Cache::forget('vendor_availability_' . $date);
+        Cache::forget('vendor_availability_'.$date);
 
         return response()->json([
             'success' => true,

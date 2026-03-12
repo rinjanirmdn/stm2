@@ -14,10 +14,10 @@ use App\Notifications\BookingSubmitted;
 use DateTime;
 use Illuminate\Notifications\Channels\DatabaseChannel;
 use Illuminate\Notifications\Channels\MailChannel;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class BookingApprovalService
 {
@@ -29,6 +29,7 @@ class BookingApprovalService
      * Operating hours for booking
      */
     public const OPERATING_START_HOUR = 7;  // 07:00
+
     public const OPERATING_END_HOUR = 20;   // 20:00 (still filtered to 19:00 max)
 
     /**
@@ -37,85 +38,85 @@ class BookingApprovalService
     public function createBookingRequest(array $data, User $vendor): Slot
     {
         return DB::transaction(function () use ($data, $vendor) {
-        // Calculate planned finish
-        $plannedFinish = $this->slotService->computePlannedFinish(
-            $data['planned_start'],
-            (int) $data['planned_duration']
-        );
+            // Calculate planned finish
+            $plannedFinish = $this->slotService->computePlannedFinish(
+                $data['planned_start'],
+                (int) $data['planned_duration']
+            );
 
-        // Create slot with pending_approval status
-        $notes = isset($data['notes']) ? trim((string) $data['notes']) : '';
+            // Create slot with pending_approval status
+            $notes = isset($data['notes']) ? trim((string) $data['notes']) : '';
 
-        $vendorCode = trim((string) ($data['vendor_code'] ?? $vendor->vendor_code ?? ''));
-        $vendorName = trim((string) ($data['vendor_name'] ?? $data['supplier_name'] ?? ''));
-        $vendorType = trim((string) ($data['vendor_type'] ?? $data['supplier_type'] ?? ''));
-        $poNumber = trim((string) ($data['po_number'] ?? ''));
+            $vendorCode = trim((string) ($data['vendor_code'] ?? $vendor->vendor_code ?? ''));
+            $vendorName = trim((string) ($data['vendor_name'] ?? $data['supplier_name'] ?? ''));
+            $vendorType = trim((string) ($data['vendor_type'] ?? $data['supplier_type'] ?? ''));
+            $poNumber = trim((string) ($data['po_number'] ?? ''));
 
-        $slot = Slot::create([
-            'ticket_number' => null,
-            'direction' => $data['direction'],
-            'warehouse_id' => $data['warehouse_id'],
-            'po_number' => $poNumber !== '' ? $poNumber : null,
-            'vendor_code' => $vendorCode !== '' ? $vendorCode : null,
-            'vendor_name' => $vendorName !== '' ? $vendorName : null,
-            'vendor_type' => $vendorType !== '' ? $vendorType : null,
-            'planned_gate_id' => $data['planned_gate_id'] ?? null,
-            'planned_start' => $data['planned_start'],
-            'planned_duration' => $data['planned_duration'],
-            'truck_type' => $data['truck_type'] ?? null,
-            'vehicle_number_snap' => $data['vehicle_number'] ?? null,
-            'driver_name' => $data['driver_name'] ?? null,
-            'driver_number' => $data['driver_number'] ?? null,
-            'approval_notes' => $notes !== '' ? $notes : null,
-            'status' => Slot::STATUS_PENDING_APPROVAL,
-            'slot_type' => 'planned',
-            'created_by' => $vendor->id,
-            'requested_by' => $vendor->id,
-            'requested_at' => now(),
-        ]);
+            $slot = Slot::create([
+                'ticket_number' => null,
+                'direction' => $data['direction'],
+                'warehouse_id' => $data['warehouse_id'],
+                'po_number' => $poNumber !== '' ? $poNumber : null,
+                'vendor_code' => $vendorCode !== '' ? $vendorCode : null,
+                'vendor_name' => $vendorName !== '' ? $vendorName : null,
+                'vendor_type' => $vendorType !== '' ? $vendorType : null,
+                'planned_gate_id' => $data['planned_gate_id'] ?? null,
+                'planned_start' => $data['planned_start'],
+                'planned_duration' => $data['planned_duration'],
+                'truck_type' => $data['truck_type'] ?? null,
+                'vehicle_number_snap' => $data['vehicle_number'] ?? null,
+                'driver_name' => $data['driver_name'] ?? null,
+                'driver_number' => $data['driver_number'] ?? null,
+                'approval_notes' => $notes !== '' ? $notes : null,
+                'status' => Slot::STATUS_PENDING_APPROVAL,
+                'slot_type' => 'planned',
+                'created_by' => $vendor->id,
+                'requested_by' => $vendor->id,
+                'requested_at' => now(),
+            ]);
 
-        $this->ensurePlannedGateAssigned($slot);
+            $this->ensurePlannedGateAssigned($slot);
 
-        // Log booking history
-        BookingHistory::logAction(
-            $slot->id,
-            BookingHistory::ACTION_REQUESTED,
-            $vendor->id,
-            Slot::STATUS_PENDING_APPROVAL,
-            null,
-            $notes !== '' ? $notes : null,
-            [
-                'new_planned_start' => $data['planned_start'],
-                'new_planned_duration' => $data['planned_duration'],
-                'new_gate_id' => $slot->planned_gate_id,
-            ]
-        );
+            // Log booking history
+            BookingHistory::logAction(
+                $slot->id,
+                BookingHistory::ACTION_REQUESTED,
+                $vendor->id,
+                Slot::STATUS_PENDING_APPROVAL,
+                null,
+                $notes !== '' ? $notes : null,
+                [
+                    'new_planned_start' => $data['planned_start'],
+                    'new_planned_duration' => $data['planned_duration'],
+                    'new_gate_id' => $slot->planned_gate_id,
+                ]
+            );
 
-        // Log activity
-        $this->safeActivityLog('booking_requested', [
-            'type' => 'booking_requested',
-            'description' => "New booking request submitted for PO: {$slot->po_number}",
-            'po_number' => $slot->po_number,
-            'mat_doc' => $slot->mat_doc ?? null,
-            'slot_id' => $slot->id,
-            'user_id' => $vendor->id,
-        ], [
-            'slot_id' => $slot->id,
-            'po_number' => $slot->po_number,
-            'vendor_id' => $vendor->id,
-        ]);
+            // Log activity
+            $this->safeActivityLog('booking_requested', [
+                'type' => 'booking_requested',
+                'description' => "New booking request submitted for PO: {$slot->po_number}",
+                'po_number' => $slot->po_number,
+                'mat_doc' => $slot->mat_doc ?? null,
+                'slot_id' => $slot->id,
+                'user_id' => $vendor->id,
+            ], [
+                'slot_id' => $slot->id,
+                'po_number' => $slot->po_number,
+                'vendor_id' => $vendor->id,
+            ]);
 
-        // Notify admins about new booking request
-        $this->notifyAdminsNewBooking($slot);
+            // Notify admins about new booking request
+            $this->notifyAdminsNewBooking($slot);
 
-        // Notify vendor that request was submitted
-        try {
-            $vendor->notify(new BookingSubmitted($slot));
-        } catch (\Throwable $e) {
-            Log::warning('Failed to send booking submitted notification: ' . $e->getMessage());
-        }
+            // Notify vendor that request was submitted
+            try {
+                $vendor->notify(new BookingSubmitted($slot));
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send booking submitted notification: '.$e->getMessage());
+            }
 
-        return $slot;
+            return $slot;
         }); // end DB::transaction
     }
 
@@ -128,8 +129,7 @@ class BookingApprovalService
         ?string $notes = null,
         ?int $bookingRequestId = null,
         ?string $approvalAction = null
-    ): Slot
-    {
+    ): Slot {
         return DB::transaction(function () use ($slot, $admin, $notes, $approvalAction, $bookingRequestId) {
             $oldStatus = $slot->status;
 
@@ -178,7 +178,7 @@ class BookingApprovalService
             $poNumber = (string) ($slot->po_number ?? '');
             $matDoc = $slot->mat_doc ?? null;
             $adminId = (int) $admin->id;
-            DB::afterCommit(function () use ($slot, $slotId, $poNumber, $matDoc, $adminId, $bookingRequestId, $action) {
+            DB::afterCommit(function () use ($slotId, $poNumber, $matDoc, $adminId) {
                 $this->safeActivityLog('booking_approved', [
                     'type' => 'booking_approved',
                     'description' => "Approved booking request for PO: {$poNumber}",
@@ -199,7 +199,7 @@ class BookingApprovalService
 
     private function ensurePlannedGateAssigned(Slot $slot): void
     {
-        if (!empty($slot->planned_gate_id)) {
+        if (! empty($slot->planned_gate_id)) {
             return;
         }
 
@@ -262,14 +262,14 @@ class BookingApprovalService
                 ->exists();
         }
 
-        $slotIdNeedle = '"slot_id":' . (int) $slot->id;
-        $urlNeedle = '"action_url":"' . str_replace('"', '\\"', $actionUrl) . '"';
+        $slotIdNeedle = '"slot_id":'.(int) $slot->id;
+        $urlNeedle = '"action_url":"'.str_replace('"', '\\"', $actionUrl).'"';
 
         return $vendor->notifications()
             ->where('type', BookingApproved::class)
             ->where(function ($q) use ($slotIdNeedle, $urlNeedle) {
-                $q->where('data', 'like', '%' . $slotIdNeedle . '%')
-                    ->orWhere('data', 'like', '%' . $urlNeedle . '%');
+                $q->where('data', 'like', '%'.$slotIdNeedle.'%')
+                    ->orWhere('data', 'like', '%'.$urlNeedle.'%');
             })
             ->exists();
     }
@@ -284,9 +284,11 @@ class BookingApprovalService
         try {
             $type = Schema::getColumnType('notifications', 'data');
             $cached = is_string($type) && $type !== '' ? strtolower($type) : 'unknown';
+
             return $cached;
         } catch (\Throwable $e) {
             $cached = 'unknown';
+
             return $cached;
         }
     }
@@ -520,7 +522,7 @@ class BookingApprovalService
                     continue;
                 }
 
-                $dateTimeStr = $date . ' ' . $timeStr . ':00';
+                $dateTimeStr = $date.' '.$timeStr.':00';
                 $checkTime = new DateTime($dateTimeStr);
                 if ($minAllowed && $checkTime < $minAllowed) {
                     continue;
@@ -544,7 +546,7 @@ class BookingApprovalService
                 $slots[] = [
                     'time' => $timeStr,
                     'datetime' => $dateTimeStr,
-                    'is_available' => !$isOccupied,
+                    'is_available' => ! $isOccupied,
                     'status' => $occupyingSlot ? $occupyingSlot->status : null,
                 ];
             }
@@ -558,7 +560,7 @@ class BookingApprovalService
         try {
             ActivityLog::create($payload);
         } catch (\Throwable $e) {
-            Log::error('Failed to log activity: ' . $type . ' - ' . $e->getMessage(), $context);
+            Log::error('Failed to log activity: '.$type.' - '.$e->getMessage(), $context);
         }
     }
 
@@ -588,7 +590,7 @@ class BookingApprovalService
                 $admin->notify(new BookingRequested($slot));
             }
         } catch (\Throwable $e) {
-            Log::warning('Failed to send booking notification: ' . $e->getMessage());
+            Log::warning('Failed to send booking notification: '.$e->getMessage());
         }
     }
 
@@ -612,22 +614,24 @@ class BookingApprovalService
                     'slot_id' => $slot->id,
                     'ticket_number' => $slot->ticket_number,
                 ]);
+
                 return;
             }
 
             $vendor = User::find($vendorId);
-            if (!$vendor) {
+            if (! $vendor) {
                 Log::warning('Approval notification skipped: vendor user not found', [
                     'slot_id' => $slot->id,
                     'ticket_number' => $slot->ticket_number,
                     'vendor_id' => $vendorId,
                 ]);
+
                 return;
             }
 
             if ($vendor) {
                 $targetId = $bookingRequestId ?: $slot->id;
-                $actionUrl = url('/vendor/bookings/' . $targetId);
+                $actionUrl = url('/vendor/bookings/'.$targetId);
 
                 Log::info('Resolved vendor recipient for approval notification', [
                     'slot_id' => $slot->id,
@@ -643,6 +647,7 @@ class BookingApprovalService
                         'vendor_id' => $vendor->id,
                         'action_url' => $actionUrl,
                     ]);
+
                     return;
                 }
 
@@ -677,14 +682,14 @@ class BookingApprovalService
                         'type' => BookingApproved::class,
                     ]);
                 } catch (\Throwable $e) {
-                    Log::warning('Failed to store approval notification (database): ' . $e->getMessage(), [
+                    Log::warning('Failed to store approval notification (database): '.$e->getMessage(), [
                         'slot_id' => $slot->id,
                         'vendor_id' => $vendor->id,
                     ]);
                 }
 
                 // Send email only AFTER successful DB commit so it is guaranteed the approval succeeded.
-                if ($storedDatabase && !empty($vendor->email)) {
+                if ($storedDatabase && ! empty($vendor->email)) {
                     $slotId = (int) $slot->id;
                     $vendorId = (int) $vendor->id;
                     $email = (string) $vendor->email;
@@ -698,7 +703,7 @@ class BookingApprovalService
                                 'email' => $email,
                             ]);
                         } catch (\Throwable $e) {
-                            Log::warning('Failed to send approval notification (mail): ' . $e->getMessage(), [
+                            Log::warning('Failed to send approval notification (mail): '.$e->getMessage(), [
                                 'slot_id' => $slotId,
                                 'vendor_id' => $vendorId,
                                 'email' => $email,
@@ -708,7 +713,7 @@ class BookingApprovalService
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning('Failed to send approval notification: ' . $e->getMessage(), [
+            Log::warning('Failed to send approval notification: '.$e->getMessage(), [
                 'slot_id' => $slot->id,
                 'requested_by' => $slot->requested_by,
             ]);
@@ -726,7 +731,7 @@ class BookingApprovalService
                 $vendor->notify(new BookingRejected($slot));
             }
         } catch (\Throwable $e) {
-            Log::warning('Failed to send rejection notification: ' . $e->getMessage());
+            Log::warning('Failed to send rejection notification: '.$e->getMessage());
         }
     }
 }

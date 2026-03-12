@@ -59,6 +59,7 @@ class SlotSeeder extends Seeder
 
         if ($warehouses->isEmpty() || $gates->isEmpty() || $vendors->isEmpty() || $truckTypes->isEmpty()) {
             $this->command->warn('SlotSeeder skipped: required master data missing.');
+
             return;
         }
 
@@ -225,7 +226,7 @@ class SlotSeeder extends Seeder
                         }
 
                         $ticketNumber = sprintf('T%s%04d', $date->format('ymd'), $ticketCounter++);
-                        $poNumber = $date->format('ymd') . str_pad((string) mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+                        $poNumber = $date->format('ymd').str_pad((string) mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
 
                         $slotData = [
                             'ticket_number' => $ticketNumber,
@@ -234,8 +235,8 @@ class SlotSeeder extends Seeder
                             'sj_complete_number' => null,
                             'truck_type' => (string) ($truckType->truck_type ?? 'Cargo'),
                             'vehicle_number_snap' => sprintf('B %04d %s', mt_rand(1000, 9999), chr(mt_rand(65, 90))),
-                            'driver_name' => 'Driver ' . mt_rand(10, 99),
-                            'driver_number' => 'DRV' . mt_rand(1000, 9999),
+                            'driver_name' => 'Driver '.mt_rand(10, 99),
+                            'driver_number' => 'DRV'.mt_rand(1000, 9999),
                             'direction' => $direction,
                             'po_id' => null,
                             'po_number' => $poNumber,
@@ -276,6 +277,6 @@ class SlotSeeder extends Seeder
             DB::table('slots')->insert($chunk);
         }
 
-        $this->command->info('✓ Slots dummy data created (' . count($slotRows) . ' rows).');
+        $this->command->info('✓ Slots dummy data created ('.count($slotRows).' rows).');
     }
 }

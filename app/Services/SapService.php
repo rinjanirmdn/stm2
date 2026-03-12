@@ -4,25 +4,27 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class SapService
 {
     private $baseUrl;
+
     private $token;
+
     private $timeout;
+
     private $isDemo;
-    
+
     public function __construct()
     {
         $this->baseUrl = trim((string) config('services.sap_po.base_url', ''));
         $this->token = trim((string) config('services.sap_po.token', ''));
         $this->timeout = (int) config('services.sap_po.timeout', 15);
-        
+
         // Demo mode if no base URL configured
         $this->isDemo = $this->baseUrl === '' || (empty($this->token) && empty(config('services.sap_po.username', '')));
     }
-    
+
     /**
      * Search PO in SAP system
      */
@@ -31,38 +33,38 @@ class SapService
         if ($this->isDemo) {
             return $this->demoSearchPO($poNumber, $vendorCode);
         }
-        
+
         try {
             $response = Http::timeout($this->timeout)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->token,
-                    'Content-Type' => 'application/json'
+                    'Authorization' => 'Bearer '.$this->token,
+                    'Content-Type' => 'application/json',
                 ])
-                ->get($this->baseUrl . config('services.sap_po.search_endpoint', '/po/search'), [
+                ->get($this->baseUrl.config('services.sap_po.search_endpoint', '/po/search'), [
                     'po_number' => $poNumber,
-                    'vendor_code' => $vendorCode
+                    'vendor_code' => $vendorCode,
                 ]);
-                
+
             if ($response->successful()) {
                 return $response->json();
             }
-            
+
             Log::error('SAP PO Search Failed', [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
-            
-            return null;
+
+            return;
         } catch (\Exception $e) {
             Log::error('SAP PO Search Error', [
                 'error' => $e->getMessage(),
-                'po_number' => $poNumber
+                'po_number' => $poNumber,
             ]);
-            
-            return null;
+
+            return;
         }
     }
-    
+
     /**
      * Get PO details from SAP
      */
@@ -71,37 +73,37 @@ class SapService
         if ($this->isDemo) {
             return $this->demoGetPODetails($poNumber);
         }
-        
+
         try {
             $endpoint = str_replace('{po}', $poNumber, config('services.sap_po.detail_endpoint', '/po/{po}'));
-            
+
             $response = Http::timeout($this->timeout)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->token,
-                    'Content-Type' => 'application/json'
+                    'Authorization' => 'Bearer '.$this->token,
+                    'Content-Type' => 'application/json',
                 ])
-                ->get($this->baseUrl . $endpoint);
-                
+                ->get($this->baseUrl.$endpoint);
+
             if ($response->successful()) {
                 return $response->json();
             }
-            
+
             Log::error('SAP PO Details Failed', [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
-            
-            return null;
+
+            return;
         } catch (\Exception $e) {
             Log::error('SAP PO Details Error', [
                 'error' => $e->getMessage(),
-                'po_number' => $poNumber
+                'po_number' => $poNumber,
             ]);
-            
-            return null;
+
+            return;
         }
     }
-    
+
     /**
      * Sync slot status to SAP
      */
@@ -110,32 +112,32 @@ class SapService
         if ($this->isDemo) {
             return $this->demoSyncSlotStatus($slotId, $status, $data);
         }
-        
+
         try {
             $response = Http::timeout($this->timeout)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->token,
-                    'Content-Type' => 'application/json'
+                    'Authorization' => 'Bearer '.$this->token,
+                    'Content-Type' => 'application/json',
                 ])
-                ->post($this->baseUrl . '/slot/sync', [
+                ->post($this->baseUrl.'/slot/sync', [
                     'slot_id' => $slotId,
                     'status' => $status,
                     'data' => $data,
-                    'timestamp' => now()->toISOString()
+                    'timestamp' => now()->toISOString(),
                 ]);
-                
+
             return $response->successful();
         } catch (\Exception $e) {
             Log::error('SAP Slot Sync Error', [
                 'error' => $e->getMessage(),
                 'slot_id' => $slotId,
-                'status' => $status
+                'status' => $status,
             ]);
-            
+
             return false;
         }
     }
-    
+
     /**
      * Demo/Simulation methods
      */
@@ -143,46 +145,46 @@ class SapService
     {
         Log::info('[DEMO] SAP PO Search', [
             'po_number' => $poNumber,
-            'vendor_code' => $vendorCode
+            'vendor_code' => $vendorCode,
         ]);
-        
+
         // Mock response based on PO number pattern
         if (str_starts_with($poNumber, 'PO')) {
             return [
                 'success' => true,
                 'data' => [
                     'po_number' => $poNumber,
-                    'vendor_code' => $vendorCode ?: 'V' . rand(1000, 9999),
+                    'vendor_code' => $vendorCode ?: 'V'.rand(1000, 9999),
                     'status' => 'active',
                     'created_date' => now()->subDays(30)->format('Y-m-d'),
                     'items' => [
                         [
                             'item_no' => '00010',
-                            'material' => 'MAT' . rand(100000, 999999),
+                            'material' => 'MAT'.rand(100000, 999999),
                             'description' => 'Material Description',
                             'quantity' => rand(10, 100),
-                            'uom' => 'PC'
-                        ]
-                    ]
-                ]
+                            'uom' => 'PC',
+                        ],
+                    ],
+                ],
             ];
         }
-        
+
         return [
             'success' => false,
-            'message' => 'PO not found'
+            'message' => 'PO not found',
         ];
     }
-    
+
     private function demoGetPODetails($poNumber)
     {
         Log::info('[DEMO] SAP PO Details', [
-            'po_number' => $poNumber
+            'po_number' => $poNumber,
         ]);
-        
+
         return [
             'po_number' => $poNumber,
-            'vendor_code' => 'V' . rand(1000, 9999),
+            'vendor_code' => 'V'.rand(1000, 9999),
             'vendor_name' => 'Demo Vendor Corp',
             'status' => 'active',
             'created_date' => now()->subDays(30)->format('Y-m-d'),
@@ -195,25 +197,25 @@ class SapService
                     'quantity' => 50,
                     'uom' => 'PC',
                     'net_price' => 100.50,
-                    'currency' => 'USD'
-                ]
+                    'currency' => 'USD',
+                ],
             ],
             'total_value' => 5025.00,
-            'currency' => 'USD'
+            'currency' => 'USD',
         ];
     }
-    
+
     private function demoSyncSlotStatus($slotId, $status, $data)
     {
         Log::info('[DEMO] SAP Slot Sync', [
             'slot_id' => $slotId,
             'status' => $status,
-            'data' => $data
+            'data' => $data,
         ]);
-        
+
         return true;
     }
-    
+
     /**
      * Check SAP connection health
      */
@@ -223,25 +225,25 @@ class SapService
             return [
                 'status' => 'demo_mode',
                 'message' => 'Running in demo/simulation mode',
-                'sap_configured' => !empty($this->baseUrl)
+                'sap_configured' => ! empty($this->baseUrl),
             ];
         }
-        
+
         try {
             $response = Http::timeout(5)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->token
+                    'Authorization' => 'Bearer '.$this->token,
                 ])
-                ->get($this->baseUrl . '/health');
-                
+                ->get($this->baseUrl.'/health');
+
             return [
                 'status' => $response->successful() ? 'connected' : 'error',
-                'response_time' => $response->handlerStats()['total_time'] ?? null
+                'response_time' => $response->handlerStats()['total_time'] ?? null,
             ];
         } catch (\Exception $e) {
             return [
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
     }

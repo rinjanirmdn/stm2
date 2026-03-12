@@ -1,4 +1,5 @@
 <?php
+
 /* Vendor Portal Routes */
 
 use App\Http\Controllers\VendorBookingController;

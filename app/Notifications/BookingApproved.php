@@ -16,7 +16,7 @@ class BookingApproved extends Notification
 
     public function via(object $notifiable): array
     {
-        if (!empty($notifiable->email)) {
+        if (! empty($notifiable->email)) {
             return ['mail', 'database'];
         }
 
@@ -31,7 +31,7 @@ class BookingApproved extends Notification
             $gateWh = (string) ($this->slot->actualGate?->warehouse?->wh_code ?? $this->slot->plannedGate?->warehouse?->wh_code ?? $this->slot->warehouse?->wh_code ?? '');
             $gateNo = (string) ($this->slot->actualGate?->gate_number ?? $this->slot->plannedGate?->gate_number ?? '');
             if ($gateWh !== '' && $gateNo !== '') {
-                $gateName = $gateWh . '-' . $gateNo;
+                $gateName = $gateWh.'-'.$gateNo;
             }
         }
         if ($gateName === '') {
@@ -43,8 +43,8 @@ class BookingApproved extends Notification
             : 'Great news! Your booking request has been approved.';
         $targetId = $this->bookingRequestId ?: $this->slot->id;
 
-        return (new MailMessage)
-            ->subject($subjectPrefix . ' - ' . $this->slot->ticket_number)
+        return (new MailMessage())
+            ->subject($subjectPrefix.' - '.$this->slot->ticket_number)
             ->view('emails.booking-approved', [
                 'subjectPrefix' => $subjectPrefix,
                 'messageLine' => $messageLine,
@@ -61,13 +61,14 @@ class BookingApproved extends Notification
         $targetId = $this->bookingRequestId ?: $this->slot->id;
         $title = $this->isRescheduled ? 'Booking Approved (Rescheduled)' : 'Booking Approved';
         $message = $this->isRescheduled
-            ? 'Your booking ' . $this->slot->ticket_number . ' has been rescheduled and approved.'
-            : 'Your booking ' . $this->slot->ticket_number . ' has been approved.';
+            ? 'Your booking '.$this->slot->ticket_number.' has been rescheduled and approved.'
+            : 'Your booking '.$this->slot->ticket_number.' has been approved.';
+
         return [
             'slot_id' => $this->slot->id,
             'title' => $title,
             'message' => $message,
-            'action_url' => url('/vendor/bookings/' . $targetId),
+            'action_url' => url('/vendor/bookings/'.$targetId),
             'icon' => 'fas fa-check-circle',
             'color' => 'green',
         ];

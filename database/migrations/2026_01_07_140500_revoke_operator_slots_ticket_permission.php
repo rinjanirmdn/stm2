@@ -16,7 +16,7 @@ return new class extends Migration
         $permNameCol = Schema::hasColumn($permissionsTable, 'perm_name') ? 'perm_name' : 'name';
 
         $roleId = DB::table($rolesTable)
-            ->whereRaw('LOWER(' . $roleNameCol . ') = ?', ['operator'])
+            ->whereRaw('LOWER('.$roleNameCol.') = ?', ['operator'])
             ->value('id');
 
         $permissionId = DB::table($permissionsTable)
@@ -48,7 +48,7 @@ return new class extends Migration
         $permNameCol = Schema::hasColumn($permissionsTable, 'perm_name') ? 'perm_name' : 'name';
 
         $roleId = DB::table($rolesTable)
-            ->whereRaw('LOWER(' . $roleNameCol . ') = ?', ['operator'])
+            ->whereRaw('LOWER('.$roleNameCol.') = ?', ['operator'])
             ->value('id');
 
         $permissionId = DB::table($permissionsTable)

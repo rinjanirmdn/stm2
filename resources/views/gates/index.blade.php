@@ -292,7 +292,7 @@
 
                                 <!-- Body: Vendor (Hide if too small) -->
                                 @if($h >= 35)
-                                <div class="st-dock-card__vendor {{ $vendorClass }}" style="white-space: normal; overflow: visible; display: -webkit-box; -webkit-line-clamp: {{ $h < 60 ? 1 : ($h < 120 ? 3 : 10) }}; -webkit-box-orient: vertical; margin-top: 4px; line-height: 1.2;">
+                                <div class="st-dock-card__vendor st-dock-card__vendor--clamp {{ $vendorClass }} {{ $h < 60 ? 'st-line-clamp-1' : ($h < 120 ? 'st-line-clamp-3' : 'st-line-clamp-10') }}">
                                     {{ $slot->vendor->name ?? '-' }}
 
                                     @php

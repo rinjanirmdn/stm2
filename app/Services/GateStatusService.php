@@ -18,7 +18,7 @@ class GateStatusService
     public function getGateCards(string $today): array
     {
         $gates = $this->getActiveGates();
-        $allGateIds = $gates->pluck('id')->map(fn($id) => (int)$id)->all();
+        $allGateIds = $gates->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         if (empty($allGateIds)) {
             return [];
@@ -28,17 +28,18 @@ class GateStatusService
         $laneGroupMap = []; // gateId => [gateIds in same lane group]
         $gateMeta = [];
         foreach ($gates as $gate) {
-            $gid = (int)$gate->id;
-            $wc = strtoupper(trim((string)($gate->warehouse_code ?? '')));
-            $gn = (string)($gate->gate_number ?? '');
+            $gid = (int) $gate->id;
+            $wc = strtoupper(trim((string) ($gate->warehouse_code ?? '')));
+            $gn = (string) ($gate->gate_number ?? '');
             $group = $this->slotService->buildLaneGroupFromMeta($wc, $gn, $gid);
             $gateMeta[$gid] = ['warehouse_code' => $wc, 'gate_number' => $gn, 'group' => $group];
         }
         // Map each gate to its lane group peers
         foreach ($gateMeta as $gid => $meta) {
             $group = $meta['group'];
-            if (!$group) {
+            if (! $group) {
                 $laneGroupMap[$gid] = [$gid];
+
                 continue;
             }
             $peers = [];
@@ -55,7 +56,7 @@ class GateStatusService
             ->where('s.status', 'in_progress')
             ->whereIn('s.actual_gate_id', $allGateIds)
             ->whereDate('s.actual_start', $today)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderByDesc('s.actual_start')
@@ -67,7 +68,7 @@ class GateStatusService
             ->whereIn('s.planned_gate_id', $allGateIds)
             ->whereIn('s.status', ['scheduled', 'arrived', 'waiting'])
             ->whereDate('s.planned_start', $today)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderBy('s.planned_start', 'asc')
@@ -77,27 +78,27 @@ class GateStatusService
         // Build gate cards using in-memory matching
         $gateCards = [];
         foreach ($gates as $gate) {
-            $gateId = (int)($gate->id ?? 0);
+            $gateId = (int) ($gate->id ?? 0);
             $laneIds = $laneGroupMap[$gateId] ?? [$gateId];
 
             // Match current slot from batch (first in-progress slot for this lane group)
-            $currentSlot = $currentSlots->first(fn($s) => in_array((int)$s->actual_gate_id, $laneIds));
+            $currentSlot = $currentSlots->first(fn ($s) => in_array((int) $s->actual_gate_id, $laneIds));
             // Match next slot from batch (first scheduled/arrived/waiting slot for this lane group)
-            $nextSlot = $nextSlots->first(fn($s) => in_array((int)$s->planned_gate_id, $laneIds));
+            $nextSlot = $nextSlots->first(fn ($s) => in_array((int) $s->planned_gate_id, $laneIds));
 
-            $warehouseCode = (string)($gate->warehouse_code ?? '');
-            $gateNumber = (string)($gate->gate_number ?? '');
+            $warehouseCode = (string) ($gate->warehouse_code ?? '');
+            $gateNumber = (string) ($gate->gate_number ?? '');
             $gateDisplay = $this->slotService->getGateDisplayName($warehouseCode, $gateNumber);
-            $gateTitle = $gateDisplay === '-' ? (string)($gate->warehouse_name ?? '-') : ((string)($gate->warehouse_name ?? '-') . ' - ' . $gateDisplay);
+            $gateTitle = $gateDisplay === '-' ? (string) ($gate->warehouse_name ?? '-') : ((string) ($gate->warehouse_name ?? '-').' - '.$gateDisplay);
 
             $gateCards[] = [
                 'gate_id' => $gateId,
                 'warehouse_code' => $warehouseCode,
-                'warehouse_name' => (string)($gate->warehouse_name ?? ''),
+                'warehouse_name' => (string) ($gate->warehouse_name ?? ''),
                 'gate_number' => $gateNumber,
                 'title' => $gateTitle,
-                'is_backup' => (int)($gate->is_backup ?? 0) === 1,
-                'is_active' => (int)($gate->is_active ?? 0) === 1,
+                'is_backup' => (int) ($gate->is_backup ?? 0) === 1,
+                'is_active' => (int) ($gate->is_active ?? 0) === 1,
                 'status_label' => $this->getGateStatusLabel($currentSlot, $nextSlot),
                 'status_class' => $this->getGateStatusClass($currentSlot, $nextSlot),
                 'current_text' => $this->formatCurrentSlotText($currentSlot),
@@ -126,7 +127,7 @@ class GateStatusService
             ->where('s.status', 'in_progress')
             ->whereIn('s.actual_gate_id', $laneGateIds)
             ->whereDate('s.actual_start', $today)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderByDesc('s.actual_start')
@@ -152,7 +153,7 @@ class GateStatusService
             ->whereIn('s.planned_gate_id', $laneGateIds)
             ->whereIn('s.status', ['scheduled', 'arrived', 'waiting'])
             ->whereDate('s.planned_start', $today)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderBy('s.planned_start', 'asc')
@@ -169,6 +170,7 @@ class GateStatusService
             return 'In progress';
         } elseif ($nextSlot) {
             $status = (string) ($nextSlot->status ?? '');
+
             return in_array($status, ['arrived', 'waiting'], true) ? 'Queue' : 'Upcoming';
         }
 
@@ -184,6 +186,7 @@ class GateStatusService
             return 'st-status-processing';
         } elseif ($nextSlot) {
             $status = (string) ($nextSlot->status ?? '');
+
             return in_array($status, ['arrived', 'waiting'], true) ? 'st-status-early' : 'st-status-idle';
         }
 
@@ -195,14 +198,14 @@ class GateStatusService
      */
     public function formatCurrentSlotText(?object $currentSlot): string
     {
-        if (!$currentSlot) {
+        if (! $currentSlot) {
             return '-';
         }
 
         $truckNumber = (string) ($currentSlot->po_number ?? '');
         $startTime = date('H:i', strtotime((string) $currentSlot->actual_start));
 
-        return $truckNumber !== '' ? ('PO ' . $truckNumber . ' @ ' . $startTime) : '-';
+        return $truckNumber !== '' ? ('PO '.$truckNumber.' @ '.$startTime) : '-';
     }
 
     /**
@@ -210,14 +213,14 @@ class GateStatusService
      */
     public function formatNextSlotText(?object $nextSlot): string
     {
-        if (!$nextSlot) {
+        if (! $nextSlot) {
             return '-';
         }
 
         $truckNumber = (string) ($nextSlot->po_number ?? '');
         $startTime = date('H:i', strtotime((string) $nextSlot->planned_start));
 
-        return $truckNumber !== '' ? ('PO ' . $truckNumber . ' @ ' . $startTime) : '-';
+        return $truckNumber !== '' ? ('PO '.$truckNumber.' @ '.$startTime) : '-';
     }
 
     /**
@@ -245,7 +248,7 @@ class GateStatusService
         $gateNumber = (string) ($gate->gate_number ?? '');
 
         $gateDisplay = $this->slotService->getGateDisplayName($warehouseCode, $gateNumber);
-        $gateTitle = $gateDisplay === '-' ? (string) ($gate->warehouse_name ?? '-') : ((string) ($gate->warehouse_name ?? '-') . ' - ' . $gateDisplay);
+        $gateTitle = $gateDisplay === '-' ? (string) ($gate->warehouse_name ?? '-') : ((string) ($gate->warehouse_name ?? '-').' - '.$gateDisplay);
 
         return [
             'gate_id' => $gateId,
@@ -302,7 +305,7 @@ class GateStatusService
             return true;
         }
 
-        $hourExpr = "EXTRACT(HOUR FROM s.planned_start)";
+        $hourExpr = 'EXTRACT(HOUR FROM s.planned_start)';
         $driver = DB::getDriverName();
         if ($driver !== 'pgsql') {
             $hourExpr = 'HOUR(s.planned_start)';
@@ -318,7 +321,7 @@ class GateStatusService
             ->whereIn('s.planned_gate_id', $laneGateIds)
             ->whereDate('s.planned_start', $date)
             ->where('s.status', '!=', 'cancelled')
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->whereRaw("{$hourExpr} <= ?", [$hour])
@@ -372,7 +375,7 @@ class GateStatusService
             $laneGroup = $this->slotService->getGateLaneGroup($gateId);
             $laneGateIds = $laneGroup ? $this->slotService->getGateIdsByLaneGroup($laneGroup) : [$gateId];
 
-            if (!empty($laneGateIds)) {
+            if (! empty($laneGateIds)) {
                 $stats = DB::table('slots as s')
                     ->join('md_gates as g', function ($join) {
                         $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
@@ -380,13 +383,13 @@ class GateStatusService
                     })
                     ->whereIn('g.id', $laneGateIds)
                     ->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start)'), $date)
-                    ->where(function($q) {
+                    ->where(function ($q) {
                         $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
                     })
                     ->select([
                         DB::raw('COUNT(*) as total_slots'),
                         DB::raw("SUM(CASE WHEN s.status = 'completed' THEN 1 ELSE 0 END) as completed_slots"),
-                        DB::raw('AVG(' . $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish') . ') as avg_duration'),
+                        DB::raw('AVG('.$this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish').') as avg_duration'),
                         DB::raw("SUM(CASE WHEN s.status = 'completed' AND (s.is_late = false OR s.is_late IS NULL) THEN 1 ELSE 0 END) as on_time_count"),
                     ])
                     ->first();

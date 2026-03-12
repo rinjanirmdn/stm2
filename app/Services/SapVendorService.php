@@ -2,25 +2,32 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Service untuk mengambil data Vendor dari SAP API
- * 
+ *
  * Saat ini vendor data diambil dari response PO API (SupplierCode, SupplierName)
  * Jika nanti ada service vendor terpisah dari SAP, bisa dikembangkan di sini.
  */
 class SapVendorService
 {
     private string $baseUrl;
+
     private string $servicePath;
+
     private string $sapClient;
+
     private string $token;
+
     private string $username;
+
     private string $password;
+
     private bool $verifySsl;
+
     private int $timeout;
 
     public function __construct()
@@ -48,7 +55,7 @@ class SapVendorService
      */
     private function buildUrl(string $endpoint): string
     {
-        return rtrim($this->baseUrl, '/') . $this->servicePath . $endpoint;
+        return rtrim($this->baseUrl, '/').$this->servicePath.$endpoint;
     }
 
     /**
@@ -68,7 +75,7 @@ class SapVendorService
             $req = $req->withHeaders(['sap-client' => $this->sapClient]);
         }
 
-        if (!$this->verifySsl) {
+        if (! $this->verifySsl) {
             $req = $req->withoutVerifying();
         }
 
@@ -81,9 +88,9 @@ class SapVendorService
 
     /**
      * Search vendors by name or code
-     * 
-     * @param string $query Search query
-     * @param int $limit Maximum results to return
+     *
+     * @param  string  $query  Search query
+     * @param  int  $limit  Maximum results to return
      * @return array List of vendors
      */
     public function search(string $query, int $limit = 20): array
@@ -94,7 +101,7 @@ class SapVendorService
         }
 
         // If SAP Vendor API is not configured, return empty
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return [];
         }
 
@@ -103,14 +110,15 @@ class SapVendorService
             $filter = "\$filter=contains(VendorName,'{$query}') or contains(VendorCode,'{$query}')";
             $top = "\$top={$limit}";
             $endpoint = "/VendorSet?{$filter}&{$top}";
-            
+
             $response = $this->buildRequest()->get($this->buildUrl($endpoint));
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('SAP Vendor search failed', [
                     'status' => $response->status(),
                     'query' => $query,
                 ]);
+
                 return [];
             }
 
@@ -129,14 +137,15 @@ class SapVendorService
                 'error' => $e->getMessage(),
                 'query' => $query,
             ]);
+
             return [];
         }
     }
 
     /**
      * Get vendor by code
-     * 
-     * @param string $vendorCode Vendor code
+     *
+     * @param  string  $vendorCode  Vendor code
      * @return array|null Vendor data or null if not found
      */
     public function getByCode(string $vendorCode): ?array
@@ -154,7 +163,7 @@ class SapVendorService
         }
 
         // If SAP Vendor API is not configured, return null
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return null;
         }
 
@@ -162,11 +171,12 @@ class SapVendorService
             $endpoint = "/VendorSet('{$vendorCode}')";
             $response = $this->buildRequest()->get($this->buildUrl($endpoint));
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('SAP Vendor get failed', [
                     'status' => $response->status(),
                     'vendor_code' => $vendorCode,
                 ]);
+
                 return null;
             }
 
@@ -182,6 +192,7 @@ class SapVendorService
                 'error' => $e->getMessage(),
                 'vendor_code' => $vendorCode,
             ]);
+
             return null;
         }
     }
@@ -189,9 +200,9 @@ class SapVendorService
     /**
      * Get vendor info from PO response
      * This is used when we already have vendor data from PO API
-     * 
-     * @param string $supplierCode Supplier code from PO
-     * @param string $supplierName Supplier name from PO
+     *
+     * @param  string  $supplierCode  Supplier code from PO
+     * @param  string  $supplierName  Supplier name from PO
      * @return array Vendor data
      */
     public function getFromPoResponse(string $supplierCode, string $supplierName): array
@@ -240,6 +251,7 @@ class SapVendorService
             })->toArray();
         } catch (\Throwable $e) {
             Log::error('Local vendor search error', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -252,7 +264,7 @@ class SapVendorService
         try {
             $vendor = \App\Models\Vendor::where('bp_code', $vendorCode)->first();
 
-            if (!$vendor) {
+            if (! $vendor) {
                 return null;
             }
 
@@ -263,6 +275,7 @@ class SapVendorService
             ];
         } catch (\Throwable $e) {
             Log::error('Local vendor get error', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -287,6 +300,7 @@ class SapVendorService
             );
         } catch (\Throwable $e) {
             Log::error('Vendor sync error', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -296,7 +310,7 @@ class SapVendorService
      */
     public function healthCheck(): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return [
                 'status' => 'not_configured',
                 'message' => 'SAP Vendor API is not configured. Using local database as fallback.',

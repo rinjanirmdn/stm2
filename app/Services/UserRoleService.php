@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 
@@ -16,8 +16,9 @@ class UserRoleService
     public function assignRole(int $userId, string $role): bool
     {
         $roleId = $this->getRoleIdByName($role);
-        if (!$roleId) {
+        if (! $roleId) {
             Log::error("Role not found: {$role}");
+
             return false;
         }
 
@@ -27,9 +28,11 @@ class UserRoleService
                 'model_type' => 'App\\Models\\User',
                 'model_id' => $userId,
             ]);
+
             return true;
         } catch (\Throwable $e) {
-            Log::error("Failed to assign role {$role} to user {$userId}: " . $e->getMessage());
+            Log::error("Failed to assign role {$role} to user {$userId}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -47,7 +50,8 @@ class UserRoleService
 
             return $deleted > 0;
         } catch (\Throwable $e) {
-            Log::error("Failed to remove role from user {$userId}: " . $e->getMessage());
+            Log::error("Failed to remove role from user {$userId}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -88,7 +92,7 @@ class UserRoleService
     public function userHasRole(int $userId, string $role): bool
     {
         $roleId = $this->getRoleIdByName($role);
-        if (!$roleId) {
+        if (! $roleId) {
             return false;
         }
 
@@ -118,7 +122,7 @@ class UserRoleService
     public function getUsersByRole(string $role): \Illuminate\Support\Collection
     {
         $roleId = $this->getRoleIdByName($role);
-        if (!$roleId) {
+        if (! $roleId) {
             return collect([]);
         }
 
@@ -142,14 +146,15 @@ class UserRoleService
 
             // Assign new roles
             foreach ($roles as $role) {
-                if (!$this->assignRole($userId, $role)) {
+                if (! $this->assignRole($userId, $role)) {
                     return false;
                 }
             }
 
             return true;
         } catch (\Throwable $e) {
-            Log::error("Failed to sync roles for user {$userId}: " . $e->getMessage());
+            Log::error("Failed to sync roles for user {$userId}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -194,7 +199,7 @@ class UserRoleService
     public function canDeactivateUser(int $userId): bool
     {
         // Check if user is admin
-        if (!$this->userHasRole($userId, 'Admin')) {
+        if (! $this->userHasRole($userId, 'Admin')) {
             return true;
         }
 
@@ -221,7 +226,7 @@ class UserRoleService
         $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
 
         foreach ($roles as $role) {
-            $rolePermissions = DB::table($roleHasPermissionsTable . ' as rhp')
+            $rolePermissions = DB::table($roleHasPermissionsTable.' as rhp')
                 ->join('md_permissions as p', 'rhp.permission_id', '=', 'p.id')
                 ->where('rhp.role_id', $role->id)
                 ->pluck('p.perm_name')
@@ -239,6 +244,7 @@ class UserRoleService
     public function userHasPermission(int $userId, string $permission): bool
     {
         $permissions = $this->getUserPermissions($userId);
+
         return in_array($permission, $permissions);
     }
 
@@ -258,7 +264,7 @@ class UserRoleService
                 'al.activity_type',
                 'al.description',
                 'al.created_at',
-                'u.nik as created_by_nik'
+                'u.nik as created_by_nik',
             ])
             ->get();
     }

@@ -2,15 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\Gate;
-use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Vendor;
-use App\Models\Warehouse;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 
 class VendorBookingSeeder extends Seeder
 {
@@ -60,12 +56,9 @@ class VendorBookingSeeder extends Seeder
         $adminUser->assignRole('Admin');
         $adminUser->givePermissionTo('bookings.reschedule');
 
-        $this->command->info("Vendor User created: vendor_user / password");
-        $this->command->info("Admin User created: booking_admin / password");
+        $this->command->info('Vendor User created: vendor_user / password');
+        $this->command->info('Admin User created: booking_admin / password');
     }
 
-    private function ensureRolesAndPermissions()
-    {
-        return;
-    }
+    private function ensureRolesAndPermissions() {}
 }

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class SlotConflictService
 {
@@ -46,7 +45,7 @@ class SlotConflictService
             if ($detail) {
                 $messages[] = $this->buildConflictLine($detail);
             } else {
-                $messages[] = 'Slot #' . $slotId;
+                $messages[] = 'Slot #'.$slotId;
             }
         }
 
@@ -107,14 +106,14 @@ class SlotConflictService
         $gateNumber = (string) ($row->actual_gate_number ?? '');
 
         $gateLabel = $this->buildGateLabel($whCode, $gateNumber);
-        $startStr = !empty($row->actual_start) ? (string) $row->actual_start : '';
+        $startStr = ! empty($row->actual_start) ? (string) $row->actual_start : '';
 
         $parts = [
-            $ticket !== '' ? ('Ticket ' . $ticket) : ('Slot #' . (int) $row->id)
+            $ticket !== '' ? ('Ticket '.$ticket) : ('Slot #'.(int) $row->id),
         ];
 
         if ($po !== '') {
-            $parts[] = 'PO ' . $po;
+            $parts[] = 'PO '.$po;
         }
 
         if ($gateLabel !== '-') {
@@ -122,11 +121,11 @@ class SlotConflictService
         }
 
         if ($startStr !== '') {
-            $parts[] = 'Mulai ' . $startStr;
+            $parts[] = 'Mulai '.$startStr;
         }
 
         if ($status !== '') {
-            $parts[] = 'Status ' . strtoupper($status);
+            $parts[] = 'Status '.strtoupper($status);
         }
 
         return implode(' | ', $parts);
@@ -141,7 +140,7 @@ class SlotConflictService
         $gateLabel = $this->slotService->getGateDisplayName($wh, (string) $gateNumber);
 
         if ($wh !== '' && $gateLabel !== '-') {
-            return $wh . ' - ' . $gateLabel;
+            return $wh.' - '.$gateLabel;
         }
 
         return $gateLabel;
@@ -155,12 +154,12 @@ class SlotConflictService
         $query = DB::table('slots')
             ->whereIn('actual_gate_id', $laneGateIds)
             ->whereDate('actual_start', $today)
-            ->where(function($query) use ($now) {
+            ->where(function ($query) use ($now) {
                 $query->where('status', 'in_progress')
-                      ->where(function($subQuery) use ($now) {
-                          $subQuery->whereNull('actual_finish')
-                                   ->orWhere('actual_finish', '>', $now);
-                      });
+                    ->where(function ($subQuery) use ($now) {
+                        $subQuery->whereNull('actual_finish')
+                            ->orWhere('actual_finish', '>', $now);
+                    });
             });
 
         if ($excludeSlotId > 0) {
@@ -184,21 +183,21 @@ class SlotConflictService
         $conflictingSlots = DB::table('slots')
             ->whereIn('actual_gate_id', $laneGateIds)
             ->where('id', '<>', $excludeSlotId)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('status', 'in_progress')
-                      ->orWhere('status', 'arrived')
-                      ->orWhere('status', 'waiting');
+                    ->orWhere('status', 'arrived')
+                    ->orWhere('status', 'waiting');
             })
-            ->where(function($query) use ($startTime, $endTime) {
-                $query->where(function($sub) use ($startTime, $endTime) {
+            ->where(function ($query) use ($startTime, $endTime) {
+                $query->where(function ($sub) use ($startTime) {
                     // Slot starts during another slot's time
                     $sub->where('actual_start', '<=', $startTime)
                         ->whereRaw('(actual_finish IS NULL OR actual_finish > ?)', [$startTime]);
-                })->orWhere(function($sub) use ($startTime, $endTime) {
+                })->orWhere(function ($sub) use ($endTime) {
                     // Slot ends during another slot's time
                     $sub->where('actual_start', '<', $endTime)
                         ->whereRaw('(actual_finish IS NULL OR actual_finish >= ?)', [$endTime]);
-                })->orWhere(function($sub) use ($startTime, $endTime) {
+                })->orWhere(function ($sub) use ($startTime, $endTime) {
                     // Slot completely overlaps another slot
                     $sub->where('actual_start', '>=', $startTime)
                         ->whereRaw('(actual_finish IS NULL OR actual_finish <= ?)', [$endTime]);
@@ -223,7 +222,7 @@ class SlotConflictService
                 'g.id',
                 'g.gate_number',
                 'w.wh_code as warehouse_code',
-                'w.wh_name as warehouse_name'
+                'w.wh_name as warehouse_name',
             ])
             ->orderBy('g.gate_number')
             ->get();
@@ -240,15 +239,16 @@ class SlotConflictService
                 'warehouse_code' => $gate->warehouse_code,
                 'warehouse_name' => $gate->warehouse_name,
                 'conflict_count' => $conflictCount,
-                'is_recommended' => $conflictCount === 0
+                'is_recommended' => $conflictCount === 0,
             ];
         }
 
         // Sort by conflict count (lowest first) then by gate number
-        usort($alternatives, function($a, $b) {
+        usort($alternatives, function ($a, $b) {
             if ($a['conflict_count'] !== $b['conflict_count']) {
                 return $a['conflict_count'] - $b['conflict_count'];
             }
+
             return strcasecmp($a['gate_number'], $b['gate_number']);
         });
 
@@ -267,12 +267,12 @@ class SlotConflictService
             ->whereIn('actual_gate_id', $laneGateIds)
             ->where('status', 'completed')
             ->where('id', '<>', $excludeSlotId)
-            ->where(function($query) use ($startTime, $endTime) {
-                $query->where(function($sub) use ($startTime, $endTime) {
+            ->where(function ($query) use ($startTime, $endTime) {
+                $query->where(function ($sub) use ($startTime) {
                     // Completed slot overlaps with new booking time
                     $sub->where('actual_start', '<=', $startTime)
                         ->where('actual_finish', '>=', $startTime);
-                })->orWhere(function($sub) use ($startTime, $endTime) {
+                })->orWhere(function ($sub) use ($endTime) {
                     $sub->where('actual_start', '<=', $endTime)
                         ->where('actual_finish', '>=', $endTime);
                 });
@@ -289,15 +289,15 @@ class SlotConflictService
                 ->whereIn('actual_gate_id', $laneGateIds)
                 ->where('status', 'scheduled')
                 ->where('id', '<>', $excludeSlotId)
-                ->where(function($query) use ($completedSlot) {
+                ->where(function ($query) use ($completedSlot) {
                     $query->where('planned_start', '>=', $completedSlot->actual_start)
-                          ->where('planned_start', '<=', $completedSlot->actual_finish);
+                        ->where('planned_start', '<=', $completedSlot->actual_finish);
                 })
                 ->update([
                     'status' => 'cancelled',
                     'blocking_risk' => 0,
                     'cancelled_reason' => 'Auto-cancelled: Truck arrived and completed operation earlier',
-                    'cancelled_at' => now()
+                    'cancelled_at' => now(),
                 ]);
         }
     }
@@ -314,9 +314,9 @@ class SlotConflictService
             ->where('actual_gate_id', $gateId)
             ->whereDate('actual_start', $today)
             ->where('status', 'in_progress')
-            ->where(function($query) use ($now) {
+            ->where(function ($query) use ($now) {
                 $query->whereNull('actual_finish')
-                      ->orWhere('actual_finish', '>', $now);
+                    ->orWhere('actual_finish', '>', $now);
             })
             ->count();
     }

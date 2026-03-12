@@ -34,9 +34,13 @@ class BookingHistory extends Model
      * Action constants
      */
     public const ACTION_REQUESTED = 'requested';
+
     public const ACTION_APPROVED = 'approved';
+
     public const ACTION_REJECTED = 'rejected';
+
     public const ACTION_RESCHEDULED = 'rescheduled';
+
     public const ACTION_CANCELLED = 'cancelled';
 
     /**
