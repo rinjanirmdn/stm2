@@ -49,8 +49,10 @@ return new class extends Migration
             ->where($roleNameCol, 'section_head')
             ->update([$roleNameCol => 'Section Head']);
 
+        $rolesTable = config('permission.table_names.roles', 'roles');
+
         // Add role_id foreign key to users table
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) use ($rolesTable) {
             // Add role_id column if it doesn't exist
             if (! Schema::hasColumn('users', 'role_id')) {
                 $table->unsignedBigInteger('role_id')->nullable()->after('role');
@@ -59,7 +61,7 @@ return new class extends Migration
             // Add foreign key constraint
             $table->foreign('role_id')
                 ->references('id')
-                ->on('roles')
+                ->on($rolesTable)
                 ->onDelete('set null');
         });
 

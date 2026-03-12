@@ -37,7 +37,7 @@ return new class extends Migration
         // Grant these permissions to all roles that can interact with unplanned slots
         $roleNameCol = \Illuminate\Support\Facades\Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
         $roles = DB::table($roleTable)
-            ->whereIn(DB::raw('LOWER(' . $roleNameCol . ')'), ['admin', 'super account', 'section head', 'security', 'operator'])
+            ->whereIn(DB::raw('LOWER('.$roleNameCol.')'), ['admin', 'super account', 'section head', 'security', 'operator'])
             ->pluck('id');
 
         foreach ($roles as $roleId) {
