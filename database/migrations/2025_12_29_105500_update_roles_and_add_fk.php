@@ -112,6 +112,8 @@ return new class extends Migration
         // Get all permission IDs
         $allPermissionIds = DB::table('md_permissions')->pluck('id')->toArray();
 
+        $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
+
         // Admin gets all permissions
         if ($adminRole) {
             $this->assignPermissionsToRole($adminRole->id, $allPermissionIds);
@@ -120,7 +122,7 @@ return new class extends Migration
         // Section Head gets most permissions (except user management and some system functions)
         if ($sectionHeadRole) {
             $sectionHeadPermissions = DB::table('md_permissions')
-                ->whereNotIn('name', [
+                ->whereNotIn($permNameCol, [
                     'users.create',
                     'users.store',
                     'users.delete',
@@ -135,7 +137,7 @@ return new class extends Migration
         // Operator gets slot operations only
         if ($operatorRole) {
             $operatorPermissions = DB::table('md_permissions')
-                ->whereIn('name', [
+                ->whereIn($permNameCol, [
                     'dashboard.view',
                     'dashboard.range_filter',
                     'slots.index',
