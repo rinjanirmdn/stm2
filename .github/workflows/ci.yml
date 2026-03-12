@@ -126,7 +126,7 @@ jobs:
           php artisan migrate --force
 
       - name: Run PHPUnit tests
-        run: php artisan test --parallel --coverage-text
+        run: php artisan test --coverage-text
 
   # ---------------------------------------------------------------------------
   # Job 3: Build Assets — Vite + React + Tailwind
