@@ -21,7 +21,7 @@
                 </div>
                 <div class="st-form-field st-maxw-250 st-relative">
                     <label class="st-label">Date Range</label>
-                    <div id="transaction_reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                    <div id="transaction_reportrange" class="st-daterange-trigger">
                         <i class="fa fa-calendar"></i>&nbsp;
                         <span></span> <i class="fa fa-caret-down"></i>
                     </div>

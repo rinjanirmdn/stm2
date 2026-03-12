@@ -628,3 +628,119 @@
 .st-bg-indigo-500 {
     background-color: var(--outbound);
 }
+
+/* ── Auth page background ── */
+.st-auth-bg {
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(rgba(15,23,42,0.5), rgba(15,23,42,0.5)),
+        var(--st-auth-bg-url) center center / cover no-repeat fixed;
+}
+
+/* ── Password input wrapper with toggle ── */
+.st-password-wrap {
+    position: relative;
+}
+
+.st-password-wrap .st-input {
+    padding-right: 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.st-password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+    padding: 0;
+}
+
+/* ── Card with primary left border accent ── */
+.st-card--primary-accent {
+    border-left-color: var(--primary);
+}
+
+/* ── Date range picker trigger ── */
+.st-daterange-trigger {
+    background: #fff;
+    cursor: pointer;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    width: 100%;
+}
+
+/* ── Hidden form (no visual) ── */
+.st-form--hidden {
+    display: none;
+}
+
+/* ── Dashboard React loading state ── */
+.st-dashboard-wrap {
+    width: 100%;
+    padding: 0 4px;
+}
+
+.st-react-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.st-react-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #0284c7;
+    border-radius: 50%;
+    animation: st-spin 0.8s linear infinite;
+}
+
+@keyframes st-spin {
+    to { transform: rotate(360deg); }
+}
+
+.st-react-loading-text {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.st-react-error {
+    padding: 24px;
+    text-align: center;
+    color: #dc2626;
+    font-size: 13px;
+}
+
+.st-react-error-hint {
+    color: #64748b;
+    font-size: 11px;
+}
+
+/* ── Gate card vendor line clamp ── */
+.st-dock-card__vendor--clamp {
+    white-space: normal;
+    overflow: visible;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    margin-top: 4px;
+    line-height: 1.2;
+}
+
+.st-line-clamp-1 { -webkit-line-clamp: 1; line-clamp: 1; }
+.st-line-clamp-3 { -webkit-line-clamp: 3; line-clamp: 3; }
+.st-line-clamp-10 { -webkit-line-clamp: 10; line-clamp: 10; }
+
+/* ── Logout link (text-only button) ── */
+.st-link-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+}

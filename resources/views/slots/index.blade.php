@@ -219,7 +219,7 @@
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="planned_start">
                                             <div class="st-font-semibold st-mb-6">ETA Range</div>
-                                            <div id="eta_reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                                            <div id="eta_reportrange" class="st-daterange-trigger">
                                                 <i class="fa fa-calendar"></i>&nbsp;
                                                 <span></span> <i class="fa fa-caret-down"></i>
                                             </div>
@@ -248,7 +248,7 @@
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide-lg st-panel--scroll st-panel--z9" data-filter-panel="arrival_presence">
                                             <div class="st-font-semibold st-mb-6">Arrival Date Filter</div>
-                                            <div id="arrival_reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                                            <div id="arrival_reportrange" class="st-daterange-trigger">
                                                 <i class="fa fa-calendar"></i>&nbsp;
                                                 <span></span> <i class="fa fa-caret-down"></i>
                                             </div>

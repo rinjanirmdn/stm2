@@ -101,7 +101,7 @@
                     </form>
 
                     {{-- Hidden form for password change request (separate from profile update) --}}
-                    <form id="vendor-password-request-form" method="POST" action="{{ route('profile.password-request') }}" style="display:none;">
+                    <form id="vendor-password-request-form" method="POST" action="{{ route('profile.password-request') }}" class="st-form--hidden">
                         @csrf
                     </form>
                 </div>
