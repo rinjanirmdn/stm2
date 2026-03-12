@@ -125,6 +125,11 @@ jobs:
         run: |
           php artisan migrate --force
 
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
       - name: Run PHPUnit tests
         run: php artisan test --coverage-text
 
