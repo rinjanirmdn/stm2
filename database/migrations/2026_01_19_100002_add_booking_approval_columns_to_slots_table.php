@@ -21,10 +21,30 @@ return new class extends Migration
             // MySQL: Modify enum to include new statuses
             DB::statement("ALTER TABLE slots MODIFY COLUMN status ENUM('scheduled', 'arrived', 'waiting', 'in_progress', 'completed', 'cancelled', 'pending_approval', 'rejected', 'pending_vendor_confirmation') DEFAULT 'scheduled'");
         } elseif ($driver === 'pgsql') {
-            // PostgreSQL: Add new values to enum type
-            DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'pending_approval'");
-            DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'rejected'");
-            DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'pending_vendor_confirmation'");
+            // PostgreSQL: Add new values to enum type or check constraint without throwing exceptions
+            $hasEnum = DB::selectOne("SELECT 1 FROM pg_type WHERE typname = 'slots_status'");
+            if ($hasEnum) {
+                DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'pending_approval'");
+                DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'rejected'");
+                DB::statement("ALTER TYPE slots_status ADD VALUE IF NOT EXISTS 'pending_vendor_confirmation'");
+            } else {
+                // Modern Laravel often uses check constraints instead of native enum types for Postgres
+                $constraint = DB::selectOne("
+                    SELECT conname 
+                    FROM pg_constraint 
+                    JOIN pg_class ON conrelid = pg_class.oid 
+                    JOIN pg_attribute ON attrelid = pg_class.oid AND attnum = ANY(conkey) 
+                    WHERE pg_class.relname = 'slots' AND attname = 'status'
+                ");
+                if ($constraint && isset($constraint->conname)) {
+                    DB::statement("ALTER TABLE slots DROP CONSTRAINT {$constraint->conname}");
+                }
+
+                // Only add constraint if table actually exists (to prevent errors if migration order differs)
+                if (Schema::hasTable('slots')) {
+                    DB::statement("ALTER TABLE slots ADD CONSTRAINT slots_status_check CHECK (status::text = ANY (ARRAY['scheduled', 'arrived', 'waiting', 'in_progress', 'completed', 'cancelled', 'pending_approval', 'rejected', 'pending_vendor_confirmation']::text[]))");
+                }
+            }
         }
         // SQLite doesn't enforce enum types, so no change needed
 

@@ -10,26 +10,29 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $roleNameCol = Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
+        $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
+
         // Get role IDs
-        $adminRoleId = DB::table('md_roles')->where('roles_name', 'Admin')->value('id');
-        $sectionHeadRoleId = DB::table('md_roles')->where('roles_name', 'Section Head')->value('id');
+        $adminRoleId = DB::table('md_roles')->where($roleNameCol, 'Admin')->value('id');
+        $sectionHeadRoleId = DB::table('md_roles')->where($roleNameCol, 'Section Head')->value('id');
 
         // Get permission IDs
-        $gatesIndexId = DB::table('md_permissions')->where('perm_name', 'gates.index')->value('id');
-        $trucksIndexId = DB::table('md_permissions')->where('perm_name', 'trucks.index')->value('id');
-        $logsIndexId = DB::table('md_permissions')->where('perm_name', 'logs.index')->value('id');
-        $vendorsCreateId = DB::table('md_permissions')->where('perm_name', 'vendors.create')->value('id');
-        $vendorsStoreId = DB::table('md_permissions')->where('perm_name', 'vendors.store')->value('id');
-        $vendorsEditId = DB::table('md_permissions')->where('perm_name', 'vendors.edit')->value('id');
-        $vendorsUpdateId = DB::table('md_permissions')->where('perm_name', 'vendors.update')->value('id');
-        $vendorsDeleteId = DB::table('md_permissions')->where('perm_name', 'vendors.delete')->value('id');
-        $vendorsImportId = DB::table('md_permissions')->where('perm_name', 'vendors.import')->value('id');
-        $vendorsImportStoreId = DB::table('md_permissions')->where('perm_name', 'vendors.import.store')->value('id');
-        $trucksCreateId = DB::table('md_permissions')->where('perm_name', 'trucks.create')->value('id');
-        $trucksStoreId = DB::table('md_permissions')->where('perm_name', 'trucks.store')->value('id');
-        $trucksEditId = DB::table('md_permissions')->where('perm_name', 'trucks.edit')->value('id');
-        $trucksUpdateId = DB::table('md_permissions')->where('perm_name', 'trucks.update')->value('id');
-        $trucksDeleteId = DB::table('md_permissions')->where('perm_name', 'trucks.delete')->value('id');
+        $gatesIndexId = DB::table('md_permissions')->where($permNameCol, 'gates.index')->value('id');
+        $trucksIndexId = DB::table('md_permissions')->where($permNameCol, 'trucks.index')->value('id');
+        $logsIndexId = DB::table('md_permissions')->where($permNameCol, 'logs.index')->value('id');
+        $vendorsCreateId = DB::table('md_permissions')->where($permNameCol, 'vendors.create')->value('id');
+        $vendorsStoreId = DB::table('md_permissions')->where($permNameCol, 'vendors.store')->value('id');
+        $vendorsEditId = DB::table('md_permissions')->where($permNameCol, 'vendors.edit')->value('id');
+        $vendorsUpdateId = DB::table('md_permissions')->where($permNameCol, 'vendors.update')->value('id');
+        $vendorsDeleteId = DB::table('md_permissions')->where($permNameCol, 'vendors.delete')->value('id');
+        $vendorsImportId = DB::table('md_permissions')->where($permNameCol, 'vendors.import')->value('id');
+        $vendorsImportStoreId = DB::table('md_permissions')->where($permNameCol, 'vendors.import.store')->value('id');
+        $trucksCreateId = DB::table('md_permissions')->where($permNameCol, 'trucks.create')->value('id');
+        $trucksStoreId = DB::table('md_permissions')->where($permNameCol, 'trucks.store')->value('id');
+        $trucksEditId = DB::table('md_permissions')->where($permNameCol, 'trucks.edit')->value('id');
+        $trucksUpdateId = DB::table('md_permissions')->where($permNameCol, 'trucks.update')->value('id');
+        $trucksDeleteId = DB::table('md_permissions')->where($permNameCol, 'trucks.delete')->value('id');
 
         echo "Admin role ID: $adminRoleId\n";
         echo "Section Head role ID: $sectionHeadRoleId\n";
@@ -79,7 +82,7 @@ return new class extends Migration
         $finalPerms = DB::table('role_has_permissions')
             ->join('md_permissions', 'role_has_permissions.permission_id', '=', 'md_permissions.id')
             ->where('role_has_permissions.role_id', $sectionHeadRoleId)
-            ->pluck('md_permissions.perm_name')
+            ->pluck('md_permissions.'.$permNameCol)
             ->toArray();
 
         foreach ($finalPerms as $perm) {
@@ -94,8 +97,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        $roleNameCol = Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
+        $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
+
         // Remove the permissions we added
-        $sectionHeadRoleId = DB::table('md_roles')->where('roles_name', 'Section Head')->value('id');
+        $sectionHeadRoleId = DB::table('md_roles')->where($roleNameCol, 'Section Head')->value('id');
 
         if ($sectionHeadRoleId) {
             $permissionsToRemove = [
@@ -117,7 +123,7 @@ return new class extends Migration
             ];
 
             $permissionIds = DB::table('md_permissions')
-                ->whereIn('perm_name', $permissionsToRemove)
+                ->whereIn($permNameCol, $permissionsToRemove)
                 ->pluck('id')
                 ->toArray();
 

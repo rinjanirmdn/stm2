@@ -26,35 +26,37 @@ return new class extends Migration
             });
 
             $driver = DB::getDriverName();
-            if ($driver === 'pgsql') {
-                DB::statement(
-                    "UPDATE slots\n".
-                    "SET po_number = COALESCE(slots.po_number, src.po_number),\n".
-                    "    vendor_name = COALESCE(slots.vendor_name, src.vendor_name, src.po_vendor_name),\n".
-                    "    vendor_code = COALESCE(slots.vendor_code, src.vendor_code, src.po_vendor_code),\n".
-                    "    vendor_type = COALESCE(slots.vendor_type, src.vendor_type, src.po_vendor_type)\n".
-                    "FROM (\n".
-                    "    SELECT s.id, t.po_number,\n".
-                    "           v.bp_name AS vendor_name, v.bp_code AS vendor_code, v.bp_type::text AS vendor_type,\n".
-                    "           pv.bp_name AS po_vendor_name, pv.bp_code AS po_vendor_code, pv.bp_type::text AS po_vendor_type\n".
-                    "    FROM slots s\n".
-                    "    LEFT JOIN po t ON t.id = s.po_id\n".
-                    "    LEFT JOIN business_partner v ON v.id = s.bp_id\n".
-                    "    LEFT JOIN business_partner pv ON pv.id = t.bp_id\n".
-                    ") src\n".
-                    'WHERE slots.id = src.id'
-                );
-            } else {
-                DB::statement(
-                    "UPDATE slots s\n".
-                    "LEFT JOIN po t ON t.id = s.po_id\n".
-                    "LEFT JOIN business_partner v ON v.id = s.bp_id\n".
-                    "LEFT JOIN business_partner pv ON pv.id = t.bp_id\n".
-                    "SET s.po_number = COALESCE(s.po_number, t.po_number),\n".
-                    "    s.vendor_name = COALESCE(s.vendor_name, v.bp_name, pv.bp_name),\n".
-                    "    s.vendor_code = COALESCE(s.vendor_code, v.bp_code, pv.bp_code),\n".
-                    '    s.vendor_type = COALESCE(s.vendor_type, v.bp_type, pv.bp_type)'
-                );
+            if (Schema::hasTable('po') && Schema::hasTable('business_partner')) {
+                if ($driver === 'pgsql') {
+                    DB::statement(
+                        "UPDATE slots\n".
+                        "SET po_number = COALESCE(slots.po_number, src.po_number),\n".
+                        "    vendor_name = COALESCE(slots.vendor_name, src.vendor_name, src.po_vendor_name),\n".
+                        "    vendor_code = COALESCE(slots.vendor_code, src.vendor_code, src.po_vendor_code),\n".
+                        "    vendor_type = COALESCE(slots.vendor_type, src.vendor_type, src.po_vendor_type)\n".
+                        "FROM (\n".
+                        "    SELECT s.id, t.po_number,\n".
+                        "           v.bp_name AS vendor_name, v.bp_code AS vendor_code, v.bp_type::text AS vendor_type,\n".
+                        "           pv.bp_name AS po_vendor_name, pv.bp_code AS po_vendor_code, pv.bp_type::text AS po_vendor_type\n".
+                        "    FROM slots s\n".
+                        "    LEFT JOIN po t ON t.id = s.po_id\n".
+                        "    LEFT JOIN business_partner v ON v.id = s.bp_id\n".
+                        "    LEFT JOIN business_partner pv ON pv.id = t.bp_id\n".
+                        ") src\n".
+                        'WHERE slots.id = src.id'
+                    );
+                } else {
+                    DB::statement(
+                        "UPDATE slots s\n".
+                        "LEFT JOIN po t ON t.id = s.po_id\n".
+                        "LEFT JOIN business_partner v ON v.id = s.bp_id\n".
+                        "LEFT JOIN business_partner pv ON pv.id = t.bp_id\n".
+                        "SET s.po_number = COALESCE(s.po_number, t.po_number),\n".
+                        "    s.vendor_name = COALESCE(s.vendor_name, v.bp_name, pv.bp_name),\n".
+                        "    s.vendor_code = COALESCE(s.vendor_code, v.bp_code, pv.bp_code),\n".
+                        '    s.vendor_type = COALESCE(s.vendor_type, v.bp_type, pv.bp_type)'
+                    );
+                }
             }
 
             if ($driver === 'pgsql') {

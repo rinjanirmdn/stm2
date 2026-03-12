@@ -10,8 +10,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
+        $permGuardCol = Schema::hasColumn('md_permissions', 'perm_guard_name') ? 'perm_guard_name' : 'guard_name';
+
         // Get existing permissions to avoid duplicates
-        $existingPermissions = DB::table('md_permissions')->pluck('name')->toArray();
+        $existingPermissions = DB::table('md_permissions')->pluck($permNameCol)->toArray();
 
         // Define all permissions for the system
         $allPermissions = [
@@ -121,8 +124,8 @@ return new class extends Migration
             $insertData = [];
             foreach ($permissionsToInsert as $permission) {
                 $insertData[] = [
-                    'name' => $permission,
-                    'guard_name' => 'web',
+                    $permNameCol => $permission,
+                    $permGuardCol => 'web',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -131,8 +134,11 @@ return new class extends Migration
             DB::table('md_permissions')->insert($insertData);
         }
 
+        $roleNameCol = Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
+        $roleGuardCol = Schema::hasColumn('md_roles', 'roles_guard_name') ? 'roles_guard_name' : 'guard_name';
+
         // Create additional roles if they don't exist
-        $existingRoles = DB::table('md_roles')->pluck('name')->toArray();
+        $existingRoles = DB::table('md_roles')->pluck($roleNameCol)->toArray();
 
         $additionalRoles = [
             'Admin',
@@ -147,8 +153,8 @@ return new class extends Migration
             foreach ($rolesToInsert as $role) {
                 try {
                     DB::table('md_roles')->insert([
-                        'name' => $role,
-                        'guard_name' => 'web',
+                        $roleNameCol => $role,
+                        $roleGuardCol => 'web',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -244,11 +250,13 @@ return new class extends Migration
             'logout',
         ];
 
-        DB::table('md_permissions')->whereIn('name', $allPermissions)->delete();
+        $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
+        DB::table('md_permissions')->whereIn($permNameCol, $allPermissions)->delete();
 
         // Remove additional roles (only if they exist)
+        $roleNameCol = Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
         $additionalRoles = ['Admin', 'Viewer', 'Vendor'];
-        DB::table('md_roles')->whereIn('name', $additionalRoles)->delete();
+        DB::table('md_roles')->whereIn($roleNameCol, $additionalRoles)->delete();
     }
 
     /**
@@ -256,12 +264,15 @@ return new class extends Migration
      */
     private function assignPermissionsToRoles(): void
     {
+        $roleNameCol = Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
+        $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
+
         // Get role IDs
-        $superAdminRole = DB::table('md_roles')->where('name', 'Super Admin')->first();
-        $adminRole = DB::table('md_roles')->where('name', 'Admin')->first();
-        $operatorRole = DB::table('md_roles')->where('name', 'operator')->first(); // Use existing 'operator' role
-        $viewerRole = DB::table('md_roles')->where('name', 'Viewer')->first();
-        $vendorRole = DB::table('md_roles')->where('name', 'Vendor')->first();
+        $superAdminRole = DB::table('md_roles')->where($roleNameCol, 'Super Admin')->first();
+        $adminRole = DB::table('md_roles')->where($roleNameCol, 'Admin')->first();
+        $operatorRole = DB::table('md_roles')->where($roleNameCol, 'operator')->first(); // Use existing 'operator' role
+        $viewerRole = DB::table('md_roles')->where($roleNameCol, 'Viewer')->first();
+        $vendorRole = DB::table('md_roles')->where($roleNameCol, 'Vendor')->first();
 
         // Get all permission IDs
         $allPermissionIds = DB::table('md_permissions')->pluck('id')->toArray();
@@ -274,7 +285,7 @@ return new class extends Migration
         // Admin gets most permissions (except SAP health)
         if ($adminRole) {
             $adminPermissions = DB::table('md_permissions')
-                ->where('name', '!=', 'sap.health')
+                ->where($permNameCol, '!=', 'sap.health')
                 ->pluck('id')
                 ->toArray();
             $this->assignPermissionsToRole($adminRole->id, $adminPermissions);
@@ -283,7 +294,7 @@ return new class extends Migration
         // Operator gets slot operations only
         if ($operatorRole) {
             $operatorPermissions = DB::table('md_permissions')
-                ->whereIn('name', [
+                ->whereIn($permNameCol, [
                     'dashboard.view',
                     'dashboard.range_filter',
                     'slots.index',
@@ -321,7 +332,7 @@ return new class extends Migration
         // Viewer gets read-only permissions
         if ($viewerRole) {
             $viewerPermissions = DB::table('md_permissions')
-                ->whereIn('name', [
+                ->whereIn($permNameCol, [
                     'dashboard.view',
                     'dashboard.range_filter',
                     'slots.index',
@@ -342,7 +353,7 @@ return new class extends Migration
         // Vendor gets limited vendor-related permissions
         if ($vendorRole) {
             $vendorPermissions = DB::table('md_permissions')
-                ->whereIn('name', [
+                ->whereIn($permNameCol, [
                     'dashboard.view',
                     'slots.index',
                     'slots.show',

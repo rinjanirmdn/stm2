@@ -12,12 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $roleNameCol = Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
+
         // Clean up roles - keep only Admin, Operator, Section Head
         $rolesToKeep = ['Admin', 'Operator', 'Section Head'];
 
         // Get roles to delete
         $rolesToDelete = DB::table('md_roles')
-            ->whereNotIn('roles_name', $rolesToKeep)
+            ->whereNotIn($roleNameCol, $rolesToKeep)
             ->pluck('id')
             ->toArray();
 
@@ -40,15 +42,17 @@ return new class extends Migration
 
         // Update existing role names if needed
         DB::table('md_roles')
-            ->where('roles_name', 'Super Admin')
-            ->update(['roles_name' => 'Admin']);
+            ->where($roleNameCol, 'Super Admin')
+            ->update([$roleNameCol => 'Admin']);
 
         DB::table('md_roles')
-            ->where('roles_name', 'section_head')
-            ->update(['roles_name' => 'Section Head']);
+            ->where($roleNameCol, 'section_head')
+            ->update([$roleNameCol => 'Section Head']);
+
+        $rolesTable = config('permission.table_names.roles', 'roles');
 
         // Add role_id foreign key to users table
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) use ($rolesTable) {
             // Add role_id column if it doesn't exist
             if (! Schema::hasColumn('users', 'role_id')) {
                 $table->unsignedBigInteger('role_id')->nullable()->after('role');
@@ -57,20 +61,22 @@ return new class extends Migration
             // Add foreign key constraint
             $table->foreign('role_id')
                 ->references('id')
-                ->on('roles')
+                ->on($rolesTable)
                 ->onDelete('set null');
         });
 
         // Update existing users to use role_id based on their current role string
         $roleMapping = [
-            'admin' => DB::table('md_roles')->where('roles_name', 'Admin')->value('id'),
-            'operator' => DB::table('md_roles')->where('roles_name', 'Operator')->value('id'),
-            'Section Head' => DB::table('md_roles')->where('roles_name', 'Section Head')->value('id'),
+            'admin' => DB::table('md_roles')->where($roleNameCol, 'Admin')->value('id'),
+            'operator' => DB::table('md_roles')->where($roleNameCol, 'Operator')->value('id'),
+            'Section Head' => DB::table('md_roles')->where($roleNameCol, 'Section Head')->value('id'),
         ];
 
+        $usersTable = \Illuminate\Support\Facades\Schema::hasTable('md_users') ? 'md_users' : 'users';
+
         foreach ($roleMapping as $roleName => $roleId) {
-            if ($roleId) {
-                DB::table('md_users')
+            if ($roleId && \Illuminate\Support\Facades\Schema::hasColumn($usersTable, 'role')) {
+                DB::table($usersTable)
                     ->where('role', $roleName)
                     ->update(['role_id' => $roleId]);
             }
@@ -104,13 +110,17 @@ return new class extends Migration
         // Clear existing role permissions
         DB::table('role_has_permissions')->delete();
 
+        $roleNameCol = Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
+
         // Get role IDs
-        $adminRole = DB::table('md_roles')->where('roles_name', 'Admin')->first();
-        $operatorRole = DB::table('md_roles')->where('roles_name', 'Operator')->first();
-        $sectionHeadRole = DB::table('md_roles')->where('roles_name', 'Section Head')->first();
+        $adminRole = DB::table('md_roles')->where($roleNameCol, 'Admin')->first();
+        $operatorRole = DB::table('md_roles')->where($roleNameCol, 'Operator')->first();
+        $sectionHeadRole = DB::table('md_roles')->where($roleNameCol, 'Section Head')->first();
 
         // Get all permission IDs
         $allPermissionIds = DB::table('md_permissions')->pluck('id')->toArray();
+
+        $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
 
         // Admin gets all permissions
         if ($adminRole) {
@@ -120,7 +130,7 @@ return new class extends Migration
         // Section Head gets most permissions (except user management and some system functions)
         if ($sectionHeadRole) {
             $sectionHeadPermissions = DB::table('md_permissions')
-                ->whereNotIn('name', [
+                ->whereNotIn($permNameCol, [
                     'users.create',
                     'users.store',
                     'users.delete',
@@ -135,7 +145,7 @@ return new class extends Migration
         // Operator gets slot operations only
         if ($operatorRole) {
             $operatorPermissions = DB::table('md_permissions')
-                ->whereIn('name', [
+                ->whereIn($permNameCol, [
                     'dashboard.view',
                     'dashboard.range_filter',
                     'slots.index',

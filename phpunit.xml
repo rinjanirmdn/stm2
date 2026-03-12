@@ -23,7 +23,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="APP_KEY" value="base64:dGVzdGluZ2tleWZvcmNpY2RwaXBlbGluZXRlc3Q="/>
+        <env name="APP_KEY" value="base64:LDFw2WgolgbtjTke061fkB99TS00FkvfmHS8t9o0ro0="/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="pgsql"/>
