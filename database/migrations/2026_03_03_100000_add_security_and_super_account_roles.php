@@ -61,13 +61,14 @@ return new class extends Migration
     {
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $securityRole = Role::where('roles_name', 'Security')->first();
+        $roleNameCol = \Illuminate\Support\Facades\Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
+        $securityRole = Role::where($roleNameCol, 'Security')->first();
         if ($securityRole) {
             $securityRole->syncPermissions([]);
             $securityRole->delete();
         }
 
-        $superRole = Role::where('roles_name', 'Super Account')->first();
+        $superRole = Role::where($roleNameCol, 'Super Account')->first();
         if ($superRole) {
             $superRole->syncPermissions([]);
             $superRole->delete();

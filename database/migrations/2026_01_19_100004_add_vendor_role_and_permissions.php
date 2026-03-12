@@ -45,8 +45,9 @@ return new class extends Migration
         // Assign vendor permissions to vendor role
         $vendorRole->syncPermissions($vendorPermissions);
 
+        $roleNameCol = \Illuminate\Support\Facades\Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
         // Give admin role all booking permissions
-        $adminRole = Role::where('roles_name', 'admin')->first();
+        $adminRole = Role::where($roleNameCol, 'admin')->first();
         if ($adminRole) {
             $currentPermissions = $adminRole->permissions->pluck('perm_name')->toArray();
             $allPermissions = array_unique(array_merge($currentPermissions, $adminBookingPermissions));
@@ -54,7 +55,7 @@ return new class extends Migration
         }
 
         // Give section_head role booking management permissions
-        $sectionHeadRole = Role::where('roles_name', 'section_head')->first();
+        $sectionHeadRole = Role::where($roleNameCol, 'section_head')->first();
         if ($sectionHeadRole) {
             $currentPermissions = $sectionHeadRole->permissions->pluck('perm_name')->toArray();
             $allPermissions = array_unique(array_merge($currentPermissions, $adminBookingPermissions));
@@ -69,8 +70,9 @@ return new class extends Migration
     {
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
+        $roleNameCol = \Illuminate\Support\Facades\Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
         // Remove vendor role
-        Role::where('roles_name', 'vendor')->delete();
+        Role::where($roleNameCol, 'vendor')->delete();
 
         // Remove permissions
         $permissions = [

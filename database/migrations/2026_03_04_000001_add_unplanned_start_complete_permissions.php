@@ -35,8 +35,9 @@ return new class extends Migration
         }
 
         // Grant these permissions to all roles that can interact with unplanned slots
+        $roleNameCol = \Illuminate\Support\Facades\Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
         $roles = DB::table($roleTable)
-            ->whereIn(DB::raw('LOWER(roles_name)'), ['admin', 'super account', 'section head', 'security', 'operator'])
+            ->whereIn(DB::raw('LOWER(' . $roleNameCol . ')'), ['admin', 'super account', 'section head', 'security', 'operator'])
             ->pluck('id');
 
         foreach ($roles as $roleId) {
@@ -79,8 +80,9 @@ return new class extends Migration
             'unplanned.complete.store',
         ];
 
+        $permNameCol = \Illuminate\Support\Facades\Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
         $permIds = DB::table('md_permissions')
-            ->whereIn('perm_name', $permissions)
+            ->whereIn($permNameCol, $permissions)
             ->pluck('id');
 
         DB::table('role_has_permissions')->whereIn('permission_id', $permIds)->delete();
