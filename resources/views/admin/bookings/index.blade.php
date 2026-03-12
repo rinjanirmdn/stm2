@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Booking Requests')
 @section('page_title', 'Booking Requests')
@@ -340,6 +340,10 @@
                         </table>
                     </div>
 
+                    <!-- Pagination -->
+                    <div class="st-pagination">
+                        {{ $bookings->withQueryString()->links() }}
+                    </div>
                 </form>
             </div>
         </div>
