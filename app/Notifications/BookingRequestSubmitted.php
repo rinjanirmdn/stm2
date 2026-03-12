@@ -15,7 +15,7 @@ class BookingRequestSubmitted extends Notification
 
     public function via(object $notifiable): array
     {
-        if (!empty($notifiable->email)) {
+        if (! empty($notifiable->email)) {
             return ['mail', 'database'];
         }
 
@@ -48,16 +48,16 @@ class BookingRequestSubmitted extends Notification
                 'bookingRequest' => $this->bookingRequest,
             ];
 
-            return (new MailMessage)
-                ->subject('[' . $appName . '] New Booking Request - PO ' . $poNumber)
+            return (new MailMessage())
+                ->subject('['.$appName.'] New Booking Request - PO '.$poNumber)
                 ->view('emails.booking-request-submitted-new', $viewData);
         } catch (\Throwable $e) {
-            Log::error('Failed to send booking request notification: ' . $e->getMessage(), [
+            Log::error('Failed to send booking request notification: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
-            return (new MailMessage)
-                ->subject('New Booking Request - PO ' . $poNumber)
+            return (new MailMessage())
+                ->subject('New Booking Request - PO '.$poNumber)
                 ->line('Failed to send email notification. Please contact administrator.');
         }
     }
@@ -70,7 +70,7 @@ class BookingRequestSubmitted extends Notification
 
         return [
             'title' => 'New Booking Request',
-            'message' => 'Request from ' . $vendorName . ' for PO ' . ($this->bookingRequest->po_number ?? '-'),
+            'message' => 'Request from '.$vendorName.' for PO '.($this->bookingRequest->po_number ?? '-'),
             'action_url' => route('bookings.show', $this->bookingRequest->id, false),
             'icon' => 'fas fa-plus-circle',
             'color' => 'blue',

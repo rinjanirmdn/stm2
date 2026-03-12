@@ -1,4 +1,5 @@
 <?php
+
 /* Unplanned Slot Routes */
 
 use App\Http\Controllers\SlotController;

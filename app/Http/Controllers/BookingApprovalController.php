@@ -2,23 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ActivityLog;
-use App\Models\Gate;
 use App\Models\BookingRequest;
+use App\Models\Gate;
 use App\Models\Slot;
 use App\Models\TruckTypeDuration;
 use App\Models\Warehouse;
+use App\Notifications\BookingRejected;
 use App\Services\BookingApprovalService;
 use App\Services\SlotService;
-use App\Notifications\BookingApproved;
-use App\Notifications\BookingRejected;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BookingApprovalController extends Controller
 {
@@ -66,28 +63,28 @@ class BookingApprovalController extends Controller
         $requestNumber = trim((string) $request->query('request_number', ''));
         if ($requestNumber !== '') {
             $requestNumber = str_replace(['%', '_'], ['\%', '\_'], $requestNumber);
-            $query->where('booking_requests.request_number', 'like', '%' . $requestNumber . '%');
+            $query->where('booking_requests.request_number', 'like', '%'.$requestNumber.'%');
         }
 
         $poNumber = trim((string) $request->query('po_number', ''));
         if ($poNumber !== '') {
             $poNumber = str_replace(['%', '_'], ['\%', '\_'], $poNumber);
-            $query->where('booking_requests.po_number', 'like', '%' . $poNumber . '%');
+            $query->where('booking_requests.po_number', 'like', '%'.$poNumber.'%');
         }
 
         $supplierName = trim((string) $request->query('supplier_name', ''));
         if ($supplierName !== '') {
             $supplierName = str_replace(['%', '_'], ['\%', '\_'], $supplierName);
-            $query->where('booking_requests.supplier_name', 'like', '%' . $supplierName . '%');
+            $query->where('booking_requests.supplier_name', 'like', '%'.$supplierName.'%');
         }
 
         $requestedBy = trim((string) $request->query('requested_by', ''));
         if ($requestedBy !== '') {
             $requestedBy = str_replace(['%', '_'], ['\%', '\_'], $requestedBy);
             $query->where(function ($q) use ($requestedBy) {
-                $q->where('u_requester.full_name', 'like', '%' . $requestedBy . '%')
-                    ->orWhere('u_requester.name', 'like', '%' . $requestedBy . '%')
-                    ->orWhere('u_requester.email', 'like', '%' . $requestedBy . '%');
+                $q->where('u_requester.full_name', 'like', '%'.$requestedBy.'%')
+                    ->orWhere('u_requester.name', 'like', '%'.$requestedBy.'%')
+                    ->orWhere('u_requester.email', 'like', '%'.$requestedBy.'%');
             });
         }
 
@@ -99,15 +96,15 @@ class BookingApprovalController extends Controller
         $convertedTicket = trim((string) $request->query('converted_ticket', ''));
         if ($convertedTicket !== '') {
             $convertedTicket = str_replace(['%', '_'], ['\%', '\_'], $convertedTicket);
-            $query->where('s_converted.ticket_number', 'like', '%' . $convertedTicket . '%');
+            $query->where('s_converted.ticket_number', 'like', '%'.$convertedTicket.'%');
         }
 
         $gate = trim((string) $request->query('gate', ''));
         if ($gate !== '') {
             $gate = str_replace(['%', '_'], ['\%', '\_'], $gate);
             $query->where(function ($q) use ($gate) {
-                $q->where('g_planned.name', 'like', '%' . $gate . '%')
-                    ->orWhere('g_planned.gate_number', 'like', '%' . $gate . '%');
+                $q->where('g_planned.name', 'like', '%'.$gate.'%')
+                    ->orWhere('g_planned.gate_number', 'like', '%'.$gate.'%');
             });
         }
 
@@ -166,16 +163,16 @@ class BookingApprovalController extends Controller
         $applied = 0;
         foreach (array_values($sorts) as $i => $s) {
             $key = trim((string) $s);
-            if ($key === '' || !array_key_exists($key, $sortMap)) {
+            if ($key === '' || ! array_key_exists($key, $sortMap)) {
                 continue;
             }
             $dir = strtolower(trim((string) ($dirs[$i] ?? 'desc')));
-            if (!in_array($dir, ['asc', 'desc'], true)) {
+            if (! in_array($dir, ['asc', 'desc'], true)) {
                 $dir = 'desc';
             }
             $col = $sortMap[$key];
             if ($col instanceof \Illuminate\Database\Query\Expression) {
-                $query->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()) . ' ' . strtoupper($dir));
+                $query->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()).' '.strtoupper($dir));
             } else {
                 $query->orderBy($col, $dir);
             }
@@ -219,9 +216,10 @@ class BookingApprovalController extends Controller
                     $whCode = (string) ($g->wh_code ?? '');
                     $gateNo = (string) ($g->gate_number ?? '');
                     $display = $this->slotService->getGateDisplayName($whCode, $gateNo);
+
                     return [
                         'id' => (int) ($g->id ?? 0),
-                        'label' => trim(($whCode !== '' ? ($whCode . ' - ') : '') . $display),
+                        'label' => trim(($whCode !== '' ? ($whCode.' - ') : '').$display),
                     ];
                 })
                 ->values();
@@ -263,7 +261,7 @@ class BookingApprovalController extends Controller
         $overrideDuration = (int) $request->query('planned_duration', 0);
 
         if ($overrideDate !== '' && $overrideTime !== '' && $overrideDuration > 0) {
-            $plannedStart = $overrideDate . ' ' . $overrideTime . ':00';
+            $plannedStart = $overrideDate.' '.$overrideTime.':00';
             $durationMinutes = $overrideDuration;
         } else {
             $plannedStart = (string) ($bookingRequest->planned_start?->format('Y-m-d H:i:s') ?? '');
@@ -289,6 +287,7 @@ class BookingApprovalController extends Controller
 
         $reason = (string) ($check['reason'] ?? '');
         $reason = $this->translateAvailabilityReason($reason);
+
         return response()->json([
             'available' => $available,
             'label' => $available ? 'Available' : 'Not Available',
@@ -367,7 +366,7 @@ class BookingApprovalController extends Controller
                 ->with('warehouse')
                 ->first();
 
-            if (!$gate) {
+            if (! $gate) {
                 return back()->with('error', 'Selected gate is not active or not found.');
             }
 
@@ -387,6 +386,7 @@ class BookingApprovalController extends Controller
                 if (empty($check['available'])) {
                     $reason = (string) ($check['reason'] ?? 'Gate is not available');
                     $reason = (string) ($check['reason'] ?? 'Gate is not available');
+
                     return back()->with('error', $reason);
                 }
             }
@@ -458,7 +458,7 @@ class BookingApprovalController extends Controller
                 ->route('bookings.show', $bookingRequest->id)
                 ->with('success', 'Booking approved successfully.');
         } catch (\Throwable $e) {
-            return back()->with('error', 'Failed to approve booking: ' . $e->getMessage());
+            return back()->with('error', 'Failed to approve booking: '.$e->getMessage());
         }
     }
 
@@ -494,12 +494,12 @@ class BookingApprovalController extends Controller
                     $bookingRequest->requester->notify(new BookingRejected(null, $bookingRequest, $request->reason));
                 }
             } catch (\Throwable $e) {
-                Log::warning('Failed to send booking rejected notification: ' . $e->getMessage());
+                Log::warning('Failed to send booking rejected notification: '.$e->getMessage());
             }
 
             return redirect()->route('bookings.index')->with('success', 'Booking rejected.');
         } catch (\Throwable $e) {
-            return back()->with('error', 'Failed to reject booking: ' . $e->getMessage());
+            return back()->with('error', 'Failed to reject booking: '.$e->getMessage());
         }
     }
 
@@ -545,12 +545,12 @@ class BookingApprovalController extends Controller
             ->with('warehouse')
             ->first();
 
-        if (!$gate) {
+        if (! $gate) {
             return back()->withInput()->with('error', 'Selected gate is not active or not found.');
         }
 
         $warehouseId = $gate->warehouse_id;
-        $plannedStart = $request->planned_date . ' ' . $request->planned_time . ':00';
+        $plannedStart = $request->planned_date.' '.$request->planned_time.':00';
 
         // Update schedule on request (final schedule before approval)
         $plannedEnd = $this->slotService->computePlannedFinish($plannedStart, (int) $request->planned_duration);
@@ -584,6 +584,7 @@ class BookingApprovalController extends Controller
         \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
 
         $request->merge(['approval_action' => Slot::APPROVAL_RESCHEDULED]);
+
         return $this->approve($request, $id);
     }
 
@@ -621,9 +622,9 @@ class BookingApprovalController extends Controller
             $calendarData[] = [
                 'gate' => [
                     'id' => $gate->id,
-                    'name' => $gate->name ?? ($gate->warehouse->wh_code . '-' . $gate->gate_number),
+                    'name' => $gate->name ?? ($gate->warehouse->wh_code.'-'.$gate->gate_number),
                 ],
-                'slots' => $gateSlots->map(fn($s) => [
+                'slots' => $gateSlots->map(fn ($s) => [
                     /** @var Slot $s */
                     'id' => $s->id,
                     'ticket_number' => $s->ticket_number,

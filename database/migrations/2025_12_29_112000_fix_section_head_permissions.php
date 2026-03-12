@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -44,7 +42,7 @@ return new class extends Migration
                 ->where('permission_id', $gatesIndexId)
                 ->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('role_has_permissions')->insert([
                     'role_id' => $sectionHeadRoleId,
                     'permission_id' => $gatesIndexId,
@@ -57,7 +55,7 @@ return new class extends Migration
         $sectionHeadPermissions = [
             $trucksIndexId, $logsIndexId,
             $vendorsCreateId, $vendorsStoreId, $vendorsEditId, $vendorsUpdateId, $vendorsDeleteId, $vendorsImportId, $vendorsImportStoreId,
-            $trucksCreateId, $trucksStoreId, $trucksEditId, $trucksUpdateId, $trucksDeleteId
+            $trucksCreateId, $trucksStoreId, $trucksEditId, $trucksUpdateId, $trucksDeleteId,
         ];
 
         foreach ($sectionHeadPermissions as $permId) {
@@ -67,7 +65,7 @@ return new class extends Migration
                     ->where('permission_id', $permId)
                     ->exists();
 
-                if (!$exists) {
+                if (! $exists) {
                     DB::table('role_has_permissions')->insert([
                         'role_id' => $sectionHeadRoleId,
                         'permission_id' => $permId,
@@ -88,7 +86,7 @@ return new class extends Migration
             echo "- $perm\n";
         }
 
-        echo "\nTotal Section Head permissions: " . count($finalPerms) . "\n";
+        echo "\nTotal Section Head permissions: ".count($finalPerms)."\n";
     }
 
     /**
@@ -115,7 +113,7 @@ return new class extends Migration
                 'trucks.store',
                 'trucks.edit',
                 'trucks.update',
-                'trucks.delete'
+                'trucks.delete',
             ];
 
             $permissionIds = DB::table('md_permissions')

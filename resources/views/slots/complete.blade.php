@@ -1,10 +1,10 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Complete - e-Docking Control System')
 @section('page_title', 'Complete Booking')
 
 @section('content')
-    <div class="st-card st-mb-16 st-border-l-4" style="border-left-color: var(--primary);">
+    <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Complete Registration</h3>
             <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id }}</span>

@@ -13,6 +13,7 @@ class DashboardStatsService
     private function getArrivalLateExpression(string $plannedStartExpr, string $arrivalExpr): string
     {
         $thresholdExpr = $this->slotService->getDateAddExpression($plannedStartExpr, 15);
+
         return "({$arrivalExpr} > {$thresholdExpr})";
     }
 
@@ -70,7 +71,7 @@ class DashboardStatsService
                 continue;
             }
 
-            if (!isset($out[$letter])) {
+            if (! isset($out[$letter])) {
                 continue;
             }
 
@@ -130,7 +131,7 @@ class DashboardStatsService
                 continue;
             }
 
-            if (!in_array($gateKey, $gates, true)) {
+            if (! in_array($gateKey, $gates, true)) {
                 $gates[] = $gateKey;
             }
 
@@ -200,7 +201,7 @@ class DashboardStatsService
                 continue;
             }
 
-            if (!in_array($gateKey, $gates, true)) {
+            if (! in_array($gateKey, $gates, true)) {
                 $gates[] = $gateKey;
             }
 
@@ -265,7 +266,7 @@ class DashboardStatsService
                 continue;
             }
 
-            if (!in_array($gateKey, $gates, true)) {
+            if (! in_array($gateKey, $gates, true)) {
                 $gates[] = $gateKey;
             }
 
@@ -361,15 +362,15 @@ class DashboardStatsService
         return [
             'all' => [
                 'on_time' => (int) ($stats->on_time_all ?? 0),
-                'late' => (int) ($stats->late_all ?? 0)
+                'late' => (int) ($stats->late_all ?? 0),
             ],
             'inbound' => [
                 'on_time' => (int) ($stats->on_time_in ?? 0),
-                'late' => (int) ($stats->late_in ?? 0)
+                'late' => (int) ($stats->late_in ?? 0),
             ],
             'outbound' => [
                 'on_time' => (int) ($stats->on_time_out ?? 0),
-                'late' => (int) ($stats->late_out ?? 0)
+                'late' => (int) ($stats->late_out ?? 0),
             ],
         ];
     }
@@ -458,7 +459,7 @@ class DashboardStatsService
 
         foreach ($completionRows as $r) {
             $code = (string) ($r->warehouse_code ?? '');
-            if ($code !== '' && !in_array($code, $completionWarehouses, true)) {
+            if ($code !== '' && ! in_array($code, $completionWarehouses, true)) {
                 $completionWarehouses[] = $code;
             }
             $completionData[] = [
@@ -511,7 +512,7 @@ class DashboardStatsService
             $direction = (string) ($r->direction ?? '');
             $dirLabel = $direction === 'inbound' ? 'In' : ($direction === 'outbound' ? 'Out' : ucfirst($direction));
             $whCode = (string) ($r->warehouse_code ?? '');
-            $label = trim(($whCode ? $whCode : '') . ' ' . $dirLabel);
+            $label = trim(($whCode ? $whCode : '').' '.$dirLabel);
             if ($label === '') {
                 $label = $direction !== '' ? ucfirst($direction) : 'Other';
             }
@@ -612,7 +613,7 @@ class DashboardStatsService
             'counts' => $trendCounts,
             'inbound' => $trendInbound,
             'outbound' => $trendOutbound,
-            'completed_total' => !empty($trendCounts) ? array_sum($trendCounts) : 0,
+            'completed_total' => ! empty($trendCounts) ? array_sum($trendCounts) : 0,
             'avg_7_days' => $this->calculateAvg7Days($trendCounts),
         ];
     }
@@ -627,6 +628,7 @@ class DashboardStatsService
         }
 
         $last7 = array_slice($trendCounts, -7);
+
         return count($last7) ? round(array_sum($last7) / count($last7), 1) : 0.0;
     }
 
@@ -689,7 +691,7 @@ class DashboardStatsService
 
         foreach ($rows as $r) {
             $code = (string) ($r->warehouse_code ?? '');
-            if ($code !== '' && !in_array($code, $warehouses, true)) {
+            if ($code !== '' && ! in_array($code, $warehouses, true)) {
                 $warehouses[] = $code;
             }
             $data[] = [
@@ -733,7 +735,7 @@ class DashboardStatsService
 
         foreach ($rows as $r) {
             $code = (string) ($r->warehouse_code ?? '');
-            if ($code !== '' && !in_array($code, $warehouses, true)) {
+            if ($code !== '' && ! in_array($code, $warehouses, true)) {
                 $warehouses[] = $code;
             }
             $data[] = [
@@ -841,22 +843,22 @@ class DashboardStatsService
                     ->select([
                         DB::raw("({$normalizedType}) as truck_type"),
                         DB::raw("({$leadTimeExpr}) as lead_min"),
-                        DB::raw("({$processTimeExpr}) as proc_min")
+                        DB::raw("({$processTimeExpr}) as proc_min"),
                     ]);
             }, 'sub')
-            ->whereNotNull('truck_type')
-            ->groupBy('truck_type')
-            ->select([
-                'truck_type',
-                DB::raw('AVG(lead_min) as avg_lead_minutes'),
-                DB::raw('AVG(proc_min) as avg_process_minutes'),
-                DB::raw('COUNT(*) as total_count')
-            ])
-            ->orderByRaw($orderExpr)
-            ->get()
-            ->toArray();
+                ->whereNotNull('truck_type')
+                ->groupBy('truck_type')
+                ->select([
+                    'truck_type',
+                    DB::raw('AVG(lead_min) as avg_lead_minutes'),
+                    DB::raw('AVG(proc_min) as avg_process_minutes'),
+                    DB::raw('COUNT(*) as total_count'),
+                ])
+                ->orderByRaw($orderExpr)
+                ->get()
+                ->toArray();
         } catch (\Throwable $e) {
-             // \Log::error('Dashboard Truck Stats Error: ' . $e->getMessage());
+            // \Log::error('Dashboard Truck Stats Error: ' . $e->getMessage());
             return [];
         }
     }

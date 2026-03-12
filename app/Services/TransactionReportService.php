@@ -76,9 +76,9 @@ class TransactionReportService
         ];
 
         try {
-            $arrival = !empty($slot->arrival_time) ? (string) $slot->arrival_time : null;
-            $start = !empty($slot->actual_start) ? (string) $slot->actual_start : null;
-            $finish = !empty($slot->actual_finish) ? (string) $slot->actual_finish : null;
+            $arrival = ! empty($slot->arrival_time) ? (string) $slot->arrival_time : null;
+            $start = ! empty($slot->actual_start) ? (string) $slot->actual_start : null;
+            $finish = ! empty($slot->actual_finish) ? (string) $slot->actual_finish : null;
 
             // Calculate waiting time (arrival to start)
             if ($arrival && $start) {
@@ -130,7 +130,7 @@ class TransactionReportService
      */
     public function getLateStatus($slot): string
     {
-        return !empty($slot->is_late) ? 'late' : 'on_time';
+        return ! empty($slot->is_late) ? 'late' : 'on_time';
     }
 
     /**
@@ -162,7 +162,7 @@ class TransactionReportService
     {
         $search = trim($request->query('q', ''));
         if ($search !== '') {
-            $like = '%' . $search . '%';
+            $like = '%'.$search.'%';
             $query->where(function ($sub) use ($like) {
                 $sub->where('s.po_number', 'like', $like)
                     ->orWhere('s.ticket_number', 'like', $like)
@@ -179,27 +179,27 @@ class TransactionReportService
         // Specific field searches
         $poSearch = trim($request->query('po', ''));
         if ($poSearch !== '') {
-            $query->where('s.po_number', 'like', '%' . $poSearch . '%');
+            $query->where('s.po_number', 'like', '%'.$poSearch.'%');
         }
 
         $ticketSearch = trim($request->query('ticket', ''));
         if ($ticketSearch !== '') {
-            $query->where('s.ticket_number', 'like', '%' . $ticketSearch . '%');
+            $query->where('s.ticket_number', 'like', '%'.$ticketSearch.'%');
         }
 
         $matDocSearch = trim($request->query('mat_doc', ''));
         if ($matDocSearch !== '') {
-            $query->where('s.mat_doc', 'like', '%' . $matDocSearch . '%');
+            $query->where('s.mat_doc', 'like', '%'.$matDocSearch.'%');
         }
 
         $userSearch = trim($request->query('user', ''));
         if ($userSearch !== '') {
-            $query->where('u.nik', 'like', '%' . $userSearch . '%');
+            $query->where('u.nik', 'like', '%'.$userSearch.'%');
         }
 
         $vendorSearch = trim($request->query('vendor', ''));
         if ($vendorSearch !== '') {
-            $query->where('s.vendor_name', 'like', '%' . $vendorSearch . '%');
+            $query->where('s.vendor_name', 'like', '%'.$vendorSearch.'%');
         }
     }
 
@@ -213,15 +213,15 @@ class TransactionReportService
 
         // Use COALESCE to include canceled transactions without actual_arrival
         if ($dateFrom !== '') {
-            $query->where(function($q) use ($dateFrom) {
+            $query->where(function ($q) use ($dateFrom) {
                 $q->whereDate('s.arrival_time', '>=', $dateFrom)
-                  ->orWhereDate('s.created_at', '>=', $dateFrom);
+                    ->orWhereDate('s.created_at', '>=', $dateFrom);
             });
         }
         if ($dateTo !== '') {
-            $query->where(function($q) use ($dateTo) {
+            $query->where(function ($q) use ($dateTo) {
                 $q->whereDate('s.arrival_time', '<=', $dateTo)
-                  ->orWhereDate('s.created_at', '<=', $dateTo);
+                    ->orWhereDate('s.created_at', '<=', $dateTo);
             });
         }
 
@@ -255,22 +255,22 @@ class TransactionReportService
         $warehouseArray = (array) $request->query('warehouse_id', []);
 
         $slotTypeValues = array_values(array_filter($slotTypeArray, fn ($v) => (string) $v !== ''));
-        if (!empty($slotTypeValues)) {
+        if (! empty($slotTypeValues)) {
             $query->whereIn('s.slot_type', $slotTypeValues);
         }
 
         $statusValues = array_values(array_filter($statusArray, fn ($v) => (string) $v !== ''));
-        if (!empty($statusValues)) {
+        if (! empty($statusValues)) {
             $query->whereIn('s.status', $statusValues);
         }
 
         $directionValues = array_values(array_filter($directionArray, fn ($v) => (string) $v !== ''));
-        if (!empty($directionValues)) {
+        if (! empty($directionValues)) {
             $query->whereIn('s.direction', $directionValues);
         }
 
         $warehouseValues = array_values(array_filter($warehouseArray, fn ($v) => (string) $v !== ''));
-        if (!empty($warehouseValues)) {
+        if (! empty($warehouseValues)) {
             $query->whereIn('s.warehouse_id', array_map('intval', $warehouseValues));
         }
     }
@@ -285,17 +285,17 @@ class TransactionReportService
 
         $leadExpr = $this->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
         if ($leadTimeMin !== '' && is_numeric($leadTimeMin)) {
-            $query->whereRaw($leadExpr . ' >= ?', [(int) $leadTimeMin]);
+            $query->whereRaw($leadExpr.' >= ?', [(int) $leadTimeMin]);
         }
         if ($leadTimeMax !== '' && is_numeric($leadTimeMax)) {
-            $query->whereRaw($leadExpr . ' <= ?', [(int) $leadTimeMax]);
+            $query->whereRaw($leadExpr.' <= ?', [(int) $leadTimeMax]);
         }
 
         // Target achievement filter
         $targetStatusArr = (array) $request->query('target_status', []);
         $targetValues = array_values(array_filter($targetStatusArr, fn ($v) => (string) $v !== ''));
 
-        if (!empty($targetValues)) {
+        if (! empty($targetValues)) {
             $needAchieve = in_array('achieve', $targetValues, true);
             $needNotAchieve = in_array('not_achieve', $targetValues, true);
 
@@ -314,22 +314,22 @@ class TransactionReportService
         $lateArray = (array) $request->query('late', []);
         $lateValues = array_values(array_filter($lateArray, fn ($v) => (string) $v !== ''));
 
-        if (!empty($lateValues)) {
+        if (! empty($lateValues)) {
             $needLate = in_array('late', $lateValues, true);
             $needOnTime = in_array('on_time', $lateValues, true);
 
             if ($needLate xor $needOnTime) {
                 $plannedExpr = "(COALESCE(s.slot_type, 'planned') = 'planned' AND s.arrival_time IS NOT NULL)";
                 $lateAddExpr = $this->getDateAddExpression('s.planned_start', 15);
-                $arrivalLateExpr = $plannedExpr . " AND s.arrival_time > {$lateAddExpr}";
-                $arrivalOnTimeExpr = $plannedExpr . " AND s.arrival_time <= {$lateAddExpr}";
+                $arrivalLateExpr = $plannedExpr." AND s.arrival_time > {$lateAddExpr}";
+                $arrivalOnTimeExpr = $plannedExpr." AND s.arrival_time <= {$lateAddExpr}";
                 $fallbackLateExpr = "((s.arrival_time IS NULL OR COALESCE(s.slot_type, 'planned') <> 'planned') AND s.is_late = true)";
                 $fallbackOnTimeExpr = "((s.arrival_time IS NULL OR COALESCE(s.slot_type, 'planned') <> 'planned') AND (s.is_late = false OR s.is_late IS NULL))";
 
                 if ($needLate) {
-                    $query->whereRaw('(' . $arrivalLateExpr . ' OR ' . $fallbackLateExpr . ')');
+                    $query->whereRaw('('.$arrivalLateExpr.' OR '.$fallbackLateExpr.')');
                 } else {
-                    $query->whereRaw('(' . $arrivalOnTimeExpr . ' OR ' . $fallbackOnTimeExpr . ')');
+                    $query->whereRaw('('.$arrivalOnTimeExpr.' OR '.$fallbackOnTimeExpr.')');
                 }
             }
         }

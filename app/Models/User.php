@@ -11,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     protected $table = 'md_users';
 
@@ -69,7 +69,7 @@ class User extends Authenticatable
      */
     public function isVendor(): bool
     {
-        return !empty($this->vendor_code);
+        return ! empty($this->vendor_code);
     }
 
     /**

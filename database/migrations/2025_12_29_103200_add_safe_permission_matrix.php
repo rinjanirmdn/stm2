@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -119,7 +117,7 @@ return new class extends Migration
         // Insert only permissions that don't exist
         $permissionsToInsert = array_diff($allPermissions, $existingPermissions);
 
-        if (!empty($permissionsToInsert)) {
+        if (! empty($permissionsToInsert)) {
             $insertData = [];
             foreach ($permissionsToInsert as $permission) {
                 $insertData[] = [
@@ -139,12 +137,12 @@ return new class extends Migration
         $additionalRoles = [
             'Admin',
             'Viewer',
-            'Vendor'
+            'Vendor',
         ];
 
         $rolesToInsert = array_diff($additionalRoles, $existingRoles);
 
-        if (!empty($rolesToInsert)) {
+        if (! empty($rolesToInsert)) {
             // Insert roles one by one to avoid duplicate key issues
             foreach ($rolesToInsert as $role) {
                 try {
@@ -372,7 +370,7 @@ return new class extends Migration
         // Only assign permissions that don't exist
         $permissionsToAssign = array_diff($permissionIds, $existingPermissions);
 
-        if (!empty($permissionsToAssign)) {
+        if (! empty($permissionsToAssign)) {
             $insertData = [];
             foreach ($permissionsToAssign as $permissionId) {
                 $insertData[] = [

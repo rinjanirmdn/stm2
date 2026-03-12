@@ -18,8 +18,9 @@ class BackfillBookingNotifications extends Command
 
     public function handle(): int
     {
-        if (!$this->option('force') && !$this->confirm('This is a one-time backfill command. Are you sure you want to run it?')) {
+        if (! $this->option('force') && ! $this->confirm('This is a one-time backfill command. Are you sure you want to run it?')) {
             $this->info('Cancelled.');
+
             return 0;
         }
 
@@ -28,7 +29,7 @@ class BackfillBookingNotifications extends Command
         $withVendor = (bool) $this->option('vendor');
 
         $this->info('Backfilling booking notifications...');
-        $this->info('Options: vendor=' . ($withVendor ? 'yes' : 'no') . ', limit=' . $limit . ', dry-run=' . ($dryRun ? 'yes' : 'no'));
+        $this->info('Options: vendor='.($withVendor ? 'yes' : 'no').', limit='.$limit.', dry-run='.($dryRun ? 'yes' : 'no'));
 
         $slotsQ = Slot::query()
             ->where('status', Slot::STATUS_PENDING_APPROVAL)
@@ -39,7 +40,7 @@ class BackfillBookingNotifications extends Command
         }
 
         $slots = $slotsQ->get();
-        $this->info('Pending slots to check: ' . $slots->count());
+        $this->info('Pending slots to check: '.$slots->count());
 
         $admins = User::whereHas('roles', function ($q) {
             $q->whereIn(DB::raw('LOWER(roles_name)'), ['admin', 'section head', 'super admin', 'super administrator']);
@@ -48,7 +49,7 @@ class BackfillBookingNotifications extends Command
         if ($admins->isEmpty()) {
             $this->warn('No admin users found.');
         } else {
-            $this->info('Admin recipients: ' . $admins->count());
+            $this->info('Admin recipients: '.$admins->count());
         }
 
         $createdAdmin = 0;
@@ -63,11 +64,12 @@ class BackfillBookingNotifications extends Command
             foreach ($admins as $admin) {
                 if ($this->notificationExists($admin, $adminUrl)) {
                     $skipped++;
+
                     continue;
                 }
 
                 $createdAdmin++;
-                if (!$dryRun) {
+                if (! $dryRun) {
                     try {
                         DB::table('notifications')->insert([
                             'id' => Str::uuid()->toString(),
@@ -76,7 +78,7 @@ class BackfillBookingNotifications extends Command
                             'notifiable_id' => $admin->id,
                             'data' => json_encode([
                                 'title' => 'New Booking Request',
-                                'message' => 'Request from ' . ($slot->vendor_name ?? 'Vendor') . ' for ' . ($slot->ticket_number ?? '-'),
+                                'message' => 'Request from '.($slot->vendor_name ?? 'Vendor').' for '.($slot->ticket_number ?? '-'),
                                 'action_url' => $adminUrl,
                                 'icon' => 'fas fa-plus-circle',
                                 'color' => 'blue',
@@ -85,7 +87,7 @@ class BackfillBookingNotifications extends Command
                             'updated_at' => $slot->created_at ?? now(),
                         ]);
                     } catch (\Throwable $e) {
-                        Log::warning('Backfill admin notify failed: ' . $e->getMessage(), [
+                        Log::warning('Backfill admin notify failed: '.$e->getMessage(), [
                             'admin_id' => $admin->id,
                             'slot_id' => $slot->id,
                         ]);
@@ -100,7 +102,7 @@ class BackfillBookingNotifications extends Command
                         $skipped++;
                     } else {
                         $createdVendor++;
-                        if (!$dryRun) {
+                        if (! $dryRun) {
                             try {
                                 DB::table('notifications')->insert([
                                     'id' => Str::uuid()->toString(),
@@ -109,7 +111,7 @@ class BackfillBookingNotifications extends Command
                                     'notifiable_id' => $vendor->id,
                                     'data' => json_encode([
                                         'title' => 'Booking Submitted',
-                                        'message' => 'Your booking request ' . ($slot->ticket_number ?? '-') . ' has been submitted.',
+                                        'message' => 'Your booking request '.($slot->ticket_number ?? '-').' has been submitted.',
                                         'action_url' => $vendorUrl,
                                         'icon' => 'fas fa-paper-plane',
                                         'color' => 'blue',
@@ -118,7 +120,7 @@ class BackfillBookingNotifications extends Command
                                     'updated_at' => $slot->created_at ?? now(),
                                 ]);
                             } catch (\Throwable $e) {
-                                Log::warning('Backfill vendor notify failed: ' . $e->getMessage(), [
+                                Log::warning('Backfill vendor notify failed: '.$e->getMessage(), [
                                     'vendor_user_id' => $vendor->id,
                                     'slot_id' => $slot->id,
                                 ]);
@@ -129,15 +131,16 @@ class BackfillBookingNotifications extends Command
             }
         }
 
-        $this->info('Created admin notifications: ' . $createdAdmin);
-        $this->info('Created vendor notifications: ' . $createdVendor);
-        $this->info('Skipped (already existed): ' . $skipped);
+        $this->info('Created admin notifications: '.$createdAdmin);
+        $this->info('Created vendor notifications: '.$createdVendor);
+        $this->info('Skipped (already existed): '.$skipped);
 
         if ($dryRun) {
             $this->warn('Dry-run: no notifications were written.');
         }
 
         $this->info('Done.');
+
         return 0;
     }
 
@@ -146,7 +149,7 @@ class BackfillBookingNotifications extends Command
         return DatabaseNotification::query()
             ->where('notifiable_type', get_class($user))
             ->where('notifiable_id', $user->id)
-            ->where('data', 'like', '%"action_url":"' . addcslashes($actionUrl, '"\\') . '"%')
+            ->where('data', 'like', '%"action_url":"'.addcslashes($actionUrl, '"\\').'"%')
             ->exists();
     }
 }

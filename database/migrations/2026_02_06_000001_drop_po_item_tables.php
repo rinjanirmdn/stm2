@@ -16,7 +16,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('booking_request_items')) {
+        if (! Schema::hasTable('booking_request_items')) {
             Schema::create('booking_request_items', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('booking_request_id');
@@ -34,7 +34,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('slot_po_items')) {
+        if (! Schema::hasTable('slot_po_items')) {
             Schema::create('slot_po_items', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('slot_id');
@@ -50,7 +50,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('slot_po_item_receipts')) {
+        if (! Schema::hasTable('slot_po_item_receipts')) {
             Schema::create('slot_po_item_receipts', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('slot_id');
@@ -64,7 +64,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('po_item_gr_checkpoints')) {
+        if (! Schema::hasTable('po_item_gr_checkpoints')) {
             Schema::create('po_item_gr_checkpoints', function (Blueprint $table) {
                 $table->id();
                 $table->string('po_number', 50);

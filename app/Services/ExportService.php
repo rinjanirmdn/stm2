@@ -29,7 +29,7 @@ class ExportService
             // Header
             fputcsv($out, [
                 'Type', 'PO', 'Ticket', 'MAT DOC', 'Vendor', 'Warehouse',
-                'Direction', 'Arrival', 'Lead Time', 'Target Status', 'Late?', 'User'
+                'Direction', 'Arrival', 'Lead Time', 'Target Status', 'Late?', 'User',
             ]);
 
             // Data rows
@@ -168,7 +168,7 @@ class ExportService
 <body>
     <div class="header">
         <h1>TRANSACTIONS REPORT - COMPLETED SLOTS</h1>
-        <p>Generated: ' . date('d M Y H:i:s') . '</p>
+        <p>Generated: '.date('d M Y H:i:s').'</p>
         <p>All Dates</p>
     </div>';
     }
@@ -226,18 +226,18 @@ class ExportService
         $fmt = $this->formatDateTime($row->arrival_time);
 
         return '<tr>
-            <td class="center">' . htmlspecialchars($typeLabel) . '</td>
-            <td>' . htmlspecialchars((string) ($row->po_number ?? $row->truck_number ?? '')) . '</td>
-            <td>' . htmlspecialchars((string) ($row->ticket_number ?? '')) . '</td>
-            <td>' . htmlspecialchars((string) ($row->mat_doc ?? '')) . '</td>
-            <td>' . htmlspecialchars((string) ($row->vendor_name ?? '')) . '</td>
-            <td class="center">' . htmlspecialchars((string) ($row->warehouse_code ?? '')) . '</td>
-            <td class="center">' . htmlspecialchars(ucfirst((string) ($row->direction ?? ''))) . '</td>
-            <td class="date">' . $fmt . '</td>
-            <td>' . htmlspecialchars($minutesLabel) . '</td>
-            <td class="center">' . htmlspecialchars(ucfirst((string) ($row->target_status ?? ''))) . '</td>
-            <td class="' . $lateClass . '">' . htmlspecialchars($lateText) . '</td>
-            <td>' . htmlspecialchars((string) ($row->created_by_username ?? '')) . '</td>
+            <td class="center">'.htmlspecialchars($typeLabel).'</td>
+            <td>'.htmlspecialchars((string) ($row->po_number ?? $row->truck_number ?? '')).'</td>
+            <td>'.htmlspecialchars((string) ($row->ticket_number ?? '')).'</td>
+            <td>'.htmlspecialchars((string) ($row->mat_doc ?? '')).'</td>
+            <td>'.htmlspecialchars((string) ($row->vendor_name ?? '')).'</td>
+            <td class="center">'.htmlspecialchars((string) ($row->warehouse_code ?? '')).'</td>
+            <td class="center">'.htmlspecialchars(ucfirst((string) ($row->direction ?? ''))).'</td>
+            <td class="date">'.$fmt.'</td>
+            <td>'.htmlspecialchars($minutesLabel).'</td>
+            <td class="center">'.htmlspecialchars(ucfirst((string) ($row->target_status ?? ''))).'</td>
+            <td class="'.$lateClass.'">'.htmlspecialchars($lateText).'</td>
+            <td>'.htmlspecialchars((string) ($row->created_by_username ?? '')).'</td>
         </tr>';
     }
 
@@ -257,12 +257,13 @@ class ExportService
     private function calculateLeadTime($row): string
     {
         try {
-            $end = !empty($row->actual_finish) ? new \DateTime((string) $row->actual_finish) : null;
-            $startStr = !empty($row->arrival_time) ? (string) $row->arrival_time : '';
+            $end = ! empty($row->actual_finish) ? new \DateTime((string) $row->actual_finish) : null;
+            $startStr = ! empty($row->arrival_time) ? (string) $row->arrival_time : '';
             $start = $startStr !== '' ? new \DateTime($startStr) : null;
 
             if ($start && $end) {
                 $diff = $start->diff($end);
+
                 return (string) ((int) $diff->days * 24 * 60 + (int) $diff->h * 60 + (int) $diff->i);
             }
         } catch (\Throwable $e) {
@@ -282,6 +283,7 @@ class ExportService
 
         if ($targetMinutes > 0 && $leadTime !== '') {
             $lt = (int) $leadTime;
+
             return $lt <= ($targetMinutes + 15) ? 'achieve' : 'not_achieve';
         }
 
@@ -293,7 +295,7 @@ class ExportService
      */
     private function getLateStatus($row): string
     {
-        return !empty($row->is_late) ? 'late' : 'on_time';
+        return ! empty($row->is_late) ? 'late' : 'on_time';
     }
 
     /**
@@ -303,18 +305,19 @@ class ExportService
     {
         $slotTypeForLate = (string) ($row->slot_type ?? 'planned');
 
-        if (!empty($row->arrival_time) && $slotTypeForLate === 'planned') {
+        if (! empty($row->arrival_time) && $slotTypeForLate === 'planned') {
             try {
                 $p = new \DateTime((string) $row->planned_start);
                 $p->modify('+15 minutes');
                 $a = new \DateTime((string) $row->arrival_time);
+
                 return $a > $p ? 'late' : 'on_time';
             } catch (\Throwable $e) {
                 return 'on_time';
             }
         }
 
-        return !empty($row->is_late) ? 'late' : 'on_time';
+        return ! empty($row->is_late) ? 'late' : 'on_time';
     }
 
     /**
@@ -328,10 +331,10 @@ class ExportService
 
         $m = $minutes;
         $h = $m / 60;
-        $out = $m . ' min';
+        $out = $m.' min';
 
         if ($h >= 1) {
-            $out .= ' (' . rtrim(rtrim(number_format($h, 2), '0'), '.') . ' h)';
+            $out .= ' ('.rtrim(rtrim(number_format($h, 2), '0'), '.').' h)';
         }
 
         return $out;
@@ -359,6 +362,7 @@ class ExportService
     public function generateFilename(string $type, string $extension): string
     {
         $timestamp = date('Ymd_His');
+
         return "transactions_report_{$timestamp}.{$extension}";
     }
 
@@ -377,7 +381,7 @@ class ExportService
             foreach ($data as $item) {
                 fputcsv($out, [
                     $item['text'] ?? '',
-                    $this->determineSuggestionType($item)
+                    $this->determineSuggestionType($item),
                 ]);
             }
 

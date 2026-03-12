@@ -34,16 +34,19 @@ class GenerateFebruaryDashboardDummy extends Command
             }
         } catch (\Throwable $e) {
             $this->error('Invalid --from/--to format. Use Y-m-d (e.g. 2026-03-02).');
+
             return self::FAILURE;
         }
 
         if ($start->gte($endExclusive)) {
             $this->error('Invalid date range: start must be <= end.');
+
             return self::FAILURE;
         }
 
-        if (!Schema::hasTable('slots')) {
+        if (! Schema::hasTable('slots')) {
             $this->error('Table slots not found.');
+
             return self::FAILURE;
         }
 
@@ -53,8 +56,9 @@ class GenerateFebruaryDashboardDummy extends Command
         }
         $warehouse = $warehouseQuery->orderBy('id')->first();
 
-        if (!$warehouse) {
+        if (! $warehouse) {
             $this->error('No active warehouse found in md_warehouse.');
+
             return self::FAILURE;
         }
 
@@ -71,12 +75,14 @@ class GenerateFebruaryDashboardDummy extends Command
 
         if ($gates->isEmpty()) {
             $this->error('No active Gate A/B/C found for selected warehouse.');
+
             return self::FAILURE;
         }
 
         $truckTypes = DB::table('md_truck')->get();
         if ($truckTypes->isEmpty()) {
             $this->error('No truck types found in md_truck.');
+
             return self::FAILURE;
         }
 
@@ -97,7 +103,7 @@ class GenerateFebruaryDashboardDummy extends Command
                 ->where('planned_start', '<', $endExclusive->format('Y-m-d 00:00:00'))
                 ->delete();
 
-            $this->info('Deleted existing February slots: ' . $deleted);
+            $this->info('Deleted existing February slots: '.$deleted);
         }
 
         mt_srand($seed);
@@ -145,6 +151,7 @@ class GenerateFebruaryDashboardDummy extends Command
                 }
 
                 usort($times, fn ($a, $b) => $a->getTimestamp() <=> $b->getTimestamp());
+
                 return $times;
             };
 
@@ -225,7 +232,7 @@ class GenerateFebruaryDashboardDummy extends Command
                 }
 
                 $ticketNumber = sprintf('T%s%04d', $date->format('ymd'), $ticketCounter++);
-                $poNumber = $date->format('ymd') . str_pad((string) mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+                $poNumber = $date->format('ymd').str_pad((string) mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
 
                 $slot = [
                     'ticket_number' => $ticketNumber,
@@ -234,8 +241,8 @@ class GenerateFebruaryDashboardDummy extends Command
                     'sj_complete_number' => null,
                     'truck_type' => (string) ($truckType->truck_type ?? 'Cargo'),
                     'vehicle_number_snap' => sprintf('B %04d %s', mt_rand(1000, 9999), chr(mt_rand(65, 90))),
-                    'driver_name' => 'Driver ' . mt_rand(10, 99),
-                    'driver_number' => 'DRV' . mt_rand(1000, 9999),
+                    'driver_name' => 'Driver '.mt_rand(10, 99),
+                    'driver_number' => 'DRV'.mt_rand(1000, 9999),
                     'direction' => $direction,
                     'po_id' => null,
                     'po_number' => $poNumber,
@@ -275,6 +282,7 @@ class GenerateFebruaryDashboardDummy extends Command
 
         if (empty($rows)) {
             $this->warn('No rows generated. Check holidays/master data.');
+
             return self::SUCCESS;
         }
 
@@ -282,7 +290,7 @@ class GenerateFebruaryDashboardDummy extends Command
             DB::table('slots')->insert($chunk);
         }
 
-        $this->info('✓ Dummy slots generated: ' . count($rows) . ' rows for ' . $daysGenerated . ' working days (excluding Sundays & holidays).');
+        $this->info('✓ Dummy slots generated: '.count($rows).' rows for '.$daysGenerated.' working days (excluding Sundays & holidays).');
 
         return self::SUCCESS;
     }

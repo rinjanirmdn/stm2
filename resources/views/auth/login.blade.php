@@ -7,9 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     @vite(['resources/css/style.css', 'resources/js/app.js'])
 </head>
-<body style="min-height:100vh;margin:0;background:
-        linear-gradient(rgba(15,23,42,0.5), rgba(15,23,42,0.5)),
-        url('{{ asset('img/bg_login.jpg') }}') center center / cover no-repeat fixed;">
+<body class="st-auth-bg" style="--st-auth-bg-url: url('{{ asset('img/bg_login.jpg') }}');">
     <div class="st-minh-screen st-flex st-items-center st-justify-center">
         <div class="st-card st-w-full st-maxw-420 st-p-18">
             <div class="st-flex st-justify-center st-items-center st-mb-8">

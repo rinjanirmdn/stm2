@@ -60,12 +60,13 @@ class LogController extends Controller
         $hasName = Schema::hasColumn($usersTable, 'name');
         $hasEmail = Schema::hasColumn($usersTable, 'email');
 
-        $allowedSorts['activity_type'] = 'al.' . $activityTypeCol;
+        $allowedSorts['activity_type'] = 'al.'.$activityTypeCol;
         $allowedSorts['user'] = $userNameExpr;
 
         $sorts = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $sorts), fn ($v) => $v !== ''));
         $dirs = array_values(array_map(function ($v) {
             $v = strtolower(trim((string) $v));
+
             return in_array($v, ['asc', 'desc'], true) ? $v : 'desc';
         }, $dirs));
 
@@ -86,20 +87,20 @@ class LogController extends Controller
         $dir = $dirs[0] ?? 'desc';
 
         $logsQ = DB::table('activity_logs as al')
-            ->leftJoin($usersTable . ' as u', 'al.' . $createdByCol, '=', 'u.id')
+            ->leftJoin($usersTable.' as u', 'al.'.$createdByCol, '=', 'u.id')
             ->leftJoin('slots as s', 'al.slot_id', '=', 's.id')
             ->select([
                 'al.id',
                 'al.slot_id',
-                DB::raw('al.' . $activityTypeCol . ' as activity_type'),
+                DB::raw('al.'.$activityTypeCol.' as activity_type'),
                 'al.description',
-                DB::raw("NULL as old_value"),
-                DB::raw("NULL as new_value"),
-                DB::raw('al.' . $createdByCol . ' as created_by'),
+                DB::raw('NULL as old_value'),
+                DB::raw('NULL as new_value'),
+                DB::raw('al.'.$createdByCol.' as created_by'),
                 'al.created_at',
-                DB::raw(($hasNik ? 'u.nik' : 'NULL') . ' as created_by_nik'),
-                DB::raw(($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : ($hasEmail ? 'u.email' : 'NULL'))) . ' as created_by_name'),
-                DB::raw(($hasEmail ? 'u.email' : 'NULL') . ' as created_by_email'),
+                DB::raw(($hasNik ? 'u.nik' : 'NULL').' as created_by_nik'),
+                DB::raw(($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : ($hasEmail ? 'u.email' : 'NULL'))).' as created_by_name'),
+                DB::raw(($hasEmail ? 'u.email' : 'NULL').' as created_by_email'),
                 's.mat_doc as slot_mat_doc',
                 's.po_number as slot_po_number',
             ]);
@@ -112,7 +113,7 @@ class LogController extends Controller
         }
 
         if ($q !== '') {
-            $like = '%' . $q . '%';
+            $like = '%'.$q.'%';
             $logsQ->where(function ($sub) use ($like) {
                 $sub
                     ->where('al.description', 'like', $like)
@@ -122,13 +123,13 @@ class LogController extends Controller
         }
 
         if ($type !== '' && in_array($type, $allowedTypes, true)) {
-            $logsQ->where('al.' . $activityTypeCol, $type);
+            $logsQ->where('al.'.$activityTypeCol, $type);
         } else {
             $type = '';
         }
 
         if ($dateFrom !== '' && $dateTo !== '') {
-            $logsQ->whereBetween('al.created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
+            $logsQ->whereBetween('al.created_at', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59']);
         } elseif ($dateFrom !== '') {
             $logsQ->whereDate('al.created_at', '>=', $dateFrom);
         } elseif ($dateTo !== '') {
@@ -137,20 +138,20 @@ class LogController extends Controller
 
         // Per-column filters
         if ($fDesc !== '') {
-            $logsQ->where('al.description', 'like', '%' . $fDesc . '%');
+            $logsQ->where('al.description', 'like', '%'.$fDesc.'%');
         }
         if ($fMatDoc !== '') {
-            $logsQ->where('s.mat_doc', 'like', '%' . $fMatDoc . '%');
+            $logsQ->where('s.mat_doc', 'like', '%'.$fMatDoc.'%');
         }
         if ($fPo !== '') {
-            $logsQ->where('s.po_number', 'like', '%' . $fPo . '%');
+            $logsQ->where('s.po_number', 'like', '%'.$fPo.'%');
         }
         if ($fUser !== '') {
-            $logsQ->where(function($q) use ($fUser) {
-                $q->where('u.full_name', 'like', '%' . $fUser . '%')
-                  ->orWhere('u.name', 'like', '%' . $fUser . '%')
-                  ->orWhere('u.nik', 'like', '%' . $fUser . '%')
-                  ->orWhere('u.email', 'like', '%' . $fUser . '%');
+            $logsQ->where(function ($q) use ($fUser) {
+                $q->where('u.full_name', 'like', '%'.$fUser.'%')
+                    ->orWhere('u.name', 'like', '%'.$fUser.'%')
+                    ->orWhere('u.nik', 'like', '%'.$fUser.'%')
+                    ->orWhere('u.email', 'like', '%'.$fUser.'%');
             });
         }
 
@@ -159,7 +160,7 @@ class LogController extends Controller
                 $d = $dirs[$i] ?? 'desc';
                 $col = $allowedSorts[$s];
                 if ($col instanceof \Illuminate\Database\Query\Expression) {
-                    $logsQ->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()) . ' ' . strtoupper($d));
+                    $logsQ->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()).' '.strtoupper($d));
                 } else {
                     $logsQ->orderBy($col, $d);
                 }
@@ -172,7 +173,7 @@ class LogController extends Controller
             ->orderBy('al.id', ($dir === 'asc') ? 'asc' : 'desc')
             ->limit(200);
 
-        $logsCacheKey = 'logs:index:data:' . sha1(json_encode([
+        $logsCacheKey = 'logs:index:data:'.sha1(json_encode([
             'uid' => Auth::id(),
             'query' => $request->query(),
             'version' => (string) Cache::get('st_realtime_version', '0'),

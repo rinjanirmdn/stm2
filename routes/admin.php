@@ -1,4 +1,5 @@
 <?php
+
 /* Admin Routes — Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API */
 
 use App\Http\Controllers\BookingApprovalController;

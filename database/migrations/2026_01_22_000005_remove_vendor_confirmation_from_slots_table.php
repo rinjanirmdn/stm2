@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('slots')) {
+        if (! Schema::hasTable('slots')) {
             return;
         }
 
@@ -34,11 +34,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('slots')) {
+        if (! Schema::hasTable('slots')) {
             return;
         }
 
-        if (!Schema::hasColumn('slots', 'vendor_confirmed_at')) {
+        if (! Schema::hasColumn('slots', 'vendor_confirmed_at')) {
             Schema::table('slots', function (Blueprint $table) {
                 $table->timestamp('vendor_confirmed_at')->nullable()->after('approved_at');
             });

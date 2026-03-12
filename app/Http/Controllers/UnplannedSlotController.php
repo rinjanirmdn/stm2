@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
-use App\Services\SlotService;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
+use App\Services\SlotService;
 use App\Services\TimeCalculationService;
 use DateTime;
 use Illuminate\Http\Request;
@@ -24,8 +24,7 @@ class UnplannedSlotController extends Controller
         private readonly SlotConflictService $conflictService,
         private readonly SlotFilterService $filterService,
         private readonly TimeCalculationService $timeService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -41,6 +40,7 @@ class UnplannedSlotController extends Controller
         $sorts = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $sorts), fn ($v) => $v !== ''));
         $dirs = array_values(array_map(function ($v) {
             $v = strtolower(trim((string) $v));
+
             return in_array($v, ['asc', 'desc'], true) ? $v : 'desc';
         }, $dirs));
 
@@ -49,7 +49,7 @@ class UnplannedSlotController extends Controller
         $pageSize = $request->get('page_size', '10');
 
         // If sort is explicitly 'reset', use default but don't pass to view
-        $isResetSort = (!is_array($rawSort) && (string) $rawSort === 'reset');
+        $isResetSort = (! is_array($rawSort) && (string) $rawSort === 'reset');
         if ($isResetSort) {
             $sort = '';
             $sorts = [];
@@ -79,24 +79,24 @@ class UnplannedSlotController extends Controller
 
         // Apply filters
         if ($request->filled('q')) {
-            $search = '%' . $request->get('q') . '%';
+            $search = '%'.$request->get('q').'%';
             $query->where(function ($q) use ($search) {
                 $q->where('s.po_number', 'like', $search)
-                  ->orWhere('s.mat_doc', 'like', $search)
-                  ->orWhere('s.vendor_name', 'like', $search);
+                    ->orWhere('s.mat_doc', 'like', $search)
+                    ->orWhere('s.vendor_name', 'like', $search);
             });
         }
 
         if ($request->filled('po_number')) {
-            $query->where('s.po_number', 'like', '%' . $request->get('po_number') . '%');
+            $query->where('s.po_number', 'like', '%'.$request->get('po_number').'%');
         }
 
         if ($request->filled('mat_doc')) {
-            $query->where('s.mat_doc', 'like', '%' . $request->get('mat_doc') . '%');
+            $query->where('s.mat_doc', 'like', '%'.$request->get('mat_doc').'%');
         }
 
         if ($request->filled('vendor')) {
-            $query->where('s.vendor_name', 'like', '%' . $request->get('vendor') . '%');
+            $query->where('s.vendor_name', 'like', '%'.$request->get('vendor').'%');
         }
 
         if ($request->filled('warehouse')) {
@@ -131,7 +131,7 @@ class UnplannedSlotController extends Controller
         // Apply sorting
         $allowedSorts = [
             'po_number', 'mat_doc', 'vendor_name', 'warehouse_name',
-            'direction', 'arrival_time', 'created_at'
+            'direction', 'arrival_time', 'created_at',
         ];
 
         $applied = 0;
@@ -148,7 +148,7 @@ class UnplannedSlotController extends Controller
                 } elseif ($s === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $d);
                 } else {
-                    $query->orderBy('s.' . $s, $d);
+                    $query->orderBy('s.'.$s, $d);
                 }
                 $applied++;
             }
@@ -164,7 +164,7 @@ class UnplannedSlotController extends Controller
                 } elseif ($actualSort === 'warehouse_name') {
                     $query->orderBy('w.wh_name', $dir);
                 } else {
-                    $query->orderBy('s.' . $actualSort, $dir);
+                    $query->orderBy('s.'.$actualSort, $dir);
                 }
             } else {
                 $query->orderByRaw('COALESCE(s.arrival_time, s.planned_start) DESC');
@@ -181,7 +181,7 @@ class UnplannedSlotController extends Controller
             $unplannedSlotsQuery = $query->limit($limit);
         }
 
-        $unplannedCacheKey = 'unplanned:index:data:' . sha1(json_encode([
+        $unplannedCacheKey = 'unplanned:index:data:'.sha1(json_encode([
             'uid' => Auth::id(),
             'query' => $request->query(),
             'version' => (string) Cache::get('st_realtime_version', '0'),
@@ -338,7 +338,7 @@ class UnplannedSlotController extends Controller
             ]);
 
             if ($slotId > 0) {
-                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Recorded as ' . $status);
+                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Recorded as '.$status);
             }
 
             return $slotId;
@@ -454,7 +454,7 @@ class UnplannedSlotController extends Controller
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $vendorId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish) {
+        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish) {
             DB::table('slots')->where('id', $slotId)->update([
                 'po_number' => $truckNumber,
                 'direction' => $direction,

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UserStoreRequest;
+use App\Http\Requests\UserUpdateRequest;
 use App\Services\UserRoleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -9,16 +11,13 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\UserStoreRequest;
-use App\Http\Requests\UserUpdateRequest;
 
 class UserController extends Controller
 {
     public function __construct(
         private readonly UserRoleService $roleService
-    ) {
-    }
+    ) {}
+
     public function index(Request $request)
     {
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
@@ -45,6 +44,7 @@ class UserController extends Controller
         $sorts = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $sorts), fn ($v) => $v !== ''));
         $dirs = array_values(array_map(function ($v) {
             $v = strtolower(trim((string) $v));
+
             return $v === 'desc' ? 'desc' : 'asc';
         }, $dirs));
 
@@ -67,13 +67,13 @@ class UserController extends Controller
         $allowedRoles = ['admin', 'section_head', 'operator', 'vendor', 'security', 'super_account', 'display_account'];
 
         $usersQ = DB::table('md_users')
-            ->leftJoin($modelHasRolesTable . ' as mhr', function ($join) {
+            ->leftJoin($modelHasRolesTable.' as mhr', function ($join) {
                 $join
                     ->on('mhr.model_id', '=', 'md_users.id')
                     ->where('mhr.model_type', '=', 'App\\Models\\User');
             })
-            ->leftJoin($rolesTable . ' as r_spatie', 'r_spatie.id', '=', 'mhr.role_id')
-            ->leftJoin($rolesTable . ' as r_user', 'r_user.id', '=', 'md_users.role_id')
+            ->leftJoin($rolesTable.' as r_spatie', 'r_spatie.id', '=', 'mhr.role_id')
+            ->leftJoin($rolesTable.' as r_user', 'r_user.id', '=', 'md_users.role_id')
             ->select([
                 'md_users.id',
                 'md_users.nik',
@@ -88,18 +88,18 @@ class UserController extends Controller
 
         // Apply individual column filters
         if ($nik !== '') {
-            $usersQ->where('md_users.nik', 'like', '%' . $nik . '%');
+            $usersQ->where('md_users.nik', 'like', '%'.$nik.'%');
         }
 
         if ($full_name !== '') {
-            $usersQ->where('md_users.full_name', 'like', '%' . $full_name . '%');
+            $usersQ->where('md_users.full_name', 'like', '%'.$full_name.'%');
         }
 
         if ($role !== '' && in_array($role, $allowedRoles, true)) {
             $roleFilter = str_replace('_', ' ', strtolower($role));
-            $usersQ->where(function($q) use ($roleFilter) {
+            $usersQ->where(function ($q) use ($roleFilter) {
                 $q->whereRaw('LOWER(r_user.roles_name) = ?', [$roleFilter])
-                  ->orWhereRaw('LOWER(r_spatie.roles_name) = ?', [$roleFilter]);
+                    ->orWhereRaw('LOWER(r_spatie.roles_name) = ?', [$roleFilter]);
             });
         } else {
             $role = '';
@@ -111,7 +111,7 @@ class UserController extends Controller
 
         // Legacy search filter (q parameter)
         if ($q !== '') {
-            $like = '%' . $q . '%';
+            $like = '%'.$q.'%';
             $usersQ->where(function ($sub) use ($like) {
                 $sub
                     ->where('md_users.nik', 'like', $like)
@@ -140,11 +140,11 @@ class UserController extends Controller
             foreach ($sorts as $i => $s) {
                 $d = $dirs[$i] ?? 'asc';
                 if ($s === 'role') {
-                    $usersQ->orderByRaw('COALESCE(r_user.roles_name, r_spatie.roles_name) ' . $d);
+                    $usersQ->orderByRaw('COALESCE(r_user.roles_name, r_spatie.roles_name) '.$d);
                 } elseif ($s === 'name') {
                     $usersQ->orderBy('md_users.full_name', $d);
                 } else {
-                    $usersQ->orderBy('md_users.' . $s, $d);
+                    $usersQ->orderBy('md_users.'.$s, $d);
                 }
             }
             $usersQ->orderByDesc('md_users.created_at')->orderByDesc('md_users.id');
@@ -154,7 +154,7 @@ class UserController extends Controller
                 ->orderByDesc('md_users.id');
         }
 
-        $usersCacheKey = 'users:index:data:' . sha1(json_encode([
+        $usersCacheKey = 'users:index:data:'.sha1(json_encode([
             'uid' => Auth::id(),
             'query' => $request->query(),
             'version' => (string) Cache::get('st_realtime_version', '0'),
@@ -200,6 +200,7 @@ class UserController extends Controller
         $normalizeRoleName = static function (string $value): string {
             $value = strtolower(trim($value));
             $value = str_replace([' ', '_', '-'], '', $value);
+
             return preg_replace('/[^a-z0-9]/', '', $value) ?? '';
         };
 
@@ -216,6 +217,7 @@ class UserController extends Controller
         if (! $roleId) {
             $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB) {
                 $candidate = $normalizeRoleName((string) ($r->roles_name ?? ''));
+
                 return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
             });
             $roleId = $roleRecord ? $roleRecord->id : null;
@@ -230,13 +232,14 @@ class UserController extends Controller
                     return true;
                 }
                 $candidate = $normalizeRoleName($name);
+
                 return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
             });
             $roleId = $roleRecord ? $roleRecord->id : null;
         }
 
-        if (!$roleId) {
-            return back()->withInput()->with('error', 'Invalid role: ' . $roleDisplayName);
+        if (! $roleId) {
+            return back()->withInput()->with('error', 'Invalid role: '.$roleDisplayName);
         }
 
         // Create user
@@ -255,7 +258,7 @@ class UserController extends Controller
         ]);
 
         // Assign role using service with proper name
-        if (!$this->roleService->assignRole($userId, $roleRecord->roles_name)) {
+        if (! $this->roleService->assignRole($userId, $roleRecord->roles_name)) {
             return back()->withInput()->with('error', 'Failed to assign role');
         }
 
@@ -267,13 +270,13 @@ class UserController extends Controller
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
         $user = DB::table('md_users')
-            ->leftJoin($modelHasRolesTable . ' as mhr', function ($join) {
+            ->leftJoin($modelHasRolesTable.' as mhr', function ($join) {
                 $join
                     ->on('mhr.model_id', '=', 'md_users.id')
                     ->where('mhr.model_type', '=', 'App\\Models\\User');
             })
-            ->leftJoin($rolesTable . ' as r_spatie', 'r_spatie.id', '=', 'mhr.role_id')
-            ->leftJoin($rolesTable . ' as r_user', 'r_user.id', '=', 'md_users.role_id')
+            ->leftJoin($rolesTable.' as r_spatie', 'r_spatie.id', '=', 'mhr.role_id')
+            ->leftJoin($rolesTable.' as r_user', 'r_user.id', '=', 'md_users.role_id')
             ->where('md_users.id', $userId)
             ->selectRaw("
                 md_users.id,
@@ -329,6 +332,7 @@ class UserController extends Controller
         $normalizeRoleName = static function (string $value): string {
             $value = strtolower(trim($value));
             $value = str_replace([' ', '_', '-'], '', $value);
+
             return preg_replace('/[^a-z0-9]/', '', $value) ?? '';
         };
 
@@ -344,6 +348,7 @@ class UserController extends Controller
         if (! $newRoleId) {
             $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB) {
                 $candidate = $normalizeRoleName((string) ($r->roles_name ?? ''));
+
                 return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
             });
             $newRoleId = $roleRecord ? $roleRecord->id : null;
@@ -358,6 +363,7 @@ class UserController extends Controller
                     return true;
                 }
                 $candidate = $normalizeRoleName($name);
+
                 return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
             });
             $newRoleId = $roleRecord ? $roleRecord->id : null;
@@ -387,7 +393,7 @@ class UserController extends Controller
 
         foreach (array_unique($loginIdentifiers) as $identifier) {
             if ($identifier !== '') {
-                Cache::forget('login_attempts_' . $identifier);
+                Cache::forget('login_attempts_'.$identifier);
             }
         }
 
@@ -398,7 +404,7 @@ class UserController extends Controller
         }
 
         // Notify user via email when password is changed by admin
-        $resetFlagKey = 'password_reset_requested_user_' . (int) $userId;
+        $resetFlagKey = 'password_reset_requested_user_'.(int) $userId;
         $hadResetRequest = Cache::has($resetFlagKey);
         $sendResetEmailAfterResponse = $passwordChanged && $hadResetRequest;
 
@@ -413,15 +419,15 @@ class UserController extends Controller
                         $appName = 'e-Docking Control System';
 
                         $html = view('emails.password-reset-user', [
-                            'appName'       => $appName,
-                            'userName'      => $userName,
-                            'userEmail'     => $userEmail,
+                            'appName' => $appName,
+                            'userName' => $userName,
+                            'userEmail' => $userEmail,
                             'plainPassword' => $plainPassword,
                         ])->render();
 
                         Mail::html($html, function ($message) use ($userEmail, $userName, $appName) {
                             $message->to($userEmail, $userName)
-                                    ->subject('[' . $appName . '] Your password has been reset by admin');
+                                ->subject('['.$appName.'] Your password has been reset by admin');
                         });
                     }
                 } catch (\Throwable $e) {
@@ -443,12 +449,12 @@ class UserController extends Controller
     public function toggle(Request $request, int $userId)
     {
         $user = DB::table('md_users')->where('id', $userId)->select(['id', 'is_active'])->first();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('users.index')->with('error', 'User not found');
         }
 
         $currentUserId = $request->user()->id ?? 0;
-        $currentActive = !empty($user->is_active);
+        $currentActive = ! empty($user->is_active);
 
         // Check if user is trying to deactivate themselves
         if ($user->id === $currentUserId && $currentActive) {
@@ -456,7 +462,7 @@ class UserController extends Controller
         }
 
         // Check if user can be deactivated (not last admin)
-        if ($currentActive && !$this->roleService->canDeactivateUser($userId)) {
+        if ($currentActive && ! $this->roleService->canDeactivateUser($userId)) {
             return redirect()->route('users.index')->with('error', 'Cannot deactivate the last admin user.');
         }
 
@@ -469,7 +475,7 @@ class UserController extends Controller
     public function destroy(Request $request, int $userId)
     {
         $user = DB::table('md_users')->where('id', $userId)->select(['id', 'role_id'])->first();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('users.index')->with('error', 'User not found');
         }
 
@@ -482,15 +488,15 @@ class UserController extends Controller
         // Look up role via Spatie model_has_roles table
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
-        $userRoleName = DB::table($modelHasRolesTable . ' as mhr')
-            ->join($rolesTable . ' as r', 'r.id', '=', 'mhr.role_id')
+        $userRoleName = DB::table($modelHasRolesTable.' as mhr')
+            ->join($rolesTable.' as r', 'r.id', '=', 'mhr.role_id')
             ->where('mhr.model_id', $userId)
             ->where('mhr.model_type', 'App\\Models\\User')
             ->value('r.roles_name');
 
         if ($userRoleName && strtolower($userRoleName) === 'admin') {
-            $remainingAdmins = DB::table($modelHasRolesTable . ' as mhr')
-                ->join($rolesTable . ' as r', 'r.id', '=', 'mhr.role_id')
+            $remainingAdmins = DB::table($modelHasRolesTable.' as mhr')
+                ->join($rolesTable.' as r', 'r.id', '=', 'mhr.role_id')
                 ->where('mhr.model_type', 'App\\Models\\User')
                 ->whereRaw('LOWER(r.roles_name) = ?', ['admin'])
                 ->where('mhr.model_id', '<>', $userId)
@@ -501,6 +507,7 @@ class UserController extends Controller
         }
 
         DB::table('md_users')->where('id', $userId)->delete();
+
         return redirect()->route('users.index')->with('success', 'User deleted permanently');
     }
 }

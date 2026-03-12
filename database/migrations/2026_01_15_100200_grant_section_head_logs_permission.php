@@ -26,7 +26,7 @@ return new class extends Migration
             $guardName = 'web';
 
             $roleId = DB::table($rolesTable)
-                ->whereRaw('LOWER(' . $roleNameCol . ') = ?', ['section head'])
+                ->whereRaw('LOWER('.$roleNameCol.') = ?', ['section head'])
                 ->when(Schema::hasColumn($rolesTable, $roleGuardCol), function ($q) use ($roleGuardCol, $guardName) {
                     return $q->where($roleGuardCol, $guardName);
                 })
@@ -34,7 +34,7 @@ return new class extends Migration
 
             if (! $roleId) {
                 $roleId = DB::table($rolesTable)
-                    ->whereRaw('LOWER(' . $roleNameCol . ') = ?', ['section_head'])
+                    ->whereRaw('LOWER('.$roleNameCol.') = ?', ['section_head'])
                     ->when(Schema::hasColumn($rolesTable, $roleGuardCol), function ($q) use ($roleGuardCol, $guardName) {
                         return $q->where($roleGuardCol, $guardName);
                     })

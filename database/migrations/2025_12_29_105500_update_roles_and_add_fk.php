@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -21,7 +21,7 @@ return new class extends Migration
             ->pluck('id')
             ->toArray();
 
-        if (!empty($rolesToDelete)) {
+        if (! empty($rolesToDelete)) {
             // Remove role assignments first
             DB::table('role_has_permissions')
                 ->whereIn('role_id', $rolesToDelete)
@@ -50,15 +50,15 @@ return new class extends Migration
         // Add role_id foreign key to users table
         Schema::table('users', function (Blueprint $table) {
             // Add role_id column if it doesn't exist
-            if (!Schema::hasColumn('users', 'role_id')) {
+            if (! Schema::hasColumn('users', 'role_id')) {
                 $table->unsignedBigInteger('role_id')->nullable()->after('role');
             }
 
             // Add foreign key constraint
             $table->foreign('role_id')
-                  ->references('id')
-                  ->on('roles')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('roles')
+                ->onDelete('set null');
         });
 
         // Update existing users to use role_id based on their current role string

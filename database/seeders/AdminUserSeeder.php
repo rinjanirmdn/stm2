@@ -43,7 +43,7 @@ class AdminUserSeeder extends Seeder
                 $userData
             );
 
-            if ($user && !empty($userData['role']) && method_exists($user, 'assignRole')) {
+            if ($user && ! empty($userData['role']) && method_exists($user, 'assignRole')) {
                 try {
                     $user->assignRole($userData['role']);
                 } catch (\Throwable $e) {
@@ -56,6 +56,6 @@ class AdminUserSeeder extends Seeder
         $this->command->info('  - admin (Admin role)');
         $this->command->info('  - operator (Operator role)');
         $this->command->info('  - SectionHead (Section Head role)');
-        $this->command->info('  Password: ' . env('DEFAULT_USER_PASSWORD', 'password'));
+        $this->command->info('  Password: '.env('DEFAULT_USER_PASSWORD', 'password'));
     }
 }

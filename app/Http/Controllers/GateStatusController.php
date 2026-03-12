@@ -3,24 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Services\GateStreamingService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class GateStatusController extends Controller
 {
     public function __construct(
         private readonly GateStreamingService $streamingService
-    ) {
-    }
+    ) {}
+
     /**
      * Stream real-time gate status updates
      */
     public function stream(Request $request)
     {
-        $response = new \Symfony\Component\HttpFoundation\StreamedResponse(function () use ($request) {
+        $response = new \Symfony\Component\HttpFoundation\StreamedResponse(function () {
             $this->streamingService->streamGateStatuses(function ($data) {
-                echo "data: " . json_encode($data) . "\n\n";
+                echo 'data: '.json_encode($data)."\n\n";
                 ob_flush();
                 flush();
             });
@@ -56,11 +55,11 @@ class GateStatusController extends Controller
 
             return response()->json([
                 'gates' => $gates,
-                'timestamp' => Carbon::now()->timestamp
+                'timestamp' => Carbon::now()->timestamp,
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

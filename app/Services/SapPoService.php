@@ -42,7 +42,6 @@ class SapPoService
         ],
     ];
 
-
     /**
      * Search POs by partial number using OData $filter
      * Endpoint: ZPOA_DTL_LIST/Set?$filter=contains(PoNo,'query')&$top=50
@@ -84,6 +83,7 @@ class SapPoService
                     break;
                 }
             }
+
             return $out;
         }
 
@@ -91,8 +91,8 @@ class SapPoService
         // This SAP Gateway endpoint rejects $filter/$top and only allows limited query options.
         // We fetch pages without server-side filtering and apply filtering client-side.
         // Some gateways are also picky about collection URLs, so we try a fallback without '/Set'.
-        $urlWithSet = rtrim($baseUrl, '/') . $servicePath . '/ZPOA_DTL_LIST/Set';
-        $urlWithoutSet = rtrim($baseUrl, '/') . $servicePath . '/ZPOA_DTL_LIST';
+        $urlWithSet = rtrim($baseUrl, '/').$servicePath.'/ZPOA_DTL_LIST/Set';
+        $urlWithoutSet = rtrim($baseUrl, '/').$servicePath.'/ZPOA_DTL_LIST';
 
         try {
             $req = $this->buildSapRequest($timeout, $token, $username, $password, $sapClient, $verifySsl)->acceptJson();
@@ -120,23 +120,23 @@ class SapPoService
                         'body' => substr($response->body(), 0, 500),
                     ]);
 
-                    if (!$response->successful()) {
+                    if (! $response->successful()) {
                         // Try next URL variant
                         break;
                     }
 
                     $json = $response->json();
                     $rows = is_array($json) ? ($json['value'] ?? []) : [];
-                    if (!is_array($rows)) {
+                    if (! is_array($rows)) {
                         $rows = [];
                     }
 
                     foreach ($rows as $item) {
-                        if (!is_array($item)) {
+                        if (! is_array($item)) {
                             continue;
                         }
 
-                        $poNo = (string)($item['PoNo'] ?? '');
+                        $poNo = (string) ($item['PoNo'] ?? '');
                         if ($poNo === '') {
                             continue;
                         }
@@ -185,7 +185,7 @@ class SapPoService
                             'customer_name' => $customerName,
                             'partner_role' => $partnerRole,
                             'direction' => $direction,
-                            'doc_date' => (string)($item['DocDate'] ?? ''),
+                            'doc_date' => (string) ($item['DocDate'] ?? ''),
                             'plant' => '',
                             'warehouse_name' => '',
                         ];
@@ -201,7 +201,7 @@ class SapPoService
                     }
                 }
 
-                if (!empty($results)) {
+                if (! empty($results)) {
                     return $results;
                 }
             }
@@ -209,13 +209,15 @@ class SapPoService
             return [];
         } catch (\Throwable $e) {
             \Log::warning('SAP PO Search Error', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
 
     /**
      * Search POs by period using ZPO_HDR_LIST endpoint
-     * @param string $period Format YYYY.MM (e.g. 2026.01)
+     *
+     * @param  string  $period  Format YYYY.MM (e.g. 2026.01)
      */
     public function searchByPeriod(string $period): array
     {
@@ -229,19 +231,21 @@ class SapPoService
         $verifySsl = (bool) config('services.sap_po.verify_ssl', false);
 
         $endpoint = "/ZPO_HDR_LIST(period='{$period}')/Set";
-        $url = rtrim($baseUrl, '/') . $servicePath . $endpoint;
+        $url = rtrim($baseUrl, '/').$servicePath.$endpoint;
 
         try {
             $req = $this->buildSapRequest($timeout, $token, $username, $password, $sapClient, $verifySsl)->acceptJson();
             $response = $req->get($url);
-            
+
             if ($response->successful()) {
                 $json = $response->json();
+
                 return $json['value'] ?? [];
             }
         } catch (\Throwable $e) {
             // Log::warning...
         }
+
         return [];
     }
 
@@ -266,7 +270,7 @@ class SapPoService
 
             $endpoint = (string) config('services.sap_po.detail_endpoint', '/po/{po}');
             $endpoint = str_replace('{po}', rawurlencode($poNumber), $endpoint);
-            $url = rtrim($baseUrl, '/') . $endpoint;
+            $url = rtrim($baseUrl, '/').$endpoint;
             $token = trim((string) config('services.sap_po.token', ''));
             $username = trim((string) config('services.sap_po.username', ''));
             $password = (string) config('services.sap_po.password', '');
@@ -327,10 +331,10 @@ class SapPoService
 
         // Replace {po} placeholder with actual PO number
         $endpoint = str_replace('{po}', $poNumber, $odataDetailEndpoint);
-        $endpoint = str_replace("'__PO__'", "'" . $poNumber . "'", $endpoint);
-        
+        $endpoint = str_replace("'__PO__'", "'".$poNumber."'", $endpoint);
+
         // Build full URL: base_url + service_path + endpoint
-        $url = rtrim($baseUrl, '/') . $servicePath . $endpoint;
+        $url = rtrim($baseUrl, '/').$servicePath.$endpoint;
 
         try {
             $req = $this->buildSapRequest($timeout, $token, $username, $password, $sapClient, $verifySsl)->acceptJson();

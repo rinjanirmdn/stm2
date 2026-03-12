@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
-use App\Services\SlotService;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
+use App\Services\SlotService;
 use App\Services\TimeCalculationService;
 use DateTime;
 use Illuminate\Http\Request;
@@ -23,8 +23,7 @@ class SlotAjaxController extends Controller
         private readonly SlotConflictService $conflictService,
         private readonly SlotFilterService $filterService,
         private readonly TimeCalculationService $timeService
-    ) {
-    }
+    ) {}
 
     public function ajaxPoSearch(Request $request)
     {
@@ -53,15 +52,17 @@ class SlotAjaxController extends Controller
 
             $po = $this->poSearchService->getPoDetail($poNumber);
 
-            if (!$po) {
+            if (! $po) {
                 return response()->json(['success' => false, 'message' => 'PO/DO not found']);
             }
+
             return response()->json(['success' => true, 'data' => $po]);
         } catch (\Throwable $e) {
             Log::warning('ajaxPoDetail failed', [
                 'poNumber' => $poNumber,
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json(['success' => false, 'message' => 'Failed to load PO/DO detail'], 200);
         }
     }
@@ -83,7 +84,7 @@ class SlotAjaxController extends Controller
         $allTokens = array_values(array_unique(array_merge($tokens, $moreTokens)));
 
         // Keep original query for highlight ordering.
-        $like = '%' . $q . '%';
+        $like = '%'.$q.'%';
 
         $rowsQ = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -96,7 +97,7 @@ class SlotAjaxController extends Controller
             ]);
 
         foreach ($allTokens as $tok) {
-            $tl = '%' . $tok . '%';
+            $tl = '%'.$tok.'%';
             $rowsQ->where(function ($sub) use ($tl) {
                 $sub->where('s.po_number', 'like', $tl)
                     ->orWhere('s.mat_doc', 'like', $tl)
@@ -110,7 +111,7 @@ class SlotAjaxController extends Controller
                 WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 2
                 WHEN s.vendor_name LIKE ? THEN 3
                 ELSE 4
-            END", [$q . '%', $q . '%', $q . '%'])
+            END", [$q.'%', $q.'%', $q.'%'])
             ->orderBy('s.po_number')
             ->limit(10)
             ->get();
@@ -131,8 +132,8 @@ class SlotAjaxController extends Controller
             $after = substr($text, $pos + strlen($q));
 
             return htmlspecialchars($before, ENT_QUOTES, 'UTF-8')
-                . '<strong>' . htmlspecialchars($match, ENT_QUOTES, 'UTF-8') . '</strong>'
-                . htmlspecialchars($after, ENT_QUOTES, 'UTF-8');
+                .'<strong>'.htmlspecialchars($match, ENT_QUOTES, 'UTF-8').'</strong>'
+                .htmlspecialchars($after, ENT_QUOTES, 'UTF-8');
         };
 
         $results = [];
@@ -145,7 +146,7 @@ class SlotAjaxController extends Controller
 
             // 1. Truck - Vendor
             if ($truck !== '' && $vendor !== '') {
-                $text = $truck . ' - ' . $vendor;
+                $text = $truck.' - '.$vendor;
                 if (! in_array($text, $seen, true)) {
                     $seen[] = $text;
                     $results[] = [
@@ -214,7 +215,7 @@ class SlotAjaxController extends Controller
         }
 
         $endDt = clone $startDt;
-        $endDt->modify('+' . (int) $plannedDurationMinutes . ' minutes');
+        $endDt->modify('+'.(int) $plannedDurationMinutes.' minutes');
 
         $startStr = $startDt->format('Y-m-d H:i:s');
         $endStr = $endDt->format('Y-m-d H:i:s');
@@ -269,7 +270,7 @@ class SlotAjaxController extends Controller
         }
 
         $endDt = clone $startDt;
-        $endDt->modify('+' . (int) $plannedDurationMinutes . ' minutes');
+        $endDt->modify('+'.(int) $plannedDurationMinutes.' minutes');
 
         $response = [
             'success' => true,
@@ -291,7 +292,7 @@ class SlotAjaxController extends Controller
             $conflicts = DB::table('slots')
                 ->whereIn('planned_gate_id', $laneGateIds)
                 ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
-                ->whereRaw('? < ' . $this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
+                ->whereRaw('? < '.$this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
                 ->whereRaw('? > planned_start', [$endStr])
                 ->orderBy('planned_start', 'asc')
                 ->select(['planned_start', 'planned_duration'])
@@ -306,7 +307,7 @@ class SlotAjaxController extends Controller
                     ->whereIn('planned_gate_id', $laneGateIds)
                     ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
                     ->whereRaw('DATE(planned_start) = ?', [$day])
-                    ->orderByRaw($this->slotService->getDateAddExpression('planned_start', 'planned_duration') . ' DESC')
+                    ->orderByRaw($this->slotService->getDateAddExpression('planned_start', 'planned_duration').' DESC')
                     ->limit(1)
                     ->select(['planned_start', 'planned_duration'])
                     ->first();
@@ -314,7 +315,7 @@ class SlotAjaxController extends Controller
                 if ($latest) {
                     try {
                         $safeStart = new DateTime((string) $latest->planned_start);
-                        $safeStart->modify('+' . (int) ($latest->planned_duration ?? 0) . ' minutes');
+                        $safeStart->modify('+'.(int) ($latest->planned_duration ?? 0).' minutes');
                         $response['suggested_start'] = $safeStart->format('Y-m-d H:i');
                     } catch (\Throwable $e) {
                         $response['suggested_start'] = null;
@@ -358,7 +359,7 @@ class SlotAjaxController extends Controller
         }
 
         $endDt = clone $startDt;
-        $endDt->modify('+' . (int) $plannedDurationMinutes . ' minutes');
+        $endDt->modify('+'.(int) $plannedDurationMinutes.' minutes');
 
         $startStr = $startDt->format('Y-m-d H:i:s');
         $endStr = $endDt->format('Y-m-d H:i:s');
@@ -390,7 +391,7 @@ class SlotAjaxController extends Controller
             $overlapCount = (int) DB::table('slots')
                 ->whereIn('planned_gate_id', $laneGateIds)
                 ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
-                ->whereRaw('? < ' . $this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
+                ->whereRaw('? < '.$this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
                 ->whereRaw('? > planned_start', [$endStr])
                 ->count();
 
@@ -443,7 +444,7 @@ class SlotAjaxController extends Controller
         }
 
         $gateDisplay = $this->slotService->getGateDisplayName($bestGate->warehouse_code, $bestGate->gate_number);
-        $gateLabel = trim(($bestGate->warehouse_code !== '' ? ($bestGate->warehouse_code . ' - ' . $gateDisplay) : $gateDisplay));
+        $gateLabel = trim(($bestGate->warehouse_code !== '' ? ($bestGate->warehouse_code.' - '.$gateDisplay) : $gateDisplay));
 
         $note = null;
         $whCodeOut = strtoupper(trim((string) $bestGate->warehouse_code));
@@ -500,7 +501,7 @@ class SlotAjaxController extends Controller
             if (! empty($row->planned_start) && ! empty($row->planned_duration)) {
                 try {
                     $dt = new DateTime((string) $row->planned_start);
-                    $dt->modify('+' . (int) $row->planned_duration . ' minutes');
+                    $dt->modify('+'.(int) $row->planned_duration.' minutes');
                     $finish = $dt->format('Y-m-d H:i:s');
                 } catch (\Throwable $e) {
                     $finish = null;
