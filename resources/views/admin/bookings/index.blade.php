@@ -348,11 +348,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Pagination -->
-                    <div class="st-pagination">
-                        {{ $bookings->withQueryString()->links() }}
-                    </div>
                 </form>
             </div>
         </div>

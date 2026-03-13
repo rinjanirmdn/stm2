@@ -183,12 +183,11 @@ class BookingApprovalController extends Controller
         }
 
         $pageSize = $request->query('page_size', '20');
-        if ($pageSize === 'all') {
-            $bookings = $query->paginate($query->count() > 0 ? $query->count() : 1);
-        } else {
+        if ($pageSize !== 'all') {
             $pageSize = max(1, (int) $pageSize);
-            $bookings = $query->paginate($pageSize);
+            $query->limit($pageSize);
         }
+        $bookings = $query->get();
 
         // Get counts for tabs
         $statusCounts = BookingRequest::query()
