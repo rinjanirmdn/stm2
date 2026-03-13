@@ -8,12 +8,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        $hasConstraint = true;
+
+        if ($driver === 'pgsql') {
+            $hasConstraint = (bool) \Illuminate\Support\Facades\DB::selectOne("
+                SELECT 1 FROM pg_constraint JOIN pg_class ON conrelid = pg_class.oid 
+                WHERE pg_class.relname = 'users' AND conname = 'users_vendor_id_foreign'
+            ");
+        } elseif ($driver === 'mysql') {
+            $dbName = \Illuminate\Support\Facades\DB::getDatabaseName();
+            $hasConstraint = (bool) \Illuminate\Support\Facades\DB::selectOne("
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE table_schema = ? AND table_name = 'users' AND constraint_name = 'users_vendor_id_foreign'
+            ", [$dbName]);
+        }
+
+        Schema::table('users', function (Blueprint $table) use ($hasConstraint) {
             // Drop constraint lama yang salah (asumsi nama constraint generated oleh Laravel)
-            try {
-                $table->dropForeign(['vendor_id']);
-            } catch (\Throwable $e) {
-                // FK may not exist on fresh databases
+            if ($hasConstraint) {
+                try {
+                    $table->dropForeign('users_vendor_id_foreign');
+                } catch (\Throwable $e) {
+                }
             }
 
             // Buat constraint baru ke business_partner (only if table exists)
@@ -28,8 +45,30 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['vendor_id']);
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        $hasConstraint = true;
+
+        if ($driver === 'pgsql') {
+            $hasConstraint = (bool) \Illuminate\Support\Facades\DB::selectOne("
+                SELECT 1 FROM pg_constraint JOIN pg_class ON conrelid = pg_class.oid 
+                WHERE pg_class.relname = 'users' AND conname = 'users_vendor_id_foreign'
+            ");
+        } elseif ($driver === 'mysql') {
+            $dbName = \Illuminate\Support\Facades\DB::getDatabaseName();
+            $hasConstraint = (bool) \Illuminate\Support\Facades\DB::selectOne("
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE table_schema = ? AND table_name = 'users' AND constraint_name = 'users_vendor_id_foreign'
+            ", [$dbName]);
+        }
+
+        Schema::table('users', function (Blueprint $table) use ($hasConstraint) {
+            if ($hasConstraint) {
+                try {
+                    $table->dropForeign('users_vendor_id_foreign');
+                } catch (\Throwable $e) {
+                }
+            }
+
             // Kembalikan ke vendors (meskipun salah, untuk rollback purpose)
             $table->foreign('vendor_id')
                 ->references('id')

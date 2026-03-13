@@ -23,33 +23,37 @@ return new class extends Migration
         echo "Operator Role ID: $operatorRoleId\n";
         echo "Section Head Role ID: $sectionHeadRoleId\n";
 
-        // Update users based on their old role string values
-        DB::table('md_users')
-            ->where('role', 'admin')
-            ->update(['role_id' => $adminRoleId]);
+        $usersTable = Schema::hasTable('md_users') ? 'md_users' : 'users';
 
-        DB::table('md_users')
-            ->where('role', 'operator')
-            ->update(['role_id' => $operatorRoleId]);
+        if (Schema::hasColumn($usersTable, 'role')) {
+            // Update users based on their old role string values
+            DB::table($usersTable)
+                ->where('role', 'admin')
+                ->update(['role_id' => $adminRoleId]);
 
-        DB::table('md_users')
-            ->where('role', 'Section Head')
-            ->update(['role_id' => $sectionHeadRoleId]);
+            DB::table($usersTable)
+                ->where('role', 'operator')
+                ->update(['role_id' => $operatorRoleId]);
 
-        // Also check for case variations
-        DB::table('md_users')
-            ->where('role', 'Admin')
-            ->update(['role_id' => $adminRoleId]);
+            DB::table($usersTable)
+                ->where('role', 'Section Head')
+                ->update(['role_id' => $sectionHeadRoleId]);
 
-        DB::table('md_users')
-            ->where('role', 'Operator')
-            ->update(['role_id' => $operatorRoleId]);
+            // Also check for case variations
+            DB::table($usersTable)
+                ->where('role', 'Admin')
+                ->update(['role_id' => $adminRoleId]);
 
-        // Verify the updates
-        echo "\nUpdated users:\n";
-        $users = DB::table('md_users')->select('username', 'role', 'role_id')->get();
-        foreach ($users as $user) {
-            echo "Username: {$user->username}, Old Role: {$user->role}, Role ID: {$user->role_id}\n";
+            DB::table($usersTable)
+                ->where('role', 'Operator')
+                ->update(['role_id' => $operatorRoleId]);
+
+            // Verify the updates
+            echo "\nUpdated users:\n";
+            $users = DB::table($usersTable)->select('username', 'role', 'role_id')->get();
+            foreach ($users as $user) {
+                echo "Username: {$user->username}, Old Role: {$user->role}, Role ID: {$user->role_id}\n";
+            }
         }
     }
 
@@ -58,7 +62,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        $usersTable = \Illuminate\Support\Facades\Schema::hasTable('md_users') ? 'md_users' : 'users';
         // Set role_id back to null
-        DB::table('md_users')->update(['role_id' => null]);
+        DB::table($usersTable)->update(['role_id' => null]);
     }
 };

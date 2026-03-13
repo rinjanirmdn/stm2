@@ -222,10 +222,10 @@ class ReportController extends Controller
         $sort = $sorts[0] ?? '';
         $dir = $dirs[0] ?? 'desc';
 
-        $pageSize = (string) $request->query('page_size', 'all');
+        $pageSize = (string) $request->query('page_size', '10');
         $pageSizeAllowed = ['10', '25', '50', '100', 'all'];
         if (! in_array($pageSize, $pageSizeAllowed, true)) {
-            $pageSize = 'all';
+            $pageSize = '10';
         }
 
         // Handle exports
