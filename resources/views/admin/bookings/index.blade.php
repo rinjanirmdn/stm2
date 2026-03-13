@@ -70,7 +70,7 @@
     <section class="st-row st-flex-1">
         <div class="st-col-12 st-flex-1 st-flex st-flex-col">
             <div class="st-card st-mb-0 st-flex st-flex-col st-relative st-flex-1">
-                <form method="GET" id="booking-filter-form" data-multi-sort="1" action="{{ route('bookings.index') }}">
+                <form method="GET" id="booking-filter-form" data-multi-sort="1" action="{{ route('bookings.index') }}" class="st-flex st-flex-col st-flex-1">
                     <input type="hidden" name="status" value="{{ $status }}">
                     @php
                         $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];

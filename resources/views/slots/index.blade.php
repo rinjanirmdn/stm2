@@ -79,7 +79,7 @@
     <section class="st-row st-flex-1">
         <div class="st-col-12 st-flex-1 st-flex st-flex-col">
             <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1">
-                <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1" autocomplete="off">
+                <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1" autocomplete="off" class="st-flex st-flex-col st-flex-1">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
                     $dirsArr = isset($dirs) && is_array($dirs) ? $dirs : [];
