@@ -67,10 +67,10 @@
         </div>
     </div>
 
-    <section class="st-row st-flex-1">
-        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
-            <div class="st-card st-mb-0 st-flex st-flex-col st-relative st-flex-1">
-                <form method="GET" id="booking-filter-form" data-multi-sort="1" action="{{ route('bookings.index') }}" class="st-flex st-flex-col st-flex-1">
+    <section class="st-row st-flex-1 st-minh-0">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col st-minh-0">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-relative st-flex-1 st-minh-0">
+                <form method="GET" id="booking-filter-form" data-multi-sort="1" action="{{ route('bookings.index') }}" class="st-flex st-flex-col st-flex-1 st-minh-0">
                     <input type="hidden" name="status" value="{{ $status }}">
                     @php
                         $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -82,7 +82,7 @@
                         <input type="hidden" name="sort[]" value="{{ $s }}">
                         <input type="hidden" name="dir[]" value="{{ $d }}">
                     @endforeach
-                    <div class="st-table-wrapper st-table-wrapper--minh-400 st-flex-1 st-maxh-none">
+                    <div class="st-table-wrapper st-table-wrapper--minh-400 st-flex-1 st-maxh-none st-minh-0">
                         <table class="st-table">
                             <thead>
                                 <tr>
@@ -347,11 +347,6 @@
                                 @endif
                             </tbody>
                         </table>
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <div class="st-pagination">
-                        {{ $bookings->withQueryString()->links() }}
                     </div>
                 </form>
             </div>
