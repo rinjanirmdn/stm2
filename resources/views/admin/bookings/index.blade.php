@@ -41,7 +41,7 @@
                     <div class="st-form-field st-maxw-120">
                         <label class="st-label st-text-12">Show</label>
                         <select name="page_size" form="booking-filter-form" class="st-select st-text-12 st-py-2">
-                            @php $pageSize = request('page_size', '20'); @endphp
+                            @php $pageSize = request('page_size', '10'); @endphp
                             @foreach (['10','20','50','100','all'] as $ps)
                                 <option value="{{ $ps }}" {{ $pageSize === $ps ? 'selected' : '' }}>{{ strtoupper($ps) }}</option>
                             @endforeach
