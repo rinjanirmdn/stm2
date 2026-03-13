@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Booking Requests')
 @section('page_title', 'Booking Requests')
@@ -15,26 +15,26 @@
                 <div class="st-form-field st-flex-1">
                     <label class="st-label st-text-12">Booking Summary</label>
                     <div class="st-flex st-flex-wrap st-gap-10 st-w-full st-booking-summary-pills">
-                        <div class="st-booking-summary-pill st-booking-summary-pill--pending">
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'pending', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--pending {{ $status === 'pending' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">Pending</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['pending'] ?? 0 }}</span>
-                        </div>
-                        <div class="st-booking-summary-pill st-booking-summary-pill--approved">
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'approved', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--approved {{ $status === 'approved' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">Approved</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['approved'] ?? 0 }}</span>
-                        </div>
-                        <div class="st-booking-summary-pill st-booking-summary-pill--cancelled">
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'cancelled', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--cancelled {{ $status === 'cancelled' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">Cancelled</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['cancelled'] ?? 0 }}</span>
-                        </div>
-                        <div class="st-booking-summary-pill st-booking-summary-pill--rejected">
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'rejected', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--rejected {{ $status === 'rejected' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">Rejected</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['rejected'] ?? 0 }}</span>
-                        </div>
-                        <div class="st-booking-summary-pill st-booking-summary-pill--all">
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'all', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--all {{ $status === 'all' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">All</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['all'] ?? 0 }}</span>
-                        </div>
+                        </a>
                     </div>
                 </div>
                 <div class="st-flex st-flex-wrap st-gap-8 st-items-end st-booking-header-controls">
