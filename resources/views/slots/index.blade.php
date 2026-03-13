@@ -89,7 +89,7 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper st-table-wrapper--minh-400">
+                <div class="st-table-wrapper st-table-wrapper--minh-400 st-flex-1 st-maxh-none">
                     <table class="st-table">
                         <thead>
                             <tr>
