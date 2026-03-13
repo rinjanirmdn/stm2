@@ -182,7 +182,13 @@ class BookingApprovalController extends Controller
             $query->orderBy('booking_requests.created_at', 'desc');
         }
 
-        $bookings = $query->paginate(20);
+        $pageSize = $request->query('page_size', '20');
+        if ($pageSize === 'all') {
+            $bookings = $query->paginate($query->count() > 0 ? $query->count() : 1);
+        } else {
+            $pageSize = max(1, (int) $pageSize);
+            $bookings = $query->paginate($pageSize);
+        }
 
         // Get counts for tabs
         $statusCounts = BookingRequest::query()
