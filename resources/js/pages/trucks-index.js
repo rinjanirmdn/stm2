@@ -1,4 +1,4 @@
-﻿function stReadJson(id, fallback) {
+function stReadJson(id, fallback) {
     try {
         var el = document.getElementById(id);
         if (!el) return fallback;
@@ -149,6 +149,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 duration: this.getAttribute('data-duration')
             };
             openModal(true, data);
+        });
+    });
+
+    // Delete confirmation dialog
+    var deleteDialog = document.getElementById('deleteTruckDialog');
+    var deleteForm = document.getElementById('delete-truck-form');
+    var deleteNameEl = document.getElementById('deleteTruckName');
+    var confirmDeleteNo = document.getElementById('confirmDeleteNo');
+
+    function showDeleteDialog(url, name) {
+        if (!deleteDialog || !deleteForm) return;
+        deleteForm.setAttribute('action', url);
+        if (deleteNameEl) deleteNameEl.textContent = name;
+        deleteDialog.classList.remove('st-hidden');
+        deleteDialog.style.display = 'flex';
+    }
+
+    function hideDeleteDialog() {
+        if (!deleteDialog) return;
+        deleteDialog.style.display = 'none';
+        deleteDialog.classList.add('st-hidden');
+    }
+
+    if (confirmDeleteNo) {
+        confirmDeleteNo.addEventListener('click', hideDeleteDialog);
+    }
+
+    if (deleteDialog) {
+        deleteDialog.addEventListener('click', function(e) {
+            if (e.target === deleteDialog) hideDeleteDialog();
+        });
+    }
+
+    document.querySelectorAll('.btn-delete-truck').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url = this.getAttribute('data-delete-url');
+            var name = this.getAttribute('data-truck-name');
+            showDeleteDialog(url, name);
         });
     });
 });

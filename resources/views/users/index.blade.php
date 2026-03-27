@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Users - e-Docking Control System')
 @section('page_title', 'Users')
@@ -248,12 +248,9 @@
 
                                         @if (! $isCurrentUser)
                                             @can('users.delete')
-                                                <form method="POST" action="{{ route('users.delete', ['userId' => $u->id]) }}" class="st-inline-form">
-                                                    @csrf
-                                                    <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('{{ $deleteConfirmMsg }}');">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="tw-action tw-action--danger btn-delete-user" data-tooltip="Delete" aria-label="Delete" data-delete-url="{{ route('users.delete', ['userId' => $u->id]) }}" data-user-name="{{ $u->full_name ?? $u->nik ?? '-' }}">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
                                             @endcan
                                         @endif
                                         @if ($isCurrentUser)
@@ -274,6 +271,31 @@
             </div>
         </div>
     </section>
+
+    <!-- Delete User Confirmation Dialog -->
+    <div id="deleteUserDialog" class="st-dialog st-dialog--overlay st-hidden">
+        <div class="st-card st-dialog__card">
+            <div class="st-card__header st-dialog__header">
+                <h3 class="st-dialog__title">Delete User</h3>
+            </div>
+            <div class="st-card__body st-dialog__body">
+                <form id="delete-user-form" method="POST" action="">
+                    @csrf
+                    <p class="st-dialog__text">
+                        Are you sure you want to delete user <span id="deleteUserName" class="st-font-semibold"></span>?
+                    </p>
+                    <div class="st-dialog__actions">
+                        <button id="confirmDeleteUserYes" type="submit" class="st-btn st-btn--danger st-dialog__btn">
+                            DELETE
+                        </button>
+                        <button id="confirmDeleteUserNo" type="button" class="st-btn st-btn--outline-primary st-dialog__btn">
+                            CANCEL
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
