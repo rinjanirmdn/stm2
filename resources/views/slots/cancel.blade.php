@@ -9,6 +9,22 @@
         <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
     </div>
 
+    @if (session('success'))
+        <div class="st-alert st-alert--success st-alert--autodismiss st-mb-12">
+            <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="st-alert__text">{{ session('success') }}</span>
+            <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="st-alert st-alert--error st-alert--autodismiss st-mb-12">
+            <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <span class="st-alert__text">{{ session('error') }}</span>
+            <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+        </div>
+    @endif
+
     <div class="st-card">
         <form method="POST" action="{{ route('slots.cancel.store', ['slotId' => $slot->id]) }}">
             @csrf
