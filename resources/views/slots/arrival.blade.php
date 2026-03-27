@@ -7,7 +7,9 @@
     <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Arrival Registration</h3>
-            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id }}</span>
+            <div class="st-flex st-align-center st-gap-8">
+                <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id }}</span>
+            </div>
         </div>
         <div class="st-form-row--grid-3 st-text--sm">
             <div class="st-flex st-align-center st-gap-8">
@@ -88,7 +90,10 @@
                         <div id="scan_qr_reader" class="st-w-full st-maxw-360 st-mt-8 st-rounded-6 st-hidden-soft st-scale-x-neg"></div>
                         <div id="scan_camera_status" class="st-text--small st-text--muted st-mt-6"></div>
                     </div>
-                    <div class="st-text--small st-text--muted st-mt-4">After ticket is filled, detail form will appear.</div>
+                    <div class="st-flex st-justify-between st-align-center st-mt-4 st-gap-10">
+                        <div class="st-text--small st-text--muted">After ticket is filled, detail form will appear.</div>
+                        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('slots.index') }}" class="st-btn st-btn--outline-primary st-btn--xs">Back</a>
+                    </div>
                 </div>
             </div>
 
