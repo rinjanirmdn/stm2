@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Trucks - e-Docking Control System')
 @section('page_title', 'Trucks')
@@ -83,12 +83,9 @@
                                             @endcan
 
                                             @can('trucks.delete')
-                                                <form method="POST" action="{{ route('trucks.delete', ['truckTypeDurationId' => $row->id]) }}" class="st-inline-form">
-                                                    @csrf
-                                                    <button type="submit" class="tw-action tw-action--danger" data-tooltip="Delete" aria-label="Delete" onclick="return confirm('Delete this truck type?');">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="tw-action tw-action--danger btn-delete-truck" data-tooltip="Delete" aria-label="Delete" data-delete-url="{{ route('trucks.delete', ['truckTypeDurationId' => $row->id]) }}" data-truck-name="{{ $row->truck_type }}">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
                                             @endcan
                                         </div>
                                     </td>
@@ -133,6 +130,31 @@
             </div>
         </div>
     @endcan
+
+    <!-- Delete Confirmation Dialog -->
+    <div id="deleteTruckDialog" class="st-dialog st-dialog--overlay st-hidden">
+        <div class="st-card st-dialog__card">
+            <div class="st-card__header st-dialog__header">
+                <h3 class="st-dialog__title">Delete Truck</h3>
+            </div>
+            <div class="st-card__body st-dialog__body">
+                <form id="delete-truck-form" method="POST" action="">
+                    @csrf
+                    <p class="st-dialog__text">
+                        Are you sure you want to delete truck type <span id="deleteTruckName" class="st-font-semibold"></span>?
+                    </p>
+                    <div class="st-dialog__actions">
+                        <button id="confirmDeleteYes" type="submit" class="st-btn st-btn--danger st-dialog__btn">
+                            DELETE
+                        </button>
+                        <button id="confirmDeleteNo" type="button" class="st-btn st-btn--outline-primary st-dialog__btn">
+                            CANCEL
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
