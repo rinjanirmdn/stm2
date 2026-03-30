@@ -25,18 +25,28 @@ class LoginController extends Controller
 
         $login = trim((string) $credentials['login']);
         $password = $credentials['password'];
+        $loginLower = strtolower($login);
 
-        // Check for failed attempts
-        $attemptsKey = 'login_attempts_'.strtolower($login);
-        $attempts = Cache::get($attemptsKey, 0);
+        // Check if user is permanently locked in database
+        $userRecord = DB::table('md_users')
+            ->where(function ($q) use ($loginLower) {
+                $q->whereRaw('LOWER(username) = ?', [$loginLower])
+                    ->orWhereRaw('LOWER(nik) = ?', [$loginLower])
+                    ->orWhereRaw('LOWER(email) = ?', [$loginLower]);
+            })
+            ->select(['id', 'is_locked'])
+            ->first();
 
-        // Lock user after 3 failed attempts
-        if ($attempts >= 3) {
+        if ($userRecord && !empty($userRecord->is_locked)) {
             return redirect()
                 ->route('forgot-password')
                 ->with('error', 'Your account is locked due to too many failed login attempts. Please request a password reset to regain access.')
                 ->withInput(['login' => $login]);
         }
+
+        // Check cache-based attempt counter (for tracking attempts before lock)
+        $attemptsKey = 'login_attempts_'.$loginLower;
+        $attempts = Cache::get($attemptsKey, 0);
 
         $fields = filter_var($login, FILTER_VALIDATE_EMAIL)
             ? ['email', 'username', 'nik']
@@ -51,17 +61,23 @@ class LoginController extends Controller
         }
 
         if (! $authed) {
-            // Increment failed attempts
-            Cache::put($attemptsKey, $attempts + 1, now()->addMinutes(30)); // Lock for 30 minutes
+            // Increment failed attempts in cache
+            $newAttempts = $attempts + 1;
+            Cache::put($attemptsKey, $newAttempts, now()->addMinutes(30));
 
-            $remainingAttempts = 3 - ($attempts + 1);
+            $remainingAttempts = 3 - $newAttempts;
             $message = 'Invalid Email/NIK/username or password';
 
             if ($remainingAttempts > 0) {
                 $message .= ". {$remainingAttempts} attempts remaining.";
             } else {
-                // When the user just reached the lock threshold, redirect them straight
-                // to the password reset request form instead of showing the login form.
+                // Lock permanently in database
+                if ($userRecord) {
+                    DB::table('md_users')
+                        ->where('id', $userRecord->id)
+                        ->update(['is_locked' => true]);
+                }
+
                 return redirect()
                     ->route('forgot-password')
                     ->with('error', 'Your account has been locked after too many failed login attempts. Please request a password reset to regain access.')
