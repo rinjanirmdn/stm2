@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     var userFilterForm = document.getElementById('user-filter-form');
     if (!userFilterForm) return;
 
@@ -134,5 +134,43 @@
             globalSearch.value = params.get('q') || '';
         }
         ajaxReload(false);
+    });
+
+    // Delete user confirmation dialog
+    var deleteDialog = document.getElementById('deleteUserDialog');
+    var deleteForm = document.getElementById('delete-user-form');
+    var deleteNameEl = document.getElementById('deleteUserName');
+    var confirmDeleteNo = document.getElementById('confirmDeleteUserNo');
+
+    function showDeleteDialog(url, name) {
+        if (!deleteDialog || !deleteForm) return;
+        deleteForm.setAttribute('action', url);
+        if (deleteNameEl) deleteNameEl.textContent = name;
+        deleteDialog.classList.remove('st-hidden');
+        deleteDialog.style.display = 'flex';
+    }
+
+    function hideDeleteDialog() {
+        if (!deleteDialog) return;
+        deleteDialog.style.display = 'none';
+        deleteDialog.classList.add('st-hidden');
+    }
+
+    if (confirmDeleteNo) {
+        confirmDeleteNo.addEventListener('click', hideDeleteDialog);
+    }
+
+    if (deleteDialog) {
+        deleteDialog.addEventListener('click', function(e) {
+            if (e.target === deleteDialog) hideDeleteDialog();
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.btn-delete-user');
+        if (!btn) return;
+        var url = btn.getAttribute('data-delete-url');
+        var name = btn.getAttribute('data-user-name');
+        showDeleteDialog(url, name);
     });
 });
