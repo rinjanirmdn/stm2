@@ -60,7 +60,7 @@ class LoginController extends Controller
             }
         }
 
-        if (! $authed) {
+        if (!$authed) {
             // Increment failed attempts in cache
             $newAttempts = $attempts + 1;
             Cache::put($attemptsKey, $newAttempts, now()->addMinutes(30));
