@@ -81,8 +81,8 @@
                         id="vendor_search"
                         class="st-input{{ $errors->has('vendor_id') ? ' st-input--invalid' : '' }} st-input--mb-4"
                         placeholder="Choose Direction First..."
-                        value="{{ old('vendor_search') }}"
-                        {{ old('direction', $slot->direction ?? '') ? '' : 'disabled' }}
+                        value="{{ old('vendor_search', $slot->vendor_name ?? '') }}"
+                        disabled
                     >
                     <input type="hidden" name="vendor_id" id="vendor_id" value="{{ old('vendor_id', $slot->vendor_id ?? '') }}">
                     <div id="vendor_suggestions" class="st-suggestions st-hidden"></div>
@@ -101,7 +101,7 @@
                             <option
                                 value="{{ $gate->id }}"
                                 data-warehouse-id="{{ $gate->warehouse_id }}"
-                                {{ old('planned_gate_id', $slot->planned_gate_id ?? '') === (string) $gate->id ? 'selected' : '' }}
+                                {{ (string) old('planned_gate_id', $slot->planned_gate_id ?? '') == (string) $gate->id ? 'selected' : '' }}
                             >
                                 {{ $gateLabel }}
                             </option>

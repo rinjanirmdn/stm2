@@ -6,7 +6,7 @@
     <title>Forgot Password - e-Docking Control System</title>
     @vite(['resources/css/style.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="st-auth-bg" style="--st-auth-bg-url: url('{{ asset('img/bg_login.jpg') }}');">
     <div class="st-minh-screen st-flex st-items-center st-justify-center">
         <div class="st-card st-w-full st-maxw-420 st-p-18">
             <div class="st-flex st-justify-center st-items-center st-mb-15 st-minh-70">

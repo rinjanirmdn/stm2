@@ -48,6 +48,22 @@
         </div>
     </div>
 
+    @if (session('success'))
+        <div class="st-alert st-alert--success st-alert--autodismiss st-mb-12">
+            <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="st-alert__text">{{ session('success') }}</span>
+            <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="st-alert st-alert--error st-alert--autodismiss st-mb-12">
+            <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <span class="st-alert__text">{{ session('error') }}</span>
+            <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+        </div>
+    @endif
+
     <div class="st-card st-mb-12">
         <div class="st-p-12">
             <div class="st-form-row st-gap-4 st-align-end">
@@ -76,10 +92,10 @@
         </div>
     </div>
 
-    <section class="st-row st-flex-1">
-        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
-            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1">
-                <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1" autocomplete="off">
+    <section class="st-row st-flex-1 st-minh-0">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col st-minh-0">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1 st-minh-0">
+                <form method="GET" id="slot-filter-form" action="{{ route('slots.index') }}" data-multi-sort="1" autocomplete="off" class="st-flex st-flex-col st-flex-1 st-minh-0">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
                     $dirsArr = isset($dirs) && is_array($dirs) ? $dirs : [];
@@ -89,7 +105,7 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper st-table-wrapper--minh-400">
+                <div class="st-table-wrapper st-table-wrapper--minh-400 st-flex-1 st-maxh-none st-minh-0">
                     <table class="st-table">
                         <thead>
                             <tr>

@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     // Tooltips handled globally in resources/js/pages/main.js (st-global-tooltip)
     function readJsonScript(id, fallback) {
         var el = document.getElementById(id);
@@ -173,6 +173,7 @@
         const form = document.getElementById('cancel-booking-form');
 
         if (dialog) {
+            dialog.classList.remove('st-hidden');
             dialog.style.display = 'flex';
             if (slotNumberElement && slotNumber) {
                 currentSlotNumber = slotNumber;
@@ -193,6 +194,7 @@
         const dialog = document.getElementById('customConfirmDialog');
         if (dialog) {
             dialog.style.display = 'none';
+            dialog.classList.add('st-hidden');
         }
         pendingCancelUrl = null;
     }
