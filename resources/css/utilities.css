@@ -1,4 +1,4 @@
-/* Auto-generated from style.css split — section: utilities */
+﻿/* Auto-generated from style.css split â€” section: utilities */
 
 .st-mb-12 {
     margin-bottom: 12px;
@@ -629,7 +629,7 @@
     background-color: var(--outbound);
 }
 
-/* ── Auth page background ── */
+/* â”€â”€ Auth page background â”€â”€ */
 .st-auth-bg {
     min-height: 100vh;
     margin: 0;
@@ -637,7 +637,7 @@
         var(--st-auth-bg-url) center center / cover no-repeat fixed;
 }
 
-/* ── Password input wrapper with toggle ── */
+/* â”€â”€ Password input wrapper with toggle â”€â”€ */
 .st-password-wrap {
     position: relative;
 }
@@ -660,12 +660,12 @@
     padding: 0;
 }
 
-/* ── Card with primary left border accent ── */
+/* â”€â”€ Card with primary left border accent â”€â”€ */
 .st-card--primary-accent {
     border-left-color: var(--primary);
 }
 
-/* ── Date range picker trigger ── */
+/* â”€â”€ Date range picker trigger â”€â”€ */
 .st-daterange-trigger {
     background: #fff;
     cursor: pointer;
@@ -674,12 +674,12 @@
     width: 100%;
 }
 
-/* ── Hidden form (no visual) ── */
+/* â”€â”€ Hidden form (no visual) â”€â”€ */
 .st-form--hidden {
     display: none;
 }
 
-/* ── Dashboard React loading state ── */
+/* â”€â”€ Dashboard React loading state â”€â”€ */
 .st-dashboard-wrap {
     width: 100%;
     padding: 0 4px;
@@ -724,7 +724,7 @@
     font-size: 11px;
 }
 
-/* ── Gate card vendor line clamp ── */
+/* â”€â”€ Gate card vendor line clamp â”€â”€ */
 .st-dock-card__vendor--clamp {
     white-space: normal;
     overflow: visible;
@@ -738,9 +738,10 @@
 .st-line-clamp-3 { -webkit-line-clamp: 3; line-clamp: 3; }
 .st-line-clamp-10 { -webkit-line-clamp: 10; line-clamp: 10; }
 
-/* ── Logout link (text-only button) ── */
+/* â”€â”€ Logout link (text-only button) â”€â”€ */
 .st-link-btn {
     background: none;
     border: none;
     cursor: pointer;
 }
+.st-minh-0 { min-height: 0; }

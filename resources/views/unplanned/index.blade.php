@@ -24,7 +24,7 @@
                     <label class="st-label">Show</label>
                     <select name="page_size" form="unplanned-filter-form" class="st-select">
                         @foreach (['10','25','50','100','all'] as $ps)
-                            <option value="{{ $ps }}" {{ request('page_size', '50') === $ps ? 'selected' : '' }}>{{ strtoupper($ps) }}</option>
+                            <option value="{{ $ps }}" {{ request('page_size', '10') === $ps ? 'selected' : '' }}>{{ strtoupper($ps) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -38,10 +38,10 @@
         </div>
     </div>
 
-    <section class="st-row st-flex-1">
-        <div class="st-col-12 st-flex-1 st-flex st-flex-col">
-            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1">
-                <form method="GET" id="unplanned-filter-form" data-multi-sort="1" action="{{ route('unplanned.index') }}">
+    <section class="st-row st-flex-1 st-minh-0">
+        <div class="st-col-12 st-flex-1 st-flex st-flex-col st-minh-0">
+            <div class="st-card st-mb-0 st-flex st-flex-col st-flex-1 st-minh-0">
+                <form method="GET" id="unplanned-filter-form" data-multi-sort="1" action="{{ route('unplanned.index') }}" class="st-flex st-flex-col st-flex-1 st-minh-0">
                 @php
                     $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
                     $dirsArr = isset($dirs) && is_array($dirs) ? $dirs : [];
@@ -51,7 +51,7 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
-                <div class="st-table-wrapper st-table-wrapper--minh-400">
+                <div class="st-table-wrapper st-table-wrapper--minh-400 st-flex-1 st-maxh-none st-minh-0">
                     <table class="st-table">
                         <thead>
                             <tr>

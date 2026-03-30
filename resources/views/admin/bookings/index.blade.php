@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Booking Requests')
 @section('page_title', 'Booking Requests')
@@ -15,29 +15,38 @@
                 <div class="st-form-field st-flex-1">
                     <label class="st-label st-text-12">Booking Summary</label>
                     <div class="st-flex st-flex-wrap st-gap-10 st-w-full st-booking-summary-pills">
-                        <div class="st-booking-summary-pill st-booking-summary-pill--pending">
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'pending', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--pending {{ $status === 'pending' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">Pending</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['pending'] ?? 0 }}</span>
-                        </div>
-                        <div class="st-booking-summary-pill st-booking-summary-pill--approved">
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'approved', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--approved {{ $status === 'approved' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">Approved</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['approved'] ?? 0 }}</span>
-                        </div>
-                        <div class="st-booking-summary-pill st-booking-summary-pill--cancelled">
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'cancelled', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--cancelled {{ $status === 'cancelled' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">Cancelled</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['cancelled'] ?? 0 }}</span>
-                        </div>
-                        <div class="st-booking-summary-pill st-booking-summary-pill--rejected">
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'rejected', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--rejected {{ $status === 'rejected' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">Rejected</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['rejected'] ?? 0 }}</span>
-                        </div>
-                        <div class="st-booking-summary-pill st-booking-summary-pill--all">
+                        </a>
+                        <a href="{{ request()->fullUrlWithQuery(['status' => 'all', 'page' => null]) }}" class="st-booking-summary-pill st-booking-summary-pill--all {{ $status === 'all' ? 'st-booking-summary-pill--active' : '' }}">
                             <span class="st-booking-summary-pill__label">All</span>
                             <span class="st-booking-summary-pill__value">{{ $counts['all'] ?? 0 }}</span>
-                        </div>
+                        </a>
                     </div>
                 </div>
                 <div class="st-flex st-flex-wrap st-gap-8 st-items-end st-booking-header-controls">
+                    <div class="st-form-field st-maxw-120">
+                        <label class="st-label st-text-12">Show</label>
+                        <select name="page_size" form="booking-filter-form" class="st-select st-text-12 st-py-2">
+                            @php $pageSize = request('page_size', '10'); @endphp
+                            @foreach (['10','20','50','100','all'] as $ps)
+                                <option value="{{ $ps }}" {{ $pageSize === $ps ? 'selected' : '' }}>{{ strtoupper($ps) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="st-form-field st-maxw-220">
                         <label class="st-label st-text-12">Search</label>
                         <input type="text" name="search" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Request No, PO..." value="{{ request('search') }}">
@@ -61,7 +70,7 @@
     <section class="st-row st-flex-1">
         <div class="st-col-12 st-flex-1 st-flex st-flex-col">
             <div class="st-card st-mb-0 st-flex st-flex-col st-relative st-flex-1">
-                <form method="GET" id="booking-filter-form" data-multi-sort="1" action="{{ route('bookings.index') }}">
+                <form method="GET" id="booking-filter-form" data-multi-sort="1" action="{{ route('bookings.index') }}" class="st-flex st-flex-col st-flex-1">
                     <input type="hidden" name="status" value="{{ $status }}">
                     @php
                         $sortsArr = isset($sorts) && is_array($sorts) ? $sorts : [];
@@ -73,7 +82,7 @@
                         <input type="hidden" name="sort[]" value="{{ $s }}">
                         <input type="hidden" name="dir[]" value="{{ $d }}">
                     @endforeach
-                    <div class="st-table-wrapper st-table-wrapper--minh-400">
+                    <div class="st-table-wrapper st-table-wrapper--minh-400 st-flex-1 st-maxh-none">
                         <table class="st-table">
                             <thead>
                                 <tr>
@@ -338,11 +347,6 @@
                                 @endif
                             </tbody>
                         </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="st-pagination">
-                        {{ $bookings->withQueryString()->links() }}
                     </div>
                 </form>
             </div>
