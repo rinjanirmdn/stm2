@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
+use App\Models\Permission;
+use App\Models\User;
 use App\Services\UserRoleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
 {
@@ -269,6 +272,102 @@ class UserController extends Controller
     {
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
+        $permissionsTable = (string) (config('permission.table_names.permissions') ?? 'permissions');
+        $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
+        $modelHasPermissionsTable = (string) (config('permission.table_names.model_has_permissions') ?? 'model_has_permissions');
+
+        $userModel = User::query()->find($userId);
+        if (! $userModel) {
+            return redirect()->route('users.index')->with('error', 'User not found');
+        }
+
+        $currentUser = $request->user();
+        $canManagePermissions = $currentUser && $currentUser->hasRole('Admin');
+
+        $allPermissions = [];
+        if ($canManagePermissions) {
+            $curated = [
+                'dashboard.view',
+                'dashboard.range_filter',
+
+                'slots.index',
+                'slots.create',
+                'slots.store',
+                'slots.show',
+                'slots.edit',
+                'slots.update',
+                'slots.delete',
+                'slots.arrival',
+                'slots.arrival.store',
+                'slots.start',
+                'slots.start.store',
+                'slots.complete',
+                'slots.complete.store',
+                'slots.cancel',
+                'slots.cancel.store',
+
+                'gates.index',
+                'gates.toggle',
+                'gates.availability',
+
+                'bookings.index',
+                'bookings.show',
+                'bookings.approve',
+                'bookings.reject',
+                'bookings.reschedule',
+
+                'unplanned.index',
+                'unplanned.create',
+                'unplanned.store',
+                'unplanned.edit',
+                'unplanned.update',
+                'unplanned.delete',
+                'unplanned.show',
+                'unplanned.start',
+                'unplanned.start.store',
+                'unplanned.complete',
+                'unplanned.complete.store',
+
+                'reports.transactions',
+                'reports.export',
+
+                'trucks.index',
+                'trucks.create',
+                'trucks.store',
+                'trucks.edit',
+                'trucks.update',
+                'trucks.delete',
+
+                'users.index',
+                'users.create',
+                'users.store',
+                'users.edit',
+                'users.update',
+                'users.delete',
+                'users.toggle',
+
+                'logs.index',
+                'logs.filter',
+
+                'vendor.dashboard',
+                'vendor.bookings.index',
+                'vendor.bookings.create',
+                'vendor.bookings.store',
+                'vendor.bookings.show',
+                'vendor.bookings.cancel',
+                'vendor.bookings.ticket',
+                'vendor.availability',
+            ];
+
+            $allPermissions = Permission::query()
+                ->whereIn('perm_name', $curated)
+                ->orderBy('perm_name')
+                ->pluck('perm_name')
+                ->map(fn ($v) => (string) $v)
+                ->values()
+                ->all();
+        }
+
         $user = DB::table('md_users')
             ->leftJoin($modelHasRolesTable.' as mhr', function ($join) {
                 $join
@@ -296,8 +395,35 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'User not found');
         }
 
+        $rolePermissions = [];
+        $directPermissions = [];
+        if ($canManagePermissions) {
+            if (! empty($user->role_id)) {
+                $rolePermissions = DB::table($roleHasPermissionsTable.' as rhp')
+                    ->join($permissionsTable.' as p', 'rhp.permission_id', '=', 'p.id')
+                    ->where('rhp.role_id', (int) $user->role_id)
+                    ->orderBy('p.perm_name')
+                    ->pluck('p.perm_name')
+                    ->map(fn ($v) => (string) $v)
+                    ->all();
+            }
+
+            $directPermissions = DB::table($modelHasPermissionsTable.' as mhp')
+                ->join($permissionsTable.' as p', 'mhp.permission_id', '=', 'p.id')
+                ->where('mhp.model_type', 'App\\Models\\User')
+                ->where('mhp.model_id', (int) $userId)
+                ->orderBy('p.perm_name')
+                ->pluck('p.perm_name')
+                ->map(fn ($v) => (string) $v)
+                ->all();
+        }
+
         return view('users.edit', [
             'editUser' => $user,
+            'allPermissions' => $allPermissions,
+            'rolePermissions' => $rolePermissions,
+            'directPermissions' => $directPermissions,
+            'canManagePermissions' => $canManagePermissions,
         ]);
     }
 
@@ -305,6 +431,7 @@ class UserController extends Controller
     {
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
+        $permissionsTable = (string) (config('permission.table_names.permissions') ?? 'permissions');
 
         $user = DB::table('md_users')
             ->where('id', $userId)
@@ -312,6 +439,11 @@ class UserController extends Controller
             ->first();
 
         if (! $user) {
+            return redirect()->route('users.index')->with('error', 'User not found');
+        }
+
+        $userModel = User::query()->find($userId);
+        if (! $userModel) {
             return redirect()->route('users.index')->with('error', 'User not found');
         }
 
@@ -402,6 +534,41 @@ class UserController extends Controller
         if ($newRoleId) {
             $this->roleService->removeRole($userId);
             $this->roleService->assignRole($userId, (string) $roleRecord->roles_name);
+        }
+
+        $actor = $request->user();
+        $canManagePermissions = $actor && $actor->hasRole('Admin');
+
+        if ($canManagePermissions && (int) $currentUserId !== (int) $userId) {
+            $permissionsInput = $request->input('permissions', []);
+            $permissions = is_array($permissionsInput) ? array_values(array_filter(array_map(fn ($v) => trim((string) $v), $permissionsInput), fn ($v) => $v !== '')) : [];
+
+            if (count($permissions) > 0) {
+                $validNames = DB::table($permissionsTable)
+                    ->whereIn('perm_name', $permissions)
+                    ->pluck('perm_name')
+                    ->map(fn ($v) => (string) $v)
+                    ->all();
+                $permissions = $validNames;
+            }
+
+            if ($newRoleId && count($permissions) > 0) {
+                $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
+
+                $rolePermissionNames = DB::table($roleHasPermissionsTable.' as rhp')
+                    ->join($permissionsTable.' as p', 'rhp.permission_id', '=', 'p.id')
+                    ->where('rhp.role_id', (int) $newRoleId)
+                    ->pluck('p.perm_name')
+                    ->map(fn ($v) => (string) $v)
+                    ->all();
+
+                if (count($rolePermissionNames) > 0) {
+                    $permissions = array_values(array_diff($permissions, $rolePermissionNames));
+                }
+            }
+
+            $userModel->syncPermissions($permissions);
+            app(PermissionRegistrar::class)->forgetCachedPermissions();
         }
 
         // Notify user via email when password is changed by admin

@@ -163,9 +163,105 @@ class RolePermissionSeeder extends Seeder
             // no-op
         }
 
-        // Create admin role with all permissions
+        $coreInternal = [
+            'dashboard.view',
+            'dashboard.range_filter',
+
+            'slots.index',
+            'slots.create',
+            'slots.store',
+            'slots.show',
+            'slots.edit',
+            'slots.update',
+            'slots.delete',
+            'slots.arrival',
+            'slots.arrival.store',
+            'slots.start',
+            'slots.start.store',
+            'slots.complete',
+            'slots.complete.store',
+            'slots.cancel',
+            'slots.cancel.store',
+            'slots.ticket',
+
+            'gates.index',
+            'gates.toggle',
+            'gates.availability',
+
+            'bookings.index',
+            'bookings.show',
+            'bookings.approve',
+            'bookings.reject',
+            'bookings.reschedule',
+
+            'unplanned.index',
+            'unplanned.create',
+            'unplanned.store',
+            'unplanned.edit',
+            'unplanned.update',
+            'unplanned.delete',
+            'unplanned.show',
+            'unplanned.start',
+            'unplanned.start.store',
+            'unplanned.complete',
+            'unplanned.complete.store',
+
+            'reports.transactions',
+            'reports.export',
+
+            'trucks.index',
+            'trucks.create',
+            'trucks.store',
+            'trucks.edit',
+            'trucks.update',
+            'trucks.delete',
+
+            'users.index',
+            'users.create',
+            'users.store',
+            'users.edit',
+            'users.update',
+            'users.delete',
+            'users.toggle',
+
+            'logs.index',
+            'logs.filter',
+
+            'profile.index',
+            'profile.change_password',
+        ];
+
+        $techInternal = [
+            'slots.search_suggestions',
+            'slots.ajax.po_search',
+            'slots.ajax.po_detail',
+            'slots.ajax.check_risk',
+            'slots.ajax.check_slot_time',
+            'slots.ajax.recommend_gate',
+            'slots.ajax.schedule_preview',
+
+            'bookings.ajax.calendar',
+            'bookings.ajax.pending_count',
+            'bookings.ajax.reminders',
+            'bookings.ajax.check_gate',
+
+            'gates.stream',
+            'gates.api_index',
+            'gates.ajax.available_slots',
+            'gates.ajax.disabled_times',
+
+            'reports.search_suggestions',
+
+            'notifications.index',
+            'notifications.markAsRead',
+            'notifications.readAll',
+            'notifications.clearAll',
+            'notifications.latest',
+        ];
+
+        // Admin == Super Administrator/IT (full internal operations + user management)
         $adminRole = Role::findOrCreate('Admin');
-        $adminRole->syncPermissions(Permission::all());
+        $adminRole->syncPermissions(array_values(array_unique(array_merge($coreInternal, $techInternal))));
 
         // Create vendor role based on master role name
         $vendorRole = Role::findOrCreate('Vendor');
@@ -192,45 +288,37 @@ class RolePermissionSeeder extends Seeder
             'notifications.latest',
         ]);
 
-        // Display Account: dashboard menu only + profile
+        // Display Account: dashboard view only
         $displayAccountRole = Role::findOrCreate('Display Account');
         $displayAccountRole->syncPermissions([
             'dashboard.view',
-            'profile.index',
         ]);
 
-        // Create section_head role with permissions as needed
+        // Section Head: same as Admin but without user management
         $sectionHeadRole = Role::findOrCreate('Section Head');
-        $sectionHeadPermissions = array_values(array_filter($permissions, function ($perm) {
-            if (str_starts_with($perm, 'users.')) {
-                return false;
-            }
-
-            return true;
+        $sectionHeadPermissions = array_values(array_filter(array_merge($coreInternal, $techInternal), function ($perm) {
+            return ! str_starts_with($perm, 'users.');
         }));
         $sectionHeadRole->syncPermissions($sectionHeadPermissions);
 
         // Optional mappings for existing master roles
-        // Security (satpam): only ticket scanning flow at truck arrival
+        // Security: verify tickets and record arrival only
         $securityRole = Role::findOrCreate('Security');
         $securityRole->syncPermissions([
-            'profile.index',
             'slots.index',
             'slots.show',
             'slots.arrival',
             'slots.arrival.store',
             'gates.index',
-            'gates.api_index',
+            'profile.index',
             'gates.stream',
-            'gates.ajax.available_slots',
-            'gates.ajax.disabled_times',
+            'gates.api_index',
         ]);
 
-        // Create operator role with limited permissions (only arrival, start, complete)
+        // Operator: execute gate operations (arrival/start/complete) + view schedule and reporting
         $operatorRole = Role::findOrCreate('Operator');
         $operatorRole->syncPermissions([
             'dashboard.view',
-            'dashboard.range_filter',
             'slots.index',
             'slots.show',
             'slots.arrival',
@@ -239,13 +327,7 @@ class RolePermissionSeeder extends Seeder
             'slots.start.store',
             'slots.complete',
             'slots.complete.store',
-            'slots.search_suggestions',
-            'slots.ajax.po_search',
-            'slots.ajax.po_detail',
-            'slots.ajax.check_risk',
-            'slots.ajax.check_slot_time',
-            'slots.ajax.recommend_gate',
-            'slots.ajax.schedule_preview',
+            'gates.index',
             'unplanned.index',
             'unplanned.show',
             'unplanned.start',
@@ -253,19 +335,32 @@ class RolePermissionSeeder extends Seeder
             'unplanned.complete',
             'unplanned.complete.store',
             'reports.transactions',
-            'reports.search_suggestions',
             'trucks.index',
-            'gates.index',
             'logs.index',
             'logs.filter',
             'profile.index',
-            'checkin.show',
-            'checkin.store',
+            'slots.search_suggestions',
+            'slots.ajax.po_search',
+            'slots.ajax.po_detail',
+            'slots.ajax.check_risk',
+            'slots.ajax.check_slot_time',
+            'slots.ajax.recommend_gate',
+            'slots.ajax.schedule_preview',
+            'gates.stream',
+            'gates.api_index',
+            'gates.ajax.available_slots',
+            'gates.ajax.disabled_times',
+            'reports.search_suggestions',
+            'notifications.index',
+            'notifications.markAsRead',
+            'notifications.readAll',
+            'notifications.clearAll',
+            'notifications.latest',
         ]);
 
-        // Super Account: all permissions except users.*
+        // Super Account: Admin-equivalent but cannot manage user accounts
         $superAccountRole = Role::findOrCreate('Super Account');
-        $superAccountPermissions = array_values(array_filter($permissions, function ($perm) {
+        $superAccountPermissions = array_values(array_filter(array_merge($coreInternal, $techInternal), function ($perm) {
             return ! str_starts_with($perm, 'users.');
         }));
         $superAccountRole->syncPermissions($superAccountPermissions);

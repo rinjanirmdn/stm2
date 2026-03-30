@@ -5,8 +5,8 @@
 
 @section('content')
     <section class="st-row">
-        <div class="st-col-12">
-            <div class="st-card st-card--narrow">
+        <div class="st-col-6 st-flex st-flex-col">
+            <div class="st-card st-card--narrow st-flex st-flex-col st-flex-1">
                 <div class="st-card-header-row">
                     <div>
                         <h2 class="st-card__title st-card-title-tight">Edit User</h2>
@@ -30,7 +30,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('users.update', ['userId' => $editUser->id, 'from_reset_email' => $fromResetEmail ? 1 : null]) }}" class="st-form-block">
+                <form id="user_edit_form" method="POST" action="{{ route('users.update', ['userId' => $editUser->id, 'from_reset_email' => $fromResetEmail ? 1 : null]) }}" class="st-form-block">
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
@@ -95,6 +95,78 @@
                         <a href="{{ route('users.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <div class="st-col-6 st-flex st-flex-col">
+            <div class="st-card st-card--narrow st-flex st-flex-col st-flex-1">
+                <div class="st-card-header-row">
+                    <div>
+                        <h2 class="st-card__title st-card-title-tight">Permission Settings</h2>
+                    </div>
+                </div>
+
+                @if (!empty($canManagePermissions))
+                    @php
+                        $all = isset($allPermissions) && is_array($allPermissions) ? $allPermissions : [];
+                        $rolePerms = isset($rolePermissions) && is_array($rolePermissions) ? $rolePermissions : [];
+                        $directPerms = isset($directPermissions) && is_array($directPermissions) ? $directPermissions : [];
+                        $oldPerms = old('permissions');
+                        $selectedDirect = is_array($oldPerms) ? array_values(array_filter(array_map('strval', $oldPerms))) : $directPerms;
+
+                        $grouped = [];
+                        foreach ($all as $p) {
+                            $p = (string) $p;
+                            $group = 'other';
+                            if (str_contains($p, '.')) {
+                                $group = explode('.', $p, 2)[0] ?: 'other';
+                            }
+                            if (!isset($grouped[$group])) $grouped[$group] = [];
+                            $grouped[$group][] = $p;
+                        }
+                        ksort($grouped);
+                    @endphp
+
+                    <div class="st-form-block st-flex st-flex-col st-flex-1">
+                        <div class="st-text--sm st-text--muted st-mb-12">
+                            Permissions can be adjusted here. Note: if a permission is granted by the user's role, removing it here may not remove access unless the role is adjusted.
+                        </div>
+
+                        <div class="st-flex-1" style="overflow-y: auto; max-height: 620px; padding-right: 6px;">
+                            @foreach ($grouped as $group => $perms)
+                                <div class="st-mb-12">
+                                    <div class="st-font-semibold st-mb-6">{{ ucwords(str_replace('_', ' ', (string) $group)) }}</div>
+
+                                    <div class="st-flex st-flex-col st-gap-6">
+                                        @foreach ($perms as $perm)
+                                            @php
+                                                $inRole = in_array($perm, $rolePerms, true);
+                                                $inDirect = in_array($perm, $selectedDirect, true);
+                                                $checked = $inRole || $inDirect;
+                                            @endphp
+                                            <label class="st-flex st-align-center st-gap-8">
+                                                <input
+                                                    type="checkbox"
+                                                    name="permissions[]"
+                                                    value="{{ $perm }}"
+                                                    form="user_edit_form"
+                                                    {{ $checked ? 'checked' : '' }}
+                                                >
+                                                <span class="st-text--sm">{{ $perm }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @else
+                    <div class="st-form-block">
+                        <div class="st-text--sm st-text--muted">
+                            Only <strong>Admin</strong> can view and manage permissions.
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </section>
