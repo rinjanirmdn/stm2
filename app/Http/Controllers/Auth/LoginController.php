@@ -37,7 +37,7 @@ class LoginController extends Controller
             ->select(['id', 'is_locked'])
             ->first();
 
-        if ($userRecord && !empty($userRecord->is_locked)) {
+        if ($userRecord && ! empty($userRecord->is_locked)) {
             return redirect()
                 ->route('forgot-password')
                 ->with('error', 'Your account is locked due to too many failed login attempts. Please request a password reset to regain access.')
