@@ -71,6 +71,15 @@ class UserUpdateRequest extends FormRequest
                 'max:20',
                 Rule::requiredIf(fn () => (string) $this->input('role') === 'vendor'),
             ],
+            'permissions' => [
+                'nullable',
+                'array',
+            ],
+            'permissions.*' => [
+                'string',
+                'max:255',
+                'exists:md_permissions,perm_name',
+            ],
         ];
     }
 
