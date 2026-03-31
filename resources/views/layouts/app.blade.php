@@ -83,6 +83,13 @@
             </a>
             @endcan
 
+            @can('security.dashboard')
+            <a href="{{ route('security.dashboard') }}" title="Security Dashboard" class="st-sidebar__link{{ request()->routeIs('security.dashboard') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-shield-halved"></i>
+                <span>Security</span>
+            </a>
+            @endcan
+
             @can('slots.index')
             <a href="{{ route('slots.index') }}" title="Planned" class="st-sidebar__link{{ request()->routeIs('slots.index') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-calendar-days"></i>

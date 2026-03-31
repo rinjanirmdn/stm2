@@ -1,14 +1,23 @@
 <?php
 
-/* Admin Routes — Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API */
+/* Admin Routes — Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API, Security Dashboard */
 
 use App\Http\Controllers\BookingApprovalController;
 use App\Http\Controllers\GateStatusController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SapController;
+use App\Http\Controllers\SecurityDashboardController;
 use App\Http\Controllers\TruckTypeDurationController;
 use App\Http\Controllers\UserController;
+
+// Security Dashboard
+Route::prefix('security')->name('security.')->group(function () {
+    Route::get('/dashboard', [SecurityDashboardController::class, 'index'])->name('dashboard')->middleware('permission:security.dashboard');
+    Route::post('/scan-ticket', [SecurityDashboardController::class, 'scanTicket'])->name('scan')->middleware(['permission:security.scan', 'throttle:30,1']);
+    Route::post('/confirm-arrival/{slotId}', [SecurityDashboardController::class, 'confirmArrival'])->name('confirm_arrival')->middleware('permission:security.confirm_arrival');
+    Route::get('/ajax/today-slots', [SecurityDashboardController::class, 'ajaxTodaySlots'])->name('ajax.today_slots')->middleware(['permission:security.dashboard', 'throttle:60,1']);
+});
 
 // Reports
 Route::prefix('reports')->name('reports.')->group(function () {
