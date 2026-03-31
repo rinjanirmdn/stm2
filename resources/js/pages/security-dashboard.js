@@ -137,9 +137,11 @@
             html += '<span class="sec-slot__badge">' + emoji + ' ' + esc(label) + '</span></div>';
             html += '<div class="sec-slot__vendor">' + esc(s.vendor_name) + '</div>';
             html += '<div class="sec-slot__meta">';
-            html += '<span><i class="fas fa-file-invoice"></i> ' + esc(s.po_number) + '</span>';
+            html += '<span><i class="fas fa-file-invoice"></i> ' + esc(!s.po_number || s.po_number === '-' ? 'Tanpa PO' : s.po_number) + '</span>';
             html += '<span><i class="fas fa-door-open"></i> ' + esc(s.gate) + '</span>';
-            html += '<span><i class="fas fa-truck"></i> ' + esc(s.vehicle_number) + '</span>';
+            if (s.vehicle_number && s.vehicle_number !== '-') {
+                html += '<span><i class="fas fa-truck"></i> ' + esc(s.vehicle_number) + '</span>';
+            }
             html += '<span class="sec-slot__dir ' + dirCls + '">' + esc(s.direction || '') + '</span>';
             html += '</div></div>';
 

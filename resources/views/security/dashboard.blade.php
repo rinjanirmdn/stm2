@@ -122,9 +122,11 @@
                     </div>
                     <div class="sec-slot__vendor">{{ $slot->vendor_name ?? '-' }}</div>
                     <div class="sec-slot__meta">
-                        <span><i class="fas fa-file-invoice"></i> {{ $slot->po_number ?? '-' }}</span>
+                        <span><i class="fas fa-file-invoice"></i> {{ !empty($slot->po_number) && $slot->po_number !== '-' ? $slot->po_number : 'Tanpa PO' }}</span>
                         <span><i class="fas fa-door-open"></i> {{ $gateDisplay }}</span>
-                        <span><i class="fas fa-truck"></i> {{ $slot->vehicle_number_snap ?? '-' }}</span>
+                        @if(!empty($slot->vehicle_number_snap) && $slot->vehicle_number_snap !== '-')
+                            <span><i class="fas fa-truck"></i> {{ $slot->vehicle_number_snap }}</span>
+                        @endif
                         <span class="sec-slot__dir sec-slot__dir--{{ strtolower($slot->direction ?? '') }}">{{ strtoupper($slot->direction ?? '') }}</span>
                     </div>
                     @if ($isLate)
@@ -144,8 +146,6 @@
                 <p>Tidak ada jadwal untuk tanggal ini</p>
             </div>
         @endforelse
-    </div>
-
     </div>
 
     {{-- ─── Camera Scanner Modal ─── --}}
