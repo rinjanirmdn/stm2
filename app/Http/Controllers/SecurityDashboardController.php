@@ -11,49 +11,50 @@ class SecurityDashboardController extends Controller
     /**
      * Security Dashboard — landing page with scan box + today's schedule.
      */
-    public function index()
+    public function index(Request $request)
     {
         $today = date('Y-m-d');
+        $selectedDate = $request->query('date', $today);
+
+        // Validate date format
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $selectedDate)) {
+            $selectedDate = $today;
+        }
+
         $now = now();
         $currentHour = (int) $now->format('H');
 
         // Determine current shift
         if ($currentHour >= 7 && $currentHour < 15) {
             $shiftLabel = 'Shift 1 (07:00 - 15:00)';
-            $shiftStart = '07:00:00';
-            $shiftEnd = '15:00:00';
         } elseif ($currentHour >= 15 && $currentHour < 23) {
             $shiftLabel = 'Shift 2 (15:00 - 23:00)';
-            $shiftStart = '15:00:00';
-            $shiftEnd = '23:00:00';
         } else {
             $shiftLabel = 'Shift 3 (23:00 - 07:00)';
-            $shiftStart = '23:00:00';
-            $shiftEnd = '07:00:00';
         }
 
-        // Today's summary counts
-        $todaySlots = DB::table('slots')
-            ->whereDate('planned_start', $today)
+        // Summary counts for selected date
+        $dateSlots = DB::table('slots')
+            ->whereDate('planned_start', $selectedDate)
             ->where('slot_type', 'planned')
             ->select('status', DB::raw('COUNT(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status');
 
         $summary = [
-            'total' => $todaySlots->sum(),
-            'scheduled' => (int) ($todaySlots['scheduled'] ?? 0),
-            'waiting' => (int) ($todaySlots['waiting'] ?? 0),
-            'in_progress' => (int) ($todaySlots['in_progress'] ?? 0),
-            'completed' => (int) ($todaySlots['completed'] ?? 0),
+            'total' => $dateSlots->sum(),
+            'scheduled' => (int) ($dateSlots['scheduled'] ?? 0),
+            'waiting' => (int) ($dateSlots['waiting'] ?? 0),
+            'in_progress' => (int) ($dateSlots['in_progress'] ?? 0),
+            'completed' => (int) ($dateSlots['completed'] ?? 0),
         ];
 
-        // Today's schedule (shift-relevant, ordered by ETA)
-        $scheduleQuery = DB::table('slots as s')
+        // Schedule for selected date
+        $schedule = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
             ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
-            ->whereDate('s.planned_start', $today)
+            ->whereDate('s.planned_start', $selectedDate)
             ->where('s.slot_type', 'planned')
             ->whereIn('s.status', ['scheduled', 'waiting', 'in_progress', 'completed'])
             ->orderBy('s.planned_start')
@@ -73,15 +74,15 @@ class SecurityDashboardController extends Controller
                 'w.wh_code as warehouse_code',
                 'pg.gate_number as planned_gate_number',
                 'wpg.wh_code as planned_gate_warehouse_code',
-            ]);
-
-        $schedule = $scheduleQuery->get();
+            ])
+            ->get();
 
         return view('security.dashboard', [
             'summary' => $summary,
             'schedule' => $schedule,
             'shiftLabel' => $shiftLabel,
             'today' => $today,
+            'selectedDate' => $selectedDate,
         ]);
     }
 
@@ -260,15 +261,19 @@ class SecurityDashboardController extends Controller
     /**
      * AJAX: Get today's slots for auto-refresh.
      */
-    public function ajaxTodaySlots()
+    public function ajaxTodaySlots(Request $request)
     {
         $today = date('Y-m-d');
+        $selectedDate = $request->query('date', $today);
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $selectedDate)) {
+            $selectedDate = $today;
+        }
 
         $slots = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
             ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
-            ->whereDate('s.planned_start', $today)
+            ->whereDate('s.planned_start', $selectedDate)
             ->where('s.slot_type', 'planned')
             ->whereIn('s.status', ['scheduled', 'waiting', 'in_progress', 'completed'])
             ->orderBy('s.planned_start')
