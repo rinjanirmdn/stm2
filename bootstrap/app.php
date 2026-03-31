@@ -18,10 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [
             \App\Http\Middleware\DynamicBaseUrlMiddleware::class,
-            \App\Http\Middleware\TouchRealtimeVersion::class,
         ]);
 
         $middleware->web(append: [
+            \App\Http\Middleware\TouchRealtimeVersion::class,
             \Illuminate\Session\Middleware\AuthenticateSession::class,
             \App\Http\Middleware\ActivityLogMiddleware::class,
             \App\Http\Middleware\EnsurePasswordIsChanged::class,

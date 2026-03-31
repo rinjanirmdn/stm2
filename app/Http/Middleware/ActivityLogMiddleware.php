@@ -312,22 +312,6 @@ class ActivityLogMiddleware
                 $insert['po_number'] = $getString($payload, 'po_number') ?: null;
             }
 
-            if (($has('mat_doc') || $has('po_number')) && $slotId !== null && ($insert['mat_doc'] ?? null) === null && ($insert['po_number'] ?? null) === null) {
-                try {
-                    $slotRow = DB::table('slots')->where('id', $slotId)->select(['mat_doc', 'po_number'])->first();
-                    if ($slotRow) {
-                        if ($has('mat_doc') && ($insert['mat_doc'] ?? null) === null) {
-                            $insert['mat_doc'] = $slotRow->mat_doc ?? null;
-                        }
-                        if ($has('po_number') && ($insert['po_number'] ?? null) === null) {
-                            $insert['po_number'] = $slotRow->po_number ?? null;
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    // no-op
-                }
-            }
-
             if ($has('old_value')) {
                 $insert['old_value'] = null;
             }
@@ -344,9 +328,18 @@ class ActivityLogMiddleware
                 $insert['updated_at'] = now();
             }
 
-            // Insert only if minimum fields exist
+            // Dispatch to queue for async insert (removes ~10-30ms latency per request)
             if (! empty($insert) && isset($insert['description'])) {
-                DB::table('activity_logs')->insert($insert);
+                try {
+                    \App\Jobs\LogActivityJob::dispatch($insert, $slotId);
+                } catch (\Throwable $e) {
+                    // Fallback: sync insert if queue dispatch fails
+                    try {
+                        DB::table('activity_logs')->insert($insert);
+                    } catch (\Throwable $e2) {
+                        // swallow
+                    }
+                }
             }
         } catch (\Throwable $e) {
             // swallow - logging must never break user flow
