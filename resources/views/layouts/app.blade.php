@@ -169,8 +169,8 @@
                         <div class="st-notification">
                             <button type="button" class="st-notification-btn" id="st-notification-btn">
                                 <i class="fas fa-bell"></i>
-                                @if(auth()->user()->unreadNotifications->count() > 0)
-                                    <span class="st-notification-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
+                                @if(auth()->user()->unreadNotifications()->count() > 0)
+                                    <span class="st-notification-badge">{{ auth()->user()->unreadNotifications()->count() }}</span>
                                 @endif
                             </button>
 
@@ -323,11 +323,11 @@
     </div>
 
 <!-- Defer semua external scripts untuk performa lebih baik -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
-<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js" defer></script>
+<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.js" defer></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js" defer></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js" defer></script>
 @vite(['resources/js/pages/main.js', 'resources/js/pages/gate-status.js'])
 <div id="st-modal-container"></div>
 

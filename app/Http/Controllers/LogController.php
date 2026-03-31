@@ -47,18 +47,33 @@ class LogController extends Controller
             'user' => DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)'),
         ];
 
-        $activityTypeCol = Schema::hasColumn('activity_logs', 'activity_type') ? 'activity_type' : 'type';
-        $createdByCol = Schema::hasColumn('activity_logs', 'created_by') ? 'created_by' : 'user_id';
+        // Cache Schema introspection results per-process to avoid 6+ DB queries per request
+        static $cachedSchema = null;
+        if ($cachedSchema === null) {
+            $cachedSchema = [
+                'activityTypeCol' => Schema::hasColumn('activity_logs', 'activity_type') ? 'activity_type' : 'type',
+                'createdByCol' => Schema::hasColumn('activity_logs', 'created_by') ? 'created_by' : 'user_id',
+                'usersTable' => Schema::hasTable('md_users') ? 'md_users' : 'users',
+            ];
+            $cachedSchema['hasNik'] = Schema::hasColumn($cachedSchema['usersTable'], 'nik');
+            $cachedSchema['hasFullName'] = Schema::hasColumn($cachedSchema['usersTable'], 'full_name');
+            $cachedSchema['hasName'] = Schema::hasColumn($cachedSchema['usersTable'], 'name');
+            $cachedSchema['hasEmail'] = Schema::hasColumn($cachedSchema['usersTable'], 'email');
+            $cachedSchema['hasOldValue'] = Schema::hasColumn('activity_logs', 'old_value');
+            $cachedSchema['hasNewValue'] = Schema::hasColumn('activity_logs', 'new_value');
+        }
 
-        $usersTable = Schema::hasTable('md_users') ? 'md_users' : 'users';
+        $activityTypeCol = $cachedSchema['activityTypeCol'];
+        $createdByCol = $cachedSchema['createdByCol'];
+        $usersTable = $cachedSchema['usersTable'];
+        $hasNik = $cachedSchema['hasNik'];
+        $hasFullName = $cachedSchema['hasFullName'];
+        $hasName = $cachedSchema['hasName'];
+        $hasEmail = $cachedSchema['hasEmail'];
+
         $userNameExpr = $usersTable === 'md_users'
             ? DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)')
             : DB::raw('COALESCE(u.name, u.email)');
-
-        $hasNik = Schema::hasColumn($usersTable, 'nik');
-        $hasFullName = Schema::hasColumn($usersTable, 'full_name');
-        $hasName = Schema::hasColumn($usersTable, 'name');
-        $hasEmail = Schema::hasColumn($usersTable, 'email');
 
         $allowedSorts['activity_type'] = 'al.'.$activityTypeCol;
         $allowedSorts['user'] = $userNameExpr;
@@ -105,10 +120,10 @@ class LogController extends Controller
                 's.po_number as slot_po_number',
             ]);
 
-        if (Schema::hasColumn('activity_logs', 'old_value')) {
+        if ($cachedSchema['hasOldValue']) {
             $logsQ->addSelect('al.old_value');
         }
-        if (Schema::hasColumn('activity_logs', 'new_value')) {
+        if ($cachedSchema['hasNewValue']) {
             $logsQ->addSelect('al.new_value');
         }
 

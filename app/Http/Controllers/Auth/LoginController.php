@@ -117,26 +117,23 @@ class LoginController extends Controller
             try {
                 $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
                 $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
+                $roleId = (int) ($user->role_id ?? 0);
 
-                if (Schema::hasTable('md_users') && Schema::hasTable($rolesTable) && Schema::hasTable($modelHasRolesTable) && Schema::hasColumn('md_users', 'role_id')) {
-                    $roleId = (int) ($user->role_id ?? 0);
+                if ($roleId > 0) {
+                    DB::table($modelHasRolesTable)
+                        ->where('model_type', 'App\\Models\\User')
+                        ->where('model_id', (int) $user->id)
+                        ->delete();
 
-                    if ($roleId > 0) {
-                        DB::table($modelHasRolesTable)
-                            ->where('model_type', 'App\\Models\\User')
-                            ->where('model_id', (int) $user->id)
-                            ->delete();
+                    DB::table($modelHasRolesTable)->insert([
+                        'role_id' => $roleId,
+                        'model_type' => 'App\\Models\\User',
+                        'model_id' => (int) $user->id,
+                    ]);
 
-                        DB::table($modelHasRolesTable)->insert([
-                            'role_id' => $roleId,
-                            'model_type' => 'App\\Models\\User',
-                            'model_id' => (int) $user->id,
-                        ]);
-
-                        try {
-                            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-                        } catch (\Throwable $e) {
-                        }
+                    try {
+                        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+                    } catch (\Throwable $e) {
                     }
                 }
             } catch (\Throwable $e) {
