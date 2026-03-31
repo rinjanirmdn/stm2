@@ -27,27 +27,32 @@
                     <button class="sec-date-today" id="dateToday" title="Kembali ke hari ini">Hari Ini</button>
                 @endif
             </div>
-            <span class="sec-header__shift">{{ $shiftLabel }}</span>
+            <select class="sec-header__shift-select" id="secShiftFilter">
+                <option value="all" selected>24 Jam</option>
+                <option value="1">Shift 1 (07:00 - 15:00)</option>
+                <option value="2">Shift 2 (15:00 - 23:00)</option>
+                <option value="3">Shift 3 (23:00 - 07:00)</option>
+            </select>
         </div>
 
-        <div class="sec-stats">
-            <div class="sec-stat sec-stat--total">
+        <div class="sec-stats" id="secStatsBar">
+            <div class="sec-stat sec-stat--total sec-stat--active-filter" data-filter="all" role="button" tabindex="0">
                 <div class="sec-stat__val" id="summary-total">{{ $summary['total'] }}</div>
                 <div class="sec-stat__lbl">Total</div>
             </div>
-            <div class="sec-stat sec-stat--scheduled">
+            <div class="sec-stat sec-stat--scheduled" data-filter="scheduled" role="button" tabindex="0">
                 <div class="sec-stat__val" id="summary-scheduled">{{ $summary['scheduled'] }}</div>
                 <div class="sec-stat__lbl">Dijadwalkan</div>
             </div>
-            <div class="sec-stat sec-stat--waiting">
+            <div class="sec-stat sec-stat--waiting" data-filter="waiting" role="button" tabindex="0">
                 <div class="sec-stat__val" id="summary-waiting">{{ $summary['waiting'] }}</div>
                 <div class="sec-stat__lbl">Sudah Tiba</div>
             </div>
-            <div class="sec-stat sec-stat--active">
+            <div class="sec-stat sec-stat--active" data-filter="in_progress" role="button" tabindex="0">
                 <div class="sec-stat__val" id="summary-active">{{ $summary['in_progress'] }}</div>
                 <div class="sec-stat__lbl">Proses</div>
             </div>
-            <div class="sec-stat sec-stat--done">
+            <div class="sec-stat sec-stat--done" data-filter="completed" role="button" tabindex="0">
                 <div class="sec-stat__val" id="summary-completed">{{ $summary['completed'] }}</div>
                 <div class="sec-stat__lbl">Selesai</div>
             </div>
@@ -137,7 +142,7 @@
                     <i class="fas fa-camera"></i>
                 </button>
                 <button type="submit" class="sec-scan-bar__submit" id="security-scan-btn">
-                    <i class="fas fa-arrow-right"></i>
+                    <i class="fas fa-search"></i>
                 </button>
             </div>
         </form>
@@ -241,15 +246,18 @@
     margin-bottom: 14px;
     flex-wrap: wrap;
 }
-.sec-header__shift {
+.sec-header__shift-select {
     background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
     color: #283593;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 5px 14px;
-    border-radius: 20px;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
+    padding: 6px 14px;
+    border-radius: 10px;
+    border: 1px solid #c5cae9;
+    cursor: pointer;
+    outline: none;
+    appearance: auto;
+    -webkit-appearance: auto;
 }
 
 /* Date navigation */
@@ -336,9 +344,17 @@
     background: #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     border-bottom: 3px solid transparent;
-    transition: transform 0.15s;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.65;
 }
-.sec-stat:hover { transform: translateY(-2px); }
+.sec-stat:hover { transform: translateY(-2px); opacity: 0.85; }
+.sec-stat--active-filter {
+    opacity: 1;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
 .sec-stat__val { font-size: 22px; font-weight: 800; line-height: 1; margin-bottom: 2px; }
 .sec-stat__lbl { font-size: 10px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .sec-stat--total { border-bottom-color: #5c6bc0; }

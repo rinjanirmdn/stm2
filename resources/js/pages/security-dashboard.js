@@ -1,5 +1,5 @@
 /**
- * Security Dashboard — Scan-to-Arrival (v2 with camera + date picker)
+ * Security Dashboard — Scan-to-Arrival (v3: shift filter, status filter, camera)
  */
 (function () {
     'use strict';
@@ -18,6 +18,9 @@
     let currentSlotId = null;
     let selectedDate = config.selectedDate || config.today;
     let html5QrCode = null;
+    let activeStatusFilter = 'all';
+    let activeShiftFilter = 'all';
+    let allSlots = []; // raw slot data for client-side filtering
 
     // ════════════════════════════════════════
     //  DATE NAVIGATION
@@ -49,23 +52,108 @@
         selectedDate = dateStr;
         if (datePicker) datePicker.value = dateStr;
         if (dateLabel) dateLabel.textContent = formatDateLabel(dateStr);
-
-        // Toggle "Hari Ini" button
         if (dateToday) dateToday.style.display = dateStr === config.today ? 'none' : '';
-
         refreshSchedule();
     }
 
-    if (datePicker) {
-        datePicker.addEventListener('change', function () {
-            navigateToDate(this.value);
-        });
-    }
+    if (datePicker) datePicker.addEventListener('change', function () { navigateToDate(this.value); });
     if (datePrev) datePrev.addEventListener('click', function () { navigateToDate(shiftDate(-1)); });
     if (dateNext) dateNext.addEventListener('click', function () { navigateToDate(shiftDate(1)); });
     if (dateToday) {
         dateToday.addEventListener('click', function () { navigateToDate(config.today); });
         dateToday.style.display = selectedDate === config.today ? 'none' : '';
+    }
+
+    // ════════════════════════════════════════
+    //  SHIFT FILTER
+    // ════════════════════════════════════════
+    const shiftSelect = document.getElementById('secShiftFilter');
+    if (shiftSelect) {
+        shiftSelect.addEventListener('change', function () {
+            activeShiftFilter = this.value;
+            renderFilteredSlots();
+        });
+    }
+
+    function getShiftForTime(etaStr) {
+        // etaStr is "HH:MM"
+        var parts = etaStr.split(':');
+        var h = parseInt(parts[0], 10);
+        if (h >= 7 && h < 15) return '1';
+        if (h >= 15 && h < 23) return '2';
+        return '3';
+    }
+
+    // ════════════════════════════════════════
+    //  STATUS FILTER (clickable stat cards)
+    // ════════════════════════════════════════
+    const statsBar = document.getElementById('secStatsBar');
+    if (statsBar) {
+        statsBar.addEventListener('click', function (e) {
+            var card = e.target.closest('.sec-stat');
+            if (!card || !card.dataset.filter) return;
+            activeStatusFilter = card.dataset.filter;
+            updateActiveFilterUI();
+            renderFilteredSlots();
+        });
+    }
+
+    function updateActiveFilterUI() {
+        var cards = document.querySelectorAll('.sec-stat[data-filter]');
+        cards.forEach(function (c) {
+            c.classList.toggle('sec-stat--active-filter', c.dataset.filter === activeStatusFilter);
+        });
+    }
+
+    // ════════════════════════════════════════
+    //  RENDER FILTERED SLOTS
+    // ════════════════════════════════════════
+    function renderFilteredSlots() {
+        var filtered = allSlots;
+
+        // Apply status filter
+        if (activeStatusFilter !== 'all') {
+            filtered = filtered.filter(function (s) { return s.status === activeStatusFilter; });
+        }
+
+        // Apply shift filter
+        if (activeShiftFilter !== 'all') {
+            filtered = filtered.filter(function (s) {
+                return getShiftForTime(s.eta) === activeShiftFilter;
+            });
+        }
+
+        var list = document.getElementById('security-schedule-list');
+        if (!list) return;
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<div class="sec-schedule__empty"><i class="fas fa-inbox"></i><p>Tidak ada jadwal yang cocok</p></div>';
+            return;
+        }
+
+        var html = '';
+        filtered.forEach(function (s) {
+            var sc = { scheduled: 'sec-slot--scheduled', waiting: 'sec-slot--waiting', in_progress: 'sec-slot--active', completed: 'sec-slot--done' }[s.status] || '';
+            var emoji = { scheduled: '🕐', waiting: '✅', in_progress: '🔄', completed: '✔️' }[s.status] || '•';
+            var label = { scheduled: 'Dijadwalkan', waiting: 'Sudah Tiba', in_progress: 'Sedang Proses', completed: 'Selesai' }[s.status] || s.status;
+            var dir = (s.direction || '').toLowerCase();
+            var dirCls = dir === 'inbound' ? 'sec-slot__dir--inbound' : dir === 'outbound' ? 'sec-slot__dir--outbound' : '';
+
+            html += '<div class="sec-slot ' + sc + '">';
+            html += '<div class="sec-slot__left"><div class="sec-slot__eta">' + esc(s.eta) + '</div>';
+            if (s.arrival_time) html += '<div class="sec-slot__arrived">Tiba ' + esc(s.arrival_time) + '</div>';
+            html += '</div><div class="sec-slot__body">';
+            html += '<div class="sec-slot__row-top"><span class="sec-slot__ticket">' + esc(s.ticket_number) + '</span>';
+            html += '<span class="sec-slot__badge">' + emoji + ' ' + esc(label) + '</span></div>';
+            html += '<div class="sec-slot__vendor">' + esc(s.vendor_name) + '</div>';
+            html += '<div class="sec-slot__meta">';
+            html += '<span><i class="fas fa-file-invoice"></i> ' + esc(s.po_number) + '</span>';
+            html += '<span><i class="fas fa-door-open"></i> ' + esc(s.gate) + '</span>';
+            html += '<span><i class="fas fa-truck"></i> ' + esc(s.vehicle_number) + '</span>';
+            html += '<span class="sec-slot__dir ' + dirCls + '">' + esc(s.direction || '') + '</span>';
+            html += '</div></div></div>';
+        });
+        list.innerHTML = html;
     }
 
     // ════════════════════════════════════════
@@ -78,7 +166,7 @@
     if (scanForm) {
         scanForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            const ticket = (scanInput.value || '').trim();
+            var ticket = (scanInput.value || '').trim();
             if (!ticket) { focusScanInput(); return; }
             doScan(ticket);
         });
@@ -89,7 +177,7 @@
         scanBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
         try {
-            const resp = await fetch(config.scanUrl, {
+            var resp = await fetch(config.scanUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -98,13 +186,13 @@
                 },
                 body: JSON.stringify({ ticket_number: ticketNumber }),
             });
-            const data = await resp.json();
+            var data = await resp.json();
             showScanResult(data);
         } catch (err) {
             showScanResult({ success: false, message: 'Gagal menghubungi server. Coba lagi.' });
         } finally {
             scanBtn.disabled = false;
-            scanBtn.innerHTML = '<i class="fas fa-arrow-right"></i>';
+            scanBtn.innerHTML = '<i class="fas fa-search"></i>';
         }
     }
 
@@ -116,28 +204,15 @@
     const camClose = document.getElementById('secCameraClose');
     const camPreview = document.getElementById('secCameraPreview');
 
-    if (camBtn) {
-        camBtn.addEventListener('click', function () {
-            openCamera();
-        });
-    }
-
-    if (camClose) {
-        camClose.addEventListener('click', function () { closeCamera(); });
-    }
-
-    if (camOverlay) {
-        camOverlay.addEventListener('click', function (e) {
-            if (e.target === camOverlay) closeCamera();
-        });
-    }
+    if (camBtn) camBtn.addEventListener('click', function () { openCamera(); });
+    if (camClose) camClose.addEventListener('click', function () { closeCamera(); });
+    if (camOverlay) camOverlay.addEventListener('click', function (e) { if (e.target === camOverlay) closeCamera(); });
 
     function openCamera() {
         camOverlay.style.display = 'flex';
 
         if (typeof Html5Qrcode === 'undefined') {
             camPreview.innerHTML = '<div style="color:#fff;padding:40px;text-align:center;">Kamera scanner sedang dimuat...</div>';
-            // Retry after library loads
             setTimeout(openCamera, 500);
             return;
         }
@@ -152,12 +227,13 @@
             { facingMode: 'environment' },
             { fps: 10, qrbox: { width: 260, height: 120 }, aspectRatio: 1.33 },
             function onScanSuccess(decodedText) {
+                // Camera scan: auto-close camera → auto-submit scan → show result
                 closeCamera();
                 if (scanInput) scanInput.value = decodedText;
                 doScan(decodedText.trim());
             },
             function onScanFailure() { /* ignore - continuously scanning */ }
-        ).catch(function (err) {
+        ).catch(function () {
             camPreview.innerHTML = '<div style="color:#ef5350;padding:30px;text-align:center;font-size:13px;">' +
                 '<i class="fas fa-exclamation-triangle" style="font-size:28px;margin-bottom:10px;display:block;"></i>' +
                 'Kamera tidak tersedia.<br>Pastikan izin kamera diaktifkan.' +
@@ -179,9 +255,8 @@
     //  RESULT MODAL
     // ════════════════════════════════════════
     function showScanResult(data) {
-        const header = document.getElementById('scanModalHeader');
-        const warningsEl = document.getElementById('scanModalWarnings');
-
+        var header = document.getElementById('scanModalHeader');
+        var warningsEl = document.getElementById('scanModalWarnings');
         warningsEl.innerHTML = '';
 
         if (!data.success) {
@@ -262,7 +337,12 @@
     }
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
     if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (modal.style.display !== 'none') closeModal(); if (camOverlay && camOverlay.style.display !== 'none') closeCamera(); } });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            if (modal.style.display !== 'none') closeModal();
+            if (camOverlay && camOverlay.style.display !== 'none') closeCamera();
+        }
+    });
 
     // ════════════════════════════════════════
     //  TOAST
@@ -293,42 +373,17 @@
             var ids = { 'summary-total': s.total, 'summary-scheduled': s.scheduled, 'summary-waiting': s.waiting, 'summary-active': s.in_progress, 'summary-completed': s.completed };
             for (var id in ids) { var el = document.getElementById(id); if (el) el.textContent = ids[id]; }
 
-            // Rebuild schedule
-            var list = document.getElementById('security-schedule-list');
-            if (!list || !data.slots) return;
-
-            if (data.slots.length === 0) {
-                list.innerHTML = '<div class="sec-schedule__empty"><i class="fas fa-inbox"></i><p>Tidak ada jadwal untuk tanggal ini</p></div>';
-                return;
-            }
-
-            var html = '';
-            data.slots.forEach(function (s) {
-                var sc = { scheduled: 'sec-slot--scheduled', waiting: 'sec-slot--waiting', in_progress: 'sec-slot--active', completed: 'sec-slot--done' }[s.status] || '';
-                var emoji = { scheduled: '🕐', waiting: '✅', in_progress: '🔄', completed: '✔️' }[s.status] || '•';
-                var label = { scheduled: 'Dijadwalkan', waiting: 'Sudah Tiba', in_progress: 'Sedang Proses', completed: 'Selesai' }[s.status] || s.status;
-                var dir = (s.direction || '').toLowerCase();
-                var dirCls = dir === 'inbound' ? 'sec-slot__dir--inbound' : dir === 'outbound' ? 'sec-slot__dir--outbound' : '';
-
-                html += '<div class="sec-slot ' + sc + '">';
-                html += '<div class="sec-slot__left"><div class="sec-slot__eta">' + esc(s.eta) + '</div>';
-                if (s.arrival_time) html += '<div class="sec-slot__arrived">Tiba ' + esc(s.arrival_time) + '</div>';
-                html += '</div><div class="sec-slot__body">';
-                html += '<div class="sec-slot__row-top"><span class="sec-slot__ticket">' + esc(s.ticket_number) + '</span>';
-                html += '<span class="sec-slot__badge">' + emoji + ' ' + esc(label) + '</span></div>';
-                html += '<div class="sec-slot__vendor">' + esc(s.vendor_name) + '</div>';
-                html += '<div class="sec-slot__meta">';
-                html += '<span><i class="fas fa-file-invoice"></i> ' + esc(s.po_number) + '</span>';
-                html += '<span><i class="fas fa-door-open"></i> ' + esc(s.gate) + '</span>';
-                html += '<span><i class="fas fa-truck"></i> ' + esc(s.vehicle_number) + '</span>';
-                html += '<span class="sec-slot__dir ' + dirCls + '">' + esc(s.direction || '') + '</span>';
-                html += '</div></div></div>';
-            });
-            list.innerHTML = html;
+            // Store all slots for client-side filtering
+            allSlots = data.slots || [];
+            renderFilteredSlots();
         } catch (e) { /* silent */ }
     }
 
     setInterval(refreshSchedule, 60000);
+
+    // Initial load: populate allSlots from the schedule already in the DOM
+    // We do an initial AJAX fetch so client-side filtering works from the start
+    refreshSchedule();
 
     function esc(t) { if (!t) return ''; var el = document.createElement('span'); el.textContent = t; return el.innerHTML; }
 
