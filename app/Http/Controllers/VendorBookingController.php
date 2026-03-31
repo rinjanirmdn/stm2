@@ -1065,74 +1065,94 @@ class VendorBookingController extends Controller
             abort(403);
         }
 
-        $gateLetter = '-';
-        try {
-            $whCode = trim((string) ($slot->planned_gate_warehouse_code ?? ''));
-            $gateNo = trim((string) ($slot->planned_gate_number ?? ''));
-            if ($whCode !== '' && $gateNo !== '') {
-                $gateLetter = $this->slotService->getGateDisplayName($whCode, $gateNo);
-            }
-        } catch (\Throwable $e) {
+        $cacheKey = 'ticket_pdf_'.$slotId.'_'.md5(json_encode([
+            $slot->ticket_number ?? '',
+            $slot->truck_number ?? '',
+            $slot->vendor_name ?? '',
+            $slot->vehicle_number_snap ?? '',
+            $slot->direction ?? '',
+            $slot->planned_start ?? '',
+            $slot->planned_gate_number ?? '',
+            $slot->actual_gate_number ?? '',
+        ]));
+
+        $pdfContent = Cache::remember($cacheKey, 3600, function () use ($slot, $slotId) {
             $gateLetter = '-';
-        }
-
-        $barcodePng = '';
-        if (! empty($slot->ticket_number)) {
             try {
-                $ticketNumber = (string) $slot->ticket_number;
-                $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($ticketNumber) {
-                    $barcodeC = new \Milon\Barcode\DNS1D();
-                    $barcodeC->setStorPath(storage_path('app/public/'));
-
-                    return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
-                });
-            } catch (\Throwable $e) {
-                $barcodePng = '';
-                Log::warning('Barcode generation failed', [
-                    'slot_id' => $slotId,
-                    'ticket_number' => $slot->ticket_number,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        $logoDataUri = Cache::rememberForever('ticket_logo_data_uri', function () {
-            try {
-                $logoPath = public_path('img/logo-full.png');
-                if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
-                    return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
+                $whCode = trim((string) ($slot->planned_gate_warehouse_code ?? ''));
+                $gateNo = trim((string) ($slot->planned_gate_number ?? ''));
+                if ($whCode !== '' && $gateNo !== '') {
+                    $gateLetter = $this->slotService->getGateDisplayName($whCode, $gateNo);
                 }
             } catch (\Throwable $e) {
+                $gateLetter = '-';
             }
-        });
 
-        $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
-            try {
-                $cssPath = public_path('ticket.css');
-                if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
-                    return (string) file_get_contents($cssPath);
+            $barcodePng = '';
+            if (! empty($slot->ticket_number)) {
+                try {
+                    $ticketNumber = (string) $slot->ticket_number;
+                    $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($ticketNumber) {
+                        $barcodeC = new \Milon\Barcode\DNS1D();
+                        $barcodeC->setStorPath(storage_path('app/public/'));
+
+                        return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
+                    });
+                } catch (\Throwable $e) {
+                    $barcodePng = '';
+                    Log::warning('Barcode generation failed', [
+                        'slot_id' => $slotId,
+                        'ticket_number' => $slot->ticket_number,
+                        'error' => $e->getMessage(),
+                    ]);
                 }
-            } catch (\Throwable $e) {
             }
 
-            return '';
+            $logoDataUri = Cache::rememberForever('ticket_logo_data_uri', function () {
+                try {
+                    $logoPath = public_path('img/logo-full.png');
+                    if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
+                        return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
+                    }
+                } catch (\Throwable $e) {
+                }
+            });
+
+            $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
+                try {
+                    $cssPath = public_path('ticket.css');
+                    if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
+                        return (string) file_get_contents($cssPath);
+                    }
+                } catch (\Throwable $e) {
+                }
+
+                return '';
+            });
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
+                'slot' => $slot,
+                'gateLetter' => $gateLetter,
+                'barcodePng' => $barcodePng,
+                'barcodeSvg' => null,
+                'barcodeHtml' => null,
+                'logoDataUri' => $logoDataUri,
+                'ticketCss' => $ticketCss,
+            ])
+                ->setOption('isRemoteEnabled', false)
+                ->setOption('isHtml5ParserEnabled', true)
+                ->setOption('chroot', public_path())
+                ->setPaper([0, 0, 252, 396], 'portrait');
+
+            return $pdf->output();
         });
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
-            'slot' => $slot,
-            'gateLetter' => $gateLetter,
-            'barcodePng' => $barcodePng,
-            'barcodeSvg' => null,
-            'barcodeHtml' => null,
-            'logoDataUri' => $logoDataUri,
-            'ticketCss' => $ticketCss,
-        ])
-            ->setOption('isRemoteEnabled', false)
-            ->setOption('isHtml5ParserEnabled', true)
-            ->setOption('chroot', public_path())
-            ->setPaper([0, 0, 252, 396], 'portrait');
+        $filename = 'ticket-'.($slot->ticket_number ?? 'unknown').'.pdf';
 
-        return $pdf->stream('ticket-'.($slot->ticket_number ?? 'unknown').'.pdf');
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 
     /**
