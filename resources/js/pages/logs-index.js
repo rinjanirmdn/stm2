@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     var dateRangeInput = document.getElementById('date_range');
     var dateFromInput = document.getElementById('date_from');
     var dateToInput = document.getElementById('date_to');
@@ -112,16 +112,34 @@
             if (dateFromInput) dateFromInput.value = iso;
             if (dateToInput) dateToInput.value = iso;
             dateRangeInput.value = value;
+            // Trigger live reload on date change
+            ajaxReload(true);
         });
 
         bindPickerDecorators($el);
     }
 
-    // Auto-submit form on input change
+    // === Live Search + Filter Logic ===
     var logsFilterForm = document.getElementById('logs-filter-form');
     if (!logsFilterForm) return;
 
+    var searchInput = document.getElementById('logs-search-input');
+    var typeFilter = document.getElementById('logs-type-filter');
     var isLoading = false;
+    var searchTimeout = null;
+
+    function syncHiddenInputs() {
+        // Sync top controls into hidden form inputs
+        var hiddenQ = logsFilterForm.querySelector('input[name="q"]');
+        var hiddenType = logsFilterForm.querySelector('input[name="type"]');
+        var hiddenDateFrom = logsFilterForm.querySelector('input[name="date_from"]');
+        var hiddenDateTo = logsFilterForm.querySelector('input[name="date_to"]');
+
+        if (hiddenQ && searchInput) hiddenQ.value = searchInput.value;
+        if (hiddenType && typeFilter) hiddenType.value = typeFilter.value;
+        if (hiddenDateFrom && dateFromInput) hiddenDateFrom.value = dateFromInput.value;
+        if (hiddenDateTo && dateToInput) hiddenDateTo.value = dateToInput.value;
+    }
 
     function appendControlToParams(params, el) {
         if (!el || !el.name || el.disabled) return;
@@ -143,19 +161,13 @@
         if (val !== '') params.append(el.name, val);
     }
 
-    function collectQueryControls() {
-        var controls = Array.prototype.slice.call(logsFilterForm.querySelectorAll('input, select, textarea'));
-        var topForm = document.querySelector('.st-card.st-mb-12 form[method="GET"]');
-        if (topForm) {
-            controls = controls.concat(Array.prototype.slice.call(topForm.querySelectorAll('input, select, textarea')));
-        }
-        return controls;
-    }
-
     function buildQueryStringFromForm() {
-        var params = new URLSearchParams();
+        syncHiddenInputs();
 
-        collectQueryControls().forEach(function (el) {
+        var params = new URLSearchParams();
+        var controls = Array.prototype.slice.call(logsFilterForm.querySelectorAll('input, select, textarea'));
+
+        controls.forEach(function (el) {
             appendControlToParams(params, el);
         });
 
@@ -173,7 +185,84 @@
     function setLoading(on) {
         isLoading = on;
         var tbody = logsFilterForm.querySelector('tbody');
-        if (tbody) tbody.style.opacity = on ? '0.5' : '1';
+        if (tbody) tbody.style.opacity = on ? '0.45' : '1';
+        if (tbody) tbody.style.pointerEvents = on ? 'none' : '';
+    }
+
+    // Escape HTML for safe injection
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+    // Highlight matching search terms in the table
+    function highlightSearchTerm(searchTerm) {
+        var tbody = logsFilterForm.querySelector('tbody');
+        if (!tbody) return;
+
+        // Get all text cells (description, mat_doc, po, user)
+        var rows = tbody.querySelectorAll('tr');
+        rows.forEach(function(row) {
+            var cells = row.querySelectorAll('td');
+            cells.forEach(function(cell) {
+                // Remove any existing highlights first
+                var marks = cell.querySelectorAll('mark.st-search-highlight');
+                marks.forEach(function(mark) {
+                    var parent = mark.parentNode;
+                    parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                    parent.normalize();
+                });
+
+                if (!searchTerm || searchTerm.length < 2) return;
+
+                // Walk text nodes and highlight matches
+                highlightTextInNode(cell, searchTerm);
+            });
+        });
+    }
+
+    function highlightTextInNode(element, searchTerm) {
+        var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+        var nodesToReplace = [];
+        var lowerSearch = searchTerm.toLowerCase();
+
+        while (walker.nextNode()) {
+            var node = walker.currentNode;
+            var text = node.textContent;
+            var lowerText = text.toLowerCase();
+            if (lowerText.indexOf(lowerSearch) !== -1) {
+                nodesToReplace.push(node);
+            }
+        }
+
+        nodesToReplace.forEach(function(textNode) {
+            var text = textNode.textContent;
+            var lowerText = text.toLowerCase();
+            var fragment = document.createDocumentFragment();
+            var lastIndex = 0;
+
+            var idx = lowerText.indexOf(lowerSearch, lastIndex);
+            while (idx !== -1) {
+                // Add text before match
+                if (idx > lastIndex) {
+                    fragment.appendChild(document.createTextNode(text.substring(lastIndex, idx)));
+                }
+                // Add highlighted match
+                var mark = document.createElement('mark');
+                mark.className = 'st-search-highlight';
+                mark.textContent = text.substring(idx, idx + searchTerm.length);
+                fragment.appendChild(mark);
+                lastIndex = idx + searchTerm.length;
+                idx = lowerText.indexOf(lowerSearch, lastIndex);
+            }
+            // Add remaining text
+            if (lastIndex < text.length) {
+                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+            }
+
+            textNode.parentNode.replaceChild(fragment, textNode);
+        });
     }
 
     function ajaxReload(pushState) {
@@ -205,6 +294,10 @@
                 if (pushState) {
                     window.history.pushState(null, '', url);
                 }
+
+                // Apply highlight after content loaded
+                var term = searchInput ? searchInput.value.trim() : '';
+                highlightSearchTerm(term);
             })
             .catch(function (err) {
                 console.error('AJAX reload failed:', err);
@@ -216,6 +309,33 @@
 
     window.ajaxReload = ajaxReload;
 
+    // Live search: filter as you type (debounced 350ms)
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                ajaxReload(true);
+            }, 350);
+        });
+
+        // Prevent form submission on Enter key
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                ajaxReload(true);
+            }
+        });
+    }
+
+    // Live type filter: filter on change
+    if (typeFilter) {
+        typeFilter.addEventListener('change', function() {
+            ajaxReload(true);
+        });
+    }
+
+    // Sort triggers in table headers
     logsFilterForm.addEventListener('change', function(e) {
         if (e.target.tagName === 'SELECT') {
             ajaxReload(true);
@@ -240,10 +360,15 @@
 
     window.addEventListener('popstate', function () {
         var params = new URLSearchParams(window.location.search);
-        collectQueryControls().forEach(function (el) {
-            if (el.type === 'hidden' && (el.name === 'sort[]' || el.name === 'dir[]')) return;
-            if (el.name) el.value = params.get(el.name) || '';
-        });
+        if (searchInput) searchInput.value = params.get('q') || '';
+        if (typeFilter) typeFilter.value = params.get('type') || '';
+        if (dateFromInput) dateFromInput.value = params.get('date_from') || '';
+        if (dateToInput) dateToInput.value = params.get('date_to') || '';
         ajaxReload(false);
     });
+
+    // Initial highlight on page load
+    if (searchInput && searchInput.value.trim().length >= 2) {
+        highlightSearchTerm(searchInput.value.trim());
+    }
 });

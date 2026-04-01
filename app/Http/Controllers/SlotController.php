@@ -270,7 +270,13 @@ class SlotController extends Controller
             ]);
 
             if ($slotId > 0) {
-                $this->slotService->logActivity($slotId, 'status_change', 'Data Created');
+                $vendorLabel = trim((string) ($poDetail['vendor_name'] ?? ''));
+                $logDesc = 'Scheduled slot created';
+                if ($vendorLabel !== '' || $truckNumber !== '') {
+                    $parts = array_filter([$vendorLabel, $truckNumber !== '' ? 'PO/DO '.$truckNumber : '']);
+                    $logDesc .= ' ('.implode(' - ', $parts).')';
+                }
+                $this->slotService->logActivity($slotId, 'status_change', $logDesc);
             }
         });
 
@@ -452,7 +458,13 @@ class SlotController extends Controller
                 'updated_at' => now(),
             ]);
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Data Updated');
+            $vendorName = trim((string) ($slot->vendor_name ?? ''));
+            $logDesc = 'Scheduled slot updated';
+            if ($vendorName !== '' || $truckNumber !== '') {
+                $parts = array_filter([$vendorName, $truckNumber !== '' ? 'PO/DO '.$truckNumber : '']);
+                $logDesc .= ' ('.implode(' - ', $parts).')';
+            }
+            $this->slotService->logActivity($slotId, 'status_change', $logDesc);
         });
 
         // Calculate blocking risk immediately after update

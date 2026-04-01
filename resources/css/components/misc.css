@@ -1917,6 +1917,26 @@ body {
     color: var(--standby);
 }
 
+.st-activity-type--early-arrival {
+    background: var(--early-arrival-bg);
+    color: var(--early-arrival);
+}
+
+/* Search result highlight */
+mark.st-search-highlight {
+    background: #fef08a;
+    color: inherit;
+    padding: 1px 2px;
+    border-radius: 3px;
+    font-weight: 600;
+    animation: st-highlight-pulse 0.4s ease-out;
+}
+
+@keyframes st-highlight-pulse {
+    0% { background: #facc15; }
+    100% { background: #fef08a; }
+}
+
 /* Small buttons & utilities */
 
 .st-page-header {
