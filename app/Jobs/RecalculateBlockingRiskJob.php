@@ -42,6 +42,9 @@ class RecalculateBlockingRiskJob implements ShouldQueue
             ->orderBy('id')
             ->get();
 
+        // Collect all updates first, then batch update
+        $pendingUpdates = [];
+
         foreach ($slots as $slot) {
             try {
                 $newRisk = $slotService->calculateBlockingRisk(
@@ -54,17 +57,40 @@ class RecalculateBlockingRiskJob implements ShouldQueue
 
                 // Only update if value changed
                 if ((int) ($slot->blocking_risk ?? 0) !== $newRisk) {
-                    DB::table('slots')
-                        ->where('id', $slot->id)
-                        ->update([
-                            'blocking_risk' => $newRisk,
-                            'blocking_risk_cached_at' => now(),
-                        ]);
+                    $pendingUpdates[$slot->id] = $newRisk;
                     $updated++;
                 }
             } catch (\Throwable $e) {
                 $errors++;
                 Log::warning('Failed to recalculate blocking risk for slot '.$slot->id.': '.$e->getMessage());
+            }
+        }
+
+        // Batch update all changed slots in a single query
+        if (! empty($pendingUpdates)) {
+            try {
+                $ids = array_keys($pendingUpdates);
+                $cases = [];
+                $bindings = [];
+
+                foreach ($pendingUpdates as $id => $risk) {
+                    $cases[] = 'WHEN id = ? THEN ?';
+                    $bindings[] = $id;
+                    $bindings[] = $risk;
+                }
+
+                $bindings[] = now();
+                $bindings = array_merge($bindings, $ids);
+
+                $casesSql = implode(' ', $cases);
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+                DB::statement(
+                    "UPDATE slots SET blocking_risk = CASE {$casesSql} END, blocking_risk_cached_at = ? WHERE id IN ({$placeholders})",
+                    $bindings
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Batch update for blocking risk failed: '.$e->getMessage());
             }
         }
 

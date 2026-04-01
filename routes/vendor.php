@@ -23,11 +23,11 @@ Route::middleware('vendor.portal')->prefix('vendor')->name('vendor.')->group(fun
 
     // AJAX endpoints
     Route::prefix('ajax')->name('ajax.')->group(function () {
-        Route::get('/available-slots', [VendorBookingController::class, 'getAvailableSlots'])->name('available_slots')->middleware('permission:vendor.ajax.available_slots');
-        Route::get('/check-availability', [VendorBookingController::class, 'checkAvailability'])->name('check_availability')->middleware('permission:vendor.ajax.check_availability');
-        Route::get('/truck-type-duration', [VendorBookingController::class, 'getTruckTypeDuration'])->name('truck_type_duration')->middleware('permission:vendor.ajax.truck_type_duration');
-        Route::get('/calendar-slots', [VendorBookingController::class, 'calendarSlots'])->name('calendar_slots')->middleware('permission:vendor.ajax.calendar_slots');
-        Route::get('/po-search', [VendorBookingController::class, 'ajaxPoSearch'])->name('po_search')->middleware('permission:vendor.ajax.po_search');
-        Route::get('/po/{poNumber}', [VendorBookingController::class, 'ajaxPoDetail'])->where('poNumber', '[A-Za-z0-9\-]+')->name('po_detail')->middleware('permission:vendor.ajax.po_detail');
+        Route::get('/available-slots', [VendorBookingController::class, 'getAvailableSlots'])->name('available_slots')->middleware(['permission:vendor.ajax.available_slots', 'throttle:30,1']);
+        Route::get('/check-availability', [VendorBookingController::class, 'checkAvailability'])->name('check_availability')->middleware(['permission:vendor.ajax.check_availability', 'throttle:30,1']);
+        Route::get('/truck-type-duration', [VendorBookingController::class, 'getTruckTypeDuration'])->name('truck_type_duration')->middleware(['permission:vendor.ajax.truck_type_duration', 'throttle:30,1']);
+        Route::get('/calendar-slots', [VendorBookingController::class, 'calendarSlots'])->name('calendar_slots')->middleware(['permission:vendor.ajax.calendar_slots', 'throttle:30,1']);
+        Route::get('/po-search', [VendorBookingController::class, 'ajaxPoSearch'])->name('po_search')->middleware(['permission:vendor.ajax.po_search', 'throttle:20,1']);
+        Route::get('/po/{poNumber}', [VendorBookingController::class, 'ajaxPoDetail'])->where('poNumber', '[A-Za-z0-9\-]+')->name('po_detail')->middleware(['permission:vendor.ajax.po_detail', 'throttle:20,1']);
     });
 });
