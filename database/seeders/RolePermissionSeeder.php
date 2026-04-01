@@ -136,6 +136,11 @@ class RolePermissionSeeder extends Seeder
             'notifications.clearAll',
             'notifications.latest',
 
+            'security.dashboard',
+            'security.scan',
+            'security.confirm_arrival',
+            'security.ajax.today_slots',
+
             'checkin.show',
             'checkin.store',
 
@@ -305,6 +310,10 @@ class RolePermissionSeeder extends Seeder
         // Security: verify tickets and record arrival only
         $securityRole = Role::findOrCreate('Security');
         $securityRole->syncPermissions([
+            'security.dashboard',
+            'security.scan',
+            'security.confirm_arrival',
+            'security.ajax.today_slots',
             'slots.index',
             'slots.show',
             'slots.arrival',
