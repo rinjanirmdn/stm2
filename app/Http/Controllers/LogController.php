@@ -32,6 +32,8 @@ class LogController extends Controller
 
         $allowedTypes = [
             'status_change',
+            'early_arrival',
+            'late_arrival',
             'gate_activation',
             'gate_deactivation',
             'auth',
@@ -71,9 +73,22 @@ class LogController extends Controller
         $hasName = $cachedSchema['hasName'];
         $hasEmail = $cachedSchema['hasEmail'];
 
-        $userNameExpr = $usersTable === 'md_users'
-            ? DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)')
-            : DB::raw('COALESCE(u.name, u.email)');
+        $nameColParts = [];
+        if ($hasFullName) {
+            $nameColParts[] = 'u.full_name';
+        }
+        if ($hasName) {
+            $nameColParts[] = 'u.name';
+        }
+        if ($hasNik) {
+            $nameColParts[] = 'u.nik';
+        }
+        if ($hasEmail) {
+            $nameColParts[] = 'u.email';
+        }
+        $userNameExpr = ! empty($nameColParts)
+            ? DB::raw('COALESCE('.implode(', ', $nameColParts).')')
+            : DB::raw('NULL');
 
         $allowedSorts['activity_type'] = 'al.'.$activityTypeCol;
         $allowedSorts['user'] = $userNameExpr;
@@ -128,12 +143,16 @@ class LogController extends Controller
         }
 
         if ($q !== '') {
-            $like = '%'.$q.'%';
-            $logsQ->where(function ($sub) use ($like) {
+            $like = '%'.strtolower($q).'%';
+            $logsQ->where(function ($sub) use ($like, $nameColParts) {
                 $sub
-                    ->where('al.description', 'like', $like)
-                    ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('s.po_number', 'like', $like);
+                    ->whereRaw('LOWER(al.description) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, cast(\'\'  as varchar))) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.po_number, cast(\'\'  as varchar))) like ?', [$like]);
+                if (! empty($nameColParts)) {
+                    $coalesce = 'LOWER(COALESCE('.implode(', ', $nameColParts).')) like ?';
+                    $sub->orWhereRaw($coalesce, [$like]);
+                }
             });
         }
 

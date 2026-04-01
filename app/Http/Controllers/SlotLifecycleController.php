@@ -477,7 +477,7 @@ class SlotLifecycleController extends Controller
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $slotInfo->actual_finish, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Data Completed with MAT DOC '.$matDoc.', Truck '.$truckType.', Vehicle '.$vehicleNumber.', Driver '.$driverNumber);
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (MAT DOC: '.$matDoc.', Truck: '.$truckType.', Vehicle: '.$vehicleNumber.', Driver: '.$driverNumber.')');
         });
 
         return redirect()->route('slots.index')->with('success', 'Data completed');
