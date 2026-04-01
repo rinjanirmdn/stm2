@@ -92,66 +92,87 @@ class SlotLifecycleController extends Controller
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
-        $gateNumber = (string) ($slot->actual_gate_number ?? '');
-        $gateWarehouse = (string) ($slot->actual_gate_warehouse_code ?? '');
-        if ($gateNumber === '') {
-            $gateNumber = (string) ($slot->planned_gate_number ?? '');
-            $gateWarehouse = (string) ($slot->planned_gate_warehouse_code ?? '');
-        }
-        if ($gateWarehouse === '') {
-            $gateWarehouse = (string) ($slot->warehouse_code ?? '');
-        }
-        $gateLetter = $this->slotService->getGateLetterByWarehouseAndNumber($gateWarehouse, $gateNumber);
+        // Cache key based on slot data that affects ticket content
+        $cacheKey = 'ticket_pdf_'.$slotId.'_'.md5(json_encode([
+            $slot->ticket_number ?? '',
+            $slot->truck_number ?? '',
+            $slot->vendor_name ?? '',
+            $slot->vehicle_number_snap ?? '',
+            $slot->direction ?? '',
+            $slot->planned_start ?? '',
+            $slot->planned_gate_number ?? '',
+            $slot->actual_gate_number ?? '',
+        ]));
 
-        // Generate barcode
-        $barcodeC = new \Milon\Barcode\DNS1D();
-        $barcodeC->setStorPath(storage_path('app/public/'));
-        $barcodePng = '';
-        if (! empty($slot->ticket_number)) {
-            $ticketNumber = (string) $slot->ticket_number;
-            $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
-                return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
+        $pdfContent = Cache::remember($cacheKey, 3600, function () use ($slot) {
+            $gateNumber = (string) ($slot->actual_gate_number ?? '');
+            $gateWarehouse = (string) ($slot->actual_gate_warehouse_code ?? '');
+            if ($gateNumber === '') {
+                $gateNumber = (string) ($slot->planned_gate_number ?? '');
+                $gateWarehouse = (string) ($slot->planned_gate_warehouse_code ?? '');
+            }
+            if ($gateWarehouse === '') {
+                $gateWarehouse = (string) ($slot->warehouse_code ?? '');
+            }
+            $gateLetter = $this->slotService->getGateLetterByWarehouseAndNumber($gateWarehouse, $gateNumber);
+
+            // Generate barcode
+            $barcodeC = new \Milon\Barcode\DNS1D();
+            $barcodeC->setStorPath(storage_path('app/public/'));
+            $barcodePng = '';
+            if (! empty($slot->ticket_number)) {
+                $ticketNumber = (string) $slot->ticket_number;
+                $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
+                    return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
+                });
+            }
+
+            // Encode logo as base64 data URI so DomPDF can render it
+            $logoDataUri = Cache::rememberForever('ticket_logo_data_uri', function () {
+                try {
+                    $logoPath = public_path('img/logo-full.png');
+                    if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
+                        return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
+                    }
+                } catch (\Throwable $e) {
+                }
             });
-        }
 
-        // Encode logo as base64 data URI so DomPDF can render it
-        $logoDataUri = Cache::rememberForever('ticket_logo_data_uri', function () {
-            try {
-                $logoPath = public_path('img/logo-full.png');
-                if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
-                    return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
+            $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
+                try {
+                    $cssPath = public_path('ticket.css');
+                    if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
+                        return (string) file_get_contents($cssPath);
+                    }
+                } catch (\Throwable $e) {
                 }
-            } catch (\Throwable $e) {
-            }
+
+                return '';
+            });
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
+                'slot' => $slot,
+                'gateLetter' => $gateLetter,
+                'barcodePng' => $barcodePng,
+                'barcodeHtml' => null,
+                'barcodeSvg' => null,
+                'logoDataUri' => $logoDataUri,
+                'ticketCss' => $ticketCss,
+            ])
+                ->setOption('isRemoteEnabled', false)
+                ->setOption('isHtml5ParserEnabled', true)
+                ->setOption('chroot', public_path())
+                ->setPaper([0, 0, 252, 396], 'portrait');
+
+            return $pdf->output();
         });
 
-        $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
-            try {
-                $cssPath = public_path('ticket.css');
-                if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
-                    return (string) file_get_contents($cssPath);
-                }
-            } catch (\Throwable $e) {
-            }
+        $filename = 'ticket-'.($slot->ticket_number ?? $slot->id).'.pdf';
 
-            return '';
-        });
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
-            'slot' => $slot,
-            'gateLetter' => $gateLetter,
-            'barcodePng' => $barcodePng,
-            'barcodeHtml' => null,
-            'barcodeSvg' => null,
-            'logoDataUri' => $logoDataUri,
-            'ticketCss' => $ticketCss,
-        ])
-            ->setOption('isRemoteEnabled', false)
-            ->setOption('isHtml5ParserEnabled', true)
-            ->setOption('chroot', public_path())
-            ->setPaper([0, 0, 252, 396], 'portrait');
-
-        return $pdf->stream('ticket-'.($slot->ticket_number ?? $slot->id).'.pdf');
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 
     public function start(int $slotId)
@@ -456,7 +477,7 @@ class SlotLifecycleController extends Controller
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $slotInfo->actual_finish, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Data Completed with MAT DOC '.$matDoc.', Truck '.$truckType.', Vehicle '.$vehicleNumber.', Driver '.$driverNumber);
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (MAT DOC: '.$matDoc.', Truck: '.$truckType.', Vehicle: '.$vehicleNumber.', Driver: '.$driverNumber.')');
         });
 
         return redirect()->route('slots.index')->with('success', 'Data completed');

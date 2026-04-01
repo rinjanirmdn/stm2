@@ -65,25 +65,21 @@
         </div>
     </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.btn-toggle-password').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var targetId = this.getAttribute('data-target');
-                var input = document.getElementById(targetId);
-                var icon = this.querySelector('i');
+    function togglePasswordVisibility(inputId, btn) {
+        var input = document.getElementById(inputId);
+        var icon = btn.querySelector('i');
+        if (!input || !icon) return;
 
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            });
-        });
-    });
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
 </script>
 </body>
 </html>

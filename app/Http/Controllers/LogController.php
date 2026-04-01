@@ -32,6 +32,8 @@ class LogController extends Controller
 
         $allowedTypes = [
             'status_change',
+            'early_arrival',
+            'late_arrival',
             'gate_activation',
             'gate_deactivation',
             'auth',
@@ -47,18 +49,46 @@ class LogController extends Controller
             'user' => DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)'),
         ];
 
-        $activityTypeCol = Schema::hasColumn('activity_logs', 'activity_type') ? 'activity_type' : 'type';
-        $createdByCol = Schema::hasColumn('activity_logs', 'created_by') ? 'created_by' : 'user_id';
+        // Cache Schema introspection results per-process to avoid 6+ DB queries per request
+        static $cachedSchema = null;
+        if ($cachedSchema === null) {
+            $cachedSchema = [
+                'activityTypeCol' => Schema::hasColumn('activity_logs', 'activity_type') ? 'activity_type' : 'type',
+                'createdByCol' => Schema::hasColumn('activity_logs', 'created_by') ? 'created_by' : 'user_id',
+                'usersTable' => Schema::hasTable('md_users') ? 'md_users' : 'users',
+            ];
+            $cachedSchema['hasNik'] = Schema::hasColumn($cachedSchema['usersTable'], 'nik');
+            $cachedSchema['hasFullName'] = Schema::hasColumn($cachedSchema['usersTable'], 'full_name');
+            $cachedSchema['hasName'] = Schema::hasColumn($cachedSchema['usersTable'], 'name');
+            $cachedSchema['hasEmail'] = Schema::hasColumn($cachedSchema['usersTable'], 'email');
+            $cachedSchema['hasOldValue'] = Schema::hasColumn('activity_logs', 'old_value');
+            $cachedSchema['hasNewValue'] = Schema::hasColumn('activity_logs', 'new_value');
+        }
 
-        $usersTable = Schema::hasTable('md_users') ? 'md_users' : 'users';
-        $userNameExpr = $usersTable === 'md_users'
-            ? DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)')
-            : DB::raw('COALESCE(u.name, u.email)');
+        $activityTypeCol = $cachedSchema['activityTypeCol'];
+        $createdByCol = $cachedSchema['createdByCol'];
+        $usersTable = $cachedSchema['usersTable'];
+        $hasNik = $cachedSchema['hasNik'];
+        $hasFullName = $cachedSchema['hasFullName'];
+        $hasName = $cachedSchema['hasName'];
+        $hasEmail = $cachedSchema['hasEmail'];
 
-        $hasNik = Schema::hasColumn($usersTable, 'nik');
-        $hasFullName = Schema::hasColumn($usersTable, 'full_name');
-        $hasName = Schema::hasColumn($usersTable, 'name');
-        $hasEmail = Schema::hasColumn($usersTable, 'email');
+        $nameColParts = [];
+        if ($hasFullName) {
+            $nameColParts[] = 'u.full_name';
+        }
+        if ($hasName) {
+            $nameColParts[] = 'u.name';
+        }
+        if ($hasNik) {
+            $nameColParts[] = 'u.nik';
+        }
+        if ($hasEmail) {
+            $nameColParts[] = 'u.email';
+        }
+        $userNameExpr = ! empty($nameColParts)
+            ? DB::raw('COALESCE('.implode(', ', $nameColParts).')')
+            : DB::raw('NULL');
 
         $allowedSorts['activity_type'] = 'al.'.$activityTypeCol;
         $allowedSorts['user'] = $userNameExpr;
@@ -105,20 +135,24 @@ class LogController extends Controller
                 's.po_number as slot_po_number',
             ]);
 
-        if (Schema::hasColumn('activity_logs', 'old_value')) {
+        if ($cachedSchema['hasOldValue']) {
             $logsQ->addSelect('al.old_value');
         }
-        if (Schema::hasColumn('activity_logs', 'new_value')) {
+        if ($cachedSchema['hasNewValue']) {
             $logsQ->addSelect('al.new_value');
         }
 
         if ($q !== '') {
-            $like = '%'.$q.'%';
-            $logsQ->where(function ($sub) use ($like) {
+            $like = '%'.strtolower($q).'%';
+            $logsQ->where(function ($sub) use ($like, $nameColParts) {
                 $sub
-                    ->where('al.description', 'like', $like)
-                    ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('s.po_number', 'like', $like);
+                    ->whereRaw('LOWER(al.description) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, cast(\'\'  as varchar))) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.po_number, cast(\'\'  as varchar))) like ?', [$like]);
+                if (! empty($nameColParts)) {
+                    $coalesce = 'LOWER(COALESCE('.implode(', ', $nameColParts).')) like ?';
+                    $sub->orWhereRaw($coalesce, [$like]);
+                }
             });
         }
 

@@ -157,6 +157,8 @@ class UserController extends Controller
                 ->orderByDesc('md_users.id');
         }
 
+        $usersQ->limit(200);
+
         $usersCacheKey = 'users:index:data:'.sha1(json_encode([
             'uid' => Auth::id(),
             'query' => $request->query(),

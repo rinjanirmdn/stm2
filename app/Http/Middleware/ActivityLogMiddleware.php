@@ -47,9 +47,41 @@ class ActivityLogMiddleware
                 }
             }
 
-            // Avoid logging activity log listing/filter actions themselves
+            // Skip routes that should NOT be auto-logged:
+            // - Routes already manually logged in their controllers (slots lifecycle, unplanned, gates, security)
+            // - System/internal routes (ajax, livewire generated, debugbar, broadcasting, notifications)
+            // - Activity log page itself
             $routeName = (string) ($request->route()?->getName() ?? '');
-            if ($routeName !== '' && str_starts_with($routeName, 'logs.')) {
+
+            // Skip generated/system routes (Livewire, debugbar, broadcasting)
+            if ($routeName === '' || str_starts_with($routeName, 'generated::') || str_starts_with($routeName, 'debugbar.') || $routeName === 'broadcasting.auth') {
+                return $response;
+            }
+
+            // Skip ajax, logs, notifications, and routes with manual logging in controllers
+            $skipPrefixes = ['logs.', 'notifications.'];
+            foreach ($skipPrefixes as $prefix) {
+                if (str_starts_with($routeName, $prefix)) {
+                    return $response;
+                }
+            }
+            if (str_contains($routeName, '.ajax.')) {
+                return $response;
+            }
+
+            // Routes that already have their own manual activity logging in controllers
+            $manuallyLoggedRoutes = [
+                'security.scan',
+                'security.confirm_arrival',
+                'slots.arrival.store',     // SlotLifecycleController logs arrival
+                'slots.start.store',       // SlotLifecycleController logs start
+                'slots.complete.store',    // SlotLifecycleController logs completion
+                'slots.cancel.store',      // SlotController logs cancellation
+                'unplanned.complete.store', // SlotLifecycleController logs unplanned complete
+                'unplanned.start.store',   // SlotLifecycleController logs unplanned start
+                'gates.toggle',            // ReportController logs gate activation/deactivation
+            ];
+            if (in_array($routeName, $manuallyLoggedRoutes, true)) {
                 return $response;
             }
 
@@ -97,25 +129,41 @@ class ActivityLogMiddleware
             }
 
             $templates = [
-                'users.store' => 'User created',
-                'users.update' => 'User updated',
-                'users.delete' => 'User deleted',
-                'users.toggle' => 'User status updated',
+                // Auth
+                'login.store' => 'User logged in',
+                'logout' => 'User logged out',
                 'forgot-password.send' => 'Password reset requested',
-                'profile.password-request' => 'Password reset requested',
-                'gates.toggle' => 'Gate status updated',
-                'slots.store' => 'Slot created',
-                'slots.update' => 'Slot updated',
-                'slots.delete' => 'Slot deleted',
+                'profile.password-request' => 'Password reset requested from profile',
+                'password.force-change.store' => 'Password changed',
+                'profile.update' => 'Profile updated',
+
+                // User management
+                'users.store' => 'User account created',
+                'users.update' => 'User account updated',
+                'users.delete' => 'User account deleted',
+                'users.toggle' => 'User account activated/deactivated',
+
+                // Planned slots
+                'slots.store' => 'Scheduled slot created',
+                'slots.update' => 'Scheduled slot updated',
+                'slots.delete' => 'Scheduled slot deleted',
+
+                // Unplanned slots
                 'unplanned.store' => 'Unplanned slot created',
                 'unplanned.update' => 'Unplanned slot updated',
                 'unplanned.delete' => 'Unplanned slot deleted',
-                'bookings.approve' => 'Booking approved',
-                'bookings.reject' => 'Booking rejected',
-                'vendor.bookings.store' => 'Booking created',
-                'vendor.bookings.cancel' => 'Booking cancelled',
-                'login.store' => 'User login',
-                'logout' => 'User logout',
+
+                // Booking requests (vendor)
+                'bookings.approve' => 'Booking request approved',
+                'bookings.reject' => 'Booking request rejected',
+                'bookings.reschedule.store' => 'Booking request rescheduled',
+                'vendor.bookings.store' => 'Booking request submitted',
+                'vendor.bookings.cancel' => 'Booking request cancelled',
+
+                // Truck types
+                'trucks.store' => 'Truck type added',
+                'trucks.update' => 'Truck type updated',
+                'trucks.delete' => 'Truck type deleted',
             ];
 
             if ($routeName !== '' && array_key_exists($routeName, $templates)) {
@@ -164,94 +212,60 @@ class ActivityLogMiddleware
                         $parts[] = $name;
                     }
                     if (! empty($parts)) {
-                        $description = 'User created ('.implode(' - ', $parts).')';
+                        $description = 'User account created ('.implode(' - ', $parts).')';
                     }
                 } elseif ($routeName === 'slots.store') {
                     $po = $getString($payload, 'po_number');
-                    if ($po !== '') {
-                        $description = 'Slot created (PO/DO '.$po.')';
+                    $vendor = $getString($payload, 'vendor_name');
+                    $detail = array_filter([$vendor, $po !== '' ? 'PO/DO '.$po : '']);
+                    if (! empty($detail)) {
+                        $description = 'Scheduled slot created ('.implode(' - ', $detail).')';
                     }
                 } elseif ($routeName === 'unplanned.store') {
                     $po = $getString($payload, 'po_number');
-                    if ($po !== '') {
-                        $description = 'Unplanned slot created (PO/DO '.$po.')';
+                    $vendor = $getString($payload, 'vendor_name');
+                    $detail = array_filter([$vendor, $po !== '' ? 'PO/DO '.$po : '']);
+                    if (! empty($detail)) {
+                        $description = 'Unplanned slot created ('.implode(' - ', $detail).')';
                     }
                 } elseif ($routeName === 'vendor.bookings.store') {
                     $po = $getString($payload, 'po_number');
                     $createdId = $extractTrailingId($location);
                     if ($po !== '' && $createdId) {
-                        $description = 'Booking created (Request #'.$createdId.' - PO/DO '.$po.')';
+                        $description = 'Booking request submitted (Request #'.$createdId.' - PO/DO '.$po.')';
                     } elseif ($createdId) {
-                        $description = 'Booking created (Request #'.$createdId.')';
+                        $description = 'Booking request submitted (Request #'.$createdId.')';
                     } elseif ($po !== '') {
-                        $description = 'Booking created (PO/DO '.$po.')';
+                        $description = 'Booking request submitted (PO/DO '.$po.')';
                     }
                 } elseif ($routeName === 'login.store') {
                     $login = trim((string) $request->input('login', $request->input('email', '')));
                     if ($login !== '') {
-                        $description = 'User login ('.$login.')';
+                        $description = 'User logged in ('.$login.')';
                     }
                 }
             }
 
+            // If no template matched, this is an unknown/unmapped route.
+            // Skip it rather than generating a vague/confusing description.
             if ($description === '') {
-                $action = '';
-                if ($method === 'POST') {
-                    $action = 'created';
-                } elseif (in_array($method, ['PUT', 'PATCH'], true)) {
-                    $action = 'updated';
-                } elseif ($method === 'DELETE') {
-                    $action = 'deleted';
-                } else {
-                    $action = 'changed';
-                }
+                return $response;
+            }
 
-                $entity = '';
-                if ($routeName !== '') {
-                    $parts = explode('.', $routeName);
-                    $entity = trim((string) ($parts[0] ?? ''));
-                }
-                if ($entity !== '') {
-                    $entity = str_replace(['-', '_'], ' ', $entity);
-                    if (strlen($entity) > 1 && substr($entity, -1) === 's') {
-                        $entity = substr($entity, 0, -1);
-                    }
-                    $entity = ucwords($entity);
-                    $description = $entity.' '.$action;
-                } else {
-                    $description = 'Data '.$action;
-                }
-
-                $detailKeys = [
-                    'ticket_number',
-                    'request_number',
-                    'po_number',
-                    'mat_doc',
-                    'vendor_name',
-                    'name',
-                    'email',
-                    'nik',
-                    'gate_number',
-                ];
-                $details = [];
-                foreach ($detailKeys as $k) {
+            // Append useful identifiers only if description doesn't already contain them
+            if ($targetId !== null && strpos($description, '(') === false) {
+                // Try to find a meaningful identifier from payload instead of raw ID
+                $identifierAdded = false;
+                $identifierKeys = ['ticket_number', 'po_number', 'name', 'email', 'nik'];
+                foreach ($identifierKeys as $k) {
                     $v = $getString($payload, $k);
-                    if ($v === '') {
-                        continue;
-                    }
-                    $label = ucwords(str_replace('_', ' ', $k));
-                    $details[] = $label.' '.$v;
-                    if (count($details) >= 2) {
+                    if ($v !== '') {
+                        $label = ucwords(str_replace('_', ' ', $k));
+                        $description .= ' ('.$label.': '.$v.')';
+                        $identifierAdded = true;
                         break;
                     }
                 }
-                if (! empty($details)) {
-                    $description .= ' ('.implode(' - ', $details).')';
-                }
-            }
-
-            if ($targetId !== null) {
-                $description .= ' (ID: '.$targetId.')';
             }
             if (strlen($description) > 1900) {
                 $description = substr($description, 0, 1900).'...';
@@ -312,22 +326,6 @@ class ActivityLogMiddleware
                 $insert['po_number'] = $getString($payload, 'po_number') ?: null;
             }
 
-            if (($has('mat_doc') || $has('po_number')) && $slotId !== null && ($insert['mat_doc'] ?? null) === null && ($insert['po_number'] ?? null) === null) {
-                try {
-                    $slotRow = DB::table('slots')->where('id', $slotId)->select(['mat_doc', 'po_number'])->first();
-                    if ($slotRow) {
-                        if ($has('mat_doc') && ($insert['mat_doc'] ?? null) === null) {
-                            $insert['mat_doc'] = $slotRow->mat_doc ?? null;
-                        }
-                        if ($has('po_number') && ($insert['po_number'] ?? null) === null) {
-                            $insert['po_number'] = $slotRow->po_number ?? null;
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    // no-op
-                }
-            }
-
             if ($has('old_value')) {
                 $insert['old_value'] = null;
             }
@@ -344,9 +342,18 @@ class ActivityLogMiddleware
                 $insert['updated_at'] = now();
             }
 
-            // Insert only if minimum fields exist
+            // Dispatch to queue for async insert (removes ~10-30ms latency per request)
             if (! empty($insert) && isset($insert['description'])) {
-                DB::table('activity_logs')->insert($insert);
+                try {
+                    \App\Jobs\LogActivityJob::dispatch($insert, $slotId);
+                } catch (\Throwable $e) {
+                    // Fallback: sync insert if queue dispatch fails
+                    try {
+                        DB::table('activity_logs')->insert($insert);
+                    } catch (\Throwable $e2) {
+                        // swallow
+                    }
+                }
             }
         } catch (\Throwable $e) {
             // swallow - logging must never break user flow

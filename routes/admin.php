@@ -13,13 +13,13 @@ use App\Http\Controllers\UserController;
 // Reports
 Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/transactions', [ReportController::class, 'transactions'])->name('transactions')->middleware('permission:reports.transactions');
-    Route::get('/search-suggestions', [ReportController::class, 'searchSuggestions'])->name('search_suggestions')->middleware('permission:reports.search_suggestions');
+    Route::get('/search-suggestions', [ReportController::class, 'searchSuggestions'])->name('search_suggestions')->middleware(['permission:reports.search_suggestions', 'throttle:30,1']);
     Route::get('/gate-status', [ReportController::class, 'gateStatus'])->name('gate_status')->middleware('permission:reports.gate_status');
 });
 
 // Real-time gate status streaming
-Route::get('/api/gate-status', [GateStatusController::class, 'apiIndex'])->name('api.gate-status')->middleware('permission:gates.api_index');
-Route::get('/api/gate-status/stream', [GateStatusController::class, 'stream'])->name('api.gate-status.stream')->middleware('permission:gates.stream');
+Route::get('/api/gate-status', [GateStatusController::class, 'apiIndex'])->name('api.gate-status')->middleware(['permission:gates.api_index', 'throttle:60,1']);
+Route::get('/api/gate-status/stream', [GateStatusController::class, 'stream'])->name('api.gate-status.stream')->middleware(['permission:gates.stream', 'throttle:60,1']);
 Route::get('/api/realtime/version', function () {
     $cacheKey = 'st_realtime_version';
     $version = (string) \Illuminate\Support\Facades\Cache::get($cacheKey, '');
@@ -40,26 +40,26 @@ Route::get('/notifications', [\App\Http\Controllers\NotificationController::clas
 Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead')->middleware('permission:notifications.markAsRead');
 Route::get('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.readAll')->middleware('permission:notifications.readAll');
 Route::post('/notifications/clear', [\App\Http\Controllers\NotificationController::class, 'clearAll'])->name('notifications.clearAll')->middleware('permission:notifications.clearAll');
-Route::get('/notifications/latest', [\App\Http\Controllers\NotificationController::class, 'latest'])->name('notifications.latest')->middleware('permission:notifications.latest');
+Route::get('/notifications/latest', [\App\Http\Controllers\NotificationController::class, 'latest'])->name('notifications.latest')->middleware(['permission:notifications.latest', 'throttle:60,1']);
 
 // SAP API Integration
 Route::prefix('api/sap')->name('api.sap.')->group(function () {
     // Legacy PO endpoints
-    Route::post('/po/search', [SapController::class, 'searchPO'])->middleware('permission:sap.search_po');
-    Route::get('/po/{poNumber}', [SapController::class, 'getPODetails'])->middleware('permission:sap.get_po_details');
-    Route::post('/slot/sync', [SapController::class, 'syncSlot'])->middleware('permission:sap.sync_slot');
+    Route::post('/po/search', [SapController::class, 'searchPO'])->middleware(['permission:sap.search_po', 'throttle:20,1']);
+    Route::get('/po/{poNumber}', [SapController::class, 'getPODetails'])->middleware(['permission:sap.get_po_details', 'throttle:20,1']);
+    Route::post('/slot/sync', [SapController::class, 'syncSlot'])->middleware(['permission:sap.sync_slot', 'throttle:10,1']);
 
     // New OData V4 endpoints
-    Route::get('/po/odata/search', [SapController::class, 'searchPOOdata'])->name('po.odata.search')->middleware('permission:sap.search_po');
+    Route::get('/po/odata/search', [SapController::class, 'searchPOOdata'])->name('po.odata.search')->middleware(['permission:sap.search_po', 'throttle:20,1']);
 
     // Vendor endpoints
-    Route::get('/vendor/search', [SapController::class, 'searchVendor'])->name('vendor.search')->middleware('permission:sap.search_po');
-    Route::get('/vendor/{vendorCode}', [SapController::class, 'getVendor'])->name('vendor.show')->middleware('permission:sap.search_po');
+    Route::get('/vendor/search', [SapController::class, 'searchVendor'])->name('vendor.search')->middleware(['permission:sap.search_po', 'throttle:20,1']);
+    Route::get('/vendor/{vendorCode}', [SapController::class, 'getVendor'])->name('vendor.show')->middleware(['permission:sap.search_po', 'throttle:20,1']);
 
     // Health check & testing
     Route::get('/health', [SapController::class, 'health'])->name('health')->middleware('permission:sap.health');
-    Route::get('/metadata', [SapController::class, 'metadata']);
-    Route::get('/test-po', [SapController::class, 'testPoConnection'])->name('test.po');
+    Route::get('/metadata', [SapController::class, 'metadata'])->middleware('permission:sap.health');
+    Route::get('/test-po', [SapController::class, 'testPoConnection'])->name('test.po')->middleware('permission:sap.health');
 });
 
 // Trucks
@@ -81,9 +81,9 @@ Route::prefix('gates')->name('gates.')->group(function () {
 
     Route::prefix('ajax')->name('ajax.')->group(function () {
         Route::get('/available-slots', [ReportController::class, 'ajaxAvailableSlots'])->name('available_slots')
-            ->middleware('permission:gates.index');
+            ->middleware(['permission:gates.index', 'throttle:30,1']);
         Route::post('/disabled-times', [ReportController::class, 'ajaxToggleDisabledTime'])->name('disabled_times')
-            ->middleware('permission:gates.index');
+            ->middleware(['permission:gates.index', 'throttle:20,1']);
     });
 
     Route::post('/{gateId}/toggle', [ReportController::class, 'toggleGate'])->whereNumber('gateId')->name('toggle')
@@ -130,8 +130,8 @@ Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('book
     Route::post('/{id}/reschedule', [BookingApprovalController::class, 'reschedule'])->whereNumber('id')->name('reschedule.store')->middleware('permission:bookings.reschedule');
 
     // AJAX
-    Route::get('/ajax/calendar', [BookingApprovalController::class, 'calendarData'])->name('ajax.calendar')->middleware('permission:bookings.ajax.calendar');
-    Route::get('/ajax/pending-count', [BookingApprovalController::class, 'pendingCount'])->name('ajax.pending_count')->middleware('permission:bookings.ajax.pending_count');
-    Route::get('/ajax/reminders', [BookingApprovalController::class, 'reminderData'])->name('ajax.reminders')->middleware('permission:bookings.ajax.reminders');
-    Route::get('/ajax/check-gate', [BookingApprovalController::class, 'ajaxCheckGateAvailability'])->name('ajax.check_gate')->middleware('permission:bookings.ajax.check_gate');
+    Route::get('/ajax/calendar', [BookingApprovalController::class, 'calendarData'])->name('ajax.calendar')->middleware(['permission:bookings.ajax.calendar', 'throttle:30,1']);
+    Route::get('/ajax/pending-count', [BookingApprovalController::class, 'pendingCount'])->name('ajax.pending_count')->middleware(['permission:bookings.ajax.pending_count', 'throttle:60,1']);
+    Route::get('/ajax/reminders', [BookingApprovalController::class, 'reminderData'])->name('ajax.reminders')->middleware(['permission:bookings.ajax.reminders', 'throttle:30,1']);
+    Route::get('/ajax/check-gate', [BookingApprovalController::class, 'ajaxCheckGateAvailability'])->name('ajax.check_gate')->middleware(['permission:bookings.ajax.check_gate', 'throttle:30,1']);
 });

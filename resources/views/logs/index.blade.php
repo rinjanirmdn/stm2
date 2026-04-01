@@ -1,11 +1,11 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Activity Logs - e-Docking Control System')
 @section('page_title', 'Activity Logs')
 
 @section('content')
     <div class="st-card st-mb-12">
-        <form method="GET" class="st-form-row st-mt-4 st-items-end">
+        <div class="st-form-row st-mt-4 st-items-end" id="logs-top-controls">
             <div class="st-form-field st-maxw-250 st-relative">
                 <label class="st-label">Date Range</label>
                 <div id="logs_reportrange" class="st-dashboard-range-picker">
@@ -17,7 +17,7 @@
             <div class="st-form-row st-form-row--gap-4 st-items-end">
                 <div class="st-form-field">
                     <label class="st-label">Type</label>
-                    <select name="type" class="st-select">
+                    <select id="logs-type-filter" class="st-select">
                         <option value="">All</option>
                         @foreach ($allowedTypes as $t)
                             <option value="{{ $t }}" {{ ($type ?? '') === $t ? 'selected' : '' }}>{{ strtolower((string) $t) === 'crud' ? 'CRUD' : ucwords(str_replace('_', ' ', $t)) }}</option>
@@ -26,13 +26,13 @@
                 </div>
                 <div class="st-form-field st-maxw-220">
                     <label class="st-label">Search</label>
-                    <input type="text" name="q" class="st-input" placeholder="MAT DOC / PO / Text" value="{{ $q ?? '' }}">
+                    <input type="text" id="logs-search-input" class="st-input" placeholder="MAT DOC / PO / Text" value="{{ $q ?? '' }}" autocomplete="off">
                 </div>
                 <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
                     <a href="{{ route('logs.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 
     <section class="st-row st-flex-1">
@@ -158,6 +158,8 @@
                                             $typeClass = 'st-activity-type--gate-deactivation';
                                         } elseif ($t === 'late_arrival') {
                                             $typeClass = 'st-activity-type--late-arrival';
+                                        } elseif ($t === 'early_arrival') {
+                                            $typeClass = 'st-activity-type--early-arrival';
                                         }
                                     @endphp
                                     <span class="st-table__status-badge {{ $typeClass }}">
