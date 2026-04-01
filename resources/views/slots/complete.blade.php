@@ -56,7 +56,7 @@
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
                     <label class="st-label">Vehicle Number <span class="st-text--danger-dark">*</span></label>
-                    <input type="text" name="vehicle_number" class="st-input" required value="{{ old('vehicle_number') }}">
+                    <input type="text" name="vehicle_number" class="st-input" required value="{{ old('vehicle_number', $slot->vehicle_number_snap ?? '') }}">
                 </div>
             </div>
 
