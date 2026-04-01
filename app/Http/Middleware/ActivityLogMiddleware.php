@@ -47,15 +47,6 @@ class ActivityLogMiddleware
                 }
             }
 
-            // Avoid logging activity log listing/filter actions, ajax calls, and security dashboard actions we already manual log
-            $routeName = (string) ($request->route()?->getName() ?? '');
-            if (
-                $routeName !== '' && (
-                    str_starts_with($routeName, 'logs.') ||
-                    str_contains($routeName, '.ajax.') ||
-                    in_array($routeName, ['security.scan', 'security.confirm_arrival'], true)
-                )
-            ) {
             // Skip routes that should NOT be auto-logged:
             // - Routes already manually logged in their controllers (slots lifecycle, unplanned, gates, security)
             // - System/internal routes (ajax, livewire generated, debugbar, broadcasting, notifications)
