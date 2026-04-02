@@ -867,7 +867,13 @@ function initVendorBookingCreate(config) {
                 if (plannedTime) {
                     plannedTime.value = time;
                     syncPlannedStart();
-                    loadMiniAvailability(); // Refresh to show updated selection
+                    updateFormState();
+
+                    // Update selection visually — no need to re-fetch
+                    miniAvailability.querySelectorAll('.cb-availability-mini__slot').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
                 }
             });
         });
@@ -1021,6 +1027,13 @@ function initVendorBookingCreate(config) {
             minYear: parseInt(window.moment().format('YYYY'), 10),
             maxYear: parseInt(window.moment().format('YYYY'), 10) + 2,
             startDate: startDate,
+            isInvalidDate: function (date) {
+                // Block Sundays and holidays — they cannot be selected
+                if (date.day() === 0) return true;
+                var ds = date.format('YYYY-MM-DD');
+                if (holidayData[ds]) return true;
+                return false;
+            },
             isCustomDate: function (date) {
                 var ds = date.format('YYYY-MM-DD');
                 var isSunday = date.day() === 0;
@@ -1034,13 +1047,6 @@ function initVendorBookingCreate(config) {
             var iso = start.format('YYYY-MM-DD');
             plannedDate.value = start.format('DD-MM-YYYY');
             plannedDate.dataset.isoValue = iso;
-
-            var ds = iso;
-            if (start.day() === 0) {
-                showVendorToast('The selected date is Sunday', 'warning');
-            } else if (holidayData[ds]) {
-                showVendorToast('The selected date is a holiday: ' + holidayData[ds], 'warning');
-            }
 
             syncPlannedStart();
             loadMiniAvailability();
@@ -1069,6 +1075,19 @@ function initVendorBookingCreate(config) {
             });
             annotateDaterangepickerDays(picker);
         });
+
+        // Close datepicker when the scroll container scrolls to prevent position drift
+        var scrollContainer = document.querySelector('.cb-scroll-container');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('scroll', function () {
+                try {
+                    var drp = window.jQuery(plannedDate).data('daterangepicker');
+                    if (drp && drp.isShowing) {
+                        drp.hide();
+                    }
+                } catch (e) { }
+            }, { passive: true });
+        }
     }
 
     // ── Timepicker with vendor rules ──

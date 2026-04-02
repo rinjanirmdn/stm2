@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     var directionSelect = document.getElementById('direction');
     var truckTypeSelect = document.getElementById('truck_type');
     var poInput = document.getElementById('po_number');
@@ -489,13 +489,13 @@
     }
 
     function updateRiskPreview() {
-        if (!warehouseSelect || !plannedStartInput || !plannedDurationInput || !durationUnitSelect || !riskPreview) return;
+        if (!warehouseSelect || !plannedStartInput || !plannedDurationInput || !riskPreview) return;
 
         var whId = warehouseSelect.value;
         var gateId = gateSelect ? gateSelect.value : '';
         var start = plannedStartInput.value;
         var duration = plannedDurationInput.value;
-        var unit = durationUnitSelect.value;
+        var unit = durationUnitSelect ? durationUnitSelect.value : 'minutes';
 
         if (!whId || !start || !duration) {
             riskPreview.textContent = 'Risk Not Calculated.';
@@ -546,13 +546,13 @@
     }
 
     function checkTimeOverlap() {
-        if (!warehouseSelect || !plannedStartInput || !plannedDurationInput || !durationUnitSelect) return;
+        if (!warehouseSelect || !plannedStartInput || !plannedDurationInput) return;
 
         var whId = warehouseSelect.value;
         var gateId = gateSelect ? gateSelect.value : '';
         var start = plannedStartInput.value;
         var duration = plannedDurationInput.value;
-        var unit = durationUnitSelect.value;
+        var unit = durationUnitSelect ? durationUnitSelect.value : 'minutes';
 
         if (!whId || !start || !duration) {
             if (timeWarning) timeWarning.textContent = '';
@@ -619,12 +619,12 @@
     }
 
     function updateGateRecommendation() {
-        if (!warehouseSelect || !plannedStartInput || !plannedDurationInput || !durationUnitSelect || !gateRecommendation) return;
+        if (!warehouseSelect || !plannedStartInput || !plannedDurationInput || !gateRecommendation) return;
 
         var whId = warehouseSelect.value;
         var start = plannedStartInput.value;
         var duration = plannedDurationInput.value;
-        var unit = durationUnitSelect.value;
+        var unit = durationUnitSelect ? durationUnitSelect.value : 'minutes';
 
         if (!whId || !start || !duration) {
             gateRecommendation.textContent = '';

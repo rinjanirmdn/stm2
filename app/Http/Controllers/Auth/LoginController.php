@@ -147,6 +147,10 @@ class LoginController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
+        if ($user && $user->can('security.dashboard')) {
+            return redirect()->intended(route('security.dashboard'));
+        }
+
         if ($user && $user->can('slots.index')) {
             return redirect()->route('slots.index');
         }

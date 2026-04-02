@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Models\Slot;
 use App\Observers\SlotObserver;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -53,10 +52,7 @@ class AppServiceProvider extends ServiceProvider
         // Register Slot observer
         Slot::observe(SlotObserver::class);
 
-        // Auto-broadcast notifications via WebSocket when stored in database
-        Event::listen(
-            \Illuminate\Notifications\Events\NotificationSent::class,
-            \App\Listeners\BroadcastNotification::class
-        );
+        // BroadcastNotification listener is auto-discovered by Laravel 11.
+        // Do NOT manually register it here — it would cause double broadcasts.
     }
 }
