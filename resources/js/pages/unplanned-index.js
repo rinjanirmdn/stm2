@@ -1,3 +1,5 @@
+import { highlightSearchInTable } from '../utils/search-highlight.js';
+
 document.addEventListener('DOMContentLoaded', function () {
     var filterForm = document.getElementById('unplanned-filter-form');
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
@@ -130,6 +132,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var isLoading = false;
 
+    // Search input reference + debounce timer
+    var searchInput = document.querySelector('input[name="q"][form="unplanned-filter-form"]');
+    var searchDebounceTimer = null;
+
+    function getSearchTerm() {
+        return searchInput ? searchInput.value.trim() : '';
+    }
+
     function appendControlToParams(params, el) {
         if (!el || !el.name || el.disabled) return;
         var tag = String(el.tagName || '').toLowerCase();
@@ -210,6 +220,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (pushState) {
                     window.history.pushState(null, '', url);
                 }
+
+                // Apply search highlight after content loaded
+                var term = getSearchTerm();
+                highlightSearchInTable(filterForm.querySelector('tbody'), term);
             })
             .catch(function (err) {
                 console.error('AJAX reload failed:', err);
@@ -220,6 +234,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.ajaxReload = ajaxReload;
+
+    // Live search: filter as you type (debounced 400ms)
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(function () {
+                ajaxReload(true);
+            }, 400);
+        });
+
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchDebounceTimer);
+                ajaxReload(true);
+            }
+        });
+    }
 
     filterForm.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -249,11 +281,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // NOTE: Filter panel toggle/clear/sort/indicator handled globally in resources/js/pages/main.js
-    // Mark panels as fixed-position so they will be positioned above sticky table headers.
     try {
         filterForm.querySelectorAll('.st-filter-panel').forEach(function (p) {
             if (!p) return;
             p.setAttribute('data-st-position', 'fixed');
         });
     } catch (e) { }
+
+    // Initial highlight on page load
+    if (searchInput && searchInput.value.trim().length >= 2) {
+        highlightSearchInTable(filterForm.querySelector('tbody'), searchInput.value.trim());
+    }
 });

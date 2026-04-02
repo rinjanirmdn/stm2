@@ -1,3 +1,5 @@
+import { highlightSearchInTable } from '../utils/search-highlight.js';
+
 function stReadJson(id, fallback) {
     try {
         var el = document.getElementById(id);
@@ -65,6 +67,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 number++;
             }
         });
+
+        // Apply search highlight
+        highlightSearchInTable(tableBody, term);
     }
 
     if (searchInput) {

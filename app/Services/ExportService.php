@@ -28,7 +28,7 @@ class ExportService
 
             // Header
             fputcsv($out, [
-                'Type', 'PO', 'Ticket', 'MAT DOC', 'Vendor', 'Warehouse',
+                'Type', 'PO', 'Ticket', 'SJ', 'Vendor', 'Warehouse',
                 'Direction', 'Arrival', 'Lead Time', 'Target Status', 'Late?', 'User',
             ]);
 
@@ -117,7 +117,7 @@ class ExportService
         col:nth-child(1) { width: 80px; }  /* Type */
         col:nth-child(2) { width: 120px; } /* PO/DO */
         col:nth-child(3) { width: 100px; } /* Ticket */
-        col:nth-child(4) { width: 100px; } /* MAT DOC */
+        col:nth-child(4) { width: 100px; } /* SJ */
         col:nth-child(5) { width: 150px; } /* Vendor */
         col:nth-child(6) { width: 100px; } /* Warehouse */
         col:nth-child(7) { width: 80px; }  /* Direction */
@@ -187,7 +187,7 @@ class ExportService
                 <th>Type</th>
                 <th>PO/DO Number</th>
                 <th>Ticket</th>
-                <th>MAT DOC</th>
+                <th>SJ</th>
                 <th>Vendor</th>
                 <th>Warehouse</th>
                 <th>Direction</th>
@@ -401,7 +401,7 @@ class ExportService
         if (strpos($text, 'po') !== false || preg_match('/^\d{6,}$/', $text)) {
             return 'PO/DO';
         } elseif (strpos($text, 'mat') !== false) {
-            return 'MAT DOC';
+            return 'SJ';
         } elseif (in_array($text, ['inbound', 'outbound'])) {
             return 'Direction';
         } elseif (strlen($text) >= 10 && preg_match('/[a-zA-Z]/', $text)) {

@@ -4,7 +4,7 @@
             <th>Type</th>
             <th>PO/DO Number</th>
             <th>Ticket</th>
-            <th>MAT DOC</th>
+            <th>SJ</th>
             <th>Vendor</th>
             <th>Warehouse</th>
             <th>Direction</th>

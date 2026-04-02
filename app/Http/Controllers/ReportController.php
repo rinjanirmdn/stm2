@@ -101,17 +101,18 @@ class ReportController extends Controller
             return response()->json([]);
         }
 
-        $like = '%'.$q.'%';
+        $qEscaped = str_replace(['%', '_'], ['\%', '\_'], $q);
+        $like = '%'.strtolower($qEscaped).'%';
 
         $rows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->where('s.status', 'completed')
             ->where(function ($sub) use ($like) {
-                $sub->where('s.po_number', 'like', $like)
-                    ->orWhere('s.ticket_number', 'like', $like)
-                    ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('s.vendor_name', 'like', $like)
-                    ->orWhere('w.wh_name', 'like', $like);
+                $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.ticket_number, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(w.wh_name) like ?', [$like]);
             })
             ->select([
                 's.po_number',
@@ -121,13 +122,13 @@ class ReportController extends Controller
                 'w.wh_name as warehouse_name',
             ])
             ->orderByRaw("CASE
-                WHEN s.po_number LIKE ? THEN 1
-                WHEN s.ticket_number LIKE ? THEN 2
-                WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 3
-                WHEN s.vendor_name LIKE ? THEN 4
-                WHEN w.wh_name LIKE ? THEN 5
+                WHEN LOWER(s.po_number) LIKE ? THEN 1
+                WHEN LOWER(COALESCE(s.ticket_number, '')) LIKE ? THEN 2
+                WHEN LOWER(COALESCE(s.mat_doc, '')) LIKE ? THEN 3
+                WHEN LOWER(COALESCE(s.vendor_name, '')) LIKE ? THEN 4
+                WHEN LOWER(w.wh_name) LIKE ? THEN 5
                 ELSE 6
-            END", [$q.'%', $q.'%', $q.'%', $q.'%', $q.'%'])
+            END", [strtolower($q).'%', strtolower($q).'%', strtolower($q).'%', strtolower($q).'%', strtolower($q).'%'])
             ->orderBy('s.po_number')
             ->limit(10)
             ->get();

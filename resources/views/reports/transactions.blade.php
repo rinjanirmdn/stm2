@@ -14,7 +14,7 @@
                         name="q"
                         form="transactions-filter-form"
                         class="st-input"
-                        placeholder="PO, Ticket, MAT DOC, Vendor, Etc"
+                        placeholder="PO, Ticket, SJ, Vendor, Etc"
                         value="{{ $q ?? '' }}"
                     >
                     <div id="transaction-search-suggestions" class="st-suggestions st-suggestions--transactions st-hidden"></div>
@@ -147,20 +147,20 @@
                                     </th>
                                     <th>
                                         <div class="st-colhead">
-                                            <span class="st-colhead__label">MAT DOC</span>
+                                            <span class="st-colhead__label">SJ</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" data-type="text" title="Sort">â‡…</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="mat_doc">
-                                                <div class="st-font-semibold st-mb-6">MAT DOC Filter</div>
-                                                <input type="text" name="mat_doc" class="st-input" placeholder="Search MAT DOC..." value="{{ $mat_doc ?? '' }}">
+                                                <div class="st-font-semibold st-mb-6">SJ Filter</div>
+                                                <input type="text" name="mat_doc" class="st-input" placeholder="Search SJ..." value="{{ $mat_doc ?? '' }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
                                                 </div>
                                             </div>
                                             <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="mat_doc">
-                                                <div class="st-font-semibold st-mb-6">Sort MAT DOC</div>
+                                                <div class="st-font-semibold st-mb-6">Sort SJ</div>
                                                 <button type="button" class="st-sort-option st-sort-option--compact" data-sort="mat_doc" data-dir="asc">
                                                     A-Z
                                                 </button>

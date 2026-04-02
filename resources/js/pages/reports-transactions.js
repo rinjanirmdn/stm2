@@ -1,4 +1,6 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+import { highlightSearchInTable } from '../utils/search-highlight.js';
+
+document.addEventListener('DOMContentLoaded', function () {
     function readJsonScript(id, fallback) {
         var el = document.getElementById(id);
         if (!el) return fallback;
@@ -195,6 +197,11 @@
                 if (pushState) {
                     window.history.pushState(null, '', url);
                 }
+
+                // Apply search highlight after content loaded
+                var searchEl = document.querySelector('input[name="q"]');
+                var term = searchEl ? searchEl.value.trim() : '';
+                highlightSearchInTable(tableBody, term);
             })
             .catch(function (err) {
                 console.error('AJAX reload failed:', err);
@@ -557,4 +564,10 @@
             document.querySelectorAll('.st-sort-panel').forEach(p => p.style.display = 'none');
         }
     });
+
+    // Initial highlight on page load
+    var searchInputHL = document.querySelector('input[name="q"]');
+    if (searchInputHL && searchInputHL.value.trim().length >= 2) {
+        highlightSearchInTable(tableBody, searchInputHL.value.trim());
+    }
 });

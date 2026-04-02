@@ -26,7 +26,7 @@
                 </div>
                 <div class="st-form-field st-maxw-220">
                     <label class="st-label">Search</label>
-                    <input type="text" id="logs-search-input" class="st-input" placeholder="MAT DOC / PO / Text" value="{{ $q ?? '' }}" autocomplete="off">
+                    <input type="text" id="logs-search-input" class="st-input" placeholder="Search..." value="{{ $q ?? '' }}" autocomplete="off">
                 </div>
                 <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
                     <a href="{{ route('logs.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
@@ -77,22 +77,6 @@
                                             <span class="st-colhead__label">Description</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="description" data-type="text" title="Sort">â‡…</button>
-                                            </span>
-                                        </div>
-                                    </th>
-                                    <th class="st-table-col-150 st-th-center">
-                                        <div class="st-colhead">
-                                            <span class="st-colhead__label">MAT DOC</span>
-                                            <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" data-type="text" title="Sort">â‡…</button>
-                                            </span>
-                                        </div>
-                                    </th>
-                                    <th class="st-table-col-150 st-th-center">
-                                        <div class="st-colhead">
-                                            <span class="st-colhead__label">PO</span>
-                                            <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" data-type="text" title="Sort">â‡…</button>
                                             </span>
                                         </div>
                                     </th>
@@ -167,13 +151,11 @@
                                     </span>
                                 </td>
                                 <td>{{ $formatDescription($row->description ?? '') }}</td>
-                                <td class="st-td-center">{{ $row->slot_mat_doc ?? '-' }}</td>
-                                <td class="st-td-center">{{ $row->slot_po_number ?? '-' }}</td>
                                 <td class="st-td-center">{{ $row->created_by_name ?? $row->created_by_email ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Logs Found</td>
+                                <td colspan="4" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Logs Found</td>
                             </tr>
                         @endforelse
                         </tbody>
