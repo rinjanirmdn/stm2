@@ -1,4 +1,4 @@
-﻿@extends('vendor.layouts.vendor')
+@extends('vendor.layouts.vendor')
 
 @section('title', 'My Bookings - Vendor Portal')
 
@@ -73,6 +73,7 @@
                 </form>
 
     <!-- Booking Rows -->
+    <div id="vendor-booking-list">
     @if($bookings->count() > 0)
         @foreach($bookings as $booking)
         @php
@@ -168,6 +169,7 @@
             <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary mb-empty__action">Create Booking</a>
         </div>
     @endif
+    </div>
             </div>
         </div>
     </div>

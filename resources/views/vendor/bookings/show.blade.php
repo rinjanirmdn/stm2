@@ -248,4 +248,33 @@
     </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        window.ajaxReload = function(pushState) {
+            if (window.__isLoadingAjax) return;
+            window.__isLoadingAjax = true;
+            
+            var container = document.querySelector('.vendor-card');
+
+            var url = window.location.href;
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function(res) { return res.text(); })
+            .then(function(html) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                var newContainer = doc.querySelector('.vendor-card');
+                var currentContainer = document.querySelector('.vendor-card');
+                
+                if (currentContainer && newContainer) {
+                    currentContainer.innerHTML = newContainer.innerHTML;
+                }
+            })
+            .finally(function() {
+                window.__isLoadingAjax = false;
+            });
+        };
+    });
+</script>
+@endpush
 @endsection

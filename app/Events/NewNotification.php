@@ -26,13 +26,19 @@ class NewNotification implements ShouldBroadcast
 
     public ?string $notificationId;
 
-    public function __construct(int $userId, string $title, string $message, ?string $url = null, ?string $notificationId = null)
+    public ?string $icon;
+
+    public ?string $color;
+
+    public function __construct(int $userId, string $title, string $message, ?string $url = null, ?string $notificationId = null, ?string $icon = null, ?string $color = null)
     {
         $this->userId = $userId;
         $this->title = $title;
         $this->message = $message;
         $this->url = $url;
         $this->notificationId = $notificationId;
+        $this->icon = $icon;
+        $this->color = $color;
     }
 
     /**
@@ -57,6 +63,8 @@ class NewNotification implements ShouldBroadcast
             'title' => $this->title,
             'message' => $this->message,
             'url' => $this->url,
+            'icon' => $this->icon,
+            'color' => $this->color,
             'timestamp' => now()->toIso8601String(),
         ];
     }

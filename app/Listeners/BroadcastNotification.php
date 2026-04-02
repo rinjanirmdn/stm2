@@ -29,12 +29,23 @@ class BroadcastNotification
             : [];
 
         try {
+            $notifId = null;
+            if (is_object($event->response) && isset($event->response->id)) {
+                $notifId = (string) $event->response->id;
+            } elseif (is_array($event->response) && isset($event->response['id'])) {
+                $notifId = (string) $event->response['id'];
+            } elseif (is_string($event->response)) {
+                $notifId = $event->response;
+            }
+
             broadcast(new NewNotification(
                 userId: (int) $notifiable->id,
                 title: $data['title'] ?? 'Notification',
                 message: $data['message'] ?? '',
                 url: $data['action_url'] ?? null,
-                notificationId: $event->response ?? null,
+                notificationId: $notifId,
+                icon: $data['icon'] ?? null,
+                color: $data['color'] ?? null,
             ));
         } catch (\Throwable $e) {
             // Don't let broadcast failures break the notification flow

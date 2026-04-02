@@ -469,6 +469,17 @@ class BookingApprovalService
                     'reason' => 'This time is already occupied by another booking',
                 ];
             }
+
+            // Validate WH2 Gate B/C window rule
+            $bcCheck = $this->slotService->validateWh2BcPlannedWindow(
+                $gateId, $startDt, $endDt, $excludeSlotId
+            );
+            if (empty($bcCheck['ok'])) {
+                return [
+                    'available' => false,
+                    'reason' => $bcCheck['message'] ?? 'Gate B/C window rule not satisfied',
+                ];
+            }
         }
 
         // Calculate blocking risk
@@ -681,6 +692,25 @@ class BookingApprovalService
                         'vendor_id' => $vendor->id,
                         'type' => BookingApproved::class,
                     ]);
+
+                    // Manually broadcast WebSocket notification to vendor.
+                    // Since we call DatabaseChannel::send() directly (not $vendor->notify()),
+                    // the NotificationSent event is never fired, so BroadcastNotification
+                    // listener never triggers. Broadcast manually for real-time toast.
+                    try {
+                        $data = $notification->toArray($vendor);
+                        broadcast(new \App\Events\NewNotification(
+                            userId: (int) $vendor->id,
+                            title: $data['title'] ?? 'Notification',
+                            message: $data['message'] ?? '',
+                            url: $data['action_url'] ?? null,
+                            notificationId: (string) $notification->id,
+                            icon: $data['icon'] ?? null,
+                            color: $data['color'] ?? null,
+                        ));
+                    } catch (\Throwable $broadcastErr) {
+                        // Don't break notification flow if broadcast fails
+                    }
                 } catch (\Throwable $e) {
                     Log::warning('Failed to store approval notification (database): '.$e->getMessage(), [
                         'slot_id' => $slot->id,

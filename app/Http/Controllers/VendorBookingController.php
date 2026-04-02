@@ -757,43 +757,13 @@ class VendorBookingController extends Controller
                 }
             }
 
-            // Get all existing slots for the date - optimized query
-            Log::info('Getting slots for date: '.$date);
-            $existingSlots = Slot::whereDate('planned_start', $date)
-                ->whereIn('status', [
-                    Slot::STATUS_PENDING_APPROVAL,
-                    Slot::STATUS_SCHEDULED,
-                    Slot::STATUS_ARRIVED,
-                    Slot::STATUS_WAITING,
-                    Slot::STATUS_IN_PROGRESS,
-                ])
-                ->select('planned_start', 'planned_duration', 'planned_gate_id')
-                ->get();
-
-            Log::info('Found '.$existingSlots->count().' slots');
-
-            // Build time conflicts map
-            $timeConflicts = [];
-            foreach ($existingSlots as $slot) {
-                $slotStart = strtotime($slot->planned_start->format('H:i'));
-                // Calculate end time based on duration
-                $slotEnd = strtotime('+ '.$slot->planned_duration.' minutes', $slotStart);
-
-                $currentTime = $slotStart;
-                while ($currentTime < $slotEnd) {
-                    $timeKey = date('H:i', $currentTime);
-                    if (! isset($timeConflicts[$timeKey])) {
-                        $timeConflicts[$timeKey] = [];
-                    }
-                    $timeConflicts[$timeKey][] = $slot->planned_gate_id;
-                    $currentTime = strtotime('+30 minutes', $currentTime);
-                }
-            }
-
             // Get all active gates - cached query
             $totalGates = Cache::remember('active_gates_count', 3600, function () {
                 return Gate::where('is_active', true)->count();
             });
+
+            // Retrieve all active gates to check true backend availability
+            $gates = Gate::where('is_active', true)->with('warehouse')->get();
 
             // Check availability for each time slot (for the whole duration window)
             $availableSlots = [];
@@ -859,21 +829,31 @@ class VendorBookingController extends Controller
                     continue;
                 }
 
-                $conflictedGates = [];
-                foreach ($durationSlices as $sliceTime) {
-                    if (! empty($timeConflicts[$sliceTime])) {
-                        $conflictedGates = array_merge($conflictedGates, $timeConflicts[$sliceTime]);
-                    }
-                }
-                $availableGates = $totalGates - count(array_unique($conflictedGates));
-                $isAvailable = $availableGates > 0;
+                $availableGates = 0;
+                $isAvailable = false;
+
                 if ($blockedByAdmin) {
                     $isAvailable = false;
                     $availableGates = 0;
-                }
-                if ($forcedByAdmin) {
+                } elseif ($forcedByAdmin) {
                     $isAvailable = true;
-                    $availableGates = max(1, $availableGates);
+                    $availableGates = max(1, $totalGates);
+                } else {
+                    $candidateStart = $date . ' ' . $time . ':00';
+                    foreach ($gates as $gate) {
+                        $result = $this->bookingService->checkAvailability(
+                            $gate->warehouse_id,
+                            $gate->id,
+                            $candidateStart,
+                            $plannedDuration,
+                            null
+                        );
+                        if (!empty($result['available'])) {
+                            $availableGates++;
+                            break; // Early exit: we only need to know >= 1 is available
+                        }
+                    }
+                    $isAvailable = ($availableGates > 0);
                 }
 
                 $availableSlots[] = [
