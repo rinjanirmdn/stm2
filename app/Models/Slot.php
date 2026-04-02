@@ -245,19 +245,22 @@ class Slot extends Model
         static::created(function ($model) {
             try {
                 broadcast(new \App\Events\SlotDataChanged('slot', 'created', $model->id));
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         });
 
         static::updated(function ($model) {
             try {
                 broadcast(new \App\Events\SlotDataChanged('slot', 'updated', $model->id));
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         });
 
         static::deleted(function ($model) {
             try {
                 broadcast(new \App\Events\SlotDataChanged('slot', 'deleted', $model->id));
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         });
     }
 }

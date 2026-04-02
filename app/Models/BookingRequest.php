@@ -68,19 +68,22 @@ class BookingRequest extends Model
         static::created(function ($model) {
             try {
                 broadcast(new \App\Events\SlotDataChanged('booking', 'created', $model->id));
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         });
 
         static::updated(function ($model) {
             try {
                 broadcast(new \App\Events\SlotDataChanged('booking', 'updated', $model->id));
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         });
 
         static::deleted(function ($model) {
             try {
                 broadcast(new \App\Events\SlotDataChanged('booking', 'deleted', $model->id));
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         });
     }
 }

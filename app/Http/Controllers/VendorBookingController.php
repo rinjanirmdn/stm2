@@ -839,7 +839,7 @@ class VendorBookingController extends Controller
                     $isAvailable = true;
                     $availableGates = max(1, $totalGates);
                 } else {
-                    $candidateStart = $date . ' ' . $time . ':00';
+                    $candidateStart = $date.' '.$time.':00';
                     foreach ($gates as $gate) {
                         $result = $this->bookingService->checkAvailability(
                             $gate->warehouse_id,
@@ -848,7 +848,7 @@ class VendorBookingController extends Controller
                             $plannedDuration,
                             null
                         );
-                        if (!empty($result['available'])) {
+                        if (! empty($result['available'])) {
                             $availableGates++;
                             break; // Early exit: we only need to know >= 1 is available
                         }
