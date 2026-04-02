@@ -220,6 +220,8 @@
     max-width: 1400px;
     margin: 0 auto;
     padding: 18px 20px 28px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Components */
@@ -3632,6 +3634,16 @@
     flex: 1;
     overflow-y: auto;
     background: #f1f5f9;
+    position: relative;
+    z-index: 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+.vendor-header {
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    pointer-events: auto;
 }
 
 .vendor-page--bookings-create .cb-content-container {

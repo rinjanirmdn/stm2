@@ -418,20 +418,28 @@ function initVendorDashboardCharts() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    initVendorHeaderUserMenu();
+    initVendorNotifications();
+    bootVendorDashboardDateRange();
+
     const bookingConfig = window.vendorBookingCreateConfig || stReadJson('vendor_booking_create_config', null);
     const availabilityConfig = window.vendorAvailabilityConfig || stReadJson('vendor_availability_config', null);
 
     if (bookingConfig) {
-        initVendorBookingCreate(bookingConfig);
+        try {
+            initVendorBookingCreate(bookingConfig);
+        } catch(e) {
+            console.error("Error in initVendorBookingCreate:", e);
+        }
     }
 
     if (availabilityConfig) {
-        initVendorAvailability(availabilityConfig);
+        try {
+            initVendorAvailability(availabilityConfig);
+        } catch(e) {
+            console.error("Error in initVendorAvailability:", e);
+        }
     }
-
-    bootVendorDashboardDateRange();
-    initVendorNotifications();
-    initVendorHeaderUserMenu();
 
     // Auto-dismiss alerts after 5 seconds
     document.querySelectorAll('.vendor-alert--autodismiss').forEach(function (alert) {
@@ -442,6 +450,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initVendorHeaderUserMenu() {
+    console.log("initVendorHeaderUserMenu CALLED");
     const menuBtn = document.getElementById('vendor-user-menu-btn');
     const menu = document.getElementById('vendor-user-menu');
     const notifProxy = document.getElementById('vendor-user-menu-notif');
@@ -532,9 +541,11 @@ function initVendorHeaderUserMenu() {
 
     menuBtn.addEventListener('click', function (e) {
         e.stopPropagation();
+        console.log("MENU BTN CLICKED", menuBtn);
         const isOpening = !menu.classList.contains('vendor-header__user-menu--open') && !menu.classList.contains('show');
         menu.classList.toggle('vendor-header__user-menu--open');
         menu.classList.toggle('show');
+        console.log("Menu has show class?", menu.classList.contains('show'));
 
         if (isOpening) {
             moveCountToBellInMenu();
