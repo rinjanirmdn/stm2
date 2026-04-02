@@ -1,0 +1,42 @@
+[
+    {
+        "id": "380ec531-cda3-4c73-81ac-ef42428701b6",
+        "type": "App\\Notifications\\BookingRequestSubmitted",
+        "notifiable_type": "App\\Models\\User",
+        "notifiable_id": 16,
+        "data": "{\"title\":\"New Booking Request\",\"message\":\"Request from PT Master Label for PO 4110002210\",\"action_url\":\"\\\/bookings\\\/53\",\"icon\":\"fas fa-plus-circle\",\"color\":\"blue\"}",
+        "read_at": null,
+        "created_at": "2026-04-02 10:11:35",
+        "updated_at": "2026-04-02 10:11:35"
+    },
+    {
+        "id": "202774c7-a34d-4618-8f95-d77bb0310925",
+        "type": "App\\Notifications\\BookingRejected",
+        "notifiable_type": "App\\Models\\User",
+        "notifiable_id": 27,
+        "data": "{\"title\":\"Booking Rejected\",\"message\":\"Your booking 4110002520 has been rejected.\",\"action_url\":\"\\\/vendor\\\/bookings\\\/52\",\"icon\":\"fas fa-times-circle\",\"color\":\"red\"}",
+        "read_at": null,
+        "created_at": "2026-04-02 10:01:48",
+        "updated_at": "2026-04-02 10:01:48"
+    },
+    {
+        "id": "01284711-f0bf-41ba-93fd-d035945a8502",
+        "type": "App\\Notifications\\BookingRequestSubmitted",
+        "notifiable_type": "App\\Models\\User",
+        "notifiable_id": 16,
+        "data": "{\"title\":\"New Booking Request\",\"message\":\"Request from PT Master Label for PO 4110002520\",\"action_url\":\"\\\/bookings\\\/52\",\"icon\":\"fas fa-plus-circle\",\"color\":\"blue\"}",
+        "read_at": "2026-04-02 10:01:13",
+        "created_at": "2026-04-02 10:00:58",
+        "updated_at": "2026-04-02 10:01:13"
+    },
+    {
+        "id": "5198b040-fb80-4c04-95ec-7e28b74600d0",
+        "type": "App\\Notifications\\BookingRejected",
+        "notifiable_type": "App\\Models\\User",
+        "notifiable_id": 27,
+        "data": "{\"title\":\"Booking Rejected\",\"message\":\"Your booking 4110002210 has been rejected.\",\"action_url\":\"\\\/vendor\\\/bookings\\\/51\",\"icon\":\"fas fa-times-circle\",\"color\":\"red\"}",
+        "read_at": null,
+        "created_at": "2026-04-02 09:58:11",
+        "updated_at": "2026-04-02 09:58:11"
+    }
+]

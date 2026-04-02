@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
     function toIsoDate(date) {
@@ -255,4 +255,28 @@
             return [true, '', ''];
         });
     });
+
+    window.ajaxReload = function(pushState) {
+        if (window.__isLoadingAjax) return;
+        window.__isLoadingAjax = true;
+        
+        var container = document.getElementById('vendor-booking-list');
+        var tabs = document.querySelector('.mb-tabs');
+
+        var url = window.location.href;
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function(res) { return res.text(); })
+        .then(function(html) {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            
+            var newContainer = doc.getElementById('vendor-booking-list');
+            if (container && newContainer) container.innerHTML = newContainer.innerHTML;
+            
+            var newTabs = doc.querySelector('.mb-tabs');
+            if (tabs && newTabs) tabs.innerHTML = newTabs.innerHTML;
+        })
+        .finally(function() {
+            window.__isLoadingAjax = false;
+        });
+    };
 });

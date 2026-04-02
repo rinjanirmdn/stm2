@@ -1,4 +1,4 @@
-﻿function stReadJson(id, fallback) {
+function stReadJson(id, fallback) {
     try {
         var el = document.getElementById(id);
         if (!el) return fallback;
@@ -106,6 +106,9 @@ window.openApproveModal = function (id, ticket) {
 
         availabilityBox.textContent = 'Checking availability...';
         availabilityBox.className = 'st-text-12 st-mt-4';
+        
+        const submitBtn = document.querySelector('#approveForm button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
 
         fetch(url, {
             method: 'GET',
@@ -120,10 +123,12 @@ window.openApproveModal = function (id, ticket) {
 
                 availabilityBox.textContent = reason ? (label + ' - ' + reason) : label;
                 availabilityBox.className = 'st-text-12 st-mt-4 ' + (ok ? 'st-text-success' : 'st-text-danger');
+                if (submitBtn) submitBtn.disabled = !ok;
             })
             .catch(function () {
                 availabilityBox.textContent = 'Not Available';
                 availabilityBox.className = 'st-text-12 st-mt-4 st-text-danger';
+                if (submitBtn) submitBtn.disabled = true;
             });
     }
 
