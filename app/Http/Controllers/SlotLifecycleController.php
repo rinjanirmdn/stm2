@@ -440,8 +440,10 @@ class SlotLifecycleController extends Controller
         }
 
         $matDoc = trim((string) $request->input('mat_doc', ''));
-        // Truck type comes from slot data, not from form
-        $truckType = (string) ($slot->truck_type ?? '');
+        $truckType = trim((string) $request->input('truck_type', ''));
+        if ($truckType === '') {
+            $truckType = trim((string) ($slot->truck_type ?? ''));
+        }
         $vehicleNumber = trim((string) $request->input('vehicle_number', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
@@ -477,7 +479,7 @@ class SlotLifecycleController extends Controller
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $slotInfo->actual_finish, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (MAT DOC: '.$matDoc.', Truck: '.$truckType.', Vehicle: '.$vehicleNumber.', Driver: '.$driverNumber.')');
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (SJ: '.$matDoc.', Truck: '.$truckType.', Vehicle: '.$vehicleNumber.', Driver: '.$driverNumber.')');
         });
 
         return redirect()->route('slots.index')->with('success', 'Data completed');
@@ -557,7 +559,12 @@ class SlotLifecycleController extends Controller
 
         // Redirect to unplanned show instead of slots show
         if ($result instanceof \Illuminate\Http\RedirectResponse) {
-            return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned completed');
+            $successTarget = route('slots.index');
+            if ($result->getTargetUrl() === $successTarget) {
+                return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned completed');
+            }
+
+            return $result;
         }
 
         return $result;

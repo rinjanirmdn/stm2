@@ -502,6 +502,97 @@ document.addEventListener('DOMContentLoaded', function () {
             line.style.top = top + 'px';
         }
     });
+
+    // Current time line: follow real clock and active shift filter
+    (function initCurrentTimeLine() {
+        var line = document.querySelector('.st-dock-time-line');
+        if (!line) return;
+
+        function pad2n(v) {
+            return String(v).padStart(2, '0');
+        }
+
+        function isoDateLocal(d) {
+            return d.getFullYear() + '-' + pad2n(d.getMonth() + 1) + '-' + pad2n(d.getDate());
+        }
+
+        function getActiveShift() {
+            var activeBtn = shiftFilter ? shiftFilter.querySelector('.st-dock-shift-btn--active') : null;
+            return activeBtn ? String(activeBtn.getAttribute('data-shift') || '') : '';
+        }
+
+        function getShiftRange(shift) {
+            // Keep these in sync with shiftRanges in this file.
+            if (shift === 'shift1') return { start: 7, end: 15 };
+            if (shift === 'shift2') return { start: 15, end: 23 };
+            if (shift === 'shift3') return { start: 23, end: 7, wrap: true };
+            return { start: 0, end: 23 };
+        }
+
+        function buildHours(range) {
+            var hours = [];
+            if (range.wrap) {
+                for (var h = range.start; h <= 23; h++) hours.push(h);
+                for (var h2 = 0; h2 <= range.end; h2++) hours.push(h2);
+            } else {
+                for (var h3 = range.start; h3 <= range.end; h3++) hours.push(h3);
+            }
+            return hours;
+        }
+
+        function buildHourMap(hours) {
+            var map = {};
+            for (var i = 0; i < hours.length; i++) map[hours[i]] = i;
+            return map;
+        }
+
+        function updateLinePosition() {
+            if (!paramDate) {
+                line.style.display = 'none';
+                return;
+            }
+
+            var now = new Date();
+            var todayStr = isoDateLocal(now);
+            if (String(paramDate) !== todayStr) {
+                line.style.display = 'none';
+                return;
+            }
+
+            var shift = getActiveShift();
+            var range = getShiftRange(shift);
+            var hours = buildHours(range);
+            var hourMap = buildHourMap(hours);
+            var slotHeight = 60;
+
+            var h = now.getHours();
+            var m = now.getMinutes();
+
+            // Only show if current hour exists in current visible range
+            if (typeof hourMap[h] === 'undefined') {
+                line.style.display = 'none';
+                return;
+            }
+
+            line.style.display = '';
+            line.style.top = (hourMap[h] * slotHeight + m) + 'px';
+            line.setAttribute('title', 'Current Time: ' + pad2n(h) + ':' + pad2n(m));
+        }
+
+        // Initial update + keep updating
+        updateLinePosition();
+        window.setInterval(function () {
+            if (document.hidden) return;
+            updateLinePosition();
+        }, 15000);
+
+        // Also update after shift filter changes
+        if (shiftFilter) {
+            shiftFilter.addEventListener('click', function () {
+                window.setTimeout(updateLinePosition, 0);
+            });
+        }
+    })();
 });
 
 window.openApproveModal = function (id, ticket) {

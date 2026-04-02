@@ -1,3 +1,5 @@
+import { highlightSearchInTable } from '../utils/search-highlight.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     var userFilterForm = document.getElementById('user-filter-form');
     if (!userFilterForm) return;
@@ -85,6 +87,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (pushState) {
                     window.history.pushState(null, '', url);
                 }
+
+                // Apply search highlight after content loaded
+                var globalSearchEl = document.querySelector('.st-card.st-mb-12 input[name="q"]');
+                var term = globalSearchEl ? globalSearchEl.value.trim() : '';
+                highlightSearchInTable(userFilterForm.querySelector('tbody'), term);
             })
             .catch(function (err) {
                 console.error('AJAX reload failed:', err);
@@ -117,6 +124,25 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         ajaxReload(true);
     });
+
+    // Debounced search for the global search box outside the form
+    var globalSearchInput = document.querySelector('.st-card.st-mb-12 input[name="q"]');
+    if (globalSearchInput) {
+        var globalSearchTimer = null;
+        globalSearchInput.addEventListener('input', function () {
+            clearTimeout(globalSearchTimer);
+            globalSearchTimer = setTimeout(function () {
+                ajaxReload(true);
+            }, 400);
+        });
+        globalSearchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(globalSearchTimer);
+                ajaxReload(true);
+            }
+        });
+    }
 
     window.addEventListener('popstate', function () {
         var params = new URLSearchParams(window.location.search);
@@ -173,4 +199,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var name = btn.getAttribute('data-user-name');
         showDeleteDialog(url, name);
     });
+
+    // Initial highlight on page load
+    var searchInputHL = document.querySelector('.st-card.st-mb-12 input[name="q"]');
+    if (searchInputHL && searchInputHL.value.trim().length >= 2) {
+        highlightSearchInTable(userFilterForm.querySelector('tbody'), searchInputHL.value.trim());
+    }
 });

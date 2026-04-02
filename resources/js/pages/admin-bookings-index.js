@@ -1,4 +1,6 @@
-﻿function stReadJson(id, fallback) {
+import { highlightSearchInTable } from '../utils/search-highlight.js';
+
+function stReadJson(id, fallback) {
     try {
         var el = document.getElementById(id);
         if (!el) return fallback;
@@ -130,6 +132,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (pushState) {
                     window.history.pushState(null, '', url);
                 }
+
+                // Apply search highlight after content loaded
+                var searchEl = document.querySelector('input[name="search"][form="booking-filter-form"]')
+                    || (bookingFilterForm ? bookingFilterForm.querySelector('input[name="search"]') : null);
+                var term = searchEl ? searchEl.value.trim() : '';
+                highlightSearchInTable(bookingFilterForm ? bookingFilterForm.querySelector('tbody') : null, term);
             })
             .catch(function (err) {
                 console.error('AJAX reload failed:', err);
@@ -216,6 +224,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } catch (e) {}
+
+        // Initial highlight on page load
+        var searchInputHL = document.querySelector('input[name="search"][form="booking-filter-form"]')
+            || bookingFilterForm.querySelector('input[name="search"]');
+        if (searchInputHL && searchInputHL.value.trim().length >= 2) {
+            highlightSearchInTable(bookingFilterForm.querySelector('tbody'), searchInputHL.value.trim());
+        }
     }
 });
 

@@ -366,12 +366,12 @@
                 <!-- Current Time Indicator (Red Line) -->
                 @php
                     $now = now();
-                    $startHr = 7;
-                    $endHr = 23;
-                    // Calculate pixels: (CurrentHour - 7) * 60 + CurrentMinute
-                    $currentPx = ($now->hour - $startHr) * 60 + $now->minute;
-                    // Only show if within the grid hours
-                    $showLine = $now->hour >= $startHr && $now->hour <= $endHr;
+                    $selectedDate = (string) ($paramDate ?? '');
+                    $todayDate = now()->toDateString();
+
+                    // 24h grid: 00:00 - 23:59
+                    $currentPx = ($now->hour * 60) + $now->minute;
+                    $showLine = $selectedDate === $todayDate;
                 @endphp
 
                 @if($showLine)

@@ -15,7 +15,7 @@
                             name="q"
                             form="unplanned-filter-form"
                             class="st-input"
-                            placeholder="PO, MAT DOC, Vendor, Etc"
+                            placeholder="PO, SJ, Vendor, Etc"
                             value="{{ request('q') }}"
                         >
                     </div>
@@ -74,14 +74,14 @@
                                 </th>
                                 <th>
                                     <div class="st-colhead">
-                                        <span class="st-colhead__label">MAT DOC</span>
+                                        <span class="st-colhead__label">SJ</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">⏷</button>
                                         </span>
                                         <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="mat_doc">
-                                            <div class="st-font-semibold st-mb-6">MAT DOC Filter</div>
-                                            <input type="text" name="mat_doc" form="unplanned-filter-form" class="st-input" placeholder="Search MAT DOC..." value="{{ request('mat_doc') }}">
+                                            <div class="st-font-semibold st-mb-6">SJ Filter</div>
+                                            <input type="text" name="mat_doc" form="unplanned-filter-form" class="st-input" placeholder="Search SJ..." value="{{ request('mat_doc') }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
                                             </div>
@@ -289,6 +289,7 @@
                 </tbody>
             </table>
         </div>
+    </form>
     </div>
     @push('scripts')
     @vite(['resources/js/pages/unplanned-index.js'])

@@ -218,7 +218,7 @@
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
-                            <div class="st-detail-label">MAT DOC</div>
+                            <div class="st-detail-label">SJ</div>
                             <div class="st-detail-colon">:</div>
                             <div class="st-detail-value">{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</div>
                         </div>

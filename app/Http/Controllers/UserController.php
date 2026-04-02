@@ -112,13 +112,14 @@ class UserController extends Controller
             $usersQ->where('md_users.is_active', $is_active === '1' ? 1 : 0);
         }
 
-        // Legacy search filter (q parameter)
+        // Legacy search filter (q parameter - uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
         if ($q !== '') {
-            $like = '%'.$q.'%';
+            $qEscaped = str_replace(['%', '_'], ['\%', '\_'], $q);
+            $like = '%'.strtolower($qEscaped).'%';
             $usersQ->where(function ($sub) use ($like) {
                 $sub
-                    ->where('md_users.nik', 'like', $like)
-                    ->orWhere('md_users.full_name', 'like', $like);
+                    ->whereRaw('LOWER(md_users.nik) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(md_users.full_name, \'\')) like ?', [$like]);
             });
         }
 

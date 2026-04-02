@@ -1924,7 +1924,7 @@ body {
 
 /* Search result highlight */
 mark.st-search-highlight {
-    background: #fef08a;
+    background: #fed7aa;
     color: inherit;
     padding: 1px 2px;
     border-radius: 3px;
@@ -1933,8 +1933,8 @@ mark.st-search-highlight {
 }
 
 @keyframes st-highlight-pulse {
-    0% { background: #facc15; }
-    100% { background: #fef08a; }
+    0% { background: #fb923c; }
+    100% { background: #fed7aa; }
 }
 
 /* Small buttons & utilities */

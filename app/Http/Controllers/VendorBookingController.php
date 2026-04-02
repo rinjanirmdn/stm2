@@ -354,13 +354,15 @@ class VendorBookingController extends Controller
             $baseQuery->whereDate('planned_start', '<=', $request->date_to);
         }
 
-        // Search by ticket number
+        // Search (uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
         if ($request->filled('search')) {
             $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
-            $baseQuery->where(function ($q) use ($search) {
-                $q->where('request_number', 'like', "%{$search}%")
-                    ->orWhere('po_number', 'like', "%{$search}%")
-                    ->orWhere('vehicle_number', 'like', "%{$search}%");
+            $like = '%'.strtolower($search).'%';
+            $baseQuery->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(booking_requests.vehicle_number, \'\')) like ?', [$like]);
             });
         }
 

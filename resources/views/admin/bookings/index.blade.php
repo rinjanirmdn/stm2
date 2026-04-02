@@ -60,7 +60,7 @@
                         <input type="hidden" name="date_to" id="date_to" form="booking-filter-form" value="{{ request('date_to') }}">
                     </div>
                     <div class="st-form-field st-minw-80 st-flex-0 st-flex st-justify-end">
-                        <a href="{{ route('bookings.index', ['status' => $status]) }}" class="st-btn st-btn--outline-primary st-text-12 st-py-2 st-px-10 st-h-24">Reset</a>
+                        <a href="{{ route('bookings.index') }}" class="st-btn st-btn--outline-primary st-text-12 st-py-2 st-px-10 st-h-24" id="booking-reset-btn">Reset</a>
                     </div>
                 </div>
             </div>

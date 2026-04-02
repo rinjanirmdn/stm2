@@ -57,7 +57,7 @@
                         <div class="st-form-field st-maxw-260">
                             <label class="st-label">Search</label>
                             <div class="st-input-wrap">
-                                <input type="text" name="q" form="slot-filter-form" class="st-input" placeholder="Truck, MAT DOC, Vendor, Etc" value="{{ $search }}">
+                                <input type="text" name="q" form="slot-filter-form" class="st-input" placeholder="Truck, SJ, Vendor, Etc" value="{{ $search }}">
                                 <div id="slot-search-suggestions" class="st-suggestions st-hidden"></div>
                             </div>
                         </div>
@@ -115,14 +115,14 @@
                                 </th>
                                 <th>
                                     <div class="st-colhead">
-                                        <span class="st-colhead__label">MAT DOC</span>
+                                        <span class="st-colhead__label">SJ</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" title="Sort">â‡…</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="mat_doc">
-                                            <div class="st-font-semibold st-mb-6">MAT DOC Filter</div>
-                                            <input type="text" name="mat_doc" form="slot-filter-form" class="st-input" placeholder="Search MAT DOC..." value="{{ $mat_doc ?? '' }}">
+                                            <div class="st-font-semibold st-mb-6">SJ Filter</div>
+                                            <input type="text" name="mat_doc" form="slot-filter-form" class="st-input" placeholder="Search SJ..." value="{{ $mat_doc ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
                                             </div>
