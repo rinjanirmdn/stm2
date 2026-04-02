@@ -128,13 +128,14 @@ class SlotFilterService
     }
 
     /**
-     * Apply general search filters
+     * Apply general search filters (uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
      */
     private function applySearchFilters($query, Request $request)
     {
         $search = trim($request->query('q', ''));
 
         if ($search !== '') {
+            $search = str_replace(['%', '_'], ['\%', '\_'], $search);
             $tokens = preg_split('/\s+/', $search) ?: [];
             $tokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $tokens), fn ($t) => $t !== ''));
 
@@ -147,14 +148,14 @@ class SlotFilterService
             $allTokens = array_values(array_unique(array_merge($tokens, $moreTokens)));
 
             foreach ($allTokens as $tok) {
-                $like = '%'.$tok.'%';
+                $like = '%'.strtolower($tok).'%';
                 $query->where(function ($sub) use ($like) {
-                    $sub->where('s.po_number', 'like', $like)
-                        ->orWhere('s.mat_doc', 'like', $like)
-                        ->orWhere('s.vendor_name', 'like', $like)
-                        ->orWhere('w.wh_name', 'like', $like)
-                        ->orWhere('s.direction', 'like', $like)
-                        ->orWhere('s.status', 'like', $like);
+                    $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
+                        ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
+                        ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like])
+                        ->orWhereRaw('LOWER(w.wh_name) like ?', [$like])
+                        ->orWhereRaw('LOWER(s.direction) like ?', [$like])
+                        ->orWhereRaw('LOWER(s.status) like ?', [$like]);
                 });
             }
         }
@@ -162,17 +163,20 @@ class SlotFilterService
         // Specific field searches
         $truckSearch = trim($request->query('truck', ''));
         if ($truckSearch !== '') {
-            $query->where('s.po_number', 'like', '%'.$truckSearch.'%');
+            $truckSearch = str_replace(['%', '_'], ['\%', '\_'], $truckSearch);
+            $query->whereRaw('LOWER(s.po_number) like ?', ['%'.strtolower($truckSearch).'%']);
         }
 
         $vendorSearch = trim($request->query('vendor', ''));
         if ($vendorSearch !== '') {
-            $query->where('s.vendor_name', 'like', '%'.$vendorSearch.'%');
+            $vendorSearch = str_replace(['%', '_'], ['\%', '\_'], $vendorSearch);
+            $query->whereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', ['%'.strtolower($vendorSearch).'%']);
         }
 
         $matDocSearch = trim($request->query('mat_doc', ''));
         if ($matDocSearch !== '') {
-            $query->where('s.mat_doc', 'like', '%'.$matDocSearch.'%');
+            $matDocSearch = str_replace(['%', '_'], ['\%', '\_'], $matDocSearch);
+            $query->whereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', ['%'.strtolower($matDocSearch).'%']);
         }
     }
 

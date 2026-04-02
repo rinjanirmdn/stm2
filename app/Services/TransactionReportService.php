@@ -145,61 +145,70 @@ class TransactionReportService
             ->select([
                 's.*',
                 's.po_number',
+                's.po_number as truck_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 's.vendor_name',
                 'u.full_name as created_by_name',
                 'u.email as created_by_email',
+                'u.username as created_by_username',
+                'u.nik as created_by_nik',
                 'td.target_duration_minutes',
             ])
             ->where('s.status', 'completed');
     }
 
     /**
-     * Apply basic search filters
+     * Apply basic search filters (uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
      */
     private function applyBasicFilters($query, Request $request)
     {
         $search = trim($request->query('q', ''));
         if ($search !== '') {
-            $like = '%'.$search.'%';
+            $search = str_replace(['%', '_'], ['\%', '\_'], $search);
+            $like = '%'.strtolower($search).'%';
             $query->where(function ($sub) use ($like) {
-                $sub->where('s.po_number', 'like', $like)
-                    ->orWhere('s.ticket_number', 'like', $like)
-                    ->orWhere('s.mat_doc', 'like', $like)
-                    ->orWhere('s.vendor_name', 'like', $like)
-                    ->orWhere('w.wh_name', 'like', $like)
-                    ->orWhere('s.truck_type', 'like', $like)
-                    ->orWhere('s.vehicle_number_snap', 'like', $like)
-                    ->orWhere('s.driver_number', 'like', $like)
-                    ->orWhere('u.nik', 'like', $like);
+                $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.ticket_number, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(w.wh_name) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.truck_type, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.vehicle_number_snap, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.driver_number, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(u.nik, \'\')) like ?', [$like]);
             });
         }
 
         // Specific field searches
         $poSearch = trim($request->query('po', ''));
         if ($poSearch !== '') {
-            $query->where('s.po_number', 'like', '%'.$poSearch.'%');
+            $poSearch = str_replace(['%', '_'], ['\%', '\_'], $poSearch);
+            $query->whereRaw('LOWER(s.po_number) like ?', ['%'.strtolower($poSearch).'%']);
         }
 
         $ticketSearch = trim($request->query('ticket', ''));
         if ($ticketSearch !== '') {
-            $query->where('s.ticket_number', 'like', '%'.$ticketSearch.'%');
+            $ticketSearch = str_replace(['%', '_'], ['\%', '\_'], $ticketSearch);
+            $query->whereRaw('LOWER(COALESCE(s.ticket_number, \'\')) like ?', ['%'.strtolower($ticketSearch).'%']);
         }
 
         $matDocSearch = trim($request->query('mat_doc', ''));
         if ($matDocSearch !== '') {
-            $query->where('s.mat_doc', 'like', '%'.$matDocSearch.'%');
+            $matDocSearch = str_replace(['%', '_'], ['\%', '\_'], $matDocSearch);
+            $query->whereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', ['%'.strtolower($matDocSearch).'%']);
         }
 
         $userSearch = trim($request->query('user', ''));
         if ($userSearch !== '') {
-            $query->where('u.nik', 'like', '%'.$userSearch.'%');
+            $userSearch = str_replace(['%', '_'], ['\%', '\_'], $userSearch);
+            $query->whereRaw('LOWER(COALESCE(u.nik, \'\')) like ?', ['%'.strtolower($userSearch).'%']);
         }
 
         $vendorSearch = trim($request->query('vendor', ''));
         if ($vendorSearch !== '') {
-            $query->where('s.vendor_name', 'like', '%'.$vendorSearch.'%');
+            $vendorSearch = str_replace(['%', '_'], ['\%', '\_'], $vendorSearch);
+            $query->whereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', ['%'.strtolower($vendorSearch).'%']);
         }
     }
 

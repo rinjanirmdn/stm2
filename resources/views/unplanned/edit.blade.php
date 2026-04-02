@@ -110,7 +110,7 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">MAT DOC <span class="st-text--optional">(Optional)</span></label>
+                    <label class="st-label">SJ <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc', $slot->mat_doc ?? '') }}">
                 </div>
             </div>
@@ -121,7 +121,11 @@
                     <select name="truck_type" class="st-select">
                         <option value="">-</option>
                         @foreach ($truckTypes as $tt => $label)
-                            <option value="{{ $tt }}" {{ old('truck_type', $slot->truck_type ?? '') === $tt ? 'selected' : '' }}>{{ $label }}</option>
+                            @php
+                                $value = is_string($tt) ? $tt : (string) $label;
+                                $text = is_string($tt) ? (string) $label : (string) $label;
+                            @endphp
+                            <option value="{{ $value }}" {{ old('truck_type', $slot->truck_type ?? '') === $value ? 'selected' : '' }}>{{ $text }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -146,18 +150,28 @@
                 </div>
             </div>
 
-            <div class="st-form-row st-form-field--mb-12">
-                <div class="st-form-field st-w-full">
-                    <label class="st-label st-font-semibold">Queue Status</label>
-                    <div class="st-flex st-gap-12 st-align-center">
-                        <label class="st-flex st-align-center st-gap-6 st-cursor-pointer">
-                            <input type="checkbox" name="set_waiting" value="1" {{ old('set_waiting', (($slot->status ?? '') === 'waiting') ? '1' : '') === '1' ? 'checked' : '' }} class="st-checkbox--plain">
-                            <span>Set to Waiting</span>
-                        </label>
-                        <span class="st-text--sm st-text--muted">Unchecked = Completed</span>
+            @php
+                $status = (string) ($slot->status ?? '');
+                $arrivalTime = (string) ($slot->arrival_time ?? '');
+                $actualStart = (string) ($slot->actual_start ?? '');
+                $hasProgressedFromWaiting = $status === 'completed' && $arrivalTime !== '' && $actualStart !== '' && $arrivalTime !== $actualStart;
+                $hideWaitingToggle = in_array($status, ['waiting', 'in_progress'], true) || $hasProgressedFromWaiting;
+            @endphp
+
+            @if (! $hideWaitingToggle)
+                <div class="st-form-row st-form-field--mb-12">
+                    <div class="st-form-field st-w-full">
+                        <label class="st-label st-font-semibold">Queue Status</label>
+                        <div class="st-flex st-gap-12 st-align-center">
+                            <label class="st-flex st-align-center st-gap-6 st-cursor-pointer">
+                                <input type="checkbox" name="set_waiting" value="1" {{ old('set_waiting', (($slot->status ?? '') === 'waiting') ? '1' : '') === '1' ? 'checked' : '' }} class="st-checkbox--plain">
+                                <span>Set to Waiting</span>
+                            </label>
+                            <span class="st-text--sm st-text--muted">Unchecked = Completed</span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
 
             <div class="st-form-actions st-mt-4">
                 <button type="submit" class="st-btn">Save</button>

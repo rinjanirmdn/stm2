@@ -128,16 +128,15 @@ class BookingApprovalController extends Controller
             $query->whereDate('booking_requests.created_at', '=', $createdAt);
         }
 
-        // Search
+        // Search (uses LOWER + table-qualified columns to avoid ambiguous column errors in PostgreSQL)
         if ($request->filled('search')) {
             $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('request_number', 'like', "%{$search}%")
-                    ->orWhere('po_number', 'like', "%{$search}%")
-                    ->orWhere('supplier_name', 'like', "%{$search}%")
-                    ->orWhereHas('requester', function ($q2) use ($search) {
-                        $q2->where('full_name', 'like', "%{$search}%");
-                    });
+            $like = '%'.strtolower($search).'%';
+            $query->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(u_requester.full_name, u_requester.name, u_requester.email)) like ?', [$like]);
             });
         }
 

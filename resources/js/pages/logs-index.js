@@ -1,3 +1,5 @@
+import { highlightSearchInTable } from '../utils/search-highlight.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     var dateRangeInput = document.getElementById('date_range');
     var dateFromInput = document.getElementById('date_from');
@@ -189,80 +191,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tbody) tbody.style.pointerEvents = on ? 'none' : '';
     }
 
-    // Escape HTML for safe injection
-    function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
-    }
-
-    // Highlight matching search terms in the table
+    // Highlight matching search terms in the table (uses shared utility)
     function highlightSearchTerm(searchTerm) {
         var tbody = logsFilterForm.querySelector('tbody');
-        if (!tbody) return;
-
-        // Get all text cells (description, mat_doc, po, user)
-        var rows = tbody.querySelectorAll('tr');
-        rows.forEach(function(row) {
-            var cells = row.querySelectorAll('td');
-            cells.forEach(function(cell) {
-                // Remove any existing highlights first
-                var marks = cell.querySelectorAll('mark.st-search-highlight');
-                marks.forEach(function(mark) {
-                    var parent = mark.parentNode;
-                    parent.replaceChild(document.createTextNode(mark.textContent), mark);
-                    parent.normalize();
-                });
-
-                if (!searchTerm || searchTerm.length < 2) return;
-
-                // Walk text nodes and highlight matches
-                highlightTextInNode(cell, searchTerm);
-            });
-        });
-    }
-
-    function highlightTextInNode(element, searchTerm) {
-        var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
-        var nodesToReplace = [];
-        var lowerSearch = searchTerm.toLowerCase();
-
-        while (walker.nextNode()) {
-            var node = walker.currentNode;
-            var text = node.textContent;
-            var lowerText = text.toLowerCase();
-            if (lowerText.indexOf(lowerSearch) !== -1) {
-                nodesToReplace.push(node);
-            }
-        }
-
-        nodesToReplace.forEach(function(textNode) {
-            var text = textNode.textContent;
-            var lowerText = text.toLowerCase();
-            var fragment = document.createDocumentFragment();
-            var lastIndex = 0;
-
-            var idx = lowerText.indexOf(lowerSearch, lastIndex);
-            while (idx !== -1) {
-                // Add text before match
-                if (idx > lastIndex) {
-                    fragment.appendChild(document.createTextNode(text.substring(lastIndex, idx)));
-                }
-                // Add highlighted match
-                var mark = document.createElement('mark');
-                mark.className = 'st-search-highlight';
-                mark.textContent = text.substring(idx, idx + searchTerm.length);
-                fragment.appendChild(mark);
-                lastIndex = idx + searchTerm.length;
-                idx = lowerText.indexOf(lowerSearch, lastIndex);
-            }
-            // Add remaining text
-            if (lastIndex < text.length) {
-                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
-            }
-
-            textNode.parentNode.replaceChild(fragment, textNode);
-        });
+        highlightSearchInTable(tbody, searchTerm);
     }
 
     function ajaxReload(pushState) {

@@ -1,3 +1,5 @@
+import { highlightSearchInTable } from '../utils/search-highlight.js';
+
 document.addEventListener('DOMContentLoaded', function () {
     // Tooltips handled globally in resources/js/pages/main.js (st-global-tooltip)
     function readJsonScript(id, fallback) {
@@ -284,12 +286,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.innerHTML = newTbody.innerHTML;
                 }
                 bindCancelConfirm();
-                syncActionTooltips();
+                try { syncActionTooltips(); } catch (e) {}
                 setupActiveFilters(); // Refresh active filter indicators
                 setupSorting(); // Refresh active sort indicators
                 if (pushState) {
                     window.history.pushState(null, '', url);
                 }
+
+                // Apply search highlight after content loaded
+                var searchEl = document.querySelector('input[name="q"][form="slot-filter-form"]');
+                var term = searchEl ? searchEl.value.trim() : '';
+                highlightSearchInTable(tbody, term);
             })
             .catch(function (err) {
                 console.error('AJAX reload failed:', err);
@@ -706,5 +713,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 hideSuggestions();
             }
         });
+    }
+
+    // Initial highlight on page load
+    var searchInputHL = document.querySelector('input[name="q"][form="slot-filter-form"]');
+    if (searchInputHL && searchInputHL.value.trim().length >= 2) {
+        highlightSearchInTable(filterForm.querySelector('tbody'), searchInputHL.value.trim());
     }
 });

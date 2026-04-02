@@ -71,7 +71,7 @@
                         <div class="st-font-semibold">PO/DO Number</div>
                         <div>{{ $slot->truck_number ?? '-' }}</div>
 
-                        <div class="st-font-semibold">MAT DOC</div>
+                        <div class="st-font-semibold">SJ</div>
                         <div>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</div>
 
                         <div class="st-font-semibold">Ticket Number</div>
@@ -245,6 +245,6 @@
             <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Unplanned</a>
         @endif
 
-        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Back</a>
+        <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Back</a>
     </div>
 @endsection

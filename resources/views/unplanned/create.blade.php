@@ -104,7 +104,7 @@
                     @enderror
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">MAT DOC <span class="st-text--optional">(Optional)</span></label>
+                    <label class="st-label">SJ <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc') }}">
                 </div>
             </div>
@@ -115,7 +115,11 @@
                     <select name="truck_type" class="st-select">
                         <option value="">-</option>
                         @foreach ($truckTypes as $tt => $label)
-                            <option value="{{ $tt }}" {{ old('truck_type') === $tt ? 'selected' : '' }}>{{ $label }}</option>
+                            @php
+                                $value = is_string($tt) ? $tt : (string) $label;
+                                $text = is_string($tt) ? (string) $label : (string) $label;
+                            @endphp
+                            <option value="{{ $value }}" {{ old('truck_type') === $value ? 'selected' : '' }}>{{ $text }}</option>
                         @endforeach
                     </select>
                 </div>

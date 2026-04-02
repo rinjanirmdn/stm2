@@ -77,26 +77,30 @@ class UnplannedSlotController extends Controller
                 'td.target_duration_minutes',
             ]);
 
-        // Apply filters
+        // Search (uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
         if ($request->filled('q')) {
-            $search = '%'.$request->get('q').'%';
-            $query->where(function ($q) use ($search) {
-                $q->where('s.po_number', 'like', $search)
-                    ->orWhere('s.mat_doc', 'like', $search)
-                    ->orWhere('s.vendor_name', 'like', $search);
+            $searchRaw = str_replace(['%', '_'], ['\%', '\_'], $request->get('q'));
+            $like = '%'.strtolower($searchRaw).'%';
+            $query->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(s.po_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like]);
             });
         }
 
         if ($request->filled('po_number')) {
-            $query->where('s.po_number', 'like', '%'.$request->get('po_number').'%');
+            $val = str_replace(['%', '_'], ['\%', '\_'], $request->get('po_number'));
+            $query->whereRaw('LOWER(s.po_number) like ?', ['%'.strtolower($val).'%']);
         }
 
         if ($request->filled('mat_doc')) {
-            $query->where('s.mat_doc', 'like', '%'.$request->get('mat_doc').'%');
+            $val = str_replace(['%', '_'], ['\%', '\_'], $request->get('mat_doc'));
+            $query->whereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', ['%'.strtolower($val).'%']);
         }
 
         if ($request->filled('vendor')) {
-            $query->where('s.vendor_name', 'like', '%'.$request->get('vendor').'%');
+            $val = str_replace(['%', '_'], ['\%', '\_'], $request->get('vendor'));
+            $query->whereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', ['%'.strtolower($val).'%']);
         }
 
         if ($request->filled('warehouse')) {
