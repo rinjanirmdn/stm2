@@ -298,6 +298,7 @@ class ReportController extends Controller
             'pageSize' => $pageSize,
             'pageSizeAllowed' => $pageSizeAllowed,
             'warehouses' => $filterOptions['warehouses'],
+            'gates' => $filterOptions['gates'],
             'vendors' => $filterOptions['vendors'],
         ] + $filterValues);
     }
@@ -335,6 +336,7 @@ class ReportController extends Controller
             'directionFilter' => array_values(array_filter((array) $request->query('direction', []), fn ($v) => (string) $v !== '')),
             'lateFilter' => array_values(array_filter((array) $request->query('late', []), fn ($v) => (string) $v !== '')),
             'warehouseFilter' => array_values(array_filter((array) $request->query('warehouse_id', []), fn ($v) => (string) $v !== '')),
+            'gateFilter' => array_values(array_filter((array) $request->query('gate_number', []), fn ($v) => (string) $v !== '')),
             'targetStatusFilter' => array_values(array_filter((array) $request->query('target_status', []), fn ($v) => (string) $v !== '')),
         ];
     }

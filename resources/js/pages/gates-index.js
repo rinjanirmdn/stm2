@@ -1,4 +1,4 @@
-﻿function stReadJson(id, fallback) {
+function stReadJson(id, fallback) {
     try {
         var el = document.getElementById(id);
         if (!el) return fallback;
@@ -92,7 +92,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 return function () {
                     document.getElementById('selected_date_display').innerText = new Date(ds).toLocaleDateString('en-GB').replace(/\//g, '.');
                     var baseUrl = gatesIndexUrl || window.location.pathname;
-                    window.location.href = baseUrl + '?date_from=' + encodeURIComponent(ds);
+                    var activeTabBtn = document.querySelector('.st-dock-view-tab--active');
+                    var activeView = activeTabBtn ? activeTabBtn.getAttribute('data-view') : 'schedule';
+                    window.location.href = baseUrl + '?date_from=' + encodeURIComponent(ds) + '&view=' + encodeURIComponent(activeView);
                 };
             }(dateStr));
 
@@ -415,6 +417,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 loadGateAvailability();
             }
         });
+
+        // Initialize active tab from URL immediately
+        var urlParams = new URLSearchParams(window.location.search);
+        var targetView = urlParams.get('view');
+        if (targetView && targetView !== 'schedule') {
+            var tabBtnToClick = gateViewTabs.querySelector('[data-view="' + targetView + '"]');
+            if (tabBtnToClick) {
+                tabBtnToClick.click();
+            }
+        }
     }
 
     // Legend collapsible toggle

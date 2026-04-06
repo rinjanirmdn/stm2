@@ -83,14 +83,18 @@ class BookingApprovalController extends Controller
             $requestedBy = str_replace(['%', '_'], ['\%', '\_'], $requestedBy);
             $query->where(function ($q) use ($requestedBy) {
                 $q->where('u_requester.full_name', 'like', '%'.$requestedBy.'%')
-                    ->orWhere('u_requester.name', 'like', '%'.$requestedBy.'%')
                     ->orWhere('u_requester.email', 'like', '%'.$requestedBy.'%');
             });
         }
 
         $plannedStart = trim((string) $request->query('planned_start', ''));
         if ($plannedStart !== '') {
-            $query->whereDate('booking_requests.planned_start', '=', $plannedStart);
+            try {
+                $parsedDate = Carbon::createFromFormat('d-m-Y', $plannedStart)->format('Y-m-d');
+                $query->whereDate('booking_requests.planned_start', '=', $parsedDate);
+            } catch (\Exception $e) {
+                $query->whereDate('booking_requests.planned_start', '=', $plannedStart);
+            }
         }
 
         $convertedTicket = trim((string) $request->query('converted_ticket', ''));
@@ -125,7 +129,12 @@ class BookingApprovalController extends Controller
 
         $createdAt = trim((string) $request->query('created_at', ''));
         if ($createdAt !== '') {
-            $query->whereDate('booking_requests.created_at', '=', $createdAt);
+            try {
+                $parsedCreatedAt = Carbon::createFromFormat('d-m-Y', $createdAt)->format('Y-m-d');
+                $query->whereDate('booking_requests.created_at', '=', $parsedCreatedAt);
+            } catch (\Exception $e) {
+                $query->whereDate('booking_requests.created_at', '=', $createdAt);
+            }
         }
 
         // Search (uses LOWER + table-qualified columns to avoid ambiguous column errors in PostgreSQL)
@@ -134,9 +143,11 @@ class BookingApprovalController extends Controller
             $like = '%'.strtolower($search).'%';
             $query->where(function ($q) use ($like) {
                 $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(CONCAT(\'req-\', CAST(booking_requests.id AS TEXT))) like ?', [$like])
                     ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
                     ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
-                    ->orWhereRaw('LOWER(COALESCE(u_requester.full_name, u_requester.name, u_requester.email)) like ?', [$like]);
+                    ->orWhereRaw('LOWER(s_converted.ticket_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(u_requester.full_name, u_requester.email)) like ?', [$like]);
             });
         }
 
