@@ -143,12 +143,13 @@ class LoginController extends Controller
             return redirect()->intended(route('vendor.dashboard'));
         }
 
-        if ($user && $user->can('dashboard.view')) {
-            return redirect()->intended(route('dashboard'));
+        // Security role gets their dedicated dashboard first
+        if ($user && $user->hasRole('security')) {
+            return redirect()->intended(route('security.dashboard'));
         }
 
-        if ($user && $user->can('security.dashboard')) {
-            return redirect()->intended(route('security.dashboard'));
+        if ($user && $user->can('dashboard.view')) {
+            return redirect()->intended(route('dashboard'));
         }
 
         if ($user && $user->can('slots.index')) {
