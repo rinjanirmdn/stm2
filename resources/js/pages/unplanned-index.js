@@ -87,45 +87,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Initialize single-date range picker for arrival date
-    var arrivalRangeInput = document.querySelector('input#unplanned_arrival_range');
-    if (arrivalRangeInput && window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.daterangepicker === 'function' && typeof window.moment === 'function') {
-        var $ = window.jQuery;
-        var moment = window.moment;
-        var fromInput = document.querySelector('input[name="arrival_from"]');
-        var toInput = document.querySelector('input[name="arrival_to"]');
-        var initial = fromInput && fromInput.value ? fromInput.value : '';
-        var start = initial && moment(initial, 'YYYY-MM-DD').isValid() ? moment(initial, 'YYYY-MM-DD') : moment();
-        if (initial) {
-            arrivalRangeInput.value = toDisplayDate(initial);
-        }
-
-        var $el = $(arrivalRangeInput);
-        $el.daterangepicker({
-            singleDatePicker: true,
-            showDropdowns: true,
-            autoApply: true,
-            startDate: start,
-            minYear: 1901,
-            maxYear: parseInt(moment().format('YYYY'), 10) + 5,
-            locale: { format: 'DD-MM-YYYY' },
-            isCustomDate: dateClassForMoment
-        }, function (startDate) {
-            var value = startDate.format('DD-MM-YYYY');
-            var iso = startDate.format('YYYY-MM-DD');
-            if (fromInput) fromInput.value = iso;
-            if (toInput) toInput.value = iso;
-            arrivalRangeInput.value = value;
-            setTimeout(function () {
-                if (typeof window.ajaxReload === 'function') {
-                    window.ajaxReload(true);
-                } else if (filterForm) {
-                    filterForm.submit();
-                }
-            }, 100);
+    // Hook for predefined arrival_reportrange to trigger ajaxReload
+    var $arrivalReportRange = window.jQuery ? window.jQuery('#arrival_reportrange') : null;
+    if ($arrivalReportRange && $arrivalReportRange.length) {
+        $arrivalReportRange.on('apply.daterangepicker', function() {
+            if (typeof window.ajaxReload === 'function') {
+                window.ajaxReload(true);
+            } else if (filterForm) {
+                filterForm.submit();
+            }
         });
-
-        bindPickerDecorators($el);
     }
 
     if (!filterForm) return;

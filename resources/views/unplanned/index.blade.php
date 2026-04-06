@@ -63,7 +63,7 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po_number" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="po">
+                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="po">
                                             <div class="st-font-semibold st-mb-6">PO/DO Filter</div>
                                             <input type="text" name="po_number" form="unplanned-filter-form" class="st-input" placeholder="Search PO/DO..." value="{{ request('po_number') }}">
                                             <div class="st-panel__actions">
@@ -79,7 +79,7 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="mat_doc">
+                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="mat_doc">
                                             <div class="st-font-semibold st-mb-6">SJ Filter</div>
                                             <input type="text" name="mat_doc" form="unplanned-filter-form" class="st-input" placeholder="Search SJ..." value="{{ request('mat_doc') }}">
                                             <div class="st-panel__actions">
@@ -95,7 +95,7 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="vendor_name" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="vendor" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="vendor">
+                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="vendor">
                                             <div class="st-font-semibold st-mb-6">Vendor Filter</div>
                                             <input type="text" name="vendor" form="unplanned-filter-form" class="st-input" placeholder="Search Vendor..." value="{{ request('vendor') }}">
                                             <div class="st-panel__actions">
@@ -104,14 +104,14 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th>
-                                    <div class="st-colhead">
+                                <th class="st-text-center">
+                                    <div class="st-colhead st-justify-center">
                                         <span class="st-colhead__label">Warehouse / Gate</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse_name" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="whgate" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="whgate">
+                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="whgate">
                                             <div class="st-font-semibold st-mb-6">Warehouse / Gate Filter</div>
                                             <div class="st-flex st-gap-8 st-items-start">
                                                 <div class="st-flex-1 st-minw-140">
@@ -146,7 +146,7 @@
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-160" data-filter-panel="direction">
+                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-160" data-filter-panel="direction">
                                             <div class="st-font-semibold st-mb-6">Direction</div>
                                             <select name="direction" form="unplanned-filter-form" class="st-select st-select--panel">
                                                 <option value="" {{ !in_array(request('direction'), ['inbound', 'outbound']) ? 'selected' : '' }}>(All)</option>
@@ -165,7 +165,7 @@
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-180" data-filter-panel="status">
+                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-180" data-filter-panel="status">
                                             <div class="st-font-semibold st-mb-6">Status</div>
                                             <select name="status" form="unplanned-filter-form" class="st-select st-select--panel">
                                                 <option value="" {{ !in_array(request('status'), ['waiting', 'completed']) ? 'selected' : '' }}>(All)</option>
@@ -178,18 +178,21 @@
                                         </div>
                                     </div>
                                 </th>
-                                <th>
-                                    <div class="st-colhead">
+                                <th class="st-text-center">
+                                    <div class="st-colhead st-justify-center">
                                         <span class="st-colhead__label">Arrival</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="arrival_time" data-type="date" title="Sort">⇅</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="arrival" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-280 st-maxh-260" data-filter-panel="arrival">
-                                            <div class="st-font-semibold st-mb-6">Arrival Range</div>
-                                            <input type="text" id="unplanned_arrival_range" name="arrival_range" form="unplanned-filter-form" class="st-input st-input--cursor" placeholder="Select Date Range" value="{{ (request('arrival_from') && request('arrival_to')) ? (request('arrival_from').' to '.request('arrival_to')) : ((request('arrival_from') || request('arrival_to')) ? (request('arrival_from') ?: request('arrival_to')) : '') }}" readonly>
-                                            <input type="hidden" name="arrival_from" form="unplanned-filter-form" value="{{ request('arrival_from') }}">
-                                            <input type="hidden" name="arrival_to" form="unplanned-filter-form" value="{{ request('arrival_to') }}">
+                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-260" data-filter-panel="arrival">
+                                            <div class="st-font-semibold st-mb-6">Arrival Date Filter</div>
+                                            <div id="arrival_reportrange" class="st-daterange-trigger" data-auto-submit="false">
+                                                <i class="fa fa-calendar"></i>&nbsp;
+                                                <span></span> <i class="fa fa-caret-down"></i>
+                                            </div>
+                                            <input type="hidden" name="arrival_from" id="arrival_from" form="unplanned-filter-form" value="{{ request('arrival_from') }}">
+                                            <input type="hidden" name="arrival_to" id="arrival_to" form="unplanned-filter-form" value="{{ request('arrival_to') }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="arrival">Clear</button>
                                             </div>
@@ -228,7 +231,7 @@
                             <td>{{ $slot->truck_number ?? '' }}</td>
                             <td>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</td>
                             <td>{{ $slot->vendor_name ?? '-' }}</td>
-                            <td>{{ $label !== '' ? $label : '-' }}</td>
+                            <td class="st-text-center">{{ $label !== '' ? $label : '-' }}</td>
                             <td class="st-td-center">
                                 @php $dir = strtolower($slot->direction ?? ''); @endphp
                                 @if($dir === 'inbound')

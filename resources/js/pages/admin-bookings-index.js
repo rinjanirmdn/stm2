@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('change', function (e) {
             var t = e.target;
             if (!t) return;
-            if (t.matches('select[form="booking-filter-form"], input[type="date"][form="booking-filter-form"]')) {
+            if (t.matches('select[form="booking-filter-form"], input[type="date"][form="booking-filter-form"], input[data-st-datepicker="1"][form="booking-filter-form"]')) {
                 ajaxReload(true);
             }
         });

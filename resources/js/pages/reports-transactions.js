@@ -202,6 +202,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 var searchEl = document.querySelector('input[name="q"]');
                 var term = searchEl ? searchEl.value.trim() : '';
                 highlightSearchInTable(tableBody, term);
+
+                // Upgrade Icons and Sync Active States (for header icons after reload)
+                try {
+                    if (typeof stUpgradeTableHeaderIcons === 'function') {
+                        stUpgradeTableHeaderIcons(document);
+                    }
+                    if (typeof stSyncActiveStateClasses === 'function') {
+                        stSyncActiveStateClasses(document);
+                    }
+                } catch (e) {
+                    console.error('State sync failed:', e);
+                }
             })
             .catch(function (err) {
                 console.error('AJAX reload failed:', err);
@@ -373,11 +385,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Date range logic
     var dateRangeInput = document.getElementById('date_range');
-    var arrivalDateRangeInput = document.getElementById('arrival_date_range');
+    var arrivalDateRangeInput = document.getElementById('arrival_reportrange');
     var dateFromInput = document.getElementById('date_from');
     var dateToInput = document.getElementById('date_to');
-    var arrivalDateFromInput = document.getElementById('arrival_date_from');
-    var arrivalDateToInput = document.getElementById('arrival_date_to');
+    var arrivalDateFromInput = document.getElementById('arrival_from');
+    var arrivalDateToInput = document.getElementById('arrival_to');
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
     function formatDateDisplay(dateStr) {
@@ -501,39 +513,36 @@ document.addEventListener('DOMContentLoaded', function () {
         bindPickerDecorators($scheduledPicker);
     }
 
-    // Initialize Arrival Date Range
-    if (arrivalDateRangeInput && arrivalDateFromInput && arrivalDateToInput && window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.daterangepicker === 'function' && typeof window.moment === 'function') {
-         var $ = window.jQuery;
-         var moment = window.moment;
-         var arrivalInitial = arrivalDateFromInput.value || '';
-         var arrivalStart = arrivalInitial && moment(arrivalInitial, 'YYYY-MM-DD').isValid() ? moment(arrivalInitial, 'YYYY-MM-DD') : moment();
-         if (arrivalDateFromInput.value && arrivalDateToInput.value) {
-            arrivalDateRangeInput.value = formatDateDisplay(arrivalDateFromInput.value) + ' to ' + formatDateDisplay(arrivalDateToInput.value);
-        } else if (arrivalDateFromInput.value) {
-             arrivalDateRangeInput.value = formatDateDisplay(arrivalDateFromInput.value);
-        }
-
-        var $arrivalPicker = $(arrivalDateRangeInput);
-        $arrivalPicker.daterangepicker({
-            singleDatePicker: true,
-            showDropdowns: true,
-            autoApply: true,
-            startDate: arrivalStart,
-            minYear: 1901,
-            maxYear: parseInt(moment().format('YYYY'), 10) + 5,
-            locale: { format: 'DD-MM-YYYY' },
-            isCustomDate: dateClassForMoment
-        }, function(startDate) {
-            var value = startDate.format('DD-MM-YYYY');
-            var iso = startDate.format('YYYY-MM-DD');
-            arrivalDateFromInput.value = iso;
-            arrivalDateToInput.value = iso;
-            arrivalDateRangeInput.value = value;
-            ajaxReload(true);
+    // Predefined Arrival Range Hook
+    if (arrivalDateRangeInput && window.jQuery) {
+        window.jQuery(arrivalDateRangeInput).on('apply.daterangepicker', function() {
+            if (typeof window.ajaxReload === 'function') {
+                window.ajaxReload(true);
+            }
         });
-
-        bindPickerDecorators($arrivalPicker);
     }
+
+    // Global Transactions Range Hook
+    var globalRangeInput = document.getElementById('transaction_reportrange');
+    if (globalRangeInput && window.jQuery) {
+        window.jQuery(globalRangeInput).on('apply.daterangepicker', function() {
+            if (typeof window.ajaxReload === 'function') {
+                window.ajaxReload(true);
+            }
+        });
+    }
+
+    // Handle individual filter clearing related to date ranges
+    document.addEventListener('click', function(e) {
+        var clearBtn = e.target.closest('.st-filter-clear');
+        if (!clearBtn) return;
+        var filter = clearBtn.getAttribute('data-filter');
+
+        if (filter === 'arrival_presence' && arrivalDateRangeInput) {
+            var label = arrivalDateRangeInput.querySelector('span');
+            if (label) label.textContent = 'Select range';
+        }
+    }, true);
 
     // Reset all filters button
     document.getElementById('clear-date-range').addEventListener('click', function() {

@@ -21,9 +21,8 @@
                 </div>
                 <div class="st-form-field st-maxw-250 st-relative">
                     <label class="st-label">Date Range</label>
-                    <div id="transaction_reportrange" class="st-daterange-trigger">
-                        <i class="fa fa-calendar"></i>&nbsp;
-                        <span></span> <i class="fa fa-caret-down"></i>
+                    <div id="transaction_reportrange" class="st-dashboard-range-picker" data-auto-submit="false">
+                        <span>Select range</span>
                     </div>
                     <input type="hidden" name="date_from" id="date_from" form="transactions-filter-form" value="{{ $date_from ?? '' }}">
                     <input type="hidden" name="date_to" id="date_to" form="transactions-filter-form" value="{{ $date_to ?? '' }}">
@@ -70,10 +69,10 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Type</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="type" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="type" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="type" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="type" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="type">
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-st-position="fixed" data-filter-panel="type">
                                                 <div class="st-font-semibold st-mb-6">Type Filter</div>
                                                 <select name="slot_type[]" class="st-select st-filter-type-select st-select--panel">
                                                     <option value="">(All)</option>
@@ -84,39 +83,21 @@
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="type">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="type">
-                                                <div class="st-font-semibold st-mb-6">Sort Type</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="type" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="type" data-dir="desc">
-                                                    Z-A
-                                                </button>
-                                            </div>
                                         </div>
                                     </th>
                                     <th>
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">PO</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="po">
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-st-position="fixed" data-filter-panel="po">
                                                 <div class="st-font-semibold st-mb-6">PO Filter</div>
                                                 <input type="text" name="po" class="st-input" placeholder="Search PO..." value="{{ $po ?? '' }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="po">Clear</button>
                                                 </div>
-                                            </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="po">
-                                                <div class="st-font-semibold st-mb-6">Sort PO</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="po" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="po" data-dir="desc">
-                                                    Z-A
-                                                </button>
                                             </div>
                                         </div>
                                     </th>
@@ -124,24 +105,15 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Ticket</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="ticket" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="ticket" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="ticket" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="ticket" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="ticket">
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-st-position="fixed" data-filter-panel="ticket">
                                                 <div class="st-font-semibold st-mb-6">Ticket Filter</div>
                                                 <input type="text" name="ticket" class="st-input" placeholder="Search Ticket..." value="{{ $ticket ?? '' }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="ticket">Clear</button>
                                                 </div>
-                                            </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="ticket">
-                                                <div class="st-font-semibold st-mb-6">Sort Ticket</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="ticket" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="ticket" data-dir="desc">
-                                                    Z-A
-                                                </button>
                                             </div>
                                         </div>
                                     </th>
@@ -149,24 +121,15 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">SJ</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="mat_doc">
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-st-position="fixed" data-filter-panel="mat_doc">
                                                 <div class="st-font-semibold st-mb-6">SJ Filter</div>
                                                 <input type="text" name="mat_doc" class="st-input" placeholder="Search SJ..." value="{{ $mat_doc ?? '' }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
                                                 </div>
-                                            </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="mat_doc">
-                                                <div class="st-font-semibold st-mb-6">Sort SJ</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="mat_doc" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="mat_doc" data-dir="desc">
-                                                    Z-A
-                                                </button>
                                             </div>
                                         </div>
                                     </th>
@@ -174,54 +137,48 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Vendor</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="vendor" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="vendor" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="vendor" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="vendor" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="vendor">
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-st-position="fixed" data-filter-panel="vendor">
                                                 <div class="st-font-semibold st-mb-6">Vendor Filter</div>
                                                 <input type="text" name="vendor" class="st-input" placeholder="Search Vendor..." value="{{ $vendor ?? '' }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="vendor">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="vendor">
-                                                <div class="st-font-semibold st-mb-6">Sort Vendor</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="vendor" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="vendor" data-dir="desc">
-                                                    Z-A
-                                                </button>
-                                            </div>
                                         </div>
                                     </th>
                                     <th>
                                         <div class="st-colhead">
-                                            <span class="st-colhead__label">Warehouse</span>
+                                            <span class="st-colhead__label">Warehouse / Gate</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="warehouse" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="warehouse" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="warehouse" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-260" data-filter-panel="warehouse">
-                                                <div class="st-font-semibold st-mb-6">Warehouse Filter</div>
-                                                <select name="warehouse_id[]" class="st-select st-filter-warehouse-select st-select--panel">
-                                                    <option value="">(All)</option>
-                                                    @foreach ($warehouses as $wh)
-                                                        <option value="{{ $wh->id }}" {{ in_array((string) $wh->id, array_map('strval', $warehouseFilter ?? []), true) ? 'selected' : '' }}>{{ $wh->name }}</option>
-                                                    @endforeach
-                                                </select>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-260" data-st-position="fixed" data-filter-panel="warehouse">
+                                                <div class="st-font-semibold st-mb-6">Warehouse / Gate Filter</div>
+                                                <div class="st-mb-8">
+                                                    <div class="st-text--xs st-mb-2">Wh</div>
+                                                    <select name="warehouse_id[]" class="st-select st-filter-warehouse-select st-select--panel">
+                                                        <option value="">(All Wh)</option>
+                                                        @foreach ($warehouses as $wh)
+                                                            <option value="{{ $wh->id }}" {{ in_array((string) $wh->id, array_map('strval', $warehouseFilter ?? []), true) ? 'selected' : '' }}>{{ $wh->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="st-mb-8">
+                                                    <div class="st-text--xs st-mb-2">Gate</div>
+                                                    <select name="gate_number[]" class="st-select st-select--panel">
+                                                        <option value="">(All Gates)</option>
+                                                        @foreach ($gates as $gn)
+                                                            <option value="{{ $gn }}" {{ in_array((string) $gn, array_map('strval', $gateFilter ?? []), true) ? 'selected' : '' }}>Gate {{ $gn }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="warehouse">Clear</button>
                                                 </div>
-                                            </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="warehouse">
-                                                <div class="st-font-semibold st-mb-6">Sort Warehouse</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="warehouse" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="warehouse" data-dir="desc">
-                                                    Z-A
-                                                </button>
                                             </div>
                                         </div>
                                     </th>
@@ -229,10 +186,10 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Direction</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="direction" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="direction" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="direction">
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-st-position="fixed" data-filter-panel="direction">
                                                 <div class="st-font-semibold st-mb-6">Direction Filter</div>
                                                 <select name="direction[]" class="st-select st-filter-direction-select st-select--panel">
                                                     <option value="">(All)</option>
@@ -243,41 +200,25 @@
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="direction">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="direction">
-                                                <div class="st-font-semibold st-mb-6">Sort Direction</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="direction" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="direction" data-dir="desc">
-                                                    Z-A
-                                                </button>
-                                            </div>
                                         </div>
                                     </th>
                                     <th>
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Arrival</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="arrival" data-type="date" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="arrival_presence" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="arrival" data-type="date" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="arrival_presence" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-260 st-maxh-220" data-filter-panel="arrival_presence">
-                                                <div class="st-font-semibold st-mb-6">Arrival Date</div>
-                                                <input type="text" name="arrival_date_range" id="arrival_date_range" class="st-input st-input--cursor" placeholder="Select Arrival Date Range" readonly>
-                                                <input type="hidden" name="arrival_date_from" id="arrival_date_from" value="{{ $arrival_date_from ?? '' }}">
-                                                <input type="hidden" name="arrival_date_to" id="arrival_date_to" value="{{ $arrival_date_to ?? '' }}">
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-260 st-maxh-220" data-st-position="fixed" data-filter-panel="arrival_presence">
+                                                <div class="st-font-semibold st-mb-6">Arrival Date Filter</div>
+                                                <div id="arrival_reportrange" class="st-dashboard-range-picker" data-auto-submit="false">
+                                                    <span>Select range</span>
+                                                </div>
+                                                <input type="hidden" name="arrival_date_from" id="arrival_from" value="{{ $arrival_date_from ?? '' }}">
+                                                <input type="hidden" name="arrival_date_to" id="arrival_to" value="{{ $arrival_date_to ?? '' }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="arrival_presence">Clear</button>
                                                 </div>
-                                            </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="arrival">
-                                                <div class="st-font-semibold st-mb-6">Sort Arrival</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="arrival" data-dir="desc">
-                                                    Newest
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="arrival" data-dir="asc">
-                                                    Oldest
-                                                </button>
                                             </div>
                                         </div>
                                     </th>
@@ -285,10 +226,10 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Lead Time</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="lead_time" data-type="duration" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="lead_time" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="lead_time" data-type="duration" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="lead_time" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-260" data-filter-panel="lead_time">
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-260" data-st-position="fixed" data-filter-panel="lead_time">
                                                 <div class="st-font-semibold st-mb-6">Lead Time (min)</div>
                                                 <div class="st-flex st-flex-col st-gap-8">
                                                     <div>
@@ -304,25 +245,16 @@
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="lead_time">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="lead_time">
-                                                <div class="st-font-semibold st-mb-6">Sort Lead Time</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="lead_time" data-dir="asc">
-                                                    Fastest
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="lead_time" data-dir="desc">
-                                                    Slowest
-                                                </button>
-                                            </div>
                                         </div>
                                     </th>
                                     <th>
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Target Status</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="target_status" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="target_status" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="target_status" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="target_status" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="target_status">
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-st-position="fixed" data-filter-panel="target_status">
                                                 <div class="st-font-semibold st-mb-6">Target Status Filter</div>
                                                 <select name="target_status[]" class="st-select st-filter-target-status-select st-select--panel">
                                                     <option value="">(All)</option>
@@ -333,26 +265,17 @@
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="target_status">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="target_status">
-                                                <div class="st-font-semibold st-mb-6">Sort Target Status</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="target_status" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="target_status" data-dir="desc">
-                                                    Z-A
-                                                </button>
-                                            </div>
                                         </div>
                                     </th>
                                     <th>
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Arrival Status</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" data-type="number" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="late" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="late" data-type="number" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="late" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-filter-panel="late">
-                                                <div class="st-font-semibold st-mb-6">Late Filter</div>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-st-position="fixed" data-filter-panel="late">
+                                                <div class="st-font-semibold st-mb-6">Arrival Status Filter</div>
                                                 <select name="late[]" class="st-select st-filter-late-select st-select--panel">
                                                     <option value="">(All)</option>
                                                     <option value="on_time" {{ in_array('on_time', $lateFilter ?? [], true) ? 'selected' : '' }}>On Time</option>
@@ -362,39 +285,21 @@
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="late">Clear</button>
                                                 </div>
                                             </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="late">
-                                                <div class="st-font-semibold st-mb-6">Sort Late</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="late" data-dir="asc">
-                                                    Terkecil
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="late" data-dir="desc">
-                                                    Terbesar
-                                                </button>
-                                            </div>
                                         </div>
                                     </th>
                                     <th>
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">User</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="user" data-type="text" title="Sort">â‡…</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="user" title="Filter">â·</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="user" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="user" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="user">
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-st-position="fixed" data-filter-panel="user">
                                                 <div class="st-font-semibold st-mb-6">User Filter</div>
                                                 <input type="text" name="user" class="st-input" placeholder="Search User..." value="{{ $user ?? '' }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="user">Clear</button>
                                                 </div>
-                                            </div>
-                                            <div class="st-sort-panel st-hidden st-top-full st-left-0 st-mt-4 st-minw-200" data-sort-panel="user">
-                                                <div class="st-font-semibold st-mb-6">Sort User</div>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="user" data-dir="asc">
-                                                    A-Z
-                                                </button>
-                                                <button type="button" class="st-sort-option st-sort-option--compact" data-sort="user" data-dir="desc">
-                                                    Z-A
-                                                </button>
                                             </div>
                                         </div>
                                     </th>
@@ -485,7 +390,12 @@
                                         <td>{{ $r->ticket_number ?? '' }}</td>
                                         <td>{{ $r->mat_doc ?? '' }}</td>
                                         <td>{{ $r->vendor_name ?? '-' }}</td>
-                                        <td>{{ $r->warehouse_name ?? '-' }}</td>
+                                        <td class="st-td-center st-nowrap">
+                                            <div class="st-flex st-flex-col st-align-center">
+                                                <div class="st-font-semibold">{{ $r->warehouse_name }}</div>
+                                                <div class="st-text--xs st-text--muted">Gate {{ $r->gate_number }}</div>
+                                            </div>
+                                        </td>
                                         <td class="st-td-center">
                                             @php $dir = strtolower($r->direction ?? ''); @endphp
                                             @if($dir === 'inbound')
