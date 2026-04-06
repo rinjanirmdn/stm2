@@ -1037,14 +1037,48 @@
         font-size: 10px;
     }
 
-    /* Forms mobile */
+    /* ── Forms / filter-bar mobile ── */
     .st-form-row {
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
     }
 
     .st-form-field {
-        min-width: 100%;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+        width: 100%;
+    }
+
+    /* Action buttons row — keep horizontal on mobile */
+    .st-form-field.st-flex-0,
+    .st-form-field.st-minw-80 {
+        flex-direction: row !important;
+        display: flex !important;
+        flex-wrap: wrap;
+        justify-content: stretch;
+        gap: 8px;
+    }
+    .st-form-field.st-flex-0 .st-btn,
+    .st-form-field.st-minw-80 .st-btn {
+        flex: 1 1 0;
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* Grid rows collapse to single column */
+    .st-form-row--grid-3 {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+    .st-form-row--grid-2 {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    /* Date range picker full width */
+    .st-dashboard-range-picker {
+        width: 100%;
     }
 
     /* Page header mobile */

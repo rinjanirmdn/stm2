@@ -91,8 +91,8 @@
                         <div id="scan_camera_status" class="st-text--small st-text--muted st-mt-6"></div>
                     </div>
                     <div class="st-flex st-justify-between st-align-center st-mt-4 st-gap-10">
-                        <div class="st-text--small st-text--muted">After ticket is filled, detail form will appear.</div>
-                        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('slots.index') }}" class="st-btn st-btn--outline-primary st-btn--xs">Back</a>
+                        <div class="st-text--small st-text--muted st-flex-1">After ticket is filled, detail form will appear.</div>
+                        <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('slots.index') }}" class="st-btn st-btn--outline-primary st-btn--xs st-flex-0 st-nowrap">Back</a>
                     </div>
                 </div>
             </div>
