@@ -7,6 +7,7 @@
 
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -37,13 +38,15 @@ Route::get('/', function () {
 });
 
 // ──────────────────────────────────────────
-// Guest routes (login, forgot password)
+// Guest routes (login, forgot password, reset password)
 // ──────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showForm'])->name('forgot-password');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetEmail'])->name('forgot-password.send');
+    Route::get('/reset-password', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.reset.store');
 });
 
 // ──────────────────────────────────────────

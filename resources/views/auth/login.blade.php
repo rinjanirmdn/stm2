@@ -19,6 +19,14 @@
                 <div class="st-text--sm st-text--muted">Please sign in to continue</div>
             </div>
             <br>
+            @if (session('success'))
+                <div class="st-alert st-alert--success st-alert--autodismiss st-mb-1">
+                    <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
+                    <span class="st-alert__text">{{ session('success') }}</span>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                </div>
+            @endif
+
             @php
                 $isLocked = $errors->any() && (str_contains($errors->first(), 'locked') || str_contains($errors->first(), 'Account locked'));
             @endphp
