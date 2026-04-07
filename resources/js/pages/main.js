@@ -1400,7 +1400,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!btn) {
             var insidePanel = target.closest && target.closest('.st-filter-panel');
             if (!insidePanel) {
-                stCloseFilterPanel();
+                var isDaterangepicker = target.closest && (target.closest('.daterangepicker') || target.closest('.flatpickr-calendar'));
+                if (!isDaterangepicker) {
+                    stCloseFilterPanel();
+                }
             }
             return;
         }

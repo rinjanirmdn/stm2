@@ -333,7 +333,7 @@
     .st-form-row {
         flex-direction: column;
         align-items: stretch;
-        gap: 16px;
+        gap: 12px;
     }
 
     .st-form-row.st-items-end {
@@ -343,11 +343,32 @@
     /* All form fields full width */
     .st-form-field,
     .st-form-field.st-flex-1,
+    .st-form-field.st-maxw-120,
     .st-form-field.st-maxw-220,
-    .st-form-field.st-maxw-360 {
+    .st-form-field.st-maxw-250,
+    .st-form-field.st-maxw-260,
+    .st-form-field.st-maxw-360,
+    .st-form-field.st-minw-260 {
         flex: 1 1 100%;
         max-width: 100%;
         width: 100%;
+    }
+
+    /* Action button fields — keep horizontal */
+    .st-form-field.st-flex-0,
+    .st-form-field.st-minw-80 {
+        flex: 0 0 auto;
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .st-form-field.st-flex-0 .st-btn,
+    .st-form-field.st-minw-80 .st-btn {
+        flex: 1 1 0;
+        text-align: center;
+        justify-content: center;
     }
 
     /* Booking Requests: keep header controls usable on small screens */

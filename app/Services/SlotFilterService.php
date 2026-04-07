@@ -199,7 +199,7 @@ class SlotFilterService
         $leadTimeMin = trim($request->query('lead_time_min', ''));
         $leadTimeMax = trim($request->query('lead_time_max', ''));
 
-        $leadExpr = $this->slotService->getTimestampDiffMinutesExpression('COALESCE(s.actual_start, s.arrival_time)', 's.actual_finish');
+        $leadExpr = $this->slotService->getTimestampDiffMinutesExpression('COALESCE(s.arrival_time, s.actual_start)', 's.actual_finish');
 
         if ($leadTimeMin !== '' && is_numeric($leadTimeMin)) {
             $query->whereRaw($leadExpr.' >= ?', [(int) $leadTimeMin]);

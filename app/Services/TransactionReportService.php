@@ -140,6 +140,10 @@ class TransactionReportService
     {
         return DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as g', function ($join) {
+                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    ->on('g.warehouse_id', '=', 's.warehouse_id');
+            })
             ->leftJoin('md_users as u', 's.created_by', '=', 'u.id')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->select([
@@ -148,6 +152,7 @@ class TransactionReportService
                 's.po_number as truck_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
+                'g.gate_number',
                 's.vendor_name',
                 'u.full_name as created_by_name',
                 'u.email as created_by_email',
@@ -202,7 +207,11 @@ class TransactionReportService
         $userSearch = trim($request->query('user', ''));
         if ($userSearch !== '') {
             $userSearch = str_replace(['%', '_'], ['\%', '\_'], $userSearch);
-            $query->whereRaw('LOWER(COALESCE(u.nik, \'\')) like ?', ['%'.strtolower($userSearch).'%']);
+            $userLike = '%'.strtolower($userSearch).'%';
+            $query->where(function ($q) use ($userLike) {
+                $q->whereRaw('LOWER(COALESCE(u.nik, \'\')) like ?', [$userLike])
+                    ->orWhereRaw('LOWER(COALESCE(u.full_name, \'\')) like ?', [$userLike]);
+            });
         }
 
         $vendorSearch = trim($request->query('vendor', ''));
@@ -282,6 +291,12 @@ class TransactionReportService
         if (! empty($warehouseValues)) {
             $query->whereIn('s.warehouse_id', array_map('intval', $warehouseValues));
         }
+
+        $gateArray = (array) $request->query('gate_number', []);
+        $gateValues = array_values(array_filter($gateArray, fn ($v) => (string) $v !== ''));
+        if (! empty($gateValues)) {
+            $query->whereIn('g.gate_number', $gateValues);
+        }
     }
 
     /**
@@ -292,7 +307,7 @@ class TransactionReportService
         $leadTimeMin = trim($request->query('lead_time_min', ''));
         $leadTimeMax = trim($request->query('lead_time_max', ''));
 
-        $leadExpr = $this->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
+        $leadExpr = $this->getTimestampDiffMinutesExpression('COALESCE(s.arrival_time, s.actual_start)', 's.actual_finish');
         if ($leadTimeMin !== '' && is_numeric($leadTimeMin)) {
             $query->whereRaw($leadExpr.' >= ?', [(int) $leadTimeMin]);
         }
@@ -362,7 +377,7 @@ class TransactionReportService
             'arrival' => 's.arrival_time',
             'lead_time' => DB::raw($leadExpr),
             'late' => DB::raw("CASE WHEN (COALESCE(s.slot_type, 'planned') = 'planned' AND s.arrival_time IS NOT NULL) AND s.arrival_time > {$lateAddExpr} THEN 1 WHEN ((s.arrival_time IS NULL OR COALESCE(s.slot_type, 'planned') <> 'planned') AND COALESCE(s.is_late, false) = true) THEN 1 ELSE 0 END"),
-            'user' => 'u.name',
+            'user' => 'u.full_name',
         ];
     }
 
@@ -377,6 +392,11 @@ class TransactionReportService
                     ->select(['id', 'wh_name as name', 'wh_code as code'])
                     ->orderBy('wh_name')
                     ->get(),
+                'gates' => DB::table('md_gates')
+                    ->select(['gate_number'])
+                    ->distinct()
+                    ->orderBy('gate_number')
+                    ->get()->pluck('gate_number')->all(),
                 'vendors' => collect(),
             ];
         });
