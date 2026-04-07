@@ -50,7 +50,8 @@ export default defineConfig({
                 'resources/js/pages/trucks-index.js',
                 'resources/js/pages/admin-bookings-index.js',
                 'resources/js/pages/admin-bookings-reschedule.js',
-                'resources/js/pages/admin-bookings-show.js'
+                'resources/js/pages/admin-bookings-show.js',
+                'resources/js/pages/security-dashboard.js'
             ],
             refresh: true,
         }),
