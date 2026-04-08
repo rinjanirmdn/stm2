@@ -17,6 +17,7 @@ Route::prefix('security')->name('security.')->group(function () {
     Route::post('/scan-ticket', [SecurityDashboardController::class, 'scanTicket'])->name('scan')->middleware(['permission:security.scan', 'throttle:30,1']);
     Route::post('/confirm-arrival/{slotId}', [SecurityDashboardController::class, 'confirmArrival'])->name('confirm_arrival')->middleware('permission:security.confirm_arrival');
     Route::get('/ajax/today-slots', [SecurityDashboardController::class, 'ajaxTodaySlots'])->name('ajax.today_slots')->middleware(['permission:security.dashboard', 'throttle:60,1']);
+    Route::get('/ajax/slot/{slotId}', [SecurityDashboardController::class, 'slotDetail'])->whereNumber('slotId')->name('ajax.slot_detail')->middleware(['permission:security.dashboard', 'throttle:60,1']);
 });
 
 // Reports

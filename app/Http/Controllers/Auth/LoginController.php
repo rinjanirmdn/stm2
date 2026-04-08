@@ -149,7 +149,12 @@ class LoginController extends Controller
         }
 
         if ($user && $user->can('dashboard.view')) {
-            return redirect()->intended(route('dashboard'));
+            // Prevent admin from being redirected to security routes via intended()
+            $intended = session()->pull('url.intended', '');
+            if ($intended && str_contains($intended, '/security/')) {
+                $intended = ''; // discard security URL for non-security users
+            }
+            return redirect()->to($intended ?: route('dashboard'));
         }
 
         if ($user && $user->can('slots.index')) {

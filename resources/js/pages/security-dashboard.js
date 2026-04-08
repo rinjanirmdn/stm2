@@ -1,57 +1,57 @@
 /**
- * Security Dashboard v4 — shift/status filter, arrival buttons, slot links, camera
+ * Security Dashboard v5 — shift/status filter, native arrival modal, slot links, camera
  */
 (function () {
     'use strict';
 
-    const configEl = document.getElementById('security_dashboard_config');
+    var configEl = document.getElementById('security_dashboard_config');
     if (!configEl) return;
 
-    const config = JSON.parse(configEl.textContent);
-    const scanInput = document.getElementById('security-scan-input');
-    const scanForm = document.getElementById('security-scan-form');
-    const scanBtn = document.getElementById('security-scan-btn');
-    const modal = document.getElementById('securityScanModal');
-    const confirmBtn = document.getElementById('scanConfirmBtn');
-    const closeBtn = document.getElementById('scanCloseBtn');
+    var config = JSON.parse(configEl.textContent);
+    var scanInput = document.getElementById('security-scan-input');
+    var scanForm = document.getElementById('security-scan-form');
+    var scanBtn = document.getElementById('security-scan-btn');
+    var modal = document.getElementById('securityScanModal');
+    var confirmBtn = document.getElementById('scanConfirmBtn');
+    var closeBtn = document.getElementById('scanCloseBtn');
 
-    const arrivalModal = document.getElementById('securityArrivalModal');
-    const arrivalFrame = document.getElementById('securityArrivalFrame');
-    const arrivalCloseBtn = document.getElementById('arrivalCloseBtn');
+    var arrivalModal = document.getElementById('securityArrivalModal');
+    var arrivalCloseBtn = document.getElementById('arrivalCloseBtn');
+    var arrivalConfirmBtn = document.getElementById('arrivalConfirmBtn');
 
-    let currentSlotId = null;
-    let selectedDate = config.selectedDate || config.today;
-    let html5QrCode = null;
-    let activeStatusFilter = 'all';
-    let activeShiftFilter = 'all';
-    let allSlots = [];
+    var currentSlotId = null;
+    var arrivalSlotId = null;
+    var arrivalExpectedTicket = '';
+    var arrivalTicketVerified = false;
+    var selectedDate = config.selectedDate || config.today;
+    var html5QrCode = null;
+    var activeStatusFilter = 'all';
+    var activeShiftFilter = 'all';
+    var allSlots = [];
+    var cameraScanTarget = 'main'; // 'main' = scan input, 'arrival' = arrival ticket input
 
     // ═══════════════════════════════════════
     //  DATE NAVIGATION
     // ═══════════════════════════════════════
-    const datePicker = document.getElementById('secDatePicker');
-    const dateLabel = document.getElementById('secDateLabel');
-    const datePrev = document.getElementById('datePrev');
-    const dateNext = document.getElementById('dateNext');
-    const dateToday = document.getElementById('dateToday');
+    var datePicker = document.getElementById('secDatePicker');
+    var dateLabel = document.getElementById('secDateLabel');
+    var datePrev = document.getElementById('datePrev');
+    var dateNext = document.getElementById('dateNext');
+    var dateToday = document.getElementById('dateToday');
 
     function normalizeDate(input) {
-        // If it's already a Date object, use UTC to avoid timezone shifts
         if (input instanceof Date && !isNaN(input.getTime())) {
             return input.getUTCFullYear() + '-' + String(input.getUTCMonth()+1).padStart(2,'0') + '-' + String(input.getUTCDate()).padStart(2,'0');
         }
         var s = String(input || '').trim();
-        // Already YYYY-MM-DD
         if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-        // DD-MM-YYYY or DD/MM/YYYY
         var m = s.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
         if (m) return m[3] + '-' + m[2] + '-' + m[1];
-        // Fallback: try native parse
         var d = new Date(s);
         if (!isNaN(d.getTime())) {
             return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
         }
-        return config.today; // ultimate fallback
+        return config.today;
     }
 
     function formatDateLabel(dateStr) {
@@ -81,7 +81,6 @@
     }
 
     if (datePicker) datePicker.addEventListener('change', function () {
-        // Prefer valueAsDate for reliable date, fallback to .value
         var picked = this.valueAsDate ? normalizeDate(this.valueAsDate) : normalizeDate(this.value);
         navigateToDate(picked);
     });
@@ -201,41 +200,240 @@
     }, true);
 
     function openArrivalModal(slotId) {
-        if (!arrivalModal || !arrivalFrame) {
-            window.location.href = config.arrivalFormUrl.replace('__SLOT_ID__', slotId);
+        if (!arrivalModal) return;
+
+        arrivalSlotId = slotId;
+        arrivalExpectedTicket = '';
+        arrivalTicketVerified = false;
+
+        // Show modal with loading state
+        var loadingEl = document.getElementById('arrivalModalLoading');
+        var contentEl = document.getElementById('arrivalModalContent');
+        var confirmBtnEl = document.getElementById('arrivalConfirmBtn');
+        var headerEl = document.getElementById('arrivalModalHeader');
+
+        if (loadingEl) loadingEl.style.display = 'flex';
+        if (contentEl) contentEl.style.display = 'none';
+        if (confirmBtnEl) { confirmBtnEl.style.display = 'none'; setConfirmEnabled(false); }
+
+        // Reset header
+        if (headerEl) {
+            headerEl.style.background = 'linear-gradient(135deg, var(--sec-teal), #00acc1)';
+            headerEl.innerHTML = '<i class="fas fa-right-to-bracket"></i> <span>Arrival</span>';
+        }
+
+        // Reset ticket input
+        var ticketInput = document.getElementById('arrivalTicketInput');
+        if (ticketInput) { ticketInput.value = ''; ticketInput.className = 'sec-arrival-ticket__input'; }
+        var hintEl = document.getElementById('arrivalTicketHint');
+        var errorEl = document.getElementById('arrivalTicketError');
+        var successEl = document.getElementById('arrivalTicketSuccess');
+        if (hintEl) hintEl.style.display = '';
+        if (errorEl) errorEl.style.display = 'none';
+        if (successEl) successEl.style.display = 'none';
+
+        arrivalModal.style.display = 'flex';
+
+        // Fetch slot details via AJAX
+        var url = config.slotDetailUrl.replace('__SLOT_ID__', slotId);
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(function (resp) { return resp.json(); })
+            .then(function (data) {
+                if (loadingEl) loadingEl.style.display = 'none';
+
+                if (!data.success) {
+                    if (contentEl) {
+                        contentEl.innerHTML = '<div class="sec-warning sec-warning--error"><i class="fas fa-exclamation-triangle"></i> ' + esc(data.message) + '</div>';
+                        contentEl.style.display = '';
+                    }
+                    return;
+                }
+
+                populateArrivalModal(data);
+            })
+            .catch(function () {
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (contentEl) {
+                    contentEl.innerHTML = '<div class="sec-warning sec-warning--error"><i class="fas fa-exclamation-triangle"></i> Gagal memuat data. Coba lagi.</div>';
+                    contentEl.style.display = '';
+                }
+            });
+    }
+
+    function populateArrivalModal(data) {
+        var contentEl = document.getElementById('arrivalModalContent');
+        var warningsEl = document.getElementById('arrivalModalWarnings');
+        var confirmBtnEl = document.getElementById('arrivalConfirmBtn');
+        var headerEl = document.getElementById('arrivalModalHeader');
+        var ticketSection = document.getElementById('arrivalTicketSection');
+        var slot = data.slot;
+
+        if (!contentEl) return;
+
+        // Store expected ticket for verification
+        arrivalExpectedTicket = (slot.ticket_number || '').trim();
+
+        // Update header based on status
+        if (headerEl) {
+            if (data.is_late) {
+                headerEl.style.background = 'linear-gradient(135deg, #fb8c00, #ef6c00)';
+                headerEl.innerHTML = '<i class="fas fa-clock"></i> <span>Arrival — Terlambat</span>';
+            } else if (!data.can_proceed) {
+                headerEl.style.background = 'linear-gradient(135deg, #fb8c00, #ef6c00)';
+                headerEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Perhatian</span>';
+            } else {
+                headerEl.style.background = 'linear-gradient(135deg, var(--sec-teal), #00acc1)';
+                headerEl.innerHTML = '<i class="fas fa-right-to-bracket"></i> <span>Arrival</span>';
+            }
+        }
+
+        // Show warnings
+        if (warningsEl) {
+            warningsEl.innerHTML = '';
+            if (data.warnings && data.warnings.length) {
+                data.warnings.forEach(function (w) {
+                    var cls = 'sec-warning sec-warning--' + w.type;
+                    var icon = w.type === 'error' ? 'fas fa-times-circle' : w.type === 'late' ? 'fas fa-clock' : 'fas fa-exclamation-triangle';
+                    warningsEl.innerHTML += '<div class="' + cls + '"><i class="' + icon + '"></i> ' + esc(w.message) + '</div>';
+                });
+            }
+        }
+
+        // Populate fields
+        setText('arrivalPoNumber', slot.po_number);
+        setText('arrivalVendor', slot.vendor_name);
+        setText('arrivalVehicle', slot.vehicle_number);
+        setText('arrivalDriver', slot.driver_name);
+        setText('arrivalDirection', slot.direction);
+        setText('arrivalWarehouse', slot.warehouse);
+        setText('arrivalGate', slot.gate);
+        setText('arrivalEta', slot.eta);
+
+        // Show/hide ticket section and confirm button based on can_proceed
+        if (ticketSection) ticketSection.style.display = data.can_proceed ? '' : 'none';
+        if (confirmBtnEl) {
+            confirmBtnEl.style.display = data.can_proceed ? '' : 'none';
+            setConfirmEnabled(false); // Start disabled, enable after ticket verified
+        }
+
+        contentEl.style.display = '';
+
+        // Auto-focus ticket input
+        if (data.can_proceed) {
+            setTimeout(function () {
+                var ticketInput = document.getElementById('arrivalTicketInput');
+                if (ticketInput) ticketInput.focus();
+            }, 150);
+        }
+    }
+
+    function setText(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value || '-';
+    }
+
+    // ═══════════════════════════════════════
+    //  TICKET VERIFICATION IN ARRIVAL MODAL
+    // ═══════════════════════════════════════
+    var arrivalTicketInputEl = document.getElementById('arrivalTicketInput');
+    if (arrivalTicketInputEl) {
+        // Verify on Enter key
+        arrivalTicketInputEl.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                verifyArrivalTicket();
+            }
+        });
+        // Also verify on blur (when user tabs away)
+        arrivalTicketInputEl.addEventListener('blur', function () {
+            if (this.value.trim()) verifyArrivalTicket();
+        });
+    }
+
+    function verifyArrivalTicket() {
+        var ticketInput = document.getElementById('arrivalTicketInput');
+        var hintEl = document.getElementById('arrivalTicketHint');
+        var errorEl = document.getElementById('arrivalTicketError');
+        var successEl = document.getElementById('arrivalTicketSuccess');
+
+        if (!ticketInput) return;
+        var entered = ticketInput.value.trim();
+
+        // Hide previous states
+        if (hintEl) hintEl.style.display = 'none';
+        if (errorEl) errorEl.style.display = 'none';
+        if (successEl) successEl.style.display = 'none';
+
+        if (!entered) {
+            ticketInput.className = 'sec-arrival-ticket__input';
+            if (hintEl) hintEl.style.display = '';
+            setConfirmEnabled(false);
+            arrivalTicketVerified = false;
             return;
         }
-        var targetUrl = config.arrivalFormUrl.replace('__SLOT_ID__', slotId);
-        if (targetUrl.indexOf('popup=') === -1) {
-            targetUrl += (targetUrl.indexOf('?') === -1 ? '?' : '&') + 'popup=1';
+
+        if (arrivalExpectedTicket && entered !== arrivalExpectedTicket) {
+            // Ticket doesn't match
+            ticketInput.className = 'sec-arrival-ticket__input sec-arrival-ticket__input--error';
+            if (errorEl) {
+                errorEl.innerHTML = '<i class="fas fa-times-circle"></i> Nomor tiket tidak cocok dengan booking ini.';
+                errorEl.style.display = '';
+            }
+            setConfirmEnabled(false);
+            arrivalTicketVerified = false;
+        } else {
+            // Ticket matches (or no expected ticket to compare)
+            ticketInput.className = 'sec-arrival-ticket__input sec-arrival-ticket__input--success';
+            if (successEl) {
+                successEl.innerHTML = '<i class="fas fa-check-circle"></i> Tiket terverifikasi — siap konfirmasi.';
+                successEl.style.display = '';
+            }
+            setConfirmEnabled(true);
+            arrivalTicketVerified = true;
         }
-        arrivalFrame.dataset.targetUrl = targetUrl;
-        arrivalFrame.src = targetUrl;
-        arrivalModal.style.display = 'flex';
+    }
+
+    function setConfirmEnabled(enabled) {
+        var btn = document.getElementById('arrivalConfirmBtn');
+        if (!btn) return;
+        if (enabled) {
+            btn.disabled = false;
+            btn.classList.remove('sec-btn--disabled');
+        } else {
+            btn.disabled = true;
+            btn.classList.add('sec-btn--disabled');
+        }
     }
 
     function closeArrivalModal() {
         if (!arrivalModal) return;
         arrivalModal.style.display = 'none';
-        if (arrivalFrame) arrivalFrame.src = 'about:blank';
+        arrivalSlotId = null;
+        arrivalExpectedTicket = '';
+        arrivalTicketVerified = false;
+        // Stop inline camera if running
+        if (typeof closeArrivalCamera === 'function') closeArrivalCamera();
         refreshSchedule();
         focusScanInput();
     }
 
-    if (arrivalFrame) {
-        arrivalFrame.addEventListener('load', function () {
+    // Arrival confirm button
+    if (arrivalConfirmBtn) {
+        arrivalConfirmBtn.addEventListener('click', async function () {
+            if (!arrivalSlotId || !arrivalTicketVerified) return;
+            arrivalConfirmBtn.disabled = true;
+            arrivalConfirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
             try {
-                var targetUrl = arrivalFrame.dataset.targetUrl || '';
-                var currentUrl = arrivalFrame.contentWindow && arrivalFrame.contentWindow.location ? String(arrivalFrame.contentWindow.location.href || '') : '';
-                if (!targetUrl || !currentUrl || currentUrl === 'about:blank') return;
-
-                // If the iframe has navigated away from the arrival form (commonly after successful submit), close it.
-                if (currentUrl.indexOf(targetUrl) === -1) {
-                    closeArrivalModal();
-                }
-            } catch (e) {
-                // Ignore cross-frame access errors and keep modal open.
-            }
+                var resp = await fetch(config.confirmUrl.replace('__SLOT_ID__', arrivalSlotId), {
+                    method: 'POST',
+                    headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN':config.csrfToken, 'Accept':'application/json' },
+                });
+                var data = await resp.json();
+                closeArrivalModal();
+                if (data.success) { showToast('success', data.message); refreshSchedule(); }
+                else { showToast('error', data.message); }
+            } catch (err) { closeArrivalModal(); showToast('error', 'Gagal menghubungi server.'); }
+            finally { arrivalConfirmBtn.disabled = false; arrivalConfirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> KONFIRMASI KEDATANGAN'; }
         });
     }
 
@@ -281,16 +479,22 @@
     var camOverlay = document.getElementById('secCameraOverlay');
     var camClose = document.getElementById('secCameraClose');
     var camPreview = document.getElementById('secCameraPreview');
+    var arrivalCameraBtn = document.getElementById('arrivalCameraBtn');
+    var arrivalCameraWrap = document.getElementById('arrivalCameraWrap');
+    var arrivalCameraPreview = document.getElementById('arrivalCameraPreview');
+    var arrivalCameraStop = document.getElementById('arrivalCameraStop');
+    var arrivalHtml5QrCode = null;
 
-    if (camBtn) camBtn.addEventListener('click', function () { openCamera(); });
-    if (camClose) camClose.addEventListener('click', function () { closeCamera(); });
-    if (camOverlay) camOverlay.addEventListener('click', function (e) { if (e.target === camOverlay) closeCamera(); });
+    if (camBtn) camBtn.addEventListener('click', function () { openMainCamera(); });
+    if (camClose) camClose.addEventListener('click', function () { closeMainCamera(); });
+    if (camOverlay) camOverlay.addEventListener('click', function (e) { if (e.target === camOverlay) closeMainCamera(); });
 
-    function openCamera() {
+    // Main camera (full overlay for top scan bar)
+    function openMainCamera() {
         camOverlay.style.display = 'flex';
         if (typeof Html5Qrcode === 'undefined') {
             camPreview.innerHTML = '<div style="color:#fff;padding:40px;text-align:center;">Memuat kamera...</div>';
-            setTimeout(openCamera, 500);
+            setTimeout(openMainCamera, 500);
             return;
         }
         if (html5QrCode) { try { html5QrCode.stop(); } catch(e){} }
@@ -299,7 +503,7 @@
             { facingMode: 'environment' },
             { fps: 10, qrbox: { width: 260, height: 120 }, aspectRatio: 1.33 },
             function onSuccess(decodedText) {
-                closeCamera();
+                closeMainCamera();
                 if (scanInput) scanInput.value = decodedText;
                 doScan(decodedText.trim());
             },
@@ -311,15 +515,55 @@
         });
     }
 
-    function closeCamera() {
+    function closeMainCamera() {
         if (html5QrCode) { try { html5QrCode.stop(); } catch(e){} html5QrCode = null; }
         if (camPreview) camPreview.innerHTML = '';
         camOverlay.style.display = 'none';
         focusScanInput();
     }
 
+    // Arrival inline camera (inside the modal)
+    if (arrivalCameraBtn) arrivalCameraBtn.addEventListener('click', function () { openArrivalCamera(); });
+    if (arrivalCameraStop) arrivalCameraStop.addEventListener('click', function () { closeArrivalCamera(); });
+
+    function openArrivalCamera() {
+        if (!arrivalCameraWrap || !arrivalCameraPreview) return;
+        arrivalCameraWrap.style.display = '';
+        if (typeof Html5Qrcode === 'undefined') {
+            arrivalCameraPreview.innerHTML = '<div style="color:#b2ebf2;padding:20px;text-align:center;font-size:12px;">Memuat kamera...</div>';
+            setTimeout(openArrivalCamera, 500);
+            return;
+        }
+        if (arrivalHtml5QrCode) { try { arrivalHtml5QrCode.stop(); } catch(e){} }
+        arrivalHtml5QrCode = new Html5Qrcode('arrivalCameraPreview');
+        arrivalHtml5QrCode.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 280, height: 80 }, aspectRatio: 3.0 },
+            function onSuccess(decodedText) {
+                closeArrivalCamera();
+                var text = decodedText.trim();
+                var arrTicketInput = document.getElementById('arrivalTicketInput');
+                if (arrTicketInput) {
+                    arrTicketInput.value = text;
+                    verifyArrivalTicket();
+                }
+            },
+            function onFail() {}
+        ).catch(function () {
+            arrivalCameraPreview.innerHTML = '<div style="color:#ef5350;padding:16px;text-align:center;font-size:12px;">' +
+                '<i class="fas fa-exclamation-triangle" style="font-size:20px;margin-bottom:6px;display:block;"></i>' +
+                'Kamera tidak tersedia.<br>Pastikan izin kamera diaktifkan.</div>';
+        });
+    }
+
+    function closeArrivalCamera() {
+        if (arrivalHtml5QrCode) { try { arrivalHtml5QrCode.stop(); } catch(e){} arrivalHtml5QrCode = null; }
+        if (arrivalCameraPreview) arrivalCameraPreview.innerHTML = '';
+        if (arrivalCameraWrap) arrivalCameraWrap.style.display = 'none';
+    }
+
     // ═══════════════════════════════════════
-    //  RESULT MODAL
+    //  RESULT MODAL (scan result)
     // ═══════════════════════════════════════
     function showScanResult(data) {
         var header = document.getElementById('scanModalHeader');
@@ -368,7 +612,7 @@
     }
 
     // ═══════════════════════════════════════
-    //  CONFIRM ARRIVAL (from modal)
+    //  CONFIRM ARRIVAL (from scan modal)
     // ═══════════════════════════════════════
     if (confirmBtn) {
         confirmBtn.addEventListener('click', async function () {
@@ -439,7 +683,7 @@
     }
 
     setInterval(refreshSchedule, 60000);
-    refreshSchedule(); // initial AJAX to populate allSlots for filtering
+    refreshSchedule();
 
     function esc(t) { if (!t) return ''; var el = document.createElement('span'); el.textContent = t; return el.innerHTML; }
 
