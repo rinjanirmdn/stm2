@@ -15,6 +15,10 @@
     const confirmBtn = document.getElementById('scanConfirmBtn');
     const closeBtn = document.getElementById('scanCloseBtn');
 
+    const arrivalModal = document.getElementById('securityArrivalModal');
+    const arrivalFrame = document.getElementById('securityArrivalFrame');
+    const arrivalCloseBtn = document.getElementById('arrivalCloseBtn');
+
     let currentSlotId = null;
     let selectedDate = config.selectedDate || config.today;
     let html5QrCode = null;
@@ -31,30 +35,56 @@
     const dateNext = document.getElementById('dateNext');
     const dateToday = document.getElementById('dateToday');
 
+    function normalizeDate(input) {
+        // If it's already a Date object, use UTC to avoid timezone shifts
+        if (input instanceof Date && !isNaN(input.getTime())) {
+            return input.getUTCFullYear() + '-' + String(input.getUTCMonth()+1).padStart(2,'0') + '-' + String(input.getUTCDate()).padStart(2,'0');
+        }
+        var s = String(input || '').trim();
+        // Already YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        // DD-MM-YYYY or DD/MM/YYYY
+        var m = s.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
+        if (m) return m[3] + '-' + m[2] + '-' + m[1];
+        // Fallback: try native parse
+        var d = new Date(s);
+        if (!isNaN(d.getTime())) {
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+        return config.today; // ultimate fallback
+    }
+
     function formatDateLabel(dateStr) {
-        var d = new Date(dateStr + 'T00:00:00');
+        var safe = normalizeDate(dateStr);
+        var d = new Date(safe + 'T00:00:00');
         var today = new Date(config.today + 'T00:00:00');
         var months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+        if (isNaN(d.getTime())) return safe;
         var base = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
         if (d.getTime() === today.getTime()) return 'Hari Ini, ' + base;
         return base;
     }
 
     function shiftDate(days) {
-        var d = new Date(selectedDate + 'T00:00:00');
+        var safe = normalizeDate(selectedDate);
+        var d = new Date(safe + 'T00:00:00');
         d.setDate(d.getDate() + days);
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
 
     function navigateToDate(dateStr) {
-        selectedDate = dateStr;
-        if (datePicker) datePicker.value = dateStr;
-        if (dateLabel) dateLabel.textContent = formatDateLabel(dateStr);
-        if (dateToday) dateToday.style.display = dateStr === config.today ? 'none' : '';
+        selectedDate = normalizeDate(dateStr);
+        if (datePicker) datePicker.value = selectedDate;
+        if (dateLabel) dateLabel.textContent = formatDateLabel(selectedDate);
+        if (dateToday) dateToday.style.display = selectedDate === config.today ? 'none' : '';
         refreshSchedule();
     }
 
-    if (datePicker) datePicker.addEventListener('change', function () { navigateToDate(this.value); });
+    if (datePicker) datePicker.addEventListener('change', function () {
+        // Prefer valueAsDate for reliable date, fallback to .value
+        var picked = this.valueAsDate ? normalizeDate(this.valueAsDate) : normalizeDate(this.value);
+        navigateToDate(picked);
+    });
     if (datePrev) datePrev.addEventListener('click', function () { navigateToDate(shiftDate(-1)); });
     if (dateNext) dateNext.addEventListener('click', function () { navigateToDate(shiftDate(1)); });
     if (dateToday) {
@@ -167,31 +197,47 @@
         var slotId = arrBtn.dataset.arrivalId;
         if (!slotId) return;
 
-        // Quick confirm arrival via the same endpoint
-        arrBtn.disabled = true;
-        arrBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        openArrivalModal(slotId);
+    }, true);
 
-        fetch(config.confirmUrl.replace('__SLOT_ID__', slotId), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': config.csrfToken, 'Accept': 'application/json' },
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-            if (data.success) {
-                showToast('success', data.message);
-                refreshSchedule();
-            } else {
-                showToast('error', data.message);
-                arrBtn.disabled = false;
-                arrBtn.innerHTML = '<i class="fas fa-right-to-bracket"></i><span>Arrival</span>';
+    function openArrivalModal(slotId) {
+        if (!arrivalModal || !arrivalFrame) {
+            window.location.href = config.arrivalFormUrl.replace('__SLOT_ID__', slotId);
+            return;
+        }
+        var targetUrl = config.arrivalFormUrl.replace('__SLOT_ID__', slotId);
+        if (targetUrl.indexOf('popup=') === -1) {
+            targetUrl += (targetUrl.indexOf('?') === -1 ? '?' : '&') + 'popup=1';
+        }
+        arrivalFrame.dataset.targetUrl = targetUrl;
+        arrivalFrame.src = targetUrl;
+        arrivalModal.style.display = 'flex';
+    }
+
+    function closeArrivalModal() {
+        if (!arrivalModal) return;
+        arrivalModal.style.display = 'none';
+        if (arrivalFrame) arrivalFrame.src = 'about:blank';
+        refreshSchedule();
+        focusScanInput();
+    }
+
+    if (arrivalFrame) {
+        arrivalFrame.addEventListener('load', function () {
+            try {
+                var targetUrl = arrivalFrame.dataset.targetUrl || '';
+                var currentUrl = arrivalFrame.contentWindow && arrivalFrame.contentWindow.location ? String(arrivalFrame.contentWindow.location.href || '') : '';
+                if (!targetUrl || !currentUrl || currentUrl === 'about:blank') return;
+
+                // If the iframe has navigated away from the arrival form (commonly after successful submit), close it.
+                if (currentUrl.indexOf(targetUrl) === -1) {
+                    closeArrivalModal();
+                }
+            } catch (e) {
+                // Ignore cross-frame access errors and keep modal open.
             }
-        })
-        .catch(function () {
-            showToast('error', 'Gagal menghubungi server.');
-            arrBtn.disabled = false;
-            arrBtn.innerHTML = '<i class="fas fa-right-to-bracket"></i><span>Arrival</span>';
         });
-    });
+    }
 
     // ═══════════════════════════════════════
     //  SCAN (text input + barcode scanner)
@@ -349,10 +395,13 @@
     function closeModal() { modal.style.display = 'none'; currentSlotId = null; focusScanInput(); }
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
     if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+    if (arrivalCloseBtn) arrivalCloseBtn.addEventListener('click', closeArrivalModal);
+    if (arrivalModal) arrivalModal.addEventListener('click', function (e) { if (e.target === arrivalModal) closeArrivalModal(); });
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             if (modal.style.display !== 'none') closeModal();
             if (camOverlay && camOverlay.style.display !== 'none') closeCamera();
+            if (arrivalModal && arrivalModal.style.display !== 'none') closeArrivalModal();
         }
     });
 

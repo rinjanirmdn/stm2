@@ -143,8 +143,8 @@ class LoginController extends Controller
             return redirect()->intended(route('vendor.dashboard'));
         }
 
-        // Security role gets their dedicated dashboard first
-        if ($user && $user->hasRole('security')) {
+        // Security users → security dashboard (only if they don't have main dashboard access)
+        if ($user && $user->can('security.dashboard') && ! $user->can('dashboard.view')) {
             return redirect()->intended(route('security.dashboard'));
         }
 
