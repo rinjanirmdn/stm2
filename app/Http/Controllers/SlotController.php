@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
+use App\Models\BookingRequest;
 use App\Models\Slot;
+use App\Notifications\SlotCancelled;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
@@ -625,7 +627,13 @@ class SlotController extends Controller
             return back()->withInput()->with('error', 'Cancellation reason is required');
         }
 
-        DB::transaction(function () use ($slotId, $reason) {
+        $actor = Auth::user();
+        $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Admin'));
+        if ($actorName === '') {
+            $actorName = 'Admin';
+        }
+
+        DB::transaction(function () use ($slotId, $reason, $actorName) {
             $now = date('Y-m-d H:i:s');
 
             // Get slot info before updating for cache clearing
@@ -636,6 +644,24 @@ class SlotController extends Controller
                 'cancelled_reason' => $reason,
                 'cancelled_at' => $now,
             ]);
+
+            // If this slot was created from a vendor booking request, sync the booking request status.
+            // Vendor "My Bookings" page is driven by booking_requests table.
+            try {
+                $bookingRequest = BookingRequest::where('converted_slot_id', $slotId)->first();
+                if ($bookingRequest) {
+                    $notes = 'Cancelled by '.$actorName;
+                    if ($reason !== '') {
+                        $notes .= ': '.$reason;
+                    }
+                    $bookingRequest->update([
+                        'status' => BookingRequest::STATUS_CANCELLED,
+                        'approval_notes' => $notes,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // Ignore booking sync failures to avoid breaking cancel flow
+            }
 
             // Clear availability cache to restore slot availability
             if ($slot && ! empty($slot->planned_start)) {
@@ -651,6 +677,36 @@ class SlotController extends Controller
             }
 
             $this->slotService->logActivity($slotId, 'status_change', 'Slot Cancelled', null, ['reason' => $reason, 'cancelled_at' => $now]);
+
+            // Notify vendor (requester) after successful DB commit (web notification + optional email)
+            DB::afterCommit(function () use ($slotId, $reason, $now) {
+                try {
+                    $slotModel = Slot::with([
+                        'requester',
+                        'plannedGate.warehouse',
+                        'actualGate.warehouse',
+                        'warehouse',
+                    ])->find($slotId);
+
+                    if (! $slotModel || ! $slotModel->requester) {
+                        return;
+                    }
+
+                    $bookingRequestId = null;
+                    try {
+                        $bookingRequestId = (int) BookingRequest::where('converted_slot_id', $slotId)->value('id');
+                        if ($bookingRequestId <= 0) {
+                            $bookingRequestId = null;
+                        }
+                    } catch (\Throwable $e) {
+                        $bookingRequestId = null;
+                    }
+
+                    $slotModel->requester->notify(new SlotCancelled($slotModel, $reason, $now, $bookingRequestId));
+                } catch (\Throwable $e) {
+                    // Never break cancellation flow because notification failed
+                }
+            });
         });
 
         return redirect()->route('slots.index')->with('success', 'Slot cancelled');

@@ -169,6 +169,13 @@ class SlotService
     {
         $createdBy = $userId ?? Auth::id();
 
+        if (is_array($oldValue) || is_object($oldValue)) {
+            $oldValue = json_encode($oldValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        if (is_array($newValue) || is_object($newValue)) {
+            $newValue = json_encode($newValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
         // Capitalize description properly
         $description = $this->capitalizeDescription($description);
 
