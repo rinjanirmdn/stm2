@@ -190,15 +190,93 @@
     </div>
 
     <div class="sec-result-overlay" id="securityArrivalModal" style="display:none;">
-        <div class="sec-result-card" style="width: 860px; max-width: 96vw;">
-            <div class="sec-result-card__header" style="background: linear-gradient(135deg, var(--sec-teal), #00acc1);">
+        <div class="sec-result-card sec-result-card--arrival">
+            <div class="sec-result-card__header" id="arrivalModalHeader" style="background: linear-gradient(135deg, var(--sec-teal), #00acc1);">
                 <i class="fas fa-right-to-bracket"></i>
                 <span>Arrival</span>
             </div>
-            <div class="sec-result-card__body" style="padding: 0;">
-                <iframe id="securityArrivalFrame" title="Arrival Form" style="width:100%;height:80vh;border:0;"></iframe>
+            <div class="sec-result-card__body">
+                <div id="arrivalModalLoading" class="sec-arrival-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Memuat data...</span>
+                </div>
+                <div id="arrivalModalContent" style="display:none;">
+                    <div id="arrivalModalWarnings"></div>
+
+                    {{-- Ticket Scan / Input --}}
+                    <div class="sec-arrival-ticket" id="arrivalTicketSection">
+                        <label class="sec-arrival-ticket__label">
+                            <i class="fas fa-barcode"></i> Scan Tiket / Input Manual <span class="sec-text--danger">*</span>
+                        </label>
+                        <div class="sec-arrival-ticket__row">
+                            <input type="text" id="arrivalTicketInput" class="sec-arrival-ticket__input" placeholder="Scan barcode atau ketik nomor tiket..." autocomplete="off">
+                            <button type="button" class="sec-arrival-ticket__cam" id="arrivalCameraBtn" title="Scan via Kamera">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                        {{-- Inline Camera Preview --}}
+                        <div id="arrivalCameraWrap" class="sec-arrival-camera" style="display:none;">
+                            <div class="sec-arrival-camera__bar">
+                                <span><i class="fas fa-video"></i> Arahkan kamera ke barcode</span>
+                                <button type="button" id="arrivalCameraStop" class="sec-arrival-camera__stop" title="Tutup Kamera">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div id="arrivalCameraPreview" class="sec-arrival-camera__preview"></div>
+                        </div>
+                        <div id="arrivalTicketHint" class="sec-arrival-ticket__hint">
+                            <i class="fas fa-info-circle"></i> Masukkan nomor tiket untuk verifikasi sebelum konfirmasi.
+                        </div>
+                        <div id="arrivalTicketError" class="sec-arrival-ticket__error" style="display:none;"></div>
+                        <div id="arrivalTicketSuccess" class="sec-arrival-ticket__success" style="display:none;"></div>
+                    </div>
+
+                    {{-- Booking Summary --}}
+                    <div class="sec-arrival-info">
+                        <div class="sec-arrival-info__header">
+                            <i class="fas fa-clipboard-list"></i> Informasi Booking
+                        </div>
+                        <div class="sec-arrival-info__grid">
+                            <div class="sec-arrival-info__item">
+                                <span class="sec-arrival-info__label">PO Number</span>
+                                <span class="sec-arrival-info__value" id="arrivalPoNumber">-</span>
+                            </div>
+                            <div class="sec-arrival-info__item">
+                                <span class="sec-arrival-info__label">Vendor</span>
+                                <span class="sec-arrival-info__value" id="arrivalVendor">-</span>
+                            </div>
+                            <div class="sec-arrival-info__item">
+                                <span class="sec-arrival-info__label">Kendaraan</span>
+                                <span class="sec-arrival-info__value" id="arrivalVehicle">-</span>
+                            </div>
+                            <div class="sec-arrival-info__item">
+                                <span class="sec-arrival-info__label">Pengemudi</span>
+                                <span class="sec-arrival-info__value" id="arrivalDriver">-</span>
+                            </div>
+                            <div class="sec-arrival-info__item">
+                                <span class="sec-arrival-info__label">Aktivitas</span>
+                                <span class="sec-arrival-info__value" id="arrivalDirection">-</span>
+                            </div>
+                            <div class="sec-arrival-info__item">
+                                <span class="sec-arrival-info__label">Warehouse</span>
+                                <span class="sec-arrival-info__value" id="arrivalWarehouse">-</span>
+                            </div>
+                            <div class="sec-arrival-info__item">
+                                <span class="sec-arrival-info__label">Gate Tujuan</span>
+                                <span class="sec-arrival-info__value" id="arrivalGate">-</span>
+                            </div>
+                            <div class="sec-arrival-info__item sec-arrival-info__item--full">
+                                <span class="sec-arrival-info__label">ETA</span>
+                                <span class="sec-arrival-info__value" id="arrivalEta">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="sec-result-card__actions">
+            <div class="sec-result-card__actions" id="arrivalModalActions">
+                <button type="button" class="sec-btn sec-btn--confirm sec-btn--disabled" id="arrivalConfirmBtn" style="display:none;" disabled>
+                    <i class="fas fa-check-circle"></i> KONFIRMASI KEDATANGAN
+                </button>
                 <button type="button" class="sec-btn sec-btn--close" id="arrivalCloseBtn">Tutup</button>
             </div>
         </div>
@@ -211,7 +289,7 @@
 <script type="application/json" id="security_dashboard_config">{!! json_encode([
     'scanUrl' => route('security.scan'),
     'confirmUrl' => rtrim(route('security.confirm_arrival', ['slotId' => '__SLOT_ID__']), '/'),
-    'arrivalFormUrl' => rtrim(route('slots.arrival', ['slotId' => '__SLOT_ID__', 'popup' => 1]), '/'),
+    'slotDetailUrl' => rtrim(route('security.ajax.slot_detail', ['slotId' => '__SLOT_ID__']), '/'),
     'refreshUrl' => route('security.ajax.today_slots'),
     'slotShowUrl' => rtrim(route('slots.show', ['slotId' => '__SLOT_ID__']), '/'),
     'csrfToken' => csrf_token(),
@@ -442,6 +520,117 @@
 .sec-btn--close { background: #f5f5f5; color: #555; }
 .sec-btn--close:hover { background: #eee; }
 
+/* ═══════ Arrival Modal ═══════ */
+.sec-result-card--arrival { width: 460px; max-width: 94vw; }
+.sec-arrival-loading {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 40px 20px; color: #78909c; font-size: 14px;
+}
+.sec-arrival-loading i { font-size: 20px; color: var(--sec-teal); }
+.sec-arrival-info {
+    border: 1px solid #f0f0f0; border-radius: 10px;
+    overflow: hidden; margin-top: 8px;
+}
+.sec-arrival-info__header {
+    background: #f8fafb; padding: 10px 16px;
+    font-size: 13px; font-weight: 700; color: #37474f;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; gap: 8px;
+}
+.sec-arrival-info__header i { color: var(--sec-teal); opacity: .7; }
+.sec-arrival-info__grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+.sec-arrival-info__item {
+    padding: 10px 16px;
+    border-bottom: 1px solid #f5f5f5;
+    display: flex; flex-direction: column; gap: 2px;
+}
+.sec-arrival-info__item:nth-child(odd) { border-right: 1px solid #f5f5f5; }
+.sec-arrival-info__item--full { grid-column: 1 / -1; border-right: none !important; }
+.sec-arrival-info__item:last-child,
+.sec-arrival-info__item:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+.sec-arrival-info__label { font-size: 11px; color: #90a4ae; font-weight: 500; text-transform: uppercase; letter-spacing: .3px; }
+.sec-arrival-info__value { font-size: 13px; color: #1a1a2e; font-weight: 600; word-break: break-word; }
+.sec-arrival-info__value--bold { font-size: 15px; font-weight: 800; color: var(--sec-teal); }
+
+/* Ticket Input Section */
+.sec-arrival-ticket { margin-bottom: 12px; }
+.sec-arrival-ticket__label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 700; color: #37474f; margin-bottom: 8px;
+}
+.sec-arrival-ticket__label i { color: var(--sec-indigo); }
+.sec-text--danger { color: #e53935; }
+.sec-arrival-ticket__row {
+    display: flex; gap: 6px; align-items: center;
+}
+.sec-arrival-ticket__input {
+    flex: 1; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 10px;
+    font-size: 14px; font-weight: 600; color: #1a1a2e; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+.sec-arrival-ticket__input:focus {
+    border-color: var(--sec-teal);
+    box-shadow: 0 0 0 3px rgba(38,198,218,.15);
+}
+.sec-arrival-ticket__input--error { border-color: #e53935 !important; }
+.sec-arrival-ticket__input--success { border-color: var(--sec-green) !important; }
+.sec-arrival-ticket__cam {
+    width: 42px; height: 42px; border-radius: 10px;
+    border: 2px solid #e0e0e0; background: #fff; color: var(--sec-indigo);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: all .15s; flex-shrink: 0;
+}
+.sec-arrival-ticket__cam:hover { border-color: var(--sec-indigo); background: #f5f5ff; }
+.sec-arrival-ticket__hint {
+    margin-top: 6px; font-size: 11px; color: #90a4ae;
+    display: flex; align-items: center; gap: 4px;
+}
+.sec-arrival-ticket__error {
+    margin-top: 6px; font-size: 12px; color: #e53935; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; background: #ffebee; border-radius: 6px;
+}
+.sec-arrival-ticket__success {
+    margin-top: 6px; font-size: 12px; color: #2e7d32; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; background: #e8f5e9; border-radius: 6px;
+}
+.sec-btn--disabled {
+    opacity: .45; cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+/* Inline Camera (inside arrival modal) */
+.sec-arrival-camera {
+    margin-top: 8px; border-radius: 10px; overflow: hidden;
+    border: 2px solid var(--sec-teal); background: #000;
+}
+.sec-arrival-camera__bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 12px; background: rgba(0,0,0,.85);
+    font-size: 12px; color: #b2ebf2;
+}
+.sec-arrival-camera__bar i { margin-right: 4px; }
+.sec-arrival-camera__stop {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,.15); color: #fff;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; transition: background .15s;
+}
+.sec-arrival-camera__stop:hover { background: rgba(255,82,82,.7); }
+.sec-arrival-camera__preview {
+    width: 100%; min-height: 120px; max-height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+}
+.sec-arrival-camera__preview video {
+    width: 100% !important; height: auto !important; max-height: 160px;
+    object-fit: cover;
+}
+
 /* ═══════ RESPONSIVE ═══════ */
 @media (max-width: 768px) {
     .sec-topbar { gap: 6px; }
@@ -457,6 +646,7 @@
     .sec-slot__meta { gap: 6px; font-size: 10px; }
     .sec-slot__arrival-btn { padding: 6px 8px; min-width: 46px; font-size: 14px; }
     .sec-slot__arrival-btn span { font-size: 8px; }
+    .sec-result-card--arrival { width: 94vw; }
 }
 @media (max-width: 480px) {
     .sec-topbar { flex-direction: column; align-items: stretch; }
@@ -480,6 +670,10 @@
     .sec-scan-group__input { font-size: 13px; }
     .sec-camera-panel { width: 95vw; }
     .sec-result-card { width: 95vw; }
+    .sec-arrival-info__grid { grid-template-columns: 1fr; }
+    .sec-arrival-info__item:nth-child(odd) { border-right: none; }
+    .sec-arrival-info__item { border-bottom: 1px solid #f5f5f5; }
+    .sec-arrival-info__item:last-child { border-bottom: none; }
 }
 @media (max-width: 360px) {
     .sec-stat { min-width: 44px; padding: 6px 2px; }
