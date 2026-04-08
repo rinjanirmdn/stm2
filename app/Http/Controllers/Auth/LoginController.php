@@ -154,6 +154,7 @@ class LoginController extends Controller
             if ($intended && str_contains($intended, '/security/')) {
                 $intended = ''; // discard security URL for non-security users
             }
+
             return redirect()->to($intended ?: route('dashboard'));
         }
 
