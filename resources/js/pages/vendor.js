@@ -421,17 +421,39 @@ document.addEventListener('DOMContentLoaded', function () {
     const bookingConfig = window.vendorBookingCreateConfig || stReadJson('vendor_booking_create_config', null);
     const availabilityConfig = window.vendorAvailabilityConfig || stReadJson('vendor_availability_config', null);
 
-    if (bookingConfig) {
-        initVendorBookingCreate(bookingConfig);
+    try {
+        if (bookingConfig) {
+            initVendorBookingCreate(bookingConfig);
+        }
+    } catch (e) {
+        console.error('Error initVendorBookingCreate:', e);
     }
 
-    if (availabilityConfig) {
-        initVendorAvailability(availabilityConfig);
+    try {
+        if (availabilityConfig) {
+            initVendorAvailability(availabilityConfig);
+        }
+    } catch (e) {
+        console.error('Error initVendorAvailability:', e);
     }
 
-    bootVendorDashboardDateRange();
-    initVendorNotifications();
-    initVendorHeaderUserMenu();
+    try {
+        bootVendorDashboardDateRange();
+    } catch (e) {
+        console.error('Error bootVendorDashboardDateRange:', e);
+    }
+
+    try {
+        initVendorNotifications();
+    } catch (e) {
+        console.error('Error initVendorNotifications:', e);
+    }
+    
+    try {
+        initVendorHeaderUserMenu();
+    } catch (e) {
+        console.error('Error initVendorHeaderUserMenu:', e);
+    }
 
     // Auto-dismiss alerts after 5 seconds
     document.querySelectorAll('.vendor-alert--autodismiss').forEach(function (alert) {
