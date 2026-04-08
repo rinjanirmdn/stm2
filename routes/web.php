@@ -23,6 +23,11 @@ Route::get('/', function () {
             return redirect()->route('vendor.dashboard');
         }
 
+        // Security users → security dashboard (only if they don't have main dashboard access)
+        if ($user && $user->can('security.dashboard') && ! $user->can('dashboard.view')) {
+            return redirect()->route('security.dashboard');
+        }
+
         if ($user && $user->can('dashboard.view')) {
             return redirect()->route('dashboard');
         }

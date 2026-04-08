@@ -134,7 +134,7 @@
                     @endif
                 </div>
                 @if ($status === 'scheduled')
-                    <button type="button" class="sec-slot__arrival-btn" data-arrival-id="{{ $slot->id }}" title="Catat Kedatangan" onclick="event.preventDefault();event.stopPropagation();">
+                    <button type="button" class="sec-slot__arrival-btn" data-arrival-id="{{ $slot->id }}" title="Catat Kedatangan" onclick="event.stopPropagation();">
                         <i class="fas fa-right-to-bracket"></i>
                         <span>Arrival</span>
                     </button>
@@ -189,6 +189,21 @@
         </div>
     </div>
 
+    <div class="sec-result-overlay" id="securityArrivalModal" style="display:none;">
+        <div class="sec-result-card" style="width: 860px; max-width: 96vw;">
+            <div class="sec-result-card__header" style="background: linear-gradient(135deg, var(--sec-teal), #00acc1);">
+                <i class="fas fa-right-to-bracket"></i>
+                <span>Arrival</span>
+            </div>
+            <div class="sec-result-card__body" style="padding: 0;">
+                <iframe id="securityArrivalFrame" title="Arrival Form" style="width:100%;height:80vh;border:0;"></iframe>
+            </div>
+            <div class="sec-result-card__actions">
+                <button type="button" class="sec-btn sec-btn--close" id="arrivalCloseBtn">Tutup</button>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -196,6 +211,7 @@
 <script type="application/json" id="security_dashboard_config">{!! json_encode([
     'scanUrl' => route('security.scan'),
     'confirmUrl' => rtrim(route('security.confirm_arrival', ['slotId' => '__SLOT_ID__']), '/'),
+    'arrivalFormUrl' => rtrim(route('slots.arrival', ['slotId' => '__SLOT_ID__', 'popup' => 1]), '/'),
     'refreshUrl' => route('security.ajax.today_slots'),
     'slotShowUrl' => rtrim(route('slots.show', ['slotId' => '__SLOT_ID__']), '/'),
     'csrfToken' => csrf_token(),
