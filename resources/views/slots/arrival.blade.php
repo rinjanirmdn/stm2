@@ -1,9 +1,24 @@
+@if (request()->boolean('popup'))
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Arrival - e-Docking Control System</title>
+    @vite(['resources/css/style.css', 'resources/js/app.js'])
+</head>
+<body class="st-app">
+    <main class="st-content st-content--layout" style="padding-top: 16px;">
+@else
 @extends('layouts.app')
 
 @section('title', 'Arrival - e-Docking Control System')
 @section('page_title', 'Arrival')
 
 @section('content')
+@endif
+
     <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Arrival Registration</h3>
@@ -160,6 +175,16 @@
         </form>
     </div>
 
+@if (request()->boolean('popup'))
+    <script src="{{ asset('js/vendor/html5-qrcode.min.js') }}"></script>
+    <script type="application/json" id="slots_arrival_config">{!! json_encode([
+        'expectedTicket' => (string) ($slot->ticket_number ?? ''),
+    ]) !!}</script>
+    @vite(['resources/js/pages/slots-arrival.js'])
+    </main>
+</body>
+</html>
+@else
 @endsection
 
 @push('scripts')
@@ -169,4 +194,5 @@
 ]) !!}</script>
 @vite(['resources/js/pages/slots-arrival.js'])
 @endpush
+@endif
 
