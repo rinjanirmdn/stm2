@@ -333,4 +333,90 @@ class SecurityDashboardController extends Controller
             })->values(),
         ]);
     }
+
+    /**
+     * AJAX: Get slot detail by ID for arrival modal.
+     */
+    public function slotDetail(int $slotId)
+    {
+        $slot = DB::table('slots as s')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
+            ->where('s.id', $slotId)
+            ->select([
+                's.id',
+                's.ticket_number',
+                's.po_number',
+                's.vendor_name',
+                's.vehicle_number_snap',
+                's.driver_name',
+                's.direction',
+                's.planned_start',
+                's.planned_duration',
+                's.arrival_time',
+                's.status',
+                's.slot_type',
+                'w.wh_name as warehouse_name',
+                'w.wh_code as warehouse_code',
+                'pg.gate_number as planned_gate_number',
+                'wpg.wh_code as planned_gate_warehouse_code',
+            ])
+            ->first();
+
+        if (! $slot) {
+            return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.']);
+        }
+
+        $gateDisplay = '-';
+        $whCode = trim((string) ($slot->planned_gate_warehouse_code ?? ''));
+        $gateNo = trim((string) ($slot->planned_gate_number ?? ''));
+        if ($whCode !== '' && $gateNo !== '') {
+            $gateDisplay = $whCode.' - Gate '.$gateNo;
+        } elseif (trim((string) ($slot->warehouse_name ?? '')) !== '') {
+            $gateDisplay = $slot->warehouse_name;
+        }
+
+        $status = (string) ($slot->status ?? '');
+        $canProceed = $status === 'scheduled' && empty($slot->arrival_time);
+
+        $warnings = [];
+        if ($status !== 'scheduled') {
+            $statusLabel = ucwords(str_replace('_', ' ', $status));
+            $warnings[] = ['type' => 'warning', 'message' => 'Status saat ini: '.$statusLabel.'.'];
+        }
+        if (! empty($slot->arrival_time)) {
+            $warnings[] = ['type' => 'warning', 'message' => 'Sudah dicatat arrival pukul '.date('H:i', strtotime($slot->arrival_time)).'.'];
+        }
+
+        $isLate = false;
+        if ($status === 'scheduled' && ! empty($slot->planned_start)) {
+            $etaPlus15 = strtotime($slot->planned_start) + (15 * 60);
+            if (time() > $etaPlus15) {
+                $isLate = true;
+                $minutesLate = (int) round((time() - strtotime($slot->planned_start)) / 60);
+                $warnings[] = ['type' => 'late', 'message' => 'TERLAMBAT '.$minutesLate.' menit dari jadwal.'];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'can_proceed' => $canProceed,
+            'is_late' => $isLate,
+            'warnings' => $warnings,
+            'slot' => [
+                'id' => $slot->id,
+                'ticket_number' => $slot->ticket_number ?? '-',
+                'po_number' => $slot->po_number ?? '-',
+                'vendor_name' => $slot->vendor_name ?? '-',
+                'vehicle_number' => $slot->vehicle_number_snap ?? '-',
+                'driver_name' => $slot->driver_name ?? '-',
+                'direction' => strtoupper($slot->direction ?? ''),
+                'gate' => $gateDisplay,
+                'warehouse' => $slot->warehouse_name ?? '-',
+                'eta' => ! empty($slot->planned_start) ? date('d-m-Y H:i', strtotime($slot->planned_start)) : '-',
+                'status' => $status,
+            ],
+        ]);
+    }
 }
