@@ -475,6 +475,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
   const trendDays = toArr(data.trendDays), trendCounts = toArr(data.trendCounts), trendInbound = toArr(data.trendInbound), trendOutbound = toArr(data.trendOutbound);
   const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const [dirGate, setDirGate] = useState('all');
+  const [isMobile, setIsMobile] = useState(false);
   const stats = [
     { label: 'Pending', value: pendingRange }, { label: 'Scheduled', value: scheduledRange },
     { label: 'Waiting', value: waitingRange }, { label: 'In Progress', value: activeRange },
@@ -482,6 +483,26 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
     { label: 'Total', value: totalAllRange },
   ];
   const trendData = useMemo(() => (trendDays || []).map((d, i) => ({ day: String(d).split('-').pop(), completed: +(trendCounts[i] || 0), inbound: +(trendInbound[i] || 0), outbound: +(trendOutbound[i] || 0) })), [trendDays, trendCounts, trendInbound, trendOutbound]);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    const apply = () => setIsMobile(!!mq.matches);
+    apply();
+    try {
+      mq.addEventListener('change', apply);
+      return () => mq.removeEventListener('change', apply);
+    } catch (e) {
+      mq.addListener(apply);
+      return () => mq.removeListener(apply);
+    }
+  }, []);
+
+  const xTickInterval = useMemo(() => {
+    if (!isMobile) return 0;
+    const n = (trendData || []).length;
+    if (!n) return 0;
+    return n > 12 ? 1 : 0;
+  }, [isMobile, trendData]);
   const dirData = useMemo(() => {
     const g = directionByGate?.[dirGate] || directionByGate?.all || directionByGate?.All || {};
     const inV = +(g.inbound || 0) || (dirGate === 'all' ? +inboundRange : 0);
@@ -519,17 +540,26 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={trendData} margin={{ top: 16, right: 8, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={tk('--chart-grid')} />
-                    <XAxis dataKey="day" tick={{ fontSize: csVar('--ds-chart-tick'), fill: tk('--chart-axis') }} interval={0} minTickGap={0} tickMargin={6} />
-                    <YAxis tick={{ fontSize: csVar('--ds-chart-tick'), fill: tk('--chart-axis') }} width={28} />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fontSize: isMobile ? 7 : csVar('--ds-chart-tick'), fill: tk('--chart-axis') }}
+                      interval={xTickInterval}
+                      minTickGap={isMobile ? 10 : 0}
+                      tickMargin={isMobile ? 10 : 6}
+                      angle={isMobile ? -35 : 0}
+                      textAnchor={isMobile ? 'end' : 'middle'}
+                      height={isMobile ? 44 : undefined}
+                    />
+                    <YAxis tick={{ fontSize: isMobile ? 7 : csVar('--ds-chart-tick'), fill: tk('--chart-axis') }} width={28} />
                     <Tooltip contentStyle={tipStyle()} />
                     <Bar dataKey="inbound" stackId="s" fill={tk('--inbound')} radius={[0, 0, 3, 3]} name="Inbound" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}>
-                      <LabelList dataKey="inbound" position="center" style={{ fontSize: csVar('--ds-chart-label'), fill: '#fff', fontWeight: 600 }} formatter={v => v > 0 ? v : ''} />
+                      <LabelList dataKey="inbound" position="center" style={{ fontSize: isMobile ? 6 : csVar('--ds-chart-label'), fill: '#fff', fontWeight: 600 }} formatter={v => v > 0 ? v : ''} />
                     </Bar>
                     <Bar dataKey="outbound" stackId="s" fill={tk('--outbound')} radius={[3, 3, 0, 0]} name="Outbound" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}>
-                      <LabelList dataKey="outbound" position="center" style={{ fontSize: csVar('--ds-chart-label'), fill: '#fff', fontWeight: 600 }} formatter={v => v > 0 ? v : ''} />
+                      <LabelList dataKey="outbound" position="center" style={{ fontSize: isMobile ? 6 : csVar('--ds-chart-label'), fill: '#fff', fontWeight: 600 }} formatter={v => v > 0 ? v : ''} />
                     </Bar>
                     <Line type="monotone" dataKey="completed" stroke={tk('--chart-line-completed')} strokeWidth={2} dot={{ r: 2, fill: tk('--chart-line-completed') }} name="Completed" isAnimationActive={animateCharts} animationDuration={CHART_ANIMATION_DURATION} animationEasing={CHART_ANIMATION_EASING}>
-                      <LabelList dataKey="completed" position="top" style={{ fontSize: csVar('--ds-chart-label'), fill: tk('--chart-line-completed'), fontWeight: 700 }} formatter={v => v > 0 ? v : ''} />
+                      <LabelList dataKey="completed" position="top" style={{ fontSize: isMobile ? 6 : csVar('--ds-chart-label'), fill: tk('--chart-line-completed'), fontWeight: 700 }} formatter={v => v > 0 ? v : ''} />
                     </Line>
                   </ComposedChart>
                 </ResponsiveContainer>

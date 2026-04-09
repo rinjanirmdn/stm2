@@ -102,3 +102,18 @@
 #react-dashboard ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+@media (max-width: 640px) {
+  #react-dashboard {
+    --ds-chart-tick: clamp(7px, 2.0vw, 9px);
+    --ds-chart-label: clamp(6px, 1.8vw, 8px);
+    --ds-tiny: clamp(7px, 1.9vw, 10px);
+  }
+}
+
+@media (max-width: 380px) {
+  #react-dashboard {
+    --ds-chart-tick: clamp(6px, 1.9vw, 8px);
+    --ds-chart-label: clamp(5px, 1.7vw, 7px);
+  }
+}
