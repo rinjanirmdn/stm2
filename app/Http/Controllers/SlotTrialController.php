@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
+use App\Services\SlotConflictService;
 use App\Services\SlotService;
 use App\Services\TimeCalculationService;
-use App\Services\SlotConflictService;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -63,10 +63,10 @@ class SlotTrialController extends Controller
             ->get();
 
         return view('slots.trial_create', [
-            'warehouses'         => $warehouses,
-            'gates'              => $gates,
-            'vendors'            => $vendors,
-            'truckTypes'         => $truckTypes,
+            'warehouses' => $warehouses,
+            'gates' => $gates,
+            'vendors' => $vendors,
+            'truckTypes' => $truckTypes,
             'truckTypeDurations' => $truckTypeDurations,
         ]);
     }
@@ -77,30 +77,30 @@ class SlotTrialController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'po_number'            => 'required|string|max:50',
-            'direction'            => 'required|in:inbound,outbound',
-            'truck_type'           => 'required|string|max:100',
-            'bp_id'                => 'nullable|integer|exists:md_bp,id',
-            'planned_gate_id'      => 'required|integer|exists:md_gates,id',
-            'planned_start'        => 'required|string',
-            'planned_duration'     => 'required|integer|min:1|max:1440',
-            'vehicle_number_snap'  => 'nullable|string|max:50',
-            'driver_name'          => 'nullable|string|max:50',
-            'driver_number'        => 'nullable|string|max:50',
-            'notes'                => 'nullable|string|max:500',
+            'po_number' => 'required|string|max:50',
+            'direction' => 'required|in:inbound,outbound',
+            'truck_type' => 'required|string|max:100',
+            'bp_id' => 'nullable|integer|exists:md_bp,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id',
+            'planned_start' => 'required|string',
+            'planned_duration' => 'required|integer|min:1|max:1440',
+            'vehicle_number_snap' => 'nullable|string|max:50',
+            'driver_name' => 'nullable|string|max:50',
+            'driver_number' => 'nullable|string|max:50',
+            'notes' => 'nullable|string|max:500',
         ]);
 
-        $poNumber         = trim((string) $request->input('po_number', ''));
-        $direction        = (string) $request->input('direction', '');
-        $plannedGateId    = (int) $request->input('planned_gate_id');
-        $plannedStart     = (string) $request->input('planned_start', '');
-        $plannedDuration  = (int) $request->input('planned_duration', 60);
-        $truckType        = trim((string) $request->input('truck_type', ''));
-        $vehicleNumber    = trim((string) $request->input('vehicle_number_snap', ''));
-        $driverName       = trim((string) $request->input('driver_name', ''));
-        $driverNumber     = trim((string) $request->input('driver_number', ''));
-        $notes            = trim((string) $request->input('notes', ''));
-        $bpId             = $request->input('bp_id') ? (int) $request->input('bp_id') : null;
+        $poNumber = trim((string) $request->input('po_number', ''));
+        $direction = (string) $request->input('direction', '');
+        $plannedGateId = (int) $request->input('planned_gate_id');
+        $plannedStart = (string) $request->input('planned_start', '');
+        $plannedDuration = (int) $request->input('planned_duration', 60);
+        $truckType = trim((string) $request->input('truck_type', ''));
+        $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
+        $driverName = trim((string) $request->input('driver_name', ''));
+        $driverNumber = trim((string) $request->input('driver_number', ''));
+        $notes = trim((string) $request->input('notes', ''));
+        $bpId = $request->input('bp_id') ? (int) $request->input('bp_id') : null;
 
         // Resolve gate & warehouse
         $gateRow = DB::table('md_gates')
@@ -140,19 +140,19 @@ class SlotTrialController extends Controller
         $plannedEndDt->modify("+{$plannedDuration} minutes");
 
         // Check gate overlap (same logic as regular slot — non-negotiable)
-        $laneGroup   = $this->slotService->getGateLaneGroup($plannedGateId);
+        $laneGroup = $this->slotService->getGateLaneGroup($plannedGateId);
         $laneGateIds = $laneGroup ? $this->slotService->getGateIdsByLaneGroup($laneGroup) : [$plannedGateId];
         if (empty($laneGateIds)) {
             $laneGateIds = [$plannedGateId];
         }
 
         $startStr = $plannedStartDt->format('Y-m-d H:i:s');
-        $endStr   = $plannedEndDt->format('Y-m-d H:i:s');
+        $endStr = $plannedEndDt->format('Y-m-d H:i:s');
 
         $overlapCount = (int) DB::table('slots')
             ->whereIn('planned_gate_id', $laneGateIds)
             ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
-            ->whereRaw('? < ' . $this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
+            ->whereRaw('? < '.$this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
             ->whereRaw('? > planned_start', [$endStr])
             ->count();
 
@@ -174,34 +174,34 @@ class SlotTrialController extends Controller
             $truckType, $vehicleNumber, $driverName, $driverNumber,
             $notes, $vendorCode, $vendorName, $vendorType
         ) {
-            $now    = date('Y-m-d H:i:s');
+            $now = date('Y-m-d H:i:s');
             $ticket = $this->slotService->generateTicketNumber($warehouseId, $plannedGateId);
 
             $slotId = (int) DB::table('slots')->insertGetId([
-                'po_number'          => $poNumber,
-                'direction'          => $direction,
-                'warehouse_id'       => $warehouseId,
-                'vendor_code'        => $vendorCode,
-                'vendor_name'        => $vendorName,
-                'vendor_type'        => $vendorType,
-                'planned_gate_id'    => $plannedGateId,
-                'planned_start'      => $plannedStart,
-                'planned_duration'   => $plannedDuration,
-                'truck_type'         => $truckType !== '' ? $truckType : null,
-                'vehicle_number_snap'=> $vehicleNumber !== '' ? $vehicleNumber : null,
-                'driver_name'        => $driverName !== '' ? $driverName : null,
-                'driver_number'      => $driverNumber !== '' ? $driverNumber : null,
-                'late_reason'        => $notes !== '' ? $notes : null,
-                'ticket_number'      => $ticket,
-                'status'             => 'scheduled',
-                'slot_type'          => 'planned',          // keep same type for compatibility
-                'created_by'         => Auth::id(),
-                'created_at'         => $now,
-                'updated_at'         => $now,
+                'po_number' => $poNumber,
+                'direction' => $direction,
+                'warehouse_id' => $warehouseId,
+                'vendor_code' => $vendorCode,
+                'vendor_name' => $vendorName,
+                'vendor_type' => $vendorType,
+                'planned_gate_id' => $plannedGateId,
+                'planned_start' => $plannedStart,
+                'planned_duration' => $plannedDuration,
+                'truck_type' => $truckType !== '' ? $truckType : null,
+                'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
+                'driver_name' => $driverName !== '' ? $driverName : null,
+                'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'late_reason' => $notes !== '' ? $notes : null,
+                'ticket_number' => $ticket,
+                'status' => 'scheduled',
+                'slot_type' => 'planned',          // keep same type for compatibility
+                'created_by' => Auth::id(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
 
             if ($slotId > 0) {
-                $logDesc = 'Slot uji coba dibuat' . ($vendorName ? " ({$vendorName})" : '');
+                $logDesc = 'Slot uji coba dibuat'.($vendorName ? " ({$vendorName})" : '');
                 if ($poNumber !== '') {
                     $logDesc .= " - Ref: {$poNumber}";
                 }
@@ -222,8 +222,8 @@ class SlotTrialController extends Controller
             $slotId
         );
         DB::table('slots')->where('id', $slotId)->update([
-            'blocking_risk'          => $blockingRisk,
-            'blocking_risk_cached_at'=> now(),
+            'blocking_risk' => $blockingRisk,
+            'blocking_risk_cached_at' => now(),
         ]);
 
         return redirect()->route('slots.index')->with('success', 'Planned uji coba berhasil dibuat.');

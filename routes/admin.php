@@ -151,11 +151,11 @@ Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('book
 // Dibutuhkan untuk form 'Create Planned Uji Coba' (tanpa SAP)
 // -----------------------------------------------------------------------------
 Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->group(function () {
-    Route::get('/',             [\App\Http\Controllers\MdBpController::class, 'index'])  ->name('index');
-    Route::get('/create',       [\App\Http\Controllers\MdBpController::class, 'create']) ->name('create');
-    Route::post('/',            [\App\Http\Controllers\MdBpController::class, 'store'])  ->name('store');
-    Route::get('/{id}/edit',    [\App\Http\Controllers\MdBpController::class, 'edit'])   ->whereNumber('id')->name('edit');
-    Route::post('/{id}/edit',   [\App\Http\Controllers\MdBpController::class, 'update']) ->whereNumber('id')->name('update');
+    Route::get('/', [\App\Http\Controllers\MdBpController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\MdBpController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\MdBpController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [\App\Http\Controllers\MdBpController::class, 'edit'])->whereNumber('id')->name('edit');
+    Route::post('/{id}/edit', [\App\Http\Controllers\MdBpController::class, 'update'])->whereNumber('id')->name('update');
     Route::post('/{id}/delete', [\App\Http\Controllers\MdBpController::class, 'destroy'])->whereNumber('id')->name('destroy');
-    Route::get('/ajax/search',  [\App\Http\Controllers\MdBpController::class, 'ajaxSearch'])->name('ajax.search');
+    Route::get('/ajax/search', [\App\Http\Controllers\MdBpController::class, 'ajaxSearch'])->name('ajax.search');
 });

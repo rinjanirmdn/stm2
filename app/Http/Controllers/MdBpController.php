@@ -10,10 +10,10 @@ class MdBpController extends Controller
 {
     public function index(Request $request)
     {
-        $search   = trim($request->query('q', ''));
-        $type     = trim($request->query('type', ''));
-        $status   = trim($request->query('status', ''));
-        $pageSize = in_array($request->query('page_size'), ['10','25','50','100'], true)
+        $search = trim($request->query('q', ''));
+        $type = trim($request->query('type', ''));
+        $status = trim($request->query('status', ''));
+        $pageSize = in_array($request->query('page_size'), ['10', '25', '50', '100'], true)
             ? $request->query('page_size')
             : '25';
 
@@ -22,13 +22,13 @@ class MdBpController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('bp_code', 'ilike', "%{$search}%")
-                  ->orWhere('bp_name', 'ilike', "%{$search}%")
-                  ->orWhere('city', 'ilike', "%{$search}%")
-                  ->orWhere('email', 'ilike', "%{$search}%");
+                    ->orWhere('bp_name', 'ilike', "%{$search}%")
+                    ->orWhere('city', 'ilike', "%{$search}%")
+                    ->orWhere('email', 'ilike', "%{$search}%");
             });
         }
 
-        if (in_array($type, ['vendor','customer'], true)) {
+        if (in_array($type, ['vendor', 'customer'], true)) {
             $query->where('bp_type', $type);
         }
 
@@ -51,31 +51,31 @@ class MdBpController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'bp_code'   => 'required|string|max:20|unique:md_bp,bp_code',
-            'bp_name'   => 'required|string|max:200',
-            'bp_type'   => 'required|in:vendor,customer',
-            'npwp'      => 'nullable|string|max:30',
-            'address'   => 'nullable|string|max:500',
-            'city'      => 'nullable|string|max:100',
-            'phone'     => 'nullable|string|max:50',
-            'email'     => 'nullable|email|max:150',
-            'pic_name'  => 'nullable|string|max:100',
+            'bp_code' => 'required|string|max:20|unique:md_bp,bp_code',
+            'bp_name' => 'required|string|max:200',
+            'bp_type' => 'required|in:vendor,customer',
+            'npwp' => 'nullable|string|max:30',
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:100',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:150',
+            'pic_name' => 'nullable|string|max:100',
             'pic_phone' => 'nullable|string|max:50',
             'is_active' => 'nullable|boolean',
         ]);
 
         DB::table('md_bp')->insert([
-            'bp_code'    => strtoupper(trim($request->input('bp_code', ''))),
-            'bp_name'    => trim($request->input('bp_name', '')),
-            'bp_type'    => $request->input('bp_type', 'vendor'),
-            'npwp'       => trim($request->input('npwp', '')) ?: null,
-            'address'    => trim($request->input('address', '')) ?: null,
-            'city'       => trim($request->input('city', '')) ?: null,
-            'phone'      => trim($request->input('phone', '')) ?: null,
-            'email'      => trim($request->input('email', '')) ?: null,
-            'pic_name'   => trim($request->input('pic_name', '')) ?: null,
-            'pic_phone'  => trim($request->input('pic_phone', '')) ?: null,
-            'is_active'  => (bool) $request->input('is_active', true),
+            'bp_code' => strtoupper(trim($request->input('bp_code', ''))),
+            'bp_name' => trim($request->input('bp_name', '')),
+            'bp_type' => $request->input('bp_type', 'vendor'),
+            'npwp' => trim($request->input('npwp', '')) ?: null,
+            'address' => trim($request->input('address', '')) ?: null,
+            'city' => trim($request->input('city', '')) ?: null,
+            'phone' => trim($request->input('phone', '')) ?: null,
+            'email' => trim($request->input('email', '')) ?: null,
+            'pic_name' => trim($request->input('pic_name', '')) ?: null,
+            'pic_phone' => trim($request->input('pic_phone', '')) ?: null,
+            'is_active' => (bool) $request->input('is_active', true),
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
             'created_at' => now(),
@@ -103,31 +103,31 @@ class MdBpController extends Controller
         }
 
         $request->validate([
-            'bp_code'   => "required|string|max:20|unique:md_bp,bp_code,{$id}",
-            'bp_name'   => 'required|string|max:200',
-            'bp_type'   => 'required|in:vendor,customer',
-            'npwp'      => 'nullable|string|max:30',
-            'address'   => 'nullable|string|max:500',
-            'city'      => 'nullable|string|max:100',
-            'phone'     => 'nullable|string|max:50',
-            'email'     => 'nullable|email|max:150',
-            'pic_name'  => 'nullable|string|max:100',
+            'bp_code' => "required|string|max:20|unique:md_bp,bp_code,{$id}",
+            'bp_name' => 'required|string|max:200',
+            'bp_type' => 'required|in:vendor,customer',
+            'npwp' => 'nullable|string|max:30',
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:100',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:150',
+            'pic_name' => 'nullable|string|max:100',
             'pic_phone' => 'nullable|string|max:50',
             'is_active' => 'nullable|boolean',
         ]);
 
         DB::table('md_bp')->where('id', $id)->update([
-            'bp_code'    => strtoupper(trim($request->input('bp_code', ''))),
-            'bp_name'    => trim($request->input('bp_name', '')),
-            'bp_type'    => $request->input('bp_type', 'vendor'),
-            'npwp'       => trim($request->input('npwp', '')) ?: null,
-            'address'    => trim($request->input('address', '')) ?: null,
-            'city'       => trim($request->input('city', '')) ?: null,
-            'phone'      => trim($request->input('phone', '')) ?: null,
-            'email'      => trim($request->input('email', '')) ?: null,
-            'pic_name'   => trim($request->input('pic_name', '')) ?: null,
-            'pic_phone'  => trim($request->input('pic_phone', '')) ?: null,
-            'is_active'  => $request->has('is_active') ? (bool) $request->input('is_active') : true,
+            'bp_code' => strtoupper(trim($request->input('bp_code', ''))),
+            'bp_name' => trim($request->input('bp_name', '')),
+            'bp_type' => $request->input('bp_type', 'vendor'),
+            'npwp' => trim($request->input('npwp', '')) ?: null,
+            'address' => trim($request->input('address', '')) ?: null,
+            'city' => trim($request->input('city', '')) ?: null,
+            'phone' => trim($request->input('phone', '')) ?: null,
+            'email' => trim($request->input('email', '')) ?: null,
+            'pic_name' => trim($request->input('pic_name', '')) ?: null,
+            'pic_phone' => trim($request->input('pic_phone', '')) ?: null,
+            'is_active' => $request->has('is_active') ? (bool) $request->input('is_active') : true,
             'updated_by' => Auth::id(),
             'updated_at' => now(),
         ]);
@@ -152,22 +152,22 @@ class MdBpController extends Controller
      */
     public function ajaxSearch(Request $request)
     {
-        $q    = trim($request->query('q', ''));
+        $q = trim($request->query('q', ''));
         $type = trim($request->query('type', ''));
 
         $query = DB::table('md_bp')
             ->where('is_active', true)
             ->orderBy('bp_name')
-            ->select(['id','bp_code','bp_name','bp_type','city']);
+            ->select(['id', 'bp_code', 'bp_name', 'bp_type', 'city']);
 
         if ($q !== '') {
             $query->where(function ($sq) use ($q) {
                 $sq->where('bp_code', 'ilike', "%{$q}%")
-                   ->orWhere('bp_name', 'ilike', "%{$q}%");
+                    ->orWhere('bp_name', 'ilike', "%{$q}%");
             });
         }
 
-        if (in_array($type, ['vendor','customer'], true)) {
+        if (in_array($type, ['vendor', 'customer'], true)) {
             $query->where('bp_type', $type);
         }
 
