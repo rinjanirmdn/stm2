@@ -60,27 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Action Menu Toggle
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.st-action-trigger')) {
-            e.preventDefault();
-            e.stopPropagation();
-            const trigger = e.target.closest('.st-action-trigger');
-            const menu = trigger.nextElementSibling;
-
-            // Close all other open menus
-            document.querySelectorAll('.st-action-menu.show').forEach(m => {
-                if (m !== menu) m.classList.remove('show');
-            });
-
-            menu.classList.toggle('show');
-        } else {
-            // Click outside, close all
-            document.querySelectorAll('.st-action-menu.show').forEach(m => {
-                m.classList.remove('show');
-            });
-        }
-    });
+    // Action Menu Toggle (handled globally in main.js)
 
     var filterForm = document.getElementById('slot-filter-form');
     if (!filterForm) return;

@@ -6,6 +6,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SlotAjaxController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\SlotLifecycleController;
+use App\Http\Controllers\SlotTrialController;
 
 Route::prefix('slots')->name('slots.')->group(function () {
     Route::get('/', [SlotController::class, 'index'])->name('index')->middleware('permission:slots.index');
@@ -15,6 +16,10 @@ Route::prefix('slots')->name('slots.')->group(function () {
     Route::middleware(['permission:slots.create'])->group(function () {
         Route::get('/create', [SlotController::class, 'create'])->name('create');
         Route::post('/', [SlotController::class, 'store'])->name('store');
+
+        // Uji Coba (Trial) — tanpa koneksi SAP, vendor dari md_bp lokal
+        Route::get('/trial-create', [SlotTrialController::class, 'create'])->name('trial.create');
+        Route::post('/trial-create', [SlotTrialController::class, 'store'])->name('trial.store');
     });
 
     Route::get('/{slotId}/edit', [SlotController::class, 'edit'])->whereNumber('slotId')->name('edit')->middleware('permission:slots.edit');

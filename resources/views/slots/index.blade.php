@@ -73,6 +73,7 @@
                             <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                             @can('slots.create')
                             <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary">Create Planned</a>
+                            <a href="{{ route('slots.trial.create') }}" class="st-btn st-btn--outline-primary" title="Buat planned tanpa koneksi SAP, menggunakan data vendor lokal (md_bp)">Create Planned Uji Coba</a>
                             @endcan
                         </div>
             </div>
@@ -571,8 +572,8 @@
                                 </td>
                                 <td class="st-table-cell st-td-center">
                                     <div class="st-action-dropdown">
-                                        <button type="button" class="st-btn st-btn--ghost st-action-trigger st-action-trigger--compact">
-                                            &#x22ee;
+                                        <button type="button" class="st-btn st-btn--ghost st-action-trigger">
+                                            <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <div class="st-action-menu">
                                             @if ($slotTypeVal === 'planned')
