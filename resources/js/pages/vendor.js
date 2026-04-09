@@ -425,6 +425,40 @@ document.addEventListener('DOMContentLoaded', function () {
     const bookingConfig = window.vendorBookingCreateConfig || stReadJson('vendor_booking_create_config', null);
     const availabilityConfig = window.vendorAvailabilityConfig || stReadJson('vendor_availability_config', null);
 
+    try {
+        if (bookingConfig) {
+            initVendorBookingCreate(bookingConfig);
+        }
+    } catch (e) {
+        console.error('Error initVendorBookingCreate:', e);
+    }
+
+    try {
+        if (availabilityConfig) {
+            initVendorAvailability(availabilityConfig);
+        }
+    } catch (e) {
+        console.error('Error initVendorAvailability:', e);
+    }
+
+    try {
+        bootVendorDashboardDateRange();
+    } catch (e) {
+        console.error('Error bootVendorDashboardDateRange:', e);
+    }
+
+    try {
+        initVendorNotifications();
+    } catch (e) {
+        console.error('Error initVendorNotifications:', e);
+    }
+    
+    try {
+        initVendorHeaderUserMenu();
+    } catch (e) {
+        console.error('Error initVendorHeaderUserMenu:', e);
+    }
+
     if (bookingConfig) {
         try {
             initVendorBookingCreate(bookingConfig);

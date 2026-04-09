@@ -52,7 +52,7 @@
     box-shadow: 0 2px 14px rgba(15, 23, 42, 0.3);
     position: sticky;
     top: 0;
-    z-index: 50;
+    z-index: 1100;
 }
 
 .vendor-header__brand {
@@ -684,6 +684,10 @@
     border-radius: 99px;
     font-weight: 700;
     border: 2px solid #38bdf8;
+}
+
+.vendor-notification {
+    position: relative;
 }
 
 .notification-dropdown {
