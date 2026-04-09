@@ -172,6 +172,8 @@
                 </div>
             @endif
 
+            @include('partials.backdate-section')
+
             <div class="st-form-actions">
                 <button type="submit" class="st-btn st-btn--pad-lg">
                     <i class="fas fa-play"></i>
