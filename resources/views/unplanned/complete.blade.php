@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Complete Unplanned - e-Docking Control System')
 @section('page_title', 'Complete Unplanned')
@@ -53,6 +53,8 @@
                     <textarea name="notes" class="st-textarea" rows="3">{{ old('notes') }}</textarea>
                 </div>
             </div>
+
+            @include('partials.backdate-section')
 
             <div class="st-form-actions">
                 <button type="submit" class="st-btn">Complete Unplanned</button>
