@@ -356,14 +356,27 @@ class VendorBookingController extends Controller
 
         // Search (uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
         if ($request->filled('search')) {
-            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
-            $like = '%'.strtolower($search).'%';
-            $baseQuery->where(function ($q) use ($like) {
-                $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
-                    ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
-                    ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
-                    ->orWhereRaw('LOWER(COALESCE(booking_requests.vehicle_number, \'\')) like ?', [$like]);
-            });
+            $search = trim((string) $request->search);
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+
+            $tokens = preg_split('/\s+/', $search) ?: [];
+            $tokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $tokens), fn ($t) => $t !== ''));
+
+            $normalized = str_replace('-', ' ', $search);
+            $moreTokens = preg_split('/\s+/', $normalized) ?: [];
+            $moreTokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $moreTokens), fn ($t) => $t !== ''));
+
+            $allTokens = array_values(array_unique(array_merge($tokens, $moreTokens)));
+
+            foreach ($allTokens as $tok) {
+                $like = '%'.strtolower($tok).'%';
+                $baseQuery->where(function ($q) use ($like) {
+                    $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
+                        ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
+                        ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
+                        ->orWhereRaw('LOWER(COALESCE(booking_requests.vehicle_number, \'\')) like ?', [$like]);
+                });
+            }
         }
 
         // Counts for status tabs (independent from current status filter & pagination)
@@ -387,7 +400,15 @@ class VendorBookingController extends Controller
             $query->where('status', $request->status);
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
+        // Handle dynamic page size
+        $pageSize = $request->query('page_size', '15');
+        if ($pageSize === 'all') {
+            $totalCount = $query->count();
+            $bookings = $query->orderBy('created_at', 'desc')->paginate($totalCount ?: 1);
+        } else {
+            $limit = is_numeric($pageSize) ? (int)$pageSize : 15;
+            $bookings = $query->orderBy('created_at', 'desc')->paginate($limit);
+        }
 
         return view('vendor.bookings.index', compact('bookings', 'counts'));
     }
@@ -470,15 +491,18 @@ class VendorBookingController extends Controller
         }
 
         $request->validate([
-            'po_number' => 'required|string', // Enforce here
+            'po_number' => 'required|string',
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
             'planned_date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'required|string|max:50',
-            'vehicle_number' => 'required|string|max:50',
-            'driver_name' => 'nullable|string|max:50',
-            'driver_number' => 'nullable|string|max:50',
+            'vehicle_number' => ['required', 'string', 'max:20', 'regex:/^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/'],
+            'driver_name' => 'required|string|max:50',
+            'driver_number' => ['required', 'string', 'regex:/^08[0-9]{8,11}$/'],
             'notes' => 'nullable|string|max:500',
+        ], [
+            'vehicle_number.regex' => 'The vehicle number format is invalid (e.g., B 1234 ABC).',
+            'driver_number.regex' => 'The driver phone must start with 08 and be between 10-13 digits.',
         ]);
 
         // Auto-assign gate based on availability
