@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UserUpdateRequest extends FormRequest
 {
@@ -58,7 +59,7 @@ class UserUpdateRequest extends FormRequest
             'password' => [
                 'nullable',
                 'string',
-                \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
+                Password::min(8)->letters()->numbers(),
                 function ($attribute, $value, $fail) {
                     if ($value && ! preg_match('/^[A-Z]/', $value)) {
                         $fail('Password harus diawali dengan huruf kapital.');
@@ -74,7 +75,9 @@ class UserUpdateRequest extends FormRequest
             'vendor_code' => [
                 'nullable',
                 'string',
-                Rule::requiredIf(function () { return (string) $this->input('role') === 'vendor'; }),
+                Rule::requiredIf(function () {
+                    return (string) $this->input('role') === 'vendor';
+                }),
             ],
             'permissions' => [
                 'nullable',

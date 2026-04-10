@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rules\Password;
 
 class ResetPasswordController extends Controller
 {
@@ -35,11 +36,11 @@ class ResetPasswordController extends Controller
             ->where('email', $email)
             ->first();
 
-        if (!$record) {
+        if (! $record) {
             return redirect()->route('forgot-password')->with('error', 'Invalid or expired password reset link. Please submit a new request.');
         }
 
-        if (!Hash::check($token, $record->token)) {
+        if (! Hash::check($token, $record->token)) {
             return redirect()->route('forgot-password')->with('error', 'Invalid or expired password reset link. Please submit a new request.');
         }
 
@@ -68,7 +69,7 @@ class ResetPasswordController extends Controller
             'password' => [
                 'required',
                 'string',
-                \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
+                Password::min(8)->letters()->numbers(),
                 function ($attribute, $value, $fail) {
                     if (! preg_match('/^[A-Z]/', $value)) {
                         $fail('Password harus diawali dengan huruf kapital.');
@@ -86,11 +87,11 @@ class ResetPasswordController extends Controller
             ->where('email', $email)
             ->first();
 
-        if (!$record) {
+        if (! $record) {
             return back()->with('error', 'Invalid or expired password reset token.');
         }
 
-        if (!Hash::check($token, $record->token)) {
+        if (! Hash::check($token, $record->token)) {
             return back()->with('error', 'Invalid or expired password reset token.');
         }
 
@@ -104,7 +105,7 @@ class ResetPasswordController extends Controller
 
         // Find user
         $user = User::where('email', $email)->first();
-        if (!$user) {
+        if (! $user) {
             return back()->with('error', 'User not found.');
         }
 

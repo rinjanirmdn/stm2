@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
@@ -13,7 +14,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         // Check if user is vendor (by role or vendor_code) and return vendor-specific view
-        if (!empty($user->vendor_code)) {
+        if (! empty($user->vendor_code)) {
             return view('vendor.profile.index', [
                 'user' => $user,
             ]);
@@ -35,7 +36,7 @@ class ProfileController extends Controller
             'new_password' => [
                 'nullable',
                 'string',
-                \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
+                Password::min(8)->letters()->numbers(),
                 function ($attribute, $value, $fail) {
                     if ($value && ! preg_match('/^[A-Z]/', $value)) {
                         $fail('Password harus diawali dengan huruf kapital.');
@@ -56,11 +57,11 @@ class ProfileController extends Controller
         // Update password if provided (ADMIN ONLY)
         if ($request->filled('new_password')) {
             // Only allow users with explicit permission to update password
-            if (!$user->can('profile.change_password')) {
+            if (! $user->can('profile.change_password')) {
                 return back()->with('error', 'Only administrators can change passwords. Please contact your admin for password assistance.');
             }
 
-            if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
+            if (! $request->filled('current_password') || ! Hash::check($request->current_password, $user->password)) {
                 return back()->with('error', 'Current password is incorrect.');
             }
             $user->password = $request->new_password; // Will be auto-hashed via cast

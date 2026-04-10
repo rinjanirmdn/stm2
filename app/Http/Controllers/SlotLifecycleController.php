@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Milon\Barcode\DNS1D;
 use RuntimeException;
 use Throwable;
@@ -35,7 +36,7 @@ class SlotLifecycleController extends Controller
     public function arrival(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (!$slot) {
+        if (! $slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -69,12 +70,12 @@ class SlotLifecycleController extends Controller
 
         $ticketNumber = trim((string) $request->input('ticket_number', ''));
         if ($ticketNumber === '') {
-            throw \Illuminate\Validation\ValidationException::withMessages(['ticket_number' => 'Ticket number is required']);
+            throw ValidationException::withMessages(['ticket_number' => 'Ticket number is required']);
         }
 
         $expectedTicket = trim((string) ($slot->ticket_number ?? ''));
         if ($expectedTicket !== '' && $ticketNumber !== $expectedTicket) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['ticket_number' => 'Ticket number does not match this slot.']);
+            throw ValidationException::withMessages(['ticket_number' => 'Ticket number does not match this slot.']);
         }
 
         // Handle backdate for Admin / Section Head
@@ -83,7 +84,7 @@ class SlotLifecycleController extends Controller
             if ($this->isBackdateAllowed()) {
                 $bd = Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
-                    throw \Illuminate\Validation\ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
+                    throw ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
                 }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }
@@ -118,7 +119,7 @@ class SlotLifecycleController extends Controller
     public function ticket(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (!$slot) {
+        if (! $slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -150,7 +151,7 @@ class SlotLifecycleController extends Controller
             $barcodeC = new DNS1D();
             $barcodeC->setStorPath(storage_path('app/public/'));
             $barcodePng = '';
-            if (!empty($slot->ticket_number)) {
+            if (! empty($slot->ticket_number)) {
                 $ticketNumber = (string) $slot->ticket_number;
                 $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
                     return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
@@ -210,7 +211,7 @@ class SlotLifecycleController extends Controller
     public function start(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (!$slot) {
+        if (! $slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -220,7 +221,7 @@ class SlotLifecycleController extends Controller
                 return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Only waiting unplanned slots can be started');
             }
         } else {
-            if (!in_array((string) ($slot->status ?? ''), ['arrived', 'waiting'], true)) {
+            if (! in_array((string) ($slot->status ?? ''), ['arrived', 'waiting'], true)) {
                 return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only arrived/waiting slots can be started');
             }
 
@@ -255,15 +256,15 @@ class SlotLifecycleController extends Controller
                 $allConflict[$cid] = true;
             }
             $gateStatuses[$gid] = [
-                'is_conflict' => !empty($conflicts),
+                'is_conflict' => ! empty($conflicts),
                 'overlapping_slots' => $conflicts,
-                'lane_utilization_pct' => !empty($conflicts) ? 100 : 0,
+                'lane_utilization_pct' => ! empty($conflicts) ? 100 : 0,
             ];
         }
 
         $conflictSlotIds = array_keys($allConflict);
         $conflictDetails = [];
-        if (!empty($conflictSlotIds)) {
+        if (! empty($conflictSlotIds)) {
             $rows = DB::table('slots')
                 ->whereIn('id', $conflictSlotIds)
                 ->select(['id', 'ticket_number'])
@@ -316,7 +317,7 @@ class SlotLifecycleController extends Controller
 
         // Compute waiting minutes (time since arrival) for waiting_reason requirement
         $waitingMinutes = 0;
-        if (!empty($slot->arrival_time)) {
+        if (! empty($slot->arrival_time)) {
             $arrivalDt = Carbon::parse($slot->arrival_time);
             $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
         }
@@ -338,43 +339,43 @@ class SlotLifecycleController extends Controller
     public function startStore(Request $request, int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (!$slot) {
+        if (! $slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         $slotType = (string) ($slot->slot_type ?? 'planned');
         if ($slotType === 'unplanned') {
             if ((string) ($slot->status ?? '') !== Slot::STATUS_WAITING) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Only waiting unplanned slots can be started']);
+                throw ValidationException::withMessages(['general' => 'Only waiting unplanned slots can be started']);
             }
         } else {
             if (! in_array((string) ($slot->status ?? ''), ['arrived', 'waiting'], true)) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Only arrived/waiting slots can be started']);
+                throw ValidationException::withMessages(['general' => 'Only arrived/waiting slots can be started']);
             }
             if (empty($slot->arrival_time)) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Please record Arrival before starting this slot']);
+                throw ValidationException::withMessages(['general' => 'Please record Arrival before starting this slot']);
             }
         }
 
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
-        if (!$actualGateId) {
+        if (! $actualGateId) {
             return back()->withInput()->with('error', 'Actual gate is required');
         }
 
         $gateRow = DB::table('md_gates')->where('id', $actualGateId)->where('is_active', true)->select(['id', 'warehouse_id'])->first();
-        if (!$gateRow) {
+        if (! $gateRow) {
             return back()->withInput()->with('error', 'Selected gate is not active');
         }
         if ((int) ($gateRow->warehouse_id ?? 0) !== (int) ($slot->warehouse_id ?? 0)) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['actual_gate_id' => 'Selected gate does not belong to the slot\'s warehouse']);
+            throw ValidationException::withMessages(['actual_gate_id' => 'Selected gate does not belong to the slot\'s warehouse']);
         }
 
         $conflicts = $this->findInProgressConflicts($actualGateId, $slotId);
-        if (!empty($conflicts)) {
+        if (! empty($conflicts)) {
             $lines = $this->buildConflictLines($conflicts);
 
             if ($request->ajax() || $request->wantsJson()) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['lane_conflict' => $lines]);
+                throw ValidationException::withMessages(['lane_conflict' => $lines]);
             }
 
             return back()
@@ -384,13 +385,13 @@ class SlotLifecycleController extends Controller
 
         // Check if waiting > 60 min → require waiting_reason
         $waitingMinutes = 0;
-        if (!empty($slot->arrival_time)) {
+        if (! empty($slot->arrival_time)) {
             $arrivalDt = Carbon::parse($slot->arrival_time);
             $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
         }
         $waitingReason = trim((string) $request->input('waiting_reason', ''));
         if ($waitingMinutes > 60 && $waitingReason === '') {
-            throw \Illuminate\Validation\ValidationException::withMessages(['waiting_reason' => 'Waiting has exceeded 60 minutes. Please provide the reason for the long wait.']);
+            throw ValidationException::withMessages(['waiting_reason' => 'Waiting has exceeded 60 minutes. Please provide the reason for the long wait.']);
         }
 
         // Handle backdate for Admin / Section Head
@@ -399,7 +400,7 @@ class SlotLifecycleController extends Controller
             if ($this->isBackdateAllowed()) {
                 $bd = Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
-                    throw \Illuminate\Validation\ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
+                    throw ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
                 }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }
@@ -470,7 +471,7 @@ class SlotLifecycleController extends Controller
     public function complete(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (!$slot) {
+        if (! $slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -486,16 +487,16 @@ class SlotLifecycleController extends Controller
     public function completeStore(Request $request, int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (!$slot) {
+        if (! $slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
         if ((string) ($slot->status ?? '') !== 'in_progress') {
-            throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Only in-progress slots can be completed']);
+            throw ValidationException::withMessages(['general' => 'Only in-progress slots can be completed']);
         }
 
         if (empty($slot->actual_start)) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Cannot complete: actual start time is missing. Please start the booking first.']);
+            throw ValidationException::withMessages(['general' => 'Cannot complete: actual start time is missing. Please start the booking first.']);
         }
 
         $matDoc = trim((string) $request->input('mat_doc', ''));
@@ -509,7 +510,7 @@ class SlotLifecycleController extends Controller
         $notes = trim((string) $request->input('notes', ''));
 
         if ($matDoc === '' || $truckType === '' || $vehicleNumber === '' || $driverNumber === '') {
-            throw \Illuminate\Validation\ValidationException::withMessages(['mat_doc' => 'All required fields must be filled']);
+            throw ValidationException::withMessages(['mat_doc' => 'All required fields must be filled']);
         }
 
         // Handle backdate for Admin / Section Head
@@ -518,7 +519,7 @@ class SlotLifecycleController extends Controller
             if ($this->isBackdateAllowed()) {
                 $bd = Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
-                    throw \Illuminate\Validation\ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
+                    throw ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
                 }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }
@@ -530,7 +531,7 @@ class SlotLifecycleController extends Controller
             // Get slot info before updating
             $slotInfo = DB::table('slots')->where('id', $slotId)->first();
 
-            if (!$slotInfo || empty($slotInfo->actual_start)) {
+            if (! $slotInfo || empty($slotInfo->actual_start)) {
                 throw new RuntimeException('Cannot complete: actual start time is missing.');
             }
 
@@ -658,7 +659,7 @@ class SlotLifecycleController extends Controller
     private function isBackdateAllowed(): bool
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

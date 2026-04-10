@@ -1,10 +1,11 @@
 <?php
+
 $files = [
     'app/Http/Controllers/Auth/ResetPasswordController.php',
     'app/Http/Controllers/ProfileController.php',
     'app/Http/Controllers/SlotLifecycleController.php',
     'app/Http/Requests/UserStoreRequest.php',
-    'app/Http/Requests/UserUpdateRequest.php'
+    'app/Http/Requests/UserUpdateRequest.php',
 ];
 
 foreach ($files as $file) {
