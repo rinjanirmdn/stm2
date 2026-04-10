@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,6 +41,7 @@
             left: -99999px !important;
             z-index: -9999 !important;
         }
+
         @media (max-width: 768px) {
             .vendor-mobile-nav {
                 display: flex !important;
@@ -66,14 +68,17 @@
     @vite(['resources/css/style.css', 'resources/css/vendor.css', 'resources/js/app.js', 'resources/js/react/vendor-dashboard.jsx'])
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/css/bootstrap-material-datetimepicker.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     @stack('styles')
 </head>
+
 <body class="vendor-app @yield('body_class')">
     <!-- Immediate script to hide mobile navigation -->
     <script>
-        (function() {
+        (function () {
             var mobileNav = document.querySelector('.vendor-mobile-nav');
             if (mobileNav && window.innerWidth >= 769) {
                 mobileNav.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;height:0!important;width:0!important;overflow:hidden!important;position:absolute!important;top:-99999px!important;left:-99999px!important;z-index:-9999!important;';
@@ -84,33 +89,42 @@
     <header class="vendor-header">
         <div class="vendor-header__brand">
             <img src="{{ asset('img/logo-icon2.png') }}" alt="e-DCS" class="vendor-header__logo">
-            <img src="{{ asset('img/e-DCS full putih.png') }}" alt="e-Docking Control System" class="vendor-header__logo vendor-header__logo--full">
+            <img src="{{ asset('img/e-Docking Control System.png') }}" alt="e-Docking Control System"
+                class="vendor-header__logo vendor-header__logo--full">
 
             <!-- Compact user menu for mobile (three dots) -->
-            <button type="button" class="vendor-header__user-menu-btn" id="vendor-user-menu-btn" aria-label="Open user menu">
+            <button type="button" class="vendor-header__user-menu-btn" id="vendor-user-menu-btn"
+                aria-label="Open user menu">
                 <i class="fas fa-ellipsis-v vendor-header__user-menu-icon"></i>
                 @if(auth()->user()->unreadNotifications->count() > 0)
-                    <span class="vendor-header__user-menu-badge" id="mobile-menu-notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
+                    <span class="vendor-header__user-menu-badge"
+                        id="mobile-menu-notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
                 @endif
             </button>
             <div class="vendor-header__user-menu" id="vendor-user-menu">
                 <div class="vendor-header__user-menu-info">
-                    <div class="vendor-header__user-name">{{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}</div>
+                    <div class="vendor-header__user-name">
+                        {{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}</div>
                     <div class="vendor-header__user-company">{{ auth()->user()->vendor_code ?? 'Vendor' }}</div>
                 </div>
                 <div class="vendor-header__user-menu-actions">
-                    <a href="{{ route('profile') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm" title="Profile">
+                    <a href="{{ route('profile') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm"
+                        title="Profile">
                         <i class="fas fa-user"></i>
                     </a>
-                    <button type="button" class="vendor-btn vendor-btn--secondary vendor-btn--sm vendor-header__user-menu-notif" id="vendor-user-menu-notif" aria-label="Notifications" title="Notifications">
+                    <button type="button"
+                        class="vendor-btn vendor-btn--secondary vendor-btn--sm vendor-header__user-menu-notif"
+                        id="vendor-user-menu-notif" aria-label="Notifications" title="Notifications">
                         <i class="fas fa-bell"></i>
                         @if(auth()->user()->unreadNotifications->count() > 0)
                             <span class="vendor-user-menu-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
                         @endif
                     </button>
-                    <form method="POST" action="{{ route('logout') }}" class="vendor-inline-form vendor-header__user-menu-logout">
+                    <form method="POST" action="{{ route('logout') }}"
+                        class="vendor-inline-form vendor-header__user-menu-logout">
                         @csrf
-                        <button type="submit" class="vendor-btn vendor-btn--secondary vendor-btn--sm" aria-label="Logout" title="Logout">
+                        <button type="submit" class="vendor-btn vendor-btn--secondary vendor-btn--sm"
+                            aria-label="Logout" title="Logout">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </form>
@@ -120,14 +134,20 @@
                     <div class="notification-header">
                         <span>Notifications</span>
                         <div class="notification-actions">
-                            <button type="button" id="user-menu-notification-clear" class="notification-action-btn notification-action-btn--ghost">Clear</button>
-                            <button type="button" id="user-menu-notification-mark-all" class="notification-action-btn">Mark all read</button>
+                            <button type="button" id="user-menu-notification-clear"
+                                class="notification-action-btn notification-action-btn--ghost">Clear</button>
+                            <button type="button" id="user-menu-notification-mark-all"
+                                class="notification-action-btn">Mark all read</button>
                         </div>
                     </div>
                     <div class="notification-list">
                         @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
-                            <a href="{{ $notification->data['action_url'] ?? '#' }}" class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}" data-notification-id="{{ $notification->id }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
-                                <div class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
+                            <a href="{{ $notification->data['action_url'] ?? '#' }}"
+                                class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}"
+                                data-notification-id="{{ $notification->id }}"
+                                onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                <div
+                                    class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
                                     <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
                                 </div>
                                 <div class="notification-content">
@@ -150,17 +170,20 @@
         <!-- Desktop navigation -->
         <nav class="vendor-header__nav" id="vendor-header-nav">
             @can('vendor.dashboard')
-                <a href="{{ route('vendor.dashboard') }}" class="vendor-nav-link{{ request()->routeIs('vendor.dashboard') ? ' active' : '' }}">
+                <a href="{{ route('vendor.dashboard') }}"
+                    class="vendor-nav-link{{ request()->routeIs('vendor.dashboard') ? ' active' : '' }}">
                     Dashboard
                 </a>
             @endcan
             @can('vendor.bookings.index')
-                <a href="{{ route('vendor.bookings.index') }}" class="vendor-nav-link{{ request()->routeIs('vendor.bookings.*') ? ' active' : '' }}">
+                <a href="{{ route('vendor.bookings.index') }}"
+                    class="vendor-nav-link{{ request()->routeIs('vendor.bookings.*') ? ' active' : '' }}">
                     My Bookings
                 </a>
             @endcan
             @can('vendor.availability')
-                <a href="{{ route('vendor.availability') }}" class="vendor-nav-link{{ request()->routeIs('vendor.availability') ? ' active' : '' }}">
+                <a href="{{ route('vendor.availability') }}"
+                    class="vendor-nav-link{{ request()->routeIs('vendor.availability') ? ' active' : '' }}">
                     Availability
                 </a>
             @endcan
@@ -178,7 +201,8 @@
         <!-- Desktop user section -->
         <div class="vendor-header__user">
             <div class="vendor-header__user-info">
-                <span class="vendor-header__user-name">{{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}</span>
+                <span
+                    class="vendor-header__user-name">{{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}</span>
                 <span class="vendor-header__user-company">{{ auth()->user()->vendor_code ?? 'Vendor' }}</span>
             </div>
 
@@ -188,7 +212,8 @@
                     <button type="button" class="vendor-nav-link vendor-notification__toggle" id="notification-btn">
                         <i class="fas fa-bell"></i>
                         @if(auth()->user()->unreadNotifications->count() > 0)
-                            <span class="notification-badge" id="notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
+                            <span class="notification-badge"
+                                id="notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
                         @endif
                     </button>
 
@@ -196,14 +221,20 @@
                         <div class="notification-header">
                             <span>Notifications</span>
                             <div class="notification-actions">
-                                <button type="button" id="notification-clear" class="notification-action-btn notification-action-btn--ghost">Clear</button>
-                                <button type="button" id="notification-mark-all" class="notification-action-btn">Mark all read</button>
+                                <button type="button" id="notification-clear"
+                                    class="notification-action-btn notification-action-btn--ghost">Clear</button>
+                                <button type="button" id="notification-mark-all" class="notification-action-btn">Mark all
+                                    read</button>
                             </div>
                         </div>
                         <div class="notification-list">
                             @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
-                                <a href="{{ $notification->data['action_url'] ?? '#' }}" class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}" data-notification-id="{{ $notification->id }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
-                                    <div class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
+                                <a href="{{ $notification->data['action_url'] ?? '#' }}"
+                                    class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}"
+                                    data-notification-id="{{ $notification->id }}"
+                                    onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                    <div
+                                        class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
                                         <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
                                     </div>
                                     <div class="notification-content">
@@ -238,19 +269,22 @@
     <!-- Mobile bottom navigation -->
     <nav class="vendor-mobile-nav" id="vendor-mobile-nav">
         @can('vendor.dashboard')
-            <a href="{{ route('vendor.dashboard') }}" class="vendor-mobile-nav-link{{ request()->routeIs('vendor.dashboard') ? ' active' : '' }}">
+            <a href="{{ route('vendor.dashboard') }}"
+                class="vendor-mobile-nav-link{{ request()->routeIs('vendor.dashboard') ? ' active' : '' }}">
                 <i class="fas fa-home"></i>
                 <span>Dashboard</span>
             </a>
         @endcan
         @can('vendor.bookings.index')
-            <a href="{{ route('vendor.bookings.index') }}" class="vendor-mobile-nav-link{{ request()->routeIs('vendor.bookings.*') ? ' active' : '' }}">
+            <a href="{{ route('vendor.bookings.index') }}"
+                class="vendor-mobile-nav-link{{ request()->routeIs('vendor.bookings.*') ? ' active' : '' }}">
                 <i class="fas fa-calendar"></i>
                 <span>Bookings</span>
             </a>
         @endcan
         @can('vendor.availability')
-            <a href="{{ route('vendor.availability') }}" class="vendor-mobile-nav-link{{ request()->routeIs('vendor.availability') ? ' active' : '' }}">
+            <a href="{{ route('vendor.availability') }}"
+                class="vendor-mobile-nav-link{{ request()->routeIs('vendor.availability') ? ' active' : '' }}">
                 <i class="fas fa-clock"></i>
                 <span>Availability</span>
             </a>
@@ -286,7 +320,8 @@
             <div class="st-custom-modal-container">
                 <div class="st-custom-modal-header">
                     <h3>Cancel Booking</h3>
-                    <button type="button" class="st-custom-modal-close" onclick="closeVendorCancelModal()">&times;</button>
+                    <button type="button" class="st-custom-modal-close"
+                        onclick="closeVendorCancelModal()">&times;</button>
                 </div>
                 <form method="POST" id="vendor-cancel-form" action="">
                     @csrf
@@ -294,12 +329,18 @@
                         <p>Are you sure you want to cancel booking <strong id="vendor-cancel-ticket"></strong>?</p>
                         <div class="st-form-field st-mt-4">
                             <label class="st-label">Reason for Cancellation <span class="st-required">*</span></label>
-                            <textarea name="reason" class="st-textarea" rows="3" required placeholder="Please provide a reason for cancellation..."></textarea>
+                            <textarea name="reason" id="vendor-cancel-reason" class="st-textarea" rows="3" required
+                                maxlength="500" placeholder="Please provide a reason for cancellation..."
+                                oninput="document.getElementById('cancel-reason-count').textContent = this.value.length"></textarea>
+                            <div class="st-hint">
+                                <span id="cancel-reason-count">0</span>/500 characters
+                            </div>
                         </div>
                     </div>
                     <div class="st-custom-modal-footer">
                         <button type="submit" class="st-btn st-btn--danger">Cancel Booking</button>
-                        <button type="button" class="st-btn st-btn--secondary" onclick="closeVendorCancelModal()">Back</button>
+                        <button type="button" class="st-btn st-btn--secondary"
+                            onclick="closeVendorCancelModal()">Back</button>
                     </div>
                 </form>
             </div>
@@ -308,7 +349,8 @@
             <div class="vendor-alert vendor-alert--success vendor-alert--autodismiss">
                 <i class="fas fa-check-circle"></i>
                 {{ session('success') }}
-                <button type="button" class="vendor-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                <button type="button" class="vendor-alert__close" onclick="this.parentElement.remove()"
+                    aria-label="Close">&times;</button>
             </div>
         @endif
 
@@ -316,7 +358,8 @@
             <div class="vendor-alert vendor-alert--error vendor-alert--autodismiss">
                 <i class="fas fa-exclamation-circle"></i>
                 {{ session('error') }}
-                <button type="button" class="vendor-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                <button type="button" class="vendor-alert__close" onclick="this.parentElement.remove()"
+                    aria-label="Close">&times;</button>
             </div>
         @endif
 
@@ -334,7 +377,9 @@
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/dmuy/MDTimePicker@v2.0/dist/mdtimepicker.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-datetimepicker/2.7.1/js/bootstrap-material-datetimepicker.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     @vite(['resources/js/pages/vendor.js'])
     @php
@@ -349,18 +394,18 @@
             : null;
     @endphp
     <script type="application/json" id="st-vendor-config">{!! json_encode([
-        'userId' => auth()->id(),
-        'latestUrl' => $stVendorLatestUrl,
-        'notifications' => [
-            'markAllUrl' => $stVendorMarkAllUrl,
-            'clearUrl' => $stVendorClearUrl,
-            'readBaseUrl' => '/notifications',
-        ],
-    ]) !!}</script>
+    'userId' => auth()->id(),
+    'latestUrl' => $stVendorLatestUrl,
+    'notifications' => [
+        'markAllUrl' => $stVendorMarkAllUrl,
+        'clearUrl' => $stVendorClearUrl,
+        'readBaseUrl' => '/notifications',
+    ],
+]) !!}</script>
 
     <!-- Immediate hide mobile navigation for desktop -->
     <script>
-        (function() {
+        (function () {
             function hideMobileNav() {
                 var mobileNav = document.getElementById('vendor-mobile-nav');
                 if (mobileNav && window.innerWidth >= 769) {
@@ -394,7 +439,7 @@
             var interval = setInterval(hideMobileNav, 50);
 
             // Stop interval after 5 seconds
-            setTimeout(function() {
+            setTimeout(function () {
                 clearInterval(interval);
             }, 5000);
         })();
@@ -408,14 +453,16 @@
             var modal = document.getElementById('vendorCancelModal');
             var ticketEl = document.getElementById('vendor-cancel-ticket');
             var formEl = document.getElementById('vendor-cancel-form');
+            var reasonTa = document.getElementById('vendor-cancel-reason');
+            var countEl = document.getElementById('cancel-reason-count');
+
             if (!modal || !ticketEl || !formEl) return;
+
             formEl.action = actionUrl || '';
             ticketEl.textContent = ticketNumber || '';
 
-            try {
-                var ta = formEl.querySelector('textarea[name="reason"]');
-                if (ta) ta.value = '';
-            } catch (e) {}
+            if (reasonTa) reasonTa.value = '';
+            if (countEl) countEl.textContent = '0';
 
             modal.classList.add('active');
         };
@@ -427,4 +474,5 @@
         };
     </script>
 </body>
+
 </html>

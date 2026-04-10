@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportService
 {
     /**
      * Export data to Excel format
      */
-    public function exportToExcel(Collection $data, string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportToExcel(Collection $data, string $filename): StreamedResponse
     {
         return response()->streamDownload(function () use ($data) {
             echo $this->buildExcelHtml($data);
@@ -21,7 +23,7 @@ class ExportService
     /**
      * Export data to CSV format
      */
-    public function exportToCsv(Collection $data, string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportToCsv(Collection $data, string $filename): StreamedResponse
     {
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');
@@ -350,7 +352,7 @@ class ExportService
         }
 
         try {
-            return \Carbon\Carbon::parse((string) $dateTime)->format('d-m-Y H:i');
+            return Carbon::parse((string) $dateTime)->format('d-m-Y H:i');
         } catch (\Throwable $e) {
             return (string) $dateTime;
         }
@@ -369,7 +371,7 @@ class ExportService
     /**
      * Export search suggestions to CSV
      */
-    public function exportSearchSuggestions(Collection $data, string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportSearchSuggestions(Collection $data, string $filename): StreamedResponse
     {
         return response()->streamDownload(function () use ($data) {
             $out = fopen('php://output', 'w');

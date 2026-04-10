@@ -638,6 +638,10 @@ function initVendorBookingCreate(config) {
     const plannedTime = document.getElementById('planned-time');
     const plannedDurationInput = document.getElementById('planned-duration');
     const plannedStartInput = document.getElementById('planned-start');
+    const vehicleNumberInput = bookingForm ? bookingForm.querySelector('input[name="vehicle_number"]') : null;
+    const driverNameInput = bookingForm ? bookingForm.querySelector('input[name="driver_name"]') : null;
+    const driverNumberInput = bookingForm ? bookingForm.querySelector('input[name="driver_number"]') : null;
+
     const truckTypeSelect = document.getElementById('truck-type-select');
     const miniAvailability = document.getElementById('mini-availability');
     const submitBtn = document.getElementById('submit-btn');
@@ -647,6 +651,16 @@ function initVendorBookingCreate(config) {
 
     if (!poSearch || !plannedDate || !plannedTime) {
         return;
+    }
+
+    // Helper: Validasi regex vehicle number
+    function isValidVehicle(val) {
+        return /^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/.test(val.trim());
+    }
+
+    // Helper: Validasi regex phone number (08...)
+    function isValidPhone(val) {
+        return /^08[0-9]{8,11}$/.test(val.trim());
     }
 
     let searchTimeout = null;
@@ -761,18 +775,30 @@ function initVendorBookingCreate(config) {
                     message: 'Please select a truck type'
                 },
                 {
-                    el: bookingForm.querySelector('input[name="vehicle_number"]'),
-                    value: ((bookingForm.querySelector('input[name="vehicle_number"]') || {}).value || '').trim(),
-                    message: 'Please fill vehicle number'
+                    el: vehicleNumberInput,
+                    value: (vehicleNumberInput ? vehicleNumberInput.value : '').trim(),
+                    isValid: vehicleNumberInput ? isValidVehicle(vehicleNumberInput.value) : false,
+                    message: 'Please fill vehicle number with valid format (e.g., B 1234 ABC)'
+                },
+                {
+                    el: driverNameInput,
+                    value: (driverNameInput ? driverNameInput.value : '').trim(),
+                    message: 'Please fill driver full name'
+                },
+                {
+                    el: driverNumberInput,
+                    value: (driverNumberInput ? driverNumberInput.value : '').trim(),
+                    isValid: driverNumberInput ? isValidPhone(driverNumberInput.value) : false,
+                    message: 'Please fill driver phone (starts with 08, 10-13 digits)'
                 }
             ];
 
             for (let i = 0; i < requiredFields.length; i++) {
                 const f = requiredFields[i];
-                if (!f.value) {
+                if (!f.value || (f.isValid !== undefined && !f.isValid)) {
                     e.preventDefault();
                     if (alertBox) {
-                        alertBox.textContent = 'Mohon lengkapi data: ' + f.message;
+                        alertBox.textContent = 'Invalid data: ' + f.message;
                         alertBox.hidden = false;
                     }
                     if (f.el && typeof f.el.focus === 'function') {
@@ -940,7 +966,11 @@ function initVendorBookingCreate(config) {
         const hasTruckType = truckTypeSelect && truckTypeSelect.value;
         const hasDate = plannedDate && plannedDate.value;
         const hasTime = plannedTime && plannedTime.value;
-        const canSubmit = hasTruckType && hasDate && hasTime;
+        const hasVehicle = vehicleNumberInput && isValidVehicle(vehicleNumberInput.value);
+        const hasDriverName = driverNameInput && driverNameInput.value.trim().length > 0;
+        const hasDriverPhone = driverNumberInput && isValidPhone(driverNumberInput.value);
+        
+        const canSubmit = hasTruckType && hasDate && hasTime && hasVehicle && hasDriverName && hasDriverPhone;
 
         if (submitBtn) {
             submitBtn.disabled = !canSubmit;
@@ -948,6 +978,16 @@ function initVendorBookingCreate(config) {
 
         if (submitWarning) {
             submitWarning.hidden = canSubmit;
+            if (!canSubmit) {
+                let msg = 'Please ensure all required fields are filled correctly:';
+                if (!hasTruckType) msg += ' Truck Type,';
+                if (!hasDate) msg += ' Date,';
+                if (!hasTime) msg += ' Time,';
+                if (!hasVehicle) msg += ' Vehicle Number (e.g., B 1234 ABC),';
+                if (!hasDriverName) msg += ' Driver Name,';
+                if (!hasDriverPhone) msg += ' Driver Phone (08...),';
+                submitWarning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + msg.replace(/,$/, '');
+            }
         }
 
         if (availabilityWarning) {
@@ -1277,6 +1317,16 @@ function initVendorBookingCreate(config) {
             syncPlannedStart();
             loadMiniAvailability();
         });
+    }
+
+    if (vehicleNumberInput) {
+        vehicleNumberInput.addEventListener('input', updateFormState);
+    }
+    if (driverNameInput) {
+        driverNameInput.addEventListener('input', updateFormState);
+    }
+    if (driverNumberInput) {
+        driverNumberInput.addEventListener('input', updateFormState);
     }
 
     syncPlannedDuration();

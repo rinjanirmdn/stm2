@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Traits;
 
+use Illuminate\Support\Facades\DB;
+
 trait SlotHelperTrait
 {
     private function buildGateLabel(?string $warehouseCode, ?string $gateNumber): string
@@ -47,7 +49,7 @@ trait SlotHelperTrait
 
     private function loadSlotDetailRow(int $slotId): ?object
     {
-        return \Illuminate\Support\Facades\DB::table('slots as s')
+        return DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->leftJoin('md_users as ru', 's.requested_by', '=', 'ru.id')
             ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')

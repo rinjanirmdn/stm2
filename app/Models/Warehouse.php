@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Warehouse extends Model
 {
@@ -16,7 +17,7 @@ class Warehouse extends Model
         'wh_name',
     ];
 
-    public function gates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function gates(): HasMany
     {
         return $this->hasMany(Gate::class);
     }

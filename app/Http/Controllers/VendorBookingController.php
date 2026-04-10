@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HolidayHelper;
 use App\Models\BookingRequest;
 use App\Models\Gate;
 use App\Models\Slot;
@@ -11,12 +12,15 @@ use App\Notifications\BookingRequestSubmitted;
 use App\Services\BookingApprovalService;
 use App\Services\PoSearchService;
 use App\Services\SlotService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Milon\Barcode\DNS1D;
 
 class VendorBookingController extends Controller
 {
@@ -356,14 +360,27 @@ class VendorBookingController extends Controller
 
         // Search (uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
         if ($request->filled('search')) {
-            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
-            $like = '%'.strtolower($search).'%';
-            $baseQuery->where(function ($q) use ($like) {
-                $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
-                    ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
-                    ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
-                    ->orWhereRaw('LOWER(COALESCE(booking_requests.vehicle_number, \'\')) like ?', [$like]);
-            });
+            $search = trim((string) $request->search);
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $search);
+
+            $tokens = preg_split('/\s+/', $search) ?: [];
+            $tokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $tokens), fn ($t) => $t !== ''));
+
+            $normalized = str_replace('-', ' ', $search);
+            $moreTokens = preg_split('/\s+/', $normalized) ?: [];
+            $moreTokens = array_values(array_filter(array_map(fn ($t) => trim((string) $t), $moreTokens), fn ($t) => $t !== ''));
+
+            $allTokens = array_values(array_unique(array_merge($tokens, $moreTokens)));
+
+            foreach ($allTokens as $tok) {
+                $like = '%'.strtolower($tok).'%';
+                $baseQuery->where(function ($q) use ($like) {
+                    $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
+                        ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
+                        ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
+                        ->orWhereRaw('LOWER(COALESCE(booking_requests.vehicle_number, \'\')) like ?', [$like]);
+                });
+            }
         }
 
         // Counts for status tabs (independent from current status filter & pagination)
@@ -387,7 +404,15 @@ class VendorBookingController extends Controller
             $query->where('status', $request->status);
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
+        // Handle dynamic page size
+        $pageSize = $request->query('page_size', '15');
+        if ($pageSize === 'all') {
+            $totalCount = $query->count();
+            $bookings = $query->orderBy('created_at', 'desc')->paginate($totalCount ?: 1);
+        } else {
+            $limit = is_numeric($pageSize) ? (int) $pageSize : 15;
+            $bookings = $query->orderBy('created_at', 'desc')->paginate($limit);
+        }
 
         return view('vendor.bookings.index', compact('bookings', 'counts'));
     }
@@ -470,15 +495,18 @@ class VendorBookingController extends Controller
         }
 
         $request->validate([
-            'po_number' => 'required|string', // Enforce here
+            'po_number' => 'required|string',
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
             'planned_date' => 'required|date_format:Y-m-d|after_or_equal:today',
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'required|string|max:50',
-            'vehicle_number' => 'required|string|max:50',
-            'driver_name' => 'nullable|string|max:50',
-            'driver_number' => 'nullable|string|max:50',
+            'vehicle_number' => ['required', 'string', 'max:20', 'regex:/^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/'],
+            'driver_name' => 'required|string|max:50',
+            'driver_number' => ['required', 'string', 'regex:/^08[0-9]{8,11}$/'],
             'notes' => 'nullable|string|max:500',
+        ], [
+            'vehicle_number.regex' => 'The vehicle number format is invalid (e.g., B 1234 ABC).',
+            'driver_number.regex' => 'The driver phone must start with 08 and be between 10-13 digits.',
         ]);
 
         // Auto-assign gate based on availability
@@ -512,8 +540,8 @@ class VendorBookingController extends Controller
 
         // Check if date is holiday using HolidayHelper
         try {
-            if (\App\Helpers\HolidayHelper::isHoliday($plannedStartAt)) {
-                $holidayName = \App\Helpers\HolidayHelper::getHolidayName($plannedStartAt);
+            if (HolidayHelper::isHoliday($plannedStartAt)) {
+                $holidayName = HolidayHelper::getHolidayName($plannedStartAt);
                 $msg = $holidayName ? "Booking date is a holiday: {$holidayName}." : 'Booking date cannot be on a holiday.';
 
                 return back()->withInput()->with('error', $msg);
@@ -677,7 +705,7 @@ class VendorBookingController extends Controller
         $selectedDate = $request->date ?? now()->format('Y-m-d');
 
         // Get holidays for calendar using HolidayHelper
-        $holidays = \App\Helpers\HolidayHelper::getHolidayMap($selectedDate);
+        $holidays = HolidayHelper::getHolidayMap($selectedDate);
 
         return view('vendor.bookings.availability', compact('gates', 'selectedDate', 'holidays'));
     }
@@ -878,7 +906,7 @@ class VendorBookingController extends Controller
             }
 
             return response()->json($response);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Validation failed: '.$e->getMessage(),
@@ -1075,7 +1103,7 @@ class VendorBookingController extends Controller
                 try {
                     $ticketNumber = (string) $slot->ticket_number;
                     $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($ticketNumber) {
-                        $barcodeC = new \Milon\Barcode\DNS1D();
+                        $barcodeC = new DNS1D();
                         $barcodeC->setStorPath(storage_path('app/public/'));
 
                         return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
@@ -1112,7 +1140,7 @@ class VendorBookingController extends Controller
                 return '';
             });
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
+            $pdf = Pdf::loadView('slots.ticket', [
                 'slot' => $slot,
                 'gateLetter' => $gateLetter,
                 'barcodePng' => $barcodePng,

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\PermissionRegistrar;
 
 class LoginController extends Controller
 {
@@ -131,7 +132,7 @@ class LoginController extends Controller
                     ]);
 
                     try {
-                        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+                        app(PermissionRegistrar::class)->forgetCachedPermissions();
                     } catch (\Throwable $e) {
                     }
                 }

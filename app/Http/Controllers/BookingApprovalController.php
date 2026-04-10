@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HolidayHelper;
 use App\Models\BookingRequest;
 use App\Models\Gate;
 use App\Models\Slot;
@@ -10,6 +11,7 @@ use App\Models\Warehouse;
 use App\Notifications\BookingRejected;
 use App\Services\BookingApprovalService;
 use App\Services\SlotService;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -181,7 +183,7 @@ class BookingApprovalController extends Controller
                 $dir = 'desc';
             }
             $col = $sortMap[$key];
-            if ($col instanceof \Illuminate\Database\Query\Expression) {
+            if ($col instanceof Expression) {
                 $query->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()).' '.strtoupper($dir));
             } else {
                 $query->orderBy($col, $dir);
@@ -463,7 +465,7 @@ class BookingApprovalController extends Controller
                 $approvedDate = $bookingRequest->planned_start instanceof \DateTimeInterface
                     ? $bookingRequest->planned_start->format('Y-m-d')
                     : date('Y-m-d', strtotime((string) $bookingRequest->planned_start));
-                \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$approvedDate}");
+                Cache::forget("vendor_availability_{$approvedDate}");
             }
 
             // Notification is dispatched by BookingApprovalService::approveBooking()
@@ -596,7 +598,7 @@ class BookingApprovalController extends Controller
         $plannedStartAt = $plannedStart instanceof \DateTimeInterface
             ? $plannedStart
             : Carbon::parse((string) $plannedStart);
-        \Illuminate\Support\Facades\Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
+        Cache::forget("vendor_availability_{$plannedStartAt->format('Y-m-d')}");
 
         $request->merge(['approval_action' => Slot::APPROVAL_RESCHEDULED]);
 
@@ -671,7 +673,7 @@ class BookingApprovalController extends Controller
      */
     private function getHolidaysForDate(string $date): array
     {
-        return \App\Helpers\HolidayHelper::getHolidayMap($date);
+        return HolidayHelper::getHolidayMap($date);
     }
 
     /**

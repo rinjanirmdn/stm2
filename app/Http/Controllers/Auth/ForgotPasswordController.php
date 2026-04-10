@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,7 @@ class ForgotPasswordController extends Controller
         $fields = ['email', 'username', 'nik'];
 
         foreach ($fields as $field) {
-            $user = \App\Models\User::where($field, $login)->first();
+            $user = User::where($field, $login)->first();
             if ($user) {
                 break;
             }
@@ -103,7 +104,7 @@ class ForgotPasswordController extends Controller
     /**
      * Send a direct password reset link to the admin's own email.
      */
-    private function sendAdminResetLink(\App\Models\User $user, string $reason)
+    private function sendAdminResetLink(User $user, string $reason)
     {
         $email = $user->email;
 

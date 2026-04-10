@@ -24,7 +24,7 @@ return new class extends Migration
                 Schema::table('slots', function (Blueprint $table) {
                     $table->index('blocking_risk', 'slots_blocking_risk_index');
                 });
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Index might already exist
             }
         }
@@ -35,7 +35,7 @@ return new class extends Migration
                 Schema::table('slots', function (Blueprint $table) {
                     $table->index('ticket_number', 'slots_ticket_number_index');
                 });
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Index might already exist
             }
         }
@@ -54,12 +54,12 @@ return new class extends Migration
 
                 try {
                     $table->dropIndex('slots_blocking_risk_index');
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                 }
 
                 try {
                     $table->dropIndex('slots_ticket_number_index');
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                 }
             });
         }

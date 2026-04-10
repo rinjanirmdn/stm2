@@ -60,20 +60,35 @@
             <table class="vb-table st-table st-table--sm">
                 <tr>
                     <td class="vb-table__label">Ticket Number</td>
-                    <td class="vb-table__value--strong">{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
+                    <td class="vb-table__value--strong">
+                        @if($booking->status === 'approved' && $booking->convertedSlot)
+                            {{ $booking->convertedSlot->ticket_number ?? 'Generating...' }}
+                        @elseif($booking->status === 'approved' && $booking->converted_slot_id)
+                            <span class="vendor-muted-text">Slot linked, processing ticket...</span>
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
                 <tr>
                     <td class="vb-table__label">Gate</td>
                     <td class="vb-table__value--strong">
                         @php
                             $gateDisplay = '-';
-                            if ($booking->status === 'approved' && $booking->convertedSlot?->plannedGate) {
-                                $whCode = (string) ($booking->convertedSlot?->warehouse?->wh_code ?? '');
-                                $gateNo = (string) ($booking->convertedSlot?->plannedGate?->gate_number ?? '');
-                                $gateDisplay = app(\App\Services\SlotService::class)->getGateDisplayName($whCode, $gateNo);
+                            if ($booking->status === 'approved') {
+                                if ($booking->convertedSlot?->plannedGate) {
+                                    $whCode = (string) ($booking->convertedSlot?->warehouse?->wh_code ?? '');
+                                    $gateNo = (string) ($booking->convertedSlot?->plannedGate?->gate_number ?? '');
+                                    $gateDisplay = app(\App\Services\SlotService::class)->getGateDisplayName($whCode, $gateNo);
+                                } elseif ($booking->planned_gate_id) {
+                                    // Fallback to request data if slot relation is missing gate info
+                                    $whCode = (string) ($booking->warehouse?->wh_code ?? '');
+                                    $gateNo = (string) ($booking->plannedGate?->gate_number ?? '');
+                                    $gateDisplay = app(\App\Services\SlotService::class)->getGateDisplayName($whCode, $gateNo);
+                                }
                             }
                         @endphp
-                        {{ $gateDisplay !== '' ? $gateDisplay : '-' }}
+                        {{ (string)$gateDisplay !== '' ? $gateDisplay : '-' }}
                     </td>
                 </tr>
                 <tr>
@@ -223,18 +238,19 @@
     <!-- Actions -->
     @if(in_array($booking->status, ['pending', 'approved']))
     <div class="vb-actions">
-        <div class="vb-actions__row">
-            <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">
-                <i class="fas fa-arrow-left"></i>
-                Back
-            </a>
-
-            @if(!empty($booking->convertedSlot?->ticket_number))
-            <a href="{{ route('vendor.bookings.ticket', ['slotId' => $booking->convertedSlot->id]) }}" class="vendor-btn vendor-btn--secondary" target="_blank">
+            @if($booking->status === 'approved' && ($booking->converted_slot_id || $booking->convertedSlot))
+            <a href="{{ route('vendor.bookings.ticket', ['slotId' => $booking->converted_slot_id ?? $booking->convertedSlot->id]) }}" 
+               class="vendor-btn vendor-btn--primary" 
+               target="_blank">
                 <i class="fas fa-print"></i>
                 Print Ticket
             </a>
             @endif
+
+            <a href="{{ route('vendor.bookings.index') }}" class="vendor-btn vendor-btn--secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back
+            </a>
 
             @if($booking->status === 'pending' && auth()->user()->hasRole('vendor'))
                 <button type="button"

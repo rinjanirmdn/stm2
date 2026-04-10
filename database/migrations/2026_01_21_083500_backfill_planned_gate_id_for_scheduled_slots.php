@@ -41,8 +41,8 @@ return new class extends Migration
             }
 
             try {
-                $startDt = new \DateTime($plannedStart);
-            } catch (\Throwable $e) {
+                $startDt = new DateTime($plannedStart);
+            } catch (Throwable $e) {
                 continue;
             }
 

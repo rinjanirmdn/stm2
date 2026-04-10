@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UserStoreRequest extends FormRequest
 {
@@ -42,7 +43,7 @@ class UserStoreRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
-                \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
+                Password::min(8)->letters()->numbers(),
                 function ($attribute, $value, $fail) {
                     if (! preg_match('/^[A-Z]/', $value)) {
                         $fail('Password harus diawali dengan huruf kapital.');
@@ -59,8 +60,9 @@ class UserStoreRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
-                // 'exists:vendors,vendor_code', // Validation against vendors table (vendors table is not available)
-                Rule::requiredIf(fn () => (string) $this->input('role') === 'vendor'),
+                Rule::requiredIf(function () {
+                    return (string) $this->input('role') === 'vendor';
+                }),
             ],
         ];
     }

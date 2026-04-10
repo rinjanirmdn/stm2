@@ -158,7 +158,7 @@ return new class extends Migration
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     // Ignore if role already exists
                     continue;
                 }

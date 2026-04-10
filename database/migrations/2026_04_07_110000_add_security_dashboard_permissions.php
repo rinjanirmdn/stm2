@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\PermissionRegistrar;
 
 return new class extends Migration
 {
@@ -12,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
         $permGuardCol = Schema::hasColumn('md_permissions', 'perm_guard_name') ? 'perm_guard_name' : 'guard_name';
@@ -98,7 +99,7 @@ return new class extends Migration
         }
 
         Cache::forget('users:roles:all');
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     /**
@@ -106,7 +107,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
 
@@ -120,6 +121,6 @@ return new class extends Migration
             DB::table('md_permissions')->whereIn('id', $permIds)->delete();
         }
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 };
