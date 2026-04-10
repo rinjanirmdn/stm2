@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -41,7 +44,7 @@ class ResetPasswordController extends Controller
         }
 
         // Check expiry
-        $createdAt = \Carbon\Carbon::parse($record->created_at);
+        $createdAt = Carbon::parse($record->created_at);
         if ($createdAt->addMinutes(self::TOKEN_LIFETIME_MINUTES)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $email)->delete();
 
@@ -82,7 +85,7 @@ class ResetPasswordController extends Controller
         }
 
         // Check expiry
-        $createdAt = \Carbon\Carbon::parse($record->created_at);
+        $createdAt = Carbon::parse($record->created_at);
         if ($createdAt->addMinutes(self::TOKEN_LIFETIME_MINUTES)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $email)->delete();
 
@@ -90,7 +93,7 @@ class ResetPasswordController extends Controller
         }
 
         // Find user
-        $user = \App\Models\User::where('email', $email)->first();
+        $user = User::where('email', $email)->first();
         if (! $user) {
             return back()->with('error', 'User not found.');
         }
@@ -113,7 +116,7 @@ class ResetPasswordController extends Controller
             strtolower(trim($user->username ?? '')),
         ];
         foreach (array_filter(array_unique($identifiers)) as $identifier) {
-            \Illuminate\Support\Facades\Cache::forget('login_attempts_'.$identifier);
+            Cache::forget('login_attempts_'.$identifier);
         }
 
         // Delete the used token
