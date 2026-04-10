@@ -406,7 +406,7 @@ class VendorBookingController extends Controller
             $totalCount = $query->count();
             $bookings = $query->orderBy('created_at', 'desc')->paginate($totalCount ?: 1);
         } else {
-            $limit = is_numeric($pageSize) ? (int)$pageSize : 15;
+            $limit = is_numeric($pageSize) ? (int) $pageSize : 15;
             $bookings = $query->orderBy('created_at', 'desc')->paginate($limit);
         }
 
