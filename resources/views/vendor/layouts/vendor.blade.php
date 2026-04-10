@@ -445,6 +445,7 @@
         })();
     </script>
     <script type="application/json" id="indonesia_holidays_global">{!! json_encode($holidays ?? []) !!}</script>
+    @include('partials.input-formatters')
     @stack('scripts')
 
     <script>

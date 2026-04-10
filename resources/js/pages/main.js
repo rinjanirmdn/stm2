@@ -169,8 +169,29 @@ document.addEventListener('DOMContentLoaded', function () {
             if (menu && menu.classList.contains('st-action-menu')) {
                 // Close all other open menus
                 document.querySelectorAll('.st-action-menu.show').forEach(function (m) {
-                    if (m !== menu) m.classList.remove('show');
+                    if (m !== menu) {
+                        m.classList.remove('show');
+                        m.style.top = '';
+                        m.style.bottom = '';
+                    }
                 });
+                
+                if (!menu.classList.contains('show')) {
+                    var triggerRect = trigger.getBoundingClientRect();
+                    var spaceBelow = window.innerHeight - triggerRect.bottom;
+                    
+                    if (spaceBelow < 250) {
+                        menu.style.top = 'auto';
+                        menu.style.bottom = '100%';
+                    } else {
+                        menu.style.bottom = 'auto';
+                        menu.style.top = '100%';
+                    }
+                } else {
+                    menu.style.top = '';
+                    menu.style.bottom = '';
+                }
+                
                 menu.classList.toggle('show');
             }
             return;
@@ -181,7 +202,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (openMenus.length > 0) {
             var inMenu = e.target && e.target.closest ? e.target.closest('.st-action-menu') : null;
             if (!inMenu) {
-                openMenus.forEach(function (m) { m.classList.remove('show'); });
+                openMenus.forEach(function (m) { 
+                    m.classList.remove('show'); 
+                    m.style.top = '';
+                    m.style.bottom = '';
+                });
             }
         }
     });

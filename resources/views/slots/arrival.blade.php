@@ -1,24 +1,3 @@
-@if (request()->boolean('popup'))
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Arrival - e-Docking Control System</title>
-    @vite(['resources/css/style.css', 'resources/js/app.js'])
-</head>
-<body class="st-app">
-    <main class="st-content st-content--layout" style="padding-top: 16px;">
-@else
-@extends('layouts.app')
-
-@section('title', 'Arrival - e-Docking Control System')
-@section('page_title', 'Arrival')
-
-@section('content')
-@endif
-
     <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Arrival Registration</h3>
@@ -66,8 +45,8 @@
         </div>
     </div>
 
-    <div class="st-card">
-        <form method="POST" action="{{ route('slots.arrival.store', ['slotId' => $slot->id]) }}">
+    <div>
+        <form method="POST" action="{{ route('slots.arrival.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}">
             @csrf
 
             <div class="st-form-row st-form-field--mb-12">
@@ -169,32 +148,16 @@
                     <i class="fas fa-save"></i>
                     <span class="st-ml-6">Save</span>
                 </button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary st-btn--pad-lg" title="Cancel">
+                <button type="button" class="st-btn st-btn--outline-primary st-btn--pad-lg" title="Cancel" onclick="closeGlobalAjaxModal()">
                     <i class="fas fa-times"></i>
                     <span class="st-ml-6">Cancel</span>
-                </a>
+                </button>
             </div>
         </form>
     </div>
 
-@if (request()->boolean('popup'))
-    <script src="{{ asset('js/vendor/html5-qrcode.min.js') }}"></script>
-    <script type="application/json" id="slots_arrival_config">{!! json_encode([
-        'expectedTicket' => (string) ($slot->ticket_number ?? ''),
-    ]) !!}</script>
-    @vite(['resources/js/pages/slots-arrival.js'])
-    </main>
-</body>
-</html>
-@else
-@endsection
-
-@push('scripts')
 <script src="{{ asset('js/vendor/html5-qrcode.min.js') }}"></script>
 <script type="application/json" id="slots_arrival_config">{!! json_encode([
     'expectedTicket' => (string) ($slot->ticket_number ?? ''),
 ]) !!}</script>
 @vite(['resources/js/pages/slots-arrival.js'])
-@endpush
-@endif
-

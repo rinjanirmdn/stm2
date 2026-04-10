@@ -328,25 +328,25 @@
                 @if (! $isUnplanned)
                     @if (in_array($status, ['scheduled'], true))
                         @can('slots.arrival')
-                        <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs">Arrival</a>
+                        <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Arrival', this.href);">Arrival</a>
                         @endcan
                     @elseif ($status === 'waiting')
                         @can('slots.start')
-                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Start</a>
+                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Start Processing', this.href);">Start</a>
                         @endcan
                     @elseif ($status === 'in_progress')
                         @can('slots.complete')
-                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Complete</a>
+                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Booking', this.href);">Complete</a>
                         @endcan
                     @endif
                 @else
                     @if ($status === 'waiting')
                         @can('slots.start')
-                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Start</a>
+                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">Start</a>
                         @endcan
                     @elseif ($status === 'in_progress')
                         @can('slots.complete')
-                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs">Complete</a>
+                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">Complete</a>
                         @endcan
                     @endif
                 @endif

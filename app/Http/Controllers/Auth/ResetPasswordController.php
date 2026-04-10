@@ -65,7 +65,17 @@ class ResetPasswordController extends Controller
         $request->validate([
             'token' => 'required|string',
             'email' => 'required|email',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => [
+                'required',
+                'string',
+                \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
+                function ($attribute, $value, $fail) {
+                    if (! preg_match('/^[A-Z]/', $value)) {
+                        $fail('Password harus diawali dengan huruf kapital.');
+                    }
+                },
+                'confirmed',
+            ],
         ]);
 
         $email = $request->input('email');

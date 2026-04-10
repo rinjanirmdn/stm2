@@ -1,4 +1,4 @@
-﻿function stReadJson(id, fallback) {
+function stReadJson(id, fallback) {
     try {
         var el = document.getElementById(id);
         if (!el) return fallback;
@@ -30,7 +30,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var value = (ticketInput.value || '').trim();
         var hasTicket = value !== '';
         var matches = expectedTicket === '' || value === expectedTicket;
+        var submitBtn = document.querySelector('#arrival_details').closest('form').querySelector('button[type="submit"]');
+        
         arrivalDetails.style.display = hasTicket && matches ? 'block' : 'none';
+        if (submitBtn) submitBtn.disabled = !(hasTicket && matches);
+        
         if (ticketHint) {
             if (!hasTicket || matches) {
                 ticketHint.style.display = 'none';

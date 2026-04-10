@@ -1,9 +1,3 @@
-@extends('layouts.app')
-
-@section('title', 'Complete - e-Docking Control System')
-@section('page_title', 'Complete Booking')
-
-@section('content')
     <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Complete Registration</h3>
@@ -42,8 +36,8 @@
         </div>
     </div>
 
-    <div class="st-card">
-        <form method="POST" action="{{ route('slots.complete.store', ['slotId' => $slot->id]) }}">
+    <div>
+        <form method="POST" action="{{ route('slots.complete.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}">
             @csrf
 
             <div class="st-form-row st-form-field--mb-12">
@@ -85,18 +79,15 @@
                     <i class="fas fa-check-circle"></i>
                     <span class="st-ml-6">Complete Registration</span>
                 </button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary st-btn--pad-lg">
+                <button type="button" class="st-btn st-btn--outline-primary st-btn--pad-lg" onclick="closeGlobalAjaxModal()">
                     <i class="fas fa-times"></i>
                     <span class="st-ml-6">Cancel</span>
-                </a>
+                </button>
             </div>
         </form>
     </div>
 
     <script type="application/json" id="truck_types_json">{{ json_encode(array_values($truckTypes)) }}</script>
 
-    @push('scripts')
 @vite(['resources/js/pages/slots-complete.js'])
-@endpush
-@endsection
 
