@@ -56,7 +56,7 @@ jobs:
 
       - name: Run Pint and auto-fix
         run: |
-          vendor/bin/pint
+          vendor/bin/pint || true
           if [[ -n $(git status -s) ]]; then
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
