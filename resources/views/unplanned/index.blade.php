@@ -266,11 +266,11 @@
                             <td class="st-td-center">
                                 <div class="tw-actionbar">
                                     @if (($slot->status ?? '') === 'waiting')
-                                        <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="tw-action tw-action--primary" data-tooltip="Start" aria-label="Start">
+                                        <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="tw-action tw-action--primary" data-tooltip="Start" aria-label="Start" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">
                                             <i class="fa-solid fa-play"></i>
                                         </a>
                                     @elseif (($slot->status ?? '') === 'in_progress')
-                                        <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="tw-action tw-action--primary" data-tooltip="Complete" aria-label="Complete">
+                                        <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="tw-action tw-action--primary" data-tooltip="Complete" aria-label="Complete" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">
                                             <i class="fa-solid fa-check"></i>
                                         </a>
                                     @endif

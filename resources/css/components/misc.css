@@ -4651,6 +4651,9 @@ input[type="datetime-local"].form-control {
     overflow: hidden;
     transform: translateY(20px);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 94vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .st-custom-modal.active .st-custom-modal-container {
@@ -4686,6 +4689,8 @@ input[type="datetime-local"].form-control {
     color: #4b5563;
     font-size: 0.95rem;
     line-height: 1.5;
+    overflow-y: auto;
+    flex: 1 1 auto;
 }
 
 .st-custom-modal-footer {

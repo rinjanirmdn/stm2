@@ -30,6 +30,7 @@ class UserStoreRequest extends FormRequest
             'email' => [
                 'required',
                 'string',
+                'email',
                 'max:50',
                 'unique:md_users,email',
             ],
@@ -41,7 +42,12 @@ class UserStoreRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
-                'min:8',
+                \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
+                function ($attribute, $value, $fail) {
+                    if (! preg_match('/^[A-Z]/', $value)) {
+                        $fail('Password harus diawali dengan huruf kapital.');
+                    }
+                },
                 'confirmed',
             ],
             'role' => [
@@ -70,7 +76,6 @@ class UserStoreRequest extends FormRequest
             'email.required' => 'Email is required.',
             'email.unique' => 'Email already exists.',
             'password.required' => 'Password is required.',
-            'password.min' => 'Password minimum 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
             'role.required' => 'Role must be selected.',
             'role.in' => 'Role must be admin, section_head, operator, or vendor.',

@@ -1,9 +1,4 @@
-@extends('layouts.app')
 
-@section('title', 'Start Planned - e-Docking Control System')
-@section('page_title', 'Start Planned')
-
-@section('content')
     @php
         $gateStatuses = $gateStatuses ?? [];
         $conflictDetails = $conflictDetails ?? [];
@@ -71,8 +66,8 @@
         </div>
     @endif
 
-    <div class="st-card">
-        <form method="POST" action="{{ route('slots.start.store', ['slotId' => $slot->id]) }}">
+    <div>
+        <form method="POST" action="{{ route('slots.start.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}">
             @csrf
 
             <div class="st-form-row st-form-field--mb-12">
@@ -179,11 +174,10 @@
                     <i class="fas fa-play"></i>
                     <span class="st-ml-6">Start Process</span>
                 </button>
-                <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary st-btn--pad-lg">
+                <button type="button" class="st-btn st-btn--outline-primary st-btn--pad-lg" onclick="closeGlobalAjaxModal()">
                     <i class="fas fa-times"></i>
                     <span class="st-ml-6">Cancel</span>
-                </a>
+                </button>
             </div>
         </form>
     </div>
-@endsection
