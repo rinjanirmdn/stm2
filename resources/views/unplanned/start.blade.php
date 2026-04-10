@@ -139,6 +139,8 @@
                 </div>
             @endif
 
+            @include('partials.backdate-section')
+
             <div class="st-form-actions">
                 <button type="submit" class="st-btn">Start</button>
                 <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
