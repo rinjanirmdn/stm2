@@ -46,6 +46,7 @@ class UserUpdateRequest extends FormRequest
             'email' => [
                 'required',
                 'string',
+                'email',
                 'max:50',
                 Rule::unique('md_users', 'email')->ignore($userId),
             ],
@@ -57,7 +58,12 @@ class UserUpdateRequest extends FormRequest
             'password' => [
                 'nullable',
                 'string',
-                'min:8',
+                \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
+                function ($attribute, $value, $fail) {
+                    if ($value && !preg_match('/^[A-Z]/', $value)) {
+                        $fail('Password harus diawali dengan huruf kapital.');
+                    }
+                },
                 'confirmed',
             ],
             'role' => [
@@ -93,7 +99,6 @@ class UserUpdateRequest extends FormRequest
             'name.max' => 'Full name maximum 255 characters.',
             'email.required' => 'Email is required.',
             'email.unique' => 'Email already exists.',
-            'password.min' => 'Password minimum 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
             'role.required' => 'Role must be selected.',
             'role.in' => 'Role must be admin or operator.',

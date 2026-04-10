@@ -1,16 +1,11 @@
-@extends('layouts.app')
 
-@section('title', 'Complete Unplanned - e-Docking Control System')
-@section('page_title', 'Complete Unplanned')
-
-@section('content')
     <div class="st-card st-mb-12">
         <div class="st-text--sm st-text--muted">Unplanned #{{ $slot->id }}</div>
         <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
     </div>
 
-    <div class="st-card">
-        <form method="POST" action="{{ route('unplanned.complete.store', ['slotId' => $slot->id]) }}">
+    <div>
+        <form method="POST" action="{{ route('unplanned.complete.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}">
             @csrf
 
             <div class="st-form-row st-form-field--mb-12">
@@ -58,15 +53,12 @@
 
             <div class="st-form-actions">
                 <button type="submit" class="st-btn">Complete Unplanned</button>
-                <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>
+                <button type="button" class="st-btn st-btn--outline-primary" onclick="closeGlobalAjaxModal()">Cancel</button>
             </div>
         </form>
     </div>
 
     <script type="application/json" id="truck_types_json">{{ json_encode(array_values($truckTypes ?? [])) }}</script>
 
-    @push('scripts')
 @vite(['resources/js/pages/unplanned-complete.js'])
-@endpush
-@endsection
 

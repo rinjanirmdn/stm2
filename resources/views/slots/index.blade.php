@@ -585,19 +585,19 @@
 
                                                 @if (!$hasArrival && $status === 'scheduled')
                                                     @can('slots.arrival')
-                                                    <a href="{{ route('slots.arrival', ['slotId' => $row->id]) }}" class="st-action-item">Arrival</a>
+                                                    <a href="{{ route('slots.arrival', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Arrival', this.href);">Arrival</a>
                                                     @endcan
                                                 @endif
                                                 @if (in_array($status, ['waiting'], true))
                                                     @can('slots.start')
-                                                    <a href="{{ route('slots.start', ['slotId' => $row->id]) }}" class="st-action-item">Start</a>
+                                                    <a href="{{ route('slots.start', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Start Processing', this.href);">Start</a>
                                                     @endcan
                                                 @endif
                                             @endif
 
                                             @if ($status === 'in_progress')
                                                 @can('slots.complete')
-                                                <a href="{{ route('slots.complete', ['slotId' => $row->id]) }}" class="st-action-item">Complete</a>
+                                                <a href="{{ route('slots.complete', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Booking', this.href);">Complete</a>
                                                 @endcan
                                             @endif
 

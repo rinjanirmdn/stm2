@@ -196,7 +196,7 @@
 @endsection
 
 @push('scripts')
-    {{-- vendor-dashboard.js, vendor-status-overview.jsx, vendor-ontime-chart.jsx removed per audit #10/#11 --}}
+    @vite(['resources/js/pages/vendor.js'])
 @endpush
 
 

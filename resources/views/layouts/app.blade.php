@@ -414,6 +414,165 @@
     ],
 ]) !!}</script>
 <script type="application/json" id="indonesia_holidays_global">{!! json_encode($holidays ?? []) !!}</script>
+@include('partials.input-formatters')
+
+{{-- Global Iframe Modal for Lifecycle Actions --}}
+<div id="st-global-iframe-modal" class="st-custom-modal">
+    <div class="st-custom-modal-overlay" onclick="closeGlobalAjaxModal()"></div>
+    <div class="st-custom-modal-container" style="max-width: 600px; width: 95%;">
+        <div class="st-custom-modal-header">
+            <i class="fas fa-tasks st-text-18 st-mr-8"></i>
+            <span id="st-global-iframe-modal-title">Action</span>
+            <button type="button" class="st-custom-modal-close" onclick="closeGlobalAjaxModal()">&times;</button>
+        </div>
+        <div class="st-custom-modal-body st-p-0" id="st-global-ajax-modal-body">
+            {{-- AJAX content will be injected here --}}
+        </div>
+        <div class="st-custom-modal-footer st-justify-center">
+            <div id="st-global-iframe-loader" class="st-text--muted st-text--sm" style="display: none;">
+                <i class="fas fa-spinner fa-spin st-mr-6"></i> Loading form...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openGlobalAjaxModal(title, url) {
+        const modal = document.getElementById('st-global-iframe-modal');
+        const modalBody = document.getElementById('st-global-ajax-modal-body');
+        const titleEl = document.getElementById('st-global-iframe-modal-title');
+        const loader = document.getElementById('st-global-iframe-loader');
+
+        titleEl.textContent = title;
+        modalBody.innerHTML = '';
+        loader.style.display = 'block';
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Add popup=1 to URL just in case backend still relies on it
+        const separator = url.indexOf('?') !== -1 ? '&' : '?';
+        const fetchUrl = url + separator + 'popup=1';
+
+        fetch(fetchUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text) });
+            }
+            return response.text();
+        })
+        .then(html => {
+            loader.style.display = 'none';
+            // Use jQuery to inject so script tags execute natively
+            if (window.$) {
+                $(modalBody).html(html);
+            } else {
+                modalBody.innerHTML = html;
+            }
+            bindAjaxFormSubmit(modalBody);
+            if (typeof window.initializeInputFormatters === 'function') {
+                window.initializeInputFormatters(modalBody);
+            }
+        })
+        .catch(err => {
+            loader.style.display = 'none';
+            modalBody.innerHTML = `<div class="st-p-16 st-text-center st-text--danger">
+                <i class="fas fa-exclamation-triangle st-text-24 st-mb-8"></i>
+                <div class="st-font-semibold">Failed to load content</div>
+                <div class="st-text--sm">${err.message.substring(0, 100)}...</div>
+            </div>`;
+        });
+    }
+
+    function bindAjaxFormSubmit(container) {
+        const form = container.querySelector('form');
+        if (!form) return;
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+            const action = form.action;
+
+            fetch(action, {
+                method: form.method || 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (!res.ok && res.status !== 422) {
+                    throw new Error('Server error');
+                }
+                return res.json().then(data => ({ status: res.status, data }));
+            })
+            .then(({ status, data }) => {
+                // Clear existing error alerts
+                const existingAlerts = form.querySelectorAll('.st-alert--error');
+                existingAlerts.forEach(el => el.remove());
+
+                if (status === 422) {
+                    if (submitBtn) submitBtn.disabled = false;
+                    let errorHtml = '<ul class="st-m-0 st-pl-16">';
+                    let errData = data.errors || data;
+                    for (const key in errData) {
+                        const msg = Array.isArray(errData[key]) ? errData[key][0] : errData[key];
+                        errorHtml += `<li>${msg}</li>`;
+                    }
+                    errorHtml += '</ul>';
+                    
+                    const errorBox = document.createElement('div');
+                    errorBox.className = 'st-alert st-alert--error st-mb-12';
+                    errorBox.innerHTML = `
+                        <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        <div class="st-alert__text">
+                            <div class="st-font-semibold st-mb-2">Validation Error</div>
+                            <div class="st-text--sm">${errorHtml}</div>
+                        </div>
+                    `;
+                    form.prepend(errorBox);
+                    container.scrollTop = 0;
+                } else if (data.success || status === 200) {
+                    // Success! Reload page to show updated table/detail
+                    window.location.reload();
+                } else {
+                    throw new Error(data.message || 'Unknown error');
+                }
+            })
+            .catch(err => {
+                if (submitBtn) submitBtn.disabled = false;
+                alert("Operation failed: " + err.message);
+            });
+        });
+    }
+
+    function closeGlobalAjaxModal() {
+        const modal = document.getElementById('st-global-iframe-modal');
+        const modalBody = document.getElementById('st-global-ajax-modal-body');
+        
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        setTimeout(() => { modalBody.innerHTML = ''; }, 200);
+    }
+
+    // Listen for messages from inside the iframe (success)
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'LIFECYCLE_SUCCESS') {
+            closeGlobalAjaxModal();
+            // Optional: show a toast here if we had a global toast, else just reload
+            window.location.reload();
+        }
+    });
+</script>
+
 @stack('scripts')
 </body>
 </html>

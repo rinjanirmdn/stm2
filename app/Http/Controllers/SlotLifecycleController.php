@@ -62,12 +62,12 @@ class SlotLifecycleController extends Controller
 
         $ticketNumber = trim((string) $request->input('ticket_number', ''));
         if ($ticketNumber === '') {
-            return back()->withInput()->with('error', 'Ticket number is required');
+            throw \Illuminate\Validation\ValidationException::withMessages(['ticket_number' => 'Ticket number is required']);
         }
 
         $expectedTicket = trim((string) ($slot->ticket_number ?? ''));
         if ($expectedTicket !== '' && $ticketNumber !== $expectedTicket) {
-            return back()->withInput()->with('error', 'Ticket number does not match this slot.');
+            throw \Illuminate\Validation\ValidationException::withMessages(['ticket_number' => 'Ticket number does not match this slot.']);
         }
 
         // Handle backdate for Admin / Section Head
@@ -76,7 +76,7 @@ class SlotLifecycleController extends Controller
             if ($this->isBackdateAllowed()) {
                 $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
-                    return back()->withInput()->with('error', 'Backdate time must be in the past.');
+                    throw \Illuminate\Validation\ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
                 }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }
@@ -96,6 +96,14 @@ class SlotLifecycleController extends Controller
                 $this->slotService->logActivity($slotId, 'backdate', 'Arrival Backdated to '.$backdateTime.' by '.auth()->user()->full_name);
             }
         });
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Arrival recorded successfully']);
+        }
+
+        if ($request->boolean('popup')) {
+            return view('partials.popup-success', ['message' => 'Arrival recorded successfully']);
+        }
 
         return redirect()->route('slots.show', ['slotId' => $slotId])->with('success', 'Arrival recorded');
     }
@@ -322,39 +330,43 @@ class SlotLifecycleController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Data not found');
+            throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Data not found']);
         }
 
         $slotType = (string) ($slot->slot_type ?? 'planned');
         if ($slotType === 'unplanned') {
             if ((string) ($slot->status ?? '') !== Slot::STATUS_WAITING) {
-                return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Only waiting unplanned slots can be started');
+                throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Only waiting unplanned slots can be started']);
             }
         } else {
             if (! in_array((string) ($slot->status ?? ''), ['arrived', 'waiting'], true)) {
-                return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only arrived/waiting slots can be started');
+                throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Only arrived/waiting slots can be started']);
             }
             if (empty($slot->arrival_time)) {
-                return redirect()->route('slots.arrival', ['slotId' => $slotId])->with('error', 'Please record Arrival before starting this slot');
+                throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Please record Arrival before starting this slot']);
             }
         }
 
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
         if (! $actualGateId) {
-            return back()->withInput()->with('error', 'Actual gate is required');
+            throw \Illuminate\Validation\ValidationException::withMessages(['actual_gate_id' => 'Actual gate is required']);
         }
 
         $gateRow = DB::table('md_gates')->where('id', $actualGateId)->where('is_active', true)->select(['id', 'warehouse_id'])->first();
         if (! $gateRow) {
-            return back()->withInput()->with('error', 'Selected gate is not active');
+            throw \Illuminate\Validation\ValidationException::withMessages(['actual_gate_id' => 'Selected gate is not active']);
         }
         if ((int) ($gateRow->warehouse_id ?? 0) !== (int) ($slot->warehouse_id ?? 0)) {
-            return back()->withInput()->with('error', 'Selected gate does not belong to the slot\'s warehouse');
+            throw \Illuminate\Validation\ValidationException::withMessages(['actual_gate_id' => 'Selected gate does not belong to the slot\'s warehouse']);
         }
 
         $conflicts = $this->findInProgressConflicts($actualGateId, $slotId);
         if (! empty($conflicts)) {
             $lines = $this->buildConflictLines($conflicts);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['lane_conflict' => $lines]);
+            }
 
             return back()
                 ->withInput()
@@ -369,7 +381,7 @@ class SlotLifecycleController extends Controller
         }
         $waitingReason = trim((string) $request->input('waiting_reason', ''));
         if ($waitingMinutes > 60 && $waitingReason === '') {
-            return back()->withInput()->with('error', 'Waiting has exceeded 60 minutes. Please provide the reason for the long wait.');
+            throw \Illuminate\Validation\ValidationException::withMessages(['waiting_reason' => 'Waiting has exceeded 60 minutes. Please provide the reason for the long wait.']);
         }
 
         // Handle backdate for Admin / Section Head
@@ -378,7 +390,7 @@ class SlotLifecycleController extends Controller
             if ($this->isBackdateAllowed()) {
                 $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
-                    return back()->withInput()->with('error', 'Backdate time must be in the past.');
+                    throw \Illuminate\Validation\ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
                 }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }
@@ -421,8 +433,16 @@ class SlotLifecycleController extends Controller
             }
         });
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Process started successfully']);
+        }
+
         if ($slotType === 'unplanned') {
             return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned started');
+        }
+
+        if ($request->boolean('popup')) {
+            return view('partials.popup-success', ['message' => 'Process started successfully']);
         }
 
         return redirect()->route('slots.show', ['slotId' => $slotId])->with('success', 'Booking started');
@@ -458,15 +478,15 @@ class SlotLifecycleController extends Controller
     {
         $slot = $this->loadSlotDetailRow($slotId);
         if (! $slot) {
-            return redirect()->route('slots.index')->with('error', 'Data not found');
+            throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Data not found']);
         }
 
         if ((string) ($slot->status ?? '') !== 'in_progress') {
-            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only in-progress slots can be completed');
+            throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Only in-progress slots can be completed']);
         }
 
         if (empty($slot->actual_start)) {
-            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Cannot complete: actual start time is missing. Please start the booking first.');
+            throw \Illuminate\Validation\ValidationException::withMessages(['general' => 'Cannot complete: actual start time is missing. Please start the booking first.']);
         }
 
         $matDoc = trim((string) $request->input('mat_doc', ''));
@@ -480,7 +500,7 @@ class SlotLifecycleController extends Controller
         $notes = trim((string) $request->input('notes', ''));
 
         if ($matDoc === '' || $truckType === '' || $vehicleNumber === '' || $driverNumber === '') {
-            return back()->withInput()->with('error', 'All required fields must be filled');
+            throw \Illuminate\Validation\ValidationException::withMessages(['mat_doc' => 'All required fields must be filled']);
         }
 
         // Handle backdate for Admin / Section Head
@@ -489,7 +509,7 @@ class SlotLifecycleController extends Controller
             if ($this->isBackdateAllowed()) {
                 $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
-                    return back()->withInput()->with('error', 'Backdate time must be in the past.');
+                    throw \Illuminate\Validation\ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
                 }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }
@@ -526,6 +546,14 @@ class SlotLifecycleController extends Controller
                 $this->slotService->logActivity($slotId, 'backdate', 'Complete Backdated to '.$backdateTime.' by '.auth()->user()->full_name);
             }
         });
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Process completed successfully']);
+        }
+
+        if ($request->boolean('popup')) {
+            return view('partials.popup-success', ['message' => 'Process completed successfully']);
+        }
 
         return redirect()->route('slots.index')->with('success', 'Data completed');
     }
