@@ -156,6 +156,36 @@ document.addEventListener('DOMContentLoaded', function () {
         ? window.getIndonesiaHolidays()
         : {};
 
+    // ─── Global Action Menu Toggle ─────────────────────────────────────────────
+    document.addEventListener('click', function (e) {
+        var trigger = e.target && e.target.closest ? e.target.closest('.st-action-trigger') : null;
+        if (trigger) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var parent = trigger.closest('.st-action-dropdown');
+            var menu = parent ? parent.querySelector('.st-action-menu') : trigger.nextElementSibling;
+            
+            if (menu && menu.classList.contains('st-action-menu')) {
+                // Close all other open menus
+                document.querySelectorAll('.st-action-menu.show').forEach(function (m) {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                menu.classList.toggle('show');
+            }
+            return;
+        }
+
+        // Click outside, close all open menus
+        var openMenus = document.querySelectorAll('.st-action-menu.show');
+        if (openMenus.length > 0) {
+            var inMenu = e.target && e.target.closest ? e.target.closest('.st-action-menu') : null;
+            if (!inMenu) {
+                openMenus.forEach(function (m) { m.classList.remove('show'); });
+            }
+        }
+    });
+
     function stToIsoDate(date) {
         var year = date.getFullYear();
         var month = String(date.getMonth() + 1).padStart(2, '0');

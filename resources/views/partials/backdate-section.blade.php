@@ -1,115 +1,130 @@
-{{-- Backdate section - Admin & Section Head only --}}
-@if(auth()->user() && auth()->user()->hasAnyRole(['Admin', 'Section Head']))
-<div class="st-backdate-section st-mb-16">
-    <div class="st-backdate-toggle">
-        <label class="st-flex st-align-center st-gap-10 st-cursor-pointer">
-            <input type="checkbox" id="backdate_toggle" class="st-checkbox" {{ old('backdate_datetime') ? 'checked' : '' }}>
-            <span class="st-flex st-align-center st-gap-8">
-                <i class="fas fa-history st-text--warning"></i>
-                <span class="st-font-semibold st-text--sm">Use Backdate</span>
-                <span class="st-badge st-badge--warning st-text--xs">Admin Only</span>
-            </span>
+{{-- Backdate Section - Only visible for Admin and Section Head --}}
+@php
+    $__bdUser = auth()->user();
+    $__bdAllowed = false;
+    $__bdRoleName = '';
+    if ($__bdUser) {
+        // Primary: Spatie hasRole
+        if (method_exists($__bdUser, 'hasRole') && $__bdUser->hasRole(['Admin', 'Section Head'])) {
+            $__bdAllowed = true;
+            $__bdRoleName = $__bdUser->hasRole('Admin') ? 'Admin' : 'Section Head';
+        }
+        // Fallback: role_id column
+        if (!$__bdAllowed && $__bdUser->role_id) {
+            $__bdRoleName = \Illuminate\Support\Facades\DB::table('md_roles')->where('id', $__bdUser->role_id)->value('roles_name') ?? '';
+            if (in_array($__bdRoleName, ['Admin', 'Section Head'])) {
+                $__bdAllowed = true;
+            }
+        }
+    }
+@endphp
+@if($__bdAllowed)
+<div class="st-border st-rounded-10 st-p-16 st-mb-16 st-backdate-section" style="border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
+    <div class="st-flex st-align-center st-gap-8 st-mb-12">
+        <div class="st-flex st-align-center st-justify-center" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;color:#fff;font-size:14px;">
+            <i class="fas fa-history"></i>
+        </div>
+        <div class="st-font-semibold st-text-14" style="color:#92400e;">
+            <i class="fas fa-bolt st-mr-4" style="color:#f59e0b;"></i> Backdate
+            <span class="st-text--xs st-font-normal" style="color:#a16207;">({{ $__bdRoleName }})</span>
+        </div>
+    </div>
+
+    <div class="st-flex st-align-center st-gap-8 st-mb-10">
+        <label class="st-flex st-align-center st-gap-8 st-cursor-pointer" style="user-select:none;">
+            <input type="checkbox" id="backdate_toggle" name="use_backdate" value="1" class="st-checkbox"
+                   {{ old('use_backdate') ? 'checked' : '' }}
+                   onchange="document.getElementById('backdate_fields').style.display = this.checked ? 'block' : 'none'; if(!this.checked) document.getElementById('backdate_datetime').value = '';">
+            <span class="st-text--sm st-font-semibold" style="color:#92400e;">Use Backdate</span>
         </label>
     </div>
-    <div id="backdate_fields" class="st-backdate-fields" style="display: {{ old('backdate_datetime') ? 'block' : 'none' }};">
-        <div class="st-alert st-alert--warning st-mb-12 st-mt-12">
-            <span class="st-alert__icon"><i class="fa-solid fa-exclamation-triangle"></i></span>
-            <span class="st-alert__text st-text--sm">
-                <strong>Backdate Mode:</strong> The timestamp will be set to the date/time you specify below instead of the current time.
-                Backdate time must be in the <strong>past</strong>.
-            </span>
+
+    <div id="backdate_fields" style="display: {{ old('use_backdate') ? 'block' : 'none' }};">
+        <div class="st-flex st-align-center st-gap-6 st-mb-10 st-p-8 st-rounded-6" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);">
+            <i class="fas fa-exclamation-triangle" style="color:#d97706;font-size:12px;"></i>
+            <span class="st-text--xs" style="color:#92400e;">Backdate time must be in the <strong>past</strong>. Future dates will be rejected.</span>
         </div>
+
         <div class="st-form-field">
-            <label class="st-label">Backdate Date & Time <span class="st-text--danger-dark">*</span></label>
+            <label class="st-label st-text--sm" style="color:#92400e;">
+                <i class="far fa-calendar-alt st-mr-4"></i> Date & Time
+            </label>
             <input
                 type="datetime-local"
-                name="backdate_datetime"
                 id="backdate_datetime"
+                name="backdate_datetime"
                 class="st-input"
                 value="{{ old('backdate_datetime') }}"
+                style="border-color:#f59e0b; max-width:320px;"
                 max="{{ now()->format('Y-m-d\TH:i') }}"
             >
-            <div id="backdate_error" class="st-text--small st-text--danger st-mt-4" style="display: none;"></div>
+            <div id="backdate_error" class="st-text--xs st-mt-4" style="color:#dc2626; display:none;">
+                <i class="fas fa-times-circle"></i> <span></span>
+            </div>
         </div>
     </div>
 </div>
 
-<style>
-.st-backdate-section {
-    border: 1.5px dashed var(--warning-border, #f59e0b);
-    border-radius: 10px;
-    padding: 16px 18px;
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.04) 0%, rgba(245, 158, 11, 0.08) 100%);
-    transition: all 0.25s ease;
-}
-.st-backdate-section:has(#backdate_toggle:checked) {
-    border-color: #d97706;
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(245, 158, 11, 0.12) 100%);
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.10);
-}
-.st-backdate-toggle {
-    user-select: none;
-}
-.st-backdate-fields {
-    animation: st-backdate-slide 0.25s ease;
-}
-@keyframes st-backdate-slide {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.st-checkbox {
-    width: 18px;
-    height: 18px;
-    accent-color: #f59e0b;
-    cursor: pointer;
-}
-</style>
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var toggle = document.getElementById('backdate_toggle');
-    var fields = document.getElementById('backdate_fields');
-    var datetimeInput = document.getElementById('backdate_datetime');
-    var errorDiv = document.getElementById('backdate_error');
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        var toggle = document.getElementById('backdate_toggle');
+        var dtInput = document.getElementById('backdate_datetime');
+        var errorDiv = document.getElementById('backdate_error');
+        if (!toggle || !dtInput) return;
 
-    if (toggle && fields) {
-        toggle.addEventListener('change', function() {
-            fields.style.display = this.checked ? 'block' : 'none';
-            if (!this.checked && datetimeInput) {
-                datetimeInput.value = '';
-                if (errorDiv) errorDiv.style.display = 'none';
-            }
-            if (this.checked && datetimeInput) {
-                datetimeInput.setAttribute('required', 'required');
-                // Set max to current time
-                var now = new Date();
-                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                datetimeInput.max = now.toISOString().slice(0, 16);
-            } else if (datetimeInput) {
-                datetimeInput.removeAttribute('required');
-            }
-        });
-
-        // Initial state
-        if (toggle.checked && datetimeInput) {
-            datetimeInput.setAttribute('required', 'required');
-        }
-    }
-
-    if (datetimeInput && errorDiv) {
-        datetimeInput.addEventListener('change', function() {
-            var val = new Date(this.value);
+        // Set max to current time on page load
+        function updateMax() {
             var now = new Date();
-            if (val > now) {
-                errorDiv.textContent = 'Backdate time must be in the past.';
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            dtInput.max = now.toISOString().slice(0, 16);
+        }
+        updateMax();
+        setInterval(updateMax, 30000);
+
+        // Validate on change
+        dtInput.addEventListener('change', function() {
+            if (!this.value) {
+                errorDiv.style.display = 'none';
+                return;
+            }
+            var selected = new Date(this.value);
+            var now = new Date();
+            if (selected >= now) {
+                errorDiv.querySelector('span').textContent = 'Backdate must be in the past, not future.';
                 errorDiv.style.display = 'block';
-                this.setCustomValidity('Backdate time must be in the past.');
+                this.style.borderColor = '#dc2626';
             } else {
                 errorDiv.style.display = 'none';
-                this.setCustomValidity('');
+                this.style.borderColor = '#f59e0b';
             }
         });
-    }
-});
+
+        // Validate on form submit
+        var form = dtInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (toggle.checked && dtInput.value) {
+                    var selected = new Date(dtInput.value);
+                    var now = new Date();
+                    if (selected >= now) {
+                        e.preventDefault();
+                        errorDiv.querySelector('span').textContent = 'Cannot submit: backdate must be in the past.';
+                        errorDiv.style.display = 'block';
+                        dtInput.style.borderColor = '#dc2626';
+                        dtInput.focus();
+                    }
+                }
+                if (toggle.checked && !dtInput.value) {
+                    e.preventDefault();
+                    errorDiv.querySelector('span').textContent = 'Please select a backdate time.';
+                    errorDiv.style.display = 'block';
+                    dtInput.style.borderColor = '#dc2626';
+                    dtInput.focus();
+                }
+            });
+        }
+    });
+})();
 </script>
 @endif

@@ -9,7 +9,6 @@ use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
 use App\Services\SlotService;
 use App\Services\TimeCalculationService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -71,19 +70,20 @@ class SlotLifecycleController extends Controller
             return back()->withInput()->with('error', 'Ticket number does not match this slot.');
         }
 
-        // Backdate support for Admin
+        // Handle backdate for Admin / Section Head
         $backdateTime = null;
-        $isBackdated = false;
-        if ($request->filled('backdate_datetime') && auth()->user() && auth()->user()->hasAnyRole(['Admin', 'Section Head'])) {
-            $backdateTime = Carbon::parse($request->input('backdate_datetime'));
-            if ($backdateTime->isFuture()) {
-                return back()->withInput()->with('error', 'Backdate time cannot be in the future.');
+        if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
+            if ($this->isBackdateAllowed()) {
+                $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
+                if ($bd->isFuture()) {
+                    return back()->withInput()->with('error', 'Backdate time must be in the past.');
+                }
+                $backdateTime = $bd->format('Y-m-d H:i:s');
             }
-            $isBackdated = true;
         }
 
-        DB::transaction(function () use ($slotId, $ticketNumber, $backdateTime, $isBackdated) {
-            $now = $backdateTime ? $backdateTime->format('Y-m-d H:i:s') : date('Y-m-d H:i:s');
+        DB::transaction(function () use ($slotId, $ticketNumber, $backdateTime) {
+            $now = $backdateTime ?? date('Y-m-d H:i:s');
             DB::table('slots')->where('id', $slotId)->update([
                 'arrival_time' => $now,
                 'ticket_number' => $ticketNumber,
@@ -92,8 +92,8 @@ class SlotLifecycleController extends Controller
 
             $this->slotService->logActivity($slotId, 'status_change', 'Status Changed to Waiting After Arrival');
             $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket '.$ticketNumber);
-            if ($isBackdated) {
-                $this->slotService->logActivity($slotId, 'backdated', 'Arrival Backdated to '.$now.' by '.auth()->user()->full_name);
+            if ($backdateTime) {
+                $this->slotService->logActivity($slotId, 'backdate', 'Arrival Backdated to '.$backdateTime.' by '.auth()->user()->full_name);
             }
         });
 
@@ -372,19 +372,20 @@ class SlotLifecycleController extends Controller
             return back()->withInput()->with('error', 'Waiting has exceeded 60 minutes. Please provide the reason for the long wait.');
         }
 
-        // Backdate support for Admin
+        // Handle backdate for Admin / Section Head
         $backdateTime = null;
-        $isBackdated = false;
-        if ($request->filled('backdate_datetime') && auth()->user() && auth()->user()->hasAnyRole(['Admin', 'Section Head'])) {
-            $backdateTime = Carbon::parse($request->input('backdate_datetime'));
-            if ($backdateTime->isFuture()) {
-                return back()->withInput()->with('error', 'Backdate time cannot be in the future.');
+        if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
+            if ($this->isBackdateAllowed()) {
+                $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
+                if ($bd->isFuture()) {
+                    return back()->withInput()->with('error', 'Backdate time must be in the past.');
+                }
+                $backdateTime = $bd->format('Y-m-d H:i:s');
             }
-            $isBackdated = true;
         }
 
-        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime, $isBackdated) {
-            $now = $backdateTime ? $backdateTime->format('Y-m-d H:i:s') : date('Y-m-d H:i:s');
+        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime) {
+            $now = $backdateTime ?? date('Y-m-d H:i:s');
             $arrivalTime = (string) ($slot->arrival_time ?? $now);
             $isLate = 0;
             if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
@@ -415,8 +416,8 @@ class SlotLifecycleController extends Controller
                 }
             }
             $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at '.$gateName);
-            if ($isBackdated) {
-                $this->slotService->logActivity($slotId, 'backdated', 'Start Backdated to '.$now.' by '.auth()->user()->full_name);
+            if ($backdateTime) {
+                $this->slotService->logActivity($slotId, 'backdate', 'Start Backdated to '.$backdateTime.' by '.auth()->user()->full_name);
             }
         });
 
@@ -482,19 +483,20 @@ class SlotLifecycleController extends Controller
             return back()->withInput()->with('error', 'All required fields must be filled');
         }
 
-        // Backdate support for Admin
+        // Handle backdate for Admin / Section Head
         $backdateTime = null;
-        $isBackdated = false;
-        if ($request->filled('backdate_datetime') && auth()->user() && auth()->user()->hasAnyRole(['Admin', 'Section Head'])) {
-            $backdateTime = Carbon::parse($request->input('backdate_datetime'));
-            if ($backdateTime->isFuture()) {
-                return back()->withInput()->with('error', 'Backdate time cannot be in the future.');
+        if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
+            if ($this->isBackdateAllowed()) {
+                $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
+                if ($bd->isFuture()) {
+                    return back()->withInput()->with('error', 'Backdate time must be in the past.');
+                }
+                $backdateTime = $bd->format('Y-m-d H:i:s');
             }
-            $isBackdated = true;
         }
 
-        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $backdateTime, $isBackdated) {
-            $now = $backdateTime ? $backdateTime->format('Y-m-d H:i:s') : date('Y-m-d H:i:s');
+        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $backdateTime) {
+            $now = $backdateTime ?? date('Y-m-d H:i:s');
 
             // Get slot info before updating
             $slotInfo = DB::table('slots')->where('id', $slotId)->first();
@@ -520,8 +522,8 @@ class SlotLifecycleController extends Controller
             }
 
             $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (SJ: '.$matDoc.', Truck: '.$truckType.', Vehicle: '.$vehicleNumber.', Driver: '.$driverNumber.')');
-            if ($isBackdated) {
-                $this->slotService->logActivity($slotId, 'backdated', 'Complete Backdated to '.$now.' by '.auth()->user()->full_name);
+            if ($backdateTime) {
+                $this->slotService->logActivity($slotId, 'backdate', 'Complete Backdated to '.$backdateTime.' by '.auth()->user()->full_name);
             }
         });
 
@@ -611,5 +613,31 @@ class SlotLifecycleController extends Controller
         }
 
         return $result;
+    }
+
+    /**
+     * Check if the current user is allowed to use backdate (Admin or Section Head)
+     */
+    private function isBackdateAllowed(): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        // Primary: Spatie hasRole
+        if (method_exists($user, 'hasRole') && $user->hasRole(['Admin', 'Section Head'])) {
+            return true;
+        }
+
+        // Fallback: role_id column (same pattern as RoleMiddleware)
+        if ($user->role_id) {
+            $roleName = DB::table('md_roles')->where('id', $user->role_id)->value('roles_name');
+            if ($roleName && in_array($roleName, ['Admin', 'Section Head'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

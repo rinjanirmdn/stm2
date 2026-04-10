@@ -132,6 +132,13 @@
             </a>
             @endcan
 
+            @can('slots.create')
+            <a href="{{ route('md_bp.index') }}" title="Business Partner" class="st-sidebar__link{{ request()->routeIs('md_bp.*') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-handshake"></i>
+                <span>Business Partner</span>
+            </a>
+            @endcan
+
             @can('users.index')
             <a href="{{ route('users.index') }}" title="Users" class="st-sidebar__link{{ request()->routeIs('users.*') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-users"></i>
