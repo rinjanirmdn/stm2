@@ -11,11 +11,14 @@ use App\Services\SlotService;
 use App\Services\TimeCalculationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use DateTime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Milon\Barcode\DNS1D;
+use RuntimeException;
+use Throwable;
 
 class SlotLifecycleController extends Controller
 {
@@ -32,7 +35,7 @@ class SlotLifecycleController extends Controller
     public function arrival(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (! $slot) {
+        if (!$slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -107,7 +110,7 @@ class SlotLifecycleController extends Controller
     public function ticket(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (! $slot) {
+        if (!$slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -139,7 +142,7 @@ class SlotLifecycleController extends Controller
             $barcodeC = new DNS1D();
             $barcodeC->setStorPath(storage_path('app/public/'));
             $barcodePng = '';
-            if (! empty($slot->ticket_number)) {
+            if (!empty($slot->ticket_number)) {
                 $ticketNumber = (string) $slot->ticket_number;
                 $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
                     return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
@@ -153,7 +156,8 @@ class SlotLifecycleController extends Controller
                     if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
                         return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
                     }
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
+                    // ignore
                 }
             });
 
@@ -163,7 +167,8 @@ class SlotLifecycleController extends Controller
                     if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
                         return (string) file_get_contents($cssPath);
                     }
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
+                    // ignore
                 }
 
                 return '';
@@ -197,7 +202,7 @@ class SlotLifecycleController extends Controller
     public function start(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (! $slot) {
+        if (!$slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -207,7 +212,7 @@ class SlotLifecycleController extends Controller
                 return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Only waiting unplanned slots can be started');
             }
         } else {
-            if (! in_array((string) ($slot->status ?? ''), ['arrived', 'waiting'], true)) {
+            if (!in_array((string) ($slot->status ?? ''), ['arrived', 'waiting'], true)) {
                 return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only arrived/waiting slots can be started');
             }
 
@@ -242,15 +247,15 @@ class SlotLifecycleController extends Controller
                 $allConflict[$cid] = true;
             }
             $gateStatuses[$gid] = [
-                'is_conflict' => ! empty($conflicts),
+                'is_conflict' => !empty($conflicts),
                 'overlapping_slots' => $conflicts,
-                'lane_utilization_pct' => ! empty($conflicts) ? 100 : 0,
+                'lane_utilization_pct' => !empty($conflicts) ? 100 : 0,
             ];
         }
 
         $conflictSlotIds = array_keys($allConflict);
         $conflictDetails = [];
-        if (! empty($conflictSlotIds)) {
+        if (!empty($conflictSlotIds)) {
             $rows = DB::table('slots')
                 ->whereIn('id', $conflictSlotIds)
                 ->select(['id', 'ticket_number'])
@@ -303,7 +308,7 @@ class SlotLifecycleController extends Controller
 
         // Compute waiting minutes (time since arrival) for waiting_reason requirement
         $waitingMinutes = 0;
-        if (! empty($slot->arrival_time)) {
+        if (!empty($slot->arrival_time)) {
             $arrivalDt = Carbon::parse($slot->arrival_time);
             $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
         }
@@ -325,7 +330,7 @@ class SlotLifecycleController extends Controller
     public function startStore(Request $request, int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (! $slot) {
+        if (!$slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -344,12 +349,12 @@ class SlotLifecycleController extends Controller
         }
 
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
-        if (! $actualGateId) {
+        if (!$actualGateId) {
             return back()->withInput()->with('error', 'Actual gate is required');
         }
 
         $gateRow = DB::table('md_gates')->where('id', $actualGateId)->where('is_active', true)->select(['id', 'warehouse_id'])->first();
-        if (! $gateRow) {
+        if (!$gateRow) {
             return back()->withInput()->with('error', 'Selected gate is not active');
         }
         if ((int) ($gateRow->warehouse_id ?? 0) !== (int) ($slot->warehouse_id ?? 0)) {
@@ -357,7 +362,7 @@ class SlotLifecycleController extends Controller
         }
 
         $conflicts = $this->findInProgressConflicts($actualGateId, $slotId);
-        if (! empty($conflicts)) {
+        if (!empty($conflicts)) {
             $lines = $this->buildConflictLines($conflicts);
 
             return back()
@@ -367,7 +372,7 @@ class SlotLifecycleController extends Controller
 
         // Check if waiting > 60 min → require waiting_reason
         $waitingMinutes = 0;
-        if (! empty($slot->arrival_time)) {
+        if (!empty($slot->arrival_time)) {
             $arrivalDt = Carbon::parse($slot->arrival_time);
             $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
         }
@@ -445,7 +450,7 @@ class SlotLifecycleController extends Controller
     public function complete(int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (! $slot) {
+        if (!$slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -461,7 +466,7 @@ class SlotLifecycleController extends Controller
     public function completeStore(Request $request, int $slotId)
     {
         $slot = $this->loadSlotDetailRow($slotId);
-        if (! $slot) {
+        if (!$slot) {
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
@@ -505,8 +510,8 @@ class SlotLifecycleController extends Controller
             // Get slot info before updating
             $slotInfo = DB::table('slots')->where('id', $slotId)->first();
 
-            if (! $slotInfo || empty($slotInfo->actual_start)) {
-                throw new \RuntimeException('Cannot complete: actual start time is missing.');
+            if (!$slotInfo || empty($slotInfo->actual_start)) {
+                throw new RuntimeException('Cannot complete: actual start time is missing.');
             }
 
             DB::table('slots')->where('id', $slotId)->update([
@@ -548,11 +553,11 @@ class SlotLifecycleController extends Controller
         if ($estimatedFinish === null) {
             $currentSlot = DB::table('slots')->where('id', $excludeSlotId)->first();
             if ($currentSlot && $currentSlot->planned_duration) {
-                $finishTime = new \DateTime($actualStart);
+                $finishTime = new DateTime($actualStart);
                 $finishTime->modify('+'.(int) $currentSlot->planned_duration.' minutes');
                 $estimatedFinish = $finishTime->format('Y-m-d H:i:s');
             } else {
-                $finishTime = new \DateTime($actualStart);
+                $finishTime = new DateTime($actualStart);
                 $finishTime->modify('+1 hour');
                 $estimatedFinish = $finishTime->format('Y-m-d H:i:s');
             }
@@ -625,7 +630,7 @@ class SlotLifecycleController extends Controller
     private function isBackdateAllowed(): bool
     {
         $user = auth()->user();
-        if (! $user) {
+        if (!$user) {
             return false;
         }
 

@@ -35,11 +35,11 @@ class ResetPasswordController extends Controller
             ->where('email', $email)
             ->first();
 
-        if (! $record) {
+        if (!$record) {
             return redirect()->route('forgot-password')->with('error', 'Invalid or expired password reset link. Please submit a new request.');
         }
 
-        if (! Hash::check($token, $record->token)) {
+        if (!Hash::check($token, $record->token)) {
             return redirect()->route('forgot-password')->with('error', 'Invalid or expired password reset link. Please submit a new request.');
         }
 
@@ -76,11 +76,11 @@ class ResetPasswordController extends Controller
             ->where('email', $email)
             ->first();
 
-        if (! $record) {
+        if (!$record) {
             return back()->with('error', 'Invalid or expired password reset token.');
         }
 
-        if (! Hash::check($token, $record->token)) {
+        if (!Hash::check($token, $record->token)) {
             return back()->with('error', 'Invalid or expired password reset token.');
         }
 
@@ -94,7 +94,7 @@ class ResetPasswordController extends Controller
 
         // Find user
         $user = User::where('email', $email)->first();
-        if (! $user) {
+        if (!$user) {
             return back()->with('error', 'User not found.');
         }
 
