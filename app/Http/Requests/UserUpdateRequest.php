@@ -60,7 +60,7 @@ class UserUpdateRequest extends FormRequest
                 'string',
                 \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
                 function ($attribute, $value, $fail) {
-                    if ($value && !preg_match('/^[A-Z]/', $value)) {
+                    if ($value && ! preg_match('/^[A-Z]/', $value)) {
                         $fail('Password harus diawali dengan huruf kapital.');
                     }
                 },
