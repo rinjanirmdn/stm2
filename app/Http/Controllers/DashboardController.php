@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HolidayHelper;
+use App\Models\BookingRequest;
+use App\Models\Slot;
 use App\Services\BottleneckAnalysisService;
 use App\Services\DashboardStatsService;
 use App\Services\GateStatusService;
@@ -151,8 +154,8 @@ class DashboardController extends Controller
             $scheduleToDt->addDay();
         }
 
-        $pendingBookings = \App\Models\BookingRequest::query()
-            ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
+        $pendingBookings = BookingRequest::query()
+            ->where('status', BookingRequest::STATUS_PENDING)
             ->when($scheduleHasRange && $scheduleFromDt && $scheduleToDt, function ($q) use ($scheduleFromDt, $scheduleToDt) {
                 return $q->whereBetween('planned_start', [$scheduleFromDt, $scheduleToDt]);
             }, function ($q) use ($scheduleDate) {
@@ -200,7 +203,7 @@ class DashboardController extends Controller
         );
 
         // Get Pending Approvals
-        $pendingApprovals = \App\Models\Slot::where('status', 'pending_approval')
+        $pendingApprovals = Slot::where('status', 'pending_approval')
             ->with(['requester', 'warehouse'])
             ->orderBy('created_at', 'asc')
             ->limit(10)
@@ -325,7 +328,7 @@ class DashboardController extends Controller
      */
     private function getHolidaysForYear(string $date): array
     {
-        return \App\Helpers\HolidayHelper::getHolidayMap($date);
+        return HolidayHelper::getHolidayMap($date);
     }
 
     private function buildProcessStatusCounts(string $scheduleDate, string $scheduleFrom, string $scheduleTo): array
@@ -375,8 +378,8 @@ class DashboardController extends Controller
             $scheduleToDt->addDay();
         }
 
-        $pendingCount = \App\Models\BookingRequest::query()
-            ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
+        $pendingCount = BookingRequest::query()
+            ->where('status', BookingRequest::STATUS_PENDING)
             ->when($scheduleHasRange && $scheduleFromDt && $scheduleToDt, function ($q) use ($scheduleFromDt, $scheduleToDt) {
                 return $q->whereBetween('planned_start', [$scheduleFromDt, $scheduleToDt]);
             }, function ($q) use ($dateFilter) {

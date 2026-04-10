@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\SlotDataChanged;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -67,21 +68,21 @@ class BookingRequest extends Model
     {
         static::created(function ($model) {
             try {
-                broadcast(new \App\Events\SlotDataChanged('booking', 'created', $model->id));
+                broadcast(new SlotDataChanged('booking', 'created', $model->id));
             } catch (\Throwable $e) {
             }
         });
 
         static::updated(function ($model) {
             try {
-                broadcast(new \App\Events\SlotDataChanged('booking', 'updated', $model->id));
+                broadcast(new SlotDataChanged('booking', 'updated', $model->id));
             } catch (\Throwable $e) {
             }
         });
 
         static::deleted(function ($model) {
             try {
-                broadcast(new \App\Events\SlotDataChanged('booking', 'deleted', $model->id));
+                broadcast(new SlotDataChanged('booking', 'deleted', $model->id));
             } catch (\Throwable $e) {
             }
         });

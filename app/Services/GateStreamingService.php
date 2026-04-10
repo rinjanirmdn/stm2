@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class GateStreamingService
@@ -13,7 +14,7 @@ class GateStreamingService
     /**
      * Get current gate statuses for streaming
      */
-    public function getGateStatuses(): \Illuminate\Support\Collection
+    public function getGateStatuses(): Collection
     {
         $endExpr = $this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)');
 

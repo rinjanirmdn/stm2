@@ -9,6 +9,7 @@ use App\Services\ExportService;
 use App\Services\SlotService;
 use App\Services\TransactionReportService;
 use Carbon\Carbon;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -247,7 +248,7 @@ class ReportController extends Controller
             }
             $d = $dirs[$i] ?? 'desc';
             $col = $sortMap[$s];
-            if ($col instanceof \Illuminate\Database\Query\Expression) {
+            if ($col instanceof Expression) {
                 $rowsQ->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()).' '.strtoupper($d));
             } else {
                 $rowsQ->orderBy($col, $d);

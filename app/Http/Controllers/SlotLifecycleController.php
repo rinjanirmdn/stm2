@@ -9,9 +9,13 @@ use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
 use App\Services\SlotService;
 use App\Services\TimeCalculationService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Milon\Barcode\DNS1D;
 
 class SlotLifecycleController extends Controller
 {
@@ -74,7 +78,7 @@ class SlotLifecycleController extends Controller
         $backdateTime = null;
         if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
             if ($this->isBackdateAllowed()) {
-                $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
+                $bd = Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
                     return back()->withInput()->with('error', 'Backdate time must be in the past.');
                 }
@@ -132,7 +136,7 @@ class SlotLifecycleController extends Controller
             $gateLetter = $this->slotService->getGateLetterByWarehouseAndNumber($gateWarehouse, $gateNumber);
 
             // Generate barcode
-            $barcodeC = new \Milon\Barcode\DNS1D();
+            $barcodeC = new DNS1D();
             $barcodeC->setStorPath(storage_path('app/public/'));
             $barcodePng = '';
             if (! empty($slot->ticket_number)) {
@@ -165,7 +169,7 @@ class SlotLifecycleController extends Controller
                 return '';
             });
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
+            $pdf = Pdf::loadView('slots.ticket', [
                 'slot' => $slot,
                 'gateLetter' => $gateLetter,
                 'barcodePng' => $barcodePng,
@@ -300,7 +304,7 @@ class SlotLifecycleController extends Controller
         // Compute waiting minutes (time since arrival) for waiting_reason requirement
         $waitingMinutes = 0;
         if (! empty($slot->arrival_time)) {
-            $arrivalDt = \Carbon\Carbon::parse($slot->arrival_time);
+            $arrivalDt = Carbon::parse($slot->arrival_time);
             $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
         }
 
@@ -364,7 +368,7 @@ class SlotLifecycleController extends Controller
         // Check if waiting > 60 min → require waiting_reason
         $waitingMinutes = 0;
         if (! empty($slot->arrival_time)) {
-            $arrivalDt = \Carbon\Carbon::parse($slot->arrival_time);
+            $arrivalDt = Carbon::parse($slot->arrival_time);
             $waitingMinutes = (int) $arrivalDt->diffInMinutes(now());
         }
         $waitingReason = trim((string) $request->input('waiting_reason', ''));
@@ -376,7 +380,7 @@ class SlotLifecycleController extends Controller
         $backdateTime = null;
         if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
             if ($this->isBackdateAllowed()) {
-                $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
+                $bd = Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
                     return back()->withInput()->with('error', 'Backdate time must be in the past.');
                 }
@@ -487,7 +491,7 @@ class SlotLifecycleController extends Controller
         $backdateTime = null;
         if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
             if ($this->isBackdateAllowed()) {
-                $bd = \Carbon\Carbon::parse($request->input('backdate_datetime'));
+                $bd = Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
                     return back()->withInput()->with('error', 'Backdate time must be in the past.');
                 }
@@ -603,7 +607,7 @@ class SlotLifecycleController extends Controller
         $result = $this->completeStore($request, $slotId);
 
         // Redirect to unplanned show instead of slots show
-        if ($result instanceof \Illuminate\Http\RedirectResponse) {
+        if ($result instanceof RedirectResponse) {
             $successTarget = route('slots.index');
             if ($result->getTargetUrl() === $successTarget) {
                 return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned completed');

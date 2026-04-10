@@ -26,7 +26,7 @@ return new class extends Migration
 
                 return;
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // ignore
         }
 

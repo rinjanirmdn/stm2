@@ -5,11 +5,14 @@
 use App\Http\Controllers\BookingApprovalController;
 use App\Http\Controllers\GateStatusController;
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\MdBpController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SapController;
 use App\Http\Controllers\SecurityDashboardController;
 use App\Http\Controllers\TruckTypeDurationController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Cache;
 
 // Security Dashboard
 Route::prefix('security')->name('security.')->group(function () {
@@ -32,10 +35,10 @@ Route::get('/api/gate-status', [GateStatusController::class, 'apiIndex'])->name(
 Route::get('/api/gate-status/stream', [GateStatusController::class, 'stream'])->name('api.gate-status.stream')->middleware(['permission:gates.stream', 'throttle:60,1']);
 Route::get('/api/realtime/version', function () {
     $cacheKey = 'st_realtime_version';
-    $version = (string) \Illuminate\Support\Facades\Cache::get($cacheKey, '');
+    $version = (string) Cache::get($cacheKey, '');
     if ($version === '') {
         $version = (string) floor(microtime(true) * 1000);
-        \Illuminate\Support\Facades\Cache::forever($cacheKey, $version);
+        Cache::forever($cacheKey, $version);
     }
 
     return response()->json([
@@ -46,11 +49,11 @@ Route::get('/api/realtime/version', function () {
 })->name('api.realtime.version');
 
 // Notifications
-Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index')->middleware('permission:notifications.index');
-Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead')->middleware('permission:notifications.markAsRead');
-Route::get('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.readAll')->middleware('permission:notifications.readAll');
-Route::post('/notifications/clear', [\App\Http\Controllers\NotificationController::class, 'clearAll'])->name('notifications.clearAll')->middleware('permission:notifications.clearAll');
-Route::get('/notifications/latest', [\App\Http\Controllers\NotificationController::class, 'latest'])->name('notifications.latest')->middleware(['permission:notifications.latest', 'throttle:60,1']);
+Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index')->middleware('permission:notifications.index');
+Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead')->middleware('permission:notifications.markAsRead');
+Route::get('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll')->middleware('permission:notifications.readAll');
+Route::post('/notifications/clear', [NotificationController::class, 'clearAll'])->name('notifications.clearAll')->middleware('permission:notifications.clearAll');
+Route::get('/notifications/latest', [NotificationController::class, 'latest'])->name('notifications.latest')->middleware(['permission:notifications.latest', 'throttle:60,1']);
 
 // SAP API Integration
 Route::prefix('api/sap')->name('api.sap.')->group(function () {
@@ -151,11 +154,11 @@ Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('book
 // Dibutuhkan untuk form 'Create Planned Uji Coba' (tanpa SAP)
 // -----------------------------------------------------------------------------
 Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->group(function () {
-    Route::get('/', [\App\Http\Controllers\MdBpController::class, 'index'])->name('index');
-    Route::get('/create', [\App\Http\Controllers\MdBpController::class, 'create'])->name('create');
-    Route::post('/', [\App\Http\Controllers\MdBpController::class, 'store'])->name('store');
-    Route::get('/{id}/edit', [\App\Http\Controllers\MdBpController::class, 'edit'])->whereNumber('id')->name('edit');
-    Route::post('/{id}/edit', [\App\Http\Controllers\MdBpController::class, 'update'])->whereNumber('id')->name('update');
-    Route::post('/{id}/delete', [\App\Http\Controllers\MdBpController::class, 'destroy'])->whereNumber('id')->name('destroy');
-    Route::get('/ajax/search', [\App\Http\Controllers\MdBpController::class, 'ajaxSearch'])->name('ajax.search');
+    Route::get('/', [MdBpController::class, 'index'])->name('index');
+    Route::get('/create', [MdBpController::class, 'create'])->name('create');
+    Route::post('/', [MdBpController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [MdBpController::class, 'edit'])->whereNumber('id')->name('edit');
+    Route::post('/{id}/edit', [MdBpController::class, 'update'])->whereNumber('id')->name('update');
+    Route::post('/{id}/delete', [MdBpController::class, 'destroy'])->whereNumber('id')->name('destroy');
+    Route::get('/ajax/search', [MdBpController::class, 'ajaxSearch'])->name('ajax.search');
 });

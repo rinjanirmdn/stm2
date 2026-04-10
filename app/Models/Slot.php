@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\SlotDataChanged;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -244,21 +245,21 @@ class Slot extends Model
     {
         static::created(function ($model) {
             try {
-                broadcast(new \App\Events\SlotDataChanged('slot', 'created', $model->id));
+                broadcast(new SlotDataChanged('slot', 'created', $model->id));
             } catch (\Throwable $e) {
             }
         });
 
         static::updated(function ($model) {
             try {
-                broadcast(new \App\Events\SlotDataChanged('slot', 'updated', $model->id));
+                broadcast(new SlotDataChanged('slot', 'updated', $model->id));
             } catch (\Throwable $e) {
             }
         });
 
         static::deleted(function ($model) {
             try {
-                broadcast(new \App\Events\SlotDataChanged('slot', 'deleted', $model->id));
+                broadcast(new SlotDataChanged('slot', 'deleted', $model->id));
             } catch (\Throwable $e) {
             }
         });

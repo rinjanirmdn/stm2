@@ -5,6 +5,7 @@
  * Route definitions are split into modular files for maintainability.
  */
 
+use App\Http\Controllers\Auth\ForcePasswordChangeController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -70,8 +71,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/password-request', [ForgotPasswordController::class, 'requestFromProfile'])->name('profile.password-request')->middleware('permission:profile.index');
 
     // Force password change
-    Route::get('/force-change-password', [\App\Http\Controllers\Auth\ForcePasswordChangeController::class, 'show'])->name('password.force-change');
-    Route::post('/force-change-password', [\App\Http\Controllers\Auth\ForcePasswordChangeController::class, 'store'])->name('password.force-change.store');
+    Route::get('/force-change-password', [ForcePasswordChangeController::class, 'show'])->name('password.force-change');
+    Route::post('/force-change-password', [ForcePasswordChangeController::class, 'store'])->name('password.force-change.store');
 
     // ── Modular route files ──
     require __DIR__.'/slots.php';

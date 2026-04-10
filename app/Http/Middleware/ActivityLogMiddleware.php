@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Jobs\LogActivityJob;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -345,7 +346,7 @@ class ActivityLogMiddleware
             // Dispatch to queue for async insert (removes ~10-30ms latency per request)
             if (! empty($insert) && isset($insert['description'])) {
                 try {
-                    \App\Jobs\LogActivityJob::dispatch($insert, $slotId);
+                    LogActivityJob::dispatch($insert, $slotId);
                 } catch (\Throwable $e) {
                     // Fallback: sync insert if queue dispatch fails
                     try {

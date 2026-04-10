@@ -62,7 +62,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        $usersTable = \Illuminate\Support\Facades\Schema::hasTable('md_users') ? 'md_users' : 'users';
+        $usersTable = Schema::hasTable('md_users') ? 'md_users' : 'users';
         // Set role_id back to null
         DB::table($usersTable)->update(['role_id' => null]);
     }

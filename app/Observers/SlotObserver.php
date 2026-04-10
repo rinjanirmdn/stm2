@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Slot;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class SlotObserver
@@ -41,7 +42,7 @@ class SlotObserver
      */
     private function clearAvailabilityCache($date): void
     {
-        $dateStr = \Carbon\Carbon::parse($date)->format('Y-m-d');
+        $dateStr = Carbon::parse($date)->format('Y-m-d');
         Cache::forget("vendor_availability_{$dateStr}");
     }
 }

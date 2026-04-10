@@ -27,7 +27,7 @@ BEGIN
 END
 $$;
 SQL);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Intentionally swallow: migration should not hard-fail if enum/type differs between envs.
         }
     }

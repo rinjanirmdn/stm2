@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\GateStreamingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GateStatusController extends Controller
 {
@@ -17,7 +18,7 @@ class GateStatusController extends Controller
      */
     public function stream(Request $request)
     {
-        $response = new \Symfony\Component\HttpFoundation\StreamedResponse(function () {
+        $response = new StreamedResponse(function () {
             $this->streamingService->streamGateStatuses(function ($data) {
                 echo 'data: '.json_encode($data)."\n\n";
                 ob_flush();

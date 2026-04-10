@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Vendor;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -237,7 +238,7 @@ class SapVendorService
     private function searchFromLocal(string $query, int $limit): array
     {
         try {
-            $vendors = \App\Models\Vendor::where('bp_name', 'LIKE', "%{$query}%")
+            $vendors = Vendor::where('bp_name', 'LIKE', "%{$query}%")
                 ->orWhere('bp_code', 'LIKE', "%{$query}%")
                 ->limit($limit)
                 ->get();
@@ -262,7 +263,7 @@ class SapVendorService
     private function getFromLocal(string $vendorCode): ?array
     {
         try {
-            $vendor = \App\Models\Vendor::where('bp_code', $vendorCode)->first();
+            $vendor = Vendor::where('bp_code', $vendorCode)->first();
 
             if (! $vendor) {
                 return null;
@@ -284,14 +285,14 @@ class SapVendorService
      * Sync vendor from SAP to local database
      * Useful for caching vendor master data
      */
-    public function syncToLocal(array $vendorData): ?\App\Models\Vendor
+    public function syncToLocal(array $vendorData): ?Vendor
     {
         if (empty($vendorData['vendor_code'])) {
             return null;
         }
 
         try {
-            return \App\Models\Vendor::updateOrCreate(
+            return Vendor::updateOrCreate(
                 ['bp_code' => $vendorData['vendor_code']],
                 [
                     'bp_name' => $vendorData['vendor_name'] ?? '',

@@ -4,15 +4,17 @@ namespace Database\Seeders;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
     public function run()
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create permissions for STM
         $permissions = [
@@ -417,9 +419,9 @@ class RolePermissionSeeder extends Seeder
         }
 
         // Assign admin role to user with username admin or first user
-        $adminUser = \App\Models\User::where('nik', 'admin')->first();
+        $adminUser = User::where('nik', 'admin')->first();
         if (! $adminUser) {
-            $adminUser = \App\Models\User::first();
+            $adminUser = User::first();
         }
 
         if ($adminUser) {

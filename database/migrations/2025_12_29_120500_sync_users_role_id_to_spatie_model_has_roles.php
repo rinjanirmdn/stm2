@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -10,7 +11,7 @@ return new class extends Migration
         // Sync users.role_id (custom column) into Spatie pivot table model_has_roles
         // so Blade @can(...) and permission middleware work.
 
-        $usersTable = \Illuminate\Support\Facades\Schema::hasTable('md_users') ? 'md_users' : 'users';
+        $usersTable = Schema::hasTable('md_users') ? 'md_users' : 'users';
 
         $users = DB::table($usersTable)
             ->select('id', 'role_id')

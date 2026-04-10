@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HolidayHelper;
 use App\Models\BookingRequest;
 use App\Models\Gate;
 use App\Models\Slot;
@@ -11,12 +12,15 @@ use App\Notifications\BookingRequestSubmitted;
 use App\Services\BookingApprovalService;
 use App\Services\PoSearchService;
 use App\Services\SlotService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Milon\Barcode\DNS1D;
 
 class VendorBookingController extends Controller
 {
@@ -536,8 +540,8 @@ class VendorBookingController extends Controller
 
         // Check if date is holiday using HolidayHelper
         try {
-            if (\App\Helpers\HolidayHelper::isHoliday($plannedStartAt)) {
-                $holidayName = \App\Helpers\HolidayHelper::getHolidayName($plannedStartAt);
+            if (HolidayHelper::isHoliday($plannedStartAt)) {
+                $holidayName = HolidayHelper::getHolidayName($plannedStartAt);
                 $msg = $holidayName ? "Booking date is a holiday: {$holidayName}." : 'Booking date cannot be on a holiday.';
 
                 return back()->withInput()->with('error', $msg);
@@ -701,7 +705,7 @@ class VendorBookingController extends Controller
         $selectedDate = $request->date ?? now()->format('Y-m-d');
 
         // Get holidays for calendar using HolidayHelper
-        $holidays = \App\Helpers\HolidayHelper::getHolidayMap($selectedDate);
+        $holidays = HolidayHelper::getHolidayMap($selectedDate);
 
         return view('vendor.bookings.availability', compact('gates', 'selectedDate', 'holidays'));
     }
@@ -902,7 +906,7 @@ class VendorBookingController extends Controller
             }
 
             return response()->json($response);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Validation failed: '.$e->getMessage(),
@@ -1099,7 +1103,7 @@ class VendorBookingController extends Controller
                 try {
                     $ticketNumber = (string) $slot->ticket_number;
                     $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($ticketNumber) {
-                        $barcodeC = new \Milon\Barcode\DNS1D();
+                        $barcodeC = new DNS1D();
                         $barcodeC->setStorPath(storage_path('app/public/'));
 
                         return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
@@ -1136,7 +1140,7 @@ class VendorBookingController extends Controller
                 return '';
             });
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('slots.ticket', [
+            $pdf = Pdf::loadView('slots.ticket', [
                 'slot' => $slot,
                 'gateLetter' => $gateLetter,
                 'barcodePng' => $barcodePng,

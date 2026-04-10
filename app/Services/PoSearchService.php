@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 class PoSearchService
 {
     public function __construct(
@@ -161,7 +163,7 @@ class PoSearchService
             }
         } catch (\Exception $e) {
             // Log warning
-            \Illuminate\Support\Facades\Log::warning("SAP PO lookup failed for $poNumber (lookup=$lookupPo): ".$e->getMessage());
+            Log::warning("SAP PO lookup failed for $poNumber (lookup=$lookupPo): ".$e->getMessage());
         }
 
         // 2. No Fallback
