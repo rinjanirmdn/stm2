@@ -377,7 +377,7 @@
                                             }
                                         };
                                     @endphp
-                                    <tr>
+                                    <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('slots.show', ['slotId' => $r->id]) }}'; }">
                                         <td>{{ $i + 1 }}</td>
                                         <td>
                                             @if ($slotTypeVal === 'unplanned')

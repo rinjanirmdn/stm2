@@ -99,9 +99,10 @@ class SlotLifecycleController extends Controller
             ]);
 
             $this->slotService->logActivity($slotId, 'status_change', 'Status Changed to Waiting After Arrival');
-            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket '.$ticketNumber);
+            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket '.strtoupper($ticketNumber));
             if ($backdateTime) {
-                $this->slotService->logActivity($slotId, 'backdate', 'Arrival Backdated to '.$backdateTime.' by '.auth()->user()->full_name);
+                $bdFmt = \Carbon\Carbon::parse($backdateTime)->format('d-m-Y H:i');
+                $this->slotService->logActivity($slotId, 'backdate', 'Arrival Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
             }
         });
 
@@ -428,7 +429,7 @@ class SlotLifecycleController extends Controller
             DB::table('slots')->where('id', $slotId)->update($updateData);
 
             $gateMeta = $this->slotService->getGateMetaById($actualGateId);
-            $gateName = $this->buildGateLabel((string) ($gateMeta['warehouse_code'] ?? ''), (string) ($gateMeta['gate_number'] ?? ''));
+            $gateName = strtoupper($this->buildGateLabel((string) ($gateMeta['warehouse_code'] ?? ''), (string) ($gateMeta['gate_number'] ?? '')));
 
             if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
                 if ($isLate) {
@@ -439,7 +440,8 @@ class SlotLifecycleController extends Controller
             }
             $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at '.$gateName);
             if ($backdateTime) {
-                $this->slotService->logActivity($slotId, 'backdate', 'Start Backdated to '.$backdateTime.' by '.auth()->user()->full_name);
+                $bdFmt = \Carbon\Carbon::parse($backdateTime)->format('d-m-Y H:i');
+                $this->slotService->logActivity($slotId, 'backdate', 'Start Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
             }
         });
 
@@ -551,9 +553,10 @@ class SlotLifecycleController extends Controller
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $now, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (SJ: '.$matDoc.', Truck: '.$truckType.', Vehicle: '.$vehicleNumber.', Driver: '.$driverNumber.')');
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (SJ: '.strtoupper($matDoc).', Truck: '.$truckType.', Vehicle: '.strtoupper($vehicleNumber).', Driver: '.$driverNumber.')');
             if ($backdateTime) {
-                $this->slotService->logActivity($slotId, 'backdate', 'Complete Backdated to '.$backdateTime.' by '.auth()->user()->full_name);
+                $bdFmt = \Carbon\Carbon::parse($backdateTime)->format('d-m-Y H:i');
+                $this->slotService->logActivity($slotId, 'backdate', 'Complete Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
             }
         });
 
