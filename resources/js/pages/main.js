@@ -1,6 +1,88 @@
 window.__stm2_main_loaded = (window.__stm2_main_loaded || 0) + 1;
 window.__stReloadGuard = (window.__stReloadGuard || 0);
 
+// ─── CSRF Token Auto-Refresh & 419 Recovery ────────────────────────
+(function () {
+    var REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes
+    var refreshTimer = null;
+
+    function updateCsrfToken(newToken) {
+        if (!newToken) return;
+        // Update meta tag
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) meta.setAttribute('content', newToken);
+        // Update all hidden _token inputs in forms
+        document.querySelectorAll('input[name="_token"]').forEach(function (el) {
+            el.value = newToken;
+        });
+        // Update jQuery AJAX defaults if jQuery is available
+        if (window.jQuery) {
+            window.jQuery.ajaxSetup({
+                headers: { 'X-CSRF-TOKEN': newToken }
+            });
+        }
+    }
+
+    function refreshCsrfToken() {
+        fetch('/csrf-refresh', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        })
+        .then(function (res) {
+            if (res.ok) return res.json();
+            throw new Error('csrf-refresh failed');
+        })
+        .then(function (data) {
+            if (data && data.token) updateCsrfToken(data.token);
+        })
+        .catch(function () {
+            // silently fail — next form submit will trigger 419 page which auto-reloads
+        });
+    }
+
+    // Periodic refresh
+    function startPeriodicRefresh() {
+        if (refreshTimer) clearInterval(refreshTimer);
+        refreshTimer = setInterval(refreshCsrfToken, REFRESH_INTERVAL);
+    }
+    startPeriodicRefresh();
+
+    // Refresh when user returns to the tab (critical for mobile sleep/wake)
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) {
+            refreshCsrfToken();
+            startPeriodicRefresh(); // reset the interval
+        }
+    });
+
+    // Patch global fetch to auto-handle 419 responses
+    var originalFetch = window.fetch;
+    window.fetch = function (url, options) {
+        return originalFetch.apply(this, arguments).then(function (response) {
+            if (response.status === 419) {
+                // Try to refresh token and reload the page
+                return refreshCsrfToken(), Promise.resolve().then(function () {
+                    window.location.reload();
+                    return response;
+                });
+            }
+            return response;
+        });
+    };
+
+    // Patch jQuery AJAX if available to handle 419
+    if (window.jQuery) {
+        window.jQuery(document).ajaxError(function (event, jqXHR) {
+            if (jqXHR.status === 419) {
+                refreshCsrfToken();
+                setTimeout(function () { window.location.reload(); }, 500);
+            }
+        });
+    }
+})();
+// ─── End CSRF Auto-Refresh ─────────────────────────────────────────
+
 window.getIndonesiaHolidays = window.getIndonesiaHolidays || function () {
     try {
         var el = document.getElementById('indonesia_holidays_global');

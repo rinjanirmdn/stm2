@@ -146,6 +146,10 @@
     opacity: 0.85;
 }
 
+.vendor-header__mobile-actions {
+    display: none;
+}
+
 .vendor-header__user-menu-btn {
     display: none;
     background: transparent;
@@ -992,6 +996,33 @@
         background: rgba(255, 255, 255, 0.2);
     }
 
+    .vendor-header__mobile-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+        z-index: 1050;
+    }
+
+    .vendor-notification__toggle.vendor-header__mobile-bell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .vendor-notification__toggle.vendor-header__mobile-bell:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
     /* SUPER AGGRESSIVE HIDE - Desktop dan Laptop */
 @media (min-width: 769px) {
     .vendor-mobile-nav {
@@ -1314,28 +1345,26 @@
 }
 
     .vendor-header__user-menu {
-        position: absolute;
-        top: 100%;
+        position: fixed;
+        top: 72px;
         right: 12px;
         background: white;
         color: var(--vendor-text);
         border-radius: var(--vendor-radius-sm);
         box-shadow: var(--vendor-shadow);
         border: 1px solid var(--vendor-border);
-        min-width: 200px;
+        min-width: 220px;
         padding: 12px;
         margin-top: 4px;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(-10px);
-        transition: all 0.2s ease;
-        z-index: 1001;
+        display: none;
+        z-index: 9999;
     }
 
-    .vendor-header__user-menu.show {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
+    .vendor-header__user-menu.show,
+    .vendor-header__user-menu.vendor-header__user-menu--open {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
 
     .vendor-header__user-menu-info {

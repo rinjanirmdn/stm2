@@ -418,68 +418,24 @@ function initVendorDashboardCharts() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    initVendorHeaderUserMenu();
-    initVendorNotifications();
-    bootVendorDashboardDateRange();
+    try { initVendorHeaderUserMenu(); } catch (e) { console.error('Error initVendorHeaderUserMenu:', e); }
+    try { initVendorNotifications(); } catch (e) { console.error('Error initVendorNotifications:', e); }
+    try { bootVendorDashboardDateRange(); } catch (e) { console.error('Error bootVendorDashboardDateRange:', e); }
 
     const bookingConfig = window.vendorBookingCreateConfig || stReadJson('vendor_booking_create_config', null);
     const availabilityConfig = window.vendorAvailabilityConfig || stReadJson('vendor_availability_config', null);
 
-    try {
-        if (bookingConfig) {
-            initVendorBookingCreate(bookingConfig);
-        }
-    } catch (e) {
-        console.error('Error initVendorBookingCreate:', e);
-    }
-
-    try {
-        if (availabilityConfig) {
-            initVendorAvailability(availabilityConfig);
-        }
-    } catch (e) {
-        console.error('Error initVendorAvailability:', e);
-    }
-
-    try {
-        bootVendorDashboardDateRange();
-    } catch (e) {
-        console.error('Error bootVendorDashboardDateRange:', e);
-    }
-
-    try {
-        initVendorNotifications();
-    } catch (e) {
-        console.error('Error initVendorNotifications:', e);
-    }
-    
-    try {
-        initVendorHeaderUserMenu();
-    } catch (e) {
-        console.error('Error initVendorHeaderUserMenu:', e);
-    }
-
     if (bookingConfig) {
-        try {
-            initVendorBookingCreate(bookingConfig);
-        } catch(e) {
-            console.error("Error in initVendorBookingCreate:", e);
-        }
+        try { initVendorBookingCreate(bookingConfig); } catch(e) { console.error("Error in initVendorBookingCreate:", e); }
     }
 
     if (availabilityConfig) {
-        try {
-            initVendorAvailability(availabilityConfig);
-        } catch(e) {
-            console.error("Error in initVendorAvailability:", e);
-        }
+        try { initVendorAvailability(availabilityConfig); } catch(e) { console.error("Error in initVendorAvailability:", e); }
     }
 
     // Auto-dismiss alerts after 5 seconds
     document.querySelectorAll('.vendor-alert--autodismiss').forEach(function (alert) {
-        setTimeout(function () {
-            alert.remove();
-        }, 5000);
+        setTimeout(function () { alert.remove(); }, 5000);
     });
 });
 
@@ -487,135 +443,19 @@ function initVendorHeaderUserMenu() {
     console.log("initVendorHeaderUserMenu CALLED");
     const menuBtn = document.getElementById('vendor-user-menu-btn');
     const menu = document.getElementById('vendor-user-menu');
-    const notifProxy = document.getElementById('vendor-user-menu-notif');
-    const notifDropdown = document.getElementById('notification-dropdown');
-    const mobileMenuBadge = document.getElementById('mobile-menu-notification-count');
-    const notifBtn = document.getElementById('notification-btn');
-    const notifCount = document.getElementById('notification-count');
     if (!menuBtn || !menu) return;
-
-    const userMenuBellBadge = notifProxy ? notifProxy.querySelector('.vendor-user-menu-badge') : null;
-
-    function isMobileViewport() {
-        return window.innerWidth < 769;
-    }
 
     function closeMenu() {
         menu.classList.remove('vendor-header__user-menu--open');
         menu.classList.remove('show');
-        // When menu closes (mobile): show badge on three-dots again
-        moveCountToThreeDots();
-    }
-
-    // Mobile behavior:
-    // - menu closed  => badge on three-dots
-    // - menu opened  => badge on bell inside menu
-    // Desktop badge (notification-count) should not be shown on mobile.
-
-    function parseCount(s) {
-        const n = parseInt(String(s || '').trim() || '0', 10);
-        return isFinite(n) ? n : 0;
-    }
-
-    function getCurrentCount() {
-        // Prefer the canonical desktop badge if present
-        const fromDesktop = notifCount ? parseCount(notifCount.textContent) : 0;
-        if (fromDesktop > 0) return fromDesktop;
-
-        // Fallback: bell badge inside the user-menu
-        const fromBell = userMenuBellBadge ? parseCount(userMenuBellBadge.textContent) : 0;
-        if (fromBell > 0) return fromBell;
-
-        // Fallback: three-dots badge
-        const fromDots = mobileMenuBadge ? parseCount(mobileMenuBadge.textContent) : 0;
-        return fromDots;
-    }
-
-    function moveCountToThreeDots() {
-        if (!isMobileViewport()) return;
-        const count = getCurrentCount();
-
-        // Hide desktop badge on mobile
-        if (notifCount) notifCount.style.display = 'none';
-
-        // Hide bell badge in user menu when menu is closed
-        if (userMenuBellBadge) userMenuBellBadge.style.display = 'none';
-
-        // Show badge on three dots
-        if (mobileMenuBadge) {
-            if (count > 0) {
-                mobileMenuBadge.textContent = String(count);
-                mobileMenuBadge.style.display = 'flex';
-            } else {
-                mobileMenuBadge.style.display = 'none';
-            }
-        }
-    }
-
-    function moveCountToBellInMenu() {
-        if (!isMobileViewport()) return;
-        const count = getCurrentCount();
-
-        // Hide desktop badge on mobile
-        if (notifCount) notifCount.style.display = 'none';
-
-        // Hide badge on three dots when menu is opened
-        if (mobileMenuBadge) mobileMenuBadge.style.display = 'none';
-
-        // Show badge on bell button inside menu
-        if (userMenuBellBadge) {
-            if (count > 0) {
-                userMenuBellBadge.textContent = String(count);
-                userMenuBellBadge.style.display = 'inline-block';
-            } else {
-                userMenuBellBadge.style.display = 'none';
-            }
-        }
     }
 
     menuBtn.addEventListener('click', function (e) {
+        console.log("3-dots mobile menu clicked!");
         e.stopPropagation();
-        console.log("MENU BTN CLICKED", menuBtn);
-        const isOpening = !menu.classList.contains('vendor-header__user-menu--open') && !menu.classList.contains('show');
         menu.classList.toggle('vendor-header__user-menu--open');
         menu.classList.toggle('show');
-        console.log("Menu has show class?", menu.classList.contains('show'));
-
-        if (isOpening) {
-            moveCountToBellInMenu();
-        } else {
-            moveCountToThreeDots();
-        }
     });
-
-    // Initialize badge states based on viewport
-    if (isMobileViewport()) {
-        moveCountToThreeDots();
-    } else {
-        // Desktop: keep normal badge (notification-count)
-        if (mobileMenuBadge) mobileMenuBadge.style.display = 'none';
-        if (userMenuBellBadge) userMenuBellBadge.style.display = 'none';
-        if (notifCount && notifCount.textContent && notifCount.textContent !== '0') {
-            notifCount.style.display = 'flex';
-        }
-    }
-
-    // Keep badge placement correct on resize
-    window.addEventListener('resize', function () {
-        if (menu.classList.contains('vendor-header__user-menu--open') || menu.classList.contains('show')) {
-            moveCountToBellInMenu();
-        } else {
-            moveCountToThreeDots();
-        }
-    });
-
-    if (notifProxy && notifDropdown) {
-        notifProxy.addEventListener('click', function (e) {
-            e.stopPropagation();
-            // Toggle the same dropdown used by the main notification bell
-            notifDropdown.classList.toggle('show');
-        });
-    }
 
     document.addEventListener('click', function (e) {
         if (!menu.classList.contains('vendor-header__user-menu--open') && !menu.classList.contains('show')) return;
@@ -638,9 +478,15 @@ function initVendorBookingCreate(config) {
     const plannedTime = document.getElementById('planned-time');
     const plannedDurationInput = document.getElementById('planned-duration');
     const plannedStartInput = document.getElementById('planned-start');
+    
+    const bookingForm = document.getElementById('booking-form');
+
     const vehicleNumberInput = bookingForm ? bookingForm.querySelector('input[name="vehicle_number"]') : null;
     const driverNameInput = bookingForm ? bookingForm.querySelector('input[name="driver_name"]') : null;
     const driverNumberInput = bookingForm ? bookingForm.querySelector('input[name="driver_number"]') : null;
+    const coaInput = bookingForm ? bookingForm.querySelector('input[name="coa"], input[type="file"][name="coa"]') : document.getElementById('coa-file');
+    const coaError = document.getElementById('coa-error');
+    const MAX_COA_BYTES = 5 * 1024 * 1024;
 
     const truckTypeSelect = document.getElementById('truck-type-select');
     const miniAvailability = document.getElementById('mini-availability');
@@ -738,7 +584,6 @@ function initVendorBookingCreate(config) {
         }
     });
 
-    const bookingForm = document.getElementById('booking-form');
     if (bookingForm) {
         bookingForm.addEventListener('submit', function (e) {
             const alertBox = document.getElementById('booking-form-alert');
@@ -1088,6 +933,16 @@ function initVendorBookingCreate(config) {
         try { plannedDate.type = 'text'; } catch (e) { }
         plannedDate.setAttribute('readonly', 'readonly');
 
+        // Add explicit touch/click triggers for mobile Safari
+        var triggerDatepicker = function (e) {
+            e.preventDefault();
+            var drp = window.jQuery(plannedDate).data('daterangepicker');
+            if (drp) drp.show();
+        };
+        plannedDate.addEventListener('click', triggerDatepicker);
+        plannedDate.addEventListener('touchend', triggerDatepicker, { passive: false });
+        plannedDate.style.cursor = 'pointer';
+
         var initialIso = plannedDate.value || '';
         if (initialIso && initialIso.indexOf('-') === 4) {
             var p = initialIso.split('-');
@@ -1268,6 +1123,14 @@ function initVendorBookingCreate(config) {
 
         plannedTime.addEventListener('keydown', function (event) { event.preventDefault(); });
         plannedTime.addEventListener('paste', function (event) { event.preventDefault(); });
+
+        var triggerTimepicker = function (e) {
+            e.preventDefault();
+            try { window.mdtimepicker('#planned-time', 'show'); } catch(ex) {}
+        };
+        plannedTime.addEventListener('click', triggerTimepicker);
+        plannedTime.addEventListener('touchend', triggerTimepicker, { passive: false });
+        plannedTime.style.cursor = 'pointer';
 
         // Use mdtimepicker — identical config to admin, with timeChanged callback for validation
         window.mdtimepicker('#planned-time', {
@@ -1707,8 +1570,8 @@ function initVendorNotifications() {
         desktopNotifBtn = newBtn;
     }
 
-    // Mobile notification handler (dalam user menu)
-    var mobileNotifBtn = document.getElementById('vendor-user-menu-notif');
+    // Mobile notification handler
+    var mobileNotifBtn = document.getElementById('vendor-mobile-notif-btn');
     var mobileNotifDropdown = document.getElementById('vendor-user-menu-notification-dropdown');
 
     if (mobileNotifBtn && mobileNotifDropdown) {

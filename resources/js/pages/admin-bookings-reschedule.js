@@ -1,4 +1,4 @@
-﻿function stReadJson(id, fallback) {
+function stReadJson(id, fallback) {
     try {
         var el = document.getElementById(id);
         if (!el) return fallback;
@@ -8,8 +8,8 @@
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    var config = stReadJson('admin_bookings_reschedule_config', {});
+(function() {
+    var config = stReadJson('admin_bookings_reschedule_config', {})();
     var bookingId = config.bookingId || null;
     var checkGateUrl = String(config.checkGateUrl || '').trim();
     var calendarBaseUrl = String(config.calendarBaseUrl || '').trim();
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(function() {
                 availabilityBox.textContent = 'Not Available';
                 availabilityBox.className = 'st-text-12 st-mt-4 st-text-danger';
-            });
+            })();
     }
 
     function loadAvailabilityList() {
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (g && g.gate && String(g.gate.id) === String(gateId)) {
                         gateBlock = g;
                     }
-                });
+                })();
 
                 if (!gateBlock || !Array.isArray(gateBlock.slots) || gateBlock.slots.length === 0) {
                     availabilityList.innerHTML = '<p class="st-text-12 st-text-success">No existing slots for this gate and date. All times are available.</p>';
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var slots = gateBlock.slots.slice().sort(function(a, b) {
                     var ta = (a.start_time || '').localeCompare(b.start_time || '');
                     return ta;
-                });
+                })();
 
                 var html = '<ul class="reschedule-availability-ul">';
                 slots.forEach(function(s) {
@@ -141,13 +141,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         (status ? '<span class="reschedule-availability-status">' + status + '</span>' : '') +
                         '</div>' +
                         '</li>';
-                });
+                })();
                 html += '</ul>';
                 availabilityList.innerHTML = html;
             })
             .catch(function() {
                 availabilityList.innerHTML = '<p class="st-text-12 st-text-danger">Failed to load availability.</p>';
-            });
+            })();
     }
 
     if (gateSelect) {
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
             syncWarehouseFromGate();
             try { updateGateAvailability(); } catch (e) {}
             try { loadAvailabilityList(); } catch (e) {}
-        });
+        })();
         if (gateSelect.value) {
             syncWarehouseFromGate();
             try { updateGateAvailability(); } catch (e) {}
@@ -167,18 +167,18 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.addEventListener('change', function() {
             try { updateGateAvailability(); } catch (e) {}
             try { loadAvailabilityList(); } catch (e) {}
-        });
+        })();
     }
 
     if (timeInput) {
         timeInput.addEventListener('change', function() {
             try { updateGateAvailability(); } catch (e) {}
-        });
+        })();
     }
 
     if (durationInput) {
         durationInput.addEventListener('change', function() {
             try { updateGateAvailability(); } catch (e) {}
-        });
+        })();
     }
-});
+})();

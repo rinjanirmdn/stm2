@@ -493,7 +493,7 @@
                                 ];
                                 $badgeClass = $badgeMap[$status] ?? 'bg-secondary';
                             @endphp
-                            <tr class="st-table-row">
+                            <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown')) { window.location.href = '{{ route('slots.show', ['slotId' => $row->id]) }}'; }">
                                 <td class="st-table-cell">{{ $rowNumber }}</td>
                                 <td class="st-table-cell">{{ $row->truck_number }}</td>
                                 <td class="st-table-cell">{{ $row->mat_doc ?? '-' }}</td>
