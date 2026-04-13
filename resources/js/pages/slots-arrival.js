@@ -8,7 +8,7 @@ function stReadJson(id, fallback) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
     var config = stReadJson('slots_arrival_config', {});
     var ticketInput = document.querySelector('input[name="ticket_number"]');
     var arrivalDetails = document.getElementById('arrival_details');
@@ -185,4 +185,4 @@ document.addEventListener('DOMContentLoaded', function () {
             stopCameraScan();
         });
     }
-});
+})();
