@@ -49,15 +49,12 @@
             <label class="st-label st-text--sm" style="color:#92400e;">
                 <i class="far fa-calendar-alt st-mr-4"></i> Date & Time
             </label>
-            <input
-                type="datetime-local"
-                id="backdate_datetime"
-                name="backdate_datetime"
-                class="st-input"
-                value="{{ old('backdate_datetime') }}"
-                style="border-color:#f59e0b; max-width:320px;"
-                max="{{ now()->format('Y-m-d\TH:i') }}"
-            >
+            <input type="hidden" name="backdate_datetime" id="backdate_datetime" value="{{ old('backdate_datetime') }}">
+            <div class="st-flex st-gap-8" style="max-width:320px;">
+                <input type="text" id="backdate_date_input" class="st-input" placeholder="Select Date" autocomplete="off" style="border-color:#f59e0b;">
+                <input type="text" id="backdate_time_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly style="border-color:#f59e0b;">
+            </div>
+            
             <div id="backdate_error" class="st-text--xs st-mt-4" style="color:#dc2626; display:none;">
                 <i class="fas fa-times-circle"></i> <span></span>
             </div>
@@ -67,64 +64,148 @@
 
 <script>
 (function() {
-    document.addEventListener('DOMContentLoaded', function() {
+    function initBackdateSection() {
         var toggle = document.getElementById('backdate_toggle');
         var dtInput = document.getElementById('backdate_datetime');
         var errorDiv = document.getElementById('backdate_error');
         if (!toggle || !dtInput) return;
 
-        // Set max to current time on page load
-        function updateMax() {
-            var now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            dtInput.max = now.toISOString().slice(0, 16);
-        }
-        updateMax();
-        setInterval(updateMax, 30000);
-
-        // Validate on change
-        dtInput.addEventListener('change', function() {
-            if (!this.value) {
-                errorDiv.style.display = 'none';
-                return;
+        var $dateInput = $('#backdate_date_input');
+        var $timeInput = $('#backdate_time_input');
+        
+        // Parse existing value if any
+        if (dtInput.value) {
+            var m = moment(dtInput.value, 'YYYY-MM-DDTHH:mm');
+            if (m.isValid()) {
+                $dateInput.val(m.format('DD-MM-YYYY'));
+                $timeInput.val(m.format('HH:mm'));
+            } else {
+                // Fallback parsing for other formats
+                var d = new Date(dtInput.value);
+                if (!isNaN(d.getTime())) {
+                    $dateInput.val(moment(d).format('DD-MM-YYYY'));
+                    $timeInput.val(moment(d).format('HH:mm'));
+                }
             }
-            var selected = new Date(this.value);
+        }
+
+        // Initialize daterangepicker if jQuery is available
+        if ($dateInput.length && typeof $.fn.daterangepicker === 'function') {
+            var drpOptions = {
+                singleDatePicker: true,
+                autoUpdateInput: true,
+                autoApply: true,
+                maxDate: moment(),
+                locale: { format: 'DD-MM-YYYY' }
+            };
+            if ($dateInput.val()) {
+                drpOptions.startDate = moment($dateInput.val(), 'DD-MM-YYYY');
+            }
+            // Destroy any existing attached instance first
+            if ($dateInput.data('daterangepicker')) {
+                $dateInput.data('daterangepicker').remove();
+            }
+            $dateInput.daterangepicker(drpOptions);
+            $dateInput.on('apply.daterangepicker change', function(ev, picker) {
+                if (picker && picker.startDate) $(this).val(picker.startDate.format('DD-MM-YYYY'));
+                updateHidden();
+            });
+        }
+
+        // Initialize mdtimepicker
+        if ($timeInput.length) {
+            $timeInput.off('timechanged change');
+            if (typeof window.mdtimepicker === 'function') {
+                window.mdtimepicker($timeInput[0], {
+                    format: 'hh:mm',
+                    is24hour: true,
+                    theme: 'cyan',
+                    hourPadding: true
+                });
+            }
+            $timeInput.on('timechanged change', function(e) {
+                if (e.type === 'timechanged' && e.time) {
+                    $(this).val(e.time);
+                }
+                updateHidden();
+            });
+        }
+        
+        // Remove old change listener (native)
+        var $dtInput = $(dtInput);
+        $dtInput.off('change.backdate');
+        
+        function validateBackdateValue(val) {
+            if (!val) {
+                errorDiv.style.display = 'none';
+                return true;
+            }
+            var selected = new Date(val);
             var now = new Date();
             if (selected >= now) {
                 errorDiv.querySelector('span').textContent = 'Backdate must be in the past, not future.';
                 errorDiv.style.display = 'block';
-                this.style.borderColor = '#dc2626';
+                $dateInput[0].style.borderColor = '#dc2626';
+                $timeInput[0].style.borderColor = '#dc2626';
+                return false;
             } else {
                 errorDiv.style.display = 'none';
-                this.style.borderColor = '#f59e0b';
+                $dateInput[0].style.borderColor = '#f59e0b';
+                $timeInput[0].style.borderColor = '#f59e0b';
+                return true;
             }
+        }
+        
+        $dtInput.on('change.backdate', function() {
+            validateBackdateValue(this.value);
         });
+
+        function updateHidden() {
+            var dVal = $dateInput.val();
+            var tVal = $timeInput.val();
+            if (dVal && tVal) {
+                var m = moment(dVal + ' ' + tVal, 'DD-MM-YYYY HH:mm');
+                if (m.isValid()) {
+                    var isoVal = m.format('YYYY-MM-DDTHH:mm');
+                    dtInput.value = isoVal;
+                    $dtInput.trigger('change.backdate');
+                }
+            } else {
+                dtInput.value = '';
+                $dtInput.trigger('change.backdate');
+            }
+        }
 
         // Validate on form submit
         var form = dtInput.closest('form');
         if (form) {
-            form.addEventListener('submit', function(e) {
+            form.removeEventListener('submit', window._bdSubmitHandler);
+            
+            window._bdSubmitHandler = function(e) {
                 if (toggle.checked && dtInput.value) {
-                    var selected = new Date(dtInput.value);
-                    var now = new Date();
-                    if (selected >= now) {
+                    if (!validateBackdateValue(dtInput.value)) {
                         e.preventDefault();
-                        errorDiv.querySelector('span').textContent = 'Cannot submit: backdate must be in the past.';
-                        errorDiv.style.display = 'block';
-                        dtInput.style.borderColor = '#dc2626';
-                        dtInput.focus();
                     }
                 }
-                if (toggle.checked && !dtInput.value) {
+                if (toggle.checked && (!dtInput.value || !$dateInput.val() || !$timeInput.val())) {
                     e.preventDefault();
-                    errorDiv.querySelector('span').textContent = 'Please select a backdate time.';
+                    errorDiv.querySelector('span').textContent = 'Please select both backdate Date and Time.';
                     errorDiv.style.display = 'block';
-                    dtInput.style.borderColor = '#dc2626';
-                    dtInput.focus();
+                    $dateInput[0].style.borderColor = '#dc2626';
+                    $timeInput[0].style.borderColor = '#dc2626';
                 }
-            });
+            };
+            
+            form.addEventListener('submit', window._bdSubmitHandler);
         }
-    });
+    }
+
+    // Run init immediately
+    if (window.jQuery) {
+        initBackdateSection();
+    } else {
+        document.addEventListener('DOMContentLoaded', initBackdateSection);
+    }
 })();
 </script>
 @endif
