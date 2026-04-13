@@ -72,10 +72,10 @@ return new class extends Migration
             'Section Head' => DB::table('md_roles')->where($roleNameCol, 'Section Head')->value('id'),
         ];
 
-        $usersTable = \Illuminate\Support\Facades\Schema::hasTable('md_users') ? 'md_users' : 'users';
+        $usersTable = Schema::hasTable('md_users') ? 'md_users' : 'users';
 
         foreach ($roleMapping as $roleName => $roleId) {
-            if ($roleId && \Illuminate\Support\Facades\Schema::hasColumn($usersTable, 'role')) {
+            if ($roleId && Schema::hasColumn($usersTable, 'role')) {
                 DB::table($usersTable)
                     ->where('role', $roleName)
                     ->update(['role_id' => $roleId]);

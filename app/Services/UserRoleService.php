@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -59,7 +60,7 @@ class UserRoleService
     /**
      * Get user roles
      */
-    public function getUserRoles(int $userId): \Illuminate\Support\Collection
+    public function getUserRoles(int $userId): Collection
     {
         return DB::table('model_has_roles as mhr')
             ->join('md_roles as r', 'mhr.role_id', '=', 'r.id')
@@ -106,7 +107,7 @@ class UserRoleService
     /**
      * Get all available roles
      */
-    public function getAllRoles(): \Illuminate\Support\Collection
+    public function getAllRoles(): Collection
     {
         return Cache::remember('users:roles:all', now()->addMinutes(10), function () {
             return DB::table('md_roles')
@@ -119,7 +120,7 @@ class UserRoleService
     /**
      * Get users by role
      */
-    public function getUsersByRole(string $role): \Illuminate\Support\Collection
+    public function getUsersByRole(string $role): Collection
     {
         $roleId = $this->getRoleIdByName($role);
         if (! $roleId) {
@@ -251,7 +252,7 @@ class UserRoleService
     /**
      * Get role assignment history
      */
-    public function getRoleAssignmentHistory(int $userId, int $limit = 10): \Illuminate\Support\Collection
+    public function getRoleAssignmentHistory(int $userId, int $limit = 10): Collection
     {
         return DB::table('activity_logs as al')
             ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id')

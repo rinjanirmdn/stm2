@@ -17,7 +17,7 @@ return new class extends Migration
             if ($row && ! empty($row->t)) {
                 return;
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if (Schema::hasTable('gates')) {
                 return;
             }

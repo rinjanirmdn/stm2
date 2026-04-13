@@ -2,23 +2,24 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        $driver = DB::getDriverName();
         $hasConstraint = true;
 
         if ($driver === 'pgsql') {
-            $hasConstraint = (bool) \Illuminate\Support\Facades\DB::selectOne("
+            $hasConstraint = (bool) DB::selectOne("
                 SELECT 1 FROM pg_constraint JOIN pg_class ON conrelid = pg_class.oid 
                 WHERE pg_class.relname = 'users' AND conname = 'users_vendor_id_foreign'
             ");
         } elseif ($driver === 'mysql') {
-            $dbName = \Illuminate\Support\Facades\DB::getDatabaseName();
-            $hasConstraint = (bool) \Illuminate\Support\Facades\DB::selectOne("
+            $dbName = DB::getDatabaseName();
+            $hasConstraint = (bool) DB::selectOne("
                 SELECT 1 FROM information_schema.table_constraints 
                 WHERE table_schema = ? AND table_name = 'users' AND constraint_name = 'users_vendor_id_foreign'
             ", [$dbName]);
@@ -29,7 +30,7 @@ return new class extends Migration
             if ($hasConstraint) {
                 try {
                     $table->dropForeign('users_vendor_id_foreign');
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                 }
             }
 
@@ -45,17 +46,17 @@ return new class extends Migration
 
     public function down(): void
     {
-        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        $driver = DB::getDriverName();
         $hasConstraint = true;
 
         if ($driver === 'pgsql') {
-            $hasConstraint = (bool) \Illuminate\Support\Facades\DB::selectOne("
+            $hasConstraint = (bool) DB::selectOne("
                 SELECT 1 FROM pg_constraint JOIN pg_class ON conrelid = pg_class.oid 
                 WHERE pg_class.relname = 'users' AND conname = 'users_vendor_id_foreign'
             ");
         } elseif ($driver === 'mysql') {
-            $dbName = \Illuminate\Support\Facades\DB::getDatabaseName();
-            $hasConstraint = (bool) \Illuminate\Support\Facades\DB::selectOne("
+            $dbName = DB::getDatabaseName();
+            $hasConstraint = (bool) DB::selectOne("
                 SELECT 1 FROM information_schema.table_constraints 
                 WHERE table_schema = ? AND table_name = 'users' AND constraint_name = 'users_vendor_id_foreign'
             ", [$dbName]);
@@ -65,7 +66,7 @@ return new class extends Migration
             if ($hasConstraint) {
                 try {
                     $table->dropForeign('users_vendor_id_foreign');
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                 }
             }
 

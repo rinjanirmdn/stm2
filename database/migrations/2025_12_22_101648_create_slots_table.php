@@ -17,7 +17,7 @@ return new class extends Migration
             if ($row && (isset($row->e) ? (bool) $row->e : false)) {
                 return;
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if (Schema::hasTable('slots')) {
                 return;
             }
@@ -64,7 +64,7 @@ return new class extends Migration
                 $table->index(['warehouse_id', 'planned_gate_id', 'planned_start']);
                 $table->index(['status', 'planned_start']);
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $msg = strtolower((string) $e->getMessage());
             if (str_contains($msg, 'already exists') || str_contains($msg, 'duplicate table') || str_contains($msg, '42p07')) {
                 return;

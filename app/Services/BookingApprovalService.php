@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\NewNotification;
 use App\Models\ActivityLog;
 use App\Models\BookingHistory;
 use App\Models\Gate;
@@ -699,7 +700,7 @@ class BookingApprovalService
                     // listener never triggers. Broadcast manually for real-time toast.
                     try {
                         $data = $notification->toArray($vendor);
-                        broadcast(new \App\Events\NewNotification(
+                        broadcast(new NewNotification(
                             userId: (int) $vendor->id,
                             title: $data['title'] ?? 'Notification',
                             message: $data['message'] ?? '',

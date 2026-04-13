@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
@@ -35,7 +36,7 @@ class ProfileController extends Controller
             'new_password' => [
                 'nullable',
                 'string',
-                \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers(),
+                Password::min(8)->letters()->numbers(),
                 function ($attribute, $value, $fail) {
                     if ($value && ! preg_match('/^[A-Z]/', $value)) {
                         $fail('Password harus diawali dengan huruf kapital.');

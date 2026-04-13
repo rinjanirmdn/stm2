@@ -4,6 +4,7 @@ namespace App\Services;
 
 use DateTime;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -581,7 +582,7 @@ class SlotService
     /**
      * Get all slots for a specific gate on the same day (for time matching logic)
      */
-    private function getAllSlotsForGateOnSameDay(?int $gateId, string $start, ?int $excludeSlotId = null): \Illuminate\Support\Collection
+    private function getAllSlotsForGateOnSameDay(?int $gateId, string $start, ?int $excludeSlotId = null): Collection
     {
         if (! $gateId) {
             return collect([]);
@@ -605,7 +606,7 @@ class SlotService
     /**
      * Get existing slots for a specific gate within time range
      */
-    private function getExistingSlotsForGate(?int $gateId, string $start, string $end, ?int $excludeSlotId = null): \Illuminate\Support\Collection
+    private function getExistingSlotsForGate(?int $gateId, string $start, string $end, ?int $excludeSlotId = null): Collection
     {
         if (! $gateId) {
             return collect([]);

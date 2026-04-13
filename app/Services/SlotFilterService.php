@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Database\Query\Expression;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -55,7 +56,7 @@ class SlotFilterService
             $dir = $dirs[$i] ?? 'desc';
             $col = $sortMap[$sort];
 
-            if ($col instanceof \Illuminate\Database\Query\Expression) {
+            if ($col instanceof Expression) {
                 $query->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()).' '.strtoupper($dir));
             } else {
                 $query->orderBy($col, $dir);

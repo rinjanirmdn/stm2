@@ -65,7 +65,7 @@ return new class extends Migration
             app('cache')
                 ->store(config('permission.cache.store') !== 'default' ? config('permission.cache.store') : null)
                 ->forget(config('permission.cache.key'));
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
         }
     }
 
@@ -117,7 +117,7 @@ return new class extends Migration
             app('cache')
                 ->store(config('permission.cache.store') !== 'default' ? config('permission.cache.store') : null)
                 ->forget(config('permission.cache.key'));
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
         }
     }
 };

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\PermissionRegistrar;
 
 return new class extends Migration
 {
@@ -78,10 +79,10 @@ return new class extends Migration
             }
 
             try {
-                app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-            } catch (\Throwable $e) {
+                app(PermissionRegistrar::class)->forgetCachedPermissions();
+            } catch (Throwable $e) {
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
         }
     }
 

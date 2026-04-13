@@ -1,5 +1,58 @@
+import { highlightTextInNode } from '../utils/search-highlight.js';
+
 document.addEventListener('DOMContentLoaded', function () {
     var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+    function getSearchTokens(raw) {
+        var search = String(raw || '').trim();
+        if (!search) return [];
+
+        // Keep behavior consistent with backend search: split by spaces, and treat '-' as separator too.
+        var baseTokens = search.split(/\s+/).map(function (t) { return String(t || '').trim(); }).filter(Boolean);
+        var normalized = search.replace(/-/g, ' ');
+        var moreTokens = normalized.split(/\s+/).map(function (t) { return String(t || '').trim(); }).filter(Boolean);
+
+        var all = baseTokens.concat(moreTokens);
+        var uniq = [];
+        all.forEach(function (t) {
+            if (uniq.indexOf(t) === -1) uniq.push(t);
+        });
+        // Prevent noisy highlights for 1-char searches
+        return uniq.filter(function (t) { return t.length >= 2; });
+    }
+
+    function clearHighlights(container) {
+        if (!container) return;
+        var marks = container.querySelectorAll('mark.st-search-highlight');
+        marks.forEach(function (mark) {
+            var parent = mark.parentNode;
+            if (!parent) return;
+            parent.replaceChild(document.createTextNode(mark.textContent), mark);
+            parent.normalize();
+        });
+    }
+
+    function applySearchHighlights() {
+        var container = document.getElementById('vendor-booking-list');
+        if (!container) return;
+
+        var input = document.querySelector('input[name="search"]');
+        var tokens = getSearchTokens(input ? input.value : '');
+
+        clearHighlights(container);
+        if (!tokens.length) return;
+
+        // Highlight in the visible text parts of each booking row.
+        var targets = container.querySelectorAll(
+            '.mb-row__ticket, .mb-row__ticket-number, .mb-row__po, .mb-row__time, .mb-row__status, .mb-row__info'
+        );
+
+        targets.forEach(function (el) {
+            tokens.forEach(function (tok) {
+                highlightTextInNode(el, tok);
+            });
+        });
+    }
 
     function toIsoDate(date) {
         const year = date.getFullYear();
@@ -259,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.ajaxReload = function(pushState) {
         if (window.__isLoadingAjax) return;
         window.__isLoadingAjax = true;
-        
+
         var container = document.getElementById('vendor-booking-list');
         var tabs = document.querySelector('.mb-tabs');
 
@@ -268,15 +321,19 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(function(res) { return res.text(); })
         .then(function(html) {
             var doc = new DOMParser().parseFromString(html, 'text/html');
-            
+
             var newContainer = doc.getElementById('vendor-booking-list');
             if (container && newContainer) container.innerHTML = newContainer.innerHTML;
-            
+
             var newTabs = doc.querySelector('.mb-tabs');
             if (tabs && newTabs) tabs.innerHTML = newTabs.innerHTML;
+
+            applySearchHighlights();
         })
         .finally(function() {
             window.__isLoadingAjax = false;
         });
     };
+
+    applySearchHighlights();
 });

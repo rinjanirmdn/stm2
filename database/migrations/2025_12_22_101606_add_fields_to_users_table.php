@@ -31,20 +31,20 @@ return new class extends Migration
         // Backfill username for existing rows (pgsql safe)
         try {
             DB::statement("UPDATE users SET username = COALESCE(NULLIF(nik, ''), 'user_' || id::text) WHERE username IS NULL OR username = ''");
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // ignore
         }
 
         // Enforce NOT NULL and unique constraint after backfill
         try {
             DB::statement('ALTER TABLE users ALTER COLUMN username SET NOT NULL');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // ignore
         }
 
         try {
             DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users (username)');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // ignore
         }
     }

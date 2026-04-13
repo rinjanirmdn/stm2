@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class GateStatusService
@@ -226,7 +227,7 @@ class GateStatusService
     /**
      * Get active gates from database
      */
-    private function getActiveGates(): \Illuminate\Support\Collection
+    private function getActiveGates(): Collection
     {
         return DB::table('md_gates as g')
             ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')

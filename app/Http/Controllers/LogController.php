@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Database\Query\Expression;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -193,7 +194,7 @@ class LogController extends Controller
             foreach ($sorts as $i => $s) {
                 $d = $dirs[$i] ?? 'desc';
                 $col = $allowedSorts[$s];
-                if ($col instanceof \Illuminate\Database\Query\Expression) {
+                if ($col instanceof Expression) {
                     $logsQ->orderByRaw($col->getValue(DB::connection()->getQueryGrammar()).' '.strtoupper($d));
                 } else {
                     $logsQ->orderBy($col, $d);

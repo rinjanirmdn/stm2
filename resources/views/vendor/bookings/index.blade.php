@@ -52,6 +52,17 @@
             <div class="mb-content">
                 <!-- Search Bar -->
                 <form method="GET" action="{{ route('vendor.bookings.index') }}" class="mb-search">
+                    <div class="mb-search__group">
+                        <label class="mb-search__label">Show</label>
+                        <select name="page_size" class="mb-search__select" onchange="this.form.submit()">
+                            <option value="10" {{ request('page_size') == '10' ? 'selected' : '' }}>10</option>
+                            <option value="15" {{ request('page_size', '15') == '15' ? 'selected' : '' }}>15</option>
+                            <option value="20" {{ request('page_size') == '20' ? 'selected' : '' }}>20</option>
+                            <option value="50" {{ request('page_size') == '50' ? 'selected' : '' }}>50</option>
+                            <option value="100" {{ request('page_size') == '100' ? 'selected' : '' }}>100</option>
+                            <option value="all" {{ request('page_size') == 'all' ? 'selected' : '' }}>ALL</option>
+                        </select>
+                    </div>
                     <input type="hidden" name="status" value="{{ $currentStatus }}">
                     <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO..." value="{{ request('search') }}">
                     <div id="vendor_reportrange" class="mb-search__input date-range-input" data-auto-submit="false">
@@ -114,6 +125,10 @@
         @endphp
         <div class="mb-row">
             <span class="mb-row__ticket">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</span>
+            @if($booking->status === 'approved' && $booking->convertedSlot)
+            <span class="mb-row__ticket-number" title="Operational Ticket Number">{{ $booking->convertedSlot->ticket_number }}</span>
+            @endif
+            <span class="mb-row__po">{{ $booking->po_number ?? '-' }}</span>
             <span class="mb-row__time">
                 <i class="fas fa-calendar mb-row__icon vendor-icon"></i>
                 {{ $booking->planned_start?->format('d-m-Y H:i') ?? '-' }}
@@ -159,7 +174,7 @@
 
         <!-- Pagination -->
         <div class="mb-pagination">
-            {{ $bookings->withQueryString()->links() }}
+            {{ $bookings->withQueryString()->links('vendor.bookings.pagination') }}
         </div>
     @else
         <div class="mb-empty">

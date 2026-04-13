@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BookingRequest;
 use Illuminate\Support\Facades\DB;
 
 class DashboardStatsService
@@ -294,7 +295,7 @@ class DashboardStatsService
 
         // Get pending count from booking_requests
         $pendingCount = DB::table('booking_requests')
-            ->where('status', \App\Models\BookingRequest::STATUS_PENDING)
+            ->where('status', BookingRequest::STATUS_PENDING)
             ->whereBetween(DB::raw('DATE(planned_start)'), [$start, $end])
             ->count();
 

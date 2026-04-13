@@ -31,9 +31,13 @@ jobs:
   lint:
     name: 🎨 Lint (Pint)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -52,8 +56,16 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Run Pint (dry-run)
-        run: vendor/bin/pint --test
+      - name: Run Pint and auto-fix
+        run: |
+          vendor/bin/pint || true
+          if [[ -n $(git status -s) ]]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "style: Github Actions auto-fix pint issues [skip ci]"
+            git push
+          fi
 
   # ---------------------------------------------------------------------------
   # Job 2: Test — PHPUnit with PostgreSQL

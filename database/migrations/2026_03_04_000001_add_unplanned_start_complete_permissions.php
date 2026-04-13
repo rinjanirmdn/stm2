@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\PermissionRegistrar;
 
 return new class extends Migration
 {
@@ -35,7 +37,7 @@ return new class extends Migration
         }
 
         // Grant these permissions to all roles that can interact with unplanned slots
-        $roleNameCol = \Illuminate\Support\Facades\Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
+        $roleNameCol = Schema::hasColumn('md_roles', 'roles_name') ? 'roles_name' : 'name';
         $roles = DB::table($roleTable)
             ->whereIn(DB::raw('LOWER('.$roleNameCol.')'), ['admin', 'super account', 'section head', 'security', 'operator'])
             ->pluck('id');
@@ -65,8 +67,8 @@ return new class extends Migration
 
         // Clear Spatie permission cache
         try {
-            app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-        } catch (\Throwable $e) {
+            app()->make(PermissionRegistrar::class)->forgetCachedPermissions();
+        } catch (Throwable $e) {
             // ignore
         }
     }
@@ -80,7 +82,7 @@ return new class extends Migration
             'unplanned.complete.store',
         ];
 
-        $permNameCol = \Illuminate\Support\Facades\Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
+        $permNameCol = Schema::hasColumn('md_permissions', 'perm_name') ? 'perm_name' : 'name';
         $permIds = DB::table('md_permissions')
             ->whereIn($permNameCol, $permissions)
             ->pluck('id');
