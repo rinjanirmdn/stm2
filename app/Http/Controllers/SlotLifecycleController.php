@@ -101,7 +101,7 @@ class SlotLifecycleController extends Controller
             $this->slotService->logActivity($slotId, 'status_change', 'Status Changed to Waiting After Arrival');
             $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket '.strtoupper($ticketNumber));
             if ($backdateTime) {
-                $bdFmt = \Carbon\Carbon::parse($backdateTime)->format('d-m-Y H:i');
+                $bdFmt = Carbon::parse($backdateTime)->format('d-m-Y H:i');
                 $this->slotService->logActivity($slotId, 'backdate', 'Arrival Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
             }
         });
@@ -440,7 +440,7 @@ class SlotLifecycleController extends Controller
             }
             $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at '.$gateName);
             if ($backdateTime) {
-                $bdFmt = \Carbon\Carbon::parse($backdateTime)->format('d-m-Y H:i');
+                $bdFmt = Carbon::parse($backdateTime)->format('d-m-Y H:i');
                 $this->slotService->logActivity($slotId, 'backdate', 'Start Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
             }
         });
@@ -555,7 +555,7 @@ class SlotLifecycleController extends Controller
 
             $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (SJ: '.strtoupper($matDoc).', Truck: '.$truckType.', Vehicle: '.strtoupper($vehicleNumber).', Driver: '.$driverNumber.')');
             if ($backdateTime) {
-                $bdFmt = \Carbon\Carbon::parse($backdateTime)->format('d-m-Y H:i');
+                $bdFmt = Carbon::parse($backdateTime)->format('d-m-Y H:i');
                 $this->slotService->logActivity($slotId, 'backdate', 'Complete Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
             }
         });
