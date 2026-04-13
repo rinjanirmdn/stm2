@@ -334,6 +334,16 @@ function stReadJson(id, fallback) {
     if (ticketInput) {
         ticketInput.addEventListener('input', toggleArrivalDetails);
         ticketInput.addEventListener('blur', toggleArrivalDetails);
+
+        // Prevent barcode scanner's auto-Enter from submitting the form
+        ticketInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleArrivalDetails();
+                ticketInput.blur(); // remove focus so user sees the validated result
+            }
+        });
     }
     toggleArrivalDetails();
 
