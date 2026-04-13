@@ -542,7 +542,10 @@
                     container.scrollTop = 0;
                 } else if (data.success || status === 200) {
                     // Success! Reload page to show updated table/detail
-                    window.location.reload();
+                    var msg = data.message || 'Operation completed successfully';
+                    var currUrl = new URL(window.location.href);
+                    currUrl.searchParams.set('_success', msg);
+                    window.location.href = currUrl.toString();
                 } else {
                     throw new Error(data.message || 'Unknown error');
                 }
