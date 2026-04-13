@@ -33,36 +33,43 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">NIK</label>
+                        <label class="st-label">NIK/Username</label>
                         <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik') }}" required>
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Email</label>
-                        <input type="email" name="email" class="st-input" maxlength="255" value="{{ old('email') }}" required>
+                        <input type="email" name="email" class="st-input" maxlength="255" value="{{ old('email') }}"
+                            required>
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">Name</label>
+                        <label class="st-label">Full Name</label>
                         <input type="text" name="name" class="st-input" maxlength="100" value="{{ old('name') }}" required>
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Role</label>
                         <select name="role" class="st-select" required id="role">
-                            <option value="operator" {{ old('role', 'operator') === 'operator' ? 'selected' : '' }}>Operator</option>
-                            <option value="section_head" {{ old('role', 'operator') === 'section_head' ? 'selected' : '' }}>Section Head</option>
+                            <option value="operator" {{ old('role', 'operator') === 'operator' ? 'selected' : '' }}>Operator
+                            </option>
+                            <option value="section_head" {{ old('role', 'operator') === 'section_head' ? 'selected' : '' }}>
+                                Section Head</option>
                             <option value="admin" {{ old('role', 'operator') === 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="security" {{ old('role', 'operator') === 'security' ? 'selected' : '' }}>Security</option>
-                            <option value="super_account" {{ old('role', 'operator') === 'super_account' ? 'selected' : '' }}>Super Account</option>
-                            <option value="vendor" {{ old('role', 'operator') === 'vendor' ? 'selected' : '' }}>Vendor</option>
+                            <option value="security" {{ old('role', 'operator') === 'security' ? 'selected' : '' }}>Security
+                            </option>
+                            <option value="super_account" {{ old('role', 'operator') === 'super_account' ? 'selected' : '' }}>
+                                Super Account</option>
+                            <option value="vendor" {{ old('role', 'operator') === 'vendor' ? 'selected' : '' }}>Vendor
+                            </option>
                             <option value="display_account" {{ old('role', 'operator') === 'display_account' ? 'selected' : '' }}>Display Account</option>
                         </select>
                     </div>
 
                     <div class="st-form-field st-form-field--mb st-form-field--hidden" id="vendor_code_field">
                         <label class="st-label">Vendor Code (SAP)</label>
-                        <input type="text" name="vendor_code" class="st-input" maxlength="20" value="{{ old('vendor_code') }}" placeholder="e.g. 1100000263">
+                        <input type="text" name="vendor_code" class="st-input" maxlength="20"
+                            value="{{ old('vendor_code') }}" placeholder="e.g. 1100000263">
                         <div class="st-form-note">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
                     </div>
 
@@ -79,8 +86,10 @@
                     <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Confirm Password</label>
                         <div class="st-input-wrap">
-                            <input type="password" name="password_confirmation" id="password_confirmation" class="st-input st-input--pr-40" required>
-                            <button type="button" class="btn-toggle-password st-btn-toggle-password" data-target="password_confirmation">
+                            <input type="password" name="password_confirmation" id="password_confirmation"
+                                class="st-input st-input--pr-40" required>
+                            <button type="button" class="btn-toggle-password st-btn-toggle-password"
+                                data-target="password_confirmation">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
@@ -97,6 +106,5 @@
 @endsection
 
 @push('scripts')
-@vite(['resources/js/pages/users-create.js'])
+    @vite(['resources/js/pages/users-create.js'])
 @endpush
-
