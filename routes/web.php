@@ -63,6 +63,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard')->middleware('permission:dashboard.view');
     Route::get('/dashboard/data', [DashboardController::class, 'data'])->name('dashboard.data')->middleware('permission:dashboard.view');
     Route::get('/dashboard/waiting-reasons', [DashboardController::class, 'waitingReasons'])->name('dashboard.waitingReasons')->middleware('permission:dashboard.range_filter');
+    // CSRF token refresh endpoint (keeps session alive on mobile)
+    Route::get('/csrf-refresh', function () {
+        return response()->json(['token' => csrf_token()]);
+    })->name('csrf.refresh');
+
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
     // Profile
