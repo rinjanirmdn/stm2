@@ -226,7 +226,7 @@
                                 $stLabel = 'Waiting';
                             }
                         @endphp
-                        <tr>
+                        <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('unplanned.show', ['slotId' => $slot->id]) }}'; }">
                             <td>{{ $idx + 1 }}</td>
                             <td>{{ $slot->truck_number ?? '' }}</td>
                             <td>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</td>

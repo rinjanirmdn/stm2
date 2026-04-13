@@ -148,37 +148,31 @@
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="planned_start">Clear</button>
                                                 </div>
+                                                           </div>
+                                    </th>
+                                    <th class="st-text-center">
+                                        <div class="st-colhead st-justify-center">
+                                            <span class="st-colhead__label">Ticket</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="converted_ticket" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="converted_ticket" title="Filter">â ·</button>
+                                            </span>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="converted_ticket">
+                                                <div class="st-font-semibold st-mb-6">Ticket Filter</div>
+                                                <input type="text" name="converted_ticket" form="booking-filter-form" class="st-input" placeholder="Search Ticket..." value="{{ request('converted_ticket') }}">
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="converted_ticket">Clear</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </th>
-                                    @if($showConvertedTicket)
-                                        <th class="st-text-center">
-                                            <div class="st-colhead st-justify-center">
-                                                <span class="st-colhead__label">Ticket</span>
-                                                <span class="st-colhead__icons">
-                                                    <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="converted_ticket" title="Sort">â‡…</button>
-                                                    <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="converted_ticket" title="Filter">â·</button>
-                                                </span>
-                                                <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="converted_ticket">
-                                                    <div class="st-font-semibold st-mb-6">Ticket Filter</div>
-                                                    <input type="text" name="converted_ticket" form="booking-filter-form" class="st-input" placeholder="Search Ticket..." value="{{ request('converted_ticket') }}">
-                                                    <div class="st-panel__actions">
-                                                        <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="converted_ticket">Clear</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </th>
-                                    @endif
                                     <th class="st-text-center">
                                         <div class="st-colhead st-justify-center">
                                             <span class="st-colhead__label">Gate</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="gate" title="Sort">â‡…</button>
-                                                @if($showConvertedTicket)
-                                                    <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_gate_id" title="Filter">â·</button>
-                                                @endif
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="planned_gate_id" title="Filter">â ·</button>
                                             </span>
-                                            @if($showConvertedTicket)
                                                 <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="planned_gate_id">
                                                     <div class="st-font-semibold st-mb-6">Gate Filter</div>
                                                     <select name="planned_gate_id" form="booking-filter-form" class="st-select">
@@ -193,7 +187,6 @@
                                                         <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="planned_gate_id">Clear</button>
                                                     </div>
                                                 </div>
-                                            @endif
                                         </div>
                                     </th>
                                     <th class="st-table-col-90 st-text-center">
@@ -260,7 +253,7 @@
                             <tbody>
                                 @if($bookings->count() > 0)
                                     @foreach($bookings as $booking)
-                                        <tr>
+                                        <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('bookings.show', $booking->id) }}'; }">
                                             <td class="st-text-center">{{ $loop->index + 1 }}</td>
                                             <td class="st-text-center">
                                                 <a href="{{ route('bookings.show', $booking->id) }}" class="st-link">
@@ -273,9 +266,7 @@
                                                 {{ $booking->planned_start?->format('d-m-Y') ?? '-' }}
                                                 <br><small class="st-text-muted">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>
                                             </td>
-                                            @if($showConvertedTicket)
                                                 <td class="st-text-center">{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
-                                            @endif
                                             <td class="st-text-center">
                                                 @php
                                                     $gateDisplay = '-';

@@ -175,6 +175,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        document.addEventListener('click', function (e) {
+            var pill = e.target.closest('.st-booking-summary-pill');
+            if (pill && pill.href) {
+                e.preventDefault();
+                var url = new URL(pill.href);
+                var status = url.searchParams.get('status');
+                if (status) {
+                    var statusInput = bookingFilterForm.querySelector('input[name="status"]');
+                    if (statusInput) statusInput.value = status;
+                    document.querySelectorAll('.st-booking-summary-pill').forEach(function(p) {
+                        p.classList.remove('st-booking-summary-pill--active');
+                    });
+                    pill.classList.add('st-booking-summary-pill--active');
+                    ajaxReload(true);
+                }
+            }
+        });
+
+        if (window.jQuery) {
+            window.jQuery('#booking_reportrange').on('apply.daterangepicker', function(ev, picker) {
+                var startInput = document.getElementById('date_from');
+                var endInput = document.getElementById('date_to');
+                if (startInput) startInput.value = picker.startDate.format('YYYY-MM-DD');
+                if (endInput) endInput.value = picker.endDate.format('YYYY-MM-DD');
+                ajaxReload(true);
+            });
+        }
+
         window.addEventListener('popstate', function () {
             var params = new URLSearchParams(window.location.search);
             var formId = String(bookingFilterForm.getAttribute('id') || '').trim();

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'View Booking - e-Docking Control System')
-@section('page_title', 'Booking Detail')
+@section('title', (($slot->slot_type ?? '') === 'unplanned' ? 'View Unplanned' : 'View Planned') . ' - e-Docking Control System')
+@section('page_title', ($slot->slot_type ?? '') === 'unplanned' ? 'Unplanned Detail' : 'Planned Detail')
 
 @section('content')
     @php
@@ -379,11 +379,11 @@
                                 $type = (string) ($log->activity_type ?? '');
                                 $typeLabel = $type !== '' ? ucwords(str_replace('_', ' ', $type)) : '-';
                             @endphp
-                            <tr>
-                                <td>{{ $fmt($log->created_at ?? null) }}</td>
-                                <td>{{ $typeLabel }}</td>
-                                <td>{{ $log->description ?? '-' }}</td>
-                                <td>{{ $log->username ?? '-' }}</td>
+                            <tr class="st-table-row">
+                                <td class="st-table-cell">{{ $fmt($log->created_at ?? null) }}</td>
+                                <td class="st-table-cell">{{ $typeLabel }}</td>
+                                <td class="st-table-cell" style="line-height:1.5;">{{ $log->description ?? '-' }}</td>
+                                <td class="st-table-cell">{{ $log->username ?? '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
