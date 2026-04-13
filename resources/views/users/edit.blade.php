@@ -34,7 +34,7 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">NIK</label>
+                        <label class="st-label">NIK/Username</label>
                         <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik', $editUser->nik) }}" required>
                     </div>
 
@@ -44,7 +44,7 @@
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">Name</label>
+                        <label class="st-label">Full Name</label>
                         <input type="text" name="name" class="st-input" maxlength="255" value="{{ old('name', $editUser->full_name) }}" required>
                     </div>
 
