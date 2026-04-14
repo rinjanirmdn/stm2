@@ -1,0 +1,280 @@
+{
+  "_client-DzYSRBXd.js": {
+    "file": "assets/client-DzYSRBXd.js",
+    "name": "client",
+    "imports": [
+      "_react-vendor-C6WxKkic.js"
+    ]
+  },
+  "_react-vendor-C6WxKkic.js": {
+    "file": "assets/react-vendor-C6WxKkic.js",
+    "name": "react-vendor"
+  },
+  "_recharts-4-iG22hf.js": {
+    "file": "assets/recharts-4-iG22hf.js",
+    "name": "recharts",
+    "imports": [
+      "_react-vendor-C6WxKkic.js"
+    ]
+  },
+  "_search-highlight-CjsPCiQd.js": {
+    "file": "assets/search-highlight-CjsPCiQd.js",
+    "name": "search-highlight"
+  },
+  "resources/css/bookings.css": {
+    "file": "assets/bookings-8T7HLU01.css",
+    "src": "resources/css/bookings.css",
+    "isEntry": true,
+    "name": "bookings",
+    "names": [
+      "bookings.css"
+    ]
+  },
+  "resources/css/dashboard-react.css": {
+    "file": "assets/dashboard-react-CpBh0EqA.css",
+    "src": "resources/css/dashboard-react.css",
+    "isEntry": true,
+    "name": "dashboard-react",
+    "names": [
+      "dashboard-react.css"
+    ]
+  },
+  "resources/css/gates.css": {
+    "file": "assets/gates-DfsnmdoT.css",
+    "src": "resources/css/gates.css",
+    "isEntry": true,
+    "name": "gates",
+    "names": [
+      "gates.css"
+    ]
+  },
+  "resources/css/style.css": {
+    "file": "assets/style-B98zptw2.css",
+    "src": "resources/css/style.css",
+    "isEntry": true,
+    "name": "style",
+    "names": [
+      "style.css"
+    ]
+  },
+  "resources/css/vendor.css": {
+    "file": "assets/vendor-o5kai0So.css",
+    "src": "resources/css/vendor.css",
+    "isEntry": true,
+    "name": "vendor",
+    "names": [
+      "vendor.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-ESKwSS35.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_react-vendor-C6WxKkic.js"
+    ]
+  },
+  "resources/js/pages/admin-bookings-index.js": {
+    "file": "assets/admin-bookings-index-BofsoK67.js",
+    "name": "admin-bookings-index",
+    "src": "resources/js/pages/admin-bookings-index.js",
+    "isEntry": true,
+    "imports": [
+      "_search-highlight-CjsPCiQd.js"
+    ]
+  },
+  "resources/js/pages/admin-bookings-reschedule.js": {
+    "file": "assets/admin-bookings-reschedule-C2I7HniW.js",
+    "name": "admin-bookings-reschedule",
+    "src": "resources/js/pages/admin-bookings-reschedule.js",
+    "isEntry": true
+  },
+  "resources/js/pages/admin-bookings-show.js": {
+    "file": "assets/admin-bookings-show-COQedTZk.js",
+    "name": "admin-bookings-show",
+    "src": "resources/js/pages/admin-bookings-show.js",
+    "isEntry": true
+  },
+  "resources/js/pages/gate-status.js": {
+    "file": "assets/gate-status-CIBBqVvF.js",
+    "name": "gate-status",
+    "src": "resources/js/pages/gate-status.js",
+    "isEntry": true
+  },
+  "resources/js/pages/gates-index.js": {
+    "file": "assets/gates-index-iGavBFqH.js",
+    "name": "gates-index",
+    "src": "resources/js/pages/gates-index.js",
+    "isEntry": true
+  },
+  "resources/js/pages/gates-monitor.js": {
+    "file": "assets/gates-monitor-oUrWkiCk.js",
+    "name": "gates-monitor",
+    "src": "resources/js/pages/gates-monitor.js",
+    "isEntry": true
+  },
+  "resources/js/pages/logs-index.js": {
+    "file": "assets/logs-index-DmVMdi1K.js",
+    "name": "logs-index",
+    "src": "resources/js/pages/logs-index.js",
+    "isEntry": true,
+    "imports": [
+      "_search-highlight-CjsPCiQd.js"
+    ]
+  },
+  "resources/js/pages/main.js": {
+    "file": "assets/main-CYzR84fd.js",
+    "name": "main",
+    "src": "resources/js/pages/main.js",
+    "isEntry": true
+  },
+  "resources/js/pages/reports-transactions.js": {
+    "file": "assets/reports-transactions-D5WxiERH.js",
+    "name": "reports-transactions",
+    "src": "resources/js/pages/reports-transactions.js",
+    "isEntry": true,
+    "imports": [
+      "_search-highlight-CjsPCiQd.js"
+    ]
+  },
+  "resources/js/pages/security-dashboard.js": {
+    "file": "assets/security-dashboard-BChT39W2.js",
+    "name": "security-dashboard",
+    "src": "resources/js/pages/security-dashboard.js",
+    "isEntry": true
+  },
+  "resources/js/pages/slots-arrival.js": {
+    "file": "assets/slots-arrival-BCUA7afE.js",
+    "name": "slots-arrival",
+    "src": "resources/js/pages/slots-arrival.js",
+    "isEntry": true
+  },
+  "resources/js/pages/slots-complete.js": {
+    "file": "assets/slots-complete-IeJ86UXb.js",
+    "name": "slots-complete",
+    "src": "resources/js/pages/slots-complete.js",
+    "isEntry": true
+  },
+  "resources/js/pages/slots-create.js": {
+    "file": "assets/slots-create-GA3LugCa.js",
+    "name": "slots-create",
+    "src": "resources/js/pages/slots-create.js",
+    "isEntry": true
+  },
+  "resources/js/pages/slots-edit.js": {
+    "file": "assets/slots-edit-D0AZz61_.js",
+    "name": "slots-edit",
+    "src": "resources/js/pages/slots-edit.js",
+    "isEntry": true
+  },
+  "resources/js/pages/slots-index.js": {
+    "file": "assets/slots-index-Bk4ZzJ4c.js",
+    "name": "slots-index",
+    "src": "resources/js/pages/slots-index.js",
+    "isEntry": true,
+    "imports": [
+      "_search-highlight-CjsPCiQd.js"
+    ]
+  },
+  "resources/js/pages/slots-trial-create.js": {
+    "file": "assets/slots-trial-create-CCoFmarJ.js",
+    "name": "slots-trial-create",
+    "src": "resources/js/pages/slots-trial-create.js",
+    "isEntry": true
+  },
+  "resources/js/pages/trucks-index.js": {
+    "file": "assets/trucks-index-Ds31ximW.js",
+    "name": "trucks-index",
+    "src": "resources/js/pages/trucks-index.js",
+    "isEntry": true,
+    "imports": [
+      "_search-highlight-CjsPCiQd.js"
+    ]
+  },
+  "resources/js/pages/unplanned-complete.js": {
+    "file": "assets/unplanned-complete-CfelTxdx.js",
+    "name": "unplanned-complete",
+    "src": "resources/js/pages/unplanned-complete.js",
+    "isEntry": true
+  },
+  "resources/js/pages/unplanned-create.js": {
+    "file": "assets/unplanned-create-Bauro9G_.js",
+    "name": "unplanned-create",
+    "src": "resources/js/pages/unplanned-create.js",
+    "isEntry": true
+  },
+  "resources/js/pages/unplanned-edit.js": {
+    "file": "assets/unplanned-edit-IrXDopXg.js",
+    "name": "unplanned-edit",
+    "src": "resources/js/pages/unplanned-edit.js",
+    "isEntry": true
+  },
+  "resources/js/pages/unplanned-index.js": {
+    "file": "assets/unplanned-index-BtE-m4Wk.js",
+    "name": "unplanned-index",
+    "src": "resources/js/pages/unplanned-index.js",
+    "isEntry": true,
+    "imports": [
+      "_search-highlight-CjsPCiQd.js"
+    ]
+  },
+  "resources/js/pages/users-create.js": {
+    "file": "assets/users-create-C1hw4OJt.js",
+    "name": "users-create",
+    "src": "resources/js/pages/users-create.js",
+    "isEntry": true
+  },
+  "resources/js/pages/users-edit.js": {
+    "file": "assets/users-edit-C1hw4OJt.js",
+    "name": "users-edit",
+    "src": "resources/js/pages/users-edit.js",
+    "isEntry": true
+  },
+  "resources/js/pages/users-index.js": {
+    "file": "assets/users-index-CcFdH6MZ.js",
+    "name": "users-index",
+    "src": "resources/js/pages/users-index.js",
+    "isEntry": true,
+    "imports": [
+      "_search-highlight-CjsPCiQd.js"
+    ]
+  },
+  "resources/js/pages/vendor-bookings-index.js": {
+    "file": "assets/vendor-bookings-index-BJCgV2LF.js",
+    "name": "vendor-bookings-index",
+    "src": "resources/js/pages/vendor-bookings-index.js",
+    "isEntry": true,
+    "imports": [
+      "_search-highlight-CjsPCiQd.js"
+    ]
+  },
+  "resources/js/pages/vendor.js": {
+    "file": "assets/vendor-5khd0Ctf.js",
+    "name": "vendor",
+    "src": "resources/js/pages/vendor.js",
+    "isEntry": true
+  },
+  "resources/js/react/dashboard.jsx": {
+    "file": "assets/dashboard-BQdu1p6h.js",
+    "name": "dashboard",
+    "src": "resources/js/react/dashboard.jsx",
+    "isEntry": true,
+    "imports": [
+      "_client-DzYSRBXd.js",
+      "_recharts-4-iG22hf.js",
+      "_react-vendor-C6WxKkic.js"
+    ]
+  },
+  "resources/js/react/vendor-dashboard.jsx": {
+    "file": "assets/vendor-dashboard-BuFrP7sS.js",
+    "name": "vendor-dashboard",
+    "src": "resources/js/react/vendor-dashboard.jsx",
+    "isEntry": true,
+    "imports": [
+      "_client-DzYSRBXd.js",
+      "_recharts-4-iG22hf.js",
+      "_react-vendor-C6WxKkic.js"
+    ]
+  }
+}
