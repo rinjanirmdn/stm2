@@ -363,6 +363,7 @@ class SlotLifecycleController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 throw ValidationException::withMessages(['actual_gate_id' => 'Actual gate is required']);
             }
+
             return back()->withInput()->with('error', 'Actual gate is required');
         }
 
@@ -371,6 +372,7 @@ class SlotLifecycleController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 throw ValidationException::withMessages(['actual_gate_id' => 'Selected gate is not active']);
             }
+
             return back()->withInput()->with('error', 'Selected gate is not active');
         }
 
