@@ -59,6 +59,7 @@ export default defineConfig({
     ],
     server: {
         host: '0.0.0.0',
+        allowedHosts: ['stm2.test'],
         origin: process.env.VITE_DEV_ORIGIN || `http://${process.env.VITE_DEV_HOST || 'localhost'}:5173`,
         cors: true,
         headers: {
