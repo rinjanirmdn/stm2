@@ -360,15 +360,18 @@ class SlotLifecycleController extends Controller
 
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
         if (! $actualGateId) {
+            if ($request->ajax() || $request->wantsJson()) {
+                throw ValidationException::withMessages(['actual_gate_id' => 'Actual gate is required']);
+            }
             return back()->withInput()->with('error', 'Actual gate is required');
         }
 
         $gateRow = DB::table('md_gates')->where('id', $actualGateId)->where('is_active', true)->select(['id', 'warehouse_id'])->first();
         if (! $gateRow) {
+            if ($request->ajax() || $request->wantsJson()) {
+                throw ValidationException::withMessages(['actual_gate_id' => 'Selected gate is not active']);
+            }
             return back()->withInput()->with('error', 'Selected gate is not active');
-        }
-        if ((int) ($gateRow->warehouse_id ?? 0) !== (int) ($slot->warehouse_id ?? 0)) {
-            throw ValidationException::withMessages(['actual_gate_id' => 'Selected gate does not belong to the slot\'s warehouse']);
         }
 
         $conflicts = $this->findInProgressConflicts($actualGateId, $slotId);
@@ -383,6 +386,11 @@ class SlotLifecycleController extends Controller
                 ->withInput()
                 ->with('conflict_lines', $lines);
         }
+
+        // Update slot's warehouse_id if actual gate belongs to a different warehouse
+        $actualWarehouseId = (int) ($gateRow->warehouse_id ?? 0);
+        $slotWarehouseId = (int) ($slot->warehouse_id ?? 0);
+        $warehouseChanged = $actualWarehouseId > 0 && $actualWarehouseId !== $slotWarehouseId;
 
         // Check if waiting > 60 min → require waiting_reason
         $waitingMinutes = 0;
@@ -407,7 +415,7 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime) {
+        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime, $warehouseChanged, $actualWarehouseId) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
             $arrivalTime = (string) ($slot->arrival_time ?? $now);
             $isLate = 0;
@@ -422,6 +430,9 @@ class SlotLifecycleController extends Controller
                 'is_late' => $isLate,
                 'actual_gate_id' => $actualGateId,
             ];
+            if ($warehouseChanged) {
+                $updateData['warehouse_id'] = $actualWarehouseId;
+            }
             if ($waitingReason !== '') {
                 $updateData['waiting_reason'] = $waitingReason;
             }
@@ -439,6 +450,9 @@ class SlotLifecycleController extends Controller
                 }
             }
             $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at '.$gateName);
+            if ($warehouseChanged) {
+                $this->slotService->logActivity($slotId, 'gate_change', 'Gate changed to different warehouse area: '.$gateName);
+            }
             if ($backdateTime) {
                 $bdFmt = Carbon::parse($backdateTime)->format('d-m-Y H:i');
                 $this->slotService->logActivity($slotId, 'backdate', 'Start Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
@@ -511,7 +525,13 @@ class SlotLifecycleController extends Controller
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
 
-        if ($matDoc === '' || $truckType === '' || $vehicleNumber === '' || $driverNumber === '') {
+        $slotType = (string) ($slot->slot_type ?? 'planned');
+        $requiredMissing = $matDoc === '' || $truckType === '' || $vehicleNumber === '';
+        // Driver number is required only for unplanned slots
+        if ($slotType === 'unplanned' && $driverNumber === '') {
+            $requiredMissing = true;
+        }
+        if ($requiredMissing) {
             throw ValidationException::withMessages(['mat_doc' => 'All required fields must be filled']);
         }
 
@@ -544,7 +564,7 @@ class SlotLifecycleController extends Controller
                 'truck_type' => $truckType,
                 'vehicle_number_snap' => $vehicleNumber,
                 'driver_name' => $driverName !== '' ? $driverName : null,
-                'driver_number' => $driverNumber,
+                'driver_number' => $driverNumber !== '' ? $driverNumber : null,
                 'late_reason' => $notes !== '' ? $notes : null,
             ]);
 

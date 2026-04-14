@@ -10,7 +10,7 @@
 
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Material Document <span class="st-text--danger-dark">*</span></label>
+                    <label class="st-label">SJ / Resi Number <span class="st-text--danger-dark">*</span></label>
                     <input type="text" name="mat_doc" class="st-input" required value="{{ old('mat_doc') }}">
                 </div>
             </div>

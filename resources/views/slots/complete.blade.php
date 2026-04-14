@@ -60,8 +60,8 @@
                     <input type="text" name="driver_name" class="st-input" required value="{{ old('driver_name') }}">
                 </div>
                 <div class="st-form-field">
-                    <label class="st-label">Driver Number <span class="st-text--danger-dark">*</span></label>
-                    <input type="text" name="driver_number" class="st-input" required value="{{ old('driver_number') }}">
+                    <label class="st-label">Driver Number <span class="st-text--optional">(Optional)</span></label>
+                    <input type="text" name="driver_number" class="st-input" value="{{ old('driver_number') }}">
                 </div>
             </div>
 
