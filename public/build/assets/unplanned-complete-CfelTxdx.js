@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",function(){var e=[];try{var t=document.getElementById("truck_types_json");e=t?JSON.parse(t.textContent||"[]"):[]}catch{e=[]}var n=Array.isArray(e)?e.length:0;console.log("Unplanned complete - Truck types count:",n),console.log("Unplanned complete - Using standard dropdown instead of autocomplete")});

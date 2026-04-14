@@ -1,0 +1,1 @@
+(function(){var t=[];try{var e=document.getElementById("truck_types_json");t=e?JSON.parse(e.textContent||"[]"):[]}catch{t=[]}var o=Array.isArray(t)?t.length:0;console.log("Complete page - Truck types count:",o),console.log("Complete page - Using standard dropdown instead of autocomplete")})();
