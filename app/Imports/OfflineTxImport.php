@@ -2,33 +2,29 @@
 
 namespace App\Imports;
 
+use DateTime;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use DateTime;
-use Exception;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class OfflineTxImport implements ToCollection, WithHeadingRow
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
-    /**
-    * @param Collection $rows
-    */
     public function collection(Collection $rows)
     {
         $warehouses = DB::table('md_warehouse')->pluck('id', 'wh_code')->toArray();
         $gates = DB::table('md_gates')->pluck('id', 'gate_number')->toArray(); // this is rough, since gates are linked to warehouse. We'll do it safely below.
-        
+
         $allGates = DB::table('md_gates')->select('id', 'gate_number', 'warehouse_id')->get();
 
         foreach ($rows as $index => $row) {
             // Check if row is empty
-            if (!isset($row['slot_type_plannedunplanned']) && !isset($row['nomor_po'])) {
+            if (! isset($row['slot_type_plannedunplanned']) && ! isset($row['nomor_po'])) {
                 continue;
             }
 
@@ -50,8 +46,8 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     }
                 }
 
-                if (!$whId || !$gateId) {
-                    Log::warning('Offline Import: Warehouse/Gate not found for row ' . $index, $row->toArray());
+                if (! $whId || ! $gateId) {
+                    Log::warning('Offline Import: Warehouse/Gate not found for row '.$index, $row->toArray());
                     // we still save it? Or skip.
                 }
 
@@ -65,7 +61,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 if ($startStr && $finishStr) {
                     $duration = round((strtotime($finishStr) - strtotime($startStr)) / 60);
                 }
-                
+
                 if ($arrivalStr && $startStr) {
                     $leadTime = round((strtotime($startStr) - strtotime($arrivalStr)) / 60);
                 }
@@ -87,32 +83,34 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     'driver_name' => substr($row['sopir'] ?? '-', 0, 100),
                     'slot_type' => $slotType === 'planned' ? 'planned' : 'unplanned',
                     'direction' => $direction === 'outbound' ? 'outbound' : 'inbound',
-                    'actual_duration_minutes' => $duration > 0 ? (int)$duration : null,
-                    'lead_time_minutes' => $leadTime > 0 ? (int)$leadTime : null,
+                    'actual_duration_minutes' => $duration > 0 ? (int) $duration : null,
+                    'lead_time_minutes' => $leadTime > 0 ? (int) $leadTime : null,
                     'created_by' => auth()->id(),
                     'created_at' => now(),
                     'updated_at' => now(),
-                    'approval_notes' => 'Imported via Offline Excel. ' . ($row['notes'] ?? ''),
+                    'approval_notes' => 'Imported via Offline Excel. '.($row['notes'] ?? ''),
                 ]);
-
             } catch (Exception $e) {
-                Log::error('Offline Import: Failed to process row ' . $index . ' - ' . $e->getMessage());
+                Log::error('Offline Import: Failed to process row '.$index.' - '.$e->getMessage());
             }
         }
     }
 
     private function parseDate($str)
     {
-        if (!$str) return null;
+        if (! $str) {
+            return;
+        }
         try {
             // Maatwebsite Excel might parse date to integer timestamp or carbon instance
             if (is_numeric($str)) {
-                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($str)->format('Y-m-d H:i:s');
+                return Date::excelToDateTimeObject($str)->format('Y-m-d H:i:s');
             }
             $dt = new DateTime($str);
+
             return $dt->format('Y-m-d H:i:s');
         } catch (Exception $e) {
-            return null;
+            return;
         }
     }
 }

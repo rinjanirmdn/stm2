@@ -2,6 +2,7 @@
 
 /* Admin Routes â€” Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API, Security Dashboard */
 
+use App\Http\Controllers\Admin\OfflineImportController;
 use App\Http\Controllers\BookingApprovalController;
 use App\Http\Controllers\GateStatusController;
 use App\Http\Controllers\LogController;
@@ -31,8 +32,8 @@ Route::prefix('reports')->name('reports.')->group(function () {
 
     // Offline Import Routes
     Route::middleware('role:super account|section head')->group(function () {
-        Route::get('/offline-import/template', [\App\Http\Controllers\Admin\OfflineImportController::class, 'downloadTemplate'])->name('offline_import.template');
-        Route::post('/offline-import/upload', [\App\Http\Controllers\Admin\OfflineImportController::class, 'import'])->name('offline_import.upload');
+        Route::get('/offline-import/template', [OfflineImportController::class, 'downloadTemplate'])->name('offline_import.template');
+        Route::post('/offline-import/upload', [OfflineImportController::class, 'import'])->name('offline_import.upload');
     });
 });
 

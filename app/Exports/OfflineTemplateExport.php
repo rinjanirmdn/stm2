@@ -7,17 +7,14 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class OfflineTemplateExport implements FromArray, WithHeadings
 {
-    /**
-    * @return array
-    */
     public function array(): array
     {
         return [
             // Dummy record to show format
             [
                 'unplanned', 'INBOUND', '01-04-2026 13:00', '01-04-2026 13:30', '01-04-2026 15:00',
-                'POC-12345', 'B 1234 ABC', 'Budi', 'PT. Vendor A', 'CDE', 'GATE 1', 'Catatan manual'
-            ]
+                'POC-12345', 'B 1234 ABC', 'Budi', 'PT. Vendor A', 'CDE', 'GATE 1', 'Catatan manual',
+            ],
         ];
     }
 
@@ -35,7 +32,7 @@ class OfflineTemplateExport implements FromArray, WithHeadings
             'Nama Vendor / Customer',
             'Warehouse Code',
             'Gate Number',
-            'Notes'
+            'Notes',
         ];
     }
 }
