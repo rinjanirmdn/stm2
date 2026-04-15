@@ -61,7 +61,7 @@
             </div>
             <div class="st-modal__body">
                 <p class="st-text--muted st-mb-4">Use this feature to import transactions manually recorded during server or network outages.</p>
-                <a href="{{ route('reports.offline_import.template') }}" class="st-link st-font-semibold st-mb-8 st-block"><i class="fa-solid fa-download st-mr-2"></i> Download Template</a>
+                <a href="{{ route('reports.offline_import.template') }}" download="offline_import_template.xlsx" class="st-link st-font-semibold st-mb-8 st-block"><i class="fa-solid fa-download st-mr-2"></i> Download Template</a>
                 
                 <form id="form-import-offline" enctype="multipart/form-data">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
