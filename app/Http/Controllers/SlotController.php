@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Traits\SlotHelperTrait;
 use App\Models\BookingRequest;
 use App\Models\Slot;
+use App\Models\User;
 use App\Notifications\SlotCancelled;
+use App\Notifications\SlotCreatedByInternal;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
@@ -15,6 +17,7 @@ use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 class SlotController extends Controller
@@ -298,6 +301,9 @@ class SlotController extends Controller
             'blocking_risk' => $blockingRisk,
             'blocking_risk_cached_at' => now(),
         ]);
+
+        // Notify Section Head & Super Account about new planned transaction
+        $this->notifyInternalSlotCreated($slotId, 'planned', $truckNumber, $poDetail, $plannedStart, $truckType, $vehicleNumber);
 
         return redirect()->route('slots.index')->with('success', 'Data created successfully');
     }
@@ -710,5 +716,80 @@ class SlotController extends Controller
         });
 
         return redirect()->route('slots.index')->with('success', 'Slot cancelled');
+    }
+
+    /**
+     * Notify Section Head and Super Account users about a new internal slot creation.
+     */
+    private function notifyInternalSlotCreated(
+        int $slotId,
+        string $slotType,
+        string $poNumber,
+        ?array $poDetail,
+        string $plannedStart,
+        string $truckType,
+        string $vehicleNumber
+    ): void {
+        try {
+            $actor = Auth::user();
+            $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Internal'));
+            $vendorName = trim((string) ($poDetail['vendor_name'] ?? ''));
+            $direction = ucfirst(trim((string) ($poDetail['direction'] ?? '')));
+
+            $plannedDate = '-';
+            try {
+                $plannedDate = (new DateTime($plannedStart))->format('d-m-Y H:i');
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
+            $ticketNumber = DB::table('slots')->where('id', $slotId)->value('ticket_number');
+
+            $recipients = User::where('is_active', true)
+                ->whereHas('roles', function ($q) {
+                    $q->whereIn(DB::raw('LOWER(roles_name)'), [
+                        'section head',
+                        'super admin',
+                        'super administrator',
+                    ]);
+                })
+                ->get();
+
+            if ($recipients->isEmpty()) {
+                Log::warning('No Section Head / Super Account recipients found for internal slot notification', [
+                    'slot_id' => $slotId,
+                ]);
+
+                return;
+            }
+
+            $notification = new SlotCreatedByInternal(
+                slotId: $slotId,
+                slotType: $slotType,
+                poNumber: $poNumber,
+                vendorName: $vendorName,
+                direction: $direction,
+                plannedDate: $plannedDate,
+                createdByName: $actorName,
+                truckType: $truckType !== '' ? $truckType : null,
+                vehicleNumber: $vehicleNumber !== '' ? $vehicleNumber : null,
+                ticketNumber: $ticketNumber,
+            );
+
+            foreach ($recipients as $recipient) {
+                try {
+                    $recipient->notify(clone $notification);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to notify recipient for internal slot: ' . $e->getMessage(), [
+                        'slot_id' => $slotId,
+                        'recipient_id' => $recipient->id,
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send internal slot creation notification: ' . $e->getMessage(), [
+                'slot_id' => $slotId,
+            ]);
+        }
     }
 }

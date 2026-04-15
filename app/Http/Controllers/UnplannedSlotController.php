@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
+use App\Models\User;
+use App\Notifications\SlotCreatedByInternal;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
@@ -13,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UnplannedSlotController extends Controller
 {
@@ -348,6 +351,9 @@ class UnplannedSlotController extends Controller
             return $slotId;
         });
 
+        // Notify Section Head & Super Account about new unplanned transaction
+        $this->notifyInternalSlotCreated($slotId, 'unplanned', $poNumber, $poDetail, $arrivalTime, $truckType, $vehicleNumber);
+
         return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned transaction recorded successfully');
     }
 
@@ -494,6 +500,78 @@ class UnplannedSlotController extends Controller
                 // Came from other pages (reports, etc.), go back to previous page
                 return redirect()->back();
             }
+        }
+    }
+
+    /**
+     * Notify Section Head and Super Account users about a new internal unplanned slot creation.
+     */
+    private function notifyInternalSlotCreated(
+        int $slotId,
+        string $slotType,
+        string $poNumber,
+        ?array $poDetail,
+        string $plannedStart,
+        string $truckType,
+        string $vehicleNumber
+    ): void {
+        try {
+            $actor = Auth::user();
+            $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Internal'));
+            $vendorName = trim((string) ($poDetail['vendor_name'] ?? ''));
+            $direction = ucfirst(trim((string) ($poDetail['direction'] ?? '')));
+
+            $plannedDate = '-';
+            try {
+                $plannedDate = (new DateTime($plannedStart))->format('d-m-Y H:i');
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
+            $recipients = User::where('is_active', true)
+                ->whereHas('roles', function ($q) {
+                    $q->whereIn(DB::raw('LOWER(roles_name)'), [
+                        'section head',
+                        'super admin',
+                        'super administrator',
+                    ]);
+                })
+                ->get();
+
+            if ($recipients->isEmpty()) {
+                Log::warning('No Section Head / Super Account recipients found for internal slot notification', [
+                    'slot_id' => $slotId,
+                ]);
+
+                return;
+            }
+
+            $notification = new SlotCreatedByInternal(
+                slotId: $slotId,
+                slotType: $slotType,
+                poNumber: $poNumber,
+                vendorName: $vendorName,
+                direction: $direction,
+                plannedDate: $plannedDate,
+                createdByName: $actorName,
+                truckType: $truckType !== '' ? $truckType : null,
+                vehicleNumber: $vehicleNumber !== '' ? $vehicleNumber : null,
+            );
+
+            foreach ($recipients as $recipient) {
+                try {
+                    $recipient->notify(clone $notification);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to notify recipient for internal slot: ' . $e->getMessage(), [
+                        'slot_id' => $slotId,
+                        'recipient_id' => $recipient->id,
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send internal slot creation notification: ' . $e->getMessage(), [
+                'slot_id' => $slotId,
+            ]);
         }
     }
 }

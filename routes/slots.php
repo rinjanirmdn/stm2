@@ -37,15 +37,15 @@ Route::prefix('slots')->name('slots.')->group(function () {
     });
 
     Route::get('/{slotId}/ticket', [SlotLifecycleController::class, 'ticket'])->whereNumber('slotId')->name('ticket')
-        ->middleware(['permission:slots.ticket', 'role:admin|super account|section head|security']);
+        ->middleware(['permission:slots.ticket', 'role:admin|super account|section head|security|operator|admin wh']);
 
     Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show')
         ->middleware('permission:slots.show');
 
     Route::get('/{slotId}/arrival', [SlotLifecycleController::class, 'arrival'])->whereNumber('slotId')->name('arrival')
-        ->middleware(['permission:slots.arrival', 'role:admin|super account|section head|security']);
+        ->middleware(['permission:slots.arrival', 'role:admin|super account|section head|security|operator|admin wh']);
     Route::post('/{slotId}/arrival', [SlotLifecycleController::class, 'arrivalStore'])->whereNumber('slotId')->name('arrival.store')
-        ->middleware(['permission:slots.arrival.store', 'role:admin|super account|section head|security']);
+        ->middleware(['permission:slots.arrival.store', 'role:admin|super account|section head|security|operator|admin wh']);
 
     Route::get('/{slotId}/start', [SlotLifecycleController::class, 'start'])->whereNumber('slotId')->name('start')
         ->middleware('permission:slots.start');

@@ -369,6 +369,49 @@ class RolePermissionSeeder extends Seeder
             'notifications.latest',
         ]);
 
+        // Admin WH: same access as Operator
+        $adminWhRole = Role::findOrCreate('Admin WH');
+        $adminWhRole->syncPermissions([
+            'dashboard.view',
+            'slots.index',
+            'slots.show',
+            'slots.arrival',
+            'slots.arrival.store',
+            'slots.start',
+            'slots.start.store',
+            'slots.complete',
+            'slots.complete.store',
+            'gates.index',
+            'unplanned.index',
+            'unplanned.show',
+            'unplanned.start',
+            'unplanned.start.store',
+            'unplanned.complete',
+            'unplanned.complete.store',
+            'reports.transactions',
+            'trucks.index',
+            'logs.index',
+            'logs.filter',
+            'profile.index',
+            'slots.search_suggestions',
+            'slots.ajax.po_search',
+            'slots.ajax.po_detail',
+            'slots.ajax.check_risk',
+            'slots.ajax.check_slot_time',
+            'slots.ajax.recommend_gate',
+            'slots.ajax.schedule_preview',
+            'gates.stream',
+            'gates.api_index',
+            'gates.ajax.available_slots',
+            'gates.ajax.disabled_times',
+            'reports.search_suggestions',
+            'notifications.index',
+            'notifications.markAsRead',
+            'notifications.readAll',
+            'notifications.clearAll',
+            'notifications.latest',
+        ]);
+
         // Super Account: Admin-equivalent but cannot manage user accounts
         $superAccountRole = Role::findOrCreate('Super Account');
         $superAccountPermissions = array_values(array_filter(array_merge($coreInternal, $techInternal), function ($perm) {
@@ -381,6 +424,7 @@ class RolePermissionSeeder extends Seeder
             'Admin',
             'Section Head',
             'Operator',
+            'Admin WH',
             'Security',
             'Vendor',
             'Display Account',

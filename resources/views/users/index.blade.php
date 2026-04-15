@@ -159,6 +159,7 @@
                                                     <option value="super_account" {{ ($role ?? '') === 'super_account' ? 'selected' : '' }}>Super Account</option>
                                                     <option value="section_head" {{ ($role ?? '') === 'section_head' ? 'selected' : '' }}>Section Head</option>
                                                     <option value="operator" {{ ($role ?? '') === 'operator' ? 'selected' : '' }}>Operator</option>
+                                                    <option value="admin_wh" {{ ($role ?? '') === 'admin_wh' ? 'selected' : '' }}>Admin WH</option>
                                                     <option value="security" {{ ($role ?? '') === 'security' ? 'selected' : '' }}>Security</option>
                                                     <option value="vendor" {{ ($role ?? '') === 'vendor' ? 'selected' : '' }}>
                                                         Vendor</option>

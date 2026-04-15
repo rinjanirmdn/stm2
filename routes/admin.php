@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 
-/* Admin Routes — Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API, Security Dashboard */
+/* Admin Routes â€” Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API, Security Dashboard */
 
 use App\Http\Controllers\BookingApprovalController;
 use App\Http\Controllers\GateStatusController;
@@ -100,7 +100,7 @@ Route::prefix('gates')->name('gates.')->group(function () {
     });
 
     Route::post('/{gateId}/toggle', [ReportController::class, 'toggleGate'])->whereNumber('gateId')->name('toggle')
-        ->middleware(['permission:gates.toggle', 'role:admin|super account|section head|security|operator']);
+        ->middleware(['permission:gates.toggle', 'role:admin|super account|section head|security|operator|admin wh']);
 });
 
 // Logs
@@ -150,7 +150,7 @@ Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('book
 });
 
 // -----------------------------------------------------------------------------
-// Master Data: Business Partner (md_bp) � Vendor & Customer lokal
+// Master Data: Business Partner (md_bp) — Vendor & Customer lokal
 // Dibutuhkan untuk form 'Create Planned Uji Coba' (tanpa SAP)
 // -----------------------------------------------------------------------------
 Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->group(function () {
@@ -162,3 +162,4 @@ Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->g
     Route::post('/{id}/delete', [MdBpController::class, 'destroy'])->whereNumber('id')->name('destroy');
     Route::get('/ajax/search', [MdBpController::class, 'ajaxSearch'])->name('ajax.search');
 });
+

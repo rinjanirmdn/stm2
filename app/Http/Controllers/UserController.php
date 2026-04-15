@@ -67,7 +67,7 @@ class UserController extends Controller
         $sort = $sorts[0] ?? '';
         $dir = $dirs[0] ?? 'desc';
 
-        $allowedRoles = ['admin', 'section_head', 'operator', 'vendor', 'security', 'super_account', 'display_account'];
+        $allowedRoles = ['admin', 'section_head', 'operator', 'admin_wh', 'vendor', 'security', 'super_account', 'display_account'];
 
         $usersQ = DB::table('md_users')
             ->leftJoin($modelHasRolesTable.' as mhr', function ($join) {

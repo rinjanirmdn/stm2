@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Edit User - e-Docking Control System')
 @section('page_title', 'Edit User')
@@ -53,6 +53,7 @@
                         <select name="role" class="st-select" required id="role">
                             @php $currentRole = $editUser->role_slug ?? 'operator'; @endphp
                             <option value="operator" {{ old('role', $currentRole) === 'operator' ? 'selected' : '' }}>Operator</option>
+                            <option value="admin_wh" {{ old('role', $currentRole) === 'admin_wh' ? 'selected' : '' }}>Admin WH</option>
                             <option value="section_head" {{ old('role', $currentRole) === 'section_head' ? 'selected' : '' }}>Section Head</option>
                             <option value="admin" {{ old('role', $currentRole) === 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="security" {{ old('role', $currentRole) === 'security' ? 'selected' : '' }}>Security</option>
