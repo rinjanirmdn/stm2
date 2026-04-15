@@ -704,6 +704,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 var items = data.items || [];
+                
+                if (data.generated_at && scheduleModalInfo) {
+                    var currentText = scheduleModalInfo.textContent.split(' | Last Update:')[0];
+                    scheduleModalInfo.textContent = currentText + ' | Last Update: ' + data.generated_at;
+                }
+
                 if (items.length === 0) {
                     scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">No scheduled / in-progress bookings on this date.</td></tr>';
                     return;
@@ -723,13 +729,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     var vendor = item.vendor_name || '-';
                     var status = (item.status || '').replace('_', ' ');
                     var safeStatus = status.charAt(0).toUpperCase() + status.slice(1);
+                    
+                    var badgeClass = 'st-badge--secondary';
+                    if (item.status === 'scheduled') badgeClass = 'st-badge--info';
+                    else if (item.status === 'waiting') badgeClass = 'st-badge--warning';
+                    else if (item.status === 'in_progress') badgeClass = 'st-badge--primary';
 
                     html += '<tr class="schedule-row st-row-clickable" data-start="' + (item.planned_start || '') + '">';
-                    html += '<td>' + timeStr + '</td>';
+                    html += '<td class="st-font-medium st-whitespace-nowrap">' + timeStr + '</td>';
                     html += '<td>' + po + '</td>';
                     html += '<td>' + truck + '</td>';
-                    html += '<td>' + vendor + '</td>';
-                    html += '<td>' + safeStatus + '</td>';
+                    html += '<td style="max-width:200px;" class="st-text-ellipsis st-whitespace-nowrap" title="' + vendor + '">' + vendor + '</td>';
+                    html += '<td><span class="st-badge st-badge--sm ' + badgeClass + '">' + safeStatus + '</span></td>';
                     html += '</tr>';
                 });
 

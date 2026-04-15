@@ -298,6 +298,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         postJson(urlSchedulePreview, fd)
             .then(function (data) {
+                if (data.generated_at && scheduleModalInfo) {
+                    var currentText = scheduleModalInfo.textContent.split(' | Last Update:')[0];
+                    scheduleModalInfo.textContent = currentText + ' | Last Update: ' + data.generated_at;
+                }
+
                 if (!data || !data.success || !data.items || data.items.length === 0) {
                     scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">Tidak ada jadwal pada tanggal ini.</td></tr>';
                     return;
@@ -317,11 +322,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     var status = (it.status || '').replace('_', ' ');
                     var safeStatus = status.charAt(0).toUpperCase() + status.slice(1);
 
-                    html += '<tr><td>'  + timeStr + '</td>'
+                    var badgeClass = 'st-badge--secondary';
+                    if (it.status === 'scheduled') badgeClass = 'st-badge--info';
+                    else if (it.status === 'waiting') badgeClass = 'st-badge--warning';
+                    else if (it.status === 'in_progress') badgeClass = 'st-badge--primary';
+
+                    html += '<tr><td class="st-font-medium st-whitespace-nowrap">'  + timeStr + '</td>'
                           + '<td>'  + po + '</td>'
                           + '<td>'  + truck + '</td>'
-                          + '<td>'  + vendor + '</td>'
-                          + '<td>'  + safeStatus + '</td></tr>';
+                          + '<td style="max-width:200px;" class="st-text-ellipsis st-whitespace-nowrap" title="' + vendor + '">'  + vendor + '</td>'
+                          + '<td><span class="st-badge st-badge--sm ' + badgeClass + '">'  + safeStatus + '</span></td></tr>';
                 });
                 scheduleModalBody.innerHTML = html;
             })

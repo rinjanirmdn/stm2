@@ -530,6 +530,10 @@ class SlotAjaxController extends Controller
             ];
         }
 
-        return response()->json(['success' => true, 'items' => $data]);
+        return response()->json([
+            'success' => true,
+            'items' => $data,
+            'generated_at' => date('d-m-Y H:i:s'),
+        ]);
     }
 }
