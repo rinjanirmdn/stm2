@@ -590,18 +590,22 @@ document.addEventListener('DOMContentLoaded', function () {
     var alertImportOffline = document.getElementById('import-offline-alert');
 
     function openModalImport() {
-        if (!modalImportOffline) return;
-        modalImportOffline.classList.add('st-modal--open');
-        if (alertImportOffline) {
-            alertImportOffline.classList.add('st-hidden');
-            alertImportOffline.innerHTML = '';
+        var modal = document.getElementById('modal-import-offline');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        var alert = document.getElementById('import-offline-alert');
+        if (alert) {
+            alert.classList.add('st-hidden');
+            alert.innerHTML = '';
         }
-        if (formImportOffline) formImportOffline.reset();
+        var form = document.getElementById('form-import-offline');
+        if (form) form.reset();
     }
 
     function closeModalImport() {
-        if (!modalImportOffline) return;
-        modalImportOffline.classList.remove('st-modal--open');
+        var modal = document.getElementById('modal-import-offline');
+        if (!modal) return;
+        modal.style.display = 'none';
     }
 
     document.addEventListener('click', function(e) {
