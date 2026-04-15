@@ -532,8 +532,7 @@ class UnplannedSlotController extends Controller
                 ->whereHas('roles', function ($q) {
                     $q->whereIn(DB::raw('LOWER(roles_name)'), [
                         'section head',
-                        'super admin',
-                        'super administrator',
+                        'super account',
                     ]);
                 })
                 ->get();
