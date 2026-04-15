@@ -3,12 +3,16 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings, WithStyles
 {
     public function array(): array
     {
@@ -76,12 +80,12 @@ class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths
                 'size' => 11,
             ],
             'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '1B6B93'],
             ],
             'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
         ]);
 
@@ -92,7 +96,7 @@ class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths
                 'color' => ['rgb' => '666666'],
             ],
             'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'fillType' => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => 'F2F2F2'],
             ],
         ]);
@@ -101,7 +105,7 @@ class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths
         $sheet->getStyle('A1:L1')->applyFromArray([
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'borderStyle' => Border::BORDER_THIN,
                     'color' => ['rgb' => '000000'],
                 ],
             ],
@@ -110,7 +114,7 @@ class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths
         // Add data validation dropdowns
         // Slot Type: planned / unplanned
         $validationSlotType = $sheet->getCell('A2')->getDataValidation();
-        $validationSlotType->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $validationSlotType->setType(DataValidation::TYPE_LIST);
         $validationSlotType->setFormula1('"planned,unplanned"');
         $validationSlotType->setAllowBlank(false);
         $validationSlotType->setShowDropDown(true);
@@ -124,7 +128,7 @@ class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths
 
         // Direction: inbound / outbound
         $validationDirection = $sheet->getCell('B2')->getDataValidation();
-        $validationDirection->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $validationDirection->setType(DataValidation::TYPE_LIST);
         $validationDirection->setFormula1('"inbound,outbound"');
         $validationDirection->setAllowBlank(false);
         $validationDirection->setShowDropDown(true);
@@ -140,10 +144,10 @@ class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths
 
         // Add instructions comment on A1
         $sheet->getComment('A1')->getText()->createTextRun(
-            "Fill: planned or unplanned"
+            'Fill: planned or unplanned'
         );
         $sheet->getComment('B1')->getText()->createTextRun(
-            "Fill: inbound or outbound"
+            'Fill: inbound or outbound'
         );
         $sheet->getComment('C1')->getText()->createTextRun(
             "Format: DD-MM-YYYY HH:mm\nExample: 15-04-2026 08:00"
@@ -155,10 +159,10 @@ class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths
             "Format: DD-MM-YYYY HH:mm\nExample: 15-04-2026 10:00"
         );
         $sheet->getComment('J1')->getText()->createTextRun(
-            "Use the warehouse code (e.g. CDE, FGH)"
+            'Use the warehouse code (e.g. CDE, FGH)'
         );
         $sheet->getComment('K1')->getText()->createTextRun(
-            "Use the gate number (e.g. GATE 1, GATE A)"
+            'Use the gate number (e.g. GATE 1, GATE A)'
         );
 
         return [];
