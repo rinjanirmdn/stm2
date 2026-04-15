@@ -28,3 +28,4 @@ class OfflineImportController extends Controller
             return response()->json(['success' => false, 'message' => 'Gagal mengimpor data: ' . $e->getMessage()], 500);
         }
     }
+}
