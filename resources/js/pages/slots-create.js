@@ -711,17 +711,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 var html = '';
                 items.forEach(function (item, idx) {
-                    var start = formatDateTimeForDisplay(item.planned_start);
-                    var finish = formatDateTimeForDisplay(item.planned_finish);
-                    var gate = item.gate || '-';
+                    var startObj = new Date(item.planned_start.replace(/-/g, '/'));
+                    var finishObj = item.planned_finish ? new Date(item.planned_finish.replace(/-/g, '/')) : null;
+                    
+                    var startTime = !isNaN(startObj) ? ('0' + startObj.getHours()).slice(-2) + ':' + ('0' + startObj.getMinutes()).slice(-2) : '-';
+                    var finishTime = finishObj && !isNaN(finishObj) ? ('0' + finishObj.getHours()).slice(-2) + ':' + ('0' + finishObj.getMinutes()).slice(-2) : '-';
+                    var timeStr = startTime + ' - ' + finishTime;
+                    
+                    var po = item.po_number || '-';
+                    var truck = item.truck || '-';
+                    var vendor = item.vendor_name || '-';
                     var status = (item.status || '').replace('_', ' ');
                     var safeStatus = status.charAt(0).toUpperCase() + status.slice(1);
 
                     html += '<tr class="schedule-row st-row-clickable" data-start="' + (item.planned_start || '') + '">';
-                    html += '<td>' + (idx + 1) + '</td>';
-                    html += '<td>' + start + '</td>';
-                    html += '<td>' + (finish || '-') + '</td>';
-                    html += '<td>' + gate + '</td>';
+                    html += '<td>' + timeStr + '</td>';
+                    html += '<td>' + po + '</td>';
+                    html += '<td>' + truck + '</td>';
+                    html += '<td>' + vendor + '</td>';
                     html += '<td>' + safeStatus + '</td>';
                     html += '</tr>';
                 });

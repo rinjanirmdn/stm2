@@ -304,11 +304,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 var html = '';
                 data.items.forEach(function (it, idx) {
-                    html += '<tr><td>'  + (idx + 1) + '</td>'
-                          + '<td>'  + (it.planned_start  || '-') + '</td>'
-                          + '<td>'  + (it.planned_finish || '-') + '</td>'
-                          + '<td>'  + (it.gate || '-') + '</td>'
-                          + '<td>'  + (it.status || '').replace('_', ' ') + '</td></tr>';
+                    var startObj = new Date(it.planned_start.replace(/-/g, '/'));
+                    var finishObj = it.planned_finish ? new Date(it.planned_finish.replace(/-/g, '/')) : null;
+                    
+                    var startTime = !isNaN(startObj) ? ('0' + startObj.getHours()).slice(-2) + ':' + ('0' + startObj.getMinutes()).slice(-2) : '-';
+                    var finishTime = finishObj && !isNaN(finishObj) ? ('0' + finishObj.getHours()).slice(-2) + ':' + ('0' + finishObj.getMinutes()).slice(-2) : '-';
+                    var timeStr = startTime + ' - ' + finishTime;
+                    
+                    var po = it.po_number || '-';
+                    var truck = it.truck || '-';
+                    var vendor = it.vendor_name || '-';
+                    var status = (it.status || '').replace('_', ' ');
+                    var safeStatus = status.charAt(0).toUpperCase() + status.slice(1);
+
+                    html += '<tr><td>'  + timeStr + '</td>'
+                          + '<td>'  + po + '</td>'
+                          + '<td>'  + truck + '</td>'
+                          + '<td>'  + vendor + '</td>'
+                          + '<td>'  + safeStatus + '</td></tr>';
                 });
                 scheduleModalBody.innerHTML = html;
             })
