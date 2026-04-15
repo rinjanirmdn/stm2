@@ -477,6 +477,13 @@ class SlotAjaxController extends Controller
 
         if ($date === '') {
             $date = date('Y-m-d');
+        } else {
+            try {
+                $parsedDate = new DateTime($date);
+                $date = $parsedDate->format('Y-m-d');
+            } catch (\Throwable $e) {
+                $date = date('Y-m-d');
+            }
         }
 
         $q = DB::table('slots as s')
