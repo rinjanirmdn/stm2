@@ -278,22 +278,7 @@ window.closeRejectModal = function () {
     modal.classList.remove('active');
 };
 
-document.addEventListener('click', function(e) {
-    const trigger = e.target.closest ? e.target.closest('.st-action-trigger') : null;
-    if (trigger) {
-        e.preventDefault();
-        e.stopPropagation();
-        const menu = trigger.nextElementSibling;
-        document.querySelectorAll('.st-action-menu.show').forEach(function(m) {
-            if (m !== menu) m.classList.remove('show');
-        });
-        if (menu) menu.classList.toggle('show');
-        return;
-    }
-    document.querySelectorAll('.st-action-menu.show').forEach(function(m) {
-        m.classList.remove('show');
-    });
-});
+// Removed duplicate action menu event listener as it's handled globally in main.js
 
 window.openApproveModal = function (id, ticket) {
     const modal = document.getElementById('approveModal');
