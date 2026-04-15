@@ -24,7 +24,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
         foreach ($rows as $index => $row) {
             // Check if row is empty
-            if (! isset($row['slot_type_plannedunplanned']) && ! isset($row['po_number'])) {
+            if (! isset($row['slot_type']) && ! isset($row['po_number'])) {
                 continue;
             }
 
@@ -51,9 +51,9 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     // we still save it? Or skip.
                 }
 
-                $arrivalStr = $this->parseDate($row['arrival_time_dd_mm_yyyy_hhmm'] ?? null);
-                $startStr = $this->parseDate($row['start_time_dd_mm_yyyy_hhmm'] ?? null);
-                $finishStr = $this->parseDate($row['finish_time_dd_mm_yyyy_hhmm'] ?? null);
+                $arrivalStr = $this->parseDate($row['arrival_time'] ?? null);
+                $startStr = $this->parseDate($row['start_time'] ?? null);
+                $finishStr = $this->parseDate($row['finish_time'] ?? null);
 
                 $duration = 0;
                 $leadTime = 0;
@@ -66,8 +66,8 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     $leadTime = round((strtotime($startStr) - strtotime($arrivalStr)) / 60);
                 }
 
-                $slotType = strtolower(trim($row['slot_type_plannedunplanned'] ?? 'unplanned'));
-                $direction = strtolower(trim($row['direction_inboundoutbound'] ?? 'inbound'));
+                $slotType = strtolower(trim($row['slot_type'] ?? 'unplanned'));
+                $direction = strtolower(trim($row['direction'] ?? 'inbound'));
 
                 DB::table('slots')->insert([
                     'warehouse_id' => $whId,
