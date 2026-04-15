@@ -28,6 +28,12 @@ Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/transactions', [ReportController::class, 'transactions'])->name('transactions')->middleware('permission:reports.transactions');
     Route::get('/search-suggestions', [ReportController::class, 'searchSuggestions'])->name('search_suggestions')->middleware(['permission:reports.search_suggestions', 'throttle:30,1']);
     Route::get('/gate-status', [ReportController::class, 'gateStatus'])->name('gate_status')->middleware('permission:reports.gate_status');
+
+    // Offline Import Routes
+    Route::middleware('role:super account|section head')->group(function () {
+        Route::get('/offline-import/template', [\App\Http\Controllers\Admin\OfflineImportController::class, 'downloadTemplate'])->name('offline_import.template');
+        Route::post('/offline-import/upload', [\App\Http\Controllers\Admin\OfflineImportController::class, 'import'])->name('offline_import.upload');
+    });
 });
 
 // Real-time gate status streaming

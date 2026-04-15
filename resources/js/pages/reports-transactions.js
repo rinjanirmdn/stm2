@@ -579,4 +579,88 @@ document.addEventListener('DOMContentLoaded', function () {
     if (searchInputHL && searchInputHL.value.trim().length >= 2) {
         highlightSearchInTable(tableBody, searchInputHL.value.trim());
     }
+
+    // Offline Import Logic
+    var btnImportOffline = document.getElementById('btn-import-offline');
+    var modalImportOffline = document.getElementById('modal-import-offline');
+    var btnImportClose = document.getElementById('modal-import-close');
+    var btnImportCancel = document.getElementById('btn-import-cancel');
+    var formImportOffline = document.getElementById('form-import-offline');
+    var btnImportSubmit = document.getElementById('btn-import-submit');
+    var alertImportOffline = document.getElementById('import-offline-alert');
+
+    function openModalImport() {
+        if (!modalImportOffline) return;
+        modalImportOffline.classList.add('st-modal--open');
+        if (alertImportOffline) {
+            alertImportOffline.classList.add('st-hidden');
+            alertImportOffline.innerHTML = '';
+        }
+        if (formImportOffline) formImportOffline.reset();
+    }
+
+    function closeModalImport() {
+        if (!modalImportOffline) return;
+        modalImportOffline.classList.remove('st-modal--open');
+    }
+
+    if (btnImportOffline) btnImportOffline.addEventListener('click', openModalImport);
+    if (btnImportClose) btnImportClose.addEventListener('click', closeModalImport);
+    if (btnImportCancel) btnImportCancel.addEventListener('click', closeModalImport);
+
+    if (formImportOffline) {
+        formImportOffline.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var fd = new FormData(formImportOffline);
+            var token = formImportOffline.querySelector('input[name="_token"]').value;
+            
+            btnImportSubmit.disabled = true;
+            btnImportSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin st-mr-2"></i> Uploading...';
+            if (alertImportOffline) {
+                alertImportOffline.classList.add('st-hidden');
+            }
+
+            fetch('/reports/offline-import/upload', {
+                method: 'POST',
+                body: fd,
+                headers: {
+                    'X-CSRF-TOKEN': token
+                }
+            })
+            .then(function(res) {
+                if (!res.ok) {
+                    return res.json().then(function(err) { throw err; });
+                }
+                return res.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    if (alertImportOffline) {
+                        alertImportOffline.className = 'st-alert st-alert--success st-mt-4';
+                        alertImportOffline.innerHTML = '<i class="fa-solid fa-check-circle st-mr-2"></i> ' + data.message;
+                        alertImportOffline.classList.remove('st-hidden');
+                    }
+                    setTimeout(function() {
+                        closeModalImport();
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Error occurred');
+                }
+            })
+            .catch(function(err) {
+                if (alertImportOffline) {
+                    var msg = err.message || (err.errors ? JSON.stringify(err.errors) : 'Gagal upload data');
+                    alertImportOffline.className = 'st-alert st-alert--danger st-mt-4';
+                    alertImportOffline.innerHTML = '<i class="fa-solid fa-exclamation-circle st-mr-2"></i> ' + msg;
+                    alertImportOffline.classList.remove('st-hidden');
+                }
+            })
+            .finally(function() {
+                btnImportSubmit.disabled = false;
+                btnImportSubmit.innerHTML = 'Upload & Import';
+            });
+        });
+    }
+
 });

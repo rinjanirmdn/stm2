@@ -42,10 +42,43 @@
                 </div>
                 <div class="st-form-field st-flex-0">
                     <a id="transactions-excel-link" href="{{ route('reports.transactions', array_merge(request()->query(), ['page_size' => 'all', 'export' => 'excel'])) }}" class="st-btn st-btn--primary">Excel</a>
+
+                    @hasanyrole('super account|section head')
+                        <button type="button" class="st-btn st-btn--primary" id="btn-import-offline" style="margin-left: 8px;">Import Offline</button>
+                    @endhasanyrole
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- Import Offline Modal --}}
+    @hasanyrole('super account|section head')
+    <div id="modal-import-offline" class="st-modal">
+        <div class="st-modal__content st-maxw-500">
+            <div class="st-modal__header">
+                <h3 class="st-modal__title">Import Data Offline</h3>
+                <button type="button" class="st-btn st-btn--sm st-modal__close" id="modal-import-close">&times;</button>
+            </div>
+            <div class="st-modal__body">
+                <p class="st-text--muted st-mb-4">Gunakan fitur ini untuk merekam transaksi yang dilakukan saat server/listrik mati.</p>
+                <a href="{{ route('reports.offline_import.template') }}" class="st-link st-font-semibold st-mb-8 st-block"><i class="fa-solid fa-download st-mr-2"></i> Download Template</a>
+                
+                <form id="form-import-offline" enctype="multipart/form-data">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <div class="st-form-field">
+                        <label class="st-label">Upload Excel File</label>
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" class="st-input" required>
+                    </div>
+                    <div id="import-offline-alert" class="st-alert st-hidden st-mt-4"></div>
+                    <div class="st-form-actions st-mt-4">
+                        <button type="submit" class="st-btn st-btn--primary" id="btn-import-submit">Upload & Import</button>
+                        <button type="button" class="st-btn st-btn--outline-primary st-modal__close" id="btn-import-cancel">Batal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endhasanyrole
 
     <section class="st-row st-flex-1 st-minh-0">
         <div class="st-col-12 st-flex-1 st-flex st-flex-col st-minh-0">
