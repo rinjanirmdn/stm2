@@ -20,19 +20,19 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
         return [
             // Row 2: Required / Optional indicator
             [
-                'Required',
-                'Required',
-                'Optional',
-                'Required',
-                'Required',
-                'Required',
-                'Optional',
-                'Optional',
-                'Optional',
-                'Optional',
-                'Required',
-                'Required',
-                'Optional',
+                'Required', // A: Slot Type
+                'Required', // B: Direction
+                'Required', // C: Truck Type
+                'Required', // D: Arrival
+                'Required', // E: Start
+                'Required', // F: Finish
+                'Required', // G: PO
+                'Required', // H: Vehicle
+                'Required', // I: Driver
+                'Required', // J: Vendor
+                'Required', // K: WH
+                'Required', // L: Gate
+                'Optional', // M: Notes
             ],
             // Row 3: Example data
             [
@@ -94,8 +94,8 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
     public function styles(Worksheet $sheet)
     {
         $lastCol = 'M';
-        $requiredCols = ['A', 'B', 'D', 'E', 'F', 'K', 'L'];
-        $optionalCols = ['C', 'G', 'H', 'I', 'J', 'M'];
+        $requiredCols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+        $optionalCols = ['M'];
 
         // --- Row 1: Column Headers ---
         // Required columns header (dark blue)
@@ -166,14 +166,14 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
         // --- Cell Comments ---
         $sheet->getComment('A1')->getText()->createTextRun("REQUIRED\nSelect: planned or unplanned");
         $sheet->getComment('B1')->getText()->createTextRun("REQUIRED\nSelect: inbound or outbound");
-        $sheet->getComment('C1')->getText()->createTextRun("OPTIONAL\nSelect truck type from dropdown");
+        $sheet->getComment('C1')->getText()->createTextRun("REQUIRED\nSelect truck type from dropdown");
         $sheet->getComment('D1')->getText()->createTextRun("REQUIRED\nFormat: DD-MM-YYYY HH:mm");
         $sheet->getComment('E1')->getText()->createTextRun("REQUIRED\nFormat: DD-MM-YYYY HH:mm");
         $sheet->getComment('F1')->getText()->createTextRun("REQUIRED\nFormat: DD-MM-YYYY HH:mm");
-        $sheet->getComment('G1')->getText()->createTextRun("OPTIONAL\nPO/DO Number");
-        $sheet->getComment('H1')->getText()->createTextRun("OPTIONAL\nTruck plate number");
-        $sheet->getComment('I1')->getText()->createTextRun("OPTIONAL\nDriver name");
-        $sheet->getComment('J1')->getText()->createTextRun("OPTIONAL\nVendor / Customer name");
+        $sheet->getComment('G1')->getText()->createTextRun("REQUIRED\nPO/DO Number");
+        $sheet->getComment('H1')->getText()->createTextRun("REQUIRED\nTruck plate number");
+        $sheet->getComment('I1')->getText()->createTextRun("REQUIRED\nDriver name");
+        $sheet->getComment('J1')->getText()->createTextRun("REQUIRED\nVendor / Customer name");
         $sheet->getComment('K1')->getText()->createTextRun("REQUIRED\nValues: {$whCodes}");
         $sheet->getComment('L1')->getText()->createTextRun("REQUIRED\nValues: {$gateNumbers}");
         $sheet->getComment('M1')->getText()->createTextRun("OPTIONAL\nAny notes");
