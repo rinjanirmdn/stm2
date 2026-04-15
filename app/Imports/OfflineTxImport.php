@@ -9,11 +9,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithStartRow;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class OfflineTxImport implements ToCollection, WithHeadingRow
+class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
 {
     public function __construct() {}
+
+    public function startRow(): int
+    {
+        return 3; // Skip row 2 (Required/Optional indicator row)
+    }
 
     public function collection(Collection $rows)
     {

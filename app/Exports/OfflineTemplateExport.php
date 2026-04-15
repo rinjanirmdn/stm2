@@ -2,24 +2,43 @@
 
 namespace App\Exports;
 
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 
-class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings, WithStyles
+class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths, WithStyles
 {
     public function array(): array
     {
         return [
+            // Row 2: Required / Optional indicator
+            [
+                'Required',
+                'Required',
+                'Optional',
+                'Required',
+                'Required',
+                'Required',
+                'Optional',
+                'Optional',
+                'Optional',
+                'Optional',
+                'Required',
+                'Required',
+                'Optional',
+            ],
+            // Row 3: Example data
             [
                 'unplanned',
                 'inbound',
+                'CDD/CDE',
                 '15-04-2026 08:00',
                 '15-04-2026 08:30',
                 '15-04-2026 10:00',
@@ -27,9 +46,9 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
                 'B 1234 ABC',
                 'Budi Santoso',
                 'PT. Vendor Example',
-                'CDE',
-                'GATE 1',
-                'Example: recorded during power outage',
+                'WH1',
+                'A',
+                'Recorded during power outage',
             ],
         ];
     }
@@ -39,6 +58,7 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
         return [
             'Slot Type',
             'Direction',
+            'Truck Type',
             'Arrival Time',
             'Start Time',
             'Finish Time',
@@ -55,116 +75,126 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
     public function columnWidths(): array
     {
         return [
-            'A' => 18,  // Slot Type
-            'B' => 16,  // Direction
-            'C' => 22,  // Arrival Time
-            'D' => 22,  // Start Time
-            'E' => 22,  // Finish Time
-            'F' => 18,  // PO Number
-            'G' => 18,  // Vehicle Number
-            'H' => 20,  // Driver Name
-            'I' => 28,  // Vendor Name
-            'J' => 20,  // Warehouse Code
-            'K' => 16,  // Gate Number
-            'L' => 40,  // Notes
+            'A' => 20,
+            'B' => 18,
+            'C' => 28,
+            'D' => 24,
+            'E' => 24,
+            'F' => 24,
+            'G' => 18,
+            'H' => 20,
+            'I' => 20,
+            'J' => 28,
+            'K' => 22,
+            'L' => 18,
+            'M' => 36,
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        // Bold header row with background color
-        $sheet->getStyle('A1:L1')->applyFromArray([
-            'font' => [
-                'bold' => true,
-                'color' => ['rgb' => 'FFFFFF'],
-                'size' => 11,
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '1B6B93'],
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-        ]);
+        $lastCol = 'M';
+        $requiredCols = ['A', 'B', 'D', 'E', 'F', 'K', 'L'];
+        $optionalCols = ['C', 'G', 'H', 'I', 'J', 'M'];
 
-        // Example row styling (light gray italic)
-        $sheet->getStyle('A2:L2')->applyFromArray([
-            'font' => [
-                'italic' => true,
-                'color' => ['rgb' => '666666'],
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'F2F2F2'],
-            ],
-        ]);
-
-        // Add borders to header
-        $sheet->getStyle('A1:L1')->applyFromArray([
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000'],
-                ],
-            ],
-        ]);
-
-        // Add data validation dropdowns
-        // Slot Type: planned / unplanned
-        $validationSlotType = $sheet->getCell('A2')->getDataValidation();
-        $validationSlotType->setType(DataValidation::TYPE_LIST);
-        $validationSlotType->setFormula1('"planned,unplanned"');
-        $validationSlotType->setAllowBlank(false);
-        $validationSlotType->setShowDropDown(true);
-        $validationSlotType->setShowErrorMessage(true);
-        $validationSlotType->setErrorTitle('Invalid');
-        $validationSlotType->setError('Please select: planned or unplanned');
-        // Apply to rows 2-100
-        for ($i = 3; $i <= 100; $i++) {
-            $sheet->getCell("A{$i}")->setDataValidation(clone $validationSlotType);
+        // --- Row 1: Column Headers ---
+        // Required columns header (dark blue)
+        foreach ($requiredCols as $col) {
+            $sheet->getStyle("{$col}1")->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1B6B93']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
+            ]);
         }
 
-        // Direction: inbound / outbound
-        $validationDirection = $sheet->getCell('B2')->getDataValidation();
-        $validationDirection->setType(DataValidation::TYPE_LIST);
-        $validationDirection->setFormula1('"inbound,outbound"');
-        $validationDirection->setAllowBlank(false);
-        $validationDirection->setShowDropDown(true);
-        $validationDirection->setShowErrorMessage(true);
-        $validationDirection->setErrorTitle('Invalid');
-        $validationDirection->setError('Please select: inbound or outbound');
-        for ($i = 3; $i <= 100; $i++) {
-            $sheet->getCell("B{$i}")->setDataValidation(clone $validationDirection);
+        // Optional columns header (lighter teal)
+        foreach ($optionalCols as $col) {
+            $sheet->getStyle("{$col}1")->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '5C9EAD']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']]],
+            ]);
         }
 
-        // Set row height for header
-        $sheet->getRowDimension(1)->setRowHeight(28);
+        // --- Row 2: Required/Optional indicator row ---
+        foreach ($requiredCols as $col) {
+            $sheet->getStyle("{$col}2")->applyFromArray([
+                'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C0392B']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ]);
+        }
+        foreach ($optionalCols as $col) {
+            $sheet->getStyle("{$col}2")->applyFromArray([
+                'font' => ['bold' => true, 'size' => 9, 'color' => ['rgb' => '333333']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E8E8E8']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ]);
+        }
 
-        // Add instructions comment on A1
-        $sheet->getComment('A1')->getText()->createTextRun(
-            'Fill: planned or unplanned'
-        );
-        $sheet->getComment('B1')->getText()->createTextRun(
-            'Fill: inbound or outbound'
-        );
-        $sheet->getComment('C1')->getText()->createTextRun(
-            "Format: DD-MM-YYYY HH:mm\nExample: 15-04-2026 08:00"
-        );
-        $sheet->getComment('D1')->getText()->createTextRun(
-            "Format: DD-MM-YYYY HH:mm\nExample: 15-04-2026 08:30"
-        );
-        $sheet->getComment('E1')->getText()->createTextRun(
-            "Format: DD-MM-YYYY HH:mm\nExample: 15-04-2026 10:00"
-        );
-        $sheet->getComment('J1')->getText()->createTextRun(
-            'Use the warehouse code (e.g. CDE, FGH)'
-        );
-        $sheet->getComment('K1')->getText()->createTextRun(
-            'Use the gate number (e.g. GATE 1, GATE A)'
-        );
+        // --- Row 3: Example data (italic, light gray) ---
+        $sheet->getStyle("A3:{$lastCol}3")->applyFromArray([
+            'font' => ['italic' => true, 'color' => ['rgb' => '888888']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FAFAFA']],
+        ]);
+
+        // Row heights
+        $sheet->getRowDimension(1)->setRowHeight(30);
+        $sheet->getRowDimension(2)->setRowHeight(18);
+
+        // --- Dropdown Validations (from row 3 onwards) ---
+        $this->applyDropdown($sheet, 'A', '"planned,unplanned"', 'Select: planned or unplanned');
+        $this->applyDropdown($sheet, 'B', '"inbound,outbound"', 'Select: inbound or outbound');
+
+        $truckTypes = DB::table('md_truck')->pluck('truck_type')->implode(',');
+        if ($truckTypes) {
+            $this->applyDropdown($sheet, 'C', '"' . $truckTypes . '"', 'Select truck type');
+        }
+
+        $whCodes = DB::table('md_warehouse')->pluck('wh_code')->implode(',');
+        if ($whCodes) {
+            $this->applyDropdown($sheet, 'K', '"' . $whCodes . '"', 'Select warehouse code');
+        }
+
+        $gateNumbers = DB::table('md_gates')->pluck('gate_number')->unique()->implode(',');
+        if ($gateNumbers) {
+            $this->applyDropdown($sheet, 'L', '"' . $gateNumbers . '"', 'Select gate number');
+        }
+
+        // --- Cell Comments ---
+        $sheet->getComment('A1')->getText()->createTextRun("REQUIRED\nSelect: planned or unplanned");
+        $sheet->getComment('B1')->getText()->createTextRun("REQUIRED\nSelect: inbound or outbound");
+        $sheet->getComment('C1')->getText()->createTextRun("OPTIONAL\nSelect truck type from dropdown");
+        $sheet->getComment('D1')->getText()->createTextRun("REQUIRED\nFormat: DD-MM-YYYY HH:mm");
+        $sheet->getComment('E1')->getText()->createTextRun("REQUIRED\nFormat: DD-MM-YYYY HH:mm");
+        $sheet->getComment('F1')->getText()->createTextRun("REQUIRED\nFormat: DD-MM-YYYY HH:mm");
+        $sheet->getComment('G1')->getText()->createTextRun("OPTIONAL\nPO/DO Number");
+        $sheet->getComment('H1')->getText()->createTextRun("OPTIONAL\nTruck plate number");
+        $sheet->getComment('I1')->getText()->createTextRun("OPTIONAL\nDriver name");
+        $sheet->getComment('J1')->getText()->createTextRun("OPTIONAL\nVendor / Customer name");
+        $sheet->getComment('K1')->getText()->createTextRun("REQUIRED\nValues: {$whCodes}");
+        $sheet->getComment('L1')->getText()->createTextRun("REQUIRED\nValues: {$gateNumbers}");
+        $sheet->getComment('M1')->getText()->createTextRun("OPTIONAL\nAny notes");
+
+        // Freeze top 2 rows
+        $sheet->freezePane('A3');
 
         return [];
+    }
+
+    private function applyDropdown(Worksheet $sheet, string $col, string $formula, string $errorMsg): void
+    {
+        for ($i = 3; $i <= 100; $i++) {
+            $validation = $sheet->getCell("{$col}{$i}")->getDataValidation();
+            $validation->setType(DataValidation::TYPE_LIST);
+            $validation->setFormula1($formula);
+            $validation->setAllowBlank(true);
+            $validation->setShowDropDown(true);
+            $validation->setShowErrorMessage(true);
+            $validation->setErrorTitle('Invalid');
+            $validation->setError($errorMsg);
+        }
     }
 }
