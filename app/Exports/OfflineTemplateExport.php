@@ -4,16 +4,16 @@ namespace App\Exports;
 
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings, WithStyles
 {
     public function array(): array
     {
@@ -150,17 +150,17 @@ class OfflineTemplateExport implements FromArray, WithHeadings, WithColumnWidths
 
         $truckTypes = DB::table('md_truck')->pluck('truck_type')->implode(',');
         if ($truckTypes) {
-            $this->applyDropdown($sheet, 'C', '"' . $truckTypes . '"', 'Select truck type');
+            $this->applyDropdown($sheet, 'C', '"'.$truckTypes.'"', 'Select truck type');
         }
 
         $whCodes = DB::table('md_warehouse')->pluck('wh_code')->implode(',');
         if ($whCodes) {
-            $this->applyDropdown($sheet, 'K', '"' . $whCodes . '"', 'Select warehouse code');
+            $this->applyDropdown($sheet, 'K', '"'.$whCodes.'"', 'Select warehouse code');
         }
 
         $gateNumbers = DB::table('md_gates')->pluck('gate_number')->unique()->implode(',');
         if ($gateNumbers) {
-            $this->applyDropdown($sheet, 'L', '"' . $gateNumbers . '"', 'Select gate number');
+            $this->applyDropdown($sheet, 'L', '"'.$gateNumbers.'"', 'Select gate number');
         }
 
         // --- Cell Comments ---
