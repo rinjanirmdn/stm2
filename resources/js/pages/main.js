@@ -239,6 +239,26 @@ document.addEventListener('DOMContentLoaded', function () {
         : {};
 
     // ─── Global Action Menu Toggle ─────────────────────────────────────────────
+    function stResetMenuPosition(menu) {
+        if (!menu) return;
+        menu.style.position = '';
+        menu.style.top = '';
+        menu.style.bottom = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.zIndex = '';
+        menu.style.width = '';
+    }
+
+    function stCloseAllActionMenus(except) {
+        document.querySelectorAll('.st-action-menu.show').forEach(function (m) {
+            if (m !== except) {
+                m.classList.remove('show');
+                stResetMenuPosition(m);
+            }
+        });
+    }
+
     document.addEventListener('click', function (e) {
         var trigger = e.target && e.target.closest ? e.target.closest('.st-action-trigger') : null;
         if (trigger) {
@@ -250,28 +270,36 @@ document.addEventListener('DOMContentLoaded', function () {
             
             if (menu && menu.classList.contains('st-action-menu')) {
                 // Close all other open menus
-                document.querySelectorAll('.st-action-menu.show').forEach(function (m) {
-                    if (m !== menu) {
-                        m.classList.remove('show');
-                        m.style.top = '';
-                        m.style.bottom = '';
-                    }
-                });
+                stCloseAllActionMenus(menu);
                 
                 if (!menu.classList.contains('show')) {
+                    // Use position:fixed to escape overflow:auto containers (e.g. st-table-wrapper)
                     var triggerRect = trigger.getBoundingClientRect();
                     var spaceBelow = window.innerHeight - triggerRect.bottom;
-                    
+                    var menuWidth = 160; // min-width from CSS
+
+                    menu.style.position = 'fixed';
+                    menu.style.zIndex = '9999';
+                    menu.style.width = 'auto';
+                    menu.style.minWidth = menuWidth + 'px';
+
+                    // Horizontal: align right edge to trigger right edge
+                    var leftPos = triggerRect.right - menuWidth;
+                    if (leftPos < 8) leftPos = 8;
+                    menu.style.left = leftPos + 'px';
+                    menu.style.right = 'auto';
+
                     if (spaceBelow < 250) {
+                        // Open upward
+                        menu.style.bottom = (window.innerHeight - triggerRect.top + 4) + 'px';
                         menu.style.top = 'auto';
-                        menu.style.bottom = '100%';
                     } else {
+                        // Open downward
+                        menu.style.top = (triggerRect.bottom + 4) + 'px';
                         menu.style.bottom = 'auto';
-                        menu.style.top = '100%';
                     }
                 } else {
-                    menu.style.top = '';
-                    menu.style.bottom = '';
+                    stResetMenuPosition(menu);
                 }
                 
                 menu.classList.toggle('show');
@@ -284,14 +312,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (openMenus.length > 0) {
             var inMenu = e.target && e.target.closest ? e.target.closest('.st-action-menu') : null;
             if (!inMenu) {
-                openMenus.forEach(function (m) { 
-                    m.classList.remove('show'); 
-                    m.style.top = '';
-                    m.style.bottom = '';
-                });
+                stCloseAllActionMenus();
             }
         }
     });
+
+    // Close action menus on scroll (since they use position:fixed)
+    document.addEventListener('scroll', function () { stCloseAllActionMenus(); }, true);
 
     function stToIsoDate(date) {
         var year = date.getFullYear();
