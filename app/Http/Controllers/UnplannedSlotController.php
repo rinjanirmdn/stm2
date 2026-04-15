@@ -562,14 +562,14 @@ class UnplannedSlotController extends Controller
                 try {
                     $recipient->notify(clone $notification);
                 } catch (\Throwable $e) {
-                    Log::warning('Failed to notify recipient for internal slot: ' . $e->getMessage(), [
+                    Log::warning('Failed to notify recipient for internal slot: '.$e->getMessage(), [
                         'slot_id' => $slotId,
                         'recipient_id' => $recipient->id,
                     ]);
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning('Failed to send internal slot creation notification: ' . $e->getMessage(), [
+            Log::warning('Failed to send internal slot creation notification: '.$e->getMessage(), [
                 'slot_id' => $slotId,
             ]);
         }

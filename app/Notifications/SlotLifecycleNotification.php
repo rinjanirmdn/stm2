@@ -52,15 +52,15 @@ class SlotLifecycleNotification extends Notification
 
         $typeLabel = $this->slotType === 'unplanned' ? 'Unplanned' : 'Planned';
 
-        $message = $label . ' by ' . $this->performedBy;
+        $message = $label.' by '.$this->performedBy;
         if ($this->ticketNumber !== '') {
-            $message .= ' — Ticket ' . $this->ticketNumber;
+            $message .= ' — Ticket '.$this->ticketNumber;
         }
         if ($this->poNumber !== '') {
-            $message .= ' (PO ' . $this->poNumber . ')';
+            $message .= ' (PO '.$this->poNumber.')';
         }
         if ($this->gateName) {
-            $message .= ' at ' . $this->gateName;
+            $message .= ' at '.$this->gateName;
         }
 
         $actionUrl = $this->slotType === 'unplanned'
@@ -68,7 +68,7 @@ class SlotLifecycleNotification extends Notification
             : route('slots.show', ['slotId' => $this->slotId], false);
 
         return [
-            'title' => $typeLabel . ': ' . $label,
+            'title' => $typeLabel.': '.$label,
             'message' => $message,
             'action_url' => $actionUrl,
             'icon' => $icon,

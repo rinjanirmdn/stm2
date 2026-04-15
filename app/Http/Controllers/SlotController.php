@@ -17,8 +17,8 @@ use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SlotController extends Controller
 {
@@ -780,14 +780,14 @@ class SlotController extends Controller
                 try {
                     $recipient->notify(clone $notification);
                 } catch (\Throwable $e) {
-                    Log::warning('Failed to notify recipient for internal slot: ' . $e->getMessage(), [
+                    Log::warning('Failed to notify recipient for internal slot: '.$e->getMessage(), [
                         'slot_id' => $slotId,
                         'recipient_id' => $recipient->id,
                     ]);
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning('Failed to send internal slot creation notification: ' . $e->getMessage(), [
+            Log::warning('Failed to send internal slot creation notification: '.$e->getMessage(), [
                 'slot_id' => $slotId,
             ]);
         }

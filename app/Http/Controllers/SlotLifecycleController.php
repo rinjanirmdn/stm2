@@ -773,16 +773,16 @@ class SlotLifecycleController extends Controller
             foreach ($recipients as $recipient) {
                 try {
                     $recipient->notify(clone $notification);
-                } catch (\Throwable $e) {
-                    Log::warning('Failed to send lifecycle notification: ' . $e->getMessage(), [
+                } catch (Throwable $e) {
+                    Log::warning('Failed to send lifecycle notification: '.$e->getMessage(), [
                         'slot_id' => $slotId,
                         'event' => $event,
                         'recipient_id' => $recipient->id,
                     ]);
                 }
             }
-        } catch (\Throwable $e) {
-            Log::warning('Failed to dispatch lifecycle notification: ' . $e->getMessage(), [
+        } catch (Throwable $e) {
+            Log::warning('Failed to dispatch lifecycle notification: '.$e->getMessage(), [
                 'slot_id' => $slotId,
                 'event' => $event,
             ]);

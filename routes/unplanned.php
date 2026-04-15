@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 /* Unplanned Slot Routes */
 
@@ -38,4 +38,3 @@ Route::prefix('unplanned')->name('unplanned.')->group(function () {
 
     Route::get('/{slotId}', [SlotController::class, 'show'])->whereNumber('slotId')->name('show')->middleware('permission:unplanned.show');
 });
-

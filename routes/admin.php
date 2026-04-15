@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 /* Admin Routes â€” Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API, Security Dashboard */
 
@@ -162,4 +162,3 @@ Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->g
     Route::post('/{id}/delete', [MdBpController::class, 'destroy'])->whereNumber('id')->name('destroy');
     Route::get('/ajax/search', [MdBpController::class, 'ajaxSearch'])->name('ajax.search');
 });
-
