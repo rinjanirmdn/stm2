@@ -68,6 +68,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
                 $slotType = strtolower(trim($row['slot_type'] ?? 'unplanned'));
                 $direction = strtolower(trim($row['direction'] ?? 'inbound'));
+                $truckType = trim($row['truck_type'] ?? '');
 
                 DB::table('slots')->insert([
                     'warehouse_id' => $whId,
@@ -81,6 +82,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     'vehicle_number_snap' => substr($row['vehicle_number'] ?? '-', 0, 50),
                     'po_number' => substr($row['po_number'] ?? '-', 0, 50),
                     'driver_name' => substr($row['driver_name'] ?? '-', 0, 100),
+                    'truck_type' => $truckType ?: null,
                     'slot_type' => $slotType === 'planned' ? 'planned' : 'unplanned',
                     'direction' => $direction === 'outbound' ? 'outbound' : 'inbound',
                     'actual_duration_minutes' => $duration > 0 ? (int) $duration : null,
