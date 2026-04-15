@@ -13,7 +13,7 @@ class OfflineImportController extends Controller
     public function downloadTemplate()
     {
         $fileName = 'offline_import_template.xlsx';
-        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $fileName;
+        $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.$fileName;
 
         $content = Excel::raw(new OfflineTemplateExport(), \Maatwebsite\Excel\Excel::XLSX);
         file_put_contents($tempPath, $content);
