@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\OfflineTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Imports\OfflineTxImport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\OfflineTemplateExport;
-use App\Imports\OfflineTxImport;
 
 class OfflineImportController extends Controller
 {
     public function downloadTemplate()
     {
-        return Excel::download(new OfflineTemplateExport, 'offline_import_template.xlsx');
+        return Excel::download(new OfflineTemplateExport(), 'offline_import_template.xlsx');
     }
 
     public function import(Request $request)
@@ -22,10 +22,11 @@ class OfflineImportController extends Controller
         ]);
 
         try {
-            Excel::import(new OfflineTxImport, $request->file('file'));
+            Excel::import(new OfflineTxImport(), $request->file('file'));
+
             return response()->json(['success' => true, 'message' => 'Data offline berhasil diimpor.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengimpor data: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Gagal mengimpor data: '.$e->getMessage()], 500);
         }
     }
 }
