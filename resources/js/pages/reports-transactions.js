@@ -604,9 +604,13 @@ document.addEventListener('DOMContentLoaded', function () {
         modalImportOffline.classList.remove('st-modal--open');
     }
 
-    if (btnImportOffline) btnImportOffline.addEventListener('click', openModalImport);
-    if (btnImportClose) btnImportClose.addEventListener('click', closeModalImport);
-    if (btnImportCancel) btnImportCancel.addEventListener('click', closeModalImport);
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#btn-import-offline')) {
+            openModalImport();
+        } else if (e.target.closest('#modal-import-close') || e.target.closest('#btn-import-cancel')) {
+            closeModalImport();
+        }
+    });
 
     if (formImportOffline) {
         formImportOffline.addEventListener('submit', function (e) {

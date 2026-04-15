@@ -6,8 +6,8 @@
 @section('content')
     <div class="st-card st-mb-12">
         <div class="st-p-12">
-            <div class="st-form-row st-items-end">
-                <div class="st-form-field st-flex-1 st-minw-260 st-relative">
+            <div class="st-form-row st-items-end" style="flex-wrap: wrap; gap: 12px;">
+                <div class="st-form-field st-flex-1 st-minw-260 st-relative" style="min-width: 200px;">
                     <label class="st-label">Search</label>
                     <input
                         type="text"
@@ -40,11 +40,11 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="st-form-field st-flex-0">
-                    <a id="transactions-excel-link" href="{{ route('reports.transactions', array_merge(request()->query(), ['page_size' => 'all', 'export' => 'excel'])) }}" class="st-btn st-btn--primary">Excel</a>
+                <div class="st-form-field st-flex-0 st-flex st-align-center" style="gap: 8px;">
+                    <a id="transactions-excel-link" href="{{ route('reports.transactions', array_merge(request()->query(), ['page_size' => 'all', 'export' => 'excel'])) }}" class="st-btn st-btn--primary">Export</a>
 
-                    @hasanyrole('super account|section head')
-                        <button type="button" class="st-btn st-btn--primary" id="btn-import-offline" style="margin-left: 8px;">Import Offline</button>
+                    @hasanyrole('Super Account|Section Head|super account|section head')
+                        <button type="button" class="st-btn st-btn--primary" id="btn-import-offline">Import</button>
                     @endhasanyrole
                 </div>
             </div>
@@ -52,7 +52,7 @@
     </div>
 
     {{-- Import Offline Modal --}}
-    @hasanyrole('super account|section head')
+    @hasanyrole('Super Account|Section Head|super account|section head')
     <div id="modal-import-offline" class="st-modal">
         <div class="st-modal__content st-maxw-500">
             <div class="st-modal__header">
