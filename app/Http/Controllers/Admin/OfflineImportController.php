@@ -13,13 +13,13 @@ class OfflineImportController extends Controller
     public function downloadTemplate()
     {
         $fileName = 'offline_import_template.xlsx';
-        $tempPath = storage_path('app/'.$fileName);
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $fileName;
 
-        Excel::store(new OfflineTemplateExport(), $fileName, 'local', \Maatwebsite\Excel\Excel::XLSX);
+        $content = Excel::raw(new OfflineTemplateExport(), \Maatwebsite\Excel\Excel::XLSX);
+        file_put_contents($tempPath, $content);
 
         return response()->download($tempPath, $fileName, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ])->deleteFileAfterSend(true);
     }
 
