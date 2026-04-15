@@ -2034,12 +2034,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('.st-notification-item--unread').forEach(function (item) {
                     item.classList.remove('st-notification-item--unread');
                 });
-                // Update notification count
-                var countBadge = document.getElementById('st-notification-count');
-                if (countBadge) {
-                    countBadge.textContent = '0';
-                    countBadge.style.display = 'none';
-                }
+                // Remove badge from bell icon
+                var badge = document.querySelector('.st-notification-badge');
+                if (badge) badge.remove();
+                // Also remove vendor badge if present
+                document.querySelectorAll('.notification-badge, .vendor-user-menu-badge, .vendor-header__user-menu-badge').forEach(function (b) {
+                    if (b) b.remove();
+                });
             }
         }).catch(function () { });
     };
