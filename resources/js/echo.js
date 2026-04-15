@@ -3,13 +3,17 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 window.Pusher = Pusher;
 
+// Determine if we're behind an HTTPS reverse proxy (Apache proxies wss→ws on port 443)
+var isHttps = window.location.protocol === 'https:';
+var reverbPort = isHttps ? 443 : (import.meta.env.VITE_REVERB_PORT ?? 8080);
+
 window.Echo = new Echo({
     broadcaster: 'reverb',
     key: import.meta.env.VITE_REVERB_APP_KEY,
     wsHost: window.location.hostname,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    wsPort: reverbPort,
+    wssPort: reverbPort,
+    forceTLS: isHttps,
     enabledTransports: ['ws', 'wss'],
 });
 
