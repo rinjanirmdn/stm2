@@ -24,7 +24,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
         foreach ($rows as $index => $row) {
             // Check if row is empty
-            if (! isset($row['slot_type_plannedunplanned']) && ! isset($row['nomor_po'])) {
+            if (! isset($row['slot_type_plannedunplanned']) && ! isset($row['po_number'])) {
                 continue;
             }
 
@@ -51,9 +51,9 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     // we still save it? Or skip.
                 }
 
-                $arrivalStr = $this->parseDate($row['jam_datang_dd_mm_yyyy_hhmm'] ?? null);
-                $startStr = $this->parseDate($row['jam_mulai_dd_mm_yyyy_hhmm'] ?? null);
-                $finishStr = $this->parseDate($row['jam_selesai_dd_mm_yyyy_hhmm'] ?? null);
+                $arrivalStr = $this->parseDate($row['arrival_time_dd_mm_yyyy_hhmm'] ?? null);
+                $startStr = $this->parseDate($row['start_time_dd_mm_yyyy_hhmm'] ?? null);
+                $finishStr = $this->parseDate($row['finish_time_dd_mm_yyyy_hhmm'] ?? null);
 
                 $duration = 0;
                 $leadTime = 0;
@@ -77,10 +77,10 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     'actual_start' => $startStr,
                     'actual_finish' => $finishStr,
                     'status' => 'completed',
-                    'vendor_name' => substr($row['nama_vendor_customer'] ?? '-', 0, 100),
-                    'vehicle_number_snap' => substr($row['nomor_kendaraan'] ?? '-', 0, 50),
-                    'po_number' => substr($row['nomor_po'] ?? '-', 0, 50),
-                    'driver_name' => substr($row['sopir'] ?? '-', 0, 100),
+                    'vendor_name' => substr($row['vendor_name'] ?? '-', 0, 100),
+                    'vehicle_number_snap' => substr($row['vehicle_number'] ?? '-', 0, 50),
+                    'po_number' => substr($row['po_number'] ?? '-', 0, 50),
+                    'driver_name' => substr($row['driver_name'] ?? '-', 0, 100),
                     'slot_type' => $slotType === 'planned' ? 'planned' : 'unplanned',
                     'direction' => $direction === 'outbound' ? 'outbound' : 'inbound',
                     'actual_duration_minutes' => $duration > 0 ? (int) $duration : null,

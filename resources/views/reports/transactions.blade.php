@@ -56,11 +56,11 @@
     <div id="modal-import-offline" class="st-modal">
         <div class="st-modal__content st-maxw-500">
             <div class="st-modal__header">
-                <h3 class="st-modal__title">Import Data Offline</h3>
+                <h3 class="st-modal__title">Import Offline Data</h3>
                 <button type="button" class="st-btn st-btn--sm st-modal__close" id="modal-import-close">&times;</button>
             </div>
             <div class="st-modal__body">
-                <p class="st-text--muted st-mb-4">Gunakan fitur ini untuk merekam transaksi yang dilakukan saat server/listrik mati.</p>
+                <p class="st-text--muted st-mb-4">Use this feature to import transactions manually recorded during server or network outages.</p>
                 <a href="{{ route('reports.offline_import.template') }}" class="st-link st-font-semibold st-mb-8 st-block"><i class="fa-solid fa-download st-mr-2"></i> Download Template</a>
                 
                 <form id="form-import-offline" enctype="multipart/form-data">
@@ -72,7 +72,7 @@
                     <div id="import-offline-alert" class="st-alert st-hidden st-mt-4"></div>
                     <div class="st-form-actions st-mt-4">
                         <button type="submit" class="st-btn st-btn--primary" id="btn-import-submit">Upload & Import</button>
-                        <button type="button" class="st-btn st-btn--outline-primary st-modal__close" id="btn-import-cancel">Batal</button>
+                        <button type="button" class="st-btn st-btn--outline-primary st-modal__close" id="btn-import-cancel">Cancel</button>
                     </div>
                 </form>
             </div>
