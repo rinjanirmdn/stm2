@@ -1,20 +1,20 @@
 {
-  "_client-DzYSRBXd.js": {
-    "file": "assets/client-DzYSRBXd.js",
+  "_client-MYcmZywi.js": {
+    "file": "assets/client-MYcmZywi.js",
     "name": "client",
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
-  "_react-vendor-C6WxKkic.js": {
-    "file": "assets/react-vendor-C6WxKkic.js",
+  "_react-vendor-N--QU9DW.js": {
+    "file": "assets/react-vendor-N--QU9DW.js",
     "name": "react-vendor"
   },
-  "_recharts-4-iG22hf.js": {
-    "file": "assets/recharts-4-iG22hf.js",
+  "_recharts-l8O6fVoK.js": {
+    "file": "assets/recharts-l8O6fVoK.js",
     "name": "recharts",
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "_search-highlight-CjsPCiQd.js": {
@@ -67,12 +67,12 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CZPMs-rA.js",
+    "file": "assets/app-BBG_585q.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "resources/js/pages/admin-bookings-index.js": {
@@ -256,25 +256,25 @@
     "isEntry": true
   },
   "resources/js/react/dashboard.jsx": {
-    "file": "assets/dashboard-BQdu1p6h.js",
+    "file": "assets/dashboard--r3u2yOg.js",
     "name": "dashboard",
     "src": "resources/js/react/dashboard.jsx",
     "isEntry": true,
     "imports": [
-      "_client-DzYSRBXd.js",
-      "_recharts-4-iG22hf.js",
-      "_react-vendor-C6WxKkic.js"
+      "_client-MYcmZywi.js",
+      "_recharts-l8O6fVoK.js",
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "resources/js/react/vendor-dashboard.jsx": {
-    "file": "assets/vendor-dashboard-BuFrP7sS.js",
+    "file": "assets/vendor-dashboard-20Gz-uOi.js",
     "name": "vendor-dashboard",
     "src": "resources/js/react/vendor-dashboard.jsx",
     "isEntry": true,
     "imports": [
-      "_client-DzYSRBXd.js",
-      "_recharts-4-iG22hf.js",
-      "_react-vendor-C6WxKkic.js"
+      "_client-MYcmZywi.js",
+      "_recharts-l8O6fVoK.js",
+      "_react-vendor-N--QU9DW.js"
     ]
   }
 }
