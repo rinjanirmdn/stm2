@@ -487,7 +487,7 @@ class UnplannedSlotController extends Controller
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $isSuperEditor, $newStatus, $newSlotType) {
+        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $newStatus, $newSlotType) {
             $updateData = [
                 'po_number' => $truckNumber,
                 'direction' => $direction,
@@ -512,12 +512,12 @@ class UnplannedSlotController extends Controller
             $oldSlotType = (string) ($slot->slot_type ?? 'unplanned');
 
             if ($newStatus !== null && $newStatus !== $oldStatus) {
-                $changes[] = 'Status: ' . ucwords(str_replace('_', ' ', $oldStatus)) . ' → ' . ucwords(str_replace('_', ' ', $newStatus));
+                $changes[] = 'Status: '.ucwords(str_replace('_', ' ', $oldStatus)).' → '.ucwords(str_replace('_', ' ', $newStatus));
             }
 
             if ($newSlotType !== null && $newSlotType !== $oldSlotType) {
                 $updateData['slot_type'] = $newSlotType;
-                $changes[] = 'Type: ' . ucfirst($oldSlotType) . ' → ' . ucfirst($newSlotType);
+                $changes[] = 'Type: '.ucfirst($oldSlotType).' → '.ucfirst($newSlotType);
             }
 
             DB::table('slots')->where('id', $slotId)->update($updateData);
@@ -526,7 +526,7 @@ class UnplannedSlotController extends Controller
             $actorName = trim((string) (Auth::user()->name ?? Auth::user()->full_name ?? Auth::user()->username ?? Auth::user()->nik ?? 'Unknown'));
 
             if (! empty($changes)) {
-                $changeDesc = 'Unplanned transaction edited by ' . $actorName . ': ' . implode(', ', $changes);
+                $changeDesc = 'Unplanned transaction edited by '.$actorName.': '.implode(', ', $changes);
                 $this->slotService->logActivity(
                     $slotId,
                     'status_change',
@@ -535,7 +535,7 @@ class UnplannedSlotController extends Controller
                     ['status' => $newStatus ?? $oldStatus, 'slot_type' => $newSlotType ?? $oldSlotType]
                 );
             } else {
-                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned transaction updated by ' . $actorName);
+                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned transaction updated by '.$actorName);
             }
         });
 

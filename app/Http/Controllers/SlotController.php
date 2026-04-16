@@ -487,7 +487,7 @@ class SlotController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $isSuperEditor, $newStatus, $newSlotType) {
+        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $newStatus, $newSlotType) {
             $updateData = [
                 'po_number' => $truckNumber,
                 'direction' => $direction,
@@ -510,12 +510,12 @@ class SlotController extends Controller
 
             if ($newStatus !== null && $newStatus !== $oldStatus) {
                 $updateData['status'] = $newStatus;
-                $changes[] = 'Status: ' . ucwords(str_replace('_', ' ', $oldStatus)) . ' → ' . ucwords(str_replace('_', ' ', $newStatus));
+                $changes[] = 'Status: '.ucwords(str_replace('_', ' ', $oldStatus)).' → '.ucwords(str_replace('_', ' ', $newStatus));
             }
 
             if ($newSlotType !== null && $newSlotType !== $oldSlotType) {
                 $updateData['slot_type'] = $newSlotType;
-                $changes[] = 'Type: ' . ucfirst($oldSlotType) . ' → ' . ucfirst($newSlotType);
+                $changes[] = 'Type: '.ucfirst($oldSlotType).' → '.ucfirst($newSlotType);
             }
 
             DB::table('slots')->where('id', $slotId)->update($updateData);
@@ -526,7 +526,7 @@ class SlotController extends Controller
 
             if (! empty($changes)) {
                 // Log each significant change separately for detailed audit trail
-                $changeDesc = 'Slot edited by ' . $actorName . ': ' . implode(', ', $changes);
+                $changeDesc = 'Slot edited by '.$actorName.': '.implode(', ', $changes);
                 $this->slotService->logActivity(
                     $slotId,
                     'status_change',
@@ -535,7 +535,7 @@ class SlotController extends Controller
                     ['status' => $newStatus ?? $oldStatus, 'slot_type' => $newSlotType ?? $oldSlotType]
                 );
             } else {
-                $logDesc = 'Slot updated by ' . $actorName;
+                $logDesc = 'Slot updated by '.$actorName;
                 if ($vendorName !== '' || $truckNumber !== '') {
                     $parts = array_filter([$vendorName, $truckNumber !== '' ? 'PO/DO '.$truckNumber : '']);
                     $logDesc .= ' ('.implode(' - ', $parts).')';

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\HeadingRowFormatter;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
@@ -18,10 +19,11 @@ class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
     {
         // Register custom heading formatter to strip * markers from column headers
         // so keys like "Slot Type *" become "slot_type" instead of "slot_type_"
-        \Maatwebsite\Excel\HeadingRowFormatter::default('custom');
-        \Maatwebsite\Excel\HeadingRowFormatter::extend('custom', function ($value) {
+        HeadingRowFormatter::default('custom');
+        HeadingRowFormatter::extend('custom', function ($value) {
             // Strip asterisk and extra whitespace, then convert to snake_case
             $cleaned = trim(str_replace('*', '', (string) $value));
+
             return strtolower(str_replace(' ', '_', $cleaned));
         });
     }

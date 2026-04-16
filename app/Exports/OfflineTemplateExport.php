@@ -124,17 +124,17 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
 
         $truckTypes = DB::table('md_truck')->pluck('truck_type')->implode(',');
         if ($truckTypes) {
-            $this->applyDropdown($sheet, 'C', '"' . $truckTypes . '"', 'Select truck type');
+            $this->applyDropdown($sheet, 'C', '"'.$truckTypes.'"', 'Select truck type');
         }
 
         $whCodes = DB::table('md_warehouse')->pluck('wh_code')->implode(',');
         if ($whCodes) {
-            $this->applyDropdown($sheet, 'M', '"' . $whCodes . '"', 'Select warehouse code');
+            $this->applyDropdown($sheet, 'M', '"'.$whCodes.'"', 'Select warehouse code');
         }
 
         $gateNumbers = DB::table('md_gates')->pluck('gate_number')->unique()->implode(',');
         if ($gateNumbers) {
-            $this->applyDropdown($sheet, 'N', '"' . $gateNumbers . '"', 'Select gate number');
+            $this->applyDropdown($sheet, 'N', '"'.$gateNumbers.'"', 'Select gate number');
         }
 
         // --- Cell Comments ---

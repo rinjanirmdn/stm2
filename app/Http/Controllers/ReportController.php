@@ -317,13 +317,13 @@ class ReportController extends Controller
             $filename = "transactions_report_{$timestamp}.xlsx";
 
             // Generate the file directly into public/exports/ so Apache serves it as a static file
-            $publicPath = public_path('exports/' . $filename);
-            $writer = \Maatwebsite\Excel\Facades\Excel::raw(new TransactionsExport($rows), \Maatwebsite\Excel\Excel::XLSX);
+            $publicPath = public_path('exports/'.$filename);
+            $writer = Excel::raw(new TransactionsExport($rows), \Maatwebsite\Excel\Excel::XLSX);
             file_put_contents($publicPath, $writer);
 
             // Return JSON with the static download URL
             return response()->json([
-                'download_url' => '/exports/' . $filename,
+                'download_url' => '/exports/'.$filename,
             ]);
         }
 
