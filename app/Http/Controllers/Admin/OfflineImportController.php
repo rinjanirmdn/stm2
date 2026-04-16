@@ -16,12 +16,12 @@ class OfflineImportController extends Controller
 
         // Ensure exports directory exists
         $exportsDir = public_path('exports');
-        if (!file_exists($exportsDir)) {
+        if (! file_exists($exportsDir)) {
             mkdir($exportsDir, 0755, true);
         }
 
         // Generate the file directly into public/exports/ so Apache serves it as a static file
-        $publicPath = $exportsDir . '/' . $fileName;
+        $publicPath = $exportsDir.'/'.$fileName;
         $export = new OfflineTemplateExport();
         $writer = Excel::raw($export, \Maatwebsite\Excel\Excel::XLSX);
         file_put_contents($publicPath, $writer);
