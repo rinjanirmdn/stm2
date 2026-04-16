@@ -147,7 +147,49 @@ document.addEventListener('DOMContentLoaded', function () {
         var params = new URLSearchParams(qs);
         params.set('export', 'excel');
         params.set('page_size', 'all');
-        excelLink.href = window.location.pathname + '?' + params.toString();
+        excelLink.setAttribute('data-export-url', window.location.pathname + '?' + params.toString());
+    }
+
+    /**
+     * Two-step download: ask server to generate the file (returns JSON with URL),
+     * then redirect browser to the static file URL so Apache serves it directly.
+     */
+    function staticDownload(url, btn) {
+        var originalText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin st-mr-2"></i> Generating...';
+        }
+        fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(function(response) {
+            if (!response.ok) throw new Error('Export failed: ' + response.status);
+            return response.json();
+        })
+        .then(function(data) {
+            if (data && data.download_url) {
+                // Navigate to the static file — Apache serves it with correct filename
+                window.location.href = data.download_url;
+            } else {
+                throw new Error('No download URL in response');
+            }
+        })
+        .catch(function(err) {
+            console.error('Export error:', err);
+            alert('Export gagal: ' + err.message);
+        })
+        .finally(function() {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
     }
 
     function syncFormFromUrl() {
@@ -347,6 +389,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     updateExcelLink();
+
+    // Export Excel button click handler
+    if (excelLink) {
+        excelLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            var url = excelLink.getAttribute('data-export-url');
+            if (!url) return;
+            staticDownload(url, excelLink);
+        });
+    }
+
+    // Download Template button click handler
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('#btn-download-template');
+        if (!btn) return;
+        e.preventDefault();
+        var url = btn.getAttribute('data-export-url');
+        staticDownload(url, btn);
+    });
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();

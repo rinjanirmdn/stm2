@@ -291,6 +291,12 @@
             </div>
 
             <div class="st-flex st-gap-6 st-flex-wrap st-align-center st-justify-end st-mb-8">
+                @if(auth()->user() && (auth()->user()->can('slots.edit') || auth()->user()->hasAnyRole(['Super Account', 'Section Head', 'super account', 'section head', 'Super Admin', 'super admin', 'Admin', 'admin'])))
+                    <a href="{{ route($isUnplanned ? 'unplanned.edit' : 'slots.edit', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
+                        <i class="fa-solid fa-pen st-mr-4"></i> Edit
+                    </a>
+                @endif
+
                 @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
                     @can('slots.ticket')
                     <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">

@@ -14,11 +14,21 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
 {
-    public function __construct() {}
+    public function __construct()
+    {
+        // Register custom heading formatter to strip * markers from column headers
+        // so keys like "Slot Type *" become "slot_type" instead of "slot_type_"
+        \Maatwebsite\Excel\HeadingRowFormatter::default('custom');
+        \Maatwebsite\Excel\HeadingRowFormatter::extend('custom', function ($value) {
+            // Strip asterisk and extra whitespace, then convert to snake_case
+            $cleaned = trim(str_replace('*', '', (string) $value));
+            return strtolower(str_replace(' ', '_', $cleaned));
+        });
+    }
 
     public function startRow(): int
     {
-        return 3; // Skip row 2 (Required/Optional indicator row)
+        return 3; // Skip row 2 (example data), data starts from row 3
     }
 
     public function collection(Collection $rows)
@@ -88,6 +98,8 @@ class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
                     'vehicle_number_snap' => substr($row['vehicle_number'] ?? '-', 0, 50),
                     'po_number' => substr($row['po_number'] ?? '-', 0, 50),
                     'driver_name' => substr($row['driver_name'] ?? '-', 0, 100),
+                    'driver_number' => substr($row['driver_number'] ?? '-', 0, 50),
+                    'mat_doc' => substr($row['sj_number'] ?? '', 0, 50),
                     'truck_type' => $truckType ?: null,
                     'slot_type' => $slotType === 'planned' ? 'planned' : 'unplanned',
                     'direction' => $direction === 'outbound' ? 'outbound' : 'inbound',

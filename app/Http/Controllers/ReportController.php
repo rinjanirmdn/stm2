@@ -312,12 +312,19 @@ class ReportController extends Controller
         $rowsQ = $this->transactionService->getTransactions($request);
         $rows = $rowsQ->get();
 
-        $timestamp = date('Ymd_His');
-
         if ($type === 'excel') {
+            $timestamp = now()->format('Ymd_His');
             $filename = "transactions_report_{$timestamp}.xlsx";
 
-            return Excel::download(new TransactionsExport($rows), $filename);
+            // Generate the file directly into public/exports/ so Apache serves it as a static file
+            $publicPath = public_path('exports/' . $filename);
+            $writer = \Maatwebsite\Excel\Facades\Excel::raw(new TransactionsExport($rows), \Maatwebsite\Excel\Excel::XLSX);
+            file_put_contents($publicPath, $writer);
+
+            // Return JSON with the static download URL
+            return response()->json([
+                'download_url' => '/exports/' . $filename,
+            ]);
         }
 
         // For CSV, keep using the existing service

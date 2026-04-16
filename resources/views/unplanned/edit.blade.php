@@ -29,6 +29,34 @@
                 </div>
             @endif
 
+            @if ($isSuperEditor ?? false)
+            <div class="st-form-row st-form-field--mb-12" style="background: #f0f6ff; padding: 12px; border-radius: 8px; border: 1px solid #d0e0f5;">
+                <div class="st-form-field">
+                    <label class="st-label">Status <span class="st-text--danger-dark">*</span></label>
+                    <select name="status" class="st-select">
+                        <option value="scheduled" {{ (string)($slot->status ?? '') === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
+                        <option value="waiting" {{ (string)($slot->status ?? '') === 'waiting' ? 'selected' : '' }}>Waiting</option>
+                        <option value="in_progress" {{ (string)($slot->status ?? '') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                        <option value="completed" {{ (string)($slot->status ?? '') === 'completed' ? 'selected' : '' }}>Completed</option>
+                    </select>
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Transaction Type <span class="st-text--danger-dark">*</span></label>
+                    <select name="slot_type" class="st-select">
+                        <option value="planned" {{ (string)($slot->slot_type ?? 'unplanned') === 'planned' ? 'selected' : '' }}>Planned</option>
+                        <option value="unplanned" {{ (string)($slot->slot_type ?? 'unplanned') === 'unplanned' ? 'selected' : '' }}>Unplanned</option>
+                    </select>
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">&nbsp;</label>
+                    <div class="st-text--xs st-text--muted" style="padding-top: 8px;">
+                        <i class="fa-solid fa-shield-halved" style="color: #4A90D9;"></i>
+                        Perubahan status & tipe akan tercatat di Activity Log
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
                     <label class="st-label">PO/DO Number <span class="st-text--danger-dark">*</span></label>
@@ -155,7 +183,7 @@
                 $arrivalTime = (string) ($slot->arrival_time ?? '');
                 $actualStart = (string) ($slot->actual_start ?? '');
                 $hasProgressedFromWaiting = $status === 'completed' && $arrivalTime !== '' && $actualStart !== '' && $arrivalTime !== $actualStart;
-                $hideWaitingToggle = in_array($status, ['waiting', 'in_progress'], true) || $hasProgressedFromWaiting;
+                $hideWaitingToggle = ($isSuperEditor ?? false) || in_array($status, ['waiting', 'in_progress'], true) || $hasProgressedFromWaiting;
             @endphp
 
             @if (! $hideWaitingToggle)

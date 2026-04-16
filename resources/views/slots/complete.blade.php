@@ -42,8 +42,15 @@
 
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
-                    <label class="st-label">Nomor Surat Jalan <span class="st-text--danger-dark">*</span></label>
-                    <input type="text" name="mat_doc" class="st-input" required value="{{ old('mat_doc') }}">
+                    <label class="st-label">Nomor Surat Jalan <span class="st-text--optional">(Optional)</span></label>
+                    <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc') }}">
+                </div>
+            </div>
+
+            <div class="st-form-row st-form-field--mb-12">
+                <div class="st-form-field">
+                    <label class="st-label">Mat Doc <span class="st-text--optional">(Optional)</span></label>
+                    <input type="text" name="mat_doc_number" class="st-input" value="{{ old('mat_doc_number') }}">
                 </div>
             </div>
 

@@ -13,14 +13,17 @@ class OfflineImportController extends Controller
     public function downloadTemplate()
     {
         $fileName = 'offline_import_template.xlsx';
-        $tempPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.$fileName;
 
-        $content = Excel::raw(new OfflineTemplateExport(), \Maatwebsite\Excel\Excel::XLSX);
-        file_put_contents($tempPath, $content);
+        // Generate the file directly into public/exports/ so Apache serves it as a static file
+        $publicPath = public_path('exports/' . $fileName);
+        $export = new OfflineTemplateExport();
+        $writer = \Maatwebsite\Excel\Facades\Excel::raw($export, \Maatwebsite\Excel\Excel::XLSX);
+        file_put_contents($publicPath, $writer);
 
-        return response()->download($tempPath, $fileName, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])->deleteFileAfterSend(true);
+        // Return JSON with the static download URL
+        return response()->json([
+            'download_url' => '/exports/' . $fileName,
+        ]);
     }
 
     public function import(Request $request)

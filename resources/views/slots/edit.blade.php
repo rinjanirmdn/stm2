@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Edit Planned - e-Docking Control System')
 @section('page_title', 'Edit Planned')
@@ -8,7 +8,7 @@
         <div class="st-flex-between st-gap-8 st-flex-wrap">
             <div>
                 <h2 class="st-page-title st-mb-0">Edit Planned #{{ $slot->id }}</h2>
-                <div class="st-text--sm st-text--muted">Only Scheduled Planned Can Be Edited</div>
+                <div class="st-text--sm st-text--muted">{{ ($isSuperEditor ?? false) ? 'Super Editor Mode — All changes will be logged' : 'Only Scheduled Planned Can Be Edited' }}</div>
             </div>
             <div class="st-flex st-gap-6 st-flex-wrap">
                 <a href="{{ route('slots.show', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--sm">Back</a>
@@ -35,6 +35,34 @@
                     </div>
                     <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
                 </div>
+            @endif
+
+            @if ($isSuperEditor ?? false)
+            <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3" style="background: #f0f6ff; padding: 12px; border-radius: 8px; border: 1px solid #d0e0f5;">
+                <div class="st-form-field">
+                    <label class="st-label">Status <span class="st-text--danger-dark">*</span></label>
+                    <select name="status" class="st-select">
+                        <option value="scheduled" {{ (string)($slot->status ?? '') === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
+                        <option value="waiting" {{ (string)($slot->status ?? '') === 'waiting' ? 'selected' : '' }}>Waiting</option>
+                        <option value="in_progress" {{ (string)($slot->status ?? '') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                        <option value="completed" {{ (string)($slot->status ?? '') === 'completed' ? 'selected' : '' }}>Completed</option>
+                    </select>
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Transaction Type <span class="st-text--danger-dark">*</span></label>
+                    <select name="slot_type" class="st-select">
+                        <option value="planned" {{ (string)($slot->slot_type ?? 'planned') === 'planned' ? 'selected' : '' }}>Planned</option>
+                        <option value="unplanned" {{ (string)($slot->slot_type ?? 'planned') === 'unplanned' ? 'selected' : '' }}>Unplanned</option>
+                    </select>
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">&nbsp;</label>
+                    <div class="st-text--xs st-text--muted" style="padding-top: 8px;">
+                        <i class="fa-solid fa-shield-halved" style="color: #4A90D9;"></i>
+                        Perubahan status & tipe akan tercatat di Activity Log
+                    </div>
+                </div>
+            </div>
             @endif
 
             <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3">

@@ -275,11 +275,9 @@
                                         </a>
                                     @endif
 
-                                    @can('unplanned.edit')
-                                    <a href="{{ route('unplanned.edit', ['slotId' => $slot->id]) }}" class="tw-action" data-tooltip="Edit" aria-label="Edit">
+                                    <a href="{{ route('unplanned.edit', ['slotId' => $slot->id]) }}" class="tw-action tw-action--warning" data-tooltip="Edit" aria-label="Edit">
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
-                                    @endcan
 
                                     <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
                                         <i class="fa-solid fa-eye"></i>

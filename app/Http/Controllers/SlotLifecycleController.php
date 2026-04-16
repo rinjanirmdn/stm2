@@ -536,9 +536,10 @@ class SlotLifecycleController extends Controller
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
+        $matDocNumber = trim((string) $request->input('mat_doc_number', ''));
 
         $slotType = (string) ($slot->slot_type ?? 'planned');
-        $requiredMissing = $matDoc === '' || $truckType === '' || $vehicleNumber === '';
+        $requiredMissing = $truckType === '' || $vehicleNumber === '';
         // Driver number is required only for unplanned slots
         if ($slotType === 'unplanned' && $driverNumber === '') {
             $requiredMissing = true;
@@ -559,7 +560,7 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $backdateTime) {
+        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $backdateTime) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
 
             // Get slot info before updating
@@ -572,11 +573,12 @@ class SlotLifecycleController extends Controller
             DB::table('slots')->where('id', $slotId)->update([
                 'status' => 'completed',
                 'actual_finish' => $now,
-                'mat_doc' => $matDoc,
+                'mat_doc' => $matDoc !== '' ? $matDoc : null,
                 'truck_type' => $truckType,
                 'vehicle_number_snap' => $vehicleNumber,
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'mat_doc_number' => $matDocNumber !== '' ? $matDocNumber : null,
                 'late_reason' => $notes !== '' ? $notes : null,
             ]);
 

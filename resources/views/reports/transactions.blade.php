@@ -41,7 +41,7 @@
                     </select>
                 </div>
                 <div class="st-form-field st-flex-0 st-flex st-align-center" style="gap: 8px;">
-                    <a id="transactions-excel-link" href="{{ route('reports.transactions', array_merge(request()->query(), ['page_size' => 'all', 'export' => 'excel'])) }}" class="st-btn st-btn--primary">Export</a>
+                    <button type="button" id="transactions-excel-link" class="st-btn st-btn--primary" data-export-url="{{ route('reports.transactions', array_merge(request()->query(), ['page_size' => 'all', 'export' => 'excel'])) }}">Export</button>
 
                     @hasanyrole('Super Account|Section Head|super account|section head')
                         <button type="button" class="st-btn st-btn--primary" id="btn-import-offline">Import</button>
@@ -61,7 +61,7 @@
             </div>
             <div class="st-modal__body">
                 <p class="st-text--muted st-mb-4">Use this feature to import transactions manually recorded during server or network outages.</p>
-                <a href="{{ route('reports.offline_import.template') }}" download="offline_import_template.xlsx" class="st-link st-font-semibold st-mb-8 st-block"><i class="fa-solid fa-download st-mr-2"></i> Download Template</a>
+                <button type="button" id="btn-download-template" class="st-link st-font-semibold st-mb-8 st-block" style="background:none;border:none;cursor:pointer;padding:0;text-align:left;" data-export-url="{{ route('reports.offline_import.template') }}" data-filename="offline_import_template.xlsx"><i class="fa-solid fa-download st-mr-2"></i> Download Template</button>
                 
                 <form id="form-import-offline" enctype="multipart/form-data">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">

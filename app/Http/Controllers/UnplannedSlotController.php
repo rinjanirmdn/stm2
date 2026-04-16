@@ -364,8 +364,17 @@ class UnplannedSlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
-        if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
-            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only unplanned transactions can be edited here');
+        $user = Auth::user();
+        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head']);
+
+        if ($isSuperEditor) {
+            if ((string) ($slot->status ?? '') === 'cancelled') {
+                return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Cancelled transactions cannot be edited');
+            }
+        } else {
+            if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
+                return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only unplanned transactions can be edited here');
+            }
         }
 
         $warehouses = DB::table('md_warehouse')
@@ -391,6 +400,7 @@ class UnplannedSlotController extends Controller
             'vendors' => $vendors,
             'gates' => $gates,
             'truckTypes' => $truckTypes,
+            'isSuperEditor' => $isSuperEditor,
         ]);
     }
 
@@ -401,8 +411,17 @@ class UnplannedSlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
-        if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
-            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only unplanned transactions can be edited here');
+        $user = Auth::user();
+        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head']);
+
+        if ($isSuperEditor) {
+            if ((string) ($slot->status ?? '') === 'cancelled') {
+                return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('error', 'Cancelled transactions cannot be edited');
+            }
+        } else {
+            if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
+                return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only unplanned transactions can be edited here');
+            }
         }
 
         $request->validate([
@@ -444,28 +463,32 @@ class UnplannedSlotController extends Controller
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
 
-        // Check if any data was actually changed
-        $dataChanged = (
-            $slot->po_number !== $truckNumber ||
-            $slot->direction !== $direction ||
-            $slot->warehouse_id !== $warehouseId ||
-            $slot->actual_gate_id !== $actualGateId ||
-            $slot->arrival_time !== $arrivalTime ||
-            $slot->mat_doc !== $matDoc ||
-            $slot->truck_type !== $truckType ||
-            $slot->vehicle_number_snap !== $vehicleNumber ||
-            $slot->driver_name !== $driverName ||
-            $slot->driver_number !== $driverNumber ||
-            $slot->late_reason !== $notes
-        );
+        // Handle status and slot_type changes for super editors
+        $newStatus = null;
+        $newSlotType = null;
+        if ($isSuperEditor) {
+            $requestedStatus = trim((string) $request->input('status', ''));
+            $requestedSlotType = trim((string) $request->input('slot_type', ''));
 
-        $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
-        $status = $setWaiting ? 'waiting' : 'completed';
+            $allowedStatuses = ['scheduled', 'waiting', 'in_progress', 'completed'];
+            if ($requestedStatus !== '' && in_array($requestedStatus, $allowedStatuses, true)) {
+                $newStatus = $requestedStatus;
+            }
+
+            if ($requestedSlotType !== '' && in_array($requestedSlotType, ['planned', 'unplanned'], true)) {
+                $newSlotType = $requestedSlotType;
+            }
+        } else {
+            $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
+            $newStatus = $setWaiting ? 'waiting' : 'completed';
+        }
+
+        $status = $newStatus ?? (string) ($slot->status ?? 'completed');
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish) {
-            DB::table('slots')->where('id', $slotId)->update([
+        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $isSuperEditor, $newStatus, $newSlotType) {
+            $updateData = [
                 'po_number' => $truckNumber,
                 'direction' => $direction,
                 'warehouse_id' => $warehouseId,
@@ -481,26 +504,42 @@ class UnplannedSlotController extends Controller
                 'actual_start' => $actualStart,
                 'actual_finish' => $actualFinish,
                 'updated_at' => now(),
-            ]);
+            ];
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Updated');
+            // Track changes for detailed logging
+            $changes = [];
+            $oldStatus = (string) ($slot->status ?? '');
+            $oldSlotType = (string) ($slot->slot_type ?? 'unplanned');
+
+            if ($newStatus !== null && $newStatus !== $oldStatus) {
+                $changes[] = 'Status: ' . ucwords(str_replace('_', ' ', $oldStatus)) . ' → ' . ucwords(str_replace('_', ' ', $newStatus));
+            }
+
+            if ($newSlotType !== null && $newSlotType !== $oldSlotType) {
+                $updateData['slot_type'] = $newSlotType;
+                $changes[] = 'Type: ' . ucfirst($oldSlotType) . ' → ' . ucfirst($newSlotType);
+            }
+
+            DB::table('slots')->where('id', $slotId)->update($updateData);
+
+            // Build descriptive log message
+            $actorName = trim((string) (Auth::user()->name ?? Auth::user()->full_name ?? Auth::user()->username ?? Auth::user()->nik ?? 'Unknown'));
+
+            if (! empty($changes)) {
+                $changeDesc = 'Unplanned transaction edited by ' . $actorName . ': ' . implode(', ', $changes);
+                $this->slotService->logActivity(
+                    $slotId,
+                    'status_change',
+                    $changeDesc,
+                    ['status' => $oldStatus, 'slot_type' => $oldSlotType],
+                    ['status' => $newStatus ?? $oldStatus, 'slot_type' => $newSlotType ?? $oldSlotType]
+                );
+            } else {
+                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned transaction updated by ' . $actorName);
+            }
         });
 
-        // Smart redirect logic
-        if ($dataChanged) {
-            // Data was changed, go to unplanned index
-            return redirect()->route('unplanned.index')->with('success', 'Unplanned transaction updated successfully');
-        } else {
-            // Data not changed, go back to previous page
-            $referer = $request->header('referer');
-            if ($referer && str_contains($referer, route('unplanned.index'))) {
-                // Came from unplanned menu, go back to unplanned index
-                return redirect()->route('unplanned.index');
-            } else {
-                // Came from other pages (reports, etc.), go back to previous page
-                return redirect()->back();
-            }
-        }
+        return redirect()->route('unplanned.index')->with('success', 'Unplanned transaction updated successfully');
     }
 
     /**
