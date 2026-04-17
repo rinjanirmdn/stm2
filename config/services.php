@@ -41,4 +41,16 @@ return [
         'timeout' => (int) env('SAP_VENDOR_TIMEOUT', 15),
     ],
 
+    'sap_so' => [
+        'base_url' => env('SAP_SO_BASE_URL', ''),
+        'service_path' => env('SAP_SO_SERVICE_PATH', '/sap/opu/odata4/sap/zsd_oji_so_bind/srvd/sap/zsd_oji_so/0001'),
+        'odata_detail_endpoint' => env('SAP_SO_ODATA_DETAIL_ENDPOINT', "/ZSD_SO_DETAIL(so_no='{so}')/Set"),
+        'sap_client' => env('SAP_SO_SAP_CLIENT', '210'),
+        'username' => env('SAP_SO_USERNAME', ''),
+        'password' => env('SAP_SO_PASSWORD', ''),
+        'verify_ssl' => env('SAP_SO_VERIFY_SSL', false),
+        'timeout' => (int) env('SAP_SO_TIMEOUT', 15),
+    ],
+
+
 ];

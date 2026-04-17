@@ -33,10 +33,10 @@
                         <div class="cb-section">
                             <h3 class="cb-section__title">
                                 <i class="fas fa-file-invoice"></i>
-                                PO Selection
+                                PO/SO Selection
                             </h3>
                             <div class="cb-field">
-                                <label class="cb-label cb-label--required">PO Number</label>
+                                <label class="cb-label cb-label--required">PO/SO Number</label>
                                 <div class="cb-po-search">
                                     <input type="text"
                                            id="po-search"
