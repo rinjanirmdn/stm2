@@ -52,5 +52,4 @@ return [
         'timeout' => (int) env('SAP_SO_TIMEOUT', 15),
     ],
 
-
 ];
