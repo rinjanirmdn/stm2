@@ -39,6 +39,37 @@
 
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
+                    <label class="st-label">Scan Ticket <span class="st-text--danger-dark">*</span></label>
+                    <div class="st-flex st-gap-8 st-align-center">
+                        <input
+                            type="text"
+                            name="ticket_number"
+                            class="st-input"
+                            required
+                            value="{{ old('ticket_number') }}"
+                            placeholder="Scan barcode or enter ticket number..."
+                            autocomplete="off"
+                        >
+                        <button type="button" id="btn_scan_ticket" class="st-btn st-btn--secondary st-btn--pad-md st-nowrap" title="Scan via Camera">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    <div id="scan_camera_wrap" class="st-hidden-soft st-mt-8 st-border st-rounded-8 st-p-8 st-bg-slate-50">
+                        <div class="st-flex st-align-center st-gap-8 st-justify-between">
+                            <div class="st-text--sm st-text--slate">Point camera at ticket barcode/QR.</div>
+                            <button type="button" id="btn_scan_stop" class="st-btn st-btn--secondary st-btn--xs st-btn--pad-sm" title="Stop Camera">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                        </div>
+                        <video id="scan_camera" class="st-w-full st-maxw-360 st-mt-8 st-rounded-6 st-scale-x-neg" autoplay muted playsinline></video>
+                        <div id="scan_qr_reader" class="st-w-full st-maxw-360 st-mt-8 st-rounded-6 st-hidden-soft st-scale-x-neg"></div>
+                        <div id="scan_camera_status" class="st-text--small st-text--muted st-mt-6"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="st-form-row st-form-field--mb-12">
+                <div class="st-form-field">
                     <label class="st-label">Actual Gate <span class="st-text--danger-dark">*</span></label>
                     <select name="actual_gate_id" class="st-select" required>
                         <option value="">Choose Gate...</option>
@@ -142,3 +173,163 @@
             </div>
         </form>
     </div>
+
+<script src="{{ asset('js/vendor/html5-qrcode.min.js') }}"></script>
+<script>
+(function () {
+    var ticketInput = document.querySelector('input[name="ticket_number"]');
+    var scanBtn = document.getElementById('btn_scan_ticket');
+    var scanWrap = document.getElementById('scan_camera_wrap');
+    var scanVideo = document.getElementById('scan_camera');
+    var scanReader = document.getElementById('scan_qr_reader');
+    var scanStopBtn = document.getElementById('btn_scan_stop');
+    var scanStatus = document.getElementById('scan_camera_status');
+    var scanStream = null;
+    var scanActive = false;
+    var html5Qr = null;
+
+    function updateScanStatus(message) {
+        if (scanStatus) {
+            scanStatus.textContent = message || '';
+        }
+    }
+
+    function stopCameraScan() {
+        scanActive = false;
+        if (scanStream) {
+            scanStream.getTracks().forEach(function (track) { track.stop(); });
+            scanStream = null;
+        }
+        if (html5Qr) {
+            html5Qr.stop().catch(function () {}).finally(function () {
+                html5Qr = null;
+            });
+        }
+        if (scanVideo) scanVideo.style.display = 'none';
+        if (scanReader) scanReader.style.display = 'none';
+        if (scanWrap) scanWrap.style.display = 'none';
+    }
+
+    function handleScanResult(code) {
+        if (!code) return;
+        if (ticketInput) {
+            ticketInput.value = code;
+            ticketInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        updateScanStatus('Ticket detected: ' + code);
+        stopCameraScan();
+    }
+
+    function startHtml5Scanner() {
+        if (!scanReader) return;
+        if (!window.Html5Qrcode) {
+            updateScanStatus('Scanner is not ready. Please enter manually.');
+            scanWrap.style.display = 'block';
+            return;
+        }
+
+        scanActive = true;
+        scanWrap.style.display = 'block';
+        if (scanVideo) scanVideo.style.display = 'none';
+        scanReader.style.display = 'block';
+        updateScanStatus('Scanning (HTML5)...');
+
+        var supportedFormats = null;
+        if (window.Html5QrcodeSupportedFormats) {
+            supportedFormats = [
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E
+            ];
+        }
+
+        html5Qr = new Html5Qrcode('scan_qr_reader');
+        html5Qr
+            .start(
+                { facingMode: 'environment' },
+                {
+                    fps: 10,
+                    qrbox: { width: 260, height: 120 },
+                    formatsToSupport: supportedFormats || undefined
+                },
+                function (decodedText) { handleScanResult(decodedText); },
+                function () {}
+            )
+            .catch(function () {
+                updateScanStatus('Camera access denied. Please enter manually.');
+            });
+    }
+
+    function startCameraScan() {
+        if (!scanWrap || !scanVideo) return;
+        if (!('BarcodeDetector' in window)) {
+            startHtml5Scanner();
+            return;
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function (stream) {
+                scanStream = stream;
+                scanVideo.srcObject = stream;
+                scanWrap.style.display = 'block';
+                scanVideo.style.display = 'block';
+                if (scanReader) scanReader.style.display = 'none';
+                updateScanStatus('Scanning...');
+                scanActive = true;
+
+                var detector = new BarcodeDetector({
+                    formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e']
+                });
+
+                var scanLoop = function () {
+                    if (!scanActive || !scanVideo) return;
+                    detector.detect(scanVideo)
+                        .then(function (barcodes) {
+                            if (!scanActive) return;
+                            if (barcodes && barcodes.length) {
+                                handleScanResult(barcodes[0].rawValue || '');
+                                return;
+                            }
+                            requestAnimationFrame(scanLoop);
+                        })
+                        .catch(function () {
+                            updateScanStatus('Failed to read barcode. Please try again.');
+                            requestAnimationFrame(scanLoop);
+                        });
+                };
+
+                requestAnimationFrame(scanLoop);
+            })
+            .catch(function () {
+                updateScanStatus('Camera access denied. Please enter manually.');
+                scanWrap.style.display = 'block';
+            });
+    }
+
+    if (ticketInput) {
+        ticketInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                e.stopPropagation();
+                ticketInput.blur();
+            }
+        });
+    }
+
+    if (scanBtn) {
+        scanBtn.addEventListener('click', function () {
+            if (scanActive) return;
+            startCameraScan();
+        });
+    }
+    if (scanStopBtn) {
+        scanStopBtn.addEventListener('click', function () {
+            stopCameraScan();
+        });
+    }
+})();
+</script>

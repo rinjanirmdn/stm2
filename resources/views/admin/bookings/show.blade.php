@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Booking Detail')
 
@@ -228,6 +228,8 @@
                             @php
                                 $gid = $g->id ?? null;
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($g->warehouse?->wh_code ?? '', $g->gate_number ?? '');
+                                $whDisplay = str_replace('WH', 'WH ', ($g->warehouse?->wh_code ?? ''));
+                                $gateLabel .= ' (' . $whDisplay . ')';
                             @endphp
                             @if($gid)
                                 <option value="{{ $gid }}" data-warehouse-id="{{ $g->warehouse_id }}" {{ (string)$currentGateId === (string)$gid ? 'selected' : '' }}>

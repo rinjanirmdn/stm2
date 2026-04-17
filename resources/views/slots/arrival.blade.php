@@ -274,7 +274,7 @@ function stReadJson(id, fallback) {
                 { facingMode: 'environment' },
                 {
                     fps: 10,
-                    qrbox: { width: 240, height: 240 },
+                    qrbox: { width: 260, height: 120 },
                     formatsToSupport: supportedFormats || undefined
                 },
                 function (decodedText) { handleScanResult(decodedText); },

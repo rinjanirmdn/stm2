@@ -12,8 +12,8 @@ class VendorPortalMiddleware
     {
         $user = $request->user();
 
-        if (! $user || empty($user->vendor_code)) {
-            return redirect()->route('dashboard')->with('error', 'You are not authorized to access the vendor portal.');
+        if (! $user || (empty($user->vendor_code) && ! $user->is_internal_vendor)) {
+            abort(403, 'You are not authorized to access the vendor portal (Vendor Code is required).');
         }
 
         return $next($request);

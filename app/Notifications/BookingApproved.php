@@ -43,7 +43,7 @@ class BookingApproved extends Notification
             : 'Great news! Your booking request has been approved.';
         $targetId = $this->bookingRequestId ?: $this->slot->id;
 
-        return (new MailMessage())
+        $mailMessage = (new MailMessage())
             ->subject($subjectPrefix.' - '.$this->slot->ticket_number)
             ->view('emails.booking-approved', [
                 'subjectPrefix' => $subjectPrefix,
@@ -54,6 +54,20 @@ class BookingApproved extends Notification
                 'slot' => $this->slot,
                 'notifiable' => $notifiable,
             ]);
+
+        try {
+            $pdfContent = app(\App\Services\SlotService::class)->generateTicketPdfContent($this->slot->id);
+            if ($pdfContent) {
+                $filename = 'ticket-'.($this->slot->ticket_number ?? $this->slot->id).'.pdf';
+                $mailMessage->attachData($pdfContent, $filename, [
+                    'mime' => 'application/pdf',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to attach ticket PDF to approval email: ' . $e->getMessage());
+        }
+
+        return $mailMessage;
     }
 
     public function toArray(object $notifiable): array

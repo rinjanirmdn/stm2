@@ -131,82 +131,10 @@ class SlotLifecycleController extends Controller
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
-        // Cache key based on slot data that affects ticket content
-        $cacheKey = 'ticket_pdf_'.$slotId.'_'.md5(json_encode([
-            $slot->ticket_number ?? '',
-            $slot->truck_number ?? '',
-            $slot->vendor_name ?? '',
-            $slot->vehicle_number_snap ?? '',
-            $slot->direction ?? '',
-            $slot->planned_start ?? '',
-            $slot->planned_gate_number ?? '',
-            $slot->actual_gate_number ?? '',
-        ]));
-
-        $pdfContent = Cache::remember($cacheKey, 3600, function () use ($slot) {
-            $gateNumber = (string) ($slot->actual_gate_number ?? '');
-            $gateWarehouse = (string) ($slot->actual_gate_warehouse_code ?? '');
-            if ($gateNumber === '') {
-                $gateNumber = (string) ($slot->planned_gate_number ?? '');
-                $gateWarehouse = (string) ($slot->planned_gate_warehouse_code ?? '');
-            }
-            if ($gateWarehouse === '') {
-                $gateWarehouse = (string) ($slot->warehouse_code ?? '');
-            }
-            $gateLetter = $this->slotService->getGateLetterByWarehouseAndNumber($gateWarehouse, $gateNumber);
-
-            // Generate barcode
-            $barcodeC = new DNS1D();
-            $barcodeC->setStorPath(storage_path('app/public/'));
-            $barcodePng = '';
-            if (! empty($slot->ticket_number)) {
-                $ticketNumber = (string) $slot->ticket_number;
-                $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
-                    return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
-                });
-            }
-
-            // Encode logo as base64 data URI so DomPDF can render it
-            $logoDataUri = Cache::rememberForever('ticket_logo_data_uri', function () {
-                try {
-                    $logoPath = public_path('img/logo-full.png');
-                    if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
-                        return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
-                    }
-                } catch (Throwable $e) {
-                    // ignore
-                }
-            });
-
-            $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
-                try {
-                    $cssPath = public_path('ticket.css');
-                    if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
-                        return (string) file_get_contents($cssPath);
-                    }
-                } catch (Throwable $e) {
-                    // ignore
-                }
-
-                return '';
-            });
-
-            $pdf = Pdf::loadView('slots.ticket', [
-                'slot' => $slot,
-                'gateLetter' => $gateLetter,
-                'barcodePng' => $barcodePng,
-                'barcodeHtml' => null,
-                'barcodeSvg' => null,
-                'logoDataUri' => $logoDataUri,
-                'ticketCss' => $ticketCss,
-            ])
-                ->setOption('isRemoteEnabled', false)
-                ->setOption('isHtml5ParserEnabled', true)
-                ->setOption('chroot', public_path())
-                ->setPaper([0, 0, 252, 396], 'portrait');
-
-            return $pdf->output();
-        });
+        $pdfContent = app(\App\Services\SlotService::class)->generateTicketPdfContent($slotId);
+        if (! $pdfContent) {
+            return redirect()->route('slots.index')->with('error', 'Could not generate ticket');
+        }
 
         $filename = 'ticket-'.($slot->ticket_number ?? $slot->id).'.pdf';
 
@@ -363,6 +291,15 @@ class SlotLifecycleController extends Controller
             if (empty($slot->arrival_time)) {
                 throw ValidationException::withMessages(['general' => 'Please record Arrival before starting this slot']);
             }
+        }
+
+        $ticketNumber = trim((string) $request->input('ticket_number', ''));
+        if ($ticketNumber === '') {
+            throw ValidationException::withMessages(['ticket_number' => 'Scan Ticket is required']);
+        }
+        $expectedTicket = trim((string) ($slot->ticket_number ?? ''));
+        if ($expectedTicket !== '' && strtoupper($ticketNumber) !== strtoupper($expectedTicket)) {
+            throw ValidationException::withMessages(['ticket_number' => 'Ticket number does not match this booking']);
         }
 
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;

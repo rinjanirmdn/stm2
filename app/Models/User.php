@@ -28,6 +28,7 @@ class User extends Authenticatable
         'username',
         'email',
         'vendor_code',
+        'is_internal_vendor',
         'password',
         'is_active',
         'role_id',
@@ -52,6 +53,7 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_internal_vendor' => 'boolean',
         ];
     }
 
@@ -71,7 +73,15 @@ class User extends Authenticatable
      */
     public function isVendor(): bool
     {
-        return ! empty($this->vendor_code);
+        return ! empty($this->vendor_code) || $this->is_internal_vendor;
+    }
+
+    /**
+     * Check if user is an internal vendor (bypasses PO filtering)
+     */
+    public function isInternalVendor(): bool
+    {
+        return $this->is_internal_vendor === true;
     }
 
     /**
