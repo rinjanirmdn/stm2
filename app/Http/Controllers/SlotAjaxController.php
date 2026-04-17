@@ -477,6 +477,13 @@ class SlotAjaxController extends Controller
 
         if ($date === '') {
             $date = date('Y-m-d');
+        } else {
+            try {
+                $parsedDate = new DateTime($date);
+                $date = $parsedDate->format('Y-m-d');
+            } catch (\Throwable $e) {
+                $date = date('Y-m-d');
+            }
         }
 
         $q = DB::table('slots as s')
@@ -486,7 +493,7 @@ class SlotAjaxController extends Controller
             ->whereRaw('DATE(s.planned_start) = ?', [$date])
             ->whereIn('s.status', ['scheduled', 'waiting', 'in_progress'])
             ->orderBy('s.planned_start', 'asc')
-            ->select(['s.id', 's.planned_start', 's.planned_duration', 's.status', 'g.gate_number', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code']);
+            ->select(['s.id', 's.po_number', 's.vehicle_number_snap', 's.vendor_name', 's.planned_start', 's.planned_duration', 's.status', 'g.gate_number', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code']);
 
         if ($plannedGateId !== null) {
             $q->where('s.planned_gate_id', $plannedGateId);
@@ -514,12 +521,19 @@ class SlotAjaxController extends Controller
                 'id' => (int) ($row->id ?? 0),
                 'planned_start' => $start,
                 'planned_finish' => $finish,
+                'po_number' => (string) ($row->po_number ?? '-'),
+                'truck' => (string) ($row->vehicle_number_snap ?? '-'),
+                'vendor_name' => (string) ($row->vendor_name ?? '-'),
                 'status' => $row->status,
                 'gate' => $gateLabel,
                 'warehouse' => $row->warehouse_name,
             ];
         }
 
-        return response()->json(['success' => true, 'items' => $data]);
+        return response()->json([
+            'success' => true,
+            'items' => $data,
+            'generated_at' => date('d-m-Y H:i:s'),
+        ]);
     }
 }

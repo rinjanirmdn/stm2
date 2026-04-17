@@ -10,21 +10,21 @@ Route::prefix('unplanned')->name('unplanned.')->group(function () {
     Route::get('/', [UnplannedSlotController::class, 'index'])->name('index')->middleware('permission:unplanned.index');
 
     // Block operator from create, edit, cancel, ticket
-    Route::middleware(['permission:unplanned.create', 'role:admin|super account|section head|security'])->group(function () {
+    Route::middleware(['permission:unplanned.create', 'role:admin|super account|section head|security|operator|admin wh'])->group(function () {
         Route::get('/create', [UnplannedSlotController::class, 'create'])->name('create');
         Route::post('/create', [UnplannedSlotController::class, 'store'])->name('store');
     });
 
     Route::get('/{slotId}/edit', [UnplannedSlotController::class, 'edit'])->whereNumber('slotId')->name('edit')
-        ->middleware(['permission:unplanned.edit', 'role:admin|super account|section head|security']);
+        ->middleware(['permission:unplanned.edit', 'role:admin|super account|section head|security|operator|admin wh']);
     Route::post('/{slotId}/edit', [UnplannedSlotController::class, 'update'])->whereNumber('slotId')->name('update')
-        ->middleware(['permission:unplanned.update', 'role:admin|super account|section head|security']);
+        ->middleware(['permission:unplanned.update', 'role:admin|super account|section head|security|operator|admin wh']);
     Route::post('/{slotId}/delete', [UnplannedSlotController::class, 'destroy'])->whereNumber('slotId')->name('delete')
-        ->middleware(['permission:unplanned.delete', 'role:admin|super account|section head|security']);
+        ->middleware(['permission:unplanned.delete', 'role:admin|super account|section head|security|operator|admin wh']);
 
     // Allow operator to use ticket (but not create/edit/cancel)
     Route::get('/{slotId}/ticket', [SlotLifecycleController::class, 'ticket'])->whereNumber('slotId')->name('ticket')
-        ->middleware(['permission:slots.ticket', 'role:admin|super account|section head|security']);
+        ->middleware(['permission:slots.ticket', 'role:admin|super account|section head|security|operator|admin wh']);
 
     // Unplanned specific actions (operator can use these)
     Route::get('/{slotId}/start', [SlotLifecycleController::class, 'unplannedStart'])->whereNumber('slotId')->name('start')

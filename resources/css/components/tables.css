@@ -443,6 +443,25 @@ table.st-table td .tw-action--danger:hover {
     box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
 }
 
+.st-table td .tw-action--warning,
+
+table.st-table td .tw-action--warning {
+    border-color: #f59e0b;
+    background: #f59e0b;
+    color: #ffffff;
+}
+
+.st-table td .tw-action--warning:hover,
+
+table.st-table td .tw-action--warning:hover {
+    border-color: #d97706;
+    background: #d97706;
+    opacity: 0.9;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+}
+
 .st-table td .btn-outline-primary,
 
 table.st-table td .btn-outline-primary,

@@ -1,7 +1,8 @@
 <?php
 
-/* Admin Routes — Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API, Security Dashboard */
+/* Admin Routes â€” Reports, Gates, Users, Logs, Trucks, Booking Approval, Notifications, SAP API, Security Dashboard */
 
+use App\Http\Controllers\Admin\OfflineImportController;
 use App\Http\Controllers\BookingApprovalController;
 use App\Http\Controllers\GateStatusController;
 use App\Http\Controllers\LogController;
@@ -28,6 +29,12 @@ Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/transactions', [ReportController::class, 'transactions'])->name('transactions')->middleware('permission:reports.transactions');
     Route::get('/search-suggestions', [ReportController::class, 'searchSuggestions'])->name('search_suggestions')->middleware(['permission:reports.search_suggestions', 'throttle:30,1']);
     Route::get('/gate-status', [ReportController::class, 'gateStatus'])->name('gate_status')->middleware('permission:reports.gate_status');
+
+    // Offline Import Routes
+    Route::middleware('role:super account|section head')->group(function () {
+        Route::get('/offline-import/template', [OfflineImportController::class, 'downloadTemplate'])->name('offline_import.template');
+        Route::post('/offline-import/upload', [OfflineImportController::class, 'import'])->name('offline_import.upload');
+    });
 });
 
 // Real-time gate status streaming
@@ -100,7 +107,7 @@ Route::prefix('gates')->name('gates.')->group(function () {
     });
 
     Route::post('/{gateId}/toggle', [ReportController::class, 'toggleGate'])->whereNumber('gateId')->name('toggle')
-        ->middleware(['permission:gates.toggle', 'role:admin|super account|section head|security|operator']);
+        ->middleware(['permission:gates.toggle', 'role:admin|super account|section head|security|operator|admin wh']);
 });
 
 // Logs
@@ -150,7 +157,7 @@ Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('book
 });
 
 // -----------------------------------------------------------------------------
-// Master Data: Business Partner (md_bp) � Vendor & Customer lokal
+// Master Data: Business Partner (md_bp) — Vendor & Customer lokal
 // Dibutuhkan untuk form 'Create Planned Uji Coba' (tanpa SAP)
 // -----------------------------------------------------------------------------
 Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->group(function () {

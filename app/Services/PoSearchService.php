@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class PoSearchService
 {
     public function __construct(
-        private readonly SapPoService $sapPoService
+        private readonly SapPoService $sapPoService,
+        private readonly SapSoService $sapSoService
     ) {}
 
     /**
@@ -98,8 +101,9 @@ class PoSearchService
     }
 
     /**
-     * Get detailed PO information with vendor resolution
-     * Flow: SAP API -> Sync Vendor
+     * Get detailed PO/SO information with vendor resolution.
+     * Flow: PO API + SO API called in PARALLEL via Http::pool()
+     *       → return whichever has data (PO prioritized).
      * Strict Mode: No Local DB fallback.
      */
     public function getPoDetail(string $poNumber): ?array
@@ -109,65 +113,146 @@ class PoSearchService
             return null;
         }
 
-        $lookupPo = $poNumber;
+        $lookupNumber = $poNumber;
         $digitsOnly = preg_replace('/\D+/', '', $poNumber);
         if (is_string($digitsOnly) && strlen($digitsOnly) >= 5) {
-            $lookupPo = $digitsOnly;
+            $lookupNumber = $digitsOnly;
         }
 
-        // 1. Try SAP API first (Real-time data)
+        // Build request configs for both PO and SO APIs
+        $poConfig = $this->sapPoService->buildDetailRequestConfig($lookupNumber);
+        $soConfig = $this->sapSoService->buildDetailRequestConfig($lookupNumber);
+
+        // If neither config is available, nothing to do
+        if ($poConfig === null && $soConfig === null) {
+            return null;
+        }
+
         try {
-            $api = $this->sapPoService->getByPoNumber($lookupPo);
-
-            if ($api) {
-                // Data found in SAP!
-                $vendorCode = (string) ($api['vendor_code'] ?? '');
-                $vendorName = (string) ($api['vendor_name'] ?? '');
-
-                // Determine direction based on SAP fields:
-                // - If CustomerCode exists => outbound
-                // - Else SupplierCode exists => inbound
-                $direction = (string) ($api['direction'] ?? '');
-                if ($direction === '') {
-                    $customerCode = (string) ($api['customer_code'] ?? '');
-                    $supplierCode = (string) ($api['supplier_code'] ?? '');
-                    if ($customerCode !== '') {
-                        $direction = 'outbound';
-                    } elseif ($supplierCode !== '') {
-                        $direction = 'inbound';
+            // Fire both requests in PARALLEL using Laravel Http::pool()
+            // Both HTTP calls start at the same time — total wait = max(PO_time, SO_time)
+            $responses = Http::pool(function (Pool $pool) use ($poConfig, $soConfig) {
+                if ($poConfig !== null) {
+                    $poReq = $pool->as('po')
+                        ->timeout($poConfig['timeout'])
+                        ->acceptJson();
+                    if ($poConfig['username'] !== '') {
+                        $poReq = $poReq->withBasicAuth($poConfig['username'], $poConfig['password']);
                     }
+                    if ($poConfig['sap_client'] !== '') {
+                        $poReq = $poReq->withHeaders(['sap-client' => $poConfig['sap_client']]);
+                    }
+                    if (! $poConfig['verify_ssl']) {
+                        $poReq = $poReq->withoutVerifying();
+                    }
+                    $poReq->get($poConfig['url']);
                 }
 
-                if ($direction === '') {
-                    $direction = 'inbound';
+                if ($soConfig !== null) {
+                    $soReq = $pool->as('so')
+                        ->timeout($soConfig['timeout'])
+                        ->acceptJson();
+                    if ($soConfig['username'] !== '') {
+                        $soReq = $soReq->withBasicAuth($soConfig['username'], $soConfig['password']);
+                    }
+                    if ($soConfig['sap_client'] !== '') {
+                        $soReq = $soReq->withHeaders(['sap-client' => $soConfig['sap_client']]);
+                    }
+                    if (! $soConfig['verify_ssl']) {
+                        $soReq = $soReq->withoutVerifying();
+                    }
+                    $soReq->get($soConfig['url']);
                 }
+            });
 
-                $partnerRole = (string) ($api['partner_role'] ?? '');
-                $vendorType = $partnerRole !== '' ? $partnerRole : ($direction === 'outbound' ? 'customer' : 'supplier');
-
-                return [
-                    'po_number' => (string) ($api['po_number'] ?? $poNumber),
-                    'plant' => (string) ($api['plant'] ?? ''),
-                    'doc_date' => (string) ($api['doc_date'] ?? ''),
-                    'warehouse_name' => (string) ($api['warehouse_name'] ?? ''),
-                    'vendor_code' => $vendorCode,
-                    'vendor_name' => $vendorName,
-                    'vendor_type' => $vendorType,
-                    'supplier_code' => (string) ($api['supplier_code'] ?? $vendorCode),
-                    'supplier_name' => (string) ($api['supplier_name'] ?? $vendorName),
-                    'customer_code' => (string) ($api['customer_code'] ?? ''),
-                    'customer_name' => (string) ($api['customer_name'] ?? ''),
-                    'direction' => $direction,
-                    'source' => 'sap',
-                ];
+            // Check PO response first (priority)
+            if ($poConfig !== null && isset($responses['po']) && $responses['po']->successful()) {
+                $poData = $this->sapPoService->parseDetailResponse($responses['po']->json(), $lookupNumber);
+                if ($poData !== null) {
+                    return $this->normalizePoResult($poData, $poNumber);
+                }
             }
-        } catch (\Exception $e) {
-            // Log warning
-            Log::warning("SAP PO lookup failed for $poNumber (lookup=$lookupPo): ".$e->getMessage());
+
+            // Check SO response
+            if ($soConfig !== null && isset($responses['so']) && $responses['so']->successful()) {
+                $soData = $this->sapSoService->parseDetailResponse($responses['so']->json(), $lookupNumber);
+                if ($soData !== null) {
+                    return $this->normalizeSoResult($soData, $poNumber);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning("SAP parallel lookup failed for $poNumber (lookup=$lookupNumber): ".$e->getMessage());
         }
 
-        // 2. No Fallback
-        // Strict SAP mode means if it's not in SAP, it doesn't exist.
+        // Nothing found in either API
         return null;
+    }
+
+    /**
+     * Normalize PO API result to standard format
+     */
+    private function normalizePoResult(array $api, string $originalNumber): array
+    {
+        $vendorCode = (string) ($api['vendor_code'] ?? '');
+        $vendorName = (string) ($api['vendor_name'] ?? '');
+
+        // Determine direction based on SAP fields
+        $direction = (string) ($api['direction'] ?? '');
+        if ($direction === '') {
+            $customerCode = (string) ($api['customer_code'] ?? '');
+            $supplierCode = (string) ($api['supplier_code'] ?? '');
+            if ($customerCode !== '') {
+                $direction = 'outbound';
+            } elseif ($supplierCode !== '') {
+                $direction = 'inbound';
+            }
+        }
+
+        if ($direction === '') {
+            $direction = 'inbound';
+        }
+
+        $partnerRole = (string) ($api['partner_role'] ?? '');
+        $vendorType = $partnerRole !== '' ? $partnerRole : ($direction === 'outbound' ? 'customer' : 'supplier');
+
+        return [
+            'po_number' => (string) ($api['po_number'] ?? $originalNumber),
+            'plant' => (string) ($api['plant'] ?? ''),
+            'doc_date' => (string) ($api['doc_date'] ?? ''),
+            'warehouse_name' => (string) ($api['warehouse_name'] ?? ''),
+            'vendor_code' => $vendorCode,
+            'vendor_name' => $vendorName,
+            'vendor_type' => $vendorType,
+            'supplier_code' => (string) ($api['supplier_code'] ?? $vendorCode),
+            'supplier_name' => (string) ($api['supplier_name'] ?? $vendorName),
+            'customer_code' => (string) ($api['customer_code'] ?? ''),
+            'customer_name' => (string) ($api['customer_name'] ?? ''),
+            'direction' => $direction,
+            'doc_type' => 'po',
+            'source' => 'sap',
+        ];
+    }
+
+    /**
+     * Normalize SO API result to standard format
+     */
+    private function normalizeSoResult(array $api, string $originalNumber): array
+    {
+        return [
+            'po_number' => (string) ($api['po_number'] ?? $originalNumber),
+            'plant' => (string) ($api['plant'] ?? ''),
+            'doc_date' => (string) ($api['doc_date'] ?? ''),
+            'warehouse_name' => (string) ($api['warehouse_name'] ?? ''),
+            'vendor_code' => (string) ($api['vendor_code'] ?? ''),
+            'vendor_name' => (string) ($api['vendor_name'] ?? ''),
+            'vendor_type' => 'customer',
+            'supplier_code' => '',
+            'supplier_name' => '',
+            'customer_code' => (string) ($api['customer_code'] ?? ''),
+            'customer_name' => (string) ($api['customer_name'] ?? ''),
+            'direction' => 'outbound',
+            'doc_type' => 'so',
+            'source' => 'sap',
+        ];
     }
 }

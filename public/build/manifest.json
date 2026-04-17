@@ -1,20 +1,20 @@
 {
-  "_client-DzYSRBXd.js": {
-    "file": "assets/client-DzYSRBXd.js",
+  "_client-MYcmZywi.js": {
+    "file": "assets/client-MYcmZywi.js",
     "name": "client",
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
-  "_react-vendor-C6WxKkic.js": {
-    "file": "assets/react-vendor-C6WxKkic.js",
+  "_react-vendor-N--QU9DW.js": {
+    "file": "assets/react-vendor-N--QU9DW.js",
     "name": "react-vendor"
   },
-  "_recharts-4-iG22hf.js": {
-    "file": "assets/recharts-4-iG22hf.js",
+  "_recharts-l8O6fVoK.js": {
+    "file": "assets/recharts-l8O6fVoK.js",
     "name": "recharts",
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "_search-highlight-CjsPCiQd.js": {
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-B98zptw2.css",
+    "file": "assets/style-Bls_xrJD.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -67,16 +67,16 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CZPMs-rA.js",
+    "file": "assets/app-BBG_585q.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "resources/js/pages/admin-bookings-index.js": {
-    "file": "assets/admin-bookings-index-BofsoK67.js",
+    "file": "assets/admin-bookings-index-CPV8tYZy.js",
     "name": "admin-bookings-index",
     "src": "resources/js/pages/admin-bookings-index.js",
     "isEntry": true,
@@ -124,13 +124,13 @@
     ]
   },
   "resources/js/pages/main.js": {
-    "file": "assets/main-CYzR84fd.js",
+    "file": "assets/main-CvMXG439.js",
     "name": "main",
     "src": "resources/js/pages/main.js",
     "isEntry": true
   },
   "resources/js/pages/reports-transactions.js": {
-    "file": "assets/reports-transactions-D5WxiERH.js",
+    "file": "assets/reports-transactions-CEsgbrRP.js",
     "name": "reports-transactions",
     "src": "resources/js/pages/reports-transactions.js",
     "isEntry": true,
@@ -157,7 +157,7 @@
     "isEntry": true
   },
   "resources/js/pages/slots-create.js": {
-    "file": "assets/slots-create-GA3LugCa.js",
+    "file": "assets/slots-create-B4owy_T5.js",
     "name": "slots-create",
     "src": "resources/js/pages/slots-create.js",
     "isEntry": true
@@ -178,7 +178,7 @@
     ]
   },
   "resources/js/pages/slots-trial-create.js": {
-    "file": "assets/slots-trial-create-CCoFmarJ.js",
+    "file": "assets/slots-trial-create-GNiyj2B_.js",
     "name": "slots-trial-create",
     "src": "resources/js/pages/slots-trial-create.js",
     "isEntry": true
@@ -256,25 +256,25 @@
     "isEntry": true
   },
   "resources/js/react/dashboard.jsx": {
-    "file": "assets/dashboard-BQdu1p6h.js",
+    "file": "assets/dashboard--r3u2yOg.js",
     "name": "dashboard",
     "src": "resources/js/react/dashboard.jsx",
     "isEntry": true,
     "imports": [
-      "_client-DzYSRBXd.js",
-      "_recharts-4-iG22hf.js",
-      "_react-vendor-C6WxKkic.js"
+      "_client-MYcmZywi.js",
+      "_recharts-l8O6fVoK.js",
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "resources/js/react/vendor-dashboard.jsx": {
-    "file": "assets/vendor-dashboard-BuFrP7sS.js",
+    "file": "assets/vendor-dashboard-20Gz-uOi.js",
     "name": "vendor-dashboard",
     "src": "resources/js/react/vendor-dashboard.jsx",
     "isEntry": true,
     "imports": [
-      "_client-DzYSRBXd.js",
-      "_recharts-4-iG22hf.js",
-      "_react-vendor-C6WxKkic.js"
+      "_client-MYcmZywi.js",
+      "_recharts-l8O6fVoK.js",
+      "_react-vendor-N--QU9DW.js"
     ]
   }
 }

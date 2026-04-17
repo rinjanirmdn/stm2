@@ -53,6 +53,8 @@
                         <select name="role" class="st-select" required id="role">
                             <option value="operator" {{ old('role', 'operator') === 'operator' ? 'selected' : '' }}>Operator
                             </option>
+                            <option value="admin_wh" {{ old('role', 'operator') === 'admin_wh' ? 'selected' : '' }}>Admin WH
+                            </option>
                             <option value="section_head" {{ old('role', 'operator') === 'section_head' ? 'selected' : '' }}>
                                 Section Head</option>
                             <option value="admin" {{ old('role', 'operator') === 'admin' ? 'selected' : '' }}>Admin</option>

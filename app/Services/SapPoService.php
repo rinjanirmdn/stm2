@@ -254,6 +254,102 @@ class SapPoService
         return $this->searchByPeriod($period);
     }
 
+    /**
+     * Build the detail request config (URL + auth) for a PO number.
+     * Used by PoSearchService for parallel Http::pool() calls.
+     *
+     * @return array{url: string, username: string, password: string, sap_client: string, timeout: int, verify_ssl: bool}|null
+     */
+    public function buildDetailRequestConfig(string $poNumber): ?array
+    {
+        $poNumber = trim($poNumber);
+        if ($poNumber === '') {
+            return null;
+        }
+
+        $baseUrl = trim((string) config('services.sap_po.base_url', ''));
+        if ($baseUrl === '') {
+            return null;
+        }
+
+        $odataEndpoint = trim((string) config('services.sap_po.odata_detail_endpoint', ''));
+        if ($odataEndpoint === '') {
+            return null;
+        }
+
+        $servicePath = trim((string) config('services.sap_po.service_path', ''));
+        $endpoint = str_replace('{po}', $poNumber, $odataEndpoint);
+        $endpoint = str_replace("'__PO__'", "'".$poNumber."'", $endpoint);
+        $url = rtrim($baseUrl, '/').$servicePath.$endpoint;
+
+        return [
+            'url' => $url,
+            'username' => trim((string) config('services.sap_po.username', '')),
+            'password' => (string) config('services.sap_po.password', ''),
+            'sap_client' => trim((string) config('services.sap_po.sap_client', '210')),
+            'timeout' => (int) config('services.sap_po.timeout', 15),
+            'verify_ssl' => (bool) config('services.sap_po.verify_ssl', false),
+        ];
+    }
+
+    /**
+     * Parse OData JSON response into normalized PO array.
+     * Used by PoSearchService after parallel Http::pool() call.
+     */
+    public function parseDetailResponse(?array $json, string $poNumber): ?array
+    {
+        if (! is_array($json)) {
+            return null;
+        }
+
+        $rows = [];
+        if (array_key_exists('value', $json) && is_array($json['value'])) {
+            $rows = $json['value'];
+        }
+
+        if (empty($rows) || ! is_array($rows[0] ?? null)) {
+            return null;
+        }
+
+        $first = $rows[0];
+        $supplierCode = (string) ($first['SupplierCode'] ?? '');
+        $supplierName = (string) ($first['SupplierName'] ?? '');
+        $customerCode = (string) ($first['CustomerCode'] ?? '');
+        $customerName = (string) ($first['CustomerName'] ?? '');
+        $docDate = (string) ($first['DocDate'] ?? '');
+
+        $partnerRole = '';
+        $direction = '';
+        $partnerCode = '';
+        $partnerName = '';
+        if ($customerCode !== '') {
+            $partnerRole = 'customer';
+            $direction = 'outbound';
+            $partnerCode = $customerCode;
+            $partnerName = $customerName;
+        } else {
+            $partnerRole = 'supplier';
+            $direction = 'inbound';
+            $partnerCode = $supplierCode;
+            $partnerName = $supplierName;
+        }
+
+        return [
+            'po_number' => (string) ($first['PoNo'] ?? $poNumber),
+            'vendor_code' => $partnerCode,
+            'vendor_name' => $partnerName,
+            'supplier_code' => $supplierCode,
+            'supplier_name' => $supplierName,
+            'customer_code' => $customerCode,
+            'customer_name' => $customerName,
+            'partner_role' => $partnerRole,
+            'direction' => $direction,
+            'doc_date' => $docDate,
+            'plant' => '',
+            'warehouse_name' => '',
+        ];
+    }
+
     public function getByPoNumber(string $poNumber): ?array
     {
         $poNumber = trim($poNumber);

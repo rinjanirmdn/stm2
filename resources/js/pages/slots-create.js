@@ -704,6 +704,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 var items = data.items || [];
+                
+                if (data.generated_at && scheduleModalInfo) {
+                    var currentText = scheduleModalInfo.textContent.split(' | Last Update:')[0];
+                    scheduleModalInfo.textContent = currentText + ' | Last Update: ' + data.generated_at;
+                }
+
                 if (items.length === 0) {
                     scheduleModalBody.innerHTML = '<tr><td colspan="5" class="st-text--muted st-modal__message">No scheduled / in-progress bookings on this date.</td></tr>';
                     return;
@@ -711,18 +717,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 var html = '';
                 items.forEach(function (item, idx) {
-                    var start = formatDateTimeForDisplay(item.planned_start);
-                    var finish = formatDateTimeForDisplay(item.planned_finish);
-                    var gate = item.gate || '-';
+                    var startObj = new Date(item.planned_start.replace(/-/g, '/'));
+                    var finishObj = item.planned_finish ? new Date(item.planned_finish.replace(/-/g, '/')) : null;
+                    
+                    var startTime = !isNaN(startObj) ? ('0' + startObj.getHours()).slice(-2) + ':' + ('0' + startObj.getMinutes()).slice(-2) : '-';
+                    var finishTime = finishObj && !isNaN(finishObj) ? ('0' + finishObj.getHours()).slice(-2) + ':' + ('0' + finishObj.getMinutes()).slice(-2) : '-';
+                    var timeStr = startTime + ' - ' + finishTime;
+                    
+                    var po = item.po_number || '-';
+                    var truck = item.truck || '-';
+                    var vendor = item.vendor_name || '-';
                     var status = (item.status || '').replace('_', ' ');
                     var safeStatus = status.charAt(0).toUpperCase() + status.slice(1);
+                    
+                    var badgeClass = 'st-badge--secondary';
+                    if (item.status === 'scheduled') badgeClass = 'st-badge--info';
+                    else if (item.status === 'waiting') badgeClass = 'st-badge--warning';
+                    else if (item.status === 'in_progress') badgeClass = 'st-badge--primary';
 
                     html += '<tr class="schedule-row st-row-clickable" data-start="' + (item.planned_start || '') + '">';
-                    html += '<td>' + (idx + 1) + '</td>';
-                    html += '<td>' + start + '</td>';
-                    html += '<td>' + (finish || '-') + '</td>';
-                    html += '<td>' + gate + '</td>';
-                    html += '<td>' + safeStatus + '</td>';
+                    html += '<td class="st-font-medium st-whitespace-nowrap">' + timeStr + '</td>';
+                    html += '<td>' + po + '</td>';
+                    html += '<td>' + truck + '</td>';
+                    html += '<td style="max-width:200px;" class="st-text-ellipsis st-whitespace-nowrap" title="' + vendor + '">' + vendor + '</td>';
+                    html += '<td><span class="st-badge st-badge--sm ' + badgeClass + '">' + safeStatus + '</span></td>';
                     html += '</tr>';
                 });
 

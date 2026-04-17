@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
 use App\Models\Slot;
+use App\Models\User;
+use App\Notifications\SlotLifecycleNotification;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
@@ -14,8 +16,10 @@ use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Milon\Barcode\DNS1D;
 use RuntimeException;
@@ -105,6 +109,9 @@ class SlotLifecycleController extends Controller
                 $this->slotService->logActivity($slotId, 'backdate', 'Arrival Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
             }
         });
+
+        // Notify Section Head & Super Account (database only, no email)
+        $this->notifyLifecycleEvent($slotId, $slot, 'arrival');
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Arrival recorded successfully']);
@@ -461,6 +468,9 @@ class SlotLifecycleController extends Controller
             }
         });
 
+        // Notify Section Head & Super Account (database only, no email)
+        $this->notifyLifecycleEvent($slotId, $slot, 'start', $actualGateId);
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Process started successfully']);
         }
@@ -526,9 +536,10 @@ class SlotLifecycleController extends Controller
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
+        $matDocNumber = trim((string) $request->input('mat_doc_number', ''));
 
         $slotType = (string) ($slot->slot_type ?? 'planned');
-        $requiredMissing = $matDoc === '' || $truckType === '' || $vehicleNumber === '';
+        $requiredMissing = $truckType === '' || $vehicleNumber === '';
         // Driver number is required only for unplanned slots
         if ($slotType === 'unplanned' && $driverNumber === '') {
             $requiredMissing = true;
@@ -549,7 +560,7 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $backdateTime) {
+        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $backdateTime) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
 
             // Get slot info before updating
@@ -562,11 +573,12 @@ class SlotLifecycleController extends Controller
             DB::table('slots')->where('id', $slotId)->update([
                 'status' => 'completed',
                 'actual_finish' => $now,
-                'mat_doc' => $matDoc,
+                'mat_doc' => $matDoc !== '' ? $matDoc : null,
                 'truck_type' => $truckType,
                 'vehicle_number_snap' => $vehicleNumber,
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'mat_doc_number' => $matDocNumber !== '' ? $matDocNumber : null,
                 'late_reason' => $notes !== '' ? $notes : null,
             ]);
 
@@ -581,6 +593,9 @@ class SlotLifecycleController extends Controller
                 $this->slotService->logActivity($slotId, 'backdate', 'Complete Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
             }
         });
+
+        // Notify Section Head & Super Account (database only, no email)
+        $this->notifyLifecycleEvent($slotId, $slot, 'complete');
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Process completed successfully']);
@@ -702,5 +717,77 @@ class SlotLifecycleController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Send database-only notification for lifecycle events (arrival, start, complete)
+     * to Section Head and Super Account users.
+     */
+    private function notifyLifecycleEvent(int $slotId, object $slot, string $event, ?int $actualGateId = null): void
+    {
+        try {
+            $actor = Auth::user();
+            $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'System'));
+            $poNumber = trim((string) ($slot->po_number ?? ''));
+            $vendorName = trim((string) ($slot->vendor_name ?? ''));
+            $ticketNumber = trim((string) ($slot->ticket_number ?? ''));
+            $slotType = (string) ($slot->slot_type ?? 'planned');
+
+            // Resolve gate name
+            $gateName = null;
+            $gateId = $actualGateId ?? ($slot->actual_gate_id ?? $slot->planned_gate_id ?? null);
+            if ($gateId) {
+                $gateMeta = $this->slotService->getGateMetaById((int) $gateId);
+                if ($gateMeta) {
+                    $gateName = strtoupper($this->buildGateLabel(
+                        (string) ($gateMeta['warehouse_code'] ?? ''),
+                        (string) ($gateMeta['gate_number'] ?? '')
+                    ));
+                }
+            }
+
+            $recipients = User::where('is_active', true)
+                ->whereHas('roles', function ($q) {
+                    $q->whereIn(DB::raw('LOWER(roles_name)'), [
+                        'section head',
+                        'super admin',
+                        'super administrator',
+                        'super account',
+                    ]);
+                })
+                ->get();
+
+            if ($recipients->isEmpty()) {
+                return;
+            }
+
+            $notification = new SlotLifecycleNotification(
+                slotId: $slotId,
+                slotType: $slotType,
+                event: $event,
+                poNumber: $poNumber,
+                vendorName: $vendorName,
+                ticketNumber: $ticketNumber,
+                performedBy: $actorName,
+                gateName: $gateName,
+            );
+
+            foreach ($recipients as $recipient) {
+                try {
+                    $recipient->notify(clone $notification);
+                } catch (Throwable $e) {
+                    Log::warning('Failed to send lifecycle notification: '.$e->getMessage(), [
+                        'slot_id' => $slotId,
+                        'event' => $event,
+                        'recipient_id' => $recipient->id,
+                    ]);
+                }
+            }
+        } catch (Throwable $e) {
+            Log::warning('Failed to dispatch lifecycle notification: '.$e->getMessage(), [
+                'slot_id' => $slotId,
+                'event' => $event,
+            ]);
+        }
     }
 }

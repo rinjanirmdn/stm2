@@ -54,7 +54,7 @@ class UserStoreRequest extends FormRequest
             'role' => [
                 'required',
                 'string',
-                'in:admin,section_head,operator,vendor,security,super_account,display_account',
+                'in:admin,section_head,operator,admin_wh,vendor,security,super_account,display_account',
             ],
             'vendor_code' => [
                 'nullable',
@@ -80,7 +80,7 @@ class UserStoreRequest extends FormRequest
             'password.required' => 'Password is required.',
             'password.confirmed' => 'Password confirmation does not match.',
             'role.required' => 'Role must be selected.',
-            'role.in' => 'Role must be admin, section_head, operator, or vendor.',
+            'role.in' => 'Invalid role selected.',
             'vendor_code.required' => 'Vendor Code (SAP) is required for vendor role.',
             'vendor_code.max' => 'Vendor Code (SAP) maximum 20 characters.',
             'vendor_code.exists' => 'Vendor Code not found in master data.',

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Traits\SlotHelperTrait;
 use App\Models\BookingRequest;
 use App\Models\Slot;
+use App\Models\User;
 use App\Notifications\SlotCancelled;
+use App\Notifications\SlotCreatedByInternal;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
@@ -16,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SlotController extends Controller
 {
@@ -299,6 +302,9 @@ class SlotController extends Controller
             'blocking_risk_cached_at' => now(),
         ]);
 
+        // Notify Section Head & Super Account about new planned transaction
+        $this->notifyInternalSlotCreated($slotId, 'planned', $truckNumber, $poDetail, $plannedStart, $truckType, $vehicleNumber);
+
         return redirect()->route('slots.index')->with('success', 'Data created successfully');
     }
 
@@ -309,8 +315,18 @@ class SlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
-        if (((string) ($slot->slot_type ?? 'planned')) !== 'planned' || (string) ($slot->status ?? '') !== 'scheduled') {
-            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled planned slots can be edited');
+        $user = Auth::user();
+        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head']);
+
+        // Super editors can edit any status except cancelled; other users only scheduled planned
+        if ($isSuperEditor) {
+            if ((string) ($slot->status ?? '') === 'cancelled') {
+                return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Cancelled transactions cannot be edited');
+            }
+        } else {
+            if (((string) ($slot->slot_type ?? 'planned')) !== 'planned' || (string) ($slot->status ?? '') !== 'scheduled') {
+                return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled planned slots can be edited');
+            }
         }
 
         $warehouses = DB::table('md_warehouse')
@@ -341,6 +357,7 @@ class SlotController extends Controller
             'gates' => $gates,
             'truckTypes' => $truckTypes,
             'truckTypeDurations' => $truckTypeDurations,
+            'isSuperEditor' => $isSuperEditor,
         ]);
     }
 
@@ -351,8 +368,17 @@ class SlotController extends Controller
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
-        if (((string) ($slot->slot_type ?? 'planned')) !== 'planned' || (string) ($slot->status ?? '') !== 'scheduled') {
-            return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled planned slots can be edited');
+        $user = Auth::user();
+        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head']);
+
+        if ($isSuperEditor) {
+            if ((string) ($slot->status ?? '') === 'cancelled') {
+                return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Cancelled transactions cannot be edited');
+            }
+        } else {
+            if (((string) ($slot->slot_type ?? 'planned')) !== 'planned' || (string) ($slot->status ?? '') !== 'scheduled') {
+                return redirect()->route('slots.show', ['slotId' => $slotId])->with('error', 'Only scheduled planned slots can be edited');
+            }
         }
 
         $request->validate([
@@ -444,8 +470,25 @@ class SlotController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes) {
-            DB::table('slots')->where('id', $slotId)->update([
+        // Handle status and slot_type changes for super editors
+        $newStatus = null;
+        $newSlotType = null;
+        if ($isSuperEditor) {
+            $requestedStatus = trim((string) $request->input('status', ''));
+            $requestedSlotType = trim((string) $request->input('slot_type', ''));
+
+            $allowedStatuses = ['scheduled', 'waiting', 'in_progress', 'completed'];
+            if ($requestedStatus !== '' && in_array($requestedStatus, $allowedStatuses, true)) {
+                $newStatus = $requestedStatus;
+            }
+
+            if ($requestedSlotType !== '' && in_array($requestedSlotType, ['planned', 'unplanned'], true)) {
+                $newSlotType = $requestedSlotType;
+            }
+        }
+
+        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $newStatus, $newSlotType) {
+            $updateData = [
                 'po_number' => $truckNumber,
                 'direction' => $direction,
                 'warehouse_id' => $warehouseId,
@@ -458,15 +501,47 @@ class SlotController extends Controller
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
                 'late_reason' => $notes !== '' ? $notes : null,
                 'updated_at' => now(),
-            ]);
+            ];
 
-            $vendorName = trim((string) ($slot->vendor_name ?? ''));
-            $logDesc = 'Scheduled slot updated';
-            if ($vendorName !== '' || $truckNumber !== '') {
-                $parts = array_filter([$vendorName, $truckNumber !== '' ? 'PO/DO '.$truckNumber : '']);
-                $logDesc .= ' ('.implode(' - ', $parts).')';
+            // Track changes for detailed logging
+            $changes = [];
+            $oldStatus = (string) ($slot->status ?? '');
+            $oldSlotType = (string) ($slot->slot_type ?? 'planned');
+
+            if ($newStatus !== null && $newStatus !== $oldStatus) {
+                $updateData['status'] = $newStatus;
+                $changes[] = 'Status: '.ucwords(str_replace('_', ' ', $oldStatus)).' → '.ucwords(str_replace('_', ' ', $newStatus));
             }
-            $this->slotService->logActivity($slotId, 'status_change', $logDesc);
+
+            if ($newSlotType !== null && $newSlotType !== $oldSlotType) {
+                $updateData['slot_type'] = $newSlotType;
+                $changes[] = 'Type: '.ucfirst($oldSlotType).' → '.ucfirst($newSlotType);
+            }
+
+            DB::table('slots')->where('id', $slotId)->update($updateData);
+
+            // Build descriptive log message
+            $vendorName = trim((string) ($slot->vendor_name ?? ''));
+            $actorName = trim((string) (Auth::user()->name ?? Auth::user()->full_name ?? Auth::user()->username ?? Auth::user()->nik ?? 'Unknown'));
+
+            if (! empty($changes)) {
+                // Log each significant change separately for detailed audit trail
+                $changeDesc = 'Slot edited by '.$actorName.': '.implode(', ', $changes);
+                $this->slotService->logActivity(
+                    $slotId,
+                    'status_change',
+                    $changeDesc,
+                    ['status' => $oldStatus, 'slot_type' => $oldSlotType],
+                    ['status' => $newStatus ?? $oldStatus, 'slot_type' => $newSlotType ?? $oldSlotType]
+                );
+            } else {
+                $logDesc = 'Slot updated by '.$actorName;
+                if ($vendorName !== '' || $truckNumber !== '') {
+                    $parts = array_filter([$vendorName, $truckNumber !== '' ? 'PO/DO '.$truckNumber : '']);
+                    $logDesc .= ' ('.implode(' - ', $parts).')';
+                }
+                $this->slotService->logActivity($slotId, 'status_change', $logDesc);
+            }
         });
 
         // Calculate blocking risk immediately after update
@@ -710,5 +785,79 @@ class SlotController extends Controller
         });
 
         return redirect()->route('slots.index')->with('success', 'Slot cancelled');
+    }
+
+    /**
+     * Notify Section Head and Super Account users about a new internal slot creation.
+     */
+    private function notifyInternalSlotCreated(
+        int $slotId,
+        string $slotType,
+        string $poNumber,
+        ?array $poDetail,
+        string $plannedStart,
+        string $truckType,
+        string $vehicleNumber
+    ): void {
+        try {
+            $actor = Auth::user();
+            $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Internal'));
+            $vendorName = trim((string) ($poDetail['vendor_name'] ?? ''));
+            $direction = ucfirst(trim((string) ($poDetail['direction'] ?? '')));
+
+            $plannedDate = '-';
+            try {
+                $plannedDate = (new DateTime($plannedStart))->format('d-m-Y H:i');
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
+            $ticketNumber = DB::table('slots')->where('id', $slotId)->value('ticket_number');
+
+            $recipients = User::where('is_active', true)
+                ->whereHas('roles', function ($q) {
+                    $q->whereIn(DB::raw('LOWER(roles_name)'), [
+                        'section head',
+                        'super account',
+                    ]);
+                })
+                ->get();
+
+            if ($recipients->isEmpty()) {
+                Log::warning('No Section Head / Super Account recipients found for internal slot notification', [
+                    'slot_id' => $slotId,
+                ]);
+
+                return;
+            }
+
+            $notification = new SlotCreatedByInternal(
+                slotId: $slotId,
+                slotType: $slotType,
+                poNumber: $poNumber,
+                vendorName: $vendorName,
+                direction: $direction,
+                plannedDate: $plannedDate,
+                createdByName: $actorName,
+                truckType: $truckType !== '' ? $truckType : null,
+                vehicleNumber: $vehicleNumber !== '' ? $vehicleNumber : null,
+                ticketNumber: $ticketNumber,
+            );
+
+            foreach ($recipients as $recipient) {
+                try {
+                    $recipient->notify(clone $notification);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to notify recipient for internal slot: '.$e->getMessage(), [
+                        'slot_id' => $slotId,
+                        'recipient_id' => $recipient->id,
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send internal slot creation notification: '.$e->getMessage(), [
+                'slot_id' => $slotId,
+            ]);
+        }
     }
 }

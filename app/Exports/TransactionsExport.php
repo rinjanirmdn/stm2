@@ -6,6 +6,8 @@ use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
@@ -111,32 +113,76 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
             'A' => 12,  // Type
             'B' => 18,  // PO/DO Number
             'C' => 15,  // Ticket
-            'D' => 12,  // SJ
-            'E' => 25,  // Vendor
-            'F' => 15,  // Warehouse
-            'G' => 10,  // Direction
-            'H' => 18,  // Arrival
-            'I' => 12,  // Lead Time
-            'J' => 15,  // Target Status
-            'K' => 8,   // Late?
-            'L' => 15,  // User
+            'D' => 16,  // SJ
+            'E' => 28,  // Vendor
+            'F' => 14,  // Truck Type
+            'G' => 16,  // Vehicle Number
+            'H' => 14,  // Warehouse
+            'I' => 12,  // Gate
+            'J' => 12,  // Direction
+            'K' => 19,  // Arrival
+            'L' => 19,  // Actual Start
+            'M' => 19,  // Actual Finish
+            'N' => 14,  // Lead Time
+            'O' => 14,  // Target Status
+            'P' => 14,  // Arrival Status
+            'Q' => 12,  // Status
+            'R' => 16,  // User
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        return [
-            // Style the first row as bold text with background
-            1 => [
-                'font' => [
-                    'bold' => true,
-                    'color' => ['rgb' => 'FFFFFF'],
-                ],
-                'fill' => [
-                    'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '4CAF50'],
-                ],
+        $lastCol = 'R';
+        $rowCount = $this->transactions->count() + 1; // +1 for header
+
+        // --- Row 1: Header ---
+        $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '3B7DD8']],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
             ],
-        ];
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'B0B0B0']],
+            ],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        // --- Data rows: borders + alignment ---
+        if ($rowCount > 1) {
+            // All data cells border
+            $sheet->getStyle("A2:{$lastCol}{$rowCount}")->applyFromArray([
+                'borders' => [
+                    'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D0D0D0']],
+                ],
+                'alignment' => [
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+
+            // Center alignment for specific columns (Type, Direction, Gate, Status, Target, Late)
+            $centerCols = ['A', 'I', 'J', 'O', 'P', 'Q'];
+            foreach ($centerCols as $col) {
+                $sheet->getStyle("{$col}2:{$col}{$rowCount}")->applyFromArray([
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+            }
+
+            // Zebra striping (alternating rows)
+            for ($r = 2; $r <= $rowCount; $r++) {
+                if ($r % 2 === 0) {
+                    $sheet->getStyle("A{$r}:{$lastCol}{$r}")->applyFromArray([
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F8FC']],
+                    ]);
+                }
+            }
+        }
+
+        // Freeze header
+        $sheet->freezePane('A2');
+
+        return [];
     }
 }

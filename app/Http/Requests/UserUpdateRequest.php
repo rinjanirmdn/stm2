@@ -70,7 +70,7 @@ class UserUpdateRequest extends FormRequest
             'role' => [
                 'required',
                 'string',
-                'in:admin,operator,section_head,vendor,security,super_account,display_account',
+                'in:admin,operator,admin_wh,section_head,vendor,security,super_account,display_account',
             ],
             'vendor_code' => [
                 'nullable',
@@ -103,7 +103,7 @@ class UserUpdateRequest extends FormRequest
             'email.unique' => 'Email already exists.',
             'password.confirmed' => 'Password confirmation does not match.',
             'role.required' => 'Role must be selected.',
-            'role.in' => 'Role must be admin or operator.',
+            'role.in' => 'Invalid role selected.',
         ];
     }
 }

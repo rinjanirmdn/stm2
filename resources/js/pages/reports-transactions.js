@@ -147,7 +147,49 @@ document.addEventListener('DOMContentLoaded', function () {
         var params = new URLSearchParams(qs);
         params.set('export', 'excel');
         params.set('page_size', 'all');
-        excelLink.href = window.location.pathname + '?' + params.toString();
+        excelLink.setAttribute('data-export-url', window.location.pathname + '?' + params.toString());
+    }
+
+    /**
+     * Two-step download: ask server to generate the file (returns JSON with URL),
+     * then redirect browser to the static file URL so Apache serves it directly.
+     */
+    function staticDownload(url, btn) {
+        var originalText = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin st-mr-2"></i> Generating...';
+        }
+        fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(function(response) {
+            if (!response.ok) throw new Error('Export failed: ' + response.status);
+            return response.json();
+        })
+        .then(function(data) {
+            if (data && data.download_url) {
+                // Navigate to the static file — Apache serves it with correct filename
+                window.location.href = data.download_url;
+            } else {
+                throw new Error('No download URL in response');
+            }
+        })
+        .catch(function(err) {
+            console.error('Export error:', err);
+            alert('Export gagal: ' + err.message);
+        })
+        .finally(function() {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
     }
 
     function syncFormFromUrl() {
@@ -347,6 +389,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     updateExcelLink();
+
+    // Export Excel button click handler
+    if (excelLink) {
+        excelLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            var url = excelLink.getAttribute('data-export-url');
+            if (!url) return;
+            staticDownload(url, excelLink);
+        });
+    }
+
+    // Download Template button click handler
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('#btn-download-template');
+        if (!btn) return;
+        e.preventDefault();
+        var url = btn.getAttribute('data-export-url');
+        staticDownload(url, btn);
+    });
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -579,4 +640,96 @@ document.addEventListener('DOMContentLoaded', function () {
     if (searchInputHL && searchInputHL.value.trim().length >= 2) {
         highlightSearchInTable(tableBody, searchInputHL.value.trim());
     }
+
+    // Offline Import Logic
+    var btnImportOffline = document.getElementById('btn-import-offline');
+    var modalImportOffline = document.getElementById('modal-import-offline');
+    var btnImportClose = document.getElementById('modal-import-close');
+    var btnImportCancel = document.getElementById('btn-import-cancel');
+    var formImportOffline = document.getElementById('form-import-offline');
+    var btnImportSubmit = document.getElementById('btn-import-submit');
+    var alertImportOffline = document.getElementById('import-offline-alert');
+
+    function openModalImport() {
+        var modal = document.getElementById('modal-import-offline');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        var alert = document.getElementById('import-offline-alert');
+        if (alert) {
+            alert.classList.add('st-hidden');
+            alert.innerHTML = '';
+        }
+        var form = document.getElementById('form-import-offline');
+        if (form) form.reset();
+    }
+
+    function closeModalImport() {
+        var modal = document.getElementById('modal-import-offline');
+        if (!modal) return;
+        modal.style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#btn-import-offline')) {
+            openModalImport();
+        } else if (e.target.closest('#modal-import-close') || e.target.closest('#btn-import-cancel')) {
+            closeModalImport();
+        }
+    });
+
+    if (formImportOffline) {
+        formImportOffline.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var fd = new FormData(formImportOffline);
+            var token = formImportOffline.querySelector('input[name="_token"]').value;
+            
+            btnImportSubmit.disabled = true;
+            btnImportSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin st-mr-2"></i> Uploading...';
+            if (alertImportOffline) {
+                alertImportOffline.classList.add('st-hidden');
+            }
+
+            fetch('/reports/offline-import/upload', {
+                method: 'POST',
+                body: fd,
+                headers: {
+                    'X-CSRF-TOKEN': token
+                }
+            })
+            .then(function(res) {
+                if (!res.ok) {
+                    return res.json().then(function(err) { throw err; });
+                }
+                return res.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    if (alertImportOffline) {
+                        alertImportOffline.className = 'st-alert st-alert--success st-mt-4';
+                        alertImportOffline.innerHTML = '<i class="fa-solid fa-check-circle st-mr-2"></i> ' + data.message;
+                        alertImportOffline.classList.remove('st-hidden');
+                    }
+                    setTimeout(function() {
+                        closeModalImport();
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Error occurred');
+                }
+            })
+            .catch(function(err) {
+                if (alertImportOffline) {
+                    var msg = err.message || (err.errors ? JSON.stringify(err.errors) : 'Gagal upload data');
+                    alertImportOffline.className = 'st-alert st-alert--danger st-mt-4';
+                    alertImportOffline.innerHTML = '<i class="fa-solid fa-exclamation-circle st-mr-2"></i> ' + msg;
+                    alertImportOffline.classList.remove('st-hidden');
+                }
+            })
+            .finally(function() {
+                btnImportSubmit.disabled = false;
+                btnImportSubmit.innerHTML = 'Upload & Import';
+            });
+        });
+    }
+
 });

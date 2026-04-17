@@ -577,11 +577,7 @@
                                         </button>
                                         <div class="st-action-menu">
                                             @if ($slotTypeVal === 'planned')
-                                                @if ($status === 'scheduled')
-                                                    @can('slots.edit')
-                                                    <a href="{{ route('slots.edit', ['slotId' => $row->id]) }}" class="st-action-item">Edit</a>
-                                                    @endcan
-                                                @endif
+                                                    <a href="{{ route('slots.edit', ['slotId' => $row->id]) }}" class="st-action-item" style="color: orange; font-weight: bold;">Edit</a>
 
                                                 @if (!$hasArrival && $status === 'scheduled')
                                                     @can('slots.arrival')
