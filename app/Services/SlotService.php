@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use DateTime;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Milon\Barcode\DNS1D;
+use Throwable;
 
 class SlotService
 {
@@ -106,7 +110,7 @@ class SlotService
             $dt->modify('+'.(int) $plannedDurationMinutes.' minutes');
 
             return $dt->format('Y-m-d H:i:s');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return null;
         }
     }
@@ -856,5 +860,105 @@ class SlotService
         }
 
         return 2;      // High
+    }
+
+    public function generateTicketPdfContent(int $slotId): ?string
+    {
+        $slot = DB::table('slots as s')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
+            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
+            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id')
+            ->where('s.id', $slotId)
+            ->select([
+                's.*',
+                's.po_number as po_number',
+                's.po_number as truck_number',
+                'w.wh_name as warehouse_name',
+                'w.wh_code as warehouse_code',
+                's.vendor_name',
+                'pg.gate_number as planned_gate_number',
+                'ag.gate_number as actual_gate_number',
+                'wpg.wh_code as planned_gate_warehouse_code',
+                'wag.wh_code as actual_gate_warehouse_code',
+            ])
+            ->first();
+
+        if (! $slot) {
+            return null;
+        }
+
+        $cacheKey = 'ticket_pdf_'.$slotId.'_'.md5(json_encode([
+            $slot->ticket_number ?? '',
+            $slot->truck_number ?? '',
+            $slot->vendor_name ?? '',
+            $slot->vehicle_number_snap ?? '',
+            $slot->direction ?? '',
+            $slot->planned_start ?? '',
+            $slot->planned_gate_number ?? '',
+            $slot->actual_gate_number ?? '',
+        ]));
+
+        return Cache::remember($cacheKey, 3600, function () use ($slot) {
+            $gateNumber = (string) ($slot->actual_gate_number ?? '');
+            $gateWarehouse = (string) ($slot->actual_gate_warehouse_code ?? '');
+            if ($gateNumber === '') {
+                $gateNumber = (string) ($slot->planned_gate_number ?? '');
+                $gateWarehouse = (string) ($slot->planned_gate_warehouse_code ?? '');
+            }
+            if ($gateWarehouse === '') {
+                $gateWarehouse = (string) ($slot->warehouse_code ?? '');
+            }
+            $gateLetter = $this->getGateLetterByWarehouseAndNumber($gateWarehouse, $gateNumber);
+
+            $barcodeC = new DNS1D();
+            $barcodeC->setStorPath(storage_path('app/public/'));
+            $barcodePng = '';
+            if (! empty($slot->ticket_number)) {
+                $ticketNumber = (string) $slot->ticket_number;
+                $barcodePng = (string) Cache::remember('ticket_barcode_png_'.sha1($ticketNumber), 86400, function () use ($barcodeC, $ticketNumber) {
+                    return (string) $barcodeC->getBarcodePNG($ticketNumber, 'C128', 2.5, 60);
+                });
+            }
+
+            $logoDataUri = Cache::rememberForever('ticket_logo_data_uri', function () {
+                try {
+                    $logoPath = public_path('img/logo-full.png');
+                    if (is_string($logoPath) && $logoPath !== '' && file_exists($logoPath)) {
+                        return 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath));
+                    }
+                } catch (Throwable $e) {
+                }
+            });
+
+            $ticketCss = Cache::rememberForever('ticket_css_inline', function () {
+                try {
+                    $cssPath = public_path('ticket.css');
+                    if (is_string($cssPath) && $cssPath !== '' && file_exists($cssPath)) {
+                        return (string) file_get_contents($cssPath);
+                    }
+                } catch (Throwable $e) {
+                }
+
+                return '';
+            });
+
+            $pdf = Pdf::loadView('slots.ticket', [
+                'slot' => $slot,
+                'gateLetter' => $gateLetter,
+                'barcodePng' => $barcodePng,
+                'barcodeHtml' => null,
+                'barcodeSvg' => null,
+                'logoDataUri' => $logoDataUri,
+                'ticketCss' => $ticketCss,
+            ])
+                ->setOption('isRemoteEnabled', false)
+                ->setOption('isHtml5ParserEnabled', true)
+                ->setOption('chroot', public_path())
+                ->setPaper([0, 0, 252, 396], 'portrait');
+
+            return $pdf->output();
+        });
     }
 }

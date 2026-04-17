@@ -441,7 +441,19 @@ class VendorBookingController extends Controller
             // Fallback to hybrid search if SAP search fails
             $results = $this->poSearchService->searchPo($q);
         }
-        $results = $this->filterPoResultsByVendor($results, $vendorCode);
+
+        // If autocomplete finds nothing but the user typed an exact number, try getPoDetail to hit SO check
+        if (empty($results) && strlen(preg_replace('/\D+/', '', $q)) >= 5) {
+            $exactMatch = $this->poSearchService->getPoDetail($q);
+            if ($exactMatch) {
+                $results = [$exactMatch];
+            }
+        }
+
+        $user = Auth::user();
+        if (! $user?->isInternalVendor()) {
+            $results = $this->filterPoResultsByVendor($results, $vendorCode);
+        }
 
         // Remaining quantities are evaluated on ajaxPoDetail (when user selects a PO)
         $filtered = array_values(array_slice($results, 0, 20));
@@ -460,7 +472,8 @@ class VendorBookingController extends Controller
         }
 
         $vendorCode = $this->getVendorCodeForUser();
-        if ($vendorCode === '') {
+        $user = Auth::user();
+        if ($vendorCode === '' && ! $user?->isInternalVendor()) {
             return response()->json(['success' => false, 'message' => 'Vendor is not linked']);
         }
 
@@ -470,7 +483,8 @@ class VendorBookingController extends Controller
         }
 
         $poVendorCode = trim((string) ($po['vendor_code'] ?? ''));
-        if ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode)) {
+        $user = Auth::user();
+        if (! $user?->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
             return response()->json(['success' => false, 'message' => 'PO/DO is not assigned to your vendor']);
         }
 
@@ -483,7 +497,7 @@ class VendorBookingController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        if (! $user->vendor_code) {
+        if (! $user->vendor_code && ! $user->isInternalVendor()) {
             return back()->withInput()->with('error', 'Account Configuration Error: Your user account is not linked to a Vendor profile.');
         }
 
@@ -585,7 +599,7 @@ class VendorBookingController extends Controller
             return back()->withInput()->with('error', 'PO/DO not found in SAP.');
         }
         $poVendorCode = trim((string) ($poDetail['vendor_code'] ?? ''));
-        if ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode)) {
+        if (! $user->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
             return back()->withInput()->with('error', 'PO/DO is not assigned to your vendor.');
         }
         $direction = $this->resolveDirection($poDetail);

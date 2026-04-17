@@ -231,6 +231,7 @@
     'poSearchUrl' => auth()->user()->can('vendor.ajax.po_search') ? route('vendor.ajax.po_search') : null,
     'poDetailUrl' => auth()->user()->can('vendor.ajax.po_detail') ? url('vendor/ajax/po') : null,
     'availableSlotsUrl' => auth()->user()->can('vendor.ajax.available_slots') ? route('vendor.ajax.available_slots') : null,
+    'isInternalVendor' => auth()->user()->isInternalVendor(),
 ]) !!}</script>
 @endpush
 @endsection

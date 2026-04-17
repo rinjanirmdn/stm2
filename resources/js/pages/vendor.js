@@ -519,12 +519,12 @@ function initVendorBookingCreate(config) {
     }
 
     // Function to show valid state
-    function showValid(message) {
+    function showValid(messageHtml) {
         poStatus.classList.remove('show', 'invalid');
         poStatus.classList.add('show', 'valid');
         poMessage.classList.remove('invalid');
         poMessage.classList.add('valid');
-        poMessage.textContent = message || 'Data valid';
+        poMessage.innerHTML = messageHtml || 'Data valid';
     }
 
     // Function to show invalid state
@@ -564,7 +564,21 @@ function initVendorBookingCreate(config) {
                         const po = data.data[0];
                         poSearch.value = po.po_number;
                         poHidden.value = po.po_number;
-                        showValid('Data valid');
+                        
+                        const isInternal = config.isInternalVendor === true || config.isInternalVendor === 1;
+                        
+                        if (isInternal) {
+                            // Construct detail string for internal vendor reference
+                            let detailHtml = `<strong>Validation Success</strong>`;
+                            if (po.vendor_name) detailHtml += `<br>Vendor: ${po.vendor_name}`;
+                            if (po.plant) detailHtml += `<br>Site / Plant: ${po.plant}`;
+                            if (po.direction) detailHtml += `<br>Type: <span style="text-transform: capitalize;">${po.direction}</span>`;
+                            
+                            showValid(detailHtml);
+                        } else {
+                            // For regular external vendors, just show a simple valid message to keep UI clean
+                            showValid('Data valid');
+                        }
                     } else {
                         // PO not found - invalid
                         showInvalid('PO number not found / Invalid data');

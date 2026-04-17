@@ -76,8 +76,12 @@ class UserUpdateRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::requiredIf(function () {
-                    return (string) $this->input('role') === 'vendor';
+                    return (string) $this->input('role') === 'vendor' && ! $this->input('is_internal_vendor');
                 }),
+            ],
+            'is_internal_vendor' => [
+                'nullable',
+                'boolean',
             ],
             'permissions' => [
                 'nullable',

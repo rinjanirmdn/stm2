@@ -66,7 +66,12 @@
                     <div class="st-form-field st-form-field--mb st-form-field--hidden" id="vendor_code_field">
                         <label class="st-label">Vendor Code (SAP)</label>
                         <input type="text" name="vendor_code" class="st-input" maxlength="20" value="{{ old('vendor_code', $editUser->vendor_code ?? '') }}" placeholder="e.g. 1100000263">
-                        <div class="st-form-note">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
+                        <div class="st-form-note st-mb-8">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
+                        
+                        <label class="st-flex st-align-center st-gap-6 st-cursor-pointer st-mt-2">
+                            <input type="checkbox" name="is_internal_vendor" value="1" form="user_edit_form" {{ old('is_internal_vendor', $editUser->is_internal_vendor) == '1' ? 'checked' : '' }} class="st-checkbox--plain">
+                            <span>Internal Vendor</span>
+                        </label>
                     </div>
 
                     <div class="st-divider"></div>

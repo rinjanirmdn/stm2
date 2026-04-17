@@ -11,8 +11,7 @@
                 <div class="st-card__subtitle">You do not have access to this page.</div>
 
                 <div class="st-mt-12 st-flex st-gap-8">
-                    <a href="{{ route('dashboard') }}" class="st-btn st-btn--outline-primary">Back to Dashboard</a>
-                    <a href="{{ route('slots.index') }}" class="st-btn st-btn--ghost">Go to Planned</a>
+                    <a href="{{ url('/') }}" class="st-btn st-btn--outline-primary">Return Home</a>
                 </div>
             </div>
         </div>

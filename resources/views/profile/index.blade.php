@@ -151,7 +151,7 @@
 
         {{-- Actions --}}
         <div class="st-profile-actions">
-            <a href="{{ route('dashboard') }}" class="st-profile-btn st-profile-btn--secondary">
+            <a href="{{ url('/') }}" class="st-profile-btn st-profile-btn--secondary">
                 <i class="fas fa-arrow-left"></i>
                 Back to Dashboard
             </a>

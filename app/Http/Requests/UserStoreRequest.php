@@ -61,8 +61,12 @@ class UserStoreRequest extends FormRequest
                 'string',
                 'max:20',
                 Rule::requiredIf(function () {
-                    return (string) $this->input('role') === 'vendor';
+                    return (string) $this->input('role') === 'vendor' && ! $this->input('is_internal_vendor');
                 }),
+            ],
+            'is_internal_vendor' => [
+                'nullable',
+                'boolean',
             ],
         ];
     }
