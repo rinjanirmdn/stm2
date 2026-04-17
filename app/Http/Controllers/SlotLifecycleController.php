@@ -11,17 +11,14 @@ use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
 use App\Services\SlotService;
 use App\Services\TimeCalculationService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use Milon\Barcode\DNS1D;
 use RuntimeException;
 use Throwable;
 
@@ -131,7 +128,7 @@ class SlotLifecycleController extends Controller
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
-        $pdfContent = app(\App\Services\SlotService::class)->generateTicketPdfContent($slotId);
+        $pdfContent = app(SlotService::class)->generateTicketPdfContent($slotId);
         if (! $pdfContent) {
             return redirect()->route('slots.index')->with('error', 'Could not generate ticket');
         }
