@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Services\SlotService;
 use DateTime;
 use Exception;
 use Illuminate\Support\Collection;
@@ -33,12 +34,12 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         $gates = DB::table('md_gates')->pluck('id', 'gate_number')->toArray(); // this is rough, since gates are linked to warehouse. We'll do it safely below.
 
         $allGates = DB::table('md_gates')->select('id', 'gate_number', 'warehouse_id')->get();
-        
+
         $truckTargets = DB::table('md_truck')
             ->whereNotNull('truck_type')
             ->pluck('target_duration_minutes', 'truck_type')
             ->toArray();
-            
+
         // lowercase all keys for safer matching
         $truckTargetDurations = [];
         foreach ($truckTargets as $tType => $tDur) {
@@ -52,9 +53,10 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             // Check if row is empty
             if (! isset($row['slot_type']) && ! isset($row['po_number'])) {
                 Log::info("Row $index skipped: slot_type and po_number are null");
+
                 continue;
             }
-            
+
             // Auto-skip the example row if user didn't delete it
             if (isset($row['slot_type']) && stripos($row['slot_type'], 'Example:') !== false) {
                 continue;
@@ -108,7 +110,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 $slotType = strtolower(trim($row['slot_type'] ?? 'unplanned'));
                 $direction = strtolower(trim($row['direction'] ?? 'inbound'));
                 $truckType = trim($row['truck_type'] ?? '');
-                
+
                 $targetDuration = null;
                 if ($truckType && isset($truckTargetDurations[strtolower(trim($truckType))])) {
                     $targetDuration = $truckTargetDurations[strtolower(trim($truckType))];
@@ -144,7 +146,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
                 // Create an activity log so that the UI shows who imported it and when.
                 try {
-                    app(\App\Services\SlotService::class)->logActivity(
+                    app(SlotService::class)->logActivity(
                         $slotId,
                         'status_change',
                         'Slot completely processed and imported via Offline Excel Template.',
@@ -152,7 +154,8 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                         null,
                         auth()->id()
                     );
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             } catch (\Throwable $e) {
                 Log::error('Offline Import: Failed to process row '.$index.' - '.$e->getMessage());
             }
@@ -169,10 +172,10 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             if (is_numeric($str)) {
                 return Date::excelToDateTimeObject($str)->format('Y-m-d H:i:s');
             }
-            
+
             // Convert slashes to dashes: 15/04/2026 -> 15-04-2026 to parse DD-MM-YYYY natively in PHP
             $str = str_replace('/', '-', $str);
-            
+
             $dt = new DateTime($str);
 
             return $dt->format('Y-m-d H:i:s');
