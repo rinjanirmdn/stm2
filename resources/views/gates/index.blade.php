@@ -277,7 +277,7 @@
                              data-top="{{ $minutesFrom7 }}"
                              data-height="{{ $duration }}"
                              ondblclick="window.location.href='{{ $targetRoute }}'"
-                             title="{{ $slot->ticket_number }} ({{ $slot->status }}) - {{ $slot->vendor->name ?? '' }}{{ !empty($slot->destination) ? ' (' . $slot->destination . ')' : '' }}">
+                             title="{{ $slot->ticket_number }} ({{ $slot->status }}) - {{ $slot->vendor_name ?? '-' }}{{ !empty($slot->destination) ? ' (' . $slot->destination . ')' : '' }}">
 
                             <div class="st-dock-card__main-content">
                                 <!-- Header: Ticket & Time -->
@@ -293,7 +293,7 @@
                                 <!-- Body: Vendor (Hide if too small) -->
                                 @if($h >= 35)
                                 <div class="st-dock-card__vendor st-dock-card__vendor--clamp {{ $vendorClass }} {{ $h < 60 ? 'st-line-clamp-1' : ($h < 120 ? 'st-line-clamp-3' : 'st-line-clamp-10') }}">
-                                    {{ $slot->vendor->name ?? '-' }}{{ !empty($slot->destination) ? ' (' . $slot->destination . ')' : '' }}
+                                    {{ $slot->vendor_name ?? '-' }}{{ !empty($slot->destination) ? ' (' . $slot->destination . ')' : '' }}
 
                                     @php
                                         $activeStatuses = ['scheduled', 'arrived', 'waiting', 'in_progress', 'completed'];
