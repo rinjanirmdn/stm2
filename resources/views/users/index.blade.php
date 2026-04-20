@@ -256,7 +256,7 @@
                                         $roleText = ucwords(str_replace('_', ' ', $roleVal));
                                         $deleteConfirmMsg = 'Are you sure you want to delete this user?';
                                     @endphp
-                                    <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('form') && !event.target.closest('a') && !event.target.closest('button') && !event.target.closest('label') && !event.target.closest('input') && !event.target.closest('.st-action-dropdown')) { window.location.href = '{{ route('users.edit', ['userId' => $u->id]) }}'; }">
+                                    <tr class="st-table-row st-row-clickable" data-href="{{ route('users.edit', ['userId' => $u->id]) }}">
                                         <td>{{ $loop->index + 1 }}</td>
                                         <td class="st-font-semibold">{{ $u->nik ?? '-' }}</td>
                                         <td>{{ $u->full_name ?? '-' }}</td>
@@ -267,14 +267,13 @@
                                         <td class="st-td-center">
                                             @if (!$isCurrentUser)
                                                 @can('users.toggle')
-                                                    <form method="POST" action="{{ route('users.toggle', ['userId' => $u->id]) }}" style="display:inline;">
-                                                        @csrf
-                                                        <label class="st-switch" title="{{ $u->is_active ? 'Click to Deactivate' : 'Click to Activate' }}" onclick="event.stopPropagation();">
-                                                            <input type="checkbox" {{ $u->is_active ? 'checked' : '' }}
-                                                                onchange="if(confirm('{{ $u->is_active ? 'Deactivate' : 'Activate' }} user {{ addslashes($u->full_name ?? $u->nik ?? '') }}?')) { this.closest('form').submit(); } else { this.checked = {{ $u->is_active ? 'true' : 'false' }}; }">
-                                                            <span class="st-switch__slider"></span>
-                                                        </label>
-                                                    </form>
+                                                    <label class="st-switch" title="{{ $u->is_active ? 'Click to Deactivate' : 'Click to Activate' }}">
+                                                        <input type="checkbox" class="st-toggle-active"
+                                                            data-toggle-url="{{ route('users.toggle', ['userId' => $u->id]) }}"
+                                                            data-user-name="{{ $u->full_name ?? $u->nik ?? '' }}"
+                                                            {{ $u->is_active ? 'checked' : '' }}>
+                                                        <span class="st-switch__slider"></span>
+                                                    </label>
                                                 @else
                                                     @if($u->is_active)
                                                         <span class="st-badge st-badge--success">Active</span>

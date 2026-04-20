@@ -5240,3 +5240,35 @@ img {
 .st-switch:hover .st-switch__slider {
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
+
+/* ===== Toast Notification ===== */
+
+.st-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    z-index: 99999;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 360px;
+}
+
+.st-toast--visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.st-toast--success {
+    background-color: #10b981;
+}
+
+.st-toast--error {
+    background-color: #ef4444;
+}

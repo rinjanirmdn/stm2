@@ -205,4 +205,87 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchInputHL && searchInputHL.value.trim().length >= 2) {
         highlightSearchInTable(userFilterForm.querySelector('tbody'), searchInputHL.value.trim());
     }
+
+    // ===== Row click to navigate to user edit =====
+    document.addEventListener('click', function(e) {
+        var row = e.target.closest('tr[data-href]');
+        if (!row) return;
+        // Don't navigate if clicking interactive elements
+        if (e.target.closest('a') || e.target.closest('button') || e.target.closest('label') ||
+            e.target.closest('input') || e.target.closest('.st-switch') || e.target.closest('.tw-actionbar')) return;
+        window.location.href = row.getAttribute('data-href');
+    });
+
+    // ===== AJAX Toggle Active/Inactive =====
+    function showToast(message, isSuccess) {
+        var existing = document.querySelector('.st-toast');
+        if (existing) existing.remove();
+
+        var toast = document.createElement('div');
+        toast.className = 'st-toast ' + (isSuccess ? 'st-toast--success' : 'st-toast--error');
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        // Trigger animation
+        requestAnimationFrame(function() {
+            toast.classList.add('st-toast--visible');
+        });
+
+        setTimeout(function() {
+            toast.classList.remove('st-toast--visible');
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 2500);
+    }
+
+    document.addEventListener('change', function(e) {
+        var checkbox = e.target.closest('.st-toggle-active');
+        if (!checkbox) return;
+
+        var url = checkbox.getAttribute('data-toggle-url');
+        var csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfToken) return;
+
+        // Disable checkbox during request
+        checkbox.disabled = true;
+        var switchLabel = checkbox.closest('.st-switch');
+        if (switchLabel) switchLabel.style.opacity = '0.5';
+
+        fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({})
+        })
+        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
+                // Update checkbox state to match server
+                checkbox.checked = result.data.is_active;
+                // Update title
+                if (switchLabel) {
+                    switchLabel.title = result.data.is_active ? 'Click to Deactivate' : 'Click to Activate';
+                }
+                showToast(result.data.message || 'Status updated', true);
+            } else {
+                // Revert checkbox
+                checkbox.checked = !checkbox.checked;
+                showToast(result.data.message || 'Failed to update status', false);
+            }
+        })
+        .catch(function(err) {
+            // Revert checkbox on error
+            checkbox.checked = !checkbox.checked;
+            showToast('Network error. Please try again.', false);
+            console.error('Toggle error:', err);
+        })
+        .finally(function() {
+            checkbox.disabled = false;
+            if (switchLabel) switchLabel.style.opacity = '1';
+        });
+    });
 });
