@@ -20,13 +20,13 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
         return [
             // Row 2: Example data
             [
-                'unplanned',
-                'inbound',
-                'CDD/CDE',
+                'Example: unplanned',
+                'Example: inbound',
+                'Example: CDD/CDE',
                 '15-04-2026 08:00',
                 '15-04-2026 08:30',
                 '15-04-2026 10:00',
-                'POC-12345',
+                'Example: POC-12345',
                 'SJ-6829316',
                 'B 1234 ABC',
                 'Budi Santoso',
