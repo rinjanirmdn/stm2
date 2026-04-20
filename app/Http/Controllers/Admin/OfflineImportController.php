@@ -41,9 +41,9 @@ class OfflineImportController extends Controller
         try {
             Excel::import(new OfflineTxImport(), $request->file('file'));
 
-            return response()->json(['success' => true, 'message' => 'Data offline berhasil diimpor.']);
+            return response()->json(['success' => true, 'message' => 'Offline data successfully imported.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal mengimpor data: '.$e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to import data: '.$e->getMessage()], 500);
         }
     }
 }
