@@ -2,7 +2,6 @@
 
 namespace App\Imports;
 
-use App\Services\SlotService;
 use DateTime;
 use Exception;
 use Illuminate\Support\Collection;
@@ -15,7 +14,9 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 class OfflineTxImport implements ToCollection, WithStartRow
 {
     private $successCount = 0;
+
     private $errorCount = 0;
+
     private $errors = [];
 
     public function startRow(): int
@@ -27,6 +28,7 @@ class OfflineTxImport implements ToCollection, WithStartRow
     {
         // Strip asterisk and extra whitespace, then convert to snake_case
         $cleaned = trim(str_replace('*', '', (string) $key));
+
         return strtolower(str_replace(' ', '_', $cleaned));
     }
 
@@ -104,6 +106,7 @@ class OfflineTxImport implements ToCollection, WithStartRow
                     }
                     $this->errors[] = $errorMsg;
                     Log::warning('Offline Import: Warehouse/Gate not found for row '.$index, $normalizedRow);
+
                     continue; // Skip this row
                 }
 

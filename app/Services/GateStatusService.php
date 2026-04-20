@@ -213,7 +213,7 @@ class GateStatusService
             $prefix .= " ({$destination})";
         }
 
-        return $truckNumber !== '' ? ($prefix . ' - PO ' . $truckNumber . ' @ ' . $startTime) : '-';
+        return $truckNumber !== '' ? ($prefix.' - PO '.$truckNumber.' @ '.$startTime) : '-';
     }
 
     /**
@@ -235,7 +235,7 @@ class GateStatusService
             $prefix .= " ({$destination})";
         }
 
-        return $truckNumber !== '' ? ($prefix . ' - PO ' . $truckNumber . ' @ ' . $startTime) : '-';
+        return $truckNumber !== '' ? ($prefix.' - PO '.$truckNumber.' @ '.$startTime) : '-';
     }
 
     /**
