@@ -494,6 +494,7 @@ class ScheduleTimelineService
                 'id' => (int) $r->id,
                 'po_number' => (string) ($r->po_number ?? ''),
                 'vendor_name' => (string) ($r->vendor_name ?? '-'),
+                'destination' => (string) ($r->destination ?? ''),
                 'warehouse_name' => (string) ($r->warehouse_name ?? ''),
                 'warehouse_code' => (string) ($r->warehouse_code ?? ''),
                 'gate_label' => $gateLabel,

@@ -285,6 +285,22 @@
                             @endif
                             </div>
                         </div>
+
+                        @if(!empty($slot->destination))
+                        <div class="st-detail-item st-detail-item--compact">
+                            <div class="st-detail-label">Destination</div>
+                            <div class="st-detail-colon">:</div>
+                            <div class="st-detail-value">{{ $slot->destination }}</div>
+                        </div>
+                        @endif
+
+                        @if(!empty($slot->late_reason))
+                        <div class="st-detail-item st-detail-item--compact">
+                            <div class="st-detail-label">Notes</div>
+                            <div class="st-detail-colon">:</div>
+                            <div class="st-detail-value st-detail-value--prewrap">{{ $slot->late_reason }}</div>
+                        </div>
+                        @endif
                     </div>
 
                 </div>
