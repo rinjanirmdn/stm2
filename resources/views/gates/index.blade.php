@@ -100,9 +100,9 @@
 
             <div class="st-dock-view-tabs" id="gate_view_tabs">
                 <button type="button" class="st-dock-view-tab st-dock-view-tab--active" data-view="schedule">Schedule</button>
-                @can('gates.availability')
+                @if(auth()->user()->can('gates.availability') || auth()->user()->hasAnyRole(['security', 'Security']))
                     <button type="button" class="st-dock-view-tab" data-view="availability">Availability</button>
-                @endcan
+                @endif
             </div>
         </header>
 
@@ -382,7 +382,7 @@
 
         </div>
 
-        @can('gates.availability')
+        @if(auth()->user()->can('gates.availability') || auth()->user()->hasAnyRole(['security', 'Security']))
             <div class="st-dock-view-panel" id="gate_availability_panel">
                 <div class="st-dock-availability">
                     <div class="st-dock-availability__header">
@@ -397,7 +397,7 @@
                     </div>
                 </div>
             </div>
-        @endcan
+        @endif
     </main>
 </div>
 
@@ -453,7 +453,7 @@
 <script type="application/json" id="gates_index_config">{!! json_encode([
     'paramDate' => $paramDate,
     'gatesIndexUrl' => route('gates.index'),
-    'availabilityUrl' => auth()->user()->can('gates.availability') ? route('gates.ajax.available_slots') : null,
+    'availabilityUrl' => auth()->user()->can('gates.availability') || auth()->user()->hasAnyRole(['security', 'Security']) ? route('gates.ajax.available_slots') : null,
     'disabledTimesUrl' => auth()->user()->can('gates.availability') ? route('gates.ajax.disabled_times') : null,
     'selectedWarehouseIds' => (array) ($warehouse_id ?? []),
     'bookingsBaseUrl' => url('/bookings'),
