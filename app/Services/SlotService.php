@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use DateTime;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Cache;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Milon\Barcode\DNS1D;
 use Throwable;
 
@@ -110,7 +110,7 @@ class SlotService
             $dt->modify('+'.(int) $plannedDurationMinutes.' minutes');
 
             return $dt->format('Y-m-d H:i:s');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return null;
         }
     }
@@ -940,6 +940,7 @@ class SlotService
                     }
                 } catch (Throwable $e) {
                 }
+
                 return '';
             });
 

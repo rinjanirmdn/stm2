@@ -3,8 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\Slot;
+use App\Services\SlotService;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 class BookingApproved extends Notification
 {
@@ -56,7 +58,7 @@ class BookingApproved extends Notification
             ]);
 
         try {
-            $pdfContent = app(\App\Services\SlotService::class)->generateTicketPdfContent($this->slot->id);
+            $pdfContent = app(SlotService::class)->generateTicketPdfContent($this->slot->id);
             if ($pdfContent) {
                 $filename = 'ticket-'.($this->slot->ticket_number ?? $this->slot->id).'.pdf';
                 $mailMessage->attachData($pdfContent, $filename, [
@@ -64,7 +66,7 @@ class BookingApproved extends Notification
                 ]);
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to attach ticket PDF to approval email: ' . $e->getMessage());
+            Log::error('Failed to attach ticket PDF to approval email: '.$e->getMessage());
         }
 
         return $mailMessage;
