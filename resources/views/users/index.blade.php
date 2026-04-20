@@ -256,7 +256,7 @@
                                         $roleText = ucwords(str_replace('_', ' ', $roleVal));
                                         $deleteConfirmMsg = 'Are you sure you want to delete this user?';
                                     @endphp
-                                    <tr>
+                                    <tr class="st-table-row st-row-clickable" data-href="{{ route('users.edit', ['userId' => $u->id]) }}">
                                         <td>{{ $loop->index + 1 }}</td>
                                         <td class="st-font-semibold">{{ $u->nik ?? '-' }}</td>
                                         <td>{{ $u->full_name ?? '-' }}</td>
@@ -265,10 +265,25 @@
                                             <span class="st-font-semibold">{{ $roleText }}</span>
                                         </td>
                                         <td class="st-td-center">
-                                            @if($u->is_active)
-                                                <span class="st-badge st-badge--success">Active</span>
+                                            @if (!$isCurrentUser)
+                                                @can('users.toggle')
+                                                    <label class="st-switch" title="{{ $u->is_active ? 'Click to Deactivate' : 'Click to Activate' }}">
+                                                        <input type="checkbox" class="st-toggle-active"
+                                                            data-toggle-url="{{ route('users.toggle', ['userId' => $u->id]) }}"
+                                                            data-user-name="{{ $u->full_name ?? $u->nik ?? '' }}"
+                                                            {{ $u->is_active ? 'checked' : '' }}>
+                                                        <span class="st-switch__slider"></span>
+                                                    </label>
+                                                @else
+                                                    @if($u->is_active)
+                                                        <span class="st-badge st-badge--success">Active</span>
+                                                    @else
+                                                        <span class="st-badge st-badge--danger">Inactive</span>
+                                                    @endif
+                                                @endcan
                                             @else
-                                                <span class="st-badge st-badge--danger">Inactive</span>
+                                                <span class="st-badge st-badge--success">Active</span>
+                                                <span class="st-text--muted st-text--xs">(you)</span>
                                             @endif
                                         </td>
                                         <td class="st-td-center">
