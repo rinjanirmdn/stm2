@@ -28,6 +28,7 @@ class UserModelTest extends TestCase
             'username',
             'email',
             'vendor_code',
+            'is_internal_vendor',
             'password',
             'is_active',
             'role_id',
