@@ -296,6 +296,18 @@
                                                 @endcan
 
                                                 @if (!$isCurrentUser)
+                                                    @can('users.toggle')
+                                                        <form method="POST" action="{{ route('users.toggle', ['userId' => $u->id]) }}" style="display:inline;">
+                                                            @csrf
+                                                            <button type="submit" class="tw-action {{ $u->is_active ? 'tw-action--warning' : 'tw-action--success' }}"
+                                                                data-tooltip="{{ $u->is_active ? 'Deactivate' : 'Activate' }}"
+                                                                aria-label="{{ $u->is_active ? 'Deactivate' : 'Activate' }}"
+                                                                onclick="return confirm('{{ $u->is_active ? 'Deactivate' : 'Activate' }} user {{ $u->full_name ?? $u->nik ?? '' }}?')">
+                                                                <i class="fa-solid {{ $u->is_active ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endcan
+
                                                     @can('users.delete')
                                                         <button type="button" class="tw-action tw-action--danger btn-delete-user"
                                                             data-tooltip="Delete" aria-label="Delete"
