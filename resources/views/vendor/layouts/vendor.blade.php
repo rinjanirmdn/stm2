@@ -89,29 +89,23 @@
     <header class="vendor-header">
         <div class="vendor-header__brand">
             <img src="{{ asset('img/logo-icon2.png') }}" alt="e-DCS" class="vendor-header__logo">
-            <img src="{{ asset('img/e-Docking Control System.png') }}" alt="e-Docking Control System"
+            <img src="{{ asset('img/e-DCS full putih.png') }}" alt="e-Docking Control System"
                 class="vendor-header__logo vendor-header__logo--full">
-
-        </div>
-        
-        <div class="vendor-header__mobile-actions" id="vendor-mobile-actions">
-            <!-- Mobile notification bell (outside three-dots menu) -->
-            <button type="button" class="vendor-notification__toggle vendor-header__mobile-bell" id="vendor-mobile-notif-btn" aria-label="Notifications">
-                <i class="fas fa-bell"></i>
-                @if(auth()->user()->unreadNotifications->count() > 0)
-                    <span class="notification-badge" id="mobile-outside-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
-                @endif
-            </button>
 
             <!-- Compact user menu for mobile (three dots) -->
             <button type="button" class="vendor-header__user-menu-btn" id="vendor-user-menu-btn"
                 aria-label="Open user menu">
                 <i class="fas fa-ellipsis-v vendor-header__user-menu-icon"></i>
+                @if(auth()->user()->unreadNotifications->count() > 0)
+                    <span class="vendor-header__user-menu-badge"
+                        id="mobile-menu-notification-count">{{ auth()->user()->unreadNotifications->count() }}</span>
+                @endif
             </button>
             <div class="vendor-header__user-menu" id="vendor-user-menu">
                 <div class="vendor-header__user-menu-info">
                     <div class="vendor-header__user-name">
-                        {{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}</div>
+                        {{ auth()->user()->name ?? auth()->user()->username ?? auth()->user()->email ?? '' }}
+                    </div>
                     <div class="vendor-header__user-company">{{ auth()->user()->vendor_code ?? 'Vendor' }}</div>
                 </div>
                 <div class="vendor-header__user-menu-actions">
@@ -119,6 +113,14 @@
                         title="Profile">
                         <i class="fas fa-user"></i>
                     </a>
+                    <button type="button"
+                        class="vendor-btn vendor-btn--secondary vendor-btn--sm vendor-header__user-menu-notif"
+                        id="vendor-user-menu-notif" aria-label="Notifications" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        @if(auth()->user()->unreadNotifications->count() > 0)
+                            <span class="vendor-user-menu-badge">{{ auth()->user()->unreadNotifications->count() }}</span>
+                        @endif
+                    </button>
                     <form method="POST" action="{{ route('logout') }}"
                         class="vendor-inline-form vendor-header__user-menu-logout">
                         @csrf
@@ -127,42 +129,41 @@
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </form>
-                    </form>
                 </div>
-            </div>
-            <!-- Mobile notification dropdown -->
-            <div class="vendor-user-menu-notification-dropdown" id="vendor-user-menu-notification-dropdown">
-                <div class="notification-header">
-                    <span>Notifications</span>
-                    <div class="notification-actions">
-                        <button type="button" id="user-menu-notification-clear"
-                            class="notification-action-btn notification-action-btn--ghost">Clear</button>
-                        <button type="button" id="user-menu-notification-mark-all"
-                            class="notification-action-btn">Mark all read</button>
-                    </div>
-                </div>
-                <div class="notification-list">
-                    @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
-                        <a href="{{ $notification->data['action_url'] ?? '#' }}"
-                            class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}"
-                            data-notification-id="{{ $notification->id }}"
-                            onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
-                            <div
-                                class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
-                                <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
-                            </div>
-                            <div class="notification-content">
-                                <p><strong>{{ $notification->data['title'] ?? 'Notification' }}</strong></p>
-                                <p>{{ $notification->data['message'] ?? '' }}</p>
-                                <span class="notification-time">{{ $notification->created_at->diffForHumans() }}</span>
-                            </div>
-                        </a>
-                    @empty
-                        <div class="notification-empty">
-                            <i class="fas fa-bell-slash notification-empty__icon"></i>
-                            <p>No notifications yet</p>
+                <!-- Mobile notification dropdown -->
+                <div class="vendor-user-menu-notification-dropdown" id="vendor-user-menu-notification-dropdown">
+                    <div class="notification-header">
+                        <span>Notifications</span>
+                        <div class="notification-actions">
+                            <button type="button" id="user-menu-notification-clear"
+                                class="notification-action-btn notification-action-btn--ghost">Clear</button>
+                            <button type="button" id="user-menu-notification-mark-all"
+                                class="notification-action-btn">Mark all read</button>
                         </div>
-                    @endforelse
+                    </div>
+                    <div class="notification-list">
+                        @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
+                            <a href="{{ $notification->data['action_url'] ?? '#' }}"
+                                class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}"
+                                data-notification-id="{{ $notification->id }}"
+                                onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                <div
+                                    class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
+                                    <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <p><strong>{{ $notification->data['title'] ?? 'Notification' }}</strong></p>
+                                    <p>{{ $notification->data['message'] ?? '' }}</p>
+                                    <span class="notification-time">{{ $notification->created_at->diffForHumans() }}</span>
+                                </div>
+                            </a>
+                        @empty
+                            <div class="notification-empty">
+                                <i class="fas fa-bell-slash notification-empty__icon"></i>
+                                <p>No notifications yet</p>
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>
@@ -445,7 +446,6 @@
         })();
     </script>
     <script type="application/json" id="indonesia_holidays_global">{!! json_encode($holidays ?? []) !!}</script>
-    @include('partials.input-formatters')
     @stack('scripts')
 
     <script>
