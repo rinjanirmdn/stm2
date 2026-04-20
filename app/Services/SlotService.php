@@ -326,7 +326,10 @@ class SlotService
 
         $letter = $this->getGateLetterByWarehouseAndNumber((string) $warehouseCode, (string) $gateNorm);
         if ($letter !== null) {
-            return 'Gate '.$letter;
+            // Map internal letter (A/B/C) to display number (1/2/3)
+            $letterToNumber = ['A' => '1', 'B' => '2', 'C' => '3'];
+            $displayNumber = $letterToNumber[$letter] ?? $letter;
+            return 'Gate '.$displayNumber;
         }
 
         return 'Gate '.strtoupper($gateNorm);
@@ -496,14 +499,14 @@ class SlotService
                 if (! ($newStartTs <= $otherStartTs && $newEndTs >= $otherEndTs)) {
                     return [
                         'ok' => false,
-                        'message' => 'WH2 Gate B/C rule: Gate C must start at or before Gate B and finish at or after Gate B when times overlap.',
+                        'message' => 'WH2 Gate 3/2 rule: Gate 3 must start at or before Gate 2 and finish at or after Gate 2 when times overlap.',
                     ];
                 }
             } else {
                 if (! ($otherStartTs <= $newStartTs && $otherEndTs >= $newEndTs)) {
                     return [
                         'ok' => false,
-                        'message' => 'WH2 Gate B/C rule: Gate C must start at or before Gate B and finish at or after Gate B when times overlap.',
+                        'message' => 'WH2 Gate 3/2 rule: Gate 3 must start at or before Gate 2 and finish at or after Gate 2 when times overlap.',
                     ];
                 }
             }
@@ -532,19 +535,19 @@ class SlotService
                 $gateNorm = $numeric !== '' ? $numeric : strtoupper($raw);
 
                 // Format yang diinginkan:
-                // A = WH1 G1
-                // B = WH2 G1
-                // C = WH2 G2
+                // 1 = WH1 Gate 1
+                // 2 = WH2 Gate 2
+                // 3 = WH2 Gate 3
                 if ($whCode === 'WH1' && ($gateNorm === '1' || strtoupper($raw) === 'A')) {
                     $groupLetter = 'A';
-                } elseif ($whCode === 'WH2' && ($gateNorm === '1' || strtoupper($raw) === 'B')) {
+                } elseif ($whCode === 'WH2' && ($gateNorm === '2' || strtoupper($raw) === 'B')) {
                     $groupLetter = 'B';
-                } elseif ($whCode === 'WH2' && ($gateNorm === '2' || strtoupper($raw) === 'C')) {
+                } elseif ($whCode === 'WH2' && ($gateNorm === '3' || strtoupper($raw) === 'C')) {
                     $groupLetter = 'C';
                 } elseif ($whCode === 'WH1') {
                     $groupLetter = 'A';
                 } elseif ($whCode === 'WH2') {
-                    // fallback default WH2 -> Gate 1 group
+                    // fallback default WH2 -> Gate 2 group
                     $groupLetter = 'B';
                 }
             }
@@ -667,7 +670,7 @@ class SlotService
             }
         }
 
-        // WH2 Gate B/C flexible blocking rules
+        // WH2 Gate 2/3 flexible blocking rules
         if ($plannedGateId && ($bcLetter === 'B' || $bcLetter === 'C')) {
             $bcCheck = $this->validateWh2BcPlannedWindow($plannedGateId, $startDt, $endDt, $excludeSlotId);
             if (empty($bcCheck['ok'])) {
@@ -676,7 +679,7 @@ class SlotService
 
             // Special blocking-risk logic based on existing conditions
             if ($bcLetter === 'C') {
-                // For Gate C, check whether it overlaps with Gate B
+                // For Gate 3, check whether it overlaps with Gate 2
                 $existingBSlots = $this->getExistingSlotsForGate($bcOtherGateId, $start, $end, $excludeSlotId);
 
                 if ($existingBSlots->isNotEmpty()) {
@@ -691,23 +694,23 @@ class SlotService
                             return 1; // Medium risk
                         }
 
-                        // Condition 4: Gate C duration is longer than Gate B
+                        // Condition 4: Gate 3 duration is longer than Gate 2
                         if ($plannedDurationMinutes > (int) $bSlot->planned_duration) {
                             return 0; // Low risk
                         }
 
                         // If there is another overlap (but entry/exit times are not exactly the same)
-                        // and Gate C duration is not longer, keep Medium because Gate C is behind
+                        // and Gate 3 duration is not longer, keep Medium because Gate 3 is behind
                         return 1; // Medium risk
                     }
                 }
 
-                // Default for Gate C if there is no overlap
+                // Default for Gate 3 if there is no overlap
                 return 0; // Low risk
             }
 
             if ($bcLetter === 'B') {
-                // For Gate B, check whether it overlaps with Gate C
+                // For Gate 2, check whether it overlaps with Gate 3
                 $existingCSlots = $this->getExistingSlotsForGate($bcOtherGateId, $start, $end, $excludeSlotId);
 
                 if ($existingCSlots->isNotEmpty()) {
@@ -719,30 +722,30 @@ class SlotService
                         // Condition 2 & 3: same entry/exit time
                         if (($cStart->format('H:i') === $startDt->format('H:i')) ||
                             ($cEnd->format('H:i') === $endDt->format('H:i'))) {
-                            return 0; // Low risk for Gate B
+                            return 0; // Low risk for Gate 2
                         }
 
-                        // Condition 4: Gate C duration is longer than Gate B
+                        // Condition 4: Gate 3 duration is longer than Gate 2
                         if ((int) $cSlot->planned_duration > $plannedDurationMinutes) {
-                            return 0; // Low risk for Gate B
+                            return 0; // Low risk for Gate 2
                         }
 
-                        // For other overlap cases, keep Low because Gate B is in front
+                        // For other overlap cases, keep Low because Gate 2 is in front
                         return 0; // Low risk
                     }
                 }
 
-                // Default for Gate B
+                // Default for Gate 2
                 return 0; // Low risk
             }
         }
 
-        // WH1 Gate A special logic - medium risk if entry/exit time matches existing slot
+        // WH1 Gate 1 special logic - medium risk if entry/exit time matches existing slot
         if ($plannedGateId) {
             $meta = $this->getGateMetaById($plannedGateId);
 
             if ($meta && ($meta['warehouse_code'] ?? '') === 'WH1' && ($meta['letter'] ?? '') === 'A') {
-                // Get ALL slots for Gate A on the same day (not just overlapping)
+                // Get ALL slots for Gate 1 on the same day (not just overlapping)
                 $existingASlots = $this->getAllSlotsForGateOnSameDay($plannedGateId, $start, $excludeSlotId);
 
                 if ($existingASlots->isNotEmpty()) {
@@ -759,7 +762,7 @@ class SlotService
                         // Check if entry time matches existing exit time OR exit time matches existing entry time
                         if (($aStart->format('H:i') === $endDt->format('H:i')) ||  // New entry = existing exit
                             ($aEnd->format('H:i') === $startDt->format('H:i'))) {   // New exit = existing entry
-                            return 1; // Medium risk for Gate A
+                            return 1; // Medium risk for Gate 1
                         }
                     }
                 }
@@ -789,7 +792,7 @@ class SlotService
             $overlapWarehouseQuery->where('s.id', '<>', $excludeSlotId);
         }
 
-        // WH2 Gate B/C rule: do not count the paired gate as "warehouse overlap".
+        // WH2 Gate 2/3 rule: do not count the paired gate as "warehouse overlap".
         // Risk for this pair is handled explicitly via $bcEdgeRaw.
         if ($bcOtherGateId) {
             $overlapWarehouseQuery->where('s.planned_gate_id', '<>', $bcOtherGateId);
@@ -799,11 +802,11 @@ class SlotService
 
         $bcEdgeRaw = 0;
         if ($bcLetter === 'C' && $bcOtherGateId) {
-            // Gate C is "behind" Gate B.
+            // Gate 3 is "behind" Gate 2.
             // Medium risk ONLY when:
-            // - Gate B finishes exactly when Gate C starts (edge touch), OR
-            // - Gate B has the exact same time window as Gate C (same start AND same end).
-            // If Gate C contains Gate B (e.g., starts same but finishes later), keep it Low.
+            // - Gate 2 finishes exactly when Gate 3 starts (edge touch), OR
+            // - Gate 2 has the exact same time window as Gate 3 (same start AND same end).
+            // If Gate 3 contains Gate 2 (e.g., starts same but finishes later), keep it Low.
 
             $otherDateAddExpr = $this->getDateAddExpression('o.planned_start', 'o.planned_duration');
 
@@ -811,7 +814,7 @@ class SlotService
                 ->where('o.planned_gate_id', $bcOtherGateId)
                 ->whereIn('o.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
                 ->where(function ($q) use ($start, $end, $otherDateAddExpr) {
-                    $q->whereRaw("{$otherDateAddExpr} = ?", [$start]) // Gate B finishes when Gate C starts
+                    $q->whereRaw("{$otherDateAddExpr} = ?", [$start]) // Gate 2 finishes when Gate 3 starts
                         ->orWhere(function ($q2) use ($start, $end, $otherDateAddExpr) {
                             $q2->where('o.planned_start', '=', $start)
                                 ->whereRaw("{$otherDateAddExpr} = ?", [$end]);

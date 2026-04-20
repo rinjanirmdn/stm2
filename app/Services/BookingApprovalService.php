@@ -471,14 +471,14 @@ class BookingApprovalService
                 ];
             }
 
-            // Validate WH2 Gate B/C window rule
+            // Validate WH2 Gate 2/3 window rule
             $bcCheck = $this->slotService->validateWh2BcPlannedWindow(
                 $gateId, $startDt, $endDt, $excludeSlotId
             );
             if (empty($bcCheck['ok'])) {
                 return [
                     'available' => false,
-                    'reason' => $bcCheck['message'] ?? 'Gate B/C window rule not satisfied',
+                    'reason' => $bcCheck['message'] ?? 'Gate 2/3 window rule not satisfied',
                 ];
             }
         }
