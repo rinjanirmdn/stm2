@@ -256,7 +256,7 @@
                                         $roleText = ucwords(str_replace('_', ' ', $roleVal));
                                         $deleteConfirmMsg = 'Are you sure you want to delete this user?';
                                     @endphp
-                                    <tr>
+                                    <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('form') && !event.target.closest('a') && !event.target.closest('button') && !event.target.closest('label') && !event.target.closest('input') && !event.target.closest('.st-action-dropdown')) { window.location.href = '{{ route('users.edit', ['userId' => $u->id]) }}'; }">
                                         <td>{{ $loop->index + 1 }}</td>
                                         <td class="st-font-semibold">{{ $u->nik ?? '-' }}</td>
                                         <td>{{ $u->full_name ?? '-' }}</td>
@@ -265,10 +265,26 @@
                                             <span class="st-font-semibold">{{ $roleText }}</span>
                                         </td>
                                         <td class="st-td-center">
-                                            @if($u->is_active)
-                                                <span class="st-badge st-badge--success">Active</span>
+                                            @if (!$isCurrentUser)
+                                                @can('users.toggle')
+                                                    <form method="POST" action="{{ route('users.toggle', ['userId' => $u->id]) }}" style="display:inline;">
+                                                        @csrf
+                                                        <label class="st-switch" title="{{ $u->is_active ? 'Click to Deactivate' : 'Click to Activate' }}" onclick="event.stopPropagation();">
+                                                            <input type="checkbox" {{ $u->is_active ? 'checked' : '' }}
+                                                                onchange="if(confirm('{{ $u->is_active ? 'Deactivate' : 'Activate' }} user {{ addslashes($u->full_name ?? $u->nik ?? '') }}?')) { this.closest('form').submit(); } else { this.checked = {{ $u->is_active ? 'true' : 'false' }}; }">
+                                                            <span class="st-switch__slider"></span>
+                                                        </label>
+                                                    </form>
+                                                @else
+                                                    @if($u->is_active)
+                                                        <span class="st-badge st-badge--success">Active</span>
+                                                    @else
+                                                        <span class="st-badge st-badge--danger">Inactive</span>
+                                                    @endif
+                                                @endcan
                                             @else
-                                                <span class="st-badge st-badge--danger">Inactive</span>
+                                                <span class="st-badge st-badge--success">Active</span>
+                                                <span class="st-text--muted st-text--xs">(you)</span>
                                             @endif
                                         </td>
                                         <td class="st-td-center">
@@ -296,18 +312,6 @@
                                                 @endcan
 
                                                 @if (!$isCurrentUser)
-                                                    @can('users.toggle')
-                                                        <form method="POST" action="{{ route('users.toggle', ['userId' => $u->id]) }}" style="display:inline;">
-                                                            @csrf
-                                                            <button type="submit" class="tw-action {{ $u->is_active ? 'tw-action--warning' : 'tw-action--success' }}"
-                                                                data-tooltip="{{ $u->is_active ? 'Deactivate' : 'Activate' }}"
-                                                                aria-label="{{ $u->is_active ? 'Deactivate' : 'Activate' }}"
-                                                                onclick="return confirm('{{ $u->is_active ? 'Deactivate' : 'Activate' }} user {{ $u->full_name ?? $u->nik ?? '' }}?')">
-                                                                <i class="fa-solid {{ $u->is_active ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
-                                                            </button>
-                                                        </form>
-                                                    @endcan
-
                                                     @can('users.delete')
                                                         <button type="button" class="tw-action tw-action--danger btn-delete-user"
                                                             data-tooltip="Delete" aria-label="Delete"
