@@ -207,13 +207,15 @@ document.addEventListener('DOMContentLoaded', function () {
             var timeAllowed = isTimeAllowed(String(paramDate || ''), rawTime);
             var isAvailable = forcedByAdmin || (isServerAvailable && timeAllowed);
             var isInactive = !isAvailable;
-            var canToggle = true;
+            var canToggle = disabledTimesUrl !== '';
             var label = isInactive ? 'Not available' : ('Available (' + gates + ' gates)');
+
+            var toggleHtml = canToggle ? '<span class="st-dock-available-item__toggle" aria-hidden="true"></span>' : '';
 
             return '<button type="button" class="st-dock-available-item' + (isInactive ? ' st-dock-available-item--inactive' : '') + (canToggle ? '' : ' st-dock-available-item--readonly') + '" data-time="' + time + '" data-gates="' + gates + '" data-can-toggle="' + (canToggle ? '1' : '0') + '" data-server-available="' + (isServerAvailable ? '1' : '0') + '" data-disabled-by-admin="' + (disabledByAdmin ? '1' : '0') + '" data-forced-by-admin="' + (forcedByAdmin ? '1' : '0') + '" data-time-allowed="' + (timeAllowed ? '1' : '0') + '">'
                 + '<span class="st-dock-available-item__time">' + time + '</span>'
                 + '<span class="st-dock-available-item__note">' + label + '</span>'
-                + '<span class="st-dock-available-item__toggle" aria-hidden="true"></span>'
+                + toggleHtml
                 + '</button>';
         }
 
