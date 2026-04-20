@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Services\SlotService;
 use DateTime;
 use Exception;
 use Illuminate\Support\Collection;
@@ -9,28 +10,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithStartRow;
-use Maatwebsite\Excel\HeadingRowFormatter;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
+class OfflineTxImport implements ToCollection, WithHeadingRow
 {
     public function __construct()
     {
         // Register custom heading formatter to strip * markers from column headers
         // so keys like "Slot Type *" become "slot_type" instead of "slot_type_"
-        HeadingRowFormatter::default('custom');
         HeadingRowFormatter::extend('custom', function ($value) {
             // Strip asterisk and extra whitespace, then convert to snake_case
             $cleaned = trim(str_replace('*', '', (string) $value));
 
             return strtolower(str_replace(' ', '_', $cleaned));
         });
-    }
-
-    public function startRow(): int
-    {
-        return 3; // Skip row 2 (example data), data starts from row 3
+        HeadingRowFormatter::default('custom');
     }
 
     public function collection(Collection $rows)
@@ -40,9 +35,37 @@ class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
 
         $allGates = DB::table('md_gates')->select('id', 'gate_number', 'warehouse_id')->get();
 
+        $truckTargets = DB::table('md_truck')
+            ->whereNotNull('truck_type')
+            ->pluck('target_duration_minutes', 'truck_type')
+            ->toArray();
+
+        // lowercase all keys for safer matching
+        $truckTargetDurations = [];
+        foreach ($truckTargets as $tType => $tDur) {
+            $truckTargetDurations[strtolower(trim($tType))] = $tDur;
+        }
+
         foreach ($rows as $index => $row) {
+            // Log the keys and row for debugging
+            Log::info("Row $index dump:", $row->toArray());
+
             // Check if row is empty
             if (! isset($row['slot_type']) && ! isset($row['po_number'])) {
+                Log::info("Row $index skipped: slot_type and po_number are null");
+
+                continue;
+            }
+
+            // Auto-skip the example row if user didn't delete it
+            if (isset($row['slot_type']) && stripos($row['slot_type'], 'Example:') !== false) {
+                continue;
+            }
+            if (isset($row['po_number']) && stripos((string) $row['po_number'], 'Example:') !== false) {
+                continue;
+            }
+            // Backward compatibility for old template example
+            if (isset($row['po_number']) && strtoupper(trim((string) $row['po_number'])) === 'POC-12345') {
                 continue;
             }
 
@@ -88,11 +111,18 @@ class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
                 $direction = strtolower(trim($row['direction'] ?? 'inbound'));
                 $truckType = trim($row['truck_type'] ?? '');
 
-                DB::table('slots')->insert([
+                $targetDuration = null;
+                if ($truckType && isset($truckTargetDurations[strtolower(trim($truckType))])) {
+                    $targetDuration = $truckTargetDurations[strtolower(trim($truckType))];
+                }
+
+                $slotId = DB::table('slots')->insertGetId([
                     'warehouse_id' => $whId,
                     'planned_gate_id' => $gateId,
                     'actual_gate_id' => $gateId,
                     'arrival_time' => $arrivalStr,
+                    'planned_start' => $startStr ?: ($arrivalStr ?: now()),
+                    'planned_duration' => $targetDuration > 0 ? (int) $targetDuration : 0,
                     'actual_start' => $startStr,
                     'actual_finish' => $finishStr,
                     'status' => 'completed',
@@ -105,14 +135,28 @@ class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
                     'truck_type' => $truckType ?: null,
                     'slot_type' => $slotType === 'planned' ? 'planned' : 'unplanned',
                     'direction' => $direction === 'outbound' ? 'outbound' : 'inbound',
-                    'actual_duration_minutes' => $duration > 0 ? (int) $duration : null,
-                    'lead_time_minutes' => $leadTime > 0 ? (int) $leadTime : null,
+                    'target_duration_minutes' => $targetDuration,
+                    'actual_duration_minutes' => $duration >= 0 ? (int) $duration : null,
+                    'lead_time_minutes' => $leadTime >= 0 ? (int) $leadTime : null,
                     'created_by' => auth()->id(),
                     'created_at' => now(),
                     'updated_at' => now(),
                     'approval_notes' => 'Imported via Offline Excel. '.($row['notes'] ?? ''),
                 ]);
-            } catch (Exception $e) {
+
+                // Create an activity log so that the UI shows who imported it and when.
+                try {
+                    app(SlotService::class)->logActivity(
+                        $slotId,
+                        'status_change',
+                        'Slot completely processed and imported via Offline Excel Template.',
+                        null,
+                        null,
+                        auth()->id()
+                    );
+                } catch (\Throwable $e) {
+                }
+            } catch (\Throwable $e) {
                 Log::error('Offline Import: Failed to process row '.$index.' - '.$e->getMessage());
             }
         }
@@ -128,6 +172,10 @@ class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
             if (is_numeric($str)) {
                 return Date::excelToDateTimeObject($str)->format('Y-m-d H:i:s');
             }
+
+            // Convert slashes to dashes: 15/04/2026 -> 15-04-2026 to parse DD-MM-YYYY natively in PHP
+            $str = str_replace('/', '-', $str);
+
             $dt = new DateTime($str);
 
             return $dt->format('Y-m-d H:i:s');
