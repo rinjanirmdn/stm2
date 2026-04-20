@@ -79,6 +79,10 @@ class DashboardController extends Controller
         // Validate and prepare date ranges
         [$rangeStart, $rangeEnd] = $this->validateAndPrepareDateRange($request, $today);
 
+        // Vendor/Customer filter
+        $vendorName = trim((string) $request->query('vendor', ''));
+        $vendorName = $vendorName !== '' ? $vendorName : null;
+
         // Get request parameters (timeline filters)
         $timelineDate = (string) $request->query('timeline_date', $today);
         $timelineFrom = trim($request->query('timeline_from', ''));
@@ -120,30 +124,30 @@ class DashboardController extends Controller
         $activityUserId = (int) $request->query('activity_user', 0);
 
         // Get statistics data
-        $rangeStats = $this->statsService->getRangeStats($rangeStart, $rangeEnd);
-        $directionByGate = $this->statsService->getDirectionByGate($rangeStart, $rangeEnd);
-        $onTimeGateStats = $this->statsService->getOnTimeGateStats($rangeStart, $rangeEnd);
-        $targetGateStats = $this->statsService->getTargetAchievementGateStats($rangeStart, $rangeEnd);
-        $completionGateStats = $this->statsService->getCompletionGateStats($rangeStart, $rangeEnd);
-        $onTimeStats = $this->statsService->getOnTimeStats($rangeStart, $rangeEnd);
-        $onTimeWarehouseStats = $this->statsService->getOnTimeWarehouseStats($rangeStart, $rangeEnd);
-        $targetStats = $this->statsService->getTargetAchievementStats($rangeStart, $rangeEnd);
-        $targetWarehouseStats = $this->statsService->getTargetAchievementWarehouseStats($rangeStart, $rangeEnd);
-        $completionStats = $this->statsService->getCompletionStats($rangeStart, $rangeEnd);
-        $targetSegmentStats = $this->statsService->getTargetSegmentStats($rangeStart, $rangeEnd);
-        $trendData = $this->statsService->getTrendData($rangeStart, $rangeEnd);
-        $averageTimes = $this->statsService->getAverageTimes($rangeStart, $rangeEnd);
-        $avgTimesByTruckType = $this->statsService->getAverageTimesByTruckType($rangeStart, $rangeEnd);
+        $rangeStats = $this->statsService->getRangeStats($rangeStart, $rangeEnd, $vendorName);
+        $directionByGate = $this->statsService->getDirectionByGate($rangeStart, $rangeEnd, $vendorName);
+        $onTimeGateStats = $this->statsService->getOnTimeGateStats($rangeStart, $rangeEnd, $vendorName);
+        $targetGateStats = $this->statsService->getTargetAchievementGateStats($rangeStart, $rangeEnd, $vendorName);
+        $completionGateStats = $this->statsService->getCompletionGateStats($rangeStart, $rangeEnd, $vendorName);
+        $onTimeStats = $this->statsService->getOnTimeStats($rangeStart, $rangeEnd, $vendorName);
+        $onTimeWarehouseStats = $this->statsService->getOnTimeWarehouseStats($rangeStart, $rangeEnd, $vendorName);
+        $targetStats = $this->statsService->getTargetAchievementStats($rangeStart, $rangeEnd, $vendorName);
+        $targetWarehouseStats = $this->statsService->getTargetAchievementWarehouseStats($rangeStart, $rangeEnd, $vendorName);
+        $completionStats = $this->statsService->getCompletionStats($rangeStart, $rangeEnd, $vendorName);
+        $targetSegmentStats = $this->statsService->getTargetSegmentStats($rangeStart, $rangeEnd, $vendorName);
+        $trendData = $this->statsService->getTrendData($rangeStart, $rangeEnd, $vendorName);
+        $averageTimes = $this->statsService->getAverageTimes($rangeStart, $rangeEnd, $vendorName);
+        $avgTimesByTruckType = $this->statsService->getAverageTimesByTruckType($rangeStart, $rangeEnd, $vendorName);
 
         // Get bottleneck analysis
-        $bottleneckData = $this->bottleneckService->analyzeBottlenecks($rangeStart, $rangeEnd);
+        $bottleneckData = $this->bottleneckService->analyzeBottlenecks($rangeStart, $rangeEnd, 30, $vendorName);
 
         // Get gate status
         $gateCards = $this->gateService->getGateCards($today);
 
         // Get schedule and timeline data
-        $schedule = $this->timelineService->getSchedule($scheduleDate, $scheduleFrom, $scheduleTo);
-        $timelineBlocks = $this->timelineService->getTimelineBlocks($timelineDate);
+        $schedule = $this->timelineService->getSchedule($scheduleDate, $scheduleFrom, $scheduleTo, $vendorName);
+        $timelineBlocks = $this->timelineService->getTimelineBlocks($timelineDate, $vendorName);
 
         // Add pending bookings from booking_requests to schedule data for chart
         $scheduleHasRange = $scheduleFrom !== '' && $scheduleTo !== '';
@@ -161,6 +165,7 @@ class DashboardController extends Controller
             }, function ($q) use ($scheduleDate) {
                 return $q->whereDate('planned_start', $scheduleDate);
             })
+            ->when($vendorName, fn ($q) => $q->where('supplier_name', $vendorName))
             ->get(['id', 'status', 'direction', 'planned_start', 'supplier_name', 'po_number', 'request_number'])
             ->map(function ($booking) {
                 return [
@@ -191,10 +196,10 @@ class DashboardController extends Controller
         }
         $allScheduleData = array_values(array_merge($scheduleSlots, $pendingBookings));
 
-        $processStatusCounts = $this->buildProcessStatusCounts($scheduleDate, $scheduleFrom, $scheduleTo);
+        $processStatusCounts = $this->buildProcessStatusCounts($scheduleDate, $scheduleFrom, $scheduleTo, $vendorName);
 
         // Get activity data
-        $activityData = $this->statsService->getActivityStats($activityDate, $activityWarehouseId, $activityUserId);
+        $activityData = $this->statsService->getActivityStats($activityDate, $activityWarehouseId, $activityUserId, $vendorName);
 
         // Calculate completion rate
         $completionRate = $this->statsService->calculateCompletionRate(
@@ -320,6 +325,8 @@ class DashboardController extends Controller
             'activityUsers' => $activityData['users'],
             'recentActivities' => $activityData['activities'],
             'holidays' => $this->getHolidaysForYear($today),
+            'vendors' => $this->getVendorList(),
+            'selected_vendor' => $vendorName ?? '',
         ];
     }
 
@@ -331,7 +338,32 @@ class DashboardController extends Controller
         return HolidayHelper::getHolidayMap($date);
     }
 
-    private function buildProcessStatusCounts(string $scheduleDate, string $scheduleFrom, string $scheduleTo): array
+    /**
+     * Get unique vendor/customer names from slots and booking_requests
+     */
+    private function getVendorList(): array
+    {
+        $slotVendors = DB::table('slots')
+            ->whereNotNull('vendor_name')
+            ->where('vendor_name', '!=', '')
+            ->distinct()
+            ->pluck('vendor_name')
+            ->toArray();
+
+        $bookingVendors = DB::table('booking_requests')
+            ->whereNotNull('supplier_name')
+            ->where('supplier_name', '!=', '')
+            ->distinct()
+            ->pluck('supplier_name')
+            ->toArray();
+
+        $merged = array_values(array_unique(array_merge($slotVendors, $bookingVendors)));
+        sort($merged, SORT_STRING | SORT_FLAG_CASE);
+
+        return $merged;
+    }
+
+    private function buildProcessStatusCounts(string $scheduleDate, string $scheduleFrom, string $scheduleTo, ?string $vendorName = null): array
     {
         $counts = [
             'pending' => 0,
@@ -354,6 +386,7 @@ class DashboardController extends Controller
                     ->orWhere('slot_type', '!=', 'unplanned');
             })
             ->whereNotIn('status', ['pending_approval', 'cancelled'])
+            ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
             ->selectRaw("
                 SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled,
                 SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) as waiting,
@@ -385,6 +418,7 @@ class DashboardController extends Controller
             }, function ($q) use ($dateFilter) {
                 return $q->whereDate('planned_start', $dateFilter);
             })
+            ->when($vendorName, fn ($q) => $q->where('supplier_name', $vendorName))
             ->count();
 
         $counts['pending'] += $pendingCount;

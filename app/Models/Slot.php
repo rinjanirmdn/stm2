@@ -49,6 +49,7 @@ class Slot extends Model
         'vendor_code',
         'vendor_name',
         'vendor_type',
+        'destination',
         'planned_gate_id',
         'actual_gate_id',
         'status',
