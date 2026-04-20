@@ -422,7 +422,7 @@
                                         <td>{{ $r->po_number ?? '' }}</td>
                                         <td>{{ $r->ticket_number ?? '' }}</td>
                                         <td>{{ $r->mat_doc ?? '' }}</td>
-                                        <td>{{ $r->vendor_name ?? '-' }}</td>
+                                        <td>{{ $r->vendor_name ?? '-' }}{{ !empty($r->destination) ? ' (' . $r->destination . ')' : '' }}</td>
                                         <td class="st-td-center st-nowrap">
                                             <div class="st-flex st-flex-col st-align-center">
                                                 <div class="st-font-semibold">{{ $r->warehouse_name }}</div>
