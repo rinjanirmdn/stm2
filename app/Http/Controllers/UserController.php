@@ -1,4 +1,4 @@
-<?php
+an<?php
 
 namespace App\Http\Controllers;
 
@@ -622,26 +622,46 @@ class UserController extends Controller
 
     public function toggle(Request $request, int $userId)
     {
-        $user = DB::table('md_users')->where('id', $userId)->select(['id', 'is_active'])->first();
+        $user = DB::table('md_users')->where('id', $userId)->select(['id', 'is_active', 'full_name'])->first();
         if (! $user) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'User not found'], 404);
+            }
+
             return redirect()->route('users.index')->with('error', 'User not found');
         }
 
-        $currentUserId = $request->user()->id ?? 0;
+        $currentUserId = (int) ($request->user()->id ?? 0);
         $currentActive = ! empty($user->is_active);
 
         // Check if user is trying to deactivate themselves
-        if ($user->id === $currentUserId && $currentActive) {
+        if ((int) $user->id === $currentUserId && $currentActive) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'You cannot deactivate your own account.'], 403);
+            }
+
             return redirect()->route('users.index')->with('error', 'You cannot deactivate your own account.');
         }
 
         // Check if user can be deactivated (not last admin)
         if ($currentActive && ! $this->roleService->canDeactivateUser($userId)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot deactivate the last admin user.'], 403);
+            }
+
             return redirect()->route('users.index')->with('error', 'Cannot deactivate the last admin user.');
         }
 
         $newActive = $currentActive ? 0 : 1;
         DB::table('md_users')->where('id', $userId)->update(['is_active' => $newActive]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'is_active' => (bool) $newActive,
+                'message' => ($newActive ? 'Activated' : 'Deactivated').' user '.($user->full_name ?? ''),
+            ]);
+        }
 
         return redirect()->route('users.index')->with('success', 'User status updated');
     }
