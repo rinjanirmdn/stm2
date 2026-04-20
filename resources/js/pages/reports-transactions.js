@@ -682,7 +682,7 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             var fd = new FormData(formImportOffline);
             var token = formImportOffline.querySelector('input[name="_token"]').value;
-            
+
             btnImportSubmit.disabled = true;
             btnImportSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin st-mr-2"></i> Uploading...';
             if (alertImportOffline) {
@@ -694,13 +694,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: fd,
                 headers: {
                     'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'Accept': 'application/json'
                 }
             })
             .then(function(res) {
                 if (!res.ok) {
-                    return res.json().then(function(err) { throw err; });
+                    return res.text().then(function(text) {
+                        try {
+                            var json = JSON.parse(text);
+                            throw new Error(json.message || 'Server error');
+                        } catch (e) {
+                            throw new Error('Server error ' + res.status + ': ' + res.statusText);
+                        }
+                    });
                 }
                 return res.json();
             })

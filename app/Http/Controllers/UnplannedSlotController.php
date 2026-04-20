@@ -260,6 +260,7 @@ class UnplannedSlotController extends Controller
         $request->validate([
             'driver_name' => 'nullable|string|max:50',
             'actual_gate_id' => 'required|integer|exists:md_gates,id',
+            'destination' => 'nullable|string|max:255',
         ]);
 
         $poNumber = trim((string) $request->input('po_number', ''));
@@ -306,6 +307,7 @@ class UnplannedSlotController extends Controller
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
+        $destination = trim((string) $request->input('destination', ''));
         $notes = trim((string) $request->input('notes', ''));
 
         $poDetail = $this->poSearchService->getPoDetail($poNumber);
@@ -318,7 +320,7 @@ class UnplannedSlotController extends Controller
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $poDetail) {
+        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $poDetail) {
             $slotId = (int) DB::table('slots')->insertGetId([
                 'po_number' => $poNumber,
                 'direction' => $direction,
@@ -334,6 +336,7 @@ class UnplannedSlotController extends Controller
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'destination' => $destination !== '' ? $destination : null,
                 'late_reason' => $notes !== '' ? $notes : null,
                 'status' => $status,
                 'slot_type' => 'unplanned',
@@ -430,6 +433,7 @@ class UnplannedSlotController extends Controller
             'vendor_id' => 'nullable|string|max:255',
             'actual_gate_id' => 'required|integer|exists:md_gates,id',
             'arrival_time' => 'required|string',
+            'destination' => 'nullable|string|max:255',
         ]);
 
         $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
@@ -461,6 +465,7 @@ class UnplannedSlotController extends Controller
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
+        $destination = trim((string) $request->input('destination', ''));
         $notes = trim((string) $request->input('notes', ''));
 
         // Handle status and slot_type changes for super editors
@@ -487,7 +492,7 @@ class UnplannedSlotController extends Controller
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $status, $actualStart, $actualFinish, $newStatus, $newSlotType) {
+        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $newStatus, $newSlotType) {
             $updateData = [
                 'po_number' => $truckNumber,
                 'direction' => $direction,
@@ -499,6 +504,7 @@ class UnplannedSlotController extends Controller
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'destination' => $destination !== '' ? $destination : null,
                 'late_reason' => $notes !== '' ? $notes : null,
                 'status' => $status,
                 'actual_start' => $actualStart,
