@@ -693,7 +693,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 body: fd,
                 headers: {
-                    'X-CSRF-TOKEN': token
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
             .then(function(res) {

@@ -31,7 +31,7 @@ Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/gate-status', [ReportController::class, 'gateStatus'])->name('gate_status')->middleware('permission:reports.gate_status');
 
     // Offline Import Routes
-    Route::middleware('role:super account|section head')->group(function () {
+    Route::middleware('role:admin|super account|section head')->group(function () {
         Route::get('/offline-import/template', [OfflineImportController::class, 'downloadTemplate'])->name('offline_import.template');
         Route::post('/offline-import/upload', [OfflineImportController::class, 'import'])->name('offline_import.upload');
     });

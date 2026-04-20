@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
-use Maatwebsite\Excel\HeadingRowFormatter;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class OfflineTxImport implements ToCollection, WithHeadingRow, WithStartRow
