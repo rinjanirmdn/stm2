@@ -275,9 +275,11 @@
                                         </a>
                                     @endif
 
-                                    <a href="{{ route('unplanned.edit', ['slotId' => $slot->id]) }}" class="tw-action tw-action--warning" data-tooltip="Edit" aria-label="Edit">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </a>
+                                    @if (auth()->user() && auth()->user()->hasAnyRole(['Super Account', 'Section Head']))
+                                        <a href="{{ route('unplanned.edit', ['slotId' => $slot->id]) }}" class="tw-action tw-action--warning" data-tooltip="Edit" aria-label="Edit">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                    @endif
 
                                     <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
                                         <i class="fa-solid fa-eye"></i>
