@@ -627,6 +627,7 @@ class UserController extends Controller
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'User not found'], 404);
             }
+
             return redirect()->route('users.index')->with('error', 'User not found');
         }
 
@@ -638,6 +639,7 @@ class UserController extends Controller
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'You cannot deactivate your own account.'], 403);
             }
+
             return redirect()->route('users.index')->with('error', 'You cannot deactivate your own account.');
         }
 
@@ -646,6 +648,7 @@ class UserController extends Controller
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Cannot deactivate the last admin user.'], 403);
             }
+
             return redirect()->route('users.index')->with('error', 'Cannot deactivate the last admin user.');
         }
 
@@ -656,7 +659,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'is_active' => (bool) $newActive,
-                'message' => ($newActive ? 'Activated' : 'Deactivated') . ' user ' . ($user->full_name ?? ''),
+                'message' => ($newActive ? 'Activated' : 'Deactivated').' user '.($user->full_name ?? ''),
             ]);
         }
 
