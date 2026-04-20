@@ -76,7 +76,7 @@ class DashboardStatsService
             }
 
             $displayKey = $letterToDisplay[$letter] ?? null;
-            if ($displayKey === null || !isset($out[$displayKey])) {
+            if ($displayKey === null || ! isset($out[$displayKey])) {
                 continue;
             }
 

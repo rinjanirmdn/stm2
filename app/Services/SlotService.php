@@ -329,6 +329,7 @@ class SlotService
             // Map internal letter (A/B/C) to display number (1/2/3)
             $letterToNumber = ['A' => '1', 'B' => '2', 'C' => '3'];
             $displayNumber = $letterToNumber[$letter] ?? $letter;
+
             return 'Gate '.$displayNumber;
         }
 
