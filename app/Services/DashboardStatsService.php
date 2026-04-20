@@ -41,10 +41,12 @@ class DashboardStatsService
             ->get();
 
         $out = [
-            'A' => ['inbound' => 0, 'outbound' => 0],
-            'B' => ['inbound' => 0, 'outbound' => 0],
-            'C' => ['inbound' => 0, 'outbound' => 0],
+            'Gate 1' => ['inbound' => 0, 'outbound' => 0],
+            'Gate 2' => ['inbound' => 0, 'outbound' => 0],
+            'Gate 3' => ['inbound' => 0, 'outbound' => 0],
         ];
+
+        $letterToDisplay = ['A' => 'Gate 1', 'B' => 'Gate 2', 'C' => 'Gate 3'];
 
         foreach ($rows as $r) {
             $gateNo = (string) ($r->gate_number ?? '');
@@ -73,11 +75,12 @@ class DashboardStatsService
                 continue;
             }
 
-            if (! isset($out[$letter])) {
+            $displayKey = $letterToDisplay[$letter] ?? null;
+            if ($displayKey === null || ! isset($out[$displayKey])) {
                 continue;
             }
 
-            $out[$letter][$dir] += (int) ($r->slot_count ?? 0);
+            $out[$displayKey][$dir] += (int) ($r->slot_count ?? 0);
         }
 
         return $out;
@@ -110,6 +113,8 @@ class DashboardStatsService
         $gates = [];
         $data = [];
 
+        $letterToDisplay = ['A' => 'Gate 1', 'B' => 'Gate 2', 'C' => 'Gate 3'];
+
         foreach ($rows as $r) {
             $dir = (string) ($r->direction ?? '');
             $gateNo = (string) ($r->gate_number ?? '');
@@ -134,13 +139,15 @@ class DashboardStatsService
                 continue;
             }
 
-            if (! in_array($gateKey, $gates, true)) {
-                $gates[] = $gateKey;
+            $displayKey = $letterToDisplay[$gateKey] ?? $gateKey;
+
+            if (! in_array($displayKey, $gates, true)) {
+                $gates[] = $displayKey;
             }
 
             $data[] = [
                 'direction' => $dir,
-                'gate_key' => $gateKey,
+                'gate_key' => $displayKey,
                 'on_time' => (int) ($r->on_time ?? 0),
                 'late' => (int) ($r->late ?? 0),
             ];
@@ -181,6 +188,8 @@ class DashboardStatsService
         $gates = [];
         $data = [];
 
+        $letterToDisplay = ['A' => 'Gate 1', 'B' => 'Gate 2', 'C' => 'Gate 3'];
+
         foreach ($rows as $r) {
             $dir = (string) ($r->direction ?? '');
             $gateNo = (string) ($r->gate_number ?? '');
@@ -205,13 +214,15 @@ class DashboardStatsService
                 continue;
             }
 
-            if (! in_array($gateKey, $gates, true)) {
-                $gates[] = $gateKey;
+            $displayKey = $letterToDisplay[$gateKey] ?? $gateKey;
+
+            if (! in_array($displayKey, $gates, true)) {
+                $gates[] = $displayKey;
             }
 
             $data[] = [
                 'direction' => $dir,
-                'gate_key' => $gateKey,
+                'gate_key' => $displayKey,
                 'achieve' => (int) ($r->achieve_count ?? 0),
                 'not_achieve' => (int) ($r->not_achieve_count ?? 0),
             ];
@@ -247,6 +258,8 @@ class DashboardStatsService
         $gates = [];
         $data = [];
 
+        $letterToDisplay = ['A' => 'Gate 1', 'B' => 'Gate 2', 'C' => 'Gate 3'];
+
         foreach ($rows as $r) {
             $dir = (string) ($r->direction ?? '');
             $gateNo = (string) ($r->gate_number ?? '');
@@ -271,13 +284,15 @@ class DashboardStatsService
                 continue;
             }
 
-            if (! in_array($gateKey, $gates, true)) {
-                $gates[] = $gateKey;
+            $displayKey = $letterToDisplay[$gateKey] ?? $gateKey;
+
+            if (! in_array($displayKey, $gates, true)) {
+                $gates[] = $displayKey;
             }
 
             $data[] = [
                 'direction' => $dir,
-                'gate_key' => $gateKey,
+                'gate_key' => $displayKey,
                 'total' => (int) ($r->total_slots ?? 0),
                 'completed' => (int) ($r->completed_slots ?? 0),
             ];

@@ -15,11 +15,11 @@ class GateSeeder extends Seeder
 
         $gates = [
             // WH1 Gates
-            ['warehouse_id' => $wh1->id, 'gate_number' => 'A', 'name' => 'Gate A', 'is_active' => true],
+            ['warehouse_id' => $wh1->id, 'gate_number' => '1', 'name' => 'Gate 1', 'is_active' => true],
 
             // WH2 Gates
-            ['warehouse_id' => $wh2->id, 'gate_number' => 'B', 'name' => 'Gate B', 'is_active' => true],
-            ['warehouse_id' => $wh2->id, 'gate_number' => 'C', 'name' => 'Gate C', 'is_active' => true],
+            ['warehouse_id' => $wh2->id, 'gate_number' => '2', 'name' => 'Gate 2', 'is_active' => true],
+            ['warehouse_id' => $wh2->id, 'gate_number' => '3', 'name' => 'Gate 3', 'is_active' => true],
         ];
 
         foreach ($gates as $gate) {
