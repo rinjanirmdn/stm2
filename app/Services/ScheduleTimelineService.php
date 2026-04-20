@@ -16,9 +16,9 @@ class ScheduleTimelineService
     /**
      * Get schedule data for a specific date
      */
-    public function getSchedule(string $date, string $from = '', string $to = ''): array
+    public function getSchedule(string $date, string $from = '', string $to = '', ?string $vendorName = null): array
     {
-        $scheduleQ = $this->buildScheduleQuery($date);
+        $scheduleQ = $this->buildScheduleQuery($date, $vendorName);
 
         $timeExpr = 'TIME(COALESCE(s.actual_start, s.planned_start))';
         if (DB::getDriverName() === 'pgsql') {
@@ -49,9 +49,9 @@ class ScheduleTimelineService
     /**
      * Get timeline blocks for visualization
      */
-    public function getTimelineBlocks(string $date): array
+    public function getTimelineBlocks(string $date, ?string $vendorName = null): array
     {
-        $timelineRows = $this->buildTimelineQuery($date);
+        $timelineRows = $this->buildTimelineQuery($date, $vendorName);
         $timelineBlocksByGate = [];
 
         foreach ($timelineRows as $r) {
@@ -360,7 +360,7 @@ class ScheduleTimelineService
     /**
      * Build base schedule query
      */
-    private function buildScheduleQuery(string $date)
+    private function buildScheduleQuery(string $date, ?string $vendorName = null)
     {
         return DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -379,6 +379,7 @@ class ScheduleTimelineService
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
             ->whereNotNull('s.id')
             ->where('s.id', '>', 0)
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->select([
                 's.id',
                 's.status',
@@ -391,13 +392,14 @@ class ScheduleTimelineService
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
                 's.vendor_name as vendor_name',
+                's.destination as destination',
             ]);
     }
 
     /**
      * Build timeline query
      */
-    private function buildTimelineQuery(string $date)
+    private function buildTimelineQuery(string $date, ?string $vendorName = null)
     {
         return DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -416,6 +418,7 @@ class ScheduleTimelineService
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
             ->whereNotNull('s.id')
             ->where('s.id', '>', 0)
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->select([
                 's.id',
                 's.direction',
@@ -434,6 +437,7 @@ class ScheduleTimelineService
                 'g.gate_number',
                 's.vendor_name as vendor_name',
                 's.vendor_type as vendor_type',
+                's.destination as destination',
             ])
             ->get();
     }
@@ -531,6 +535,7 @@ class ScheduleTimelineService
                 'id' => (int) ($r->id ?? 0),
                 'po_number' => (string) ($r->po_number ?? ''),
                 'vendor_name' => (string) ($r->vendor_name ?? '-'),
+                'destination' => (string) ($r->destination ?? ''),
                 'warehouse_name' => (string) ($r->warehouse_name ?? ''),
                 'gate_label' => $gateLabel,
                 'planned_time' => ! empty($r->planned_start) ? date('H:i', strtotime((string) $r->planned_start)) : '-',
@@ -591,6 +596,7 @@ class ScheduleTimelineService
             'po_number' => (string) ($r->po_number ?? ''),
             'vendor_name' => (string) ($r->vendor_name ?? '-'),
             'vendor_type' => (string) ($r->vendor_type ?? ''),
+            'destination' => (string) ($r->destination ?? ''),
             'direction' => (string) ($r->direction ?? ''),
             'slot_status' => $status,
             'warehouse_name' => (string) ($r->warehouse_name ?? ''),

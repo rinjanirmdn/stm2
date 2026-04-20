@@ -61,7 +61,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderByDesc('s.actual_start')
-            ->select(['s.id', 's.po_number', 's.actual_start', 's.actual_gate_id'])
+            ->select(['s.id', 's.po_number', 's.actual_start', 's.actual_gate_id', 's.vendor_name', 's.destination'])
             ->get();
 
         // Batch-fetch ALL next-scheduled slots for today (1 query instead of N)
@@ -73,7 +73,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderBy('s.planned_start', 'asc')
-            ->select(['s.id', 's.po_number', 's.planned_start', 's.status', 's.planned_gate_id'])
+            ->select(['s.id', 's.po_number', 's.planned_start', 's.status', 's.planned_gate_id', 's.vendor_name', 's.destination'])
             ->get();
 
         // Build gate cards using in-memory matching
@@ -132,7 +132,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderByDesc('s.actual_start')
-            ->select(['s.id', 's.po_number', 's.actual_start'])
+            ->select(['s.id', 's.po_number', 's.actual_start', 's.vendor_name', 's.destination'])
             ->first();
     }
 
@@ -158,7 +158,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderBy('s.planned_start', 'asc')
-            ->select(['s.id', 's.po_number', 's.planned_start', 's.status'])
+            ->select(['s.id', 's.po_number', 's.planned_start', 's.status', 's.vendor_name', 's.destination'])
             ->first();
     }
 
@@ -205,8 +205,15 @@ class GateStatusService
 
         $truckNumber = (string) ($currentSlot->po_number ?? '');
         $startTime = date('H:i', strtotime((string) $currentSlot->actual_start));
+        $vendor = (string) ($currentSlot->vendor_name ?? '');
+        $destination = (string) ($currentSlot->destination ?? '');
 
-        return $truckNumber !== '' ? ('PO '.$truckNumber.' @ '.$startTime) : '-';
+        $prefix = $vendor !== '' ? $vendor : 'Unknown Vendor';
+        if ($destination !== '') {
+            $prefix .= " ({$destination})";
+        }
+
+        return $truckNumber !== '' ? ($prefix . ' - PO ' . $truckNumber . ' @ ' . $startTime) : '-';
     }
 
     /**
@@ -220,8 +227,15 @@ class GateStatusService
 
         $truckNumber = (string) ($nextSlot->po_number ?? '');
         $startTime = date('H:i', strtotime((string) $nextSlot->planned_start));
+        $vendor = (string) ($nextSlot->vendor_name ?? '');
+        $destination = (string) ($nextSlot->destination ?? '');
 
-        return $truckNumber !== '' ? ('PO '.$truckNumber.' @ '.$startTime) : '-';
+        $prefix = $vendor !== '' ? $vendor : 'Unknown Vendor';
+        if ($destination !== '') {
+            $prefix .= " ({$destination})";
+        }
+
+        return $truckNumber !== '' ? ($prefix . ' - PO ' . $truckNumber . ' @ ' . $startTime) : '-';
     }
 
     /**

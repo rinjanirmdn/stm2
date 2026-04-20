@@ -18,7 +18,7 @@ class DashboardStatsService
         return "({$arrivalExpr} > {$thresholdExpr})";
     }
 
-    public function getDirectionByGate(string $start, string $end): array
+    public function getDirectionByGate(string $start, string $end, ?string $vendorName = null): array
     {
         $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
 
@@ -30,6 +30,7 @@ class DashboardStatsService
             })
             ->whereBetween($rangeDate, [$start, $end])
             ->where('s.status', '!=', 'cancelled')
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->select([
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
@@ -82,7 +83,7 @@ class DashboardStatsService
         return $out;
     }
 
-    public function getOnTimeGateStats(string $start, string $end): array
+    public function getOnTimeGateStats(string $start, string $end, ?string $vendorName = null): array
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
@@ -96,6 +97,7 @@ class DashboardStatsService
             })
             ->where('s.status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->groupBy(['s.direction', 'g.gate_number'])
             ->select([
                 's.direction',
@@ -150,7 +152,7 @@ class DashboardStatsService
         ];
     }
 
-    public function getTargetAchievementGateStats(string $start, string $end): array
+    public function getTargetAchievementGateStats(string $start, string $end, ?string $vendorName = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
         $rangeDate = DB::raw('DATE(s.planned_start)');
@@ -166,6 +168,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_finish')
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->groupBy(['s.direction', 'g.gate_number'])
             ->select([
                 's.direction',
@@ -220,7 +223,7 @@ class DashboardStatsService
         ];
     }
 
-    public function getCompletionGateStats(string $start, string $end): array
+    public function getCompletionGateStats(string $start, string $end, ?string $vendorName = null): array
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
@@ -231,6 +234,7 @@ class DashboardStatsService
             })
             ->whereBetween($rangeDate, [$start, $end])
             ->where('s.status', '!=', 'cancelled')
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->groupBy(['s.direction', 'g.gate_number'])
             ->select([
                 's.direction',
@@ -289,7 +293,7 @@ class DashboardStatsService
      * Get range statistics for dashboard
      * Optimized: Single query instead of 10 separate queries
      */
-    public function getRangeStats(string $start, string $end): array
+    public function getRangeStats(string $start, string $end, ?string $vendorName = null): array
     {
         $rangeDate = DB::raw('DATE(COALESCE(actual_start, arrival_time, planned_start))');
 
@@ -297,6 +301,7 @@ class DashboardStatsService
         $pendingCount = DB::table('booking_requests')
             ->where('status', BookingRequest::STATUS_PENDING)
             ->whereBetween(DB::raw('DATE(planned_start)'), [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('supplier_name', $vendorName))
             ->count();
 
         $arrivalLateExpr = $this->getArrivalLateExpression('planned_start', 'arrival_time');
@@ -305,6 +310,7 @@ class DashboardStatsService
         // Single query with conditional aggregation for other stats (from slots)
         $stats = DB::table('slots')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
             ->selectRaw("
                 COUNT(*) AS total_all,
                 SUM(CASE WHEN status != 'cancelled' THEN 1 ELSE 0 END) AS total,
@@ -339,7 +345,7 @@ class DashboardStatsService
      * Get on-time statistics by direction
      * Optimized: Single query with aggregation
      */
-    public function getOnTimeStats(string $start, string $end): array
+    public function getOnTimeStats(string $start, string $end, ?string $vendorName = null): array
     {
         $rangeDate = DB::raw('DATE(planned_start)');
 
@@ -350,6 +356,7 @@ class DashboardStatsService
         $stats = DB::table('slots')
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
             ->selectRaw("
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_all,
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_all,
@@ -379,7 +386,7 @@ class DashboardStatsService
     /**
      * Get target achievement statistics
      */
-    public function getTargetAchievementStats(string $start, string $end): array
+    public function getTargetAchievementStats(string $start, string $end, ?string $vendorName = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
         $rangeDate = DB::raw('DATE(s.planned_start)');
@@ -391,6 +398,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_finish')
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->whereRaw("{$exprActual} <= td.target_duration_minutes + 15")
             ->count();
 
@@ -401,6 +409,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_finish')
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->whereRaw("{$exprActual} > td.target_duration_minutes + 15")
             ->count();
 
@@ -417,6 +426,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_finish')
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->groupBy('s.direction')
             ->select([
                 's.direction',
@@ -440,12 +450,13 @@ class DashboardStatsService
     /**
      * Get completion statistics by warehouse and direction
      */
-    public function getCompletionStats(string $start, string $end): array
+    public function getCompletionStats(string $start, string $end, ?string $vendorName = null): array
     {
         $completionRows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->whereBetween(DB::raw('DATE(s.planned_start)'), [$start, $end])
             ->where('s.status', '!=', 'cancelled')
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->groupBy(['s.direction', 'w.wh_code'])
             ->select([
                 's.direction',
@@ -480,7 +491,7 @@ class DashboardStatsService
     /**
      * Get target achievement by segment (warehouse + direction)
      */
-    public function getTargetSegmentStats(string $start, string $end): array
+    public function getTargetSegmentStats(string $start, string $end, ?string $vendorName = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
         $rangeDate = DB::raw('DATE(s.planned_start)');
@@ -493,6 +504,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_finish')
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->groupBy(['s.direction', 'w.wh_code'])
             ->orderBy('w.wh_code')
             ->orderBy('s.direction')
@@ -535,7 +547,7 @@ class DashboardStatsService
     /**
      * Get trend data for completed slots per day
      */
-    public function getTrendData(string $start, string $end): array
+    public function getTrendData(string $start, string $end, ?string $vendorName = null): array
     {
         $trendDays = [];
         $trendCounts = [];
@@ -546,6 +558,7 @@ class DashboardStatsService
         $completedPerDay = DB::table('slots')
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
             ->groupBy($rangeDate)
             ->orderBy($rangeDate, 'asc')
             ->select([
@@ -562,6 +575,7 @@ class DashboardStatsService
         $completedPerDayDir = DB::table('slots')
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
             ->groupBy($rangeDate)
             ->groupBy('direction')
             ->orderBy($rangeDate, 'asc')
@@ -636,7 +650,7 @@ class DashboardStatsService
     /**
      * Get average lead and processing times
      */
-    public function getAverageTimes(string $start, string $end): array
+    public function getAverageTimes(string $start, string $end, ?string $vendorName = null): array
     {
         $avgLeadMinutes = null;
         $avgProcessMinutes = null;
@@ -649,6 +663,7 @@ class DashboardStatsService
                 ->whereNotNull('s.arrival_time')
                 ->whereNotNull('s.actual_finish')
                 ->whereBetween($rangeDate, [$start, $end])
+                ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
                 ->avg(DB::raw($this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish')));
 
             $avgProcessMinutes = DB::table('slots as s')
@@ -656,6 +671,7 @@ class DashboardStatsService
                 ->whereNotNull('s.actual_start')
                 ->whereNotNull('s.actual_finish')
                 ->whereBetween($rangeDate, [$start, $end])
+                ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
                 ->avg(DB::raw($this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish')));
         } catch (\Throwable $e) {
             // Return null values on error
@@ -667,7 +683,7 @@ class DashboardStatsService
         ];
     }
 
-    public function getOnTimeWarehouseStats(string $start, string $end): array
+    public function getOnTimeWarehouseStats(string $start, string $end, ?string $vendorName = null): array
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
@@ -678,6 +694,7 @@ class DashboardStatsService
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->where('s.status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->groupBy(['s.direction', 'w.wh_code'])
             ->select([
                 's.direction',
@@ -709,7 +726,7 @@ class DashboardStatsService
         ];
     }
 
-    public function getTargetAchievementWarehouseStats(string $start, string $end): array
+    public function getTargetAchievementWarehouseStats(string $start, string $end, ?string $vendorName = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
         $rangeDate = DB::raw('DATE(s.planned_start)');
@@ -722,6 +739,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_finish')
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
+            ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->groupBy(['s.direction', 'w.wh_code'])
             ->select([
                 's.direction',
@@ -764,7 +782,7 @@ class DashboardStatsService
     /**
      * Get activity statistics
      */
-    public function getActivityStats(string $date, int $warehouseId = 0, int $userId = 0): array
+    public function getActivityStats(string $date, int $warehouseId = 0, int $userId = 0, ?string $vendorName = null): array
     {
         $activityQ = DB::table('activity_logs as al')
             ->leftJoin('slots as s', 'al.slot_id', '=', 's.id')
@@ -789,6 +807,9 @@ class DashboardStatsService
         if ($userId > 0) {
             $activityQ->where('al.created_by', $userId);
         }
+        if ($vendorName) {
+            $activityQ->where('s.vendor_name', $vendorName);
+        }
 
         return [
             'activities' => $activityQ
@@ -803,7 +824,7 @@ class DashboardStatsService
     /**
      * Get average lead and processing times grouped by truck type
      */
-    public function getAverageTimesByTruckType(string $start, string $end): array
+    public function getAverageTimesByTruckType(string $start, string $end, ?string $vendorName = null): array
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
@@ -837,10 +858,11 @@ class DashboardStatsService
 
         try {
             // Use subquery to make grouping and ordering cleaner across different DB drivers
-            return DB::table(function ($query) use ($normalizedType, $leadTimeExpr, $processTimeExpr, $rangeDate, $start, $end) {
+            return DB::table(function ($query) use ($normalizedType, $leadTimeExpr, $processTimeExpr, $rangeDate, $start, $end, $vendorName) {
                 $query->from('slots as s')
                     ->where('s.status', 'completed')
                     ->whereBetween($rangeDate, [$start, $end])
+                    ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
                     ->select([
                         DB::raw("({$normalizedType}) as truck_type"),
                         DB::raw("({$leadTimeExpr}) as lead_min"),

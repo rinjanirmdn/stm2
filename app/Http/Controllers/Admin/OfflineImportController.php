@@ -34,14 +34,41 @@ class OfflineImportController extends Controller
 
     public function import(Request $request)
     {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
-        ]);
+        try {
+            $request->validate([
+                'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => 'Validation failed: ' . implode(', ', $e->errors())], 422);
+        }
 
         try {
-            Excel::import(new OfflineTxImport(), $request->file('file'));
+            $import = new OfflineTxImport();
+            Excel::import($import, $request->file('file'));
 
-            return response()->json(['success' => true, 'message' => 'Offline data successfully imported.']);
+            $successCount = $import->getSuccessCount();
+            $errorCount = $import->getErrorCount();
+            $errors = $import->getErrors();
+
+            if ($successCount > 0) {
+                $message = "Berhasil mengimpor {$successCount} data.";
+                if ($errorCount > 0) {
+                    $message .= " {$errorCount} data gagal diimpor.";
+                }
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'success_count' => $successCount,
+                    'error_count' => $errorCount,
+                    'errors' => $errors,
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data yang berhasil diimpor. ' . ($errorCount > 0 ? implode('; ', $errors) : ''),
+                    'errors' => $errors,
+                ]);
+            }
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to import data: '.$e->getMessage()], 500);
         }
