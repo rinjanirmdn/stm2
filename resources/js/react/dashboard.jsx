@@ -8,7 +8,8 @@ import {
 import {
   ChevronLeft, ChevronRight, Clock, Target,
   Truck, Calendar, BarChart3, RotateCcw,
-  ArrowDownLeft, ArrowUpRight, Timer, Gauge, Layers
+  ArrowDownLeft, ArrowUpRight, Timer, Gauge, Layers,
+  Building2
 } from 'lucide-react';
 
 function getData() { return window.__DASHBOARD_DATA__ || {}; }
@@ -25,6 +26,7 @@ const DASHBOARD_FILTER_KEYS = [
   'timeline_date', 'timeline_from', 'timeline_to',
   'schedule_date', 'schedule_from', 'schedule_to',
   'activity_date', 'activity_warehouse', 'activity_user',
+  'vendor',
 ];
 const DASHBOARD_FILTER_SYNC_KEY = 'st_dashboard_filter_sync_v1';
 
@@ -402,7 +404,7 @@ function buildParams(currentData, overrides) {
     }
   })();
   if (preserveDisplay) params.set('display', '1');
-  const keys = ['range_start', 'range_end', 'timeline_date', 'timeline_from', 'timeline_to', 'schedule_date', 'schedule_from', 'schedule_to', 'activity_date', 'activity_warehouse', 'activity_user'];
+  const keys = ['range_start', 'range_end', 'timeline_date', 'timeline_from', 'timeline_to', 'schedule_date', 'schedule_from', 'schedule_to', 'activity_date', 'activity_warehouse', 'activity_user', 'vendor'];
   keys.forEach(k => { if (currentData[k]) params.set(k, currentData[k]); });
   Object.entries(overrides).forEach(([k, v]) => { if (v !== undefined && v !== null) params.set(k, v); });
   return params;
@@ -758,7 +760,10 @@ function BottleneckSlide({ data, isDisplayOnly = false, animateCharts = true }) 
                     {reasonsModal.rows.map((r, i) => (
                       <tr key={r.id || i} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fafafa' : '#fff' }}>
                         <td style={{ padding: '8px 6px', fontWeight: 500 }}>{r.ticket_number || `#${r.id}`}</td>
-                        <td style={{ padding: '8px 6px', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.vendor_name}>{r.vendor_name || '-'}</td>
+                        <td style={{ padding: '8px 6px', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.vendor_name + (r.destination ? ` (${r.destination})` : '')}>
+                          {r.vendor_name || '-'}
+                          {r.destination && <span className="text-gray-400 font-normal ml-1">({r.destination})</span>}
+                        </td>
                         <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 600, color: r.wait_minutes > 60 ? '#dc2626' : '#059669' }}>{r.wait_minutes}</td>
                         <td style={{ padding: '8px 6px', color: r.waiting_reason ? '#1f2937' : '#d1d5db', fontStyle: r.waiting_reason ? 'normal' : 'italic', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.waiting_reason || ''}>{r.waiting_reason || 'Not provided'}</td>
                       </tr>
@@ -1018,7 +1023,7 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
                   <span className="font-bold" style={{ fontSize: 14, color: th.text }}>{b.po_number || `#${b.id || '-'}`}</span>
                   <span className="uppercase font-semibold tracking-wide" style={{ fontSize: 9, color: th.badgeText, background: th.badgeBg, padding: '2px 8px', borderRadius: 6 }}>{stLabel}</span>
                 </div>
-                {b.vendor_name && <div className="truncate mt-0.5" style={{ fontSize: 11, color: th.label, maxWidth: 240 }}>{b.vendor_name}</div>}
+                {b.vendor_name && <div className="truncate mt-0.5" style={{ fontSize: 11, color: th.label, maxWidth: 240 }}>{b.vendor_name}{b.destination && ` (${b.destination})`}</div>}
               </div>
               {/* Body */}
               <div style={{ padding: '8px 14px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -1244,7 +1249,10 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
                   return (
                     <tr key={i} className="border-b border-gray-100 hover:bg-sky-50/30 transition-colors">
                       <td className="py-2 px-3 font-medium text-gray-800">{row.po_number || row.ticket_number || row.request_number || '-'}</td>
-                      <td className="py-2 px-3 text-gray-600 max-w-[160px] truncate">{row.vendor_name || row.supplier_name || '-'}</td>
+                      <td className="py-2 px-3 text-gray-600 max-w-[160px] truncate" title={row.vendor_name || row.supplier_name || '-'}>
+                        {(row.vendor_name || row.supplier_name || '-')}
+                        {row.destination && <span className="text-gray-400 ml-1">({row.destination})</span>}
+                      </td>
                       <td className="py-2 px-3 text-gray-600 hidden lg:table-cell">{row.warehouse_name || '-'}</td>
                       <td className="py-2 px-3 text-gray-600 hidden md:table-cell">{row.gate_label || '-'}</td>
                       <td className="py-2 px-3 text-gray-600 font-mono">{row.eta || '-'}</td>
@@ -1445,6 +1453,27 @@ function Dashboard() {
             <JQRangePicker startValue={data.range_start || ''} endValue={data.range_end || ''} onApply={(s, e) => onFilter({ range_start: s, range_end: e })} />
             <a href="/dashboard" className="text-[11px] text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1 no-underline"><RotateCcw size={11} /> Reset</a>
           </div>
+          {/* Vendor/Customer Filter */}
+          {(() => {
+            const vendors = toArr(data.vendors);
+            const selectedVendor = data.selected_vendor || '';
+            if (vendors.length === 0) return null;
+            return (
+              <div className="flex items-center gap-1 shrink-0 border-l border-gray-200 pl-2">
+                <Building2 size={13} className="text-gray-400 shrink-0" />
+                <select
+                  value={selectedVendor}
+                  onChange={(e) => onFilter({ vendor: e.target.value })}
+                  className="text-[12px] border border-gray-200 rounded-lg bg-white text-gray-700 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-100 py-1 pl-1.5 pr-6 max-w-[200px] truncate cursor-pointer appearance-none"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 4px center', backgroundRepeat: 'no-repeat', backgroundSize: '16px' }}
+                  title={selectedVendor ? `Filtered: ${selectedVendor}` : 'All Vendors/Customers'}
+                >
+                  <option value="">All Vendors</option>
+                  {vendors.map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+            );
+          })()}
           <div className="flex items-center gap-1 flex-1 justify-center">
             <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronLeft size={16} /></button>
             <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5 overflow-x-auto">

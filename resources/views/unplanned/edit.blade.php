@@ -105,6 +105,13 @@
                     <label class="st-label">Vendor Name</label>
                     <input type="text" id="vendor_name" class="st-input" placeholder="Vendor will auto-fill from PO" readonly value="{{ $slot->vendor_name ?? '' }}">
                 </div>
+                <div class="st-form-field">
+                    <label class="st-label">Destination <span class="st-text--optional">(Optional)</span></label>
+                    <input type="text" name="destination" class="st-input" value="{{ old('destination', $slot->destination ?? '') }}" placeholder="e.g., Surabaya">
+                    @error('destination')
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
 
             <div class="st-form-row st-form-field--mb-12 st-hidden">

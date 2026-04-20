@@ -191,6 +191,13 @@
 
             <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3 st-form-row--align-end">
                 <div class="st-form-field">
+                    <label class="st-label">Destination <span class="st-text--optional">(Optional)</span></label>
+                    <input type="text" name="destination" class="st-input{{ $errors->has('destination') ? ' st-input--invalid' : '' }}" value="{{ old('destination', $slot->destination ?? '') }}" placeholder="e.g., Surabaya">
+                    @error('destination')
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field">
                     <label class="st-label">Driver Number <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="driver_number" class="st-input{{ $errors->has('driver_number') ? ' st-input--invalid' : '' }}" value="{{ old('driver_number', $slot->driver_number ?? '') }}" placeholder="e.g., 08xxxxxxxxxx">
                     @error('driver_number')

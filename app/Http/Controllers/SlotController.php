@@ -164,6 +164,7 @@ class SlotController extends Controller
             'vehicle_number_snap' => 'nullable|string|max:50',
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
+            'destination' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -177,6 +178,7 @@ class SlotController extends Controller
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
+        $destination = trim((string) $request->input('destination', ''));
         $notes = trim((string) $request->input('notes', ''));
 
         if (! $plannedGateId) {
@@ -248,7 +250,7 @@ class SlotController extends Controller
         }
 
         $slotId = 0;
-        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $poDetail) {
+        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $poDetail) {
             $now = date('Y-m-d H:i:s');
             $ticket = $this->slotService->generateTicketNumber($warehouseId, $plannedGateId);
             $slotId = (int) DB::table('slots')->insertGetId([
@@ -265,6 +267,7 @@ class SlotController extends Controller
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'destination' => $destination !== '' ? $destination : null,
                 'late_reason' => $notes !== '' ? $notes : null,
                 'ticket_number' => $ticket,
                 'status' => 'scheduled',
@@ -392,6 +395,7 @@ class SlotController extends Controller
             'vehicle_number_snap' => 'nullable|string|max:50',
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
+            'destination' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -406,6 +410,7 @@ class SlotController extends Controller
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
+        $destination = trim((string) $request->input('destination', ''));
         $notes = trim((string) $request->input('notes', ''));
 
         if (! $plannedGateId) {
@@ -487,7 +492,7 @@ class SlotController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $newStatus, $newSlotType) {
+        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $newStatus, $newSlotType) {
             $updateData = [
                 'po_number' => $truckNumber,
                 'direction' => $direction,
@@ -499,6 +504,7 @@ class SlotController extends Controller
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'destination' => $destination !== '' ? $destination : null,
                 'late_reason' => $notes !== '' ? $notes : null,
                 'updated_at' => now(),
             ];
