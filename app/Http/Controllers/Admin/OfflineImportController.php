@@ -6,6 +6,7 @@ use App\Exports\OfflineTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Imports\OfflineTxImport;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
 class OfflineImportController extends Controller
@@ -38,8 +39,8 @@ class OfflineImportController extends Controller
             $request->validate([
                 'file' => 'required|mimes:xlsx,xls,csv|max:10240',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Validation failed: ' . implode(', ', $e->errors())], 422);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => 'Validation failed: '.implode(', ', $e->errors())], 422);
         }
 
         try {
@@ -55,6 +56,7 @@ class OfflineImportController extends Controller
                 if ($errorCount > 0) {
                     $message .= " {$errorCount} data gagal diimpor.";
                 }
+
                 return response()->json([
                     'success' => true,
                     'message' => $message,
@@ -65,7 +67,7 @@ class OfflineImportController extends Controller
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Tidak ada data yang berhasil diimpor. ' . ($errorCount > 0 ? implode('; ', $errors) : ''),
+                    'message' => 'Tidak ada data yang berhasil diimpor. '.($errorCount > 0 ? implode('; ', $errors) : ''),
                     'errors' => $errors,
                 ]);
             }
