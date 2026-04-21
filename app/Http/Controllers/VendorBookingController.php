@@ -119,7 +119,10 @@ class VendorBookingController extends Controller
         try {
             $admins = User::where('is_active', true)
                 ->whereHas('roles', function ($q) {
-                    $q->whereRaw('LOWER(roles_name) = ?', ['section head']);
+                    $q->whereIn(DB::raw('LOWER(roles_name)'), [
+                        'section head',
+                        'super account',
+                    ]);
                 })
                 ->get();
 

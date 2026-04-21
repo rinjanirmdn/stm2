@@ -43,7 +43,7 @@ class BackfillBookingNotifications extends Command
         $this->info('Pending slots to check: '.$slots->count());
 
         $admins = User::whereHas('roles', function ($q) {
-            $q->whereIn(DB::raw('LOWER(roles_name)'), ['admin', 'section head', 'super admin', 'super administrator']);
+            $q->whereIn(DB::raw('LOWER(roles_name)'), ['admin', 'section head', 'super account']);
         })->get();
 
         if ($admins->isEmpty()) {

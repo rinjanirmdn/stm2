@@ -586,8 +586,7 @@ class BookingApprovalService
                 $q->whereIn(DB::raw('LOWER(roles_name)'), [
                     'admin',
                     'section head',
-                    'super admin',
-                    'super administrator',
+                    'super account',
                 ]);
             })->get();
 
