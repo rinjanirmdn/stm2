@@ -269,11 +269,17 @@
                                 if (!empty($slot->truck_type)) {
                                     $truckParts[] = 'Jenis: ' . $slot->truck_type;
                                 }
+                                if (!empty($slot->driver_name)) {
+                                    $truckParts[] = 'Driver Name: ' . $slot->driver_name;
+                                }
                                 if (!empty($slot->driver_number)) {
-                                    $truckParts[] = 'Driver: ' . $slot->driver_number;
+                                    $truckParts[] = 'Driver Phone: ' . $slot->driver_number;
                                 }
                                 if (!empty($slot->vehicle_number_snap)) {
                                     $truckParts[] = 'No. Mobil: ' . $slot->vehicle_number_snap;
+                                }
+                                if (!empty($slot->seal_number)) {
+                                    $truckParts[] = 'Seal: ' . $slot->seal_number;
                                 }
                             @endphp
                             @if (!empty($truckParts))

@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-BoQ3HBXb.css",
+    "file": "assets/style-ioVfErVG.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -256,7 +256,7 @@
     "isEntry": true
   },
   "resources/js/react/dashboard.jsx": {
-    "file": "assets/dashboard-CDqijrET.js",
+    "file": "assets/dashboard-Wi5Po1xU.js",
     "name": "dashboard",
     "src": "resources/js/react/dashboard.jsx",
     "isEntry": true,

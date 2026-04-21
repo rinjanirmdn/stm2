@@ -472,6 +472,32 @@ class SlotLifecycleController extends Controller
         $notes = trim((string) $request->input('notes', ''));
         $matDocNumber = trim((string) $request->input('mat_doc_number', ''));
 
+        // Handle multiple seal numbers (array from form)
+        $sealNumberRaw = $request->input('seal_number', []);
+        $sealNumbers = [];
+        if (is_array($sealNumberRaw)) {
+            foreach ($sealNumberRaw as $sn) {
+                $sn = trim((string) $sn);
+                if ($sn !== '') {
+                    $sealNumbers[] = $sn;
+                }
+            }
+        } elseif (is_string($sealNumberRaw) && trim($sealNumberRaw) !== '') {
+            $sealNumbers[] = trim($sealNumberRaw);
+        }
+        $sealNumber = ! empty($sealNumbers) ? implode(', ', $sealNumbers) : '';
+
+        // Surat Jalan is now required
+        if ($matDoc === '') {
+            throw ValidationException::withMessages(['mat_doc' => 'Nomor Surat Jalan wajib diisi']);
+        }
+
+        // Seal number is required for outbound direction
+        $direction = strtolower((string) ($slot->direction ?? ''));
+        if ($direction === 'outbound' && $sealNumber === '') {
+            throw ValidationException::withMessages(['seal_number' => 'NO Seal wajib diisi untuk transaksi outbound']);
+        }
+
         $slotType = (string) ($slot->slot_type ?? 'planned');
         $requiredMissing = $truckType === '' || $vehicleNumber === '';
         // Driver number is required only for unplanned slots
@@ -494,7 +520,7 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $backdateTime) {
+        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $sealNumber, $backdateTime) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
 
             // Get slot info before updating
@@ -513,6 +539,7 @@ class SlotLifecycleController extends Controller
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
                 'mat_doc_number' => $matDocNumber !== '' ? $matDocNumber : null,
+                'seal_number' => $sealNumber !== '' ? $sealNumber : null,
                 'late_reason' => $notes !== '' ? $notes : null,
             ]);
 
