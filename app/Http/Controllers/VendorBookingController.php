@@ -527,6 +527,9 @@ class VendorBookingController extends Controller
 
         // Auto-assign gate based on availability
         $plannedDuration = $this->resolvePlannedDuration($request->truck_type);
+        if ($plannedDuration === null) {
+            return back()->withInput()->with('error', 'Please select a truck type to determine duration.');
+        }
         $plannedGateId = $this->assignAvailableGate($request->planned_date, $request->planned_time, $plannedDuration);
 
         if (! $plannedGateId) {
@@ -1186,9 +1189,9 @@ class VendorBookingController extends Controller
      */
     private function assignAvailableGate($date, $time, $plannedDuration = 60)
     {
-        $plannedDuration = (int) ($plannedDuration ?? 0);
-        if ($plannedDuration < 0) {
-            $plannedDuration = 0;
+        $plannedDuration = (int) ($plannedDuration ?? 60);
+        if ($plannedDuration <= 0) {
+            $plannedDuration = 60;
         }
         $plannedStart = $date.' '.$time.':00';
 
