@@ -46,7 +46,7 @@
                 <tr>
                     <td class="label-col">Gate</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">@php $letterMap = ['A' => '1', 'B' => '2', 'C' => '3']; @endphp{{ isset($gateLetter) && $gateLetter !== null ? 'Gate '.($letterMap[$gateLetter] ?? $gateLetter) : '-' }}</td>
+                    <td class="value-col">{{ isset($gateLetter) && $gateLetter !== null ? 'Gate '.str_replace(['A', 'B', 'C'], ['1', '2', '3'], $gateLetter) : '-' }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">ETA</td>
