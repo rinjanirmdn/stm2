@@ -485,7 +485,7 @@ class SlotLifecycleController extends Controller
         } elseif (is_string($sealNumberRaw) && trim($sealNumberRaw) !== '') {
             $sealNumbers[] = trim($sealNumberRaw);
         }
-        $sealNumber = !empty($sealNumbers) ? implode(', ', $sealNumbers) : '';
+        $sealNumber = ! empty($sealNumbers) ? implode(', ', $sealNumbers) : '';
 
         // Surat Jalan is now required
         if ($matDoc === '') {
