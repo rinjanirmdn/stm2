@@ -270,7 +270,31 @@ class VendorBookingController extends Controller
         // Performance metrics
         $performance = $this->computeVendorPerformance($user->id, $rangeStart, $rangeEnd);
 
-        return view('vendor.dashboard', compact('stats', 'recentBookings', 'performance', 'rangeStart', 'rangeEnd', 'arrivalFilter'));
+        $isInternalVendor = $user->isInternalVendor();
+
+        // For internal vendors: collect unique vendor names for filter dropdown
+        $vendorNames = [];
+        $vendorFilter = '';
+        if ($isInternalVendor) {
+            $vendorFilter = trim((string) $request->query('vendor_filter', ''));
+            $vendorNames = BookingRequest::where('requested_by', $user->id)
+                ->whereNotNull('supplier_name')
+                ->where('supplier_name', '!=', '')
+                ->distinct()
+                ->pluck('supplier_name')
+                ->sort()
+                ->values()
+                ->all();
+
+            // Apply vendor filter to recent bookings
+            if ($vendorFilter !== '') {
+                $recentBookings = $recentBookings->filter(function ($booking) use ($vendorFilter) {
+                    return stripos((string) ($booking->supplier_name ?? ''), $vendorFilter) !== false;
+                })->values()->take(5);
+            }
+        }
+
+        return view('vendor.dashboard', compact('stats', 'recentBookings', 'performance', 'rangeStart', 'rangeEnd', 'arrivalFilter', 'isInternalVendor', 'vendorNames', 'vendorFilter'));
     }
 
     /**
@@ -416,7 +440,9 @@ class VendorBookingController extends Controller
             $bookings = $query->orderBy('created_at', 'desc')->paginate($limit);
         }
 
-        return view('vendor.bookings.index', compact('bookings', 'counts'));
+        $isInternalVendor = $user->isInternalVendor();
+
+        return view('vendor.bookings.index', compact('bookings', 'counts', 'isInternalVendor'));
     }
 
     /**
@@ -528,7 +554,7 @@ class VendorBookingController extends Controller
         // Auto-assign gate based on availability
         $plannedDuration = $this->resolvePlannedDuration($request->truck_type);
         if ($plannedDuration === null) {
-            return back()->withInput()->with('error', 'Please select a truck type to determine duration.');
+            return back()->withInput()->with('error', 'Please select a valid truck type.');
         }
         $plannedGateId = $this->assignAvailableGate($request->planned_date, $request->planned_time, $plannedDuration);
 
@@ -659,7 +685,9 @@ class VendorBookingController extends Controller
             ->with(['approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate', 'convertedSlot.actualGate'])
             ->firstOrFail();
 
-        return view('vendor.bookings.show', compact('booking'));
+        $isInternalVendor = Auth::user()?->isInternalVendor() ?? false;
+
+        return view('vendor.bookings.show', compact('booking', 'isInternalVendor'));
     }
 
     /**
@@ -1189,9 +1217,9 @@ class VendorBookingController extends Controller
      */
     private function assignAvailableGate($date, $time, $plannedDuration = 60)
     {
-        $plannedDuration = (int) ($plannedDuration ?? 60);
-        if ($plannedDuration <= 0) {
-            $plannedDuration = 60;
+        $plannedDuration = (int) ($plannedDuration ?? 0);
+        if ($plannedDuration < 0) {
+            $plannedDuration = 0;
         }
         $plannedStart = $date.' '.$time.':00';
 

@@ -100,6 +100,8 @@ class SlotService
     /**
      * Calculate planned finish time from start time and duration
      */
+    public function computePlannedFinish(?string $plannedStart, ?int $plannedDurationMinutes): ?string
+    {
         if ($plannedStart === null || $plannedStart === '' || $plannedDurationMinutes === null || $plannedDurationMinutes < 0) {
             return null;
         }

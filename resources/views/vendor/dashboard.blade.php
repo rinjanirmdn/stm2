@@ -121,6 +121,17 @@
                             Late
                         </a>
                     </div>
+                    @if($isInternalVendor ?? false)
+                    <div class="vd-recent-filter-group">
+                        <span class="vd-recent-filter-label">Vendor:</span>
+                        <select onchange="var params=new URLSearchParams(window.location.search);if(this.value){params.set('vendor_filter',this.value)}else{params.delete('vendor_filter')};window.location.search=params.toString()" style="font-size:0.8em;padding:3px 6px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#334155;max-width:160px">
+                            <option value="">All Vendors</option>
+                            @foreach(($vendorNames ?? []) as $vn)
+                            <option value="{{ $vn }}" {{ ($vendorFilter ?? '') === $vn ? 'selected' : '' }}>{{ $vn }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
                     <a href="{{ route('vendor.bookings.index') }}" class="vd-view-all-link">View All</a>
                 </div>
             </div>
@@ -173,6 +184,11 @@
                             <span class="vd-recent-time">{{ $booking->planned_start->format('d-m-Y H:i') }}</span>
                         </div>
                         <div class="vd-recent-meta">
+                            @if(($isInternalVendor ?? false) && $booking->supplier_name)
+                            <span style="font-size:0.78em;color:#64748b;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ $booking->supplier_name }}">
+                                <i class="fas fa-building" style="margin-right:2px;opacity:0.5"></i>{{ $booking->supplier_name }}
+                            </span>
+                            @endif
                             <span class="vendor-badge vendor-badge--{{ $badgeColor }} vd-badge--xs">{{ $displayLabel }}</span>
                             @if($arrivalLabel)
                                 <span class="vendor-badge vendor-badge--{{ $arrivalBadge }} vd-badge--xs">{{ $arrivalLabel }}</span>
