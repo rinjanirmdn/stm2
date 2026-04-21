@@ -1093,7 +1093,7 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
   const scMap = getStatusColors();
   const statusAbbr = { pending: 'PND', scheduled: 'SCH', waiting: 'WAIT', 'in progress': 'IN PR', completed: 'CMPLT', cancelled: 'CXL' };
   const statusChartData = useMemo(() => Object.entries(processStatusCounts || {}).map(([k, v]) => ({ name: k.replace(/_/g, ' '), key: k, value: +v, fill: (scMap[k] || scMap.scheduled).accent })), [processStatusCounts]);
-  const badgeMap = { scheduled: 'gray', waiting: 'yellow', arrived: 'yellow', active: 'purple', in_progress: 'purple', completed: 'green', cancelled: 'red', pending: 'orange', pending_approval: 'orange' };
+  const badgeMap = { scheduled: 'gray', waiting: 'yellow', arrived: 'yellow', active: 'blue', in_progress: 'blue', completed: 'green', cancelled: 'red', pending: 'orange', pending_approval: 'orange' };
 
   const allRows = useMemo(() => schedule.filter(r => r.id || r.is_pending_booking || r.po_number || r.ticket_number || r.request_number), [schedule]);
 
