@@ -86,7 +86,9 @@ class VendorBookingController extends Controller
         }
 
         $row = TruckTypeDuration::where('truck_type', $truckType)->first();
-        if (!$row) return null;
+        if (! $row) {
+            return null;
+        }
 
         return (int) $row->target_duration_minutes;
     }
