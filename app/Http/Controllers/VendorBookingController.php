@@ -86,9 +86,11 @@ class VendorBookingController extends Controller
         }
 
         $row = TruckTypeDuration::where('truck_type', $truckType)->first();
-        $duration = (int) ($row?->target_duration_minutes ?? 0);
+        if (! $row) {
+            return null;
+        }
 
-        return $duration > 0 ? $duration : null;
+        return (int) $row->target_duration_minutes;
     }
 
     private function resolveDirection(array $poDetail): string
@@ -732,7 +734,7 @@ class VendorBookingController extends Controller
         try {
             $request->validate([
                 'date' => 'required|date',
-                'planned_duration' => 'nullable|integer|min:30|max:720',
+                'planned_duration' => 'nullable|integer|min:0|max:720',
             ]);
 
             $date = $request->date;
@@ -942,7 +944,7 @@ class VendorBookingController extends Controller
     {
         $request->validate([
             'planned_start' => 'required|date',
-            'planned_duration' => 'required|integer|min:30',
+            'planned_duration' => 'required|integer|min:0',
             'exclude_slot_id' => 'nullable|exists:slots,id',
         ]);
 
@@ -1184,6 +1186,10 @@ class VendorBookingController extends Controller
      */
     private function assignAvailableGate($date, $time, $plannedDuration = 60)
     {
+        $plannedDuration = (int) ($plannedDuration ?? 0);
+        if ($plannedDuration < 0) {
+            $plannedDuration = 0;
+        }
         $plannedStart = $date.' '.$time.':00';
 
         // Get all active gates
