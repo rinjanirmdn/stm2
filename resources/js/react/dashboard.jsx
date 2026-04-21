@@ -967,11 +967,12 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
                 if (l < -720) l += 1440;
                 const w = Math.max(+(b.width || 1), 1);
                 const cls = { scheduled: 'bg-gray-400', waiting: 'bg-amber-400', in_progress: 'bg-sky-500', completed: 'bg-emerald-500' };
-                return <div key={bi} className={`absolute ${cls[b.status] || 'bg-gray-400'} rounded text-white truncate px-1 flex items-center h-full shadow-sm cursor-pointer`}
+                return <div key={bi} className={`absolute ${cls[b.status] || 'bg-gray-400'} rounded text-white truncate px-1 flex items-center h-full shadow-sm cursor-pointer hover:opacity-80 transition-opacity`}
                   style={{ fontSize: 'var(--ds-chart-label)', left: `${(l / totalMin) * 100}%`, width: `${Math.max((w / totalMin) * 100, 0.6)}%` }}
                   onMouseEnter={(e) => setTip({ x: e.clientX, y: e.clientY, block: b })}
                   onMouseMove={(e) => setTip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
                   onMouseLeave={() => setTip(null)}
+                  onClick={(e) => { e.stopPropagation(); if (b.id) window.location.href = `/slots/${b.id}`; }}
                 >{b.po_number || `#${b.id || ''}`}</div>;
               });
               return (
@@ -1246,8 +1247,11 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
                 {rows.length > 0 ? rows.map((row, i) => {
                   const st = row.status || 'scheduled';
                   const label = st === 'arrived' ? 'waiting' : st;
+                  const detailUrl = row.id ? `/slots/${row.id}` : null;
                   return (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-sky-50/30 transition-colors">
+                    <tr key={i} className={`border-b border-gray-100 hover:bg-sky-50/30 transition-colors ${detailUrl ? 'cursor-pointer' : ''}`}
+                      onClick={() => { if (detailUrl) window.location.href = detailUrl; }}
+                    >
                       <td className="py-2 px-3 font-medium text-gray-800">{row.po_number || row.ticket_number || row.request_number || '-'}</td>
                       <td className="py-2 px-3 text-gray-600 max-w-[160px] truncate" title={row.vendor_name || row.supplier_name || '-'}>
                         {(row.vendor_name || row.supplier_name || '-')}
