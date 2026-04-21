@@ -102,7 +102,7 @@ class SlotService
      */
     public function computePlannedFinish(?string $plannedStart, ?int $plannedDurationMinutes): ?string
     {
-        if ($plannedStart === null || $plannedStart === '' || ! $plannedDurationMinutes || $plannedDurationMinutes <= 0) {
+        if ($plannedStart === null || $plannedStart === '' || $plannedDurationMinutes === null || $plannedDurationMinutes < 0) {
             return null;
         }
         try {
