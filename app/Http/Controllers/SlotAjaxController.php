@@ -451,7 +451,7 @@ class SlotAjaxController extends Controller
         if ($whCodeOut === 'WH2') {
             $letterOut = $this->slotService->getGateLetterByWarehouseAndNumber($whCodeOut, (string) $bestGate->gate_number);
             if ($letterOut === 'C') {
-                $note = 'WH2: Prioritize Gate C if available because Gate B is in front/line and can block access to Gate C when operating.';
+                $note = 'WH2: Prioritize Gate 3 if available because Gate 2 is in front/line and can block access to Gate 3 when operating.';
             }
         }
 

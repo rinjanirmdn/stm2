@@ -67,14 +67,14 @@ class GenerateFebruaryDashboardDummy extends Command
             $gateQuery->where('is_active', true);
         }
         if (Schema::hasColumn('md_gates', 'gate_number')) {
-            $gateQuery->whereIn('gate_number', ['A', 'B', 'C']);
+            $gateQuery->whereIn('gate_number', ['1', '2', '3']);
         } elseif (Schema::hasColumn('md_gates', 'name')) {
-            $gateQuery->whereIn('name', ['Gate A', 'Gate B', 'Gate C']);
+            $gateQuery->whereIn('name', ['Gate 1', 'Gate 2', 'Gate 3']);
         }
         $gates = $gateQuery->orderBy('id')->get();
 
         if ($gates->isEmpty()) {
-            $this->error('No active Gate A/B/C found for selected warehouse.');
+            $this->error('No active Gate 1/2/3 found for selected warehouse.');
 
             return self::FAILURE;
         }
