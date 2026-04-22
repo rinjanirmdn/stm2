@@ -156,22 +156,22 @@
                 @if($slot && $slot->arrival_time)
                 <tr>
                     <td class="vb-table__label">Actual Arrival</td>
-                    <td class="vb-table__value--strong">{{ $slot->arrival_time->format('H:i') }}</td>
+                    <td class="vb-table__value--strong">{{ $slot->arrival_time->format('d-m-Y H:i') }}</td>
                 </tr>
                 <tr>
                     <td class="vb-table__label">Arrival Status</td>
                     <td>
                         @php
-                            $arrivalDiff = $slot->arrival_time->diffInMinutes($booking->planned_start, false);
+                            $arrivalDiff = (int) round($booking->planned_start->diffInMinutes($slot->arrival_time, false));
                             if($arrivalDiff > 15) {
                                 $arrivalStatus = 'Late';
                                 $arrivalColor = 'danger';
-                            } elseif($arrivalDiff >= -15 && $arrivalDiff <= 15) {
-                                $arrivalStatus = 'On-Time';
+                            } elseif($arrivalDiff < -15) {
+                                $arrivalStatus = 'On-Time (Early)';
                                 $arrivalColor = 'success';
                             } else {
-                                $arrivalStatus = 'Early';
-                                $arrivalColor = 'info';
+                                $arrivalStatus = 'On-Time';
+                                $arrivalColor = 'success';
                             }
                         @endphp
                         <span class="vendor-badge vendor-badge--{{ $arrivalColor }}">
@@ -185,18 +185,18 @@
                     </td>
                 </tr>
                 @endif
-                
+
                 @if($slot && $slot->actual_start)
                 <tr>
                     <td class="vb-table__label">Actual Start</td>
-                    <td class="vb-table__value--strong">{{ $slot->actual_start->format('H:i') }}</td>
+                    <td class="vb-table__value--strong">{{ $slot->actual_start->format('d-m-Y H:i') }}</td>
                 </tr>
                 @endif
 
                 @if($slot && $slot->actual_finish)
                 <tr>
                     <td class="vb-table__label">Actual Complete</td>
-                    <td class="vb-table__value--strong">{{ $slot->actual_finish->format('H:i') }}</td>
+                    <td class="vb-table__value--strong">{{ $slot->actual_finish->format('d-m-Y H:i') }}</td>
                 </tr>
                 @endif
                 <tr>
