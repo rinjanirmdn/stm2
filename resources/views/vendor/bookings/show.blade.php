@@ -149,16 +149,20 @@
                     <td class="vb-table__label">Scheduled Time</td>
                     <td class="vb-table__value--strong">{{ $booking->planned_start?->format('H:i') ?? '-' }}</td>
                 </tr>
-                @if($booking->actual_arrival)
+                @php
+                    $slot = $booking->convertedSlot;
+                @endphp
+
+                @if($slot && $slot->arrival_time)
                 <tr>
                     <td class="vb-table__label">Actual Arrival</td>
-                    <td class="vb-table__value--strong">{{ $booking->actual_arrival->format('H:i') }}</td>
+                    <td class="vb-table__value--strong">{{ $slot->arrival_time->format('H:i') }}</td>
                 </tr>
                 <tr>
                     <td class="vb-table__label">Arrival Status</td>
                     <td>
                         @php
-                            $arrivalDiff = $booking->actual_arrival->diffInMinutes($booking->planned_start, false);
+                            $arrivalDiff = $slot->arrival_time->diffInMinutes($booking->planned_start, false);
                             if($arrivalDiff > 15) {
                                 $arrivalStatus = 'Late';
                                 $arrivalColor = 'danger';
@@ -179,6 +183,20 @@
                         </span>
                         @endif
                     </td>
+                </tr>
+                @endif
+                
+                @if($slot && $slot->actual_start)
+                <tr>
+                    <td class="vb-table__label">Actual Start</td>
+                    <td class="vb-table__value--strong">{{ $slot->actual_start->format('H:i') }}</td>
+                </tr>
+                @endif
+
+                @if($slot && $slot->actual_finish)
+                <tr>
+                    <td class="vb-table__label">Actual Complete</td>
+                    <td class="vb-table__value--strong">{{ $slot->actual_finish->format('H:i') }}</td>
                 </tr>
                 @endif
                 <tr>
