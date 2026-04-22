@@ -71,7 +71,7 @@
                                            readonly
                                            value="{{ old('planned_date') }}"
                                            required>
-                                    <div class="cb-hint">Min 4 hours from now</div>
+                                    <div class="cb-hint">Min H-2</div>
                                     @error('planned_date')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror

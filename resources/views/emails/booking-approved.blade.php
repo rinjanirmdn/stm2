@@ -48,6 +48,11 @@
                                         <tr>
                                             <td style="padding:4px 0;font-size:14px;"><strong>PO/DO Number:</strong> {{ $slot->po_number }}</td>
                                         </tr>
+                                        @if(isset($notifiable) && method_exists($notifiable, 'isInternalVendor') && $notifiable->isInternalVendor())
+                                        <tr>
+                                            <td style="padding:4px 0;font-size:14px;"><strong>Vendor Name:</strong> {{ $slot->vendor_name ?: 'N/A' }}</td>
+                                        </tr>
+                                        @endif
                                         <tr>
                                             <td style="padding:4px 0;font-size:14px;"><strong>Scheduled Time:</strong> {{ $plannedDate }}</td>
                                         </tr>
@@ -82,6 +87,13 @@
                                 </td>
                             </tr>
                         </table>
+
+                        @if(isset($notifiable) && method_exists($notifiable, 'isInternalVendor') && $notifiable->isInternalVendor())
+                        <div style="margin:24px 0 0 0;padding:12px;background-color:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;">
+                            <p style="margin:0;color:#92400e;font-size:13px;font-weight:600;">Important Note:</p>
+                            <p style="margin:4px 0 0 0;color:#92400e;font-size:13px;">Please ensure you provide this ticket (attached PDF file) to the booked vendor (<strong>{{ $slot->vendor_name ?: 'the relevant vendor' }}</strong>) so they can present it to Security upon arrival.</p>
+                        </div>
+                        @endif
 
                         <p style="margin:16px 0 0 0;color:#374151;">Please make sure to arrive on time. Thank you for using our service.</p>
                     </td>

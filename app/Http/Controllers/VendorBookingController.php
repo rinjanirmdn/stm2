@@ -542,7 +542,7 @@ class VendorBookingController extends Controller
         $request->validate([
             'po_number' => 'required|string',
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
-            'planned_date' => 'required|date_format:Y-m-d|after_or_equal:today',
+            'planned_date' => 'required|date_format:Y-m-d|after_or_equal:' . \Carbon\Carbon::today()->addDays(2)->format('Y-m-d'),
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'required|string|max:50',
             'vehicle_number' => ['required', 'string', 'max:20', 'regex:/^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/'],
@@ -596,11 +596,6 @@ class VendorBookingController extends Controller
             }
         } catch (\Exception $e) {
             // If holiday check fails, continue with booking
-        }
-
-        $minAllowed = now()->addHours(4);
-        if ($plannedStartAt->lessThan($minAllowed)) {
-            return back()->withInput()->with('error', 'Booking must be at least 4 hours from now.');
         }
 
         if ($plannedStartAt->format('H:i') > '19:00') {
@@ -752,7 +747,7 @@ class VendorBookingController extends Controller
         // Get all active gates for display
         $gates = Gate::where('is_active', true)->with('warehouse')->get();
 
-        $selectedDate = $request->date ?? now()->format('Y-m-d');
+        $selectedDate = $request->date ?? now()->addDays(2)->format('Y-m-d');
 
         // Get holidays for calendar using HolidayHelper
         $holidays = HolidayHelper::getHolidayMap($selectedDate);
@@ -778,7 +773,7 @@ class VendorBookingController extends Controller
             }
 
             $isToday = $date === now()->format('Y-m-d');
-            $minAllowed = now()->addHours(4)->seconds(0);
+            $minAllowed = now()->addDays(2)->startOfDay();
             $disabledTimes = Cache::get('admin_gates_disabled_times_'.$date, []);
             $forcedTimes = Cache::get('admin_gates_forced_times_'.$date, []);
             if (! is_array($disabledTimes)) {
