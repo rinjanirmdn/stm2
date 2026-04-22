@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
+use App\Models\User;
+use App\Notifications\SlotCreatedByInternal;
 use App\Services\SlotConflictService;
 use App\Services\SlotService;
 use App\Services\TimeCalculationService;
@@ -10,6 +12,7 @@ use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * SlotTrialController
@@ -225,6 +228,53 @@ class SlotTrialController extends Controller
             'blocking_risk' => $blockingRisk,
             'blocking_risk_cached_at' => now(),
         ]);
+
+        // Notify Section Head & Super Account about new trial transaction
+        try {
+            $actor = Auth::user();
+            $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Admin Uji Coba'));
+
+            $plannedDate = '-';
+            try {
+                $plannedDate = (new DateTime($plannedStart))->format('d-m-Y H:i');
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
+            $ticketNumber = DB::table('slots')->where('id', $slotId)->value('ticket_number');
+
+            $recipients = User::where('is_active', true)
+                ->whereHas('roles', function ($q) {
+                    $q->whereIn(DB::raw('LOWER(roles_name)'), [
+                        'section head',
+                        'super account',
+                    ]);
+                })
+                ->get();
+
+            if ($recipients->isNotEmpty()) {
+                $notification = new SlotCreatedByInternal(
+                    slotId: $slotId,
+                    slotType: 'planned (Uji Coba)',
+                    poNumber: $poNumber,
+                    vendorName: $vendorName ?? '',
+                    direction: ucfirst($direction),
+                    plannedDate: $plannedDate,
+                    createdByName: $actorName,
+                    truckType: $truckType !== '' ? $truckType : null,
+                    vehicleNumber: $vehicleNumber !== '' ? $vehicleNumber : null,
+                    ticketNumber: $ticketNumber,
+                );
+
+                foreach ($recipients as $recipient) {
+                    $recipient->notify(clone $notification);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to dispatch trial slot notification: '.$e->getMessage(), [
+                'slot_id' => $slotId,
+            ]);
+        }
 
         return redirect()->route('slots.index')->with('success', 'Planned uji coba berhasil dibuat.');
     }
