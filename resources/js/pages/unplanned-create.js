@@ -11,7 +11,7 @@
     var urlPoSearch = slotRoutes.po_search || '';
     var urlPoDetailTemplate = slotRoutes.po_detail_template || '';
 
-    // PO/DO autocomplete
+    // PO/SO autocomplete
     var poInput = document.getElementById('po_number');
     var poSuggestions = document.getElementById('po_suggestions');
     var poLoading = document.getElementById('po_loading');

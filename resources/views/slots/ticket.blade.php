@@ -23,9 +23,9 @@
 
             <table class="info-table">
                 <tr>
-                    <td class="label-col">Nomor PO</td>
+                    <td class="label-col">Nomor {{ strtolower($slot->direction ?? '') === 'outbound' ? 'SO' : 'PO' }}</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ $slot->truck_number ?? '-' }}</td>
+                    <td class="value-col">{{ $slot->po_number ?? '-' }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Vendor</td>

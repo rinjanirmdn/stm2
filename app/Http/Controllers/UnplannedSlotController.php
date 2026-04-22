@@ -283,11 +283,11 @@ class UnplannedSlotController extends Controller
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         if ($poNumber === '' || $arrivalInput === '' || $direction === '') {
-            return back()->withInput()->with('error', 'PO/DO number, direction, gate, and arrival time are required');
+            return back()->withInput()->with('error', 'PO/SO number, direction, gate, and arrival time are required');
         }
 
         if (strlen($poNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 characters']);
+            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
         }
 
         if (! in_array($direction, ['inbound', 'outbound'], true)) {
@@ -312,7 +312,7 @@ class UnplannedSlotController extends Controller
 
         $poDetail = $this->poSearchService->getPoDetail($poNumber);
         if (! $poDetail) {
-            return back()->withInput()->with('error', 'PO/DO not found in SAP.');
+            return back()->withInput()->with('error', 'PO/SO not found in SAP.');
         }
 
         $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
@@ -457,7 +457,7 @@ class UnplannedSlotController extends Controller
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 characters']);
+            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
         }
 
         $matDoc = trim((string) $request->input('mat_doc', ''));

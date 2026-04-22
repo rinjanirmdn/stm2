@@ -47,13 +47,13 @@ class SlotAjaxController extends Controller
         try {
             $poNumber = trim($poNumber);
             if ($poNumber === '') {
-                return response()->json(['success' => false, 'message' => 'PO/DO number is required']);
+                return response()->json(['success' => false, 'message' => 'PO/SO number is required']);
             }
 
             $po = $this->poSearchService->getPoDetail($poNumber);
 
             if (! $po) {
-                return response()->json(['success' => false, 'message' => 'PO/DO not found']);
+                return response()->json(['success' => false, 'message' => 'PO/SO not found']);
             }
 
             return response()->json(['success' => true, 'data' => $po]);
@@ -63,7 +63,7 @@ class SlotAjaxController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return response()->json(['success' => false, 'message' => 'Failed to load PO/DO detail'], 200);
+            return response()->json(['success' => false, 'message' => 'Failed to load PO/SO detail'], 200);
         }
     }
 

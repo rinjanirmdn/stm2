@@ -46,7 +46,7 @@
                                             <td style="padding:4px 0;font-size:14px;"><strong>Ticket Number:</strong> {{ $slot->ticket_number }}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding:4px 0;font-size:14px;"><strong>PO/DO Number:</strong> {{ $slot->po_number }}</td>
+                                            <td style="padding:4px 0;font-size:14px;"><strong>PO/SO Number:</strong> {{ $slot->po_number }}</td>
                                         </tr>
                                         @if(isset($notifiable) && method_exists($notifiable, 'isInternalVendor') && $notifiable->isInternalVendor())
                                         <tr>

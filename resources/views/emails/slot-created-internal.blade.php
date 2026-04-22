@@ -55,7 +55,7 @@
                                             <td style="padding:4px 0;font-size:14px;"><strong>Vendor:</strong> {{ $vendorName ?: '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding:4px 0;font-size:14px;"><strong>PO/DO Number:</strong> {{ $poNumber }}</td>
+                                            <td style="padding:4px 0;font-size:14px;"><strong>PO/SO Number:</strong> {{ $poNumber }}</td>
                                         </tr>
                                         <tr>
                                             <td style="padding:4px 0;font-size:14px;"><strong>Scheduled Time:</strong> {{ $plannedDate }}</td>
