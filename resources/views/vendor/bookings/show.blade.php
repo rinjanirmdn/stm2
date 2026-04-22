@@ -166,12 +166,12 @@
                             if($arrivalDiff > 15) {
                                 $arrivalStatus = 'Late';
                                 $arrivalColor = 'danger';
-                            } elseif($arrivalDiff >= -15 && $arrivalDiff <= 15) {
-                                $arrivalStatus = 'On-Time';
+                            } elseif($arrivalDiff < -15) {
+                                $arrivalStatus = 'On-Time (Early)';
                                 $arrivalColor = 'success';
                             } else {
-                                $arrivalStatus = 'Early';
-                                $arrivalColor = 'info';
+                                $arrivalStatus = 'On-Time';
+                                $arrivalColor = 'success';
                             }
                         @endphp
                         <span class="vendor-badge vendor-badge--{{ $arrivalColor }}">
