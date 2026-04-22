@@ -9,6 +9,7 @@ use App\Models\Slot;
 use App\Models\TruckTypeDuration;
 use App\Models\User;
 use App\Notifications\BookingRequestSubmitted;
+use App\Notifications\SlotLifecycleNotification;
 use App\Services\BookingApprovalService;
 use App\Services\PoSearchService;
 use App\Services\SlotService;
@@ -733,9 +734,9 @@ class VendorBookingController extends Controller
 
             // Notify Section Head & Super Account about vendor cancellation
             try {
-                $recipients = \App\Models\User::where('is_active', true)
+                $recipients = User::where('is_active', true)
                     ->whereHas('roles', function ($q) {
-                        $q->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(roles_name)'), ['section head', 'super account']);
+                        $q->whereIn(DB::raw('LOWER(roles_name)'), ['section head', 'super account']);
                     })
                     ->get();
 
@@ -743,14 +744,14 @@ class VendorBookingController extends Controller
                     $slotId = (int) $booking->converted_slot_id;
                     $ticketNumber = '';
                     $slotType = 'planned';
-                    
+
                     if ($slotId > 0) {
-                        $slot = \Illuminate\Support\Facades\DB::table('slots')->where('id', $slotId)->first();
+                        $slot = DB::table('slots')->where('id', $slotId)->first();
                         $ticketNumber = $slot->ticket_number ?? '';
                         $slotType = $slot->slot_type ?? 'planned';
                     }
 
-                    $notification = new \App\Notifications\SlotLifecycleNotification(
+                    $notification = new SlotLifecycleNotification(
                         slotId: $slotId > 0 ? $slotId : $booking->id, // fallback to booking ID if slot not yet created
                         slotType: $slotType,
                         event: 'cancel',

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\SlotHelperTrait;
+use App\Models\User;
+use App\Notifications\SlotCreatedByInternal;
 use App\Services\SlotConflictService;
 use App\Services\SlotService;
 use App\Services\TimeCalculationService;
@@ -11,8 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\User;
-use App\Notifications\SlotCreatedByInternal;
 
 /**
  * SlotTrialController
@@ -233,7 +233,7 @@ class SlotTrialController extends Controller
         try {
             $actor = Auth::user();
             $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Admin Uji Coba'));
-            
+
             $plannedDate = '-';
             try {
                 $plannedDate = (new DateTime($plannedStart))->format('d-m-Y H:i');

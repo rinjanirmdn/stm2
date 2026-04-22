@@ -8,6 +8,7 @@ use App\Models\Slot;
 use App\Models\User;
 use App\Notifications\SlotCancelled;
 use App\Notifications\SlotCreatedByInternal;
+use App\Notifications\SlotLifecycleNotification;
 use App\Services\PoSearchService;
 use App\Services\SlotConflictService;
 use App\Services\SlotFilterService;
@@ -795,7 +796,7 @@ class SlotController extends Controller
                         ->get();
 
                     if ($recipients->isNotEmpty()) {
-                        $notification = new \App\Notifications\SlotLifecycleNotification(
+                        $notification = new SlotLifecycleNotification(
                             slotId: $slotId,
                             slotType: $slotModel->slot_type ?? 'planned',
                             event: 'cancel',
