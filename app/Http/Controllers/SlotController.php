@@ -759,8 +759,8 @@ class SlotController extends Controller
 
             $this->slotService->logActivity($slotId, 'status_change', 'Slot Cancelled', null, ['reason' => $reason, 'cancelled_at' => $now]);
 
-            // Notify vendor (requester) after successful DB commit (web notification + optional email)
-            DB::afterCommit(function () use ($slotId, $reason, $now) {
+            // Notify vendor (requester) and internal users after successful DB commit
+            DB::afterCommit(function () use ($slotId, $reason, $now, $actorName) {
                 try {
                     $slotModel = Slot::with([
                         'requester',
@@ -769,7 +769,7 @@ class SlotController extends Controller
                         'warehouse',
                     ])->find($slotId);
 
-                    if (! $slotModel || ! $slotModel->requester) {
+                    if (! $slotModel) {
                         return;
                     }
 
@@ -783,7 +783,33 @@ class SlotController extends Controller
                         $bookingRequestId = null;
                     }
 
-                    $slotModel->requester->notify(new SlotCancelled($slotModel, $reason, $now, $bookingRequestId));
+                    if ($slotModel->requester) {
+                        $slotModel->requester->notify(new SlotCancelled($slotModel, $reason, $now, $bookingRequestId));
+                    }
+
+                    // Notify Section Head & Super Account
+                    $recipients = User::where('is_active', true)
+                        ->whereHas('roles', function ($q) {
+                            $q->whereIn(DB::raw('LOWER(roles_name)'), ['section head', 'super account']);
+                        })
+                        ->get();
+
+                    if ($recipients->isNotEmpty()) {
+                        $notification = new \App\Notifications\SlotLifecycleNotification(
+                            slotId: $slotId,
+                            slotType: $slotModel->slot_type ?? 'planned',
+                            event: 'cancel',
+                            poNumber: $slotModel->po_number ?? '',
+                            vendorName: $slotModel->vendor_name ?? '',
+                            ticketNumber: $slotModel->ticket_number ?? '',
+                            performedBy: $actorName,
+                            gateName: null,
+                            reason: $reason
+                        );
+                        foreach ($recipients as $recipient) {
+                            $recipient->notify(clone $notification);
+                        }
+                    }
                 } catch (\Throwable $e) {
                     // Never break cancellation flow because notification failed
                 }

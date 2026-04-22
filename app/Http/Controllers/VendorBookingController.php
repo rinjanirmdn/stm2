@@ -731,6 +731,45 @@ class VendorBookingController extends Controller
                 }
             }
 
+            // Notify Section Head & Super Account about vendor cancellation
+            try {
+                $recipients = \App\Models\User::where('is_active', true)
+                    ->whereHas('roles', function ($q) {
+                        $q->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(roles_name)'), ['section head', 'super account']);
+                    })
+                    ->get();
+
+                if ($recipients->isNotEmpty()) {
+                    $slotId = (int) $booking->converted_slot_id;
+                    $ticketNumber = '';
+                    $slotType = 'planned';
+                    
+                    if ($slotId > 0) {
+                        $slot = \Illuminate\Support\Facades\DB::table('slots')->where('id', $slotId)->first();
+                        $ticketNumber = $slot->ticket_number ?? '';
+                        $slotType = $slot->slot_type ?? 'planned';
+                    }
+
+                    $notification = new \App\Notifications\SlotLifecycleNotification(
+                        slotId: $slotId > 0 ? $slotId : $booking->id, // fallback to booking ID if slot not yet created
+                        slotType: $slotType,
+                        event: 'cancel',
+                        poNumber: $booking->po_number ?? '',
+                        vendorName: $booking->vendor_name ?? '',
+                        ticketNumber: $ticketNumber,
+                        performedBy: $actorName,
+                        gateName: null,
+                        reason: $reason
+                    );
+
+                    foreach ($recipients as $recipient) {
+                        $recipient->notify(clone $notification);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore notification error
+            }
+
             return redirect()
                 ->route('vendor.bookings.index')
                 ->with('success', 'Booking cancelled successfully.');
