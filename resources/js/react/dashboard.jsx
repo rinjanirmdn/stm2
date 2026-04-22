@@ -1452,48 +1452,55 @@ function Dashboard() {
     >
       <style>{`@keyframes stSlideFadeIn { 0% { opacity: 0; transform: translateY(10px) scale(0.995); } 100% { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
       {!isDisplayOnly && (
-        <div className="flex flex-wrap items-center gap-2 mb-2 bg-white rounded-xl border border-gray-200 px-2 py-1.5 shadow-sm">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <JQRangePicker startValue={data.range_start || ''} endValue={data.range_end || ''} onApply={(s, e) => onFilter({ range_start: s, range_end: e })} />
-            <a href="/dashboard" className="text-[11px] text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1 no-underline"><RotateCcw size={11} /> Reset</a>
-          </div>
-          {/* Vendor/Customer Filter */}
-          {(() => {
-            const vendors = toArr(data.vendors);
-            const selectedVendor = data.selected_vendor || '';
-            if (vendors.length === 0) return null;
-            return (
-              <div className="flex items-center gap-1 shrink-0 border-l border-gray-200 pl-2">
-                <Building2 size={13} className="text-gray-400 shrink-0" />
-                <select
-                  value={selectedVendor}
-                  onChange={(e) => onFilter({ vendor: e.target.value })}
-                  className="text-[12px] border border-gray-200 rounded-lg bg-white text-gray-700 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-100 py-1 pl-1.5 pr-6 max-w-[200px] truncate cursor-pointer appearance-none"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 4px center', backgroundRepeat: 'no-repeat', backgroundSize: '16px' }}
-                  title={selectedVendor ? `Filtered: ${selectedVendor}` : 'All Vendors/Customers'}
-                >
-                  <option value="">All Vendors</option>
-                  {vendors.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-              </div>
-            );
-          })()}
-          <div className="flex items-center gap-1 flex-1 justify-center">
-            <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronLeft size={16} /></button>
-            <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5 overflow-x-auto">
-              {SLIDES.map((s, i) => {
-                const Icon = ICONS[i] || BarChart3;
-                return (
-                  <button key={s.id} onClick={() => setActive(i)} className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all shrink-0 ${i === active ? 'bg-white text-sky-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60 border border-transparent'}`}>
-                    <Icon size={13} />
-                    <span className="hidden md:inline">{s.label}</span>
-                  </button>
-                );
-              })}
+        <div className="flex items-center justify-between gap-3 mb-2 bg-white rounded-xl border border-gray-200 px-3 py-2 shadow-sm overflow-x-auto">
+          {/* Left Block: Date & Vendor */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <JQRangePicker startValue={data.range_start || ''} endValue={data.range_end || ''} onApply={(s, e) => onFilter({ range_start: s, range_end: e })} />
+              <a href="/dashboard" className="text-[11px] text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1 no-underline shrink-0"><RotateCcw size={11} /> Reset</a>
             </div>
-            <button onClick={next} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronRight size={16} /></button>
+            {/* Vendor/Customer Filter */}
+            {(() => {
+              const vendors = toArr(data.vendors);
+              const selectedVendor = data.selected_vendor || '';
+              if (vendors.length === 0) return null;
+              return (
+                <div className="flex items-center gap-1 shrink-0 border-l border-gray-200 pl-2">
+                  <Building2 size={13} className="text-gray-400 shrink-0" />
+                  <select
+                    value={selectedVendor}
+                    onChange={(e) => onFilter({ vendor: e.target.value })}
+                    className="text-[12px] border border-gray-200 rounded-lg bg-white text-gray-700 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-100 py-1 pl-1.5 pr-6 max-w-[200px] truncate cursor-pointer appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 4px center', backgroundRepeat: 'no-repeat', backgroundSize: '16px' }}
+                    title={selectedVendor ? `Filtered: ${selectedVendor}` : 'All Vendors/Customers'}
+                  >
+                    <option value="">All Vendors</option>
+                    {vendors.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                </div>
+              );
+            })()}
           </div>
-          <div className="text-[12px] font-medium text-gray-500 shrink-0">{active + 1}/{total}</div>
+          
+          {/* Right Block: Slides Tabs */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronLeft size={16} /></button>
+              <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5 overflow-x-auto max-w-full">
+                {SLIDES.map((s, i) => {
+                  const Icon = ICONS[i] || BarChart3;
+                  return (
+                    <button key={s.id} onClick={() => setActive(i)} className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all shrink-0 ${i === active ? 'bg-white text-sky-700 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-white/60 border border-transparent'}`}>
+                      <Icon size={13} />
+                      <span className="hidden md:inline">{s.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={next} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronRight size={16} /></button>
+            </div>
+            <div className="text-[12px] font-medium text-gray-500 shrink-0 border-l border-gray-200 pl-2">{active + 1}/{total}</div>
+          </div>
         </div>
       )}
 
