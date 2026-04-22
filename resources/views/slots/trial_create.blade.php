@@ -237,7 +237,7 @@
                         <thead>
                             <tr>
                                 <th>Time</th>
-                                <th>PO/DO</th>
+                                <th>PO/SO</th>
                                 <th>Truck</th>
                                 <th>Vendor</th>
                                 <th>Status</th>

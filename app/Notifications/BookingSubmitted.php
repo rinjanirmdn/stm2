@@ -31,7 +31,7 @@ class BookingSubmitted extends Notification
             ->subject('Booking Request Submitted - PO '.$poNumber)
             ->greeting('Hello '.$notifiable->name.',')
             ->line('Your booking request has been submitted successfully and is waiting for approval.')
-            ->line('**PO/DO Number:** '.$poNumber)
+            ->line('**PO/SO Number:** '.$poNumber)
             ->line('**Scheduled Time:** '.$plannedDate)
             ->line('**Gate:** '.$gateName)
             ->line('**Direction:** '.ucfirst((string) ($this->slot->direction ?? '')))

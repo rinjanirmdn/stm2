@@ -50,7 +50,7 @@ class SlotCancelled extends Notification
             ->subject('Booking Cancelled - '.$ticketNumber)
             ->greeting('Hello '.$notifiable->name.',')
             ->line('Your booking has been cancelled.')
-            ->line('**PO/DO Number:** '.$poNumber)
+            ->line('**PO/SO Number:** '.$poNumber)
             ->line('**Scheduled Time:** '.$plannedDate)
             ->line('**Gate:** '.$gateName)
             ->line('**Reason:** '.($this->reason !== '' ? $this->reason : '-'))

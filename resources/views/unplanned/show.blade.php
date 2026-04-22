@@ -68,7 +68,7 @@
                     <h2 class="st-card__title st-mb-10">General Info</h2>
 
                     <div class="st-info-grid">
-                        <div class="st-font-semibold">PO/DO Number</div>
+                        <div class="st-font-semibold">PO/SO Number</div>
                         <div>{{ $slot->truck_number ?? '-' }}</div>
 
                         <div class="st-font-semibold">SJ</div>

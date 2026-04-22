@@ -14,7 +14,7 @@ class PoSearchService
     ) {}
 
     /**
-     * Search PO/DO numbers with priority to SAP, fallback to local DB
+     * Search PO/SO numbers with priority to SAP, fallback to local DB
      */
     public function searchPo(string $query): array
     {
@@ -41,7 +41,7 @@ class PoSearchService
                     $firstTwo = substr($poNumber, 0, 2);
                     $direction = 'inbound';
 
-                    if ($firstChar === '8' || strtoupper($firstTwo) === 'DO') {
+                    if ($firstChar === '8' || strtoupper($firstTwo) === 'SO') {
                         $direction = 'outbound';
                     }
 

@@ -198,15 +198,15 @@ class SlotController extends Controller
         $poNumber = $truckNumber;
         $poDetail = $this->poSearchService->getPoDetail($poNumber);
         if (! $poDetail) {
-            return back()->withInput()->with('error', 'PO/DO not found in SAP.');
+            return back()->withInput()->with('error', 'PO/SO not found in SAP.');
         }
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 characters']);
+            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
         }
 
         if ($truckNumber === '' || $plannedStart === '' || $direction === '') {
-            return back()->withInput()->with('error', 'PO/DO number, direction, gate, and planned start are required');
+            return back()->withInput()->with('error', 'PO/SO number, direction, gate, and planned start are required');
         }
 
         try {
@@ -281,7 +281,7 @@ class SlotController extends Controller
                 $vendorLabel = trim((string) ($poDetail['vendor_name'] ?? ''));
                 $logDesc = 'Scheduled slot created';
                 if ($vendorLabel !== '' || $truckNumber !== '') {
-                    $parts = array_filter([$vendorLabel, $truckNumber !== '' ? 'PO/DO '.$truckNumber : '']);
+                    $parts = array_filter([$vendorLabel, $truckNumber !== '' ? 'PO/SO '.$truckNumber : '']);
                     $logDesc .= ' ('.implode(' - ', $parts).')';
                 }
                 $this->slotService->logActivity($slotId, 'status_change', $logDesc);
@@ -428,7 +428,7 @@ class SlotController extends Controller
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/DO number max 12 characters']);
+            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
         }
 
         if ($plannedGateId !== null) {
@@ -543,7 +543,7 @@ class SlotController extends Controller
             } else {
                 $logDesc = 'Slot updated by '.$actorName;
                 if ($vendorName !== '' || $truckNumber !== '') {
-                    $parts = array_filter([$vendorName, $truckNumber !== '' ? 'PO/DO '.$truckNumber : '']);
+                    $parts = array_filter([$vendorName, $truckNumber !== '' ? 'PO/SO '.$truckNumber : '']);
                     $logDesc .= ' ('.implode(' - ', $parts).')';
                 }
                 $this->slotService->logActivity($slotId, 'status_change', $logDesc);

@@ -32,7 +32,7 @@ class BookingRequested extends Notification
             ->greeting('Hello '.$notifiable->name.',')
             ->line('A new booking request has been submitted and requires your review.')
             ->line('**Vendor:** '.$vendorName)
-            ->line('**PO/DO Number:** '.$poNumber)
+            ->line('**PO/SO Number:** '.$poNumber)
             ->line('**Scheduled Time:** '.$plannedDate)
             ->line('**Direction:** '.ucfirst((string) ($this->slot->direction ?? '')))
             ->action('Review Booking', url('/unplanned/approval/'.$this->slot->id))

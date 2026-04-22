@@ -111,7 +111,7 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
     {
         return [
             'A' => 12,  // Type
-            'B' => 18,  // PO/DO Number
+            'B' => 18,  // PO/SO Number
             'C' => 15,  // Ticket
             'D' => 16,  // SJ
             'E' => 28,  // Vendor

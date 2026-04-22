@@ -17,7 +17,7 @@
             <div class="st-flex st-align-center st-gap-8">
                 <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-truck"></i></div>
                 <div>
-                    <div class="st-text--xs st-text--muted">PO / DO</div>
+                    <div class="st-text--xs st-text--muted">PO / SO</div>
                     <div class="st-font-semibold">{{ $slot->truck_number ?? '-' }}</div>
                 </div>
             </div>

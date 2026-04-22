@@ -117,7 +117,7 @@ class ExportService
             mso-width-source: userset;
         }
         col:nth-child(1) { width: 80px; }  /* Type */
-        col:nth-child(2) { width: 120px; } /* PO/DO */
+        col:nth-child(2) { width: 120px; } /* PO/SO */
         col:nth-child(3) { width: 100px; } /* Ticket */
         col:nth-child(4) { width: 100px; } /* SJ */
         col:nth-child(5) { width: 150px; } /* Vendor */
@@ -187,7 +187,7 @@ class ExportService
         <thead>
             <tr>
                 <th>Type</th>
-                <th>PO/DO Number</th>
+                <th>PO/SO Number</th>
                 <th>Ticket</th>
                 <th>SJ</th>
                 <th>Vendor</th>
@@ -401,7 +401,7 @@ class ExportService
         $text = strtolower($item['text'] ?? '');
 
         if (strpos($text, 'po') !== false || preg_match('/^\d{6,}$/', $text)) {
-            return 'PO/DO';
+            return 'PO/SO';
         } elseif (strpos($text, 'mat') !== false) {
             return 'SJ';
         } elseif (in_array($text, ['inbound', 'outbound'])) {
