@@ -542,7 +542,7 @@ class VendorBookingController extends Controller
         $request->validate([
             'po_number' => 'required|string',
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
-            'planned_date' => 'required|date_format:Y-m-d|after_or_equal:' . \Carbon\Carbon::today()->addDays(2)->format('Y-m-d'),
+            'planned_date' => 'required|date_format:Y-m-d|after_or_equal:'.Carbon::today()->addDays(2)->format('Y-m-d'),
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'required|string|max:50',
             'vehicle_number' => ['required', 'string', 'max:20', 'regex:/^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/'],
