@@ -2,7 +2,7 @@
     <thead>
         <tr>
             <th>Type</th>
-            <th>PO/DO Number</th>
+            <th>PO/SO Number</th>
             <th>Ticket</th>
             <th>SJ</th>
             <th>Vendor</th>

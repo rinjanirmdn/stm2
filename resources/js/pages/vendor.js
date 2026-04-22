@@ -610,7 +610,7 @@ function initVendorBookingCreate(config) {
             if (!poNumber) {
                 e.preventDefault();
                 if (alertBox) {
-                    alertBox.textContent = 'Mohon lengkapi data: pilih PO/DO number.';
+                    alertBox.textContent = 'Mohon lengkapi data: pilih PO/SO number.';
                     alertBox.hidden = false;
                 }
                 poSearch.focus();

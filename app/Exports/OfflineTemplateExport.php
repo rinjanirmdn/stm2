@@ -144,7 +144,7 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
         $sheet->getComment('D1')->getText()->createTextRun("Wajib diisi\nFormat: DD-MM-YYYY HH:mm");
         $sheet->getComment('E1')->getText()->createTextRun("Wajib diisi\nFormat: DD-MM-YYYY HH:mm");
         $sheet->getComment('F1')->getText()->createTextRun("Wajib diisi\nFormat: DD-MM-YYYY HH:mm");
-        $sheet->getComment('G1')->getText()->createTextRun("Wajib diisi\nNomor PO/DO");
+        $sheet->getComment('G1')->getText()->createTextRun("Wajib diisi\nNomor PO/SO");
         $sheet->getComment('H1')->getText()->createTextRun("Opsional\nNomor SJ (Surat Jalan)");
         $sheet->getComment('I1')->getText()->createTextRun("Wajib diisi\nNomor plat kendaraan");
         $sheet->getComment('J1')->getText()->createTextRun("Opsional\nNama pengemudi");

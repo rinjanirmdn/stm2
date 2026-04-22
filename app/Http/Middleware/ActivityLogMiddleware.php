@@ -218,14 +218,14 @@ class ActivityLogMiddleware
                 } elseif ($routeName === 'slots.store') {
                     $po = $getString($payload, 'po_number');
                     $vendor = $getString($payload, 'vendor_name');
-                    $detail = array_filter([$vendor, $po !== '' ? 'PO/DO '.$po : '']);
+                    $detail = array_filter([$vendor, $po !== '' ? 'PO/SO '.$po : '']);
                     if (! empty($detail)) {
                         $description = 'Scheduled slot created ('.implode(' - ', $detail).')';
                     }
                 } elseif ($routeName === 'unplanned.store') {
                     $po = $getString($payload, 'po_number');
                     $vendor = $getString($payload, 'vendor_name');
-                    $detail = array_filter([$vendor, $po !== '' ? 'PO/DO '.$po : '']);
+                    $detail = array_filter([$vendor, $po !== '' ? 'PO/SO '.$po : '']);
                     if (! empty($detail)) {
                         $description = 'Unplanned slot created ('.implode(' - ', $detail).')';
                     }
@@ -233,11 +233,11 @@ class ActivityLogMiddleware
                     $po = $getString($payload, 'po_number');
                     $createdId = $extractTrailingId($location);
                     if ($po !== '' && $createdId) {
-                        $description = 'Booking request submitted (Request #'.$createdId.' - PO/DO '.$po.')';
+                        $description = 'Booking request submitted (Request #'.$createdId.' - PO/SO '.$po.')';
                     } elseif ($createdId) {
                         $description = 'Booking request submitted (Request #'.$createdId.')';
                     } elseif ($po !== '') {
-                        $description = 'Booking request submitted (PO/DO '.$po.')';
+                        $description = 'Booking request submitted (PO/SO '.$po.')';
                     }
                 } elseif ($routeName === 'login.store') {
                     $login = trim((string) $request->input('login', $request->input('email', '')));

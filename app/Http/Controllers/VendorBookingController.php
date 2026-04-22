@@ -499,7 +499,7 @@ class VendorBookingController extends Controller
     {
         $poNumber = trim($poNumber);
         if ($poNumber === '') {
-            return response()->json(['success' => false, 'message' => 'PO/DO number is required']);
+            return response()->json(['success' => false, 'message' => 'PO/SO number is required']);
         }
 
         $vendorCode = $this->getVendorCodeForUser();
@@ -510,13 +510,13 @@ class VendorBookingController extends Controller
 
         $po = $this->poSearchService->getPoDetail($poNumber);
         if (! $po) {
-            return response()->json(['success' => false, 'message' => 'PO/DO not found']);
+            return response()->json(['success' => false, 'message' => 'PO/SO not found']);
         }
 
         $poVendorCode = trim((string) ($po['vendor_code'] ?? ''));
         $user = Auth::user();
         if (! $user?->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
-            return response()->json(['success' => false, 'message' => 'PO/DO is not assigned to your vendor']);
+            return response()->json(['success' => false, 'message' => 'PO/SO is not assigned to your vendor']);
         }
 
         return response()->json(['success' => true, 'data' => $po]);
@@ -625,11 +625,11 @@ class VendorBookingController extends Controller
         $vendorCode = $this->getVendorCodeForUser();
         $poDetail = $this->poSearchService->getPoDetail($poNumber);
         if (! $poDetail) {
-            return back()->withInput()->with('error', 'PO/DO not found in SAP.');
+            return back()->withInput()->with('error', 'PO/SO not found in SAP.');
         }
         $poVendorCode = trim((string) ($poDetail['vendor_code'] ?? ''));
         if (! $user->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
-            return back()->withInput()->with('error', 'PO/DO is not assigned to your vendor.');
+            return back()->withInput()->with('error', 'PO/SO is not assigned to your vendor.');
         }
         $direction = $this->resolveDirection($poDetail);
 

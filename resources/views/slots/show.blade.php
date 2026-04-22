@@ -212,7 +212,7 @@
 
                     <div class="st-detail-grid st-detail-grid--sm">
                         <div class="st-detail-item st-detail-item--compact">
-                            <div class="st-detail-label">PO/DO Number</div>
+                            <div class="st-detail-label">PO/SO Number</div>
                             <div class="st-detail-colon">:</div>
                             <div class="st-detail-value st-detail-value--primary st-detail-value--primary-sm">{{ $slot->po_number ?? ($slot->po->po_number ?? '-') }}</div>
                         </div>
