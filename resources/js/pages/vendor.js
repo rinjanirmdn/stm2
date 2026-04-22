@@ -976,11 +976,11 @@ function initVendorBookingCreate(config) {
             singleDatePicker: true,
             showDropdowns: true,
             autoApply: true,
-            minDate: window.moment(),
+            minDate: window.moment().add(2, 'days'),
             locale: { format: 'DD-MM-YYYY' },
             minYear: parseInt(window.moment().format('YYYY'), 10),
             maxYear: parseInt(window.moment().format('YYYY'), 10) + 2,
-            startDate: startDate,
+            startDate: startDate.isBefore(window.moment().add(2, 'days'), 'day') ? window.moment().add(2, 'days') : startDate,
             isInvalidDate: function (date) {
                 // Block Sundays and holidays — they cannot be selected
                 if (date.day() === 0) return true;
@@ -1047,14 +1047,6 @@ function initVendorBookingCreate(config) {
     // ── Timepicker with vendor rules ──
     var lastValidTime = plannedTime.value || '08:00';
 
-    function getMinAllowedHour() {
-        // 4 hours from now
-        var now = new Date();
-        now.setSeconds(0, 0);
-        now.setTime(now.getTime() + 4 * 60 * 60 * 1000);
-        return now;
-    }
-
     function isTimeValid(timeStr) {
         if (!timeStr) return false;
         var parts = timeStr.split(':');
@@ -1066,24 +1058,6 @@ function initVendorBookingCreate(config) {
         if (h > 19 || (h === 19 && m > 0)) return false;
         // Rule: min 07:00
         if (h < 7) return false;
-
-        // Rule: 4 hours from now (only if selected date is today)
-        var dateVal = (plannedDate.dataset.isoValue || plannedDate.value || '').trim();
-        if (dateVal) {
-            var todayIso = toIsoDate(new Date());
-            // Normalize DD-MM-YYYY to YYYY-MM-DD for comparison
-            var dateIso = dateVal;
-            if (dateVal.indexOf('-') === 2) {
-                var dp = dateVal.split('-');
-                dateIso = dp[2] + '-' + dp[1] + '-' + dp[0];
-            }
-            if (dateIso === todayIso) {
-                var minDt = getMinAllowedHour();
-                var minH = minDt.getHours();
-                var minM = minDt.getMinutes();
-                if (h < minH || (h === minH && m < minM)) return false;
-            }
-        }
 
         return true;
     }
@@ -1107,7 +1081,7 @@ function initVendorBookingCreate(config) {
             } else if (h < 7) {
                 msg = 'Waktu booking minimal jam 07:00';
             } else {
-                msg = 'Booking harus minimal 4 jam dari sekarang';
+                msg = 'Waktu booking tidak valid';
             }
             // Show inline error below input
             if (timeErrorEl) {
@@ -1224,7 +1198,9 @@ function initVendorAvailability(config) {
 
     let currentDate = selectedDate ? new Date(selectedDate) : new Date();
     const today = new Date();
-    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const minDate = new Date(today);
+    minDate.setDate(today.getDate() + 2);
+    const minDateMidnight = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
     const holidayData = holidays;
 
     function pad2(value) {
@@ -1237,8 +1213,9 @@ function initVendorAvailability(config) {
 
     function getMinAllowedDateTime() {
         const now = new Date();
-        now.setSeconds(0, 0);
-        return new Date(now.getTime() + 4 * 60 * 60 * 1000);
+        now.setDate(now.getDate() + 2);
+        now.setHours(0, 0, 0, 0);
+        return now;
     }
 
     function isTimeAllowed(dateStr, time) {
@@ -1301,7 +1278,7 @@ function initVendorAvailability(config) {
             const dateStr = toIsoDateLocal(date);
             const isToday = date.toDateString() === today.toDateString();
             const isSelected = dateStr === selectedDate;
-            const isPast = date < todayMidnight;
+            const isPast = date < minDateMidnight;
             const isSunday = date.getDay() === 0;
             const isHoliday = holidayData[dateStr];
 
