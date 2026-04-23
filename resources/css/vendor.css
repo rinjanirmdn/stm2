@@ -3870,6 +3870,12 @@
     color: #ef4444;
 }
 
+.vendor-page--bookings-create .cb-text--optional {
+    font-weight: 400;
+    color: #6b7280;
+    font-size: 12px;
+}
+
 .vendor-page--bookings-create .cb-input,
 .vendor-page--bookings-create .cb-select,
 .vendor-page--bookings-create .cb-textarea {
