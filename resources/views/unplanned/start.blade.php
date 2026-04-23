@@ -168,7 +168,7 @@
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
                     <label class="st-label">Photo Documentation <span class="st-text--optional">(Optional)</span></label>
-                    <input type="file" name="photo" id="photo_input" class="st-hidden-soft" accept="image/*">
+                    <input type="file" name="photos[]" id="photo_input" class="st-hidden-soft" accept="image/*" multiple>
                     <div id="photo_capture_container">
                         <div id="photo_initial_state" class="st-border st-border-dashed st-rounded-6 st-p-16 st-bg-slate-50 st-text-center">
                             <i class="fas fa-camera st-text--xl st-text--slate-light st-mb-8"></i>
@@ -199,13 +199,14 @@
                         </div>
 
                         <div id="photo_preview_state" class="st-hidden-soft st-mt-8 st-border st-border-dashed st-rounded-6 st-p-16 st-bg-slate-50 st-text-center">
-                            <img id="photo_preview_img" class="st-w-full st-maxw-360 st-rounded-6 st-mb-12" style="max-height: 250px; object-fit: contain; display: inline-block;">
+                            <div id="photo_preview_grid" class="st-flex st-flex-wrap st-gap-8 st-mb-12 st-justify-center"></div>
+                            <div class="st-text--sm st-text--muted st-mb-8"><span id="photo_count">0</span>/5 photos selected</div>
                             <div class="st-flex st-justify-center st-gap-8">
-                                <button type="button" id="btn_retake_photo" class="st-btn st-btn--secondary st-btn--sm">
-                                    <i class="fas fa-redo st-mr-4"></i> Retake
+                                <button type="button" id="btn_add_more_photo" class="st-btn st-btn--secondary st-btn--sm">
+                                    <i class="fas fa-plus st-mr-4"></i> Add More
                                 </button>
                                 <button type="button" id="btn_remove_photo" class="st-btn st-btn--danger-soft st-btn--sm">
-                                    <i class="fas fa-trash st-mr-4"></i> Remove
+                                    <i class="fas fa-trash st-mr-4"></i> Remove All
                                 </button>
                             </div>
                         </div>
@@ -388,7 +389,7 @@
     var btnOpenCamera = document.getElementById('btn_open_camera');
     var btnCloseCamera = document.getElementById('btn_close_camera');
     var btnCapturePhoto = document.getElementById('btn_capture_photo');
-    var btnRetakePhoto = document.getElementById('btn_retake_photo');
+    var btnAddMorePhoto = document.getElementById('btn_add_more_photo');
     var btnRemovePhoto = document.getElementById('btn_remove_photo');
     
     var viewInitial = document.getElementById('photo_initial_state');
@@ -396,10 +397,69 @@
     var viewPreview = document.getElementById('photo_preview_state');
     
     var videoStream = document.getElementById('photo_video_stream');
-    var previewImg = document.getElementById('photo_preview_img');
+    var previewGrid = document.getElementById('photo_preview_grid');
+    var photoCountSpan = document.getElementById('photo_count');
     
     var photoStream = null;
     var shouldMirrorPhoto = false;
+    var selectedPhotos = new DataTransfer();
+
+    function updatePreviewView() {
+        previewGrid.innerHTML = '';
+        var files = selectedPhotos.files;
+        photoCountSpan.innerText = files.length;
+        
+        if (files.length === 0) {
+            viewPreview.style.display = 'none';
+            viewInitial.style.display = 'block';
+            return;
+        }
+        
+        viewInitial.style.display = 'none';
+        viewPreview.style.display = 'block';
+        
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var reader = new FileReader();
+            reader.onload = (function(f, idx) {
+                return function(e) {
+                    var container = document.createElement('div');
+                    container.className = 'st-relative';
+                    
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'st-rounded-6 st-border';
+                    img.style.width = '100px';
+                    img.style.height = '100px';
+                    img.style.objectFit = 'cover';
+                    
+                    var removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'st-btn st-btn--danger st-btn--xs st-absolute';
+                    removeBtn.style.top = '-5px';
+                    removeBtn.style.right = '-5px';
+                    removeBtn.style.padding = '2px 6px';
+                    removeBtn.style.borderRadius = '50%';
+                    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    removeBtn.onclick = function() {
+                        var dt = new DataTransfer();
+                        var currentFiles = selectedPhotos.files;
+                        for (var j = 0; j < currentFiles.length; j++) {
+                            if (j !== idx) dt.items.add(currentFiles[j]);
+                        }
+                        selectedPhotos = dt;
+                        photoInputHidden.files = selectedPhotos.files;
+                        updatePreviewView();
+                    };
+                    
+                    container.appendChild(img);
+                    container.appendChild(removeBtn);
+                    previewGrid.appendChild(container);
+                };
+            })(file, i);
+            reader.readAsDataURL(file);
+        }
+    }
 
     function stopPhotoCamera() {
         if (photoStream) {
@@ -407,40 +467,47 @@
             photoStream = null;
         }
         if (viewCamera) viewCamera.style.display = 'none';
-        if (!photoInputHidden.files || photoInputHidden.files.length === 0) {
-            if (viewInitial) viewInitial.style.display = 'flex';
+        if (selectedPhotos.files.length === 0) {
+            if (viewInitial) viewInitial.style.display = 'block';
+        } else {
+            if (viewPreview) viewPreview.style.display = 'block';
         }
     }
 
-    if (btnOpenCamera) {
-        btnOpenCamera.addEventListener('click', function() {
-            viewInitial.style.display = 'none';
-            viewPreview.style.display = 'none';
-            viewCamera.style.display = 'block';
-            
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                .then(function(stream) {
-                    photoStream = stream;
-                    videoStream.srcObject = stream;
-                    
-                    var track = stream.getVideoTracks()[0];
-                    var settings = track.getSettings();
-                    shouldMirrorPhoto = (settings.facingMode === 'user' || !settings.facingMode);
-                    
-                    if (shouldMirrorPhoto) {
-                        videoStream.style.transform = 'scaleX(-1)';
-                    } else {
-                        videoStream.style.transform = 'none';
-                    }
-                })
-                .catch(function(err) {
-                    alert('Tidak dapat mengakses kamera: ' + err.message);
-                    stopPhotoCamera();
-                    viewInitial.style.display = 'flex';
-                });
-        });
+    function openCameraView() {
+        if (selectedPhotos.files.length >= 5) {
+            alert('Maksimal 5 foto telah dipilih.');
+            return;
+        }
+        viewInitial.style.display = 'none';
+        viewPreview.style.display = 'none';
+        viewCamera.style.display = 'block';
+        
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function(stream) {
+                photoStream = stream;
+                videoStream.srcObject = stream;
+                
+                var track = stream.getVideoTracks()[0];
+                var settings = track.getSettings();
+                shouldMirrorPhoto = (settings.facingMode === 'user' || !settings.facingMode);
+                
+                if (shouldMirrorPhoto) {
+                    videoStream.style.transform = 'scaleX(-1)';
+                } else {
+                    videoStream.style.transform = 'none';
+                }
+            })
+            .catch(function(err) {
+                alert('Tidak dapat mengakses kamera: ' + err.message);
+                stopPhotoCamera();
+                updatePreviewView();
+            });
     }
 
+    if (btnOpenCamera) btnOpenCamera.addEventListener('click', openCameraView);
+    if (btnAddMorePhoto) btnAddMorePhoto.addEventListener('click', openCameraView);
+    
     if (btnCloseCamera) {
         btnCloseCamera.addEventListener('click', stopPhotoCamera);
     }
@@ -464,7 +531,7 @@
                 canvas.width = width;
                 canvas.height = height;
                 canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                callback(canvas.toDataURL('image/jpeg', 0.7), canvas);
+                callback(canvas.toDataURL('image/jpeg', 0.7), canvas, file);
             };
             img.src = e.target.result;
         };
@@ -497,55 +564,53 @@
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
             }
             
-            var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-            previewImg.src = dataUrl;
-            
             canvas.toBlob(function(blob) {
                 var compressedFile = new File([blob], "capture_" + Date.now() + ".jpg", { type: 'image/jpeg', lastModified: Date.now() });
-                var dataTransfer = new DataTransfer();
-                dataTransfer.items.add(compressedFile);
-                photoInputHidden.files = dataTransfer.files;
+                selectedPhotos.items.add(compressedFile);
+                photoInputHidden.files = selectedPhotos.files;
                 
                 stopPhotoCamera();
-                viewInitial.style.display = 'none';
-                viewPreview.style.display = 'block';
+                updatePreviewView();
             }, 'image/jpeg', 0.7);
         });
     }
 
     if (photoInputHidden) {
         photoInputHidden.addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            if (!file) return;
-            processImageFile(file, function(dataUrl, canvas) {
-                previewImg.src = dataUrl;
-                canvas.toBlob(function(blob) {
-                    var compressedFile = new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() });
-                    var dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(compressedFile);
-                    photoInputHidden.files = dataTransfer.files;
-                    
-                    if (viewInitial) viewInitial.style.display = 'none';
-                    if (viewCamera) viewCamera.style.display = 'none';
-                    if (viewPreview) viewPreview.style.display = 'block';
-                }, 'image/jpeg', 0.7);
-            });
-        });
-    }
+            var files = e.target.files;
+            if (!files || files.length === 0) return;
+            
+            var filesProcessed = 0;
+            var totalFilesToProcess = Math.min(files.length, 5 - selectedPhotos.items.length);
+            
+            if (totalFilesToProcess <= 0) {
+                alert('Maksimal 5 foto.');
+                return;
+            }
 
-    if (btnRetakePhoto) {
-        btnRetakePhoto.addEventListener('click', function() {
-            viewPreview.style.display = 'none';
-            photoInputHidden.value = '';
-            btnOpenCamera.click();
+            for (var i = 0; i < totalFilesToProcess; i++) {
+                processImageFile(files[i], function(dataUrl, canvas, originalFile) {
+                    canvas.toBlob(function(blob) {
+                        var compressedFile = new File([blob], originalFile.name, { type: 'image/jpeg', lastModified: Date.now() });
+                        selectedPhotos.items.add(compressedFile);
+                        filesProcessed++;
+                        
+                        if (filesProcessed === totalFilesToProcess) {
+                            photoInputHidden.files = selectedPhotos.files;
+                            updatePreviewView();
+                            if (viewCamera) viewCamera.style.display = 'none';
+                        }
+                    }, 'image/jpeg', 0.7);
+                });
+            }
         });
     }
 
     if (btnRemovePhoto) {
         btnRemovePhoto.addEventListener('click', function() {
-            viewPreview.style.display = 'none';
-            photoInputHidden.value = '';
-            viewInitial.style.display = 'flex';
+            selectedPhotos = new DataTransfer();
+            photoInputHidden.files = selectedPhotos.files;
+            updatePreviewView();
         });
     }
 })();
