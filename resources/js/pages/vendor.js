@@ -499,6 +499,22 @@ function initVendorBookingCreate(config) {
         return;
     }
 
+    // Autofill optional fields from localStorage (saved during previous booking submission)
+    try {
+        if (vehicleNumberInput && !vehicleNumberInput.value) {
+            const saved = localStorage.getItem('vendor_autofill_vehicle_number');
+            if (saved) vehicleNumberInput.value = saved;
+        }
+        if (driverNameInput && !driverNameInput.value) {
+            const saved = localStorage.getItem('vendor_autofill_driver_name');
+            if (saved) driverNameInput.value = saved;
+        }
+        if (driverNumberInput && !driverNumberInput.value) {
+            const saved = localStorage.getItem('vendor_autofill_driver_number');
+            if (saved) driverNumberInput.value = saved;
+        }
+    } catch (ex) { /* localStorage not available */ }
+
     // Helper: Validasi regex vehicle number
     function isValidVehicle(val) {
         return /^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/.test(val.trim());
@@ -632,23 +648,6 @@ function initVendorBookingCreate(config) {
                     el: truckTypeSelect,
                     value: (truckTypeSelect && truckTypeSelect.value ? truckTypeSelect.value : '').trim(),
                     message: 'Please select a truck type'
-                },
-                {
-                    el: vehicleNumberInput,
-                    value: (vehicleNumberInput ? vehicleNumberInput.value : '').trim(),
-                    isValid: vehicleNumberInput ? isValidVehicle(vehicleNumberInput.value) : false,
-                    message: 'Please fill vehicle number with valid format (e.g., B 1234 ABC)'
-                },
-                {
-                    el: driverNameInput,
-                    value: (driverNameInput ? driverNameInput.value : '').trim(),
-                    message: 'Please fill driver full name'
-                },
-                {
-                    el: driverNumberInput,
-                    value: (driverNumberInput ? driverNumberInput.value : '').trim(),
-                    isValid: driverNumberInput ? isValidPhone(driverNumberInput.value) : false,
-                    message: 'Please fill driver phone (starts with 08, 10-13 digits)'
                 }
             ];
 
@@ -666,6 +665,37 @@ function initVendorBookingCreate(config) {
                     return false;
                 }
             }
+
+            // Optional fields: validate format only when filled
+            const vehicleVal = vehicleNumberInput ? vehicleNumberInput.value.trim() : '';
+            if (vehicleVal && !isValidVehicle(vehicleVal)) {
+                e.preventDefault();
+                if (alertBox) {
+                    alertBox.textContent = 'Invalid data: Vehicle number format is invalid (e.g., B 1234 ABC)';
+                    alertBox.hidden = false;
+                }
+                if (vehicleNumberInput) vehicleNumberInput.focus();
+                return false;
+            }
+
+            const driverPhoneVal = driverNumberInput ? driverNumberInput.value.trim() : '';
+            if (driverPhoneVal && !isValidPhone(driverPhoneVal)) {
+                e.preventDefault();
+                if (alertBox) {
+                    alertBox.textContent = 'Invalid data: Driver phone format is invalid (starts with 08, 10-13 digits)';
+                    alertBox.hidden = false;
+                }
+                if (driverNumberInput) driverNumberInput.focus();
+                return false;
+            }
+
+            // Save optional fields to localStorage for autofill on next booking
+            try {
+                if (vehicleVal) localStorage.setItem('vendor_autofill_vehicle_number', vehicleVal);
+                const driverNameVal = driverNameInput ? driverNameInput.value.trim() : '';
+                if (driverNameVal) localStorage.setItem('vendor_autofill_driver_name', driverNameVal);
+                if (driverPhoneVal) localStorage.setItem('vendor_autofill_driver_number', driverPhoneVal);
+            } catch (ex) { /* localStorage not available */ }
 
             // Check if selected time is available
             const selectedTime = plannedTime.value.trim();
@@ -825,11 +855,14 @@ function initVendorBookingCreate(config) {
         const hasTruckType = truckTypeSelect && truckTypeSelect.value;
         const hasDate = plannedDate && plannedDate.value;
         const hasTime = plannedTime && plannedTime.value;
-        const hasVehicle = vehicleNumberInput && isValidVehicle(vehicleNumberInput.value);
-        const hasDriverName = driverNameInput && driverNameInput.value.trim().length > 0;
-        const hasDriverPhone = driverNumberInput && isValidPhone(driverNumberInput.value);
+
+        // Vehicle/Driver are optional — only check format when filled
+        const vehicleVal = vehicleNumberInput ? vehicleNumberInput.value.trim() : '';
+        const vehicleFormatOk = !vehicleVal || isValidVehicle(vehicleVal);
+        const driverPhoneVal = driverNumberInput ? driverNumberInput.value.trim() : '';
+        const phoneFormatOk = !driverPhoneVal || isValidPhone(driverPhoneVal);
         
-        const canSubmit = hasTruckType && hasDate && hasTime && hasVehicle && hasDriverName && hasDriverPhone;
+        const canSubmit = hasTruckType && hasDate && hasTime && vehicleFormatOk && phoneFormatOk;
 
         if (submitBtn) {
             submitBtn.disabled = !canSubmit;
@@ -842,9 +875,8 @@ function initVendorBookingCreate(config) {
                 if (!hasTruckType) msg += ' Truck Type,';
                 if (!hasDate) msg += ' Date,';
                 if (!hasTime) msg += ' Time,';
-                if (!hasVehicle) msg += ' Vehicle Number (e.g., B 1234 ABC),';
-                if (!hasDriverName) msg += ' Driver Name,';
-                if (!hasDriverPhone) msg += ' Driver Phone (08...),';
+                if (!vehicleFormatOk) msg += ' Vehicle Number format (e.g., B 1234 ABC),';
+                if (!phoneFormatOk) msg += ' Driver Phone format (08...),';
                 submitWarning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + msg.replace(/,$/, '');
             }
         }

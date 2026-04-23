@@ -546,9 +546,9 @@ class VendorBookingController extends Controller
             'planned_date' => 'required|date_format:Y-m-d|after_or_equal:'.Carbon::today()->addDays(2)->format('Y-m-d'),
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'required|string|max:50',
-            'vehicle_number' => ['required', 'string', 'max:20', 'regex:/^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/'],
-            'driver_name' => 'required|string|max:50',
-            'driver_number' => ['required', 'string', 'regex:/^08[0-9]{8,11}$/'],
+            'vehicle_number' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/'],
+            'driver_name' => 'nullable|string|max:50',
+            'driver_number' => ['nullable', 'string', 'regex:/^08[0-9]{8,11}$/'],
             'notes' => 'nullable|string|max:500',
         ], [
             'vehicle_number.regex' => 'The vehicle number format is invalid (e.g., B 1234 ABC).',
