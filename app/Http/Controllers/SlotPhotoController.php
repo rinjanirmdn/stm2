@@ -32,7 +32,7 @@ class SlotPhotoController extends Controller
 
         return response($data, 200, [
             'Content-Type' => $photo->mime_type ?? 'image/jpeg',
-            'Content-Disposition' => 'inline; filename="' . ($photo->filename ?? 'photo.jpg') . '"',
+            'Content-Disposition' => 'inline; filename="'.($photo->filename ?? 'photo.jpg').'"',
             'Cache-Control' => 'public, max-age=604800', // 7 days cache
             'ETag' => md5($id),
         ]);
@@ -60,7 +60,7 @@ class SlotPhotoController extends Controller
 
         return response($data, 200, [
             'Content-Type' => $photo->mime_type ?? 'image/jpeg',
-            'Content-Disposition' => 'attachment; filename="' . ($photo->filename ?? 'photo.jpg') . '"',
+            'Content-Disposition' => 'attachment; filename="'.($photo->filename ?? 'photo.jpg').'"',
         ]);
     }
 }

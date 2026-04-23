@@ -124,8 +124,6 @@ trait SlotHelperTrait
      *  - null → null
      *  - JSON array string: '["path/a.jpg","path/b.jpg"]' → ['path/a.jpg', 'path/b.jpg']
      *  - Plain string: 'path/a.jpg' → ['path/a.jpg']
-     *
-     * @return array|null
      */
     private function normalizePhotoPaths(mixed $value): ?array
     {
@@ -151,4 +149,3 @@ trait SlotHelperTrait
         return [$value];
     }
 }
-
