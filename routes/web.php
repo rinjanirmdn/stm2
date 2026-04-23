@@ -87,9 +87,9 @@ Route::middleware('auth')->group(function () {
 });
 
 // ──────────────────────────────────────────
-// Storage Fallback for Cross-Device/IP
+// Media Display (Bypass Symlink/Networking issues)
 // ──────────────────────────────────────────
-Route::get('/storage/{path}', function ($path) {
+Route::get('/media-foto/{path}', function ($path) {
     $fullPath = storage_path('app/public/'.$path);
     if (! file_exists($fullPath)) {
         abort(404);
@@ -101,4 +101,4 @@ Route::get('/storage/{path}', function ($path) {
         'Content-Type' => $mimeType,
         'Cache-Control' => 'public, max-age=86400',
     ]);
-})->where('path', '.*')->name('storage.fallback');
+})->where('path', '.*')->name('media.photo');

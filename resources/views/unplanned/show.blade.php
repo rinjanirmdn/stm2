@@ -200,9 +200,9 @@
                                     <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Start Process</div>
                                     @foreach($startPhotos as $idx => $path)
                                         <div class="st-photo-preview st-text-center">
-                                            <img src="{{ asset('storage/' . $path) }}" alt="Start Photo {{ $idx + 1 }}" style="max-width: 150px; max-height: 150px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)">
+                                            <img src="{{ url('/media-foto/' . $path) }}" alt="Start Photo {{ $idx + 1 }}" style="max-width: 150px; max-height: 150px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)">
                                             <div class="st-mt-4">
-                                                <a href="{{ asset('storage/' . $path) }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ url('/media-foto/' . $path) }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -219,9 +219,9 @@
                                     <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Complete Process</div>
                                     @foreach($completePhotos as $idx => $path)
                                         <div class="st-photo-preview st-text-center">
-                                            <img src="{{ asset('storage/' . $path) }}" alt="Complete Photo {{ $idx + 1 }}" style="max-width: 150px; max-height: 150px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)">
+                                            <img src="{{ url('/media-foto/' . $path) }}" alt="Complete Photo {{ $idx + 1 }}" style="max-width: 150px; max-height: 150px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)">
                                             <div class="st-mt-4">
-                                                <a href="{{ asset('storage/' . $path) }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ url('/media-foto/' . $path) }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
