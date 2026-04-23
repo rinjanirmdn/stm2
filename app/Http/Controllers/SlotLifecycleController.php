@@ -362,13 +362,24 @@ class SlotLifecycleController extends Controller
         if ($request->hasFile('photos')) {
             $request->validate([
                 'photos' => 'array|max:5',
-                'photos.*' => 'image|max:1024',
+                'photos.*' => 'image|max:2048',
             ]);
-            $paths = [];
+            $photoIds = [];
+            $pdo = DB::connection()->getPdo();
             foreach ($request->file('photos') as $photo) {
-                $paths[] = $photo->store('documentation/start', 'public');
+                $stmt = $pdo->prepare(
+                    'INSERT INTO slot_photos (slot_id, phase, filename, mime_type, photo_data, created_at) VALUES (?, ?, ?, ?, ?, NOW()) RETURNING id'
+                );
+                $stmt->bindValue(1, $slotId, \PDO::PARAM_INT);
+                $stmt->bindValue(2, 'start', \PDO::PARAM_STR);
+                $stmt->bindValue(3, $photo->getClientOriginalName(), \PDO::PARAM_STR);
+                $stmt->bindValue(4, $photo->getMimeType() ?? 'image/jpeg', \PDO::PARAM_STR);
+                $stmt->bindValue(5, file_get_contents($photo->getRealPath()), \PDO::PARAM_LOB);
+                $stmt->execute();
+                $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                $photoIds[] = (int) ($row['id'] ?? 0);
             }
-            $photoPaths = json_encode($paths);
+            $photoPaths = json_encode($photoIds);
         }
 
         DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime, $warehouseChanged, $actualWarehouseId, $photoPaths) {
@@ -540,13 +551,24 @@ class SlotLifecycleController extends Controller
         if ($request->hasFile('photos')) {
             $request->validate([
                 'photos' => 'array|max:5',
-                'photos.*' => 'image|max:1024',
+                'photos.*' => 'image|max:2048',
             ]);
-            $paths = [];
+            $photoIds = [];
+            $pdo = DB::connection()->getPdo();
             foreach ($request->file('photos') as $photo) {
-                $paths[] = $photo->store('documentation/complete', 'public');
+                $stmt = $pdo->prepare(
+                    'INSERT INTO slot_photos (slot_id, phase, filename, mime_type, photo_data, created_at) VALUES (?, ?, ?, ?, ?, NOW()) RETURNING id'
+                );
+                $stmt->bindValue(1, $slotId, \PDO::PARAM_INT);
+                $stmt->bindValue(2, 'complete', \PDO::PARAM_STR);
+                $stmt->bindValue(3, $photo->getClientOriginalName(), \PDO::PARAM_STR);
+                $stmt->bindValue(4, $photo->getMimeType() ?? 'image/jpeg', \PDO::PARAM_STR);
+                $stmt->bindValue(5, file_get_contents($photo->getRealPath()), \PDO::PARAM_LOB);
+                $stmt->execute();
+                $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                $photoIds[] = (int) ($row['id'] ?? 0);
             }
-            $photoPaths = json_encode($paths);
+            $photoPaths = json_encode($photoIds);
         }
 
         DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $sealNumber, $backdateTime, $photoPaths) {

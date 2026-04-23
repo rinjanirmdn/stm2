@@ -188,21 +188,22 @@
                         <div>{{ !empty($slot->actual_gate_number) ? $actualGateLabel : '-' }}</div>
                     </div>
 
-                    @if(!empty($slot->start_photo_path) || !empty($slot->complete_photo_path))
+                    @if(!empty($slot->start_photos) || !empty($slot->complete_photos))
                         <div class="st-detail-divider st-detail-divider--compact"></div>
                         <h2 class="st-card__title st-mb-2 st-text--md-14">Photo Documentation</h2>
                         <div class="st-flex st-gap-16 st-flex-wrap st-mt-8">
-                            @if(!empty($slot->start_photo_path))
-                                @php 
-                                    $startPhotos = is_array($slot->start_photo_path) ? $slot->start_photo_path : [$slot->start_photo_path];
-                                @endphp
+                            @if(!empty($slot->start_photos))
                                 <div class="st-flex st-gap-8 st-flex-wrap">
                                     <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Start Process</div>
-                                    @foreach($startPhotos as $idx => $path)
+                                    @foreach($slot->start_photos as $idx => $photo)
+                                        @php
+                                            $imgUrl = !empty($photo->id) ? route('slot-photos.show', $photo->id) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
+                                            $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
+                                        @endphp
                                         <div class="st-photo-preview st-text-center">
-                                            <img src="{{ parse_url(asset('storage/' . $path), PHP_URL_PATH) }}" alt="Start Photo {{ $idx + 1 }}" style="max-width: 150px; max-height: 150px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)">
+                                            <img src="{{ $imgUrl }}" alt="Start Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.style.display='none'">
                                             <div class="st-mt-4">
-                                                <a href="{{ parse_url(asset('storage/' . $path), PHP_URL_PATH) }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -211,17 +212,18 @@
                                 </div>
                             @endif
 
-                            @if(!empty($slot->complete_photo_path))
-                                @php 
-                                    $completePhotos = is_array($slot->complete_photo_path) ? $slot->complete_photo_path : [$slot->complete_photo_path];
-                                @endphp
+                            @if(!empty($slot->complete_photos))
                                 <div class="st-flex st-gap-8 st-flex-wrap">
                                     <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Complete Process</div>
-                                    @foreach($completePhotos as $idx => $path)
+                                    @foreach($slot->complete_photos as $idx => $photo)
+                                        @php
+                                            $imgUrl = !empty($photo->id) ? route('slot-photos.show', $photo->id) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
+                                            $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
+                                        @endphp
                                         <div class="st-photo-preview st-text-center">
-                                            <img src="{{ parse_url(asset('storage/' . $path), PHP_URL_PATH) }}" alt="Complete Photo {{ $idx + 1 }}" style="max-width: 150px; max-height: 150px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)">
+                                            <img src="{{ $imgUrl }}" alt="Complete Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.style.display='none'">
                                             <div class="st-mt-4">
-                                                <a href="{{ parse_url(asset('storage/' . $path), PHP_URL_PATH) }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -296,14 +298,13 @@
     </div>
 
     <!-- Photo Modal -->
-    <div id="photo-zoom-dialog" class="st-dialog-overlay st-dialog-overlay--hidden" style="z-index: 9999; display: none;" onclick="this.style.display='none'">
-        <div class="st-flex st-justify-center st-align-center st-h-full st-w-full st-p-20" style="background-color: rgba(0,0,0,0.8);">
-            <img id="zoomed-photo" src="" alt="Zoomed Photo" style="max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-        </div>
+    <div id="photo-zoom-dialog" style="position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);padding:16px;" onclick="this.style.display='none'">
+        <img id="zoomed-photo" src="" alt="Zoomed Photo" style="max-width:95vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);object-fit:contain;">
     </div>
     <script>
         function openPhotoModal(src) {
-            document.getElementById('zoomed-photo').src = src;
+            var img = document.getElementById('zoomed-photo');
+            img.src = src;
             document.getElementById('photo-zoom-dialog').style.display = 'flex';
         }
     </script>
