@@ -123,14 +123,13 @@
                                     @enderror
                                 </div>
                                 <div class="cb-field">
-                                    <label class="cb-label cb-label--required">Vehicle Number</label>
+                                    <label class="cb-label">Vehicle Number <span class="cb-text--optional">(Optional)</span></label>
                                     <input type="text"
                                            name="vehicle_number"
                                            class="cb-input"
                                            placeholder="e.g., B 1234 ABC"
                                            value="{{ old('vehicle_number') }}"
                                            maxlength="20"
-                                           required
                                            pattern="^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$"
                                            oninput="this.value = this.value.toUpperCase()">
                                     <div class="cb-hint">Format: B 1234 ABC (with spaces)</div>
@@ -139,27 +138,25 @@
                                     @enderror
                                 </div>
                                 <div class="cb-field">
-                                    <label class="cb-label cb-label--required">Driver Name</label>
+                                    <label class="cb-label">Driver Name <span class="cb-text--optional">(Optional)</span></label>
                                     <input type="text"
                                            name="driver_name"
                                            class="cb-input"
                                            placeholder="Driver's full name"
                                            value="{{ old('driver_name') }}"
-                                           maxlength="50"
-                                           required>
+                                           maxlength="50">
                                     @error('driver_name')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="cb-field">
-                                    <label class="cb-label cb-label--required">Driver Phone</label>
+                                    <label class="cb-label">Driver Phone <span class="cb-text--optional">(Optional)</span></label>
                                     <input type="tel"
                                            name="driver_number"
                                            class="cb-input"
                                            placeholder="e.g., 08123456789"
                                            value="{{ old('driver_number') }}"
                                            maxlength="15"
-                                           required
                                            pattern="^08[0-9]{8,11}$">
                                     <div class="cb-hint">Format: 08xxxxxxxxxx (10-13 digits)</div>
                                     @error('driver_number')

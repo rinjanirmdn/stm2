@@ -358,13 +358,20 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $request->validate(['photo' => 'nullable|image|max:1024']);
-            $photoPath = $request->file('photo')->store('documentation/start', 'public');
+        $photoPaths = null;
+        if ($request->hasFile('photos')) {
+            $request->validate([
+                'photos' => 'array|max:5',
+                'photos.*' => 'image|max:1024',
+            ]);
+            $paths = [];
+            foreach ($request->file('photos') as $photo) {
+                $paths[] = $photo->store('documentation/start', 'public');
+            }
+            $photoPaths = json_encode($paths);
         }
 
-        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime, $warehouseChanged, $actualWarehouseId, $photoPath) {
+        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime, $warehouseChanged, $actualWarehouseId, $photoPaths) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
             $arrivalTime = (string) ($slot->arrival_time ?? $now);
             $isLate = 0;
@@ -385,8 +392,8 @@ class SlotLifecycleController extends Controller
             if ($waitingReason !== '') {
                 $updateData['waiting_reason'] = $waitingReason;
             }
-            if ($photoPath) {
-                $updateData['start_photo_path'] = $photoPath;
+            if ($photoPaths !== null) {
+                $updateData['start_photo_path'] = $photoPaths;
             }
 
             DB::table('slots')->where('id', $slotId)->update($updateData);
@@ -529,13 +536,20 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $request->validate(['photo' => 'nullable|image|max:1024']);
-            $photoPath = $request->file('photo')->store('documentation/complete', 'public');
+        $photoPaths = null;
+        if ($request->hasFile('photos')) {
+            $request->validate([
+                'photos' => 'array|max:5',
+                'photos.*' => 'image|max:1024',
+            ]);
+            $paths = [];
+            foreach ($request->file('photos') as $photo) {
+                $paths[] = $photo->store('documentation/complete', 'public');
+            }
+            $photoPaths = json_encode($paths);
         }
 
-        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $sealNumber, $backdateTime, $photoPath) {
+        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $sealNumber, $backdateTime, $photoPaths) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
 
             // Get slot info before updating
@@ -558,8 +572,8 @@ class SlotLifecycleController extends Controller
                 'late_reason' => $notes !== '' ? $notes : null,
             ];
 
-            if ($photoPath) {
-                $updateData['complete_photo_path'] = $photoPath;
+            if ($photoPaths !== null) {
+                $updateData['complete_photo_path'] = $photoPaths;
             }
 
             DB::table('slots')->where('id', $slotId)->update($updateData);

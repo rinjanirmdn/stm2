@@ -91,6 +91,8 @@ class Slot extends Model
         'is_late' => 'boolean',
         'moved_gate' => 'boolean',
         'blocking_risk' => 'integer',
+        'start_photo_path' => 'array',
+        'complete_photo_path' => 'array',
     ];
 
     /**
