@@ -94,20 +94,10 @@ trait SlotHelperTrait
 
             // Fallback: if no DB photos found, check legacy path columns
             if (empty($startPhotos) && ! empty($slot->start_photo_path)) {
-                $legacyPaths = $this->normalizePhotoPaths($slot->start_photo_path);
-                if ($legacyPaths) {
-                    foreach ($legacyPaths as $path) {
-                        $startPhotos[] = (object) ['id' => null, 'filename' => basename($path), 'legacy_path' => $path];
-                    }
-                }
+                $startPhotos = $this->resolvePhotoPathColumn($slot->start_photo_path);
             }
             if (empty($completePhotos) && ! empty($slot->complete_photo_path)) {
-                $legacyPaths = $this->normalizePhotoPaths($slot->complete_photo_path);
-                if ($legacyPaths) {
-                    foreach ($legacyPaths as $path) {
-                        $completePhotos[] = (object) ['id' => null, 'filename' => basename($path), 'legacy_path' => $path];
-                    }
-                }
+                $completePhotos = $this->resolvePhotoPathColumn($slot->complete_photo_path);
             }
 
             $slot->start_photos = ! empty($startPhotos) ? $startPhotos : null;
@@ -115,6 +105,48 @@ trait SlotHelperTrait
         }
 
         return $slot;
+    }
+
+    /**
+     * Resolve a photo_path column value into photo objects.
+     *
+     * The column might contain:
+     *  - JSON array of DB photo IDs: '[1,2,3]' (new system)
+     *  - JSON array of file paths: '["documentation/start/abc.jpg"]'
+     *  - Plain file path string: 'documentation/start/abc.jpg'
+     *
+     * @return array Array of photo objects with either 'id' or 'legacy_path'
+     */
+    private function resolvePhotoPathColumn(mixed $value): array
+    {
+        $items = $this->normalizePhotoPaths($value);
+        if (! $items) {
+            return [];
+        }
+
+        $photos = [];
+        foreach ($items as $item) {
+            $item = (string) $item;
+
+            // If it's purely numeric, it might be a DB photo ID
+            if (ctype_digit($item)) {
+                $exists = DB::table('slot_photos')->where('id', (int) $item)->exists();
+                if ($exists) {
+                    $row = DB::table('slot_photos')->where('id', (int) $item)->select(['id', 'filename'])->first();
+                    $photos[] = (object) ['id' => $row->id, 'filename' => $row->filename];
+                }
+                // If ID doesn't exist in DB, skip it (stale reference)
+                continue;
+            }
+
+            // Must look like a real file path (contains '/' or has a file extension)
+            if (str_contains($item, '/') || preg_match('/\.\w{2,4}$/', $item)) {
+                $photos[] = (object) ['id' => null, 'filename' => basename($item), 'legacy_path' => $item];
+            }
+            // Otherwise skip invalid values
+        }
+
+        return $photos;
     }
 
     /**
