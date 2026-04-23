@@ -358,7 +358,13 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime, $warehouseChanged, $actualWarehouseId) {
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $request->validate(['photo' => 'nullable|image|max:1024']);
+            $photoPath = $request->file('photo')->store('documentation/start', 'public');
+        }
+
+        DB::transaction(function () use ($slot, $slotId, $actualGateId, $waitingReason, $backdateTime, $warehouseChanged, $actualWarehouseId, $photoPath) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
             $arrivalTime = (string) ($slot->arrival_time ?? $now);
             $isLate = 0;
@@ -378,6 +384,9 @@ class SlotLifecycleController extends Controller
             }
             if ($waitingReason !== '') {
                 $updateData['waiting_reason'] = $waitingReason;
+            }
+            if ($photoPath) {
+                $updateData['start_photo_path'] = $photoPath;
             }
 
             DB::table('slots')->where('id', $slotId)->update($updateData);
@@ -520,7 +529,13 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $sealNumber, $backdateTime) {
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $request->validate(['photo' => 'nullable|image|max:1024']);
+            $photoPath = $request->file('photo')->store('documentation/complete', 'public');
+        }
+
+        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $sealNumber, $backdateTime, $photoPath) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
 
             // Get slot info before updating
@@ -530,7 +545,7 @@ class SlotLifecycleController extends Controller
                 throw new RuntimeException('Cannot complete: actual start time is missing.');
             }
 
-            DB::table('slots')->where('id', $slotId)->update([
+            $updateData = [
                 'status' => 'completed',
                 'actual_finish' => $now,
                 'mat_doc' => $matDoc !== '' ? $matDoc : null,
@@ -541,7 +556,13 @@ class SlotLifecycleController extends Controller
                 'mat_doc_number' => $matDocNumber !== '' ? $matDocNumber : null,
                 'seal_number' => $sealNumber !== '' ? $sealNumber : null,
                 'late_reason' => $notes !== '' ? $notes : null,
-            ]);
+            ];
+
+            if ($photoPath) {
+                $updateData['complete_photo_path'] = $photoPath;
+            }
+
+            DB::table('slots')->where('id', $slotId)->update($updateData);
 
             // Auto-cancel obsolete scheduled slots when a slot is completed
             if ($slotInfo && $slotInfo->actual_gate_id) {
