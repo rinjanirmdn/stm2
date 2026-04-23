@@ -34,7 +34,7 @@
     @endif
 
     <div>
-        <form method="POST" action="{{ route('unplanned.start.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}">
+        <form method="POST" action="{{ route('unplanned.start.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}" enctype="multipart/form-data">
             @csrf
 
             <div class="st-form-row st-form-field--mb-12">
@@ -165,7 +165,57 @@
                 </div>
             @endif
 
+            <div class="st-form-row st-form-field--mb-12">
+                <div class="st-form-field">
+                    <label class="st-label">Photo Documentation <span class="st-text--optional">(Optional)</span></label>
+                    <input type="file" name="photo" id="photo_input" class="st-hidden-soft" accept="image/*">
+                    <div id="photo_capture_container">
+                        <div id="photo_initial_state" class="st-border st-border-dashed st-rounded-6 st-p-16 st-bg-slate-50 st-text-center">
+                            <i class="fas fa-camera st-text--xl st-text--slate-light st-mb-8"></i>
+                            <div class="st-text--sm st-text--muted st-mb-12">No photo attached</div>
+                            <div class="st-flex st-justify-center st-gap-8">
+                                <button type="button" id="btn_open_camera" class="st-btn st-btn--secondary st-btn--sm">
+                                    <i class="fas fa-camera st-mr-4"></i> Open Camera
+                                </button>
+                                <button type="button" id="btn_upload_photo" class="st-btn st-btn--secondary st-btn--sm" onclick="document.getElementById('photo_input').click()">
+                                    <i class="fas fa-upload st-mr-4"></i> Upload File
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="photo_camera_view" class="st-hidden-soft st-mt-8 st-border st-rounded-8 st-p-8 st-bg-slate-50">
+                            <div class="st-flex st-align-center st-gap-8 st-justify-between st-mb-8">
+                                <div class="st-text--sm st-text--slate">Point camera to capture photo.</div>
+                                <button type="button" id="btn_close_camera" class="st-btn st-btn--secondary st-btn--xs st-btn--pad-sm" title="Close Camera">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <video id="photo_video_stream" class="st-w-full st-rounded-6 st-bg-black" autoplay muted playsinline style="max-height: 300px; object-fit: contain; background: #000;"></video>
+                            <div class="st-mt-8 st-text-center">
+                                <button type="button" id="btn_capture_photo" class="st-btn st-btn--primary">
+                                    <i class="fas fa-circle st-mr-4"></i> Capture Photo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="photo_preview_state" class="st-hidden-soft st-mt-8 st-border st-border-dashed st-rounded-6 st-p-16 st-bg-slate-50 st-text-center">
+                            <img id="photo_preview_img" class="st-w-full st-maxw-360 st-rounded-6 st-mb-12" style="max-height: 250px; object-fit: contain; display: inline-block;">
+                            <div class="st-flex st-justify-center st-gap-8">
+                                <button type="button" id="btn_retake_photo" class="st-btn st-btn--secondary st-btn--sm">
+                                    <i class="fas fa-redo st-mr-4"></i> Retake
+                                </button>
+                                <button type="button" id="btn_remove_photo" class="st-btn st-btn--danger-soft st-btn--sm">
+                                    <i class="fas fa-trash st-mr-4"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @include('partials.backdate-section')
+
+
 
             <div class="st-form-actions">
                 <button type="submit" class="st-btn">Start</button>
@@ -329,6 +379,173 @@
     if (scanStopBtn) {
         scanStopBtn.addEventListener('click', function () {
             stopCameraScan();
+        });
+    }
+
+    // Photo Compression Logic
+    // Photo Capture Logic
+    var photoInputHidden = document.getElementById('photo_input');
+    var btnOpenCamera = document.getElementById('btn_open_camera');
+    var btnCloseCamera = document.getElementById('btn_close_camera');
+    var btnCapturePhoto = document.getElementById('btn_capture_photo');
+    var btnRetakePhoto = document.getElementById('btn_retake_photo');
+    var btnRemovePhoto = document.getElementById('btn_remove_photo');
+    
+    var viewInitial = document.getElementById('photo_initial_state');
+    var viewCamera = document.getElementById('photo_camera_view');
+    var viewPreview = document.getElementById('photo_preview_state');
+    
+    var videoStream = document.getElementById('photo_video_stream');
+    var previewImg = document.getElementById('photo_preview_img');
+    
+    var photoStream = null;
+    var shouldMirrorPhoto = false;
+
+    function stopPhotoCamera() {
+        if (photoStream) {
+            photoStream.getTracks().forEach(function(track) { track.stop(); });
+            photoStream = null;
+        }
+        if (viewCamera) viewCamera.style.display = 'none';
+        if (!photoInputHidden.files || photoInputHidden.files.length === 0) {
+            if (viewInitial) viewInitial.style.display = 'flex';
+        }
+    }
+
+    if (btnOpenCamera) {
+        btnOpenCamera.addEventListener('click', function() {
+            viewInitial.style.display = 'none';
+            viewPreview.style.display = 'none';
+            viewCamera.style.display = 'block';
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(function(stream) {
+                    photoStream = stream;
+                    videoStream.srcObject = stream;
+                    
+                    var track = stream.getVideoTracks()[0];
+                    var settings = track.getSettings();
+                    shouldMirrorPhoto = (settings.facingMode === 'user' || !settings.facingMode);
+                    
+                    if (shouldMirrorPhoto) {
+                        videoStream.style.transform = 'scaleX(-1)';
+                    } else {
+                        videoStream.style.transform = 'none';
+                    }
+                })
+                .catch(function(err) {
+                    alert('Tidak dapat mengakses kamera: ' + err.message);
+                    stopPhotoCamera();
+                    viewInitial.style.display = 'flex';
+                });
+        });
+    }
+
+    if (btnCloseCamera) {
+        btnCloseCamera.addEventListener('click', stopPhotoCamera);
+    }
+
+    function processImageFile(file, callback) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                var maxSize = 1024;
+                var width = img.width;
+                var height = img.height;
+
+                if (width > height) {
+                    if (width > maxSize) { height *= maxSize / width; width = maxSize; }
+                } else {
+                    if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                callback(canvas.toDataURL('image/jpeg', 0.7), canvas);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    if (btnCapturePhoto) {
+        btnCapturePhoto.addEventListener('click', function() {
+            var canvas = document.createElement('canvas');
+            var width = videoStream.videoWidth || 640;
+            var height = videoStream.videoHeight || 480;
+            
+            var maxSize = 1024;
+            if (width > height) {
+                if (width > maxSize) { height *= maxSize / width; width = maxSize; }
+            } else {
+                if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d');
+            
+            if (shouldMirrorPhoto) {
+                ctx.translate(width, 0);
+                ctx.scale(-1, 1);
+            }
+            ctx.drawImage(videoStream, 0, 0, width, height);
+            if (shouldMirrorPhoto) {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+            }
+            
+            var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            previewImg.src = dataUrl;
+            
+            canvas.toBlob(function(blob) {
+                var compressedFile = new File([blob], "capture_" + Date.now() + ".jpg", { type: 'image/jpeg', lastModified: Date.now() });
+                var dataTransfer = new DataTransfer();
+                dataTransfer.items.add(compressedFile);
+                photoInputHidden.files = dataTransfer.files;
+                
+                stopPhotoCamera();
+                viewInitial.style.display = 'none';
+                viewPreview.style.display = 'block';
+            }, 'image/jpeg', 0.7);
+        });
+    }
+
+    if (photoInputHidden) {
+        photoInputHidden.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            processImageFile(file, function(dataUrl, canvas) {
+                previewImg.src = dataUrl;
+                canvas.toBlob(function(blob) {
+                    var compressedFile = new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() });
+                    var dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(compressedFile);
+                    photoInputHidden.files = dataTransfer.files;
+                    
+                    if (viewInitial) viewInitial.style.display = 'none';
+                    if (viewCamera) viewCamera.style.display = 'none';
+                    if (viewPreview) viewPreview.style.display = 'block';
+                }, 'image/jpeg', 0.7);
+            });
+        });
+    }
+
+    if (btnRetakePhoto) {
+        btnRetakePhoto.addEventListener('click', function() {
+            viewPreview.style.display = 'none';
+            photoInputHidden.value = '';
+            btnOpenCamera.click();
+        });
+    }
+
+    if (btnRemovePhoto) {
+        btnRemovePhoto.addEventListener('click', function() {
+            viewPreview.style.display = 'none';
+            photoInputHidden.value = '';
+            viewInitial.style.display = 'flex';
         });
     }
 })();

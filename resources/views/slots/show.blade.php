@@ -309,6 +309,35 @@
                         @endif
                     </div>
 
+                    @if(!empty($slot->start_photo_path) || !empty($slot->complete_photo_path))
+                        <div class="st-detail-divider st-detail-divider--compact"></div>
+                        <h2 class="st-card__title st-mb-2 st-text--md-14">Photo Documentation</h2>
+                        <div class="st-flex st-gap-16 st-flex-wrap st-mt-8">
+                            @if(!empty($slot->start_photo_path))
+                                <div class="st-photo-preview st-text-center">
+                                    <div class="st-font-semibold st-text--sm st-mb-8 st-text--slate">Start Process</div>
+                                    <img src="{{ asset('storage/' . $slot->start_photo_path) }}" alt="Start Photo" style="max-width: 150px; max-height: 150px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)">
+                                    <div class="st-mt-8">
+                                        <a href="{{ asset('storage/' . $slot->start_photo_path) }}" download="Start_Photo_{{ $slot->id }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                            <i class="fas fa-download st-mr-4"></i> Save
+                                        </a>
+                                    </div>
+                                </div>
+                            @endif
+                            @if(!empty($slot->complete_photo_path))
+                                <div class="st-photo-preview st-text-center">
+                                    <div class="st-font-semibold st-text--sm st-mb-8 st-text--slate">Complete Process</div>
+                                    <img src="{{ asset('storage/' . $slot->complete_photo_path) }}" alt="Complete Photo" style="max-width: 150px; max-height: 150px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)">
+                                    <div class="st-mt-8">
+                                        <a href="{{ asset('storage/' . $slot->complete_photo_path) }}" download="Complete_Photo_{{ $slot->id }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                            <i class="fas fa-download st-mr-4"></i> Save
+                                        </a>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                 </div>
             </div>
 
@@ -384,6 +413,8 @@
         </div>
     </div>
 
+
+
     @if ($logs && count($logs) > 0)
         <div class="st-card st-mb-12">
             <div class="st-card__header">
@@ -437,4 +468,17 @@
             </form>
         </div>
     </div>
+
+    <!-- Photo Modal -->
+    <div id="photo-zoom-dialog" class="st-dialog-overlay st-dialog-overlay--hidden" style="z-index: 9999; display: none;" onclick="this.style.display='none'">
+        <div class="st-flex st-justify-center st-align-center st-h-full st-w-full st-p-20" style="background-color: rgba(0,0,0,0.8);">
+            <img id="zoomed-photo" src="" alt="Zoomed Photo" style="max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+        </div>
+    </div>
+    <script>
+        function openPhotoModal(src) {
+            document.getElementById('zoomed-photo').src = src;
+            document.getElementById('photo-zoom-dialog').style.display = 'flex';
+        }
+    </script>
 @endsection
