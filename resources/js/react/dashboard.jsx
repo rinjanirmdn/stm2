@@ -516,9 +516,13 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
 
   return (
     <div className="gap-2 flex flex-col flex-1">
-      {/* Stat cards - responsive grid: 2 cols on mobile, 4 on md, 7 on lg */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-        {stats.map(s => <StatCard key={s.label} label={s.label} value={s.value} tip={STAT_TIPS[s.label]} isDisplayOnly={isDisplayOnly} />)}
+      {/* Stat cards - horizontal scroll on mobile, grid on md+ */}
+      <div className="flex overflow-x-auto sm:grid sm:grid-cols-4 lg:grid-cols-7 gap-2 pb-1 snap-x scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {stats.map(s => (
+          <div key={s.label} className="min-w-[140px] sm:min-w-0 shrink-0 snap-start">
+            <StatCard label={s.label} value={s.value} tip={STAT_TIPS[s.label]} isDisplayOnly={isDisplayOnly} />
+          </div>
+        ))}
       </div>
 
       {/* Charts row */}
@@ -1309,6 +1313,67 @@ function Dashboard() {
   const prev = () => setActive(a => (a - 1 + total) % total);
   const next = () => setActive(a => (a + 1) % total);
 
+  const touchStartRef = useRef(null);
+  const touchEndRef = useRef(null);
+
+  const handleTouchStart = (e) => {
+    // Abaikan jika menyentuh elemen yang bisa di-scroll secara horizontal (misal tabel timeline)
+    let target = e.target;
+    let isScrollable = false;
+    while (target && target !== e.currentTarget) {
+      if (target.scrollWidth > target.clientWidth) {
+        const style = window.getComputedStyle(target);
+        if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
+          isScrollable = true;
+          break;
+        }
+      }
+      target = target.parentNode;
+    }
+    
+    if (isScrollable) {
+       touchStartRef.current = null;
+       return;
+    }
+
+    touchStartRef.current = { x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY };
+    touchEndRef.current = null;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStartRef.current) return;
+    touchEndRef.current = { x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY };
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartRef.current || !touchEndRef.current) return;
+    
+    const distanceX = touchStartRef.current.x - touchEndRef.current.x;
+    const distanceY = touchStartRef.current.y - touchEndRef.current.y;
+    
+    // Jika pergerakan vertikal lebih dominan (scroll layar/pull-to-refresh), abaikan
+    if (Math.abs(distanceY) > Math.abs(distanceX)) {
+       return;
+    }
+
+    // Jarak minimal usapan diperbesar agar tidak terlalu sensitif (tidak gampang terganti)
+    const minSwipeDistance = 90; 
+    
+    const isLeftSwipe = distanceX > minSwipeDistance;
+    const isRightSwipe = distanceX < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      next();
+    }
+    if (isRightSwipe) {
+      prev();
+    }
+    
+    // Reset state setelah diproses
+    touchStartRef.current = null;
+    touchEndRef.current = null;
+  };
+
   const applySyncedFilters = useCallback((incomingFilters) => {
     if (!isDisplayOnly) return;
     const currentFilters = readFilterStateFromSearch(window.location.search || '');
@@ -1449,12 +1514,15 @@ function Dashboard() {
   return (
     <div
       className="flex flex-col relative pb-2 flex-1"
+      onTouchStartCapture={handleTouchStart}
+      onTouchMoveCapture={handleTouchMove}
+      onTouchEndCapture={handleTouchEnd}
     >
       <style>{`@keyframes stSlideFadeIn { 0% { opacity: 0; transform: translateY(10px) scale(0.995); } 100% { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
       {!isDisplayOnly && (
-        <div className="flex items-center justify-between gap-3 mb-2 bg-white rounded-xl border border-gray-200 px-3 py-2 shadow-sm overflow-x-auto">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2 bg-white rounded-xl border border-gray-200 px-3 py-2 shadow-sm overflow-x-auto">
           {/* Left Block: Date & Vendor */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 max-w-full overflow-x-auto pb-1 md:pb-0">
             <div className="flex items-center gap-1.5 shrink-0">
               <JQRangePicker startValue={data.range_start || ''} endValue={data.range_end || ''} onApply={(s, e) => onFilter({ range_start: s, range_end: e })} />
               <a href="/dashboard" className="text-[11px] text-sky-600 hover:text-sky-700 font-medium flex items-center gap-1 no-underline shrink-0"><RotateCcw size={11} /> Reset</a>
@@ -1483,10 +1551,10 @@ function Dashboard() {
           </div>
           
           {/* Right Block: Slides Tabs */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center md:justify-start gap-2 shrink-0 w-full md:w-auto overflow-x-auto pt-1 md:pt-0">
+            <div className="flex items-center gap-1 shrink-0">
               <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0"><ChevronLeft size={16} /></button>
-              <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5 overflow-x-auto max-w-full">
+              <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5 shrink-0">
                 {SLIDES.map((s, i) => {
                   const Icon = ICONS[i] || BarChart3;
                   return (

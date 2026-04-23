@@ -9,6 +9,7 @@ use App\Models\Slot;
 use App\Models\TruckTypeDuration;
 use App\Models\User;
 use App\Notifications\BookingRequestSubmitted;
+use App\Notifications\SlotLifecycleNotification;
 use App\Services\BookingApprovalService;
 use App\Services\PoSearchService;
 use App\Services\SlotService;
@@ -729,6 +730,45 @@ class VendorBookingController extends Controller
                 foreach ($durations as $d) {
                     Cache::forget("vendor_availability_{$cancelDate}_{$d}");
                 }
+            }
+
+            // Notify Section Head & Super Account about vendor cancellation
+            try {
+                $recipients = User::where('is_active', true)
+                    ->whereHas('roles', function ($q) {
+                        $q->whereIn(DB::raw('LOWER(roles_name)'), ['section head', 'super account']);
+                    })
+                    ->get();
+
+                if ($recipients->isNotEmpty()) {
+                    $slotId = (int) $booking->converted_slot_id;
+                    $ticketNumber = '';
+                    $slotType = 'planned';
+
+                    if ($slotId > 0) {
+                        $slot = DB::table('slots')->where('id', $slotId)->first();
+                        $ticketNumber = $slot->ticket_number ?? '';
+                        $slotType = $slot->slot_type ?? 'planned';
+                    }
+
+                    $notification = new SlotLifecycleNotification(
+                        slotId: $slotId > 0 ? $slotId : $booking->id, // fallback to booking ID if slot not yet created
+                        slotType: $slotType,
+                        event: 'cancel',
+                        poNumber: $booking->po_number ?? '',
+                        vendorName: $booking->vendor_name ?? '',
+                        ticketNumber: $ticketNumber,
+                        performedBy: $actorName,
+                        gateName: null,
+                        reason: $reason
+                    );
+
+                    foreach ($recipients as $recipient) {
+                        $recipient->notify(clone $notification);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore notification error
             }
 
             return redirect()

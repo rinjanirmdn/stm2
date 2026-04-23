@@ -19,6 +19,7 @@ class SlotLifecycleNotification extends Notification
         public string $ticketNumber,
         public string $performedBy,
         public ?string $gateName = null,
+        public ?string $reason = null,
     ) {}
 
     public function via(object $notifiable): array
@@ -32,18 +33,21 @@ class SlotLifecycleNotification extends Notification
             'arrival' => 'Arrival Recorded',
             'start' => 'Process Started',
             'complete' => 'Process Completed',
+            'cancel' => 'Process Cancelled',
         ];
 
         $iconMap = [
             'arrival' => 'fas fa-truck-loading',
             'start' => 'fas fa-play-circle',
             'complete' => 'fas fa-check-circle',
+            'cancel' => 'fas fa-times-circle',
         ];
 
         $colorMap = [
             'arrival' => 'blue',
             'start' => 'orange',
             'complete' => 'green',
+            'cancel' => 'red',
         ];
 
         $label = $eventLabels[$this->event] ?? ucfirst($this->event);
@@ -61,6 +65,9 @@ class SlotLifecycleNotification extends Notification
         }
         if ($this->gateName) {
             $message .= ' at '.$this->gateName;
+        }
+        if ($this->reason) {
+            $message .= ' — Reason: '.$this->reason;
         }
 
         $actionUrl = $this->slotType === 'unplanned'
