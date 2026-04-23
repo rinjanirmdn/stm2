@@ -24,6 +24,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Dynamically set APP_URL and Storage URL based on the current request host.
+        // This allows the app to work seamlessly across different IPs (e.g. Laragon network access).
+        if (! $this->app->runningInConsole()) {
+            $currentUrl = url('/');
+            config(['app.url' => $currentUrl]);
+            config(['filesystems.disks.public.url' => $currentUrl.'/storage']);
+        }
+
         // Load holidays lazily — only when views that use them are rendered
         View::composer(['layouts.app', 'vendor.layouts.vendor', 'vendor.bookings.availability'], function ($view) {
             try {
