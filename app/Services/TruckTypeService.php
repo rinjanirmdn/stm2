@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
-
 /**
  * Single source of truth for truck type normalization.
  *
@@ -63,6 +61,6 @@ class TruckTypeService
             $cases[] = "WHEN '{$label}' THEN ".($i + 1);
         }
 
-        return "CASE {$alias} ".implode(' ', $cases)." ELSE 99 END";
+        return "CASE {$alias} ".implode(' ', $cases).' ELSE 99 END';
     }
 }
