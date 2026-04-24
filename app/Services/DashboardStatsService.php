@@ -20,7 +20,7 @@ class DashboardStatsService
 
     public function getDirectionByGate(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
+        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
 
         $rows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -95,7 +95,7 @@ class DashboardStatsService
 
     public function getOnTimeGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
+        $rangeDate = DB::raw('DATE(s.planned_start)');
 
         $arrivalLateExpr = $this->getArrivalLateExpression('s.planned_start', 's.arrival_time');
         $lateCaseExpr = "CASE WHEN s.slot_type = 'planned' AND s.arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (s.is_late = true) END";
@@ -257,7 +257,7 @@ class DashboardStatsService
 
     public function getCompletionGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
+        $rangeDate = DB::raw('DATE(s.planned_start)');
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_gates as g', function ($join) {
@@ -338,7 +338,7 @@ class DashboardStatsService
      */
     public function getRangeStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(actual_start, planned_start, arrival_time))');
+        $rangeDate = DB::raw('DATE(COALESCE(actual_start, arrival_time, planned_start))');
 
         // Get pending count from booking_requests
         $pendingCount = DB::table('booking_requests')
@@ -372,7 +372,9 @@ class DashboardStatsService
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
                 SUM(CASE WHEN status = 'completed' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late,
                 SUM(CASE WHEN direction = 'inbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS inbound,
-                SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound
+                SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound,
+                SUM(CASE WHEN direction = 'inbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_inbound,
+                SUM(CASE WHEN direction = 'outbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_outbound
             ")
             ->first();
 
@@ -388,6 +390,8 @@ class DashboardStatsService
             'late' => (int) ($stats->late ?? 0),
             'inbound' => (int) ($stats->inbound ?? 0),
             'outbound' => (int) ($stats->outbound ?? 0),
+            'completed_inbound' => (int) ($stats->completed_inbound ?? 0),
+            'completed_outbound' => (int) ($stats->completed_outbound ?? 0),
         ];
     }
 
@@ -417,9 +421,9 @@ class DashboardStatsService
             ->selectRaw("
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_all,
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_all,
-                SUM(CASE WHEN direction = 'inbound' AND ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_in,
+                SUM(CASE WHEN direction = 'inbound' THEN (CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) ELSE 0 END) AS on_time_in,
                 SUM(CASE WHEN direction = 'inbound' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_in,
-                SUM(CASE WHEN direction = 'outbound' AND ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_out,
+                SUM(CASE WHEN direction = 'outbound' THEN (CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) ELSE 0 END) AS on_time_out,
                 SUM(CASE WHEN direction = 'outbound' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_out
             ")
             ->first();
@@ -960,7 +964,7 @@ class DashboardStatsService
      */
     public function getAverageTimesByTruckType(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
+        $rangeDate = DB::raw('DATE(s.planned_start)');
 
         $leadTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('COALESCE(s.arrival_time, s.actual_start)', 's.actual_finish');
         $processTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
@@ -971,7 +975,7 @@ class DashboardStatsService
 
         try {
             // Use subquery to make grouping and ordering cleaner across different DB drivers
-            return DB::table(function ($query) use ($normalizedType, $leadTimeExpr, $processTimeExpr, $rangeDate, $start, $end, $vendorName) {
+            return DB::table(function ($query) use ($normalizedType, $leadTimeExpr, $processTimeExpr, $rangeDate, $start, $end, $vendorName, $transporter) {
                 $query->from('slots as s')
                     ->where('s.status', 'completed')
                     ->whereBetween($rangeDate, [$start, $end])

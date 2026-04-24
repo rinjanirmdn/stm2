@@ -285,6 +285,20 @@ class DashboardController extends Controller
             'avg7' => $trendData['avg_7_days'],
             'onTimeDir' => $onTimeStats,
             'targetDir' => $targetStats,
+            'completionDir' => [
+                'all' => [
+                    'completed' => $trendData['completed_total'] ?? $rangeStats['completed'],
+                    'total' => $rangeStats['total'],
+                ],
+                'inbound' => [
+                    'completed' => $rangeStats['completed_inbound'] ?? 0,
+                    'total' => $rangeStats['inbound'] ?? 0,
+                ],
+                'outbound' => [
+                    'completed' => $rangeStats['completed_outbound'] ?? 0,
+                    'total' => $rangeStats['outbound'] ?? 0,
+                ],
+            ],
             'onTimeWarehouseData' => $onTimeWarehouseStats['data'] ?? [],
             'targetWarehouseData' => $targetWarehouseStats['data'] ?? [],
             'kpiWarehouses' => array_values(array_unique(array_merge(

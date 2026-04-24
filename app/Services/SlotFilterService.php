@@ -124,8 +124,7 @@ class SlotFilterService
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
-            ->leftJoin(DB::raw('(SELECT truck_type, MAX(target_duration_minutes) as target_duration_minutes FROM md_truck GROUP BY truck_type) as td'), 's.truck_type', '=', 'td.truck_type')
-            ->whereRaw("COALESCE(s.slot_type, 'planned') <> 'unplanned'");
+            ->leftJoin(DB::raw('(SELECT truck_type, MAX(target_duration_minutes) as target_duration_minutes FROM md_truck GROUP BY truck_type) as td'), 's.truck_type', '=', 'td.truck_type');
     }
 
     /**
@@ -217,11 +216,12 @@ class SlotFilterService
         $dateFrom = trim($request->query('date_from', ''));
         $dateTo = trim($request->query('date_to', ''));
 
-        if ($dateFrom !== '') {
-            $query->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '>=', $dateFrom);
-        }
-        if ($dateTo !== '') {
-            $query->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '<=', $dateTo);
+        if ($dateFrom !== '' && $dateTo !== '') {
+            $query->whereBetween('s.planned_start', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59']);
+        } elseif ($dateFrom !== '') {
+            $query->whereDate('s.planned_start', '>=', $dateFrom);
+        } elseif ($dateTo !== '') {
+            $query->whereDate('s.planned_start', '<=', $dateTo);
         }
     }
 

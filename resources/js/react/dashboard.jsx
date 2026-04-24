@@ -835,20 +835,26 @@ function BottleneckSlide({ data, isDisplayOnly = false, animateCharts = true }) 
     </div>
   );
 }
-
 /* ================================================================
    SLIDE 2 — KPI
    ================================================================ */
 function KPISlide({ data, onFilter, isDisplayOnly = false, animateCharts = true }) {
-  const { onTimeDir = {}, targetDir = {}, completionRate = 0, completionTotalSlots = 0, completionCompletedSlots = 0 } = data;
+  const { onTimeDir = {}, targetDir = {}, completionDir = {} } = data;
   const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const [kpiDir, setKpiDir] = useState('all');
   const src = kpiDir === 'all' ? (onTimeDir?.all || {}) : (onTimeDir?.[kpiDir] || {});
   const tSrc = kpiDir === 'all' ? (targetDir?.all || {}) : (targetDir?.[kpiDir] || {});
+  const cSrc = kpiDir === 'all' ? (completionDir?.all || {}) : (completionDir?.[kpiDir] || {});
+
   const onT = +(src.on_time || 0), late = +(src.late || 0), otTotal = onT + late;
   const ach = +(tSrc.achieve || 0), notA = +(tSrc.not_achieve || 0), tTotal = ach + notA;
+  const compValue = +(cSrc.completed || 0), cTotal = +(cSrc.total || 0), uncompValue = Math.max(0, cTotal - compValue);
+
   const onTimePct = otTotal > 0 ? ((onT / otTotal) * 100).toFixed(1) : '0.0';
   const targetPct = tTotal > 0 ? ((ach / tTotal) * 100).toFixed(1) : '0.0';
+  const compPct = cTotal > 0 ? ((compValue / cTotal) * 100).toFixed(1) : '0.0';
+
+  const kpiExtra = kpiDir !== 'all' ? { 'direction[]': kpiDir } : {};
 
   const kpiBgMap = { good: 'bg-emerald-50 border-emerald-100 text-emerald-700', bad: 'bg-red-50 border-red-100 text-red-700', neutral: 'bg-gray-50 border-gray-200 text-gray-600' };
   const kpiDotMap = { good: 'bg-emerald-500', bad: 'bg-red-500', neutral: 'bg-gray-400' };
@@ -939,13 +945,13 @@ function KPISlide({ data, onFilter, isDisplayOnly = false, animateCharts = true 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
         <KpiCard title="On Time vs Late" pct={onTimePct} pctColor={tk('--completed')}
           chartData={[{ name: 'On Time', value: onT }, { name: 'Late', value: late }]}
-          colors={COLORS_KPI()} metrics={[['On Time', onT, { 'late[]': 'on_time' }], ['Late', late, { 'late[]': 'late' }], ['Total', otTotal, {}]]} />
+          colors={COLORS_KPI()} metrics={[['On Time', onT, { 'late[]': 'on_time', ...kpiExtra }], ['Late', late, { 'late[]': 'late', ...kpiExtra }], ['Total', otTotal, { ...kpiExtra }]]} />
         <KpiCard title="Target Achievement" pct={targetPct} pctColor={tk('--completed')}
           chartData={[{ name: 'Achieved', value: ach }, { name: 'Not Achieved', value: notA }]}
-          colors={COLORS_KPI()} metrics={[['Achieve', ach, { 'target_status[]': 'achieve' }], ['Not Achieve', notA, { 'target_status[]': 'not_achieve' }], ['Total', tTotal, {}]]} />
-        <KpiCard title="Completion Rate" pct={parseFloat(completionRate || 0).toFixed(1)} pctColor={tk('--completed')}
-          chartData={[{ name: 'Completed', value: +completionCompletedSlots }, { name: 'Remaining', value: Math.max(0, +completionTotalSlots - +completionCompletedSlots) }]}
-          colors={COLORS_KPI()} metrics={[['Completed', +completionCompletedSlots, {}], ['Remaining', Math.max(0, +completionTotalSlots - +completionCompletedSlots), { 'status[]': ['scheduled', 'waiting', 'in_progress'] }], ['Total', +completionTotalSlots, { 'status[]': ['scheduled', 'waiting', 'in_progress', 'completed'] }]]} />
+          colors={COLORS_KPI()} metrics={[['Achieve', ach, { 'target_status[]': 'achieve', ...kpiExtra }], ['Not Achieve', notA, { 'target_status[]': 'not_achieve', ...kpiExtra }], ['Total', tTotal, { ...kpiExtra }]]} />
+        <KpiCard title="Completion Rate" pct={compPct} pctColor={tk('--completed')}
+          chartData={[{ name: 'Completed', value: compValue }, { name: 'Remaining', value: uncompValue }]}
+          colors={COLORS_KPI()} metrics={[['Completed', compValue, { 'status[]': 'completed', ...kpiExtra }], ['Remaining', uncompValue, { 'status[]': ['scheduled', 'waiting', 'in_progress'], ...kpiExtra }], ['Total', cTotal, { 'status[]': ['scheduled', 'waiting', 'in_progress', 'completed'], ...kpiExtra }]]} />
       </div>
     </div>
   );

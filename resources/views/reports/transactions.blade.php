@@ -450,19 +450,25 @@
                                         <td class="st-td-center">
                                             @if ($leadTimeMinutes !== null)
                                                 @php
-                                                    $ltMinutes = (int) $leadTimeMinutes;
-                                                    $ltHours = $ltMinutes / 60;
+                                                    $ltM = (int) $leadTimeMinutes;
+                                                    $ltH = floor($ltM / 60);
+                                                    $ltRem = $ltM % 60;
                                                 @endphp
-                                                {{ $ltMinutes }} Min
-                                                @if ($ltHours >= 1)
-                                                    ({{ rtrim(rtrim(number_format($ltHours, 2), '0'), '.') }} Hours)
-                                                @endif
-                                                <div class="st-text--xs-10 st-text--muted st-mt-1 st-leading-13">
-                                                    @if ($waitingMinutes !== null)
-                                                        <div>Waiting: {{ (int) $waitingMinutes }} Min</div>
+                                                <div class="st-leadtime">
+                                                    @if ($ltH > 0)
+                                                        {{ $ltH }}h {{ $ltRem }}m
+                                                    @else
+                                                        {{ $ltRem }}m
                                                     @endif
-                                                    @if ($processMinutes !== null)
-                                                        <div>Process: {{ (int) $processMinutes }} Min</div>
+                                                    @if ($waitingMinutes !== null || $processMinutes !== null)
+                                                        <div class="st-text--xs-10 st-text--muted st-mt-1 st-leading-13">
+                                                            @if ($waitingMinutes !== null)
+                                                                <div>Waiting: {{ (int) $waitingMinutes }} Min</div>
+                                                            @endif
+                                                            @if ($processMinutes !== null)
+                                                                <div>Process: {{ (int) $processMinutes }} Min</div>
+                                                            @endif
+                                                        </div>
                                                     @endif
                                                 </div>
                                             @else
