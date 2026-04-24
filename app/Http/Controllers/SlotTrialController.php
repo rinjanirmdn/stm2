@@ -65,12 +65,18 @@ class SlotTrialController extends Controller
             ->select(['id', 'bp_code', 'bp_name', 'bp_type'])
             ->get();
 
+        $vendorTransporters = DB::table('md_vendor_transporters')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         return view('slots.trial_create', [
             'warehouses' => $warehouses,
             'gates' => $gates,
             'vendors' => $vendors,
             'truckTypes' => $truckTypes,
             'truckTypeDurations' => $truckTypeDurations,
+            'vendorTransporters' => $vendorTransporters,
         ]);
     }
 
@@ -90,6 +96,9 @@ class SlotTrialController extends Controller
             'vehicle_number_snap' => 'nullable|string|max:50',
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
+            'use_vendor_transporter' => 'nullable|boolean',
+            'vendor_transporter_id' => 'nullable|exists:md_vendor_transporters,id',
+            'destination' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -102,8 +111,26 @@ class SlotTrialController extends Controller
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
+        $destination = trim((string) $request->input('destination', ''));
         $notes = trim((string) $request->input('notes', ''));
         $bpId = $request->input('bp_id') ? (int) $request->input('bp_id') : null;
+
+        $useVendorTransporter = (bool) $request->input('use_vendor_transporter', false);
+        $vendorTransporterId = $request->input('vendor_transporter_id') !== null && (string) $request->input('vendor_transporter_id') !== '' ? (int) $request->input('vendor_transporter_id') : null;
+
+        $transporterType = null;
+        if ($direction === 'outbound') {
+            $transporterType = $useVendorTransporter ? 'vendor' : 'internal';
+            if ($transporterType === 'vendor' && ! $vendorTransporterId) {
+                return back()->withInput()->withErrors(['vendor_transporter_id' => 'Vendor Transporter must be selected if checked']);
+            }
+            if ($transporterType === 'internal') {
+                $vendorTransporterId = null;
+            }
+            $driverNumber = null; // Ignore driver number for outbound
+        } else {
+            $vendorTransporterId = null;
+        }
 
         // Resolve gate & warehouse
         $gateRow = DB::table('md_gates')
@@ -175,7 +202,8 @@ class SlotTrialController extends Controller
             &$slotId, $poNumber, $direction, $warehouseId,
             $plannedGateId, $plannedStart, $plannedDuration,
             $truckType, $vehicleNumber, $driverName, $driverNumber,
-            $notes, $vendorCode, $vendorName, $vendorType
+            $notes, $vendorCode, $vendorName, $vendorType,
+            $transporterType, $vendorTransporterId, $destination
         ) {
             $now = date('Y-m-d H:i:s');
             $ticket = $this->slotService->generateTicketNumber($warehouseId, $plannedGateId);
@@ -187,6 +215,8 @@ class SlotTrialController extends Controller
                 'vendor_code' => $vendorCode,
                 'vendor_name' => $vendorName,
                 'vendor_type' => $vendorType,
+                'transporter_type' => $transporterType,
+                'vendor_transporter_id' => $vendorTransporterId,
                 'planned_gate_id' => $plannedGateId,
                 'planned_start' => $plannedStart,
                 'planned_duration' => $plannedDuration,
@@ -194,6 +224,7 @@ class SlotTrialController extends Controller
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
+                'destination' => $destination !== '' ? $destination : null,
                 'late_reason' => $notes !== '' ? $notes : null,
                 'ticket_number' => $ticket,
                 'status' => 'scheduled',

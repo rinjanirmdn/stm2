@@ -57,7 +57,7 @@
                 Booking Information
             </h3>
 
-            <table class="vb-table st-table st-table--sm">
+            <table class="vb-table">
                 <tr>
                     <td class="vb-table__label">Ticket Number</td>
                     <td class="vb-table__value--strong">
@@ -132,7 +132,7 @@
                 Schedule
             </h3>
 
-            <table class="vb-table st-table st-table--sm">
+            <table class="vb-table">
                 @if($isRescheduled)
                 <tr>
                     <td class="vb-table__label">Schedule Type</td>
@@ -218,7 +218,7 @@
                 Vehicle Information
             </h3>
 
-            <table class="vb-table st-table st-table--sm">
+            <table class="vb-table">
                 <tr>
                     <td class="vb-table__label">Truck Type</td>
                     <td>{{ $booking->truck_type ?? '-' }}</td>
@@ -241,7 +241,7 @@
                 Approval Info
             </h3>
 
-            <table class="vb-table st-table st-table--sm">
+            <table class="vb-table">
                 @if($booking->approver)
                 <tr>
                     <td class="vb-table__label">Processed By</td>

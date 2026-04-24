@@ -91,6 +91,7 @@ class SlotController extends Controller
         $lateValues = array_values(array_filter((array) $request->query('late', []), fn ($v) => (string) $v !== ''));
         $blockingValues = array_values(array_filter((array) $request->query('blocking', []), fn ($v) => (string) $v !== ''));
         $targetStatusValues = array_values(array_filter((array) $request->query('target_status', []), fn ($v) => (string) $v !== ''));
+        $truckTypeValues = array_values(array_filter((array) $request->query('truck_type', []), fn ($v) => (string) $v !== ''));
 
         return view('slots.index', [
             'slots' => $slots,
@@ -114,6 +115,7 @@ class SlotController extends Controller
             'gateFilter' => $gateValues,
             'statusFilter' => $statusValues,
             'directionFilter' => $dirValues,
+            'truckTypeFilter' => $truckTypeValues,
             'lateFilter' => $lateValues,
             'blockingFilter' => $blockingValues,
             'pageSize' => $pageSize,
