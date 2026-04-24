@@ -331,7 +331,7 @@ class DashboardController extends Controller
             'holidays' => $this->getHolidaysForYear($today),
             'vendors' => $this->getVendorList(),
             'selected_vendor' => $vendorName ?? '',
-            'transporters' => \Illuminate\Support\Facades\DB::table('md_vendor_transporters')->where('is_active', true)->orderBy('name')->get(),
+            'transporters' => DB::table('md_vendor_transporters')->where('is_active', true)->orderBy('name')->get(),
             'selected_transporter' => $transporter ?? '',
         ];
     }
@@ -392,7 +392,13 @@ class DashboardController extends Controller
                     ->orWhere('slot_type', '!=', 'unplanned');
             })
             ->whereNotIn('status', ['pending_approval', 'cancelled'])
-            ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))->when($transporter, function($q) use ($transporter) { if ($transporter === 'internal') { $q->where('transporter_type', 'internal'); } else { $q->where('vendor_transporter_id', $transporter); } })
+            ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))->when($transporter, function ($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('transporter_type', 'internal');
+                } else {
+                    $q->where('vendor_transporter_id', $transporter);
+                }
+            })
             ->selectRaw("
                 SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled,
                 SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) as waiting,

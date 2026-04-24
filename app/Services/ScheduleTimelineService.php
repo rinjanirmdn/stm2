@@ -380,7 +380,7 @@ class ScheduleTimelineService
             ->whereNotNull('s.id')
             ->where('s.id', '>', 0)
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -426,7 +426,7 @@ class ScheduleTimelineService
             ->whereNotNull('s.id')
             ->where('s.id', '>', 0)
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {

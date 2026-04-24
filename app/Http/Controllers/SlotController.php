@@ -190,19 +190,19 @@ class SlotController extends Controller
 
         $useVendorTransporter = (bool) $request->input('use_vendor_transporter', false);
         $vendorTransporterId = $request->input('vendor_transporter_id') !== null && (string) $request->input('vendor_transporter_id') !== '' ? (int) $request->input('vendor_transporter_id') : null;
-        
+
         $transporterType = null;
         if ($direction === 'outbound') {
             $transporterType = $useVendorTransporter ? 'vendor' : 'internal';
-            if ($transporterType === 'vendor' && !$vendorTransporterId) {
-                 return back()->withInput()->withErrors(['vendor_transporter_id' => 'Vendor Transporter must be selected if checked']);
+            if ($transporterType === 'vendor' && ! $vendorTransporterId) {
+                return back()->withInput()->withErrors(['vendor_transporter_id' => 'Vendor Transporter must be selected if checked']);
             }
             if ($transporterType === 'internal') {
-                 $vendorTransporterId = null;
+                $vendorTransporterId = null;
             }
             $driverNumber = null; // Ignore driver number for outbound
         } else {
-             $vendorTransporterId = null;
+            $vendorTransporterId = null;
         }
 
         if (! $plannedGateId) {

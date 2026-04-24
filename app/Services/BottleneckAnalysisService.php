@@ -30,13 +30,13 @@ class BottleneckAnalysisService
                 ->whereIn('s.status', ['in_progress', 'completed'])
                 ->whereBetween('s.arrival_time', [$start.' 00:00:00', $end.' 23:59:59'])
                 ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
-                if ($transporter === 'internal') {
-                    $q->where('s.transporter_type', 'internal');
-                } else {
-                    $q->where('s.vendor_transporter_id', $transporter);
-                }
-            })
+                ->when($transporter, function ($q) use ($transporter) {
+                    if ($transporter === 'internal') {
+                        $q->where('s.transporter_type', 'internal');
+                    } else {
+                        $q->where('s.vendor_transporter_id', $transporter);
+                    }
+                })
                 ->groupBy(['w.wh_code', 'g.gate_number', 's.direction'])
                 ->havingRaw("AVG({$waitExpr}) > ?", [0])
                 ->orderByDesc('avg_wait_minutes')

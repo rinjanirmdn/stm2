@@ -31,7 +31,7 @@ class DashboardStatsService
             ->whereBetween($rangeDate, [$start, $end])
             ->where('s.status', '!=', 'cancelled')
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -108,7 +108,7 @@ class DashboardStatsService
             ->where('s.status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -190,7 +190,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -267,7 +267,7 @@ class DashboardStatsService
             ->whereBetween($rangeDate, [$start, $end])
             ->where('s.status', '!=', 'cancelled')
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -354,7 +354,7 @@ class DashboardStatsService
         $stats = DB::table('slots')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('transporter_type', 'internal');
                 } else {
@@ -407,7 +407,7 @@ class DashboardStatsService
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('transporter_type', 'internal');
                 } else {
@@ -456,7 +456,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -474,7 +474,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -498,7 +498,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -535,7 +535,7 @@ class DashboardStatsService
             ->whereBetween(DB::raw('DATE(s.planned_start)'), [$start, $end])
             ->where('s.status', '!=', 'cancelled')
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -590,7 +590,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -651,7 +651,7 @@ class DashboardStatsService
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('transporter_type', 'internal');
                 } else {
@@ -675,7 +675,7 @@ class DashboardStatsService
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('transporter_type', 'internal');
                 } else {
@@ -770,13 +770,13 @@ class DashboardStatsService
                 ->whereNotNull('s.actual_finish')
                 ->whereBetween($rangeDate, [$start, $end])
                 ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
-                if ($transporter === 'internal') {
-                    $q->where('s.transporter_type', 'internal');
-                } else {
-                    $q->where('s.vendor_transporter_id', $transporter);
-                }
-            })
+                ->when($transporter, function ($q) use ($transporter) {
+                    if ($transporter === 'internal') {
+                        $q->where('s.transporter_type', 'internal');
+                    } else {
+                        $q->where('s.vendor_transporter_id', $transporter);
+                    }
+                })
                 ->avg(DB::raw($this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish')));
 
             $avgProcessMinutes = DB::table('slots as s')
@@ -785,13 +785,13 @@ class DashboardStatsService
                 ->whereNotNull('s.actual_finish')
                 ->whereBetween($rangeDate, [$start, $end])
                 ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
-                if ($transporter === 'internal') {
-                    $q->where('s.transporter_type', 'internal');
-                } else {
-                    $q->where('s.vendor_transporter_id', $transporter);
-                }
-            })
+                ->when($transporter, function ($q) use ($transporter) {
+                    if ($transporter === 'internal') {
+                        $q->where('s.transporter_type', 'internal');
+                    } else {
+                        $q->where('s.vendor_transporter_id', $transporter);
+                    }
+                })
                 ->avg(DB::raw($this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish')));
         } catch (\Throwable $e) {
             // Return null values on error
@@ -815,7 +815,7 @@ class DashboardStatsService
             ->where('s.status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -867,7 +867,7 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
+            ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
                     $q->where('s.transporter_type', 'internal');
                 } else {
@@ -997,13 +997,13 @@ class DashboardStatsService
                     ->where('s.status', 'completed')
                     ->whereBetween($rangeDate, [$start, $end])
                     ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
-            ->when($transporter, function($q) use ($transporter) {
-                if ($transporter === 'internal') {
-                    $q->where('s.transporter_type', 'internal');
-                } else {
-                    $q->where('s.vendor_transporter_id', $transporter);
-                }
-            })
+                    ->when($transporter, function ($q) use ($transporter) {
+                        if ($transporter === 'internal') {
+                            $q->where('s.transporter_type', 'internal');
+                        } else {
+                            $q->where('s.vendor_transporter_id', $transporter);
+                        }
+                    })
                     ->select([
                         DB::raw("({$normalizedType}) as truck_type"),
                         DB::raw("({$leadTimeExpr}) as lead_min"),
