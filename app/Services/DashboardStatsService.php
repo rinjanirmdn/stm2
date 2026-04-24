@@ -372,7 +372,9 @@ class DashboardStatsService
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
                 SUM(CASE WHEN status = 'completed' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late,
                 SUM(CASE WHEN direction = 'inbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS inbound,
-                SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound
+                SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound,
+                SUM(CASE WHEN direction = 'inbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_inbound,
+                SUM(CASE WHEN direction = 'outbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_outbound
             ")
             ->first();
 
@@ -388,6 +390,8 @@ class DashboardStatsService
             'late' => (int) ($stats->late ?? 0),
             'inbound' => (int) ($stats->inbound ?? 0),
             'outbound' => (int) ($stats->outbound ?? 0),
+            'completed_inbound' => (int) ($stats->completed_inbound ?? 0),
+            'completed_outbound' => (int) ($stats->completed_outbound ?? 0),
         ];
     }
 
@@ -417,9 +421,9 @@ class DashboardStatsService
             ->selectRaw("
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_all,
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_all,
-                SUM(CASE WHEN direction = 'inbound' AND ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_in,
+                SUM(CASE WHEN direction = 'inbound' THEN (CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) ELSE 0 END) AS on_time_in,
                 SUM(CASE WHEN direction = 'inbound' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_in,
-                SUM(CASE WHEN direction = 'outbound' AND ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_out,
+                SUM(CASE WHEN direction = 'outbound' THEN (CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) ELSE 0 END) AS on_time_out,
                 SUM(CASE WHEN direction = 'outbound' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_out
             ")
             ->first();

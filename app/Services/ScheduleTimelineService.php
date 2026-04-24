@@ -372,10 +372,6 @@ class ScheduleTimelineService
                 $q->whereDate('s.actual_start', $date)
                     ->orWhereDate('s.planned_start', $date);
             })
-            ->where(function ($q) {
-                $q->whereNull('s.slot_type')
-                    ->orWhere('s.slot_type', '!=', 'unplanned');
-            })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
             ->whereNotNull('s.id')
             ->where('s.id', '>', 0)
@@ -417,10 +413,6 @@ class ScheduleTimelineService
             ->where(function ($q) use ($date) {
                 $q->whereDate('s.actual_start', $date)
                     ->orWhereDate('s.planned_start', $date);
-            })
-            ->where(function ($q) {
-                $q->whereNull('s.slot_type')
-                    ->orWhere('s.slot_type', '!=', 'unplanned');
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
             ->whereNotNull('s.id')
