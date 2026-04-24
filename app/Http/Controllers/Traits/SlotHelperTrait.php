@@ -135,6 +135,7 @@ trait SlotHelperTrait
                     $row = DB::table('slot_photos')->where('id', (int) $item)->select(['id', 'filename'])->first();
                     $photos[] = (object) ['id' => $row->id, 'filename' => $row->filename];
                 }
+
                 // If ID doesn't exist in DB, skip it (stale reference)
                 continue;
             }
