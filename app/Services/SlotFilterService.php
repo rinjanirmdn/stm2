@@ -154,9 +154,7 @@ class SlotFilterService
                     $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
                         ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
                         ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like])
-                        ->orWhereRaw('LOWER(w.wh_name) like ?', [$like])
-                        ->orWhereRaw('LOWER(s.direction) like ?', [$like])
-                        ->orWhereRaw('LOWER(s.status) like ?', [$like]);
+                        ->orWhereRaw('LOWER(w.wh_name) like ?', [$like]);
                 });
             }
         }

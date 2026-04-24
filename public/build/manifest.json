@@ -22,7 +22,7 @@
     "name": "search-highlight"
   },
   "resources/css/bookings.css": {
-    "file": "assets/bookings-8T7HLU01.css",
+    "file": "assets/bookings-Bxt_hXv1.css",
     "src": "resources/css/bookings.css",
     "isEntry": true,
     "name": "bookings",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-BSKbjdS7.css",
+    "file": "assets/style-DOihY1DU.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -58,7 +58,7 @@
     ]
   },
   "resources/css/vendor.css": {
-    "file": "assets/vendor-DcT345jf.css",
+    "file": "assets/vendor-C-B5HRWG.css",
     "src": "resources/css/vendor.css",
     "isEntry": true,
     "name": "vendor",
@@ -169,7 +169,7 @@
     "isEntry": true
   },
   "resources/js/pages/slots-index.js": {
-    "file": "assets/slots-index-Bk4ZzJ4c.js",
+    "file": "assets/slots-index-CivBiUhz.js",
     "name": "slots-index",
     "src": "resources/js/pages/slots-index.js",
     "isEntry": true,
