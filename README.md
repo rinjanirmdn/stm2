@@ -8,7 +8,7 @@
 e-Docking Control System (e-DCS) is a web-based application designed to streamline, monitor, and manage warehouse docking activities. It provides an efficient way to handle incoming and outgoing shipments, manage vendor bookings, allocate gates, and monitor the overall lifecycle of a slot or booking request.
 
 ## Key Features
-- **Vendor Booking Management**: Allow vendors to request and schedule docking slots.
+- **Vendor Booking Management**: Allows the PPIC, Purchasing, and EXIM divisions to submit requests and schedule loading and unloading times for vendors
 - **Gate Allocation**: Efficiently assign warehouse gates to scheduled trucks.
 - **Live Status Monitoring**: Real-time tracking of slot statuses (Scheduled, Arrived, In Progress, Completed).
 - **Photo Documentation**: Capture start and completion photos directly in the system via a robust backend storage.
