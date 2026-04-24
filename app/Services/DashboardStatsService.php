@@ -20,7 +20,7 @@ class DashboardStatsService
 
     public function getDirectionByGate(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
+        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
 
         $rows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -95,7 +95,7 @@ class DashboardStatsService
 
     public function getOnTimeGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
+        $rangeDate = DB::raw('DATE(s.planned_start)');
 
         $arrivalLateExpr = $this->getArrivalLateExpression('s.planned_start', 's.arrival_time');
         $lateCaseExpr = "CASE WHEN s.slot_type = 'planned' AND s.arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (s.is_late = true) END";
@@ -257,7 +257,7 @@ class DashboardStatsService
 
     public function getCompletionGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
+        $rangeDate = DB::raw('DATE(s.planned_start)');
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_gates as g', function ($join) {
@@ -338,7 +338,7 @@ class DashboardStatsService
      */
     public function getRangeStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(actual_start, planned_start, arrival_time))');
+        $rangeDate = DB::raw('DATE(COALESCE(actual_start, arrival_time, planned_start))');
 
         // Get pending count from booking_requests
         $pendingCount = DB::table('booking_requests')
@@ -960,7 +960,7 @@ class DashboardStatsService
      */
     public function getAverageTimesByTruckType(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
+        $rangeDate = DB::raw('DATE(s.planned_start)');
 
         $leadTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('COALESCE(s.arrival_time, s.actual_start)', 's.actual_finish');
         $processTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
@@ -971,7 +971,7 @@ class DashboardStatsService
 
         try {
             // Use subquery to make grouping and ordering cleaner across different DB drivers
-            return DB::table(function ($query) use ($normalizedType, $leadTimeExpr, $processTimeExpr, $rangeDate, $start, $end, $vendorName) {
+            return DB::table(function ($query) use ($normalizedType, $leadTimeExpr, $processTimeExpr, $rangeDate, $start, $end, $vendorName, $transporter) {
                 $query->from('slots as s')
                     ->where('s.status', 'completed')
                     ->whereBetween($rangeDate, [$start, $end])
