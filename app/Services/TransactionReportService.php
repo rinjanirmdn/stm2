@@ -229,12 +229,13 @@ class TransactionReportService
         $dateFrom = trim($request->query('date_from', ''));
         $dateTo = trim($request->query('date_to', ''));
 
-        // Use COALESCE to match DashboardStatsService logic so drill-downs from dashboard are perfectly aligned.
+        // Use planned_start to match DashboardStatsService truck performance logic
+        // so drill-downs from dashboard always show the exact same records.
         if ($dateFrom !== '') {
-            $query->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '>=', $dateFrom);
+            $query->whereDate('s.planned_start', '>=', $dateFrom);
         }
         if ($dateTo !== '') {
-            $query->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '<=', $dateTo);
+            $query->whereDate('s.planned_start', '<=', $dateTo);
         }
 
         // Arrival date specific filters
