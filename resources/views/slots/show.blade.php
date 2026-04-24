@@ -322,7 +322,7 @@
                                             $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
                                         @endphp
                                         <div class="st-photo-preview st-text-center">
-                                            <img src="{{ $imgUrl }}" alt="Start Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.style.display='none'">
+                                            <img src="{{ $imgUrl }}" alt="Start Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.closest('.st-photo-preview').style.display='none'">
                                             <div class="st-mt-4">
                                                 <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
@@ -342,7 +342,7 @@
                                             $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
                                         @endphp
                                         <div class="st-photo-preview st-text-center">
-                                            <img src="{{ $imgUrl }}" alt="Complete Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.style.display='none'">
+                                            <img src="{{ $imgUrl }}" alt="Complete Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.closest('.st-photo-preview').style.display='none'">
                                             <div class="st-mt-4">
                                                 <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
