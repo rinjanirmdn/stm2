@@ -142,6 +142,8 @@ class SlotController extends Controller
             ->pluck('target_duration_minutes', 'truck_type')
             ->all();
 
+        $vendors = [];
+
         $vendorTransporters = DB::table('md_vendor_transporters')
             ->where('is_active', true)
             ->orderBy('name')

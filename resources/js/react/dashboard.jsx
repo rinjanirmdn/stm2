@@ -404,8 +404,10 @@ function buildParams(currentData, overrides) {
     }
   })();
   if (preserveDisplay) params.set('display', '1');
-  const keys = ['range_start', 'range_end', 'timeline_date', 'timeline_from', 'timeline_to', 'schedule_date', 'schedule_from', 'schedule_to', 'activity_date', 'activity_warehouse', 'activity_user', 'vendor'];
+  const keys = ['range_start', 'range_end', 'timeline_date', 'timeline_from', 'timeline_to', 'schedule_date', 'schedule_from', 'schedule_to', 'activity_date', 'activity_warehouse', 'activity_user'];
   keys.forEach(k => { if (currentData[k]) params.set(k, currentData[k]); });
+  if (currentData.selected_vendor) params.set('vendor', currentData.selected_vendor);
+  if (currentData.selected_transporter) params.set('transporter', currentData.selected_transporter);
   Object.entries(overrides).forEach(([k, v]) => { if (v !== undefined && v !== null) params.set(k, v); });
   return params;
 }
