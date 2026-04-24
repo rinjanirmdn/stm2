@@ -786,7 +786,7 @@ function BottleneckSlide({ data, isDisplayOnly = false, animateCharts = true }) 
 /* ================================================================
    SLIDE 2 — KPI
    ================================================================ */
-function KPISlide({ data, isDisplayOnly = false, animateCharts = true }) {
+function KPISlide({ data, onFilter, isDisplayOnly = false, animateCharts = true }) {
   const { onTimeDir = {}, targetDir = {}, completionRate = 0, completionTotalSlots = 0, completionCompletedSlots = 0 } = data;
   const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const [kpiDir, setKpiDir] = useState('all');
@@ -852,14 +852,31 @@ function KPISlide({ data, isDisplayOnly = false, animateCharts = true }) {
     );
   }
 
+  const handleDirectionChange = (val) => {
+    setKpiDir(val);
+    if (val !== 'outbound' && data.selected_transporter) {
+      if (onFilter) onFilter({ transporter: '' });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2 flex-1">
       {!isDisplayOnly && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 font-medium">KPI</span>
-          <SelectInput value={kpiDir} onChange={setKpiDir}>
+          <SelectInput value={kpiDir} onChange={handleDirectionChange}>
             <option value="all">All Direction</option><option value="inbound">Inbound</option><option value="outbound">Outbound</option>
           </SelectInput>
+          
+          {kpiDir === 'outbound' && (
+            <SelectInput value={data.selected_transporter || ''} onChange={(val) => onFilter && onFilter({ transporter: val })}>
+              <option value="">All Transporters</option>
+              <option value="internal">Internal Car</option>
+              {toArr(data.transporters).map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </SelectInput>
+          )}
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
@@ -1497,7 +1514,7 @@ function Dashboard() {
     try {
       switch (active) {
         case 0: return <AnalyticsSlide data={data} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;
-        case 1: return <KPISlide data={data} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;
+        case 1: return <KPISlide data={data} onFilter={onFilter} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;
         case 2: return <BottleneckSlide data={data} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;
         case 3: return <TimelineSlide data={data} onFilter={onFilter} isDisplayOnly={isDisplayOnly} />;
         case 4: return <ScheduleSlide data={data} onFilter={onFilter} isDisplayOnly={isDisplayOnly} animateCharts={animateCharts} />;

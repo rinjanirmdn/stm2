@@ -18,7 +18,7 @@ class DashboardStatsService
         return "({$arrivalExpr} > {$thresholdExpr})";
     }
 
-    public function getDirectionByGate(string $start, string $end, ?string $vendorName = null): array
+    public function getDirectionByGate(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
 
@@ -31,6 +31,13 @@ class DashboardStatsService
             ->whereBetween($rangeDate, [$start, $end])
             ->where('s.status', '!=', 'cancelled')
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->select([
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
@@ -86,7 +93,7 @@ class DashboardStatsService
         return $out;
     }
 
-    public function getOnTimeGateStats(string $start, string $end, ?string $vendorName = null): array
+    public function getOnTimeGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
@@ -101,6 +108,13 @@ class DashboardStatsService
             ->where('s.status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy(['s.direction', 'g.gate_number'])
             ->select([
                 's.direction',
@@ -159,7 +173,7 @@ class DashboardStatsService
         ];
     }
 
-    public function getTargetAchievementGateStats(string $start, string $end, ?string $vendorName = null): array
+    public function getTargetAchievementGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
         $rangeDate = DB::raw('DATE(s.planned_start)');
@@ -176,6 +190,13 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy(['s.direction', 'g.gate_number'])
             ->select([
                 's.direction',
@@ -234,7 +255,7 @@ class DashboardStatsService
         ];
     }
 
-    public function getCompletionGateStats(string $start, string $end, ?string $vendorName = null): array
+    public function getCompletionGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
@@ -246,6 +267,13 @@ class DashboardStatsService
             ->whereBetween($rangeDate, [$start, $end])
             ->where('s.status', '!=', 'cancelled')
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy(['s.direction', 'g.gate_number'])
             ->select([
                 's.direction',
@@ -308,7 +336,7 @@ class DashboardStatsService
      * Get range statistics for dashboard
      * Optimized: Single query instead of 10 separate queries
      */
-    public function getRangeStats(string $start, string $end, ?string $vendorName = null): array
+    public function getRangeStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $rangeDate = DB::raw('DATE(COALESCE(actual_start, arrival_time, planned_start))');
 
@@ -326,6 +354,13 @@ class DashboardStatsService
         $stats = DB::table('slots')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('transporter_type', 'internal');
+                } else {
+                    $q->where('vendor_transporter_id', $transporter);
+                }
+            })
             ->selectRaw("
                 COUNT(*) AS total_all,
                 SUM(CASE WHEN status != 'cancelled' THEN 1 ELSE 0 END) AS total,
@@ -360,7 +395,7 @@ class DashboardStatsService
      * Get on-time statistics by direction
      * Optimized: Single query with aggregation
      */
-    public function getOnTimeStats(string $start, string $end, ?string $vendorName = null): array
+    public function getOnTimeStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $rangeDate = DB::raw('DATE(planned_start)');
 
@@ -372,6 +407,13 @@ class DashboardStatsService
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('transporter_type', 'internal');
+                } else {
+                    $q->where('vendor_transporter_id', $transporter);
+                }
+            })
             ->selectRaw("
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_all,
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_all,
@@ -401,7 +443,7 @@ class DashboardStatsService
     /**
      * Get target achievement statistics
      */
-    public function getTargetAchievementStats(string $start, string $end, ?string $vendorName = null): array
+    public function getTargetAchievementStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
         $rangeDate = DB::raw('DATE(s.planned_start)');
@@ -414,6 +456,13 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->whereRaw("{$exprActual} <= td.target_duration_minutes + 15")
             ->count();
 
@@ -425,6 +474,13 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->whereRaw("{$exprActual} > td.target_duration_minutes + 15")
             ->count();
 
@@ -442,6 +498,13 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy('s.direction')
             ->select([
                 's.direction',
@@ -465,13 +528,20 @@ class DashboardStatsService
     /**
      * Get completion statistics by warehouse and direction
      */
-    public function getCompletionStats(string $start, string $end, ?string $vendorName = null): array
+    public function getCompletionStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $completionRows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->whereBetween(DB::raw('DATE(s.planned_start)'), [$start, $end])
             ->where('s.status', '!=', 'cancelled')
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy(['s.direction', 'w.wh_code'])
             ->select([
                 's.direction',
@@ -506,7 +576,7 @@ class DashboardStatsService
     /**
      * Get target achievement by segment (warehouse + direction)
      */
-    public function getTargetSegmentStats(string $start, string $end, ?string $vendorName = null): array
+    public function getTargetSegmentStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
         $rangeDate = DB::raw('DATE(s.planned_start)');
@@ -520,6 +590,13 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy(['s.direction', 'w.wh_code'])
             ->orderBy('w.wh_code')
             ->orderBy('s.direction')
@@ -562,7 +639,7 @@ class DashboardStatsService
     /**
      * Get trend data for completed slots per day
      */
-    public function getTrendData(string $start, string $end, ?string $vendorName = null): array
+    public function getTrendData(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $trendDays = [];
         $trendCounts = [];
@@ -574,6 +651,13 @@ class DashboardStatsService
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('transporter_type', 'internal');
+                } else {
+                    $q->where('vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy($rangeDate)
             ->orderBy($rangeDate, 'asc')
             ->select([
@@ -591,6 +675,13 @@ class DashboardStatsService
             ->where('status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('transporter_type', 'internal');
+                } else {
+                    $q->where('vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy($rangeDate)
             ->groupBy('direction')
             ->orderBy($rangeDate, 'asc')
@@ -665,7 +756,7 @@ class DashboardStatsService
     /**
      * Get average lead and processing times
      */
-    public function getAverageTimes(string $start, string $end, ?string $vendorName = null): array
+    public function getAverageTimes(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $avgLeadMinutes = null;
         $avgProcessMinutes = null;
@@ -679,6 +770,13 @@ class DashboardStatsService
                 ->whereNotNull('s.actual_finish')
                 ->whereBetween($rangeDate, [$start, $end])
                 ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
                 ->avg(DB::raw($this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish')));
 
             $avgProcessMinutes = DB::table('slots as s')
@@ -687,6 +785,13 @@ class DashboardStatsService
                 ->whereNotNull('s.actual_finish')
                 ->whereBetween($rangeDate, [$start, $end])
                 ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
                 ->avg(DB::raw($this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish')));
         } catch (\Throwable $e) {
             // Return null values on error
@@ -698,7 +803,7 @@ class DashboardStatsService
         ];
     }
 
-    public function getOnTimeWarehouseStats(string $start, string $end, ?string $vendorName = null): array
+    public function getOnTimeWarehouseStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
@@ -710,6 +815,13 @@ class DashboardStatsService
             ->where('s.status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy(['s.direction', 'w.wh_code'])
             ->select([
                 's.direction',
@@ -741,7 +853,7 @@ class DashboardStatsService
         ];
     }
 
-    public function getTargetAchievementWarehouseStats(string $start, string $end, ?string $vendorName = null): array
+    public function getTargetAchievementWarehouseStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
         $rangeDate = DB::raw('DATE(s.planned_start)');
@@ -755,6 +867,13 @@ class DashboardStatsService
             ->whereNotNull('s.actual_start')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->groupBy(['s.direction', 'w.wh_code'])
             ->select([
                 's.direction',
@@ -797,7 +916,7 @@ class DashboardStatsService
     /**
      * Get activity statistics
      */
-    public function getActivityStats(string $date, int $warehouseId = 0, int $userId = 0, ?string $vendorName = null): array
+    public function getActivityStats(string $date, int $warehouseId = 0, int $userId = 0, ?string $vendorName = null, ?string $transporter = null): array
     {
         $activityQ = DB::table('activity_logs as al')
             ->leftJoin('slots as s', 'al.slot_id', '=', 's.id')
@@ -839,7 +958,7 @@ class DashboardStatsService
     /**
      * Get average lead and processing times grouped by truck type
      */
-    public function getAverageTimesByTruckType(string $start, string $end, ?string $vendorName = null): array
+    public function getAverageTimesByTruckType(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
@@ -878,6 +997,13 @@ class DashboardStatsService
                     ->where('s.status', 'completed')
                     ->whereBetween($rangeDate, [$start, $end])
                     ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
                     ->select([
                         DB::raw("({$normalizedType}) as truck_type"),
                         DB::raw("({$leadTimeExpr}) as lead_min"),

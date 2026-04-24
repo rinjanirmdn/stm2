@@ -167,3 +167,15 @@ Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->g
     Route::post('/{id}/delete', [MdBpController::class, 'destroy'])->whereNumber('id')->name('destroy');
     Route::get('/ajax/search', [MdBpController::class, 'ajaxSearch'])->name('ajax.search');
 });
+
+// -----------------------------------------------------------------------------
+// Master Data: Vendor Transporters
+// -----------------------------------------------------------------------------
+Route::prefix('master/transporters')->name('master.transporters.')->middleware('permission:slots.create')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Master\VendorTransporterController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\Master\VendorTransporterController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\Master\VendorTransporterController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [\App\Http\Controllers\Master\VendorTransporterController::class, 'edit'])->whereNumber('id')->name('edit');
+    Route::post('/{id}/edit', [\App\Http\Controllers\Master\VendorTransporterController::class, 'update'])->whereNumber('id')->name('update');
+    Route::post('/{id}/delete', [\App\Http\Controllers\Master\VendorTransporterController::class, 'destroy'])->whereNumber('id')->name('destroy');
+});

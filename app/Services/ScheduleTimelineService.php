@@ -16,7 +16,7 @@ class ScheduleTimelineService
     /**
      * Get schedule data for a specific date
      */
-    public function getSchedule(string $date, string $from = '', string $to = '', ?string $vendorName = null): array
+    public function getSchedule(string $date, string $from = '', string $to = '', ?string $vendorName = null, ?string $transporter = null): array
     {
         $scheduleQ = $this->buildScheduleQuery($date, $vendorName);
 
@@ -49,7 +49,7 @@ class ScheduleTimelineService
     /**
      * Get timeline blocks for visualization
      */
-    public function getTimelineBlocks(string $date, ?string $vendorName = null): array
+    public function getTimelineBlocks(string $date, ?string $vendorName = null, ?string $transporter = null): array
     {
         $timelineRows = $this->buildTimelineQuery($date, $vendorName);
         $timelineBlocksByGate = [];
@@ -380,6 +380,13 @@ class ScheduleTimelineService
             ->whereNotNull('s.id')
             ->where('s.id', '>', 0)
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->select([
                 's.id',
                 's.status',
@@ -419,6 +426,13 @@ class ScheduleTimelineService
             ->whereNotNull('s.id')
             ->where('s.id', '>', 0)
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
+            ->when($transporter, function($q) use ($transporter) {
+                if ($transporter === 'internal') {
+                    $q->where('s.transporter_type', 'internal');
+                } else {
+                    $q->where('s.vendor_transporter_id', $transporter);
+                }
+            })
             ->select([
                 's.id',
                 's.direction',

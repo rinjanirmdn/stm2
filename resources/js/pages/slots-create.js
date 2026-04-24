@@ -335,8 +335,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function onDirectionChanged() {
-        if (vendorSearchAutoFill) return;
         var dir = directionSelect ? (directionSelect.value || '') : '';
+        
+        var driverContainer = document.getElementById('driver_number_container');
+        var vendorTransporterContainer = document.getElementById('vendor_transporter_container');
+        
+        if (driverContainer && vendorTransporterContainer) {
+            if (dir === 'outbound') {
+                driverContainer.classList.add('st-hidden');
+                vendorTransporterContainer.classList.remove('st-hidden');
+            } else {
+                driverContainer.classList.remove('st-hidden');
+                vendorTransporterContainer.classList.add('st-hidden');
+            }
+        }
+        
+        if (vendorSearchAutoFill) return;
         if (vendorSelect) vendorSelect.value = '';
         if (vendorSearch) vendorSearch.value = '';
         clearVendorSuggestions();
@@ -350,6 +364,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
         vendorSearch.disabled = false;
         vendorSearch.placeholder = 'Search Vendor...';
+    }
+
+    var useVendorTransporterCb = document.getElementById('use_vendor_transporter');
+    var vendorTransporterSelectContainer = document.getElementById('vendor_transporter_select_container');
+    if (useVendorTransporterCb && vendorTransporterSelectContainer) {
+        useVendorTransporterCb.addEventListener('change', function() {
+            if (this.checked) {
+                vendorTransporterSelectContainer.classList.remove('st-hidden');
+            } else {
+                vendorTransporterSelectContainer.classList.add('st-hidden');
+            }
+        });
     }
 
     function syncWarehouseFromGate() {
