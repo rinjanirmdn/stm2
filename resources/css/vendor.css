@@ -4615,11 +4615,13 @@
     .vendor-page--bookings-show .vb-table td {
         overflow-wrap: anywhere;
         word-break: break-word;
+        text-align: left !important;
     }
 
     .vendor-page--bookings-show .vb-table tr {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
         padding: 10px 0;
         border-bottom: 1px solid #eef2f7;
     }
@@ -4630,13 +4632,15 @@
 
     .vendor-page--bookings-show .vb-table td {
         padding: 0;
+        width: 100%;
     }
 
     .vendor-page--bookings-show .vb-table__label {
-        width: auto;
+        width: 100%;
         font-size: 12px;
         font-weight: 600;
         margin-bottom: 4px;
+        color: #64748b;
     }
 
     .vendor-page--bookings-show .vb-actions__row {
