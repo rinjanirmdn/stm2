@@ -140,6 +140,7 @@ trait SlotHelperTrait
                 if ($row) {
                     $photos[] = (object) ['id' => $row->id, 'filename' => $row->filename];
                 }
+
                 // Skip if ID doesn't match slot+phase
                 continue;
             }
