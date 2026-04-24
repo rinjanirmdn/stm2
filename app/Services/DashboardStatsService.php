@@ -20,7 +20,7 @@ class DashboardStatsService
 
     public function getDirectionByGate(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
+        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
 
         $rows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -95,7 +95,7 @@ class DashboardStatsService
 
     public function getOnTimeGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
 
         $arrivalLateExpr = $this->getArrivalLateExpression('s.planned_start', 's.arrival_time');
         $lateCaseExpr = "CASE WHEN s.slot_type = 'planned' AND s.arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (s.is_late = true) END";
@@ -257,7 +257,7 @@ class DashboardStatsService
 
     public function getCompletionGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_gates as g', function ($join) {
@@ -338,7 +338,7 @@ class DashboardStatsService
      */
     public function getRangeStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(actual_start, arrival_time, planned_start))');
+        $rangeDate = DB::raw('DATE(COALESCE(actual_start, planned_start, arrival_time))');
 
         // Get pending count from booking_requests
         $pendingCount = DB::table('booking_requests')
@@ -960,35 +960,14 @@ class DashboardStatsService
      */
     public function getAverageTimesByTruckType(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.planned_start, s.arrival_time))');
 
-        $leadTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
+        $leadTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('COALESCE(s.arrival_time, s.actual_start)', 's.actual_finish');
         $processTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
 
-        // Normalize truck type names (handle common typos and case sensitivity)
-        $normalizedType = "CASE
-            WHEN s.truck_type LIKE '%C%ntainer 40ft (L%ose)%' OR s.truck_type LIKE '%C%ntainer 40ft (L%ouse)%' OR s.truck_type LIKE '%K%ntainer 40ft (L%ose)%' THEN 'Container 40ft (Loose)'
-            WHEN LOWER(s.truck_type) LIKE '%c%ntainer 40ft (p%aletize)%' OR LOWER(s.truck_type) LIKE '%k%ntainer 40ft (p%aletize)%' THEN 'Container 40ft (Paletize)'
-            WHEN s.truck_type LIKE '%C%ntainer 20ft (L%ose)%' OR s.truck_type LIKE '%C%ntainer 20ft (L%ouse)%' OR s.truck_type LIKE '%K%ntainer 20ft (L%ose)%' THEN 'Container 20ft (Loose)'
-            WHEN LOWER(s.truck_type) LIKE '%c%ntainer 20ft (p%aletize)%' OR LOWER(s.truck_type) LIKE '%k%ntainer 20ft (p%aletize)%' THEN 'Container 20ft (Paletize)'
-            WHEN s.truck_type LIKE '%Wingbox (L%ose)%' OR s.truck_type LIKE '%Wingbox (L%ouse)%' THEN 'Wingbox (Loose)'
-            WHEN LOWER(s.truck_type) LIKE '%wingbox (p%aletize)%' THEN 'Wingbox (Paletize)'
-            WHEN LOWER(s.truck_type) LIKE '%fuso%' THEN 'Fuso'
-            WHEN LOWER(s.truck_type) LIKE '%cdd%' OR LOWER(s.truck_type) LIKE '%cde%' THEN 'CDD/CDE'
-            ELSE NULL
-        END";
-
-        $orderExpr = "CASE truck_type
-            WHEN 'Container 40ft (Loose)' THEN 1
-            WHEN 'Container 40ft (Paletize)' THEN 2
-            WHEN 'Container 20ft (Loose)' THEN 3
-            WHEN 'Container 20ft (Paletize)' THEN 4
-            WHEN 'Wingbox (Loose)' THEN 5
-            WHEN 'Wingbox (Paletize)' THEN 6
-            WHEN 'Fuso' THEN 7
-            WHEN 'CDD/CDE' THEN 8
-            ELSE 9
-        END";
+        // Normalize truck type names using shared TruckTypeService (single source of truth)
+        $normalizedType = TruckTypeService::normalizeExpression('s.truck_type', 'NULL');
+        $orderExpr = TruckTypeService::orderExpression('truck_type');
 
         try {
             // Use subquery to make grouping and ordering cleaner across different DB drivers
