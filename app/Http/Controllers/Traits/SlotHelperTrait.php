@@ -94,10 +94,10 @@ trait SlotHelperTrait
 
             // Fallback: if no DB photos found, check legacy path columns
             if (empty($startPhotos) && ! empty($slot->start_photo_path)) {
-                $startPhotos = $this->resolvePhotoPathColumn($slot->start_photo_path);
+                $startPhotos = $this->resolvePhotoPathColumn($slot->start_photo_path, $slotId, 'start');
             }
             if (empty($completePhotos) && ! empty($slot->complete_photo_path)) {
-                $completePhotos = $this->resolvePhotoPathColumn($slot->complete_photo_path);
+                $completePhotos = $this->resolvePhotoPathColumn($slot->complete_photo_path, $slotId, 'complete');
             }
 
             $slot->start_photos = ! empty($startPhotos) ? $startPhotos : null;
@@ -117,7 +117,7 @@ trait SlotHelperTrait
      *
      * @return array Array of photo objects with either 'id' or 'legacy_path'
      */
-    private function resolvePhotoPathColumn(mixed $value): array
+    private function resolvePhotoPathColumn(mixed $value, int $slotId, string $phase): array
     {
         $items = $this->normalizePhotoPaths($value);
         if (! $items) {
@@ -130,13 +130,18 @@ trait SlotHelperTrait
 
             // If it's purely numeric, it might be a DB photo ID
             if (ctype_digit($item)) {
-                $exists = DB::table('slot_photos')->where('id', (int) $item)->exists();
-                if ($exists) {
-                    $row = DB::table('slot_photos')->where('id', (int) $item)->select(['id', 'filename'])->first();
+                // Only accept if this photo belongs to this slot AND correct phase
+                $row = DB::table('slot_photos')
+                    ->where('id', (int) $item)
+                    ->where('slot_id', $slotId)
+                    ->where('phase', $phase)
+                    ->select(['id', 'filename'])
+                    ->first();
+                if ($row) {
                     $photos[] = (object) ['id' => $row->id, 'filename' => $row->filename];
                 }
 
-                // If ID doesn't exist in DB, skip it (stale reference)
+                // Skip if ID doesn't match slot+phase
                 continue;
             }
 
