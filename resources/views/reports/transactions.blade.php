@@ -93,6 +93,9 @@
                         <input type="hidden" name="sort[]" value="{{ $s }}">
                         <input type="hidden" name="dir[]" value="{{ $d }}">
                     @endforeach
+                    @foreach ($truckTypeFilter ?? [] as $t)
+                        <input type="hidden" name="truck_type[]" value="{{ $t }}">
+                    @endforeach
                     <div class="st-table-wrapper st-table-wrapper--minh-400 st-flex-1 st-maxh-none st-minh-0">
                         <table class="st-table">
                             <thead>

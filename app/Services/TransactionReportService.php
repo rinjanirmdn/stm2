@@ -229,18 +229,12 @@ class TransactionReportService
         $dateFrom = trim($request->query('date_from', ''));
         $dateTo = trim($request->query('date_to', ''));
 
-        // Use COALESCE to include canceled transactions without actual_arrival
+        // Use COALESCE to match DashboardStatsService logic so drill-downs from dashboard are perfectly aligned.
         if ($dateFrom !== '') {
-            $query->where(function ($q) use ($dateFrom) {
-                $q->whereDate('s.arrival_time', '>=', $dateFrom)
-                    ->orWhereDate('s.created_at', '>=', $dateFrom);
-            });
+            $query->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '>=', $dateFrom);
         }
         if ($dateTo !== '') {
-            $query->where(function ($q) use ($dateTo) {
-                $q->whereDate('s.arrival_time', '<=', $dateTo)
-                    ->orWhereDate('s.created_at', '<=', $dateTo);
-            });
+            $query->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '<=', $dateTo);
         }
 
         // Arrival date specific filters
@@ -296,6 +290,13 @@ class TransactionReportService
         $gateValues = array_values(array_filter($gateArray, fn ($v) => (string) $v !== ''));
         if (! empty($gateValues)) {
             $query->whereIn('g.gate_number', $gateValues);
+        }
+
+        $truckTypeArray = (array) $request->query('truck_type', []);
+        $truckTypeValues = array_values(array_filter($truckTypeArray, fn ($v) => (string) $v !== ''));
+        if (! empty($truckTypeValues)) {
+            $normalizedType = TruckTypeService::normalizeExpression('s.truck_type', 's.truck_type');
+            $query->whereIn(DB::raw("({$normalizedType})"), $truckTypeValues);
         }
     }
 
