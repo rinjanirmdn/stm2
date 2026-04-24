@@ -144,12 +144,18 @@ class SlotController extends Controller
 
         $vendors = [];
 
+        $vendorTransporters = DB::table('md_vendor_transporters')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         return view('slots.create', [
             'warehouses' => $warehouses,
             'gates' => $gates,
             'vendors' => $vendors,
             'truckTypes' => $truckTypes,
             'truckTypeDurations' => $truckTypeDurations,
+            'vendorTransporters' => $vendorTransporters,
         ]);
     }
 
@@ -165,6 +171,8 @@ class SlotController extends Controller
             'vehicle_number_snap' => 'nullable|string|max:50',
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
+            'use_vendor_transporter' => 'nullable|boolean',
+            'vendor_transporter_id' => 'nullable|exists:md_vendor_transporters,id',
             'destination' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
         ]);
@@ -181,6 +189,23 @@ class SlotController extends Controller
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $destination = trim((string) $request->input('destination', ''));
         $notes = trim((string) $request->input('notes', ''));
+
+        $useVendorTransporter = (bool) $request->input('use_vendor_transporter', false);
+        $vendorTransporterId = $request->input('vendor_transporter_id') !== null && (string) $request->input('vendor_transporter_id') !== '' ? (int) $request->input('vendor_transporter_id') : null;
+
+        $transporterType = null;
+        if ($direction === 'outbound') {
+            $transporterType = $useVendorTransporter ? 'vendor' : 'internal';
+            if ($transporterType === 'vendor' && ! $vendorTransporterId) {
+                return back()->withInput()->withErrors(['vendor_transporter_id' => 'Vendor Transporter must be selected if checked']);
+            }
+            if ($transporterType === 'internal') {
+                $vendorTransporterId = null;
+            }
+            $driverNumber = null; // Ignore driver number for outbound
+        } else {
+            $vendorTransporterId = null;
+        }
 
         if (! $plannedGateId) {
             return back()->withInput()->with('error', 'Gate is required');
@@ -251,7 +276,7 @@ class SlotController extends Controller
         }
 
         $slotId = 0;
-        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $poDetail) {
+        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $poDetail, $transporterType, $vendorTransporterId) {
             $now = date('Y-m-d H:i:s');
             $ticket = $this->slotService->generateTicketNumber($warehouseId, $plannedGateId);
             $slotId = (int) DB::table('slots')->insertGetId([
@@ -261,6 +286,8 @@ class SlotController extends Controller
                 'vendor_code' => $poDetail['vendor_code'] ?? null,
                 'vendor_name' => $poDetail['vendor_name'] ?? null,
                 'vendor_type' => $poDetail['vendor_type'] ?? null,
+                'transporter_type' => $transporterType,
+                'vendor_transporter_id' => $vendorTransporterId,
                 'planned_gate_id' => $plannedGateId,
                 'planned_start' => $plannedStart,
                 'planned_duration' => $plannedDurationMinutes,

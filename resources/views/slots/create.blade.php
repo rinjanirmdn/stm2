@@ -173,19 +173,37 @@
             </div>
 
             <div class="st-form-row st-form-field--mb-12 st-form-row--grid-3 st-form-row--align-end">
-                <div class="st-form-field">
+                <div class="st-form-field {{ old('direction') === 'outbound' ? '' : 'st-hidden' }}" id="destination_container">
                     <label class="st-label">Destination <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="destination" class="st-input{{ $errors->has('destination') ? ' st-input--invalid' : '' }}" value="{{ old('destination') }}" placeholder="e.g., Surabaya">
                     @error('destination')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="st-form-field">
+                <div class="st-form-field" id="driver_number_container">
                     <label class="st-label">Driver Number <span class="st-text--optional">(optional)</span></label>
                     <input type="text" name="driver_number" class="st-input{{ $errors->has('driver_number') ? ' st-input--invalid' : '' }}" value="{{ old('driver_number') }}" placeholder="e.g., 08xxxxxxxxxx">
                     @error('driver_number')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
+                </div>
+
+                <div class="st-form-field st-hidden" id="vendor_transporter_container">
+                    <label class="st-label st-flex st-align-center st-gap-8 st-cursor-pointer" style="display:inline-flex;">
+                        <input type="checkbox" name="use_vendor_transporter" id="use_vendor_transporter" value="1" {{ old('use_vendor_transporter') ? 'checked' : '' }}>
+                        <span class="st-font-semibold">Use Vendor Transporter</span>
+                    </label>
+                    <div id="vendor_transporter_select_container" class="st-mt-8 {{ old('use_vendor_transporter') ? '' : 'st-hidden' }}">
+                        <select name="vendor_transporter_id" id="vendor_transporter_id" class="st-select{{ $errors->has('vendor_transporter_id') ? ' st-input--invalid' : '' }}">
+                            <option value="">-- Select Vendor Transporter --</option>
+                            @foreach ($vendorTransporters ?? [] as $vt)
+                                <option value="{{ $vt->id }}" {{ (string)old('vendor_transporter_id') === (string)$vt->id ? 'selected' : '' }}>{{ $vt->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('vendor_transporter_id')
+                            <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
                 <div class="st-form-field">
                     <div class="st-form-row--grid-risk">

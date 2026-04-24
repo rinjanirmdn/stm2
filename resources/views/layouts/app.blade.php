@@ -137,6 +137,10 @@
                 <i class="fas fa-handshake"></i>
                 <span>Business Partner</span>
             </a>
+            <a href="{{ route('master.transporters.index') }}" title="Vendor Transporter" class="st-sidebar__link{{ request()->routeIs('master.transporters.*') ? ' st-sidebar__link--active' : '' }}">
+                <i class="fas fa-truck"></i>
+                <span>Vendor Transporter</span>
+            </a>
             @endcan
 
             @can('users.index')
