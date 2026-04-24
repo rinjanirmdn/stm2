@@ -18,7 +18,7 @@ class ScheduleTimelineService
      */
     public function getSchedule(string $date, string $from = '', string $to = '', ?string $vendorName = null, ?string $transporter = null): array
     {
-        $scheduleQ = $this->buildScheduleQuery($date, $vendorName);
+        $scheduleQ = $this->buildScheduleQuery($date, $vendorName, $transporter);
 
         $timeExpr = 'TIME(COALESCE(s.actual_start, s.planned_start))';
         if (DB::getDriverName() === 'pgsql') {
@@ -51,7 +51,7 @@ class ScheduleTimelineService
      */
     public function getTimelineBlocks(string $date, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $timelineRows = $this->buildTimelineQuery($date, $vendorName);
+        $timelineRows = $this->buildTimelineQuery($date, $vendorName, $transporter);
         $timelineBlocksByGate = [];
 
         foreach ($timelineRows as $r) {
@@ -360,7 +360,7 @@ class ScheduleTimelineService
     /**
      * Build base schedule query
      */
-    private function buildScheduleQuery(string $date, ?string $vendorName = null)
+    private function buildScheduleQuery(string $date, ?string $vendorName = null, ?string $transporter = null)
     {
         return DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
@@ -406,7 +406,7 @@ class ScheduleTimelineService
     /**
      * Build timeline query
      */
-    private function buildTimelineQuery(string $date, ?string $vendorName = null)
+    private function buildTimelineQuery(string $date, ?string $vendorName = null, ?string $transporter = null)
     {
         return DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
