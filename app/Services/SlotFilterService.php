@@ -217,11 +217,12 @@ class SlotFilterService
         $dateFrom = trim($request->query('date_from', ''));
         $dateTo = trim($request->query('date_to', ''));
 
-        if ($dateFrom !== '') {
-            $query->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '>=', $dateFrom);
-        }
-        if ($dateTo !== '') {
-            $query->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start, s.arrival_time)'), '<=', $dateTo);
+        if ($dateFrom !== '' && $dateTo !== '') {
+            $query->whereBetween('s.planned_start', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59']);
+        } elseif ($dateFrom !== '') {
+            $query->whereDate('s.planned_start', '>=', $dateFrom);
+        } elseif ($dateTo !== '') {
+            $query->whereDate('s.planned_start', '<=', $dateTo);
         }
     }
 
