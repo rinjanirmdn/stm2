@@ -1,59 +1,71 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="public/img/e-Docking%20Control%20System.png" alt="e-Docking Control System Logo" width="400">
 </p>
 
-## About Laravel
+# e-Docking Control System (e-DCS)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Overview
+e-Docking Control System (e-DCS) is a web-based application designed to streamline, monitor, and manage warehouse docking activities. It provides an efficient way to handle incoming and outgoing shipments, manage vendor bookings, allocate gates, and monitor the overall lifecycle of a slot or booking request.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Key Features
+- **Vendor Booking Management**: Allow vendors to request and schedule docking slots.
+- **Gate Allocation**: Efficiently assign warehouse gates to scheduled trucks.
+- **Live Status Monitoring**: Real-time tracking of slot statuses (Scheduled, Arrived, In Progress, Completed).
+- **Photo Documentation**: Capture start and completion photos directly in the system via a robust backend storage.
+- **Reporting & Dashboards**: Comprehensive analytics and operational dashboards for Section Heads and Administrators.
+- **Conflict Management**: Detect overlapping schedules and provide early warnings for lane congestion.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Technology Stack
+- **Framework**: Laravel 11
+- **Language**: PHP 8.3
+- **Database**: PostgreSQL / MySQL
+- **Frontend**: Blade Templates, Vanilla JS, Custom CSS (e-DCS UI Kit)
 
-## Learning Laravel
+## Installation & Setup
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+1. Clone the repository:
+   ```bash
+   git clone <repository_url>
+   cd stm2
+   ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+2. Install PHP dependencies:
+   ```bash
+   composer install
+   ```
 
-## Laravel Sponsors
+3. Setup environment configuration:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+4. Configure your `.env` file with proper database credentials and ensure `APP_URL` is set correctly.
 
-### Premium Partners
+5. Run database migrations and seeders:
+   ```bash
+   php artisan migrate --seed
+   ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+6. Link the storage directory (critical for photo documentation):
+   ```bash
+   php artisan storage:link
+   ```
 
-## Contributing
+7. Start the development server:
+   ```bash
+   php artisan serve
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Photo Documentation Flow
+This system is equipped with cross-device photo capture capabilities. Photos taken during the Start and Complete processes are securely saved to the database (via `SlotPhotoController`) and accessed dynamically to avoid cross-domain symlink issues.
 
-## Code of Conduct
+## Roles & Permissions
+- **Super Admin & Admin**: Full access to all configurations, master data, and manual overrides.
+- **Section Head**: Can view dashboards, approve backdates, and receive critical notifications.
+- **Security / Gate Checker**: Handles vehicle arrival logs and ticket scanning.
+- **Warehouse Operator**: Records start and complete processes along with photo proofs.
+- **Vendor**: Books slots based on PO/SO availability.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+*Built for efficient warehouse logistics and gate control.*
