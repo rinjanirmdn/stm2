@@ -346,6 +346,7 @@ class ReportController extends Controller
             'warehouseFilter' => array_values(array_filter((array) $request->query('warehouse_id', []), fn ($v) => (string) $v !== '')),
             'gateFilter' => array_values(array_filter((array) $request->query('gate_number', []), fn ($v) => (string) $v !== '')),
             'targetStatusFilter' => array_values(array_filter((array) $request->query('target_status', []), fn ($v) => (string) $v !== '')),
+            'truckTypeFilter' => array_values(array_filter((array) $request->query('truck_type', []), fn ($v) => (string) $v !== '')),
         ];
     }
 

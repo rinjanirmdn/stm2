@@ -313,15 +313,17 @@ function Badge({ children, color = 'gray' }) {
   const c = { green: 'bg-emerald-50 text-emerald-700 border-emerald-200', red: 'bg-red-50 text-red-700 border-red-200', blue: 'bg-sky-50 text-sky-700 border-sky-200', orange: 'bg-orange-50 text-orange-700 border-orange-200', yellow: 'bg-amber-50 text-amber-700 border-amber-200', gray: 'bg-gray-50 text-gray-600 border-gray-200', purple: 'bg-purple-50 text-purple-700 border-purple-200' };
   return <span className={`inline-flex items-center px-2 py-0.5 font-semibold rounded-md border ${c[color] || c.gray}`} style={{ fontSize: 'var(--ds-tiny)' }}>{children}</span>;
 }
-function StatCard({ label, value, tip, isDisplayOnly = false }) {
+function StatCard({ label, value, tip, isDisplayOnly = false, onClick }) {
   const pad = isDisplayOnly ? 'clamp(10px, 0.95vi, 16px)' : 'var(--ds-pad)';
   const labelSize = isDisplayOnly ? 'clamp(12px, 1.05vi, 16px)' : 'var(--ds-metric-label)';
   const valueSize = isDisplayOnly ? 'clamp(24px, 2.2vi, 36px)' : 'var(--ds-metric-value)';
+  const clickable = !isDisplayOnly && typeof onClick === 'function';
   return (
-    <div className="bg-white rounded-lg border border-gray-200 text-center relative group" style={{ padding: pad }}>
+    <div className={`bg-white rounded-lg border border-gray-200 text-center relative group transition-all ${clickable ? 'cursor-pointer hover:border-sky-300 hover:shadow-md hover:bg-sky-50/30 active:scale-[0.97]' : ''}`} style={{ padding: pad }} onClick={clickable ? onClick : undefined} title={clickable ? `View ${label} data` : undefined}>
       {tip && <div className="absolute top-1 right-1 text-gray-300 group-hover:text-gray-500 cursor-help" title={tip}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg></div>}
       <div className="text-gray-500 mb-0.5" style={{ fontSize: labelSize }}>{label}</div>
       <div className="font-bold text-gray-900" style={{ fontSize: valueSize }}>{typeof value === 'number' ? value.toLocaleString() : value}</div>
+      {clickable && <div className="text-[9px] text-sky-500 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">Click to view →</div>}
     </div>
   );
 }
@@ -362,6 +364,30 @@ function FilterPill({ label, active, onClick, count }) {
 const fmtMin = (m) => { if (!m && m !== 0) return '-'; const n = parseFloat(m); if (isNaN(n)) return '-'; const h = Math.floor(n / 60); const min = Math.round(n % 60); return h > 0 ? `${h}h ${min}m` : `${min}m`; };
 /** Safely convert any value to array (handles PHP objects/collections serialized as {}) */
 const toArr = (v) => { if (Array.isArray(v)) return v; if (v && typeof v === 'object') return Object.values(v); return []; };
+
+/** Navigate to /slots or /reports/transactions with given query params for drill-down */
+function navigateToSlots(params = {}, baseUrl = null) {
+  // If status is strictly completed, redirect to reports page as requested by user
+  if (!baseUrl) {
+    if (params['status[]'] === 'completed') {
+      baseUrl = '/reports/transactions';
+    } else {
+      baseUrl = '/slots';
+    }
+  }
+
+  const url = new URL(baseUrl, window.location.origin);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') {
+      if (Array.isArray(v)) {
+        v.forEach(item => url.searchParams.append(k, item));
+      } else {
+        url.searchParams.set(k, String(v));
+      }
+    }
+  });
+  window.location.href = url.toString();
+}
 
 /* ── Design Tokens — read from CSS :root variables (single source of truth) ── */
 const _tokenCache = {};
@@ -480,6 +506,16 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
   const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const [dirGate, setDirGate] = useState('all');
   const [isMobile, setIsMobile] = useState(false);
+  const dateParams = { date_from: data.range_start || '', date_to: data.range_end || '', page_size: 'all' };
+  const statusLabelToFilter = { 
+    'Pending': { baseUrl: window.location.pathname.includes('/vendor') ? '/vendor/bookings' : '/bookings', params: { status: 'pending' } }, 
+    'Scheduled': { params: { 'status[]': 'scheduled' } }, 
+    'Waiting': { params: { 'status[]': ['waiting', 'arrived'] } }, 
+    'In Progress': { params: { 'status[]': 'in_progress' } }, 
+    'Completed': { params: { 'status[]': 'completed' } }, 
+    'Cancel': { params: { 'status[]': 'cancelled' } }, 
+    'Total': { params: {} } 
+  };
   const stats = [
     { label: 'Pending', value: pendingRange }, { label: 'Scheduled', value: scheduledRange },
     { label: 'Waiting', value: waitingRange }, { label: 'In Progress', value: activeRange },
@@ -520,11 +556,19 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
     <div className="gap-2 flex flex-col flex-1">
       {/* Stat cards - horizontal scroll on mobile, grid on md+ */}
       <div className="flex overflow-x-auto sm:grid sm:grid-cols-4 lg:grid-cols-7 gap-2 pb-1 snap-x scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {stats.map(s => (
-          <div key={s.label} className="min-w-[140px] sm:min-w-0 shrink-0 snap-start">
-            <StatCard label={s.label} value={s.value} tip={STAT_TIPS[s.label]} isDisplayOnly={isDisplayOnly} />
-          </div>
-        ))}
+        {stats.map(s => {
+          const filterConfig = statusLabelToFilter[s.label];
+          const handleClick = filterConfig !== undefined ? () => {
+            const p = { ...dateParams, ...(filterConfig.params || {}) };
+            if (data.selected_vendor) p.vendor = data.selected_vendor;
+            navigateToSlots(p, filterConfig.baseUrl || '/slots');
+          } : undefined;
+          return (
+            <div key={s.label} className="min-w-[140px] sm:min-w-0 shrink-0 snap-start">
+              <StatCard label={s.label} value={s.value} tip={STAT_TIPS[s.label]} isDisplayOnly={isDisplayOnly} onClick={handleClick} />
+            </div>
+          );
+        })}
       </div>
 
       {/* Charts row */}
@@ -614,14 +658,18 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 shrink-0">
-              <div className="flex items-center gap-2 bg-sky-50 rounded-lg px-2 py-2 border border-sky-100">
+              <div className={`flex items-center gap-2 bg-sky-50 rounded-lg px-2 py-2 border border-sky-100 transition-all ${!isDisplayOnly ? 'cursor-pointer hover:border-sky-300 hover:shadow-md active:scale-[0.97]' : ''}`}
+                onClick={!isDisplayOnly ? () => navigateToSlots({ ...dateParams, 'direction[]': 'inbound', ...(data.selected_vendor ? { vendor: data.selected_vendor } : {}) }) : undefined}
+                title={!isDisplayOnly ? 'View Inbound data' : undefined}>
                 <span className="w-2.5 h-2.5 rounded-full bg-sky-600 shrink-0"></span>
                 <div className="min-w-0">
                   <div className="text-sky-600 font-medium" style={{ fontSize: 'var(--ds-tiny)' }}>Inbound</div>
                   <div className="font-bold text-gray-800" style={{ fontSize: 'var(--ds-body)' }}>{dirData.inV}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 bg-orange-50 rounded-lg px-2 py-2 border border-orange-100">
+              <div className={`flex items-center gap-2 bg-orange-50 rounded-lg px-2 py-2 border border-orange-100 transition-all ${!isDisplayOnly ? 'cursor-pointer hover:border-orange-300 hover:shadow-md active:scale-[0.97]' : ''}`}
+                onClick={!isDisplayOnly ? () => navigateToSlots({ ...dateParams, 'direction[]': 'outbound', ...(data.selected_vendor ? { vendor: data.selected_vendor } : {}) }) : undefined}
+                title={!isDisplayOnly ? 'View Outbound data' : undefined}>
                 <span className="w-2.5 h-2.5 rounded-full bg-orange-600 shrink-0"></span>
                 <div className="min-w-0">
                   <div className="text-orange-600 font-medium" style={{ fontSize: 'var(--ds-tiny)' }}>Outbound</div>
@@ -708,8 +756,11 @@ function BottleneckSlide({ data, isDisplayOnly = false, animateCharts = true }) 
             <div className="grid grid-cols-2 gap-2 flex-1" style={{ gridAutoRows: '1fr' }}>
               {(avgTimesByTruckType || []).map((t, i) => {
                 const label = (t.truck_type || '-').replace(/^Container\s+/i, '').replace(/Wingbox/i, 'WB');
+                const clickable = !isDisplayOnly && t.total_count > 0;
                 return (
-                  <div key={i} className="border border-gray-200 rounded-lg p-2 flex flex-col">
+                  <div key={i} className={`border border-gray-200 rounded-lg p-2 flex flex-col transition-all ${clickable ? 'cursor-pointer hover:border-sky-300 hover:shadow-md hover:bg-sky-50/20 active:scale-[0.97]' : ''}`}
+                    onClick={clickable ? () => navigateToSlots({ date_from: data.range_start || '', date_to: data.range_end || '', 'truck_type[]': t.truck_type, 'status[]': 'completed', page_size: 'all', ...(data.selected_vendor ? { vendor: data.selected_vendor } : {}) }) : undefined}
+                    title={clickable ? `View ${t.truck_type} completed slots` : undefined}>
                     <div className="flex items-center justify-between mb-1 shrink-0">
                       <span className="font-semibold text-gray-700 truncate" style={{ fontSize: 'var(--ds-small)' }} title={t.truck_type}>{label}</span>
                       <span className="text-gray-400 bg-gray-100 rounded px-1 py-0.5" style={{ fontSize: 'var(--ds-tiny)' }}>{t.total_count || 0}</span>
@@ -838,8 +889,12 @@ function KPISlide({ data, onFilter, isDisplayOnly = false, animateCharts = true 
           <div className="grid grid-cols-3 w-full shrink-0" style={{ gap: 'var(--ds-gap)' }}>
             {metrics.map((m, i) => {
               const sem = kpiSemantic(i, metrics.length);
+              const isClickable = !isDisplayOnly && m[1] > 0;
+              const extraParams = m[2] || {};
               return (
-                <div key={i} className={`flex items-center gap-1.5 rounded-lg border ${kpiBgMap[sem]}`} style={{ padding: 'var(--ds-pad)' }}>
+                <div key={i} className={`flex items-center gap-1.5 rounded-lg border ${kpiBgMap[sem]} transition-all ${isClickable ? 'cursor-pointer hover:shadow-md active:scale-[0.97]' : ''}`} style={{ padding: 'var(--ds-pad)' }}
+                  onClick={isClickable ? () => navigateToSlots({ date_from: data.range_start || '', date_to: data.range_end || '', 'status[]': 'completed', page_size: 'all', ...(data.selected_vendor ? { vendor: data.selected_vendor } : {}), ...extraParams }) : undefined}
+                  title={isClickable ? `View completed slots` : undefined}>
                   <span className={`w-2 h-2 rounded-full shrink-0 ${kpiDotMap[sem]}`}></span>
                   <div className="min-w-0">
                     <div className="font-medium" style={{ fontSize: 'var(--ds-tiny)' }}>{m[0]}</div>
@@ -884,13 +939,13 @@ function KPISlide({ data, onFilter, isDisplayOnly = false, animateCharts = true 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
         <KpiCard title="On Time vs Late" pct={onTimePct} pctColor={tk('--completed')}
           chartData={[{ name: 'On Time', value: onT }, { name: 'Late', value: late }]}
-          colors={COLORS_KPI()} metrics={[['On Time', onT], ['Late', late], ['Total', otTotal]]} />
+          colors={COLORS_KPI()} metrics={[['On Time', onT, { 'late[]': 'on_time' }], ['Late', late, { 'late[]': 'late' }], ['Total', otTotal, {}]]} />
         <KpiCard title="Target Achievement" pct={targetPct} pctColor={tk('--completed')}
           chartData={[{ name: 'Achieved', value: ach }, { name: 'Not Achieved', value: notA }]}
-          colors={COLORS_KPI()} metrics={[['Achieve', ach], ['Not Achieve', notA], ['Total', tTotal]]} />
+          colors={COLORS_KPI()} metrics={[['Achieve', ach, { 'target_status[]': 'achieve' }], ['Not Achieve', notA, { 'target_status[]': 'not_achieve' }], ['Total', tTotal, {}]]} />
         <KpiCard title="Completion Rate" pct={parseFloat(completionRate || 0).toFixed(1)} pctColor={tk('--completed')}
           chartData={[{ name: 'Completed', value: +completionCompletedSlots }, { name: 'Remaining', value: Math.max(0, +completionTotalSlots - +completionCompletedSlots) }]}
-          colors={COLORS_KPI()} metrics={[['Completed', +completionCompletedSlots], ['Remaining', Math.max(0, +completionTotalSlots - +completionCompletedSlots)], ['Total', +completionTotalSlots]]} />
+          colors={COLORS_KPI()} metrics={[['Completed', +completionCompletedSlots, {}], ['Remaining', Math.max(0, +completionTotalSlots - +completionCompletedSlots), { 'status[]': ['scheduled', 'waiting', 'in_progress'] }], ['Total', +completionTotalSlots, { 'status[]': ['scheduled', 'waiting', 'in_progress', 'completed'] }]]} />
       </div>
     </div>
   );
@@ -1218,8 +1273,11 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
             <div className="grid grid-cols-3 gap-1.5 mt-2">
               {Object.entries(processStatusCounts || {}).map(([k, v]) => {
                 const c = (scMap[k] || scMap.scheduled).accent;
+                const isClickable = !isDisplayOnly && +v > 0;
                 return (
-                  <div key={k} className="text-center bg-gray-50 rounded-lg" style={{ padding: 'var(--ds-pad)', borderLeft: `3px solid ${c}` }}>
+                  <div key={k} className={`text-center bg-gray-50 rounded-lg transition-all ${isClickable ? 'cursor-pointer hover:shadow-md hover:bg-white active:scale-[0.97]' : ''}`} style={{ padding: 'var(--ds-pad)', borderLeft: `3px solid ${c}` }}
+                    onClick={isClickable ? () => setStatusFilter(k === 'in_progress' ? 'in_progress' : k) : undefined}
+                    title={isClickable ? `Filter table by ${k.replace(/_/g, ' ')}` : undefined}>
                     <div className="uppercase leading-tight break-words" style={{ fontSize: 'var(--ds-tiny)', color: c }} title={k.replace(/_/g, ' ')}>{k.replace(/_/g, ' ')}</div>
                     <div className="font-bold text-gray-800 leading-tight" style={{ fontSize: 'var(--ds-body)' }}>{v}</div>
                   </div>

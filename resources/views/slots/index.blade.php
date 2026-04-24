@@ -93,6 +93,9 @@
                     <input type="hidden" name="sort[]" value="{{ $s }}">
                     <input type="hidden" name="dir[]" value="{{ $d }}">
                 @endforeach
+                @foreach ($truckTypeFilter ?? [] as $tt)
+                    <input type="hidden" name="truck_type[]" value="{{ $tt }}">
+                @endforeach
                 <div class="st-table-wrapper st-table-wrapper--minh-400 st-flex-1 st-maxh-none st-minh-0">
                     <table class="st-table">
                         <thead>
@@ -520,12 +523,14 @@
                                     @if ($leadTimeMinutes !== null)
                                         @php
                                             $m = (int) $leadTimeMinutes;
-                                            $h = $m / 60;
+                                            $h = floor($m / 60);
+                                            $rem_m = $m % 60;
                                         @endphp
                                         <div class="st-leadtime">
-                                            {{ $m }} Min
-                                            @if ($h >= 1)
-                                                ({{ rtrim(rtrim(number_format($h, 2), '0'), '.') }} Hours)
+                                            @if ($h > 0)
+                                                {{ $h }}h {{ $rem_m }}m
+                                            @else
+                                                {{ $rem_m }}m
                                             @endif
                                             @if ($waitingMinutes !== null || $processMinutes !== null)
                                                 <div class="st-text--xs-10 st-text--muted st-mt-1 st-leading-13">
