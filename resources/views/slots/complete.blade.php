@@ -1,3 +1,4 @@
+
     <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Complete Registration</h3>
@@ -624,6 +625,7 @@
 })();
 </script>
 @endif
+
 
 @vite(['resources/js/pages/slots-complete.js'])
 
