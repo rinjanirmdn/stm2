@@ -49,7 +49,7 @@ trait SlotHelperTrait
 
     private function loadSlotDetailRow(int $slotId): ?object
     {
-        return DB::table('slots as s')
+        $slot = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
             ->leftJoin('md_users as ru', 's.requested_by', '=', 'ru.id')
             ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
@@ -72,5 +72,80 @@ trait SlotHelperTrait
                 'td.target_duration_minutes',
             ])
             ->first();
+
+        if ($slot) {
+            // Load photos from slot_photos table (new DB storage)
+            $dbPhotos = DB::table('slot_photos')
+                ->where('slot_id', $slotId)
+                ->select(['id', 'phase', 'filename'])
+                ->orderBy('id')
+                ->get();
+
+            $startPhotos = [];
+            $completePhotos = [];
+            foreach ($dbPhotos as $p) {
+                $photoObj = (object) ['id' => $p->id, 'filename' => $p->filename];
+                if ($p->phase === 'start') {
+                    $startPhotos[] = $photoObj;
+                } elseif ($p->phase === 'complete') {
+                    $completePhotos[] = $photoObj;
+                }
+            }
+
+            // Fallback: if no DB photos found, check legacy path columns
+            if (empty($startPhotos) && ! empty($slot->start_photo_path)) {
+                $legacyPaths = $this->normalizePhotoPaths($slot->start_photo_path);
+                if ($legacyPaths) {
+                    foreach ($legacyPaths as $path) {
+                        $startPhotos[] = (object) ['id' => null, 'filename' => basename($path), 'legacy_path' => $path];
+                    }
+                }
+            }
+            if (empty($completePhotos) && ! empty($slot->complete_photo_path)) {
+                $legacyPaths = $this->normalizePhotoPaths($slot->complete_photo_path);
+                if ($legacyPaths) {
+                    foreach ($legacyPaths as $path) {
+                        $completePhotos[] = (object) ['id' => null, 'filename' => basename($path), 'legacy_path' => $path];
+                    }
+                }
+            }
+
+            $slot->start_photos = ! empty($startPhotos) ? $startPhotos : null;
+            $slot->complete_photos = ! empty($completePhotos) ? $completePhotos : null;
+        }
+
+        return $slot;
+    }
+
+    /**
+     * Normalize photo path values from DB into a proper PHP array.
+     *
+     * Handles mixed formats in the database:
+     *  - null → null
+     *  - JSON array string: '["path/a.jpg","path/b.jpg"]' → ['path/a.jpg', 'path/b.jpg']
+     *  - Plain string: 'path/a.jpg' → ['path/a.jpg']
+     */
+    private function normalizePhotoPaths(mixed $value): ?array
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        $value = (string) $value;
+
+        // Try JSON decode first (handles '["path1","path2"]' format)
+        if (str_starts_with($value, '[')) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded) && ! empty($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Plain string path (legacy single-photo format)
+        return [$value];
     }
 }

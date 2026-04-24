@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SlotPhotoController;
 use Illuminate\Support\Facades\Route;
 
 // ──────────────────────────────────────────
@@ -78,6 +79,10 @@ Route::middleware('auth')->group(function () {
     // Force password change
     Route::get('/force-change-password', [ForcePasswordChangeController::class, 'show'])->name('password.force-change');
     Route::post('/force-change-password', [ForcePasswordChangeController::class, 'store'])->name('password.force-change.store');
+
+    // Slot Photos (served from database)
+    Route::get('/slot-photos/{id}', [SlotPhotoController::class, 'show'])->name('slot-photos.show')->where('id', '[0-9]+');
+    Route::get('/slot-photos/{id}/download', [SlotPhotoController::class, 'download'])->name('slot-photos.download')->where('id', '[0-9]+');
 
     // ── Modular route files ──
     require __DIR__.'/slots.php';
