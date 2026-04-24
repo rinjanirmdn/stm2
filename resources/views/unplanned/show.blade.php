@@ -10,7 +10,8 @@
         $hasArrival = !empty($slot->arrival_time);
 
         $fmt = function ($v) {
-            if (empty($v)) return '-';
+            if (empty($v))
+                return '-';
             try {
                 return \Carbon\Carbon::parse((string) $v)->format('d-m-Y H:i');
             } catch (\Throwable $e) {
@@ -19,7 +20,8 @@
         };
 
         $minutesLabel = function ($minutes) {
-            if ($minutes === null) return '-';
+            if ($minutes === null)
+                return '-';
             $m = (int) $minutes;
             $h = $m / 60;
             $out = $m . ' Min';
@@ -36,7 +38,7 @@
         $actualGateLabel = app(\App\Services\SlotService::class)->getGateDisplayName((string) ($slot->warehouse_code ?? ''), (string) ($slot->actual_gate_number ?? ''));
 
         $lateDisplay = null;
-        if (! $isUnplanned) {
+        if (!$isUnplanned) {
             if (!empty($slot->arrival_time)) {
                 try {
                     $p = new \DateTime((string) $slot->planned_start);
@@ -201,9 +203,12 @@
                                             $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
                                         @endphp
                                         <div class="st-photo-preview st-text-center">
-                                            <img src="{{ $imgUrl }}" alt="Start Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.style.display='none'">
+                                            <img src="{{ $imgUrl }}" alt="Start Photo {{ $idx + 1 }}" loading="lazy"
+                                                style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;"
+                                                onclick="openPhotoModal(this.src)" onerror="this.style.display='none'">
                                             <div class="st-mt-4">
-                                                <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg"
+                                                    class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -214,16 +219,20 @@
 
                             @if(!empty($slot->complete_photos))
                                 <div class="st-flex st-gap-8 st-flex-wrap">
-                                    <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Complete Process</div>
+                                    <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Complete Process
+                                    </div>
                                     @foreach($slot->complete_photos as $idx => $photo)
                                         @php
                                             $imgUrl = !empty($photo->id) ? route('slot-photos.show', $photo->id) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
                                             $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
                                         @endphp
                                         <div class="st-photo-preview st-text-center">
-                                            <img src="{{ $imgUrl }}" alt="Complete Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.style.display='none'">
+                                            <img src="{{ $imgUrl }}" alt="Complete Photo {{ $idx + 1 }}" loading="lazy"
+                                                style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;"
+                                                onclick="openPhotoModal(this.src)" onerror="this.style.display='none'">
                                             <div class="st-mt-4">
-                                                <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg"
+                                                    class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -241,13 +250,14 @@
 
 
 
-    @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
+    @if (!$isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
         @can('slots.ticket')
-        <div class="st-form-actions st-justify-end st-mb-12">
-            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
-                Print Ticket
-            </a>
-        </div>
+            <div class="st-form-actions st-justify-end st-mb-12">
+                <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary"
+                    onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
+                    Print Ticket
+                </a>
+            </div>
         @endcan
     @endif
 
@@ -289,17 +299,22 @@
 
     <div class="st-form-actions st-flex-wrap st-mb-12">
         @if ($status === 'waiting')
-            <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start Unplanned</a>
+            <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start
+                Unplanned</a>
         @elseif ($status === 'in_progress')
-            <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete Unplanned</a>
+            <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete
+                Unplanned</a>
         @endif
 
         <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Back</a>
     </div>
 
     <!-- Photo Modal -->
-    <div id="photo-zoom-dialog" style="position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);padding:16px;" onclick="this.style.display='none'">
-        <img id="zoomed-photo" src="" alt="Zoomed Photo" style="max-width:95vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);object-fit:contain;">
+    <div id="photo-zoom-dialog"
+        style="position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);padding:16px;"
+        onclick="this.style.display='none'">
+        <img id="zoomed-photo" src="" alt="Zoomed Photo"
+            style="max-width:95vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);object-fit:contain;">
     </div>
     <script>
         function openPhotoModal(src) {
