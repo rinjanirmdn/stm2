@@ -375,8 +375,48 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ─── Direction / Vendor Transporter toggles ────────────────────────────────
+    function onDirectionChanged() {
+        var dir = directionSelect ? (directionSelect.value || '') : '';
+        
+        var driverContainer = document.getElementById('trial_driver_number_container');
+        var vendorTransporterContainer = document.getElementById('trial_vendor_transporter_container');
+        var destinationContainer = document.getElementById('trial_destination_container');
+        
+        if (driverContainer && vendorTransporterContainer) {
+            if (dir === 'outbound') {
+                driverContainer.classList.add('st-hidden');
+                vendorTransporterContainer.classList.remove('st-hidden');
+                if (destinationContainer) destinationContainer.classList.remove('st-hidden');
+            } else {
+                driverContainer.classList.remove('st-hidden');
+                vendorTransporterContainer.classList.add('st-hidden');
+                if (destinationContainer) destinationContainer.classList.add('st-hidden');
+            }
+        }
+    }
+
+    if (directionSelect) {
+        directionSelect.addEventListener('change', function () {
+            onDirectionChanged();
+        });
+    }
+
+    var useVendorTransporterCb = document.getElementById('trial_use_vendor_transporter');
+    var vendorTransporterSelectContainer = document.getElementById('trial_vendor_transporter_select_container');
+    if (useVendorTransporterCb && vendorTransporterSelectContainer) {
+        useVendorTransporterCb.addEventListener('change', function() {
+            if (this.checked) {
+                vendorTransporterSelectContainer.classList.remove('st-hidden');
+            } else {
+                vendorTransporterSelectContainer.classList.add('st-hidden');
+            }
+        });
+    }
+
     // ─── Init ──────────────────────────────────────────────────────────────────
     applyWarehouseLockState();
     updateDurationFromTruckType();
     updateDirectionFromBp();
+    onDirectionChanged();
 });
