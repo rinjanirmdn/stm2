@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VendorTransporterController extends Controller
 {
@@ -51,14 +52,14 @@ class VendorTransporterController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->route('master.transporters.index')->with('success', 'Vendor Transporter berhasil ditambahkan.');
+        return redirect()->route('master.transporters.index')->with('success', 'Vendor Transporter created successfully.');
     }
 
     public function edit(int $id)
     {
         $transporter = DB::table('md_vendor_transporters')->where('id', $id)->first();
         if (! $transporter) {
-            return redirect()->route('master.transporters.index')->with('error', 'Data tidak ditemukan.');
+            return redirect()->route('master.transporters.index')->with('error', 'Data not found.');
         }
 
         return view('master.transporters.edit', compact('transporter'));
@@ -68,7 +69,7 @@ class VendorTransporterController extends Controller
     {
         $transporter = DB::table('md_vendor_transporters')->where('id', $id)->first();
         if (! $transporter) {
-            return redirect()->route('master.transporters.index')->with('error', 'Data tidak ditemukan.');
+            return redirect()->route('master.transporters.index')->with('error', 'Data not found.');
         }
 
         $request->validate([
@@ -82,24 +83,24 @@ class VendorTransporterController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->route('master.transporters.index')->with('success', 'Vendor Transporter berhasil diperbarui.');
+        return redirect()->route('master.transporters.index')->with('success', 'Vendor Transporter updated successfully.');
     }
 
     public function destroy(int $id)
     {
         $transporter = DB::table('md_vendor_transporters')->where('id', $id)->first();
         if (! $transporter) {
-            return redirect()->route('master.transporters.index')->with('error', 'Data tidak ditemukan.');
+            return redirect()->route('master.transporters.index')->with('error', 'Data not found.');
         }
 
         // Check if it's used in slots
         $usedCount = DB::table('slots')->where('vendor_transporter_id', $id)->count();
         if ($usedCount > 0) {
-            return redirect()->route('master.transporters.index')->with('error', 'Data tidak dapat dihapus karena sedang digunakan dalam transaksi.');
+            return redirect()->route('master.transporters.index')->with('error', 'Data cannot be deleted because it is currently in use.');
         }
 
         DB::table('md_vendor_transporters')->where('id', $id)->delete();
 
-        return redirect()->route('master.transporters.index')->with('success', 'Vendor Transporter berhasil dihapus.');
+        return redirect()->route('master.transporters.index')->with('success', 'Vendor Transporter deleted successfully.');
     }
 }

@@ -339,14 +339,17 @@ document.addEventListener('DOMContentLoaded', function () {
         
         var driverContainer = document.getElementById('driver_number_container');
         var vendorTransporterContainer = document.getElementById('vendor_transporter_container');
+        var destinationContainer = document.getElementById('destination_container');
         
         if (driverContainer && vendorTransporterContainer) {
             if (dir === 'outbound') {
                 driverContainer.classList.add('st-hidden');
                 vendorTransporterContainer.classList.remove('st-hidden');
+                if (destinationContainer) destinationContainer.classList.remove('st-hidden');
             } else {
                 driverContainer.classList.remove('st-hidden');
                 vendorTransporterContainer.classList.add('st-hidden');
+                if (destinationContainer) destinationContainer.classList.add('st-hidden');
             }
         }
         
@@ -1050,6 +1053,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    onDirectionChanged();
     filterVendors();
     filterGates();
     applyWarehouseLockState();

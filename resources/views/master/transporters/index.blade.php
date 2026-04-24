@@ -26,14 +26,14 @@
             <form method="GET" action="{{ route('master.transporters.index') }}" autocomplete="off" class="st-form-row st-gap-4 st-align-end">
                 <div class="st-form-field st-maxw-260">
                     <label class="st-label">Search</label>
-                    <input type="text" name="q" class="st-input" placeholder="Nama Transporter..." value="{{ $search }}">
+                    <input type="text" name="q" class="st-input" placeholder="Transporter Name..." value="{{ $search }}">
                 </div>
                 <div class="st-form-field st-maxw-160">
                     <label class="st-label">Status</label>
                     <select name="status" class="st-select">
-                        <option value="">Semua</option>
-                        <option value="active"   {{ $status === 'active'   ? 'selected' : '' }}>Aktif</option>
-                        <option value="inactive" {{ $status === 'inactive' ? 'selected' : '' }}>Nonaktif</option>
+                        <option value="">All</option>
+                        <option value="active"   {{ $status === 'active'   ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ $status === 'inactive' ? 'selected' : '' }}>Inactive</option>
                     </select>
                 </div>
                 <div class="st-form-field st-maxw-120">
@@ -47,7 +47,7 @@
                 <div class="st-form-field st-minw-80 st-flex st-flex-0 st-justify-end st-gap-8">
                     <a href="{{ route('master.transporters.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                     <button type="submit" class="st-btn st-btn--outline-primary">Filter</button>
-                    <a href="{{ route('master.transporters.create') }}" class="st-btn st-btn--primary">+ Tambah</a>
+                    <a href="{{ route('master.transporters.create') }}" class="st-btn st-btn--primary">+ Add</a>
                 </div>
             </form>
         </div>
@@ -61,7 +61,7 @@
                         <thead>
                             <tr>
                                 <th class="st-table-col-40">#</th>
-                                <th>Nama Transporter</th>
+                                <th>Transporter Name</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -74,9 +74,9 @@
                                 <td class="st-table-cell"><strong>{{ $t->name }}</strong></td>
                                 <td class="st-table-cell">
                                     @if ($t->is_active)
-                                        <span class="st-table__status-badge st-status-on-time">Aktif</span>
+                                        <span class="st-table__status-badge st-status-on-time">Active</span>
                                     @else
-                                        <span class="st-table__status-badge st-status-late">Nonaktif</span>
+                                        <span class="st-table__status-badge st-status-late">Inactive</span>
                                     @endif
                                 </td>
                                 <td class="st-table-cell">
@@ -87,9 +87,9 @@
                                         <div class="st-action-menu">
                                             <a href="{{ route('master.transporters.edit', $t->id) }}" class="st-action-item">Edit</a>
                                             <form method="POST" action="{{ route('master.transporters.destroy', $t->id) }}"
-                                                  onsubmit="return confirm('Hapus Transporter {{ addslashes($t->name) }}?')" style="display:inline;">
+                                                  onsubmit="return confirm('Delete Transporter {{ addslashes($t->name) }}?')" style="display:inline;">
                                                 @csrf
-                                                <button type="submit" class="st-action-item st-action-item--danger" style="width:100%;text-align:left;">Hapus</button>
+                                                <button type="submit" class="st-action-item st-action-item--danger" style="width:100%;text-align:left;">Delete</button>
                                             </form>
                                         </div>
                                     </div>
@@ -98,7 +98,7 @@
                         @empty
                             <tr>
                                 <td colspan="4" class="st-table-empty st-text-center st-text--muted st-py-16">
-                                    Belum ada data Vendor Transporter.
+                                    No Vendor Transporter data found.
                                 </td>
                             </tr>
                         @endforelse
