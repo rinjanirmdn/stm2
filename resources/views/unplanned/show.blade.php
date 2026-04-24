@@ -299,11 +299,9 @@
 
     <div class="st-form-actions st-flex-wrap st-mb-12">
         @if ($status === 'waiting')
-            <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Start
-                Unplanned</a>
+            <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">Start Unplanned</a>
         @elseif ($status === 'in_progress')
-            <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary">Complete
-                Unplanned</a>
+            <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">Complete Unplanned</a>
         @endif
 
         <a href="{{ route('unplanned.index') }}" class="st-btn st-btn--outline-primary">Back</a>
