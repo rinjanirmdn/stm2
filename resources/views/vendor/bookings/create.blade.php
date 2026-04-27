@@ -70,6 +70,7 @@
                                            autocomplete="off"
                                            readonly
                                            value="{{ old('planned_date') }}"
+                                           placeholder="Select date"
                                            required>
                                     <div class="cb-hint">Min H-2</div>
                                     @error('planned_date')
@@ -84,7 +85,8 @@
                                            id="planned-time"
                                            inputmode="none"
                                            readonly
-                                           value="{{ old('planned_time', '08:00') }}"
+                                           value="{{ old('planned_time') }}"
+                                           placeholder="Select time"
                                            required>
                                     <div class="cb-hint">07:00 - 19:00</div>
                                     <div class="cb-hint cb-hint--error" id="time-error" hidden></div>

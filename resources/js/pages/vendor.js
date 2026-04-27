@@ -996,18 +996,25 @@ function initVendorBookingCreate(config) {
             plannedDate.dataset.isoValue = initialIso;
         }
 
-        var startDate = initialIso && window.moment(initialIso, 'YYYY-MM-DD').isValid()
+        var hasInitialDate = initialIso && window.moment(initialIso, 'YYYY-MM-DD').isValid();
+        var startDate = hasInitialDate
             ? window.moment(initialIso, 'YYYY-MM-DD')
-            : window.moment();
+            : window.moment().add(2, 'days');
 
-        // Always set isoValue so loadMiniAvailability works on first call
-        plannedDate.dataset.isoValue = startDate.format('YYYY-MM-DD');
-        plannedDate.value = startDate.format('DD-MM-YYYY');
+        // Only set value if there was an initial date (old() value); otherwise leave empty for placeholder
+        if (hasInitialDate) {
+            plannedDate.dataset.isoValue = startDate.format('YYYY-MM-DD');
+            plannedDate.value = startDate.format('DD-MM-YYYY');
+        } else {
+            plannedDate.dataset.isoValue = '';
+            plannedDate.value = '';
+        }
 
         window.jQuery(plannedDate).daterangepicker({
             singleDatePicker: true,
             showDropdowns: true,
             autoApply: true,
+            autoUpdateInput: false,
             minDate: window.moment().add(2, 'days'),
             locale: { format: 'DD-MM-YYYY' },
             minYear: parseInt(window.moment().format('YYYY'), 10),
@@ -1036,6 +1043,25 @@ function initVendorBookingCreate(config) {
 
             syncPlannedStart();
             loadMiniAvailability();
+            updateFormState(); // Ensure form state is updated after date selection
+        });
+
+        // Need to explicitly handle apply event when autoUpdateInput is false
+        window.jQuery(plannedDate).on('apply.daterangepicker', function(ev, picker) {
+            var iso = picker.startDate.format('YYYY-MM-DD');
+            window.jQuery(this).val(picker.startDate.format('DD-MM-YYYY'));
+            this.dataset.isoValue = iso;
+            syncPlannedStart();
+            loadMiniAvailability();
+            updateFormState();
+        });
+
+        window.jQuery(plannedDate).on('cancel.daterangepicker', function(ev, picker) {
+            window.jQuery(this).val('');
+            this.dataset.isoValue = '';
+            syncPlannedStart();
+            loadMiniAvailability();
+            updateFormState();
         });
 
         // Inject holiday name data attributes + tooltips when picker opens
@@ -1077,7 +1103,7 @@ function initVendorBookingCreate(config) {
     }
 
     // ── Timepicker with vendor rules ──
-    var lastValidTime = plannedTime.value || '08:00';
+    var lastValidTime = plannedTime.value || '';
 
     function isTimeValid(timeStr) {
         if (!timeStr) return false;

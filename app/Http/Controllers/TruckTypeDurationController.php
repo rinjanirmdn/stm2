@@ -89,6 +89,11 @@ class TruckTypeDurationController extends Controller
             return redirect()->route('trucks.index')->with('error', 'Truck Type duration not found');
         }
 
+        $usedCount = DB::table('slots')->where('truck_type', $row->truck_type)->count();
+        if ($usedCount > 0) {
+            return redirect()->route('trucks.index')->with('error', 'Data cannot be deleted because it is currently in use.');
+        }
+
         DB::table('md_truck')->where('id', $truckTypeDurationId)->delete();
 
         return redirect()->route('trucks.index')->with('success', 'Truck Type duration deleted successfully');

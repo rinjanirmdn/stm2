@@ -6,20 +6,7 @@
 
 @section('content')
 
-    @if (session('success'))
-        <div class="st-alert st-alert--success st-alert--autodismiss">
-            <span class="st-alert__icon"><i class="fa-solid fa-circle-check"></i></span>
-            <div class="st-alert__text">{{ session('success') }}</div>
-            <button type="button" class="st-alert__close" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
-    @if (session('error'))
-        <div class="st-alert st-alert--error st-alert--autodismiss">
-            <span class="st-alert__icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
-            <div class="st-alert__text">{{ session('error') }}</div>
-            <button type="button" class="st-alert__close" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
+
 
     {{-- Filter bar --}}
     <div class="st-card st-mb-12">
