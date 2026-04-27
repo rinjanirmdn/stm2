@@ -547,7 +547,7 @@ class SlotController extends Controller
             if ($newStatus !== null && $newStatus !== $oldStatus) {
                 $updateData['status'] = $newStatus;
                 $changes[] = 'Status: '.ucwords(str_replace('_', ' ', $oldStatus)).' → '.ucwords(str_replace('_', ' ', $newStatus));
-                
+
                 // Clear timestamps when reverting status backwards
                 if ($newStatus === 'scheduled') {
                     $updateData['arrival_time'] = null;
