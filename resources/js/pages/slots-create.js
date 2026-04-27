@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var poSuggestions = document.getElementById('po_suggestions');
     var poLoading = document.getElementById('po_loading');
     var poStatus = document.getElementById('po_status');
+    var poFeedback = document.getElementById('po_feedback');
     var poDetailRequestSeq = 0;
     var poLastAutoFilledValue = '';
 
@@ -51,21 +52,44 @@ document.addEventListener('DOMContentLoaded', function () {
     function clearPoFeedback() {
         setPoLoading(false);
         setPoStatus('');
+        if (poInput) poInput.classList.remove('st-input--invalid');
+        if (poFeedback) {
+            poFeedback.style.display = 'none';
+            poFeedback.innerHTML = '';
+            poFeedback.className = 'st-po-feedback st-mt-4';
+        }
     }
 
     function showPoLoading() {
         setPoLoading(true);
         setPoStatus('');
+        if (poFeedback) {
+            poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--searching';
+            poFeedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching PO/SO number...';
+            poFeedback.style.display = 'flex';
+        }
     }
 
     function showPoValid() {
         setPoLoading(false);
         setPoStatus('valid');
+        if (poInput) poInput.classList.remove('st-input--invalid');
+        if (poFeedback) {
+            poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--valid';
+            poFeedback.innerHTML = '<i class="fa-solid fa-circle-check"></i> Valid — PO/SO number found.';
+            poFeedback.style.display = 'flex';
+        }
     }
 
     function showPoInvalid() {
         setPoLoading(false);
         setPoStatus('invalid');
+        if (poInput) poInput.classList.add('st-input--invalid');
+        if (poFeedback) {
+            poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--invalid';
+            poFeedback.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Invalid — PO/SO number not found. Please check and re-enter the number.';
+            poFeedback.style.display = 'flex';
+        }
     }
 
     var riskPreview = document.getElementById('risk_preview');
@@ -945,16 +969,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
 
-        // Auto-fetch detail on blur/change if user typed a full number directly
+        // Auto-fetch detail on blur/change — validate any input length
         function autoFetchDetail() {
             var val = (poInput.value || '').trim();
-            if (val.length >= 10) {
-                // Delay slightly to avoid conflict with suggestion click
-                setTimeout(function () {
-                    fetchPoDetail(val, function (data) {
+            if (val === '') {
+                clearPoFeedback();
+                return;
+            }
+            // If already validated as valid, skip
+            if (val === poLastAutoFilledValue) return;
+
+            // Delay slightly to avoid conflict with suggestion click
+            setTimeout(function () {
+                // Re-check value in case user clicked a suggestion
+                var current = (poInput.value || '').trim();
+                if (current !== val) return;
+                if (current === poLastAutoFilledValue) return;
+
+                if (current.length >= 10) {
+                    fetchPoDetail(current, function (data) {
                         if (data.success && data.data) {
                             applyPoDetail(data.data);
-                            poLastAutoFilledValue = val;
+                            poLastAutoFilledValue = current;
                             showPoValid();
                         } else {
                             poLastAutoFilledValue = '';
@@ -963,10 +999,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             showPoInvalid();
                         }
                     });
-                }, 200);
-            } else if (val === '') {
-                clearPoFeedback();
-            }
+                } else {
+                    // PO/SO number too short — invalid
+                    poLastAutoFilledValue = '';
+                    showPoInvalid();
+                }
+            }, 200);
         }
         poInput.addEventListener('change', autoFetchDetail);
         poInput.addEventListener('blur', autoFetchDetail);

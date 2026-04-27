@@ -69,9 +69,12 @@
                 <div class="st-form-field">
                     <label class="st-label">PO/SO Number <span class="st-text--danger-dark">*</span></label>
                     <div class="st-form-field--relative">
-                        <input type="text" id="po_number" autocomplete="off" name="po_number" maxlength="12" class="st-input{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', $slot->truck_number ?? '') }}">
+                        <input type="text" id="po_number" autocomplete="off" name="po_number" maxlength="12" class="st-input st-input--pr-40{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', $slot->truck_number ?? '') }}">
+                        <span class="st-input-loader" id="po_loading" aria-hidden="true"></span>
+                        <span class="st-input-status" id="po_status" aria-hidden="true"></span>
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
+                    <div id="po_feedback" class="st-po-feedback st-mt-4" style="display:none;"></div>
                     @error('po_number')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
