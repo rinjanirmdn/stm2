@@ -21,7 +21,7 @@
                                 <td style="padding-top:12px;">
                                     <div style="font-size:18px;font-weight:600;">New Booking Request</div>
                                     <div style="font-size:13px;opacity:0.9;">
-                                        <img src="{{ url('/img/e-Docking Control System.png') }}" alt="e-Docking Control System" style="height:20px;width:auto;display:block;margin-top:4px;">
+                                        <img src="{{ asset('img/e-Docking%20Control%20System.png') }}" alt="e-Docking Control System" style="height:20px;width:auto;display:block;margin-top:4px;">
                                     </div>
                                 </td>
                             </tr>
