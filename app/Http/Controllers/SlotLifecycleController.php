@@ -290,13 +290,15 @@ class SlotLifecycleController extends Controller
             }
         }
 
-        $ticketNumber = trim((string) $request->input('ticket_number', ''));
-        if ($ticketNumber === '') {
-            throw ValidationException::withMessages(['ticket_number' => 'Scan Ticket is required']);
-        }
-        $expectedTicket = trim((string) ($slot->ticket_number ?? ''));
-        if ($expectedTicket !== '' && strtoupper($ticketNumber) !== strtoupper($expectedTicket)) {
-            throw ValidationException::withMessages(['ticket_number' => 'Ticket number does not match this booking']);
+        if ($slotType !== 'unplanned') {
+            $ticketNumber = trim((string) $request->input('ticket_number', ''));
+            if ($ticketNumber === '') {
+                throw ValidationException::withMessages(['ticket_number' => 'Scan Ticket is required']);
+            }
+            $expectedTicket = trim((string) ($slot->ticket_number ?? ''));
+            if ($expectedTicket !== '' && strtoupper($ticketNumber) !== strtoupper($expectedTicket)) {
+                throw ValidationException::withMessages(['ticket_number' => 'Ticket number does not match this booking']);
+            }
         }
 
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;

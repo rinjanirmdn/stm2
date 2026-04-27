@@ -342,6 +342,9 @@ class UserController extends Controller
                 'trucks.update',
                 'trucks.delete',
 
+                'master.transporters.index',
+                'master.bp.index',
+
                 'users.index',
                 'users.create',
                 'users.store',
