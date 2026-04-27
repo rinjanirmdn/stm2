@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (bpSelect) {
         bpSelect.addEventListener('change', function () {
             updateDirectionFromBp();
+            onDirectionChanged();
             updateRiskPreview();
             checkTimeOverlap();
         });
