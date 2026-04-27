@@ -98,6 +98,20 @@ class RolePermissionSeeder extends Seeder
             'trucks.update',
             'trucks.delete',
 
+            'master.bp.index',
+            'master.bp.create',
+            'master.bp.store',
+            'master.bp.edit',
+            'master.bp.update',
+            'master.bp.delete',
+
+            'master.transporters.index',
+            'master.transporters.create',
+            'master.transporters.store',
+            'master.transporters.edit',
+            'master.transporters.update',
+            'master.transporters.delete',
+
             'gates.index',
             'gates.stream',
             'gates.api_index',
@@ -222,6 +236,20 @@ class RolePermissionSeeder extends Seeder
             'trucks.edit',
             'trucks.update',
             'trucks.delete',
+
+            'master.bp.index',
+            'master.bp.create',
+            'master.bp.store',
+            'master.bp.edit',
+            'master.bp.update',
+            'master.bp.delete',
+
+            'master.transporters.index',
+            'master.transporters.create',
+            'master.transporters.store',
+            'master.transporters.edit',
+            'master.transporters.update',
+            'master.transporters.delete',
 
             'users.index',
             'users.create',
