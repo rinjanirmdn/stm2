@@ -10,33 +10,31 @@
     {{-- Filter bar --}}
     <div class="st-card st-mb-12">
         <div class="st-p-12">
-            <form method="GET" action="{{ route('master.transporters.index') }}" autocomplete="off" class="st-form-row st-gap-4 st-align-end">
+            <div class="st-form-row st-gap-4 st-align-end">
                 <div class="st-form-field st-maxw-260">
                     <label class="st-label">Search</label>
-                    <input type="text" name="q" class="st-input" placeholder="Transporter Name..." value="{{ $search }}">
+                    <input type="text" id="transporter-search" class="st-input" placeholder="Transporter Name..." autocomplete="off">
                 </div>
                 <div class="st-form-field st-maxw-160">
                     <label class="st-label">Status</label>
-                    <select name="status" class="st-select">
+                    <select id="transporter-status" class="st-select">
                         <option value="">All</option>
-                        <option value="active"   {{ $status === 'active'   ? 'selected' : '' }}>Active</option>
-                        <option value="inactive" {{ $status === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
                     </select>
                 </div>
                 <div class="st-form-field st-maxw-120">
                     <label class="st-label">Show</label>
-                    <select name="page_size" class="st-select">
-                        @foreach (['10','25','50','100'] as $ps)
-                            <option value="{{ $ps }}" {{ $pageSize === $ps ? 'selected' : '' }}>{{ $ps }}</option>
+                    <select id="transporter-page-size" class="st-select">
+                        @foreach ($pageSizeAllowed as $ps)
+                            <option value="{{ $ps }}" {{ $ps === '10' ? 'selected' : '' }}>{{ strtoupper($ps) }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="st-form-field st-minw-80 st-flex st-flex-0 st-justify-end st-gap-8">
-                    <a href="{{ route('master.transporters.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
-                    <button type="submit" class="st-btn st-btn--outline-primary">Filter</button>
+                <div class="st-form-field st-flex-1 st-minw-80 st-flex st-justify-end st-gap-8">
                     <button type="button" id="btn-add-transporter" class="st-btn st-btn--primary">+ Add</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -53,10 +51,16 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                        @php $list = $transporters instanceof \Illuminate\Pagination\LengthAwarePaginator ? $transporters->items() : $transporters->all(); @endphp
-                        @forelse ($list as $i => $t)
-                            <tr class="st-table-row">
+                        <tbody id="transporter-table-body">
+                        @if (count($transporters) === 0)
+                            <tr class="transporter-empty-row">
+                                <td colspan="4" class="st-table-empty st-text-center st-text--muted st-py-16">
+                                    No Vendor Transporter data found.
+                                </td>
+                            </tr>
+                        @else
+                            @foreach ($transporters as $i => $t)
+                                <tr class="st-table-row" data-row-id="{{ $t->id }}" data-name="{{ strtolower($t->name) }}" data-status="{{ $t->is_active ? 'active' : 'inactive' }}">
                                 <td class="st-table-cell">{{ $i + 1 }}</td>
                                 <td class="st-table-cell"><strong>{{ $t->name }}</strong></td>
                                 <td class="st-table-cell">
@@ -76,23 +80,12 @@
                                         </button>
                                     </div>
                                 </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="st-table-empty st-text-center st-text--muted st-py-16">
-                                    No Vendor Transporter data found.
-                                </td>
-                            </tr>
-                        @endforelse
+                                </tr>
+                            @endforeach
+                        @endif
                         </tbody>
                     </table>
                 </div>
-
-                @if ($transporters instanceof \Illuminate\Pagination\LengthAwarePaginator && $transporters->hasPages())
-                    <div class="st-p-12">
-                        {{ $transporters->links() }}
-                    </div>
-                @endif
             </div>
         </div>
     </section>

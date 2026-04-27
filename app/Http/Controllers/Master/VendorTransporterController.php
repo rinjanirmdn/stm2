@@ -10,27 +10,14 @@ class VendorTransporterController extends Controller
 {
     public function index(Request $request)
     {
-        $search = trim($request->query('q', ''));
-        $status = trim($request->query('status', ''));
-        $pageSize = in_array($request->query('page_size'), ['10', '25', '50', '100'], true)
-            ? $request->query('page_size')
-            : '25';
+        $pageSizeAllowed = ['10', '25', '50', 'all'];
 
-        $query = DB::table('md_vendor_transporters')->orderBy('name');
+        $transporters = DB::table('md_vendor_transporters')->orderBy('name')->get();
 
-        if ($search !== '') {
-            $query->where('name', 'ilike', "%{$search}%");
-        }
-
-        if ($status === 'active') {
-            $query->where('is_active', true);
-        } elseif ($status === 'inactive') {
-            $query->where('is_active', false);
-        }
-
-        $transporters = $pageSize === 'all' ? $query->get() : $query->paginate((int) $pageSize)->appends($request->query());
-
-        return view('master.transporters.index', compact('transporters', 'search', 'status', 'pageSize'));
+        return view('master.transporters.index', [
+            'transporters' => $transporters,
+            'pageSizeAllowed' => $pageSizeAllowed,
+        ]);
     }
 
     public function create()
