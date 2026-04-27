@@ -1,10 +1,13 @@
 <?php
+
 require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\PermissionRegistrar;
 
 $perms = [
     'master.transporters.index',
@@ -19,7 +22,7 @@ $roles = DB::table('md_roles')
 
 foreach ($perms as $permName) {
     $perm = DB::table('md_permissions')->where('perm_name', $permName)->first();
-    if (!$perm) {
+    if (! $perm) {
         $permId = DB::table('md_permissions')->insertGetId([
             'perm_name' => $permName,
             'perm_guard_name' => 'web',
@@ -35,7 +38,7 @@ foreach ($perms as $permName) {
             ->where('permission_id', $permId)
             ->where('role_id', $role->id)
             ->exists();
-        if (!$exists) {
+        if (! $exists) {
             DB::table('role_has_permissions')->insert([
                 'permission_id' => $permId,
                 'role_id' => $role->id,
@@ -44,6 +47,6 @@ foreach ($perms as $permName) {
     }
 }
 
-app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+app(PermissionRegistrar::class)->forgetCachedPermissions();
 
 echo "Permissions added successfully!\n";
