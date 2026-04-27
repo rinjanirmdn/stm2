@@ -159,7 +159,7 @@ Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('book
 // Master Data: Business Partner (md_bp) — Vendor & Customer lokal
 // Dibutuhkan untuk form 'Create Planned Uji Coba' (tanpa SAP)
 // -----------------------------------------------------------------------------
-Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->group(function () {
+Route::prefix('md-bp')->name('md_bp.')->middleware('permission:master.bp.index')->group(function () {
     Route::get('/', [MdBpController::class, 'index'])->name('index');
     Route::get('/create', [MdBpController::class, 'create'])->name('create');
     Route::post('/', [MdBpController::class, 'store'])->name('store');
@@ -172,7 +172,7 @@ Route::prefix('md-bp')->name('md_bp.')->middleware('permission:slots.create')->g
 // -----------------------------------------------------------------------------
 // Master Data: Vendor Transporters
 // -----------------------------------------------------------------------------
-Route::prefix('master/transporters')->name('master.transporters.')->middleware('permission:slots.create')->group(function () {
+Route::prefix('master/transporters')->name('master.transporters.')->middleware('permission:master.transporters.index')->group(function () {
     Route::get('/', [VendorTransporterController::class, 'index'])->name('index');
     Route::get('/create', [VendorTransporterController::class, 'create'])->name('create');
     Route::post('/', [VendorTransporterController::class, 'store'])->name('store');

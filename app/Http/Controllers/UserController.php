@@ -342,6 +342,9 @@ class UserController extends Controller
                 'trucks.update',
                 'trucks.delete',
 
+                'master.transporters.index',
+                'master.bp.index',
+
                 'users.index',
                 'users.create',
                 'users.store',
@@ -698,6 +701,20 @@ class UserController extends Controller
             if ($remainingAdmins === 0) {
                 return redirect()->route('users.index')->with('error', 'You cannot delete the last admin user.');
             }
+        }
+
+        // Check if user is in use in slots or activity logs
+        $usedInSlots = DB::table('slots')
+            ->where('created_by', $userId)
+            ->orWhere('approved_by', $userId)
+            ->count();
+
+        $usedInLogs = DB::table('slot_activity_logs')
+            ->where('user_id', $userId)
+            ->count();
+
+        if ($usedInSlots > 0 || $usedInLogs > 0) {
+            return redirect()->route('users.index')->with('error', 'User cannot be deleted because they are associated with existing transactions or logs. Please deactivate the user instead.');
         }
 
         DB::table('md_users')->where('id', $userId)->delete();
