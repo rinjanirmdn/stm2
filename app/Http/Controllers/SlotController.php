@@ -547,6 +547,18 @@ class SlotController extends Controller
             if ($newStatus !== null && $newStatus !== $oldStatus) {
                 $updateData['status'] = $newStatus;
                 $changes[] = 'Status: '.ucwords(str_replace('_', ' ', $oldStatus)).' → '.ucwords(str_replace('_', ' ', $newStatus));
+
+                // Clear timestamps when reverting status backwards
+                if ($newStatus === 'scheduled') {
+                    $updateData['arrival_time'] = null;
+                    $updateData['actual_start'] = null;
+                    $updateData['actual_finish'] = null;
+                } elseif ($newStatus === 'waiting') {
+                    $updateData['actual_start'] = null;
+                    $updateData['actual_finish'] = null;
+                } elseif ($newStatus === 'in_progress') {
+                    $updateData['actual_finish'] = null;
+                }
             }
 
             if ($newSlotType !== null && $newSlotType !== $oldSlotType) {
