@@ -124,7 +124,8 @@ class SlotFilterService
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
-            ->leftJoin(DB::raw('(SELECT truck_type, MAX(target_duration_minutes) as target_duration_minutes FROM md_truck GROUP BY truck_type) as td'), 's.truck_type', '=', 'td.truck_type');
+            ->leftJoin(DB::raw('(SELECT truck_type, MAX(target_duration_minutes) as target_duration_minutes FROM md_truck GROUP BY truck_type) as td'), 's.truck_type', '=', 'td.truck_type')
+            ->whereRaw("COALESCE(s.slot_type, 'planned') = 'planned'");
     }
 
     /**
