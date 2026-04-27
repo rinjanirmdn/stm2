@@ -700,6 +700,20 @@ class UserController extends Controller
             }
         }
 
+        // Check if user is in use in slots or activity logs
+        $usedInSlots = DB::table('slots')
+            ->where('created_by', $userId)
+            ->orWhere('approved_by', $userId)
+            ->count();
+
+        $usedInLogs = DB::table('slot_activity_logs')
+            ->where('user_id', $userId)
+            ->count();
+
+        if ($usedInSlots > 0 || $usedInLogs > 0) {
+            return redirect()->route('users.index')->with('error', 'User cannot be deleted because they are associated with existing transactions or logs. Please deactivate the user instead.');
+        }
+
         DB::table('md_users')->where('id', $userId)->delete();
 
         return redirect()->route('users.index')->with('success', 'User deleted permanently');
