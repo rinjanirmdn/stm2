@@ -118,3 +118,15 @@
     --st-primary-color: var(--primary);
     --st-bg-hover: #f3f4f6;
 }
+
+/* Mobile: bump up font sizes for readability */
+@media (max-width: 768px) {
+    :root {
+        --st-font-title: 18px;
+        --st-font-subtitle: 16px;
+        --st-font-body: 15px;
+        --st-font-small: 14px;
+        --st-font-table: 16px;
+        --st-font-table-head: 13px;
+    }
+}

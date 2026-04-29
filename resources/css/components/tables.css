@@ -215,6 +215,25 @@ table.st-table thead th .st-filter-header--inline-compact>span:first-child {
     table.st-table {
         min-width: 900px;
     }
+
+    table.st-table th,
+    table.st-table td {
+        font-size: var(--st-font-table);
+        padding: 4px 6px;
+    }
+
+    table.st-table th {
+        font-size: var(--st-font-table-head);
+        padding: 4px 6px;
+    }
+
+    .st-table__status-badge {
+        font-size: 11px;
+    }
+
+    .st-table-row {
+        height: auto;
+    }
 }
 
 table.st-table th .st-colhead,
@@ -273,7 +292,7 @@ table.st-table td {
     padding: 6px 8px;
     border-bottom: 1px solid #e5e7eb;
     text-align: left;
-    font-size: 11px;
+    font-size: var(--st-font-table);
 }
 
 table.st-table td.st-table-empty {

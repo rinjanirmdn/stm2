@@ -147,3 +147,29 @@
     background-color: #64748b;
     /* slate-500 */
 }
+
+/* Mobile: scale up badges to match larger table/detail fonts */
+@media (max-width: 768px) {
+    .st-badge {
+        font-size: 14px;
+        padding: 3px 10px;
+    }
+
+    .st-badge--xs {
+        font-size: 12px;
+    }
+
+    .st-badge-modern {
+        font-size: 14px;
+        padding: 3px 8px;
+    }
+
+    .st-table__status-badge {
+        font-size: 13px;
+        padding: 3px 8px;
+    }
+
+    .st-status-badge--xs {
+        font-size: 12px;
+    }
+}
