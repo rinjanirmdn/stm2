@@ -410,3 +410,32 @@
         margin-left: 0;
     }
 }
+
+/* Mobile: scale up form element fonts for readability */
+@media (max-width: 768px) {
+    .st-label {
+        font-size: 14px;
+    }
+
+    .st-input,
+    .st-select,
+    .st-textarea {
+        font-size: 15px;
+    }
+
+    .st-form-note {
+        font-size: 13px;
+    }
+
+    .st-checkbox-label {
+        font-size: 14px;
+    }
+
+    .st-po-feedback {
+        font-size: 13px;
+    }
+
+    .st-po-feedback i {
+        font-size: 12px;
+    }
+}
