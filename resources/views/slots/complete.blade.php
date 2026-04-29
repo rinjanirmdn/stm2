@@ -1,4 +1,9 @@
+@extends('layouts.app')
 
+@section('title', 'Complete Process - e-Docking Control System')
+@section('page_title', 'Complete Process')
+
+@section('content')
     <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Complete Registration</h3>
@@ -626,6 +631,6 @@
 </script>
 @endif
 
-
+@endsection
 @vite(['resources/js/pages/slots-complete.js'])
 
