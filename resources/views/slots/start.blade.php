@@ -1,4 +1,9 @@
+@extends('layouts.app')
 
+@section('title', 'Start Process - e-Docking Control System')
+@section('page_title', 'Start Process')
+
+@section('content')
     @php
         $gateStatuses = $gateStatuses ?? [];
         $conflictDetails = $conflictDetails ?? [];
@@ -657,4 +662,4 @@
     }
 })();
 </script>
-
+@endsection
