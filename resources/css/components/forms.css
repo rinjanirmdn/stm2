@@ -212,6 +212,38 @@
     color: #ef4444;
 }
 
+.st-po-feedback {
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.st-po-feedback--valid {
+    color: #047857;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+}
+
+.st-po-feedback--invalid {
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.st-po-feedback--searching {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.st-po-feedback i {
+    font-size: 11px;
+}
+
 .st-form-row {
     display: flex;
     flex-wrap: wrap;

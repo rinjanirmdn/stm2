@@ -372,7 +372,9 @@ class DashboardStatsService
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
                 SUM(CASE WHEN status = 'completed' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late,
                 SUM(CASE WHEN direction = 'inbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS inbound,
-                SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound
+                SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound,
+                SUM(CASE WHEN direction = 'inbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_inbound,
+                SUM(CASE WHEN direction = 'outbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_outbound
             ")
             ->first();
 
@@ -388,6 +390,8 @@ class DashboardStatsService
             'late' => (int) ($stats->late ?? 0),
             'inbound' => (int) ($stats->inbound ?? 0),
             'outbound' => (int) ($stats->outbound ?? 0),
+            'completed_inbound' => (int) ($stats->completed_inbound ?? 0),
+            'completed_outbound' => (int) ($stats->completed_outbound ?? 0),
         ];
     }
 
@@ -417,9 +421,9 @@ class DashboardStatsService
             ->selectRaw("
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_all,
                 SUM(CASE WHEN ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_all,
-                SUM(CASE WHEN direction = 'inbound' AND ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_in,
+                SUM(CASE WHEN direction = 'inbound' THEN (CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) ELSE 0 END) AS on_time_in,
                 SUM(CASE WHEN direction = 'inbound' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_in,
-                SUM(CASE WHEN direction = 'outbound' AND ({$lateCaseExpr}) THEN 0 ELSE 1 END) AS on_time_out,
+                SUM(CASE WHEN direction = 'outbound' THEN (CASE WHEN ({$lateCaseExpr}) THEN 0 ELSE 1 END) ELSE 0 END) AS on_time_out,
                 SUM(CASE WHEN direction = 'outbound' AND ({$lateCaseExpr}) THEN 1 ELSE 0 END) AS late_out
             ")
             ->first();
@@ -962,37 +966,16 @@ class DashboardStatsService
     {
         $rangeDate = DB::raw('DATE(s.planned_start)');
 
-        $leadTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_finish');
+        $leadTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('COALESCE(s.arrival_time, s.actual_start)', 's.actual_finish');
         $processTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
 
-        // Normalize truck type names (handle common typos and case sensitivity)
-        $normalizedType = "CASE
-            WHEN s.truck_type LIKE '%C%ntainer 40ft (L%ose)%' OR s.truck_type LIKE '%C%ntainer 40ft (L%ouse)%' OR s.truck_type LIKE '%K%ntainer 40ft (L%ose)%' THEN 'Container 40ft (Loose)'
-            WHEN LOWER(s.truck_type) LIKE '%c%ntainer 40ft (p%aletize)%' OR LOWER(s.truck_type) LIKE '%k%ntainer 40ft (p%aletize)%' THEN 'Container 40ft (Paletize)'
-            WHEN s.truck_type LIKE '%C%ntainer 20ft (L%ose)%' OR s.truck_type LIKE '%C%ntainer 20ft (L%ouse)%' OR s.truck_type LIKE '%K%ntainer 20ft (L%ose)%' THEN 'Container 20ft (Loose)'
-            WHEN LOWER(s.truck_type) LIKE '%c%ntainer 20ft (p%aletize)%' OR LOWER(s.truck_type) LIKE '%k%ntainer 20ft (p%aletize)%' THEN 'Container 20ft (Paletize)'
-            WHEN s.truck_type LIKE '%Wingbox (L%ose)%' OR s.truck_type LIKE '%Wingbox (L%ouse)%' THEN 'Wingbox (Loose)'
-            WHEN LOWER(s.truck_type) LIKE '%wingbox (p%aletize)%' THEN 'Wingbox (Paletize)'
-            WHEN LOWER(s.truck_type) LIKE '%fuso%' THEN 'Fuso'
-            WHEN LOWER(s.truck_type) LIKE '%cdd%' OR LOWER(s.truck_type) LIKE '%cde%' THEN 'CDD/CDE'
-            ELSE NULL
-        END";
-
-        $orderExpr = "CASE truck_type
-            WHEN 'Container 40ft (Loose)' THEN 1
-            WHEN 'Container 40ft (Paletize)' THEN 2
-            WHEN 'Container 20ft (Loose)' THEN 3
-            WHEN 'Container 20ft (Paletize)' THEN 4
-            WHEN 'Wingbox (Loose)' THEN 5
-            WHEN 'Wingbox (Paletize)' THEN 6
-            WHEN 'Fuso' THEN 7
-            WHEN 'CDD/CDE' THEN 8
-            ELSE 9
-        END";
+        // Normalize truck type names using shared TruckTypeService (single source of truth)
+        $normalizedType = TruckTypeService::normalizeExpression('s.truck_type', 'NULL');
+        $orderExpr = TruckTypeService::orderExpression('truck_type');
 
         try {
             // Use subquery to make grouping and ordering cleaner across different DB drivers
-            return DB::table(function ($query) use ($normalizedType, $leadTimeExpr, $processTimeExpr, $rangeDate, $start, $end, $vendorName) {
+            return DB::table(function ($query) use ($normalizedType, $leadTimeExpr, $processTimeExpr, $rangeDate, $start, $end, $vendorName, $transporter) {
                 $query->from('slots as s')
                     ->where('s.status', 'completed')
                     ->whereBetween($rangeDate, [$start, $end])

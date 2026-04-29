@@ -154,6 +154,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const rejectReason = document.getElementById('rejectReason');
         const form = document.getElementById('cancel-booking-form');
 
+        // Close any open action dropdown menus (main.js uses 'show' class)
+        document.querySelectorAll('.st-action-menu.show').forEach(function(menu) {
+            menu.classList.remove('show');
+            menu.style.position = '';
+            menu.style.top = '';
+            menu.style.bottom = '';
+            menu.style.left = '';
+            menu.style.right = '';
+            menu.style.zIndex = '';
+            menu.style.width = '';
+        });
+
         if (dialog) {
             dialog.classList.remove('st-hidden');
             dialog.style.display = 'flex';
@@ -273,10 +285,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.history.pushState(null, '', url);
                 }
 
-                // Apply search highlight after content loaded
+                // Apply search highlight and client-side filtering after content loaded
                 var searchEl = document.querySelector('input[name="q"][form="slot-filter-form"]');
                 var term = searchEl ? searchEl.value.trim() : '';
-                highlightSearchInTable(tbody, term);
+                var lowerTerm = term.toLowerCase();
+
+                if (tbody) {
+                    var rows = tbody.querySelectorAll('tr');
+                    rows.forEach(function (row) {
+                        if (row.querySelector('.st-table-empty')) return;
+                        var text = (row.textContent || '').toLowerCase();
+                        if (lowerTerm === '' || text.indexOf(lowerTerm) !== -1) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                    highlightSearchInTable(tbody, term);
+                }
             })
             .catch(function (err) {
                 console.error('AJAX reload failed:', err);
@@ -653,6 +679,23 @@ document.addEventListener('DOMContentLoaded', function () {
         searchInput.addEventListener('input', function () {
             var raw = (searchInput.value || '');
             var value = raw.trim();
+            var lowerValue = value.toLowerCase();
+
+            // Apply immediate client-side filter for responsive UI
+            var currentTbody = filterForm.querySelector('tbody');
+            if (currentTbody) {
+                var rows = currentTbody.querySelectorAll('tr');
+                rows.forEach(function (row) {
+                    if (row.querySelector('.st-table-empty')) return;
+                    var text = (row.textContent || '').toLowerCase();
+                    if (lowerValue === '' || text.indexOf(lowerValue) !== -1) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                highlightSearchInTable(currentTbody, value);
+            }
 
             if (value.length === 0) {
                 hideSuggestions();

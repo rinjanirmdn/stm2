@@ -167,7 +167,7 @@
                                             }
                                             $displayLabel = match ($displayStatus) {
                                                 'pending' => 'Pending',
-                                                'approved' => 'Approved',
+                                                'approved' => 'Scheduled',
                                                 'scheduled' => 'Scheduled',
                                                 'waiting' => 'Waiting',
                                                 'in_progress' => 'In Progress',
@@ -178,7 +178,7 @@
                                             };
                                             $badgeColor = match ($displayStatus) {
                                                 'pending' => 'warning',
-                                                'approved' => 'success',
+                                                'approved' => 'secondary',
                                                 'scheduled' => 'secondary',
                                                 'waiting' => 'warning',
                                                 'in_progress' => 'info',

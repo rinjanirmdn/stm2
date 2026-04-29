@@ -91,6 +91,7 @@ class SlotController extends Controller
         $lateValues = array_values(array_filter((array) $request->query('late', []), fn ($v) => (string) $v !== ''));
         $blockingValues = array_values(array_filter((array) $request->query('blocking', []), fn ($v) => (string) $v !== ''));
         $targetStatusValues = array_values(array_filter((array) $request->query('target_status', []), fn ($v) => (string) $v !== ''));
+        $truckTypeValues = array_values(array_filter((array) $request->query('truck_type', []), fn ($v) => (string) $v !== ''));
 
         return view('slots.index', [
             'slots' => $slots,
@@ -114,6 +115,7 @@ class SlotController extends Controller
             'gateFilter' => $gateValues,
             'statusFilter' => $statusValues,
             'directionFilter' => $dirValues,
+            'truckTypeFilter' => $truckTypeValues,
             'lateFilter' => $lateValues,
             'blockingFilter' => $blockingValues,
             'pageSize' => $pageSize,
@@ -545,6 +547,18 @@ class SlotController extends Controller
             if ($newStatus !== null && $newStatus !== $oldStatus) {
                 $updateData['status'] = $newStatus;
                 $changes[] = 'Status: '.ucwords(str_replace('_', ' ', $oldStatus)).' → '.ucwords(str_replace('_', ' ', $newStatus));
+
+                // Clear timestamps when reverting status backwards
+                if ($newStatus === 'scheduled') {
+                    $updateData['arrival_time'] = null;
+                    $updateData['actual_start'] = null;
+                    $updateData['actual_finish'] = null;
+                } elseif ($newStatus === 'waiting') {
+                    $updateData['actual_start'] = null;
+                    $updateData['actual_finish'] = null;
+                } elseif ($newStatus === 'in_progress') {
+                    $updateData['actual_finish'] = null;
+                }
             }
 
             if ($newSlotType !== null && $newSlotType !== $oldSlotType) {

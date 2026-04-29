@@ -142,6 +142,11 @@ class MdBpController extends Controller
             return redirect()->route('md_bp.index')->with('error', 'Data tidak ditemukan.');
         }
 
+        $usedCount = DB::table('slots')->where('vendor_code', $bp->bp_code)->count();
+        if ($usedCount > 0) {
+            return redirect()->route('md_bp.index')->with('error', 'Data cannot be deleted because it is currently in use.');
+        }
+
         DB::table('md_bp')->where('id', $id)->delete();
 
         return redirect()->route('md_bp.index')->with('success', 'Business Partner berhasil dihapus.');

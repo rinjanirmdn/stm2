@@ -57,7 +57,7 @@
                 Booking Information
             </h3>
 
-            <table class="vb-table st-table st-table--sm">
+            <table class="vb-table">
                 <tr>
                     <td class="vb-table__label">Ticket Number</td>
                     <td class="vb-table__value--strong">
@@ -132,7 +132,7 @@
                 Schedule
             </h3>
 
-            <table class="vb-table st-table st-table--sm">
+            <table class="vb-table">
                 @if($isRescheduled)
                 <tr>
                     <td class="vb-table__label">Schedule Type</td>
@@ -218,7 +218,7 @@
                 Vehicle Information
             </h3>
 
-            <table class="vb-table st-table st-table--sm">
+            <table class="vb-table">
                 <tr>
                     <td class="vb-table__label">Truck Type</td>
                     <td>{{ $booking->truck_type ?? '-' }}</td>
@@ -241,7 +241,7 @@
                 Approval Info
             </h3>
 
-            <table class="vb-table st-table st-table--sm">
+            <table class="vb-table">
                 @if($booking->approver)
                 <tr>
                     <td class="vb-table__label">Processed By</td>
@@ -258,6 +258,49 @@
         </div>
         @endif
     </div>
+
+    @if($slot && (!empty($slot->start_photo_path) || !empty($slot->complete_photo_path)))
+    <div style="margin-top: 25px;">
+        <h3 class="vb-section-title">
+            <i class="fas fa-camera"></i>
+            Documentation
+        </h3>
+        
+        <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+            @if(!empty($slot->start_photo_path) && is_array($slot->start_photo_path))
+                <div style="flex: 1; min-width: 250px;">
+                    <h4 style="font-size: 0.95em; color: #475569; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></span>
+                        Start Photos
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
+                        @foreach($slot->start_photo_path as $photo)
+                            <a href="{{ asset('storage/' . $photo) }}" target="_blank" style="display: block; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                <img src="{{ asset('storage/' . $photo) }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Start Photo">
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            @if(!empty($slot->complete_photo_path) && is_array($slot->complete_photo_path))
+                <div style="flex: 1; min-width: 250px;">
+                    <h4 style="font-size: 0.95em; color: #475569; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                        Complete Photos
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
+                        @foreach($slot->complete_photo_path as $photo)
+                            <a href="{{ asset('storage/' . $photo) }}" target="_blank" style="display: block; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                <img src="{{ asset('storage/' . $photo) }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Complete Photo">
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+    @endif
 
     <!-- Actions -->
     @if(in_array($booking->status, ['pending', 'approved']))

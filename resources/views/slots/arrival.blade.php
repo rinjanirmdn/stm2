@@ -302,6 +302,12 @@ function stReadJson(id, fallback) {
                 updateScanStatus('Scanning...');
                 scanActive = true;
 
+                // Detect front/back camera and mirror accordingly
+                var track = stream.getVideoTracks()[0];
+                var settings = track.getSettings ? track.getSettings() : {};
+                var isFrontCamera = (settings.facingMode === 'user' || !settings.facingMode);
+                scanVideo.style.transform = isFrontCamera ? 'scaleX(-1)' : 'none';
+
                 var detector = new BarcodeDetector({
                     formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e']
                 });

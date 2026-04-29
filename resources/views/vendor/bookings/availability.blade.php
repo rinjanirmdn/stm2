@@ -1,4 +1,4 @@
-﻿@extends('vendor.layouts.vendor')
+@extends('vendor.layouts.vendor')
 
 @section('title', 'Gate Availability - Vendor Portal')
 
@@ -71,6 +71,7 @@
     'holidays' => $holidays ?? [],
     'availableSlotsUrl' => auth()->user()->can('vendor.ajax.available_slots') ? route('vendor.ajax.available_slots') : null,
     'bookingCreateUrl' => auth()->user()->can('vendor.bookings.create') ? route('vendor.bookings.create') : null,
+    'forcedHolidayDatesUrl' => auth()->user()->can('vendor.ajax.available_slots') ? route('vendor.ajax.forced_holiday_dates') : null,
 ]) !!}</script>
 @endpush
 

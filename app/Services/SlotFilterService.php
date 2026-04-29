@@ -124,8 +124,8 @@ class SlotFilterService
                 $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
-            ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
-            ->whereRaw("COALESCE(s.slot_type, 'planned') <> 'unplanned'");
+            ->leftJoin(DB::raw('(SELECT truck_type, MAX(target_duration_minutes) as target_duration_minutes FROM md_truck GROUP BY truck_type) as td'), 's.truck_type', '=', 'td.truck_type')
+            ->whereRaw("COALESCE(s.slot_type, 'planned') = 'planned'");
     }
 
     /**
@@ -154,9 +154,7 @@ class SlotFilterService
                     $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
                         ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
                         ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like])
-                        ->orWhereRaw('LOWER(w.wh_name) like ?', [$like])
-                        ->orWhereRaw('LOWER(s.direction) like ?', [$like])
-                        ->orWhereRaw('LOWER(s.status) like ?', [$like]);
+                        ->orWhereRaw('LOWER(w.wh_name) like ?', [$like]);
                 });
             }
         }
@@ -236,6 +234,7 @@ class SlotFilterService
         $gateFilter = (array) $request->query('gate', []);
         $statusFilter = (array) $request->query('status', []);
         $directionFilter = (array) $request->query('direction', []);
+        $truckTypeFilter = (array) $request->query('truck_type', []);
 
         $gateValues = array_values(array_filter($gateFilter, fn ($v) => (string) $v !== ''));
         if (! empty($gateValues)) {
@@ -250,6 +249,14 @@ class SlotFilterService
         $dirValues = array_values(array_filter($directionFilter, fn ($v) => (string) $v !== ''));
         if (! empty($dirValues)) {
             $query->whereIn('s.direction', $dirValues);
+        }
+
+        $truckTypeValues = array_values(array_filter($truckTypeFilter, fn ($v) => (string) $v !== ''));
+        if (! empty($truckTypeValues)) {
+            // Use shared TruckTypeService (single source of truth, same as dashboard)
+            $normalizedType = TruckTypeService::normalizeExpression('s.truck_type', 's.truck_type');
+
+            $query->whereIn(DB::raw("({$normalizedType})"), $truckTypeValues);
         }
     }
 

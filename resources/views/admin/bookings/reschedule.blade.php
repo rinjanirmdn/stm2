@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Reschedule Booking')
 @section('page_title', 'Reschedule Booking')
@@ -53,6 +53,10 @@
                             @endphp
                             <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
                         </div>
+                    </div>
+                    <div class="detail-item">
+                        <label class="detail-label">PO/SO Number</label>
+                        <div class="detail-value">{{ $booking->po_number ?? '-' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Supplier</label>

@@ -4550,24 +4550,37 @@
     color: #374151;
     font-size: 1rem;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .vendor-page--bookings-show .vb-table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 14px;
 }
 
 .vendor-page--bookings-show .vb-table td {
-    padding: 0.5rem 0;
+    padding: 8px 0;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.vendor-page--bookings-show .vb-table tr:last-child td {
+    border-bottom: none;
 }
 
 .vendor-page--bookings-show .vb-table__label {
     color: #64748b;
     width: 40%;
+    font-size: 13px;
 }
 
 .vendor-page--bookings-show .vb-table__value--strong {
     font-weight: 600;
+    color: #1e293b;
 }
 
 .vendor-page--bookings-show .vb-arrival-meta {
@@ -4591,25 +4604,14 @@
 @media (max-width: 768px) {
     .vendor-page--bookings-show .vb-detail-grid {
         grid-template-columns: 1fr;
-        gap: 1.25rem;
+        gap: 1.5rem;
     }
 
-    .vendor-page--bookings-show .vb-table {
-        width: 100%;
-        table-layout: fixed;
-    }
-
-    /* Override global st-table mobile min-width (style.css sets 900px) to prevent horizontal overflow */
-    .vendor-page--bookings-show table.st-table {
-        min-width: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-    }
-
-    .vendor-page--bookings-show table.st-table,
-    .vendor-page--bookings-show table.st-table * {
-        box-sizing: border-box;
-        max-width: 100% !important;
+    .vendor-page--bookings-show .vb-section-title {
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
     }
 
     .vendor-page--bookings-show .vb-table td {
@@ -4644,17 +4646,15 @@
     }
 
     .vendor-page--bookings-show .vb-actions__row {
-        flex-wrap: nowrap;
-        gap: 10px;
+        flex-direction: column;
+        gap: 8px;
     }
 
+    .vendor-page--bookings-show .vb-actions .vendor-btn,
     .vendor-page--bookings-show .vb-actions__row .vendor-btn {
-        flex: 1 1 0;
-        min-width: 0;
+        width: 100%;
         justify-content: center;
-        padding-left: 10px;
-        padding-right: 10px;
-        white-space: nowrap;
+        text-align: center;
     }
 }
 
