@@ -31,16 +31,10 @@
                                                class="vendor-form__input" placeholder="Enter your full name">
                                     </div>
                                     <div class="vendor-form__field">
-                                        <label class="vendor-form__label">Username</label>
+                                        <label class="vendor-form__label">NIK/Username</label>
                                         <input type="text" value="{{ $user->username ?? '-' }}"
                                                class="vendor-form__input vendor-form__input--disabled" disabled>
-                                        <div class="vendor-form__hint">Username cannot be changed</div>
-                                    </div>
-                                    <div class="vendor-form__field">
-                                        <label class="vendor-form__label">NIK</label>
-                                        <input type="text" value="{{ $user->nik ?? '-' }}"
-                                               class="vendor-form__input vendor-form__input--disabled" disabled>
-                                        <div class="vendor-form__hint">NIK cannot be changed</div>
+                                        <div class="vendor-form__hint">NIK/Username cannot be changed</div>
                                     </div>
                                 </div>
                             </div>

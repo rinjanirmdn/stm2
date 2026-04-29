@@ -31,7 +31,7 @@
     ]
   },
   "resources/css/dashboard-react.css": {
-    "file": "assets/dashboard-react-DGV3kUQ7.css",
+    "file": "assets/dashboard-react-CQ8OMHt-.css",
     "src": "resources/css/dashboard-react.css",
     "isEntry": true,
     "name": "dashboard-react",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-C1jCzpWY.css",
+    "file": "assets/style-B-NcxL-C.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -103,7 +103,7 @@
     "isEntry": true
   },
   "resources/js/pages/gates-index.js": {
-    "file": "assets/gates-index-D_6Qh8TU.js",
+    "file": "assets/gates-index-BUds2BYz.js",
     "name": "gates-index",
     "src": "resources/js/pages/gates-index.js",
     "isEntry": true
@@ -136,7 +136,7 @@
     "isEntry": true
   },
   "resources/js/pages/reports-transactions.js": {
-    "file": "assets/reports-transactions-3ckdpYDM.js",
+    "file": "assets/reports-transactions-CZKDrx2w.js",
     "name": "reports-transactions",
     "src": "resources/js/pages/reports-transactions.js",
     "isEntry": true,
@@ -175,7 +175,7 @@
     "isEntry": true
   },
   "resources/js/pages/slots-index.js": {
-    "file": "assets/slots-index-CivBiUhz.js",
+    "file": "assets/slots-index-D86fEcWG.js",
     "name": "slots-index",
     "src": "resources/js/pages/slots-index.js",
     "isEntry": true,
@@ -256,7 +256,7 @@
     ]
   },
   "resources/js/pages/vendor.js": {
-    "file": "assets/vendor-BfBgskMT.js",
+    "file": "assets/vendor-D-UMlnAz.js",
     "name": "vendor",
     "src": "resources/js/pages/vendor.js",
     "isEntry": true

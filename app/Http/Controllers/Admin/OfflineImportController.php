@@ -65,9 +65,15 @@ class OfflineImportController extends Controller
                     'errors' => $errors,
                 ]);
             } else {
+                if ($errorCount === 0) {
+                    $msg = 'No data found to import. Please make sure to enter valid data in the template.';
+                } else {
+                    $msg = 'No data was imported due to validation errors.';
+                }
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Tidak ada data yang berhasil diimpor. '.($errorCount > 0 ? implode('; ', $errors) : ''),
+                    'message' => $msg,
                     'errors' => $errors,
                 ]);
             }

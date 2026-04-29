@@ -253,8 +253,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 var isServerAvailable = String(row.getAttribute('data-server-available') || '0') === '1';
                 var timeAllowed = String(row.getAttribute('data-time-allowed') || '0') === '1';
 
+                // Detect if current date is Sunday or Holiday
+                var dateForCheck = new Date(String(paramDate));
+                var isSunday = dateForCheck.getDay() === 0;
+                var isHoliday = !!(holidayData[String(paramDate)]);
+                var isSundayOrHoliday = isSunday || isHoliday;
+
                 // OFF -> ON on default-not-available uses force_available
                 // ON -> OFF always writes disabled=true
+                // On Sunday/Holiday: toggling ON ALWAYS uses force_available
                 var payload = {
                     date: String(paramDate),
                     time: time,
@@ -262,7 +269,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     force_available: false
                 };
                 if (!isCurrentlyInactive) {
+                    // Turning OFF
                     payload.disabled = true;
+                } else if (isSundayOrHoliday) {
+                    // On Sunday/Holiday: turning ON must always force
+                    payload.disabled = false;
+                    payload.force_available = true;
                 } else if (disabledByAdmin) {
                     payload.disabled = false;
                     payload.force_available = false;
