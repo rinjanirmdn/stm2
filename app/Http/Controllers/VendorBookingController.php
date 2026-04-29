@@ -221,7 +221,7 @@ class VendorBookingController extends Controller
         $pendingCount = (clone $brBase)->where('status', BookingRequest::STATUS_PENDING)->count();
         // Count approved BRs that have no slot as scheduled (to handle legacy data/seeders)
         $approvedBrCount = (clone $brBase)->where('status', BookingRequest::STATUS_APPROVED)
-                                          ->whereNull('converted_slot_id')->count();
+            ->whereNull('converted_slot_id')->count();
         $scheduledCount = (clone $slotBase)->where('status', Slot::STATUS_SCHEDULED)->count() + $approvedBrCount;
         $waitingCount = (clone $slotBase)->where('status', Slot::STATUS_WAITING)->count();
         $inProgCount = (clone $slotBase)->where('status', Slot::STATUS_IN_PROGRESS)->count();
@@ -586,7 +586,7 @@ class VendorBookingController extends Controller
             return back()->withInput()->with('error', 'Invalid planned schedule.');
         }
 
-        $forcedTimes = \Illuminate\Support\Facades\Cache::get('admin_gates_forced_times_'.$request->planned_date, []);
+        $forcedTimes = Cache::get('admin_gates_forced_times_'.$request->planned_date, []);
         $forcedTimes = is_array($forcedTimes) ? $forcedTimes : [];
         $timeStr = date('H:i', strtotime($request->planned_time));
         $isForcedByAdmin = in_array($timeStr, $forcedTimes, true);
@@ -602,6 +602,7 @@ class VendorBookingController extends Controller
             $msg = $holidayName
                 ? "Booking on {$holidayName} is not available. The warehouse team must open specific hours first."
                 : 'Booking on this holiday is not available. The warehouse team must open specific hours first.';
+
             return back()->withInput()->with('error', $msg);
         }
 

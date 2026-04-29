@@ -70,7 +70,7 @@ class OfflineImportController extends Controller
                 } else {
                     $msg = 'No data was imported due to validation errors.';
                 }
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => $msg,
