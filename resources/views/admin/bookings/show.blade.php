@@ -93,6 +93,10 @@
                         </div>
                     </div>
                     <div class="detail-item">
+                        <label class="detail-label">PO/SO Number</label>
+                        <div class="detail-value">{{ $booking->po_number ?? '-' }}</div>
+                    </div>
+                    <div class="detail-item">
                         <label class="detail-label">Supplier</label>
                         <div class="detail-value">{{ $booking->supplier_name ?? '-' }}</div>
                     </div>

@@ -102,7 +102,7 @@ Route::prefix('gates')->name('gates.')->group(function () {
         Route::get('/available-slots', [ReportController::class, 'ajaxAvailableSlots'])->name('available_slots')
             ->middleware(['permission:gates.index', 'throttle:30,1']);
         Route::post('/disabled-times', [ReportController::class, 'ajaxToggleDisabledTime'])->name('disabled_times')
-            ->middleware(['permission:gates.index', 'throttle:20,1']);
+            ->middleware(['permission:gates.index', 'throttle:60,1']);
     });
 
     Route::post('/{gateId}/toggle', [ReportController::class, 'toggleGate'])->whereNumber('gateId')->name('toggle')

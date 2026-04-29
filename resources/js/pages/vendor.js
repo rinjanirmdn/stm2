@@ -468,6 +468,7 @@ function initVendorBookingCreate(config) {
     const poSearchUrl = config.poSearchUrl || '';
     const poDetailUrl = config.poDetailUrl || '';
     const availableSlotsUrl = config.availableSlotsUrl || '';
+    const forcedHolidayDatesUrl = config.forcedHolidayDatesUrl || '';
 
     const poSearch = document.getElementById('po-search');
     const poHidden = document.getElementById('po-number-hidden');
@@ -494,6 +495,43 @@ function initVendorBookingCreate(config) {
     const submitWarning = document.getElementById('submit-warning');
     const availabilityWarning = document.getElementById('availability-warning');
     const holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
+
+    // Set of Sunday/Holiday dates that have admin-forced times
+    const forcedHolidayDatesSet = new Set();
+    let forcedDatesFetched = false;
+
+    function fetchForcedDatesForRange(startDate, endDate, callback) {
+        if (!forcedHolidayDatesUrl) {
+            if (callback) callback();
+            return;
+        }
+        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+        fetch(forcedHolidayDatesUrl + '?start=' + startDate + '&end=' + endDate, {
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success && Array.isArray(data.forced_dates)) {
+                data.forced_dates.forEach(function (d) { forcedHolidayDatesSet.add(d); });
+            }
+        })
+        .catch(function () {})
+        .finally(function () { if (callback) callback(); });
+    }
+
+    // Pre-fetch forced dates for next 3 months (booking is min H+2)
+    (function () {
+        var now = new Date();
+        var start = new Date(now.getFullYear(), now.getMonth(), 1);
+        var end = new Date(now.getFullYear(), now.getMonth() + 3, 0);
+        var pad = function (v) { return String(v).padStart(2, '0'); };
+        var startStr = start.getFullYear() + '-' + pad(start.getMonth() + 1) + '-01';
+        var endStr = end.getFullYear() + '-' + pad(end.getMonth() + 1) + '-' + pad(end.getDate());
+        fetchForcedDatesForRange(startStr, endStr, function () {
+            forcedDatesFetched = true;
+        });
+    })();
 
     if (!poSearch || !plannedDate || !plannedTime) {
         return;
@@ -1021,10 +1059,12 @@ function initVendorBookingCreate(config) {
             maxYear: parseInt(window.moment().format('YYYY'), 10) + 2,
             startDate: startDate.isBefore(window.moment().add(2, 'days'), 'day') ? window.moment().add(2, 'days') : startDate,
             isInvalidDate: function (date) {
-                // Block Sundays and holidays — they cannot be selected
-                if (date.day() === 0) return true;
                 var ds = date.format('YYYY-MM-DD');
-                if (holidayData[ds]) return true;
+                var isSunday = date.day() === 0;
+                var isHoliday = !!(holidayData[ds]);
+                if ((isSunday || isHoliday) && !forcedHolidayDatesSet.has(ds)) {
+                    return true;
+                }
                 return false;
             },
             isCustomDate: function (date) {
@@ -1253,6 +1293,7 @@ function initVendorAvailability(config) {
     const holidays = config.holidays || {};
     const availableSlotsUrl = config.availableSlotsUrl || '';
     const bookingCreateUrl = config.bookingCreateUrl || '';
+    const forcedHolidayDatesUrl = config.forcedHolidayDatesUrl || '';
 
     let currentDate = selectedDate ? new Date(selectedDate) : new Date();
     const today = new Date();
@@ -1260,6 +1301,15 @@ function initVendorAvailability(config) {
     minDate.setDate(today.getDate() + 2);
     const minDateMidnight = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
     const holidayData = holidays;
+
+    // Set of Sunday/Holiday dates that have admin-forced times (YYYY-MM-DD strings)
+    let forcedHolidayDatesSet = new Set();
+
+    function isSundayOrHoliday(dateStr, dateObj) {
+        if (dateObj && dateObj.getDay() === 0) return true;
+        if (holidayData && holidayData[dateStr]) return true;
+        return false;
+    }
 
     function pad2(value) {
         return String(value).padStart(2, '0');
@@ -1302,7 +1352,49 @@ function initVendorAvailability(config) {
         mobileFilterBtn.addEventListener('click', toggleSidebar);
     }
 
-    renderMiniCalendar();
+    // Fetch which Sunday/Holiday dates have admin-forced times for the current month
+    let lastForcedFetchKey = '';
+    function fetchForcedHolidayDates(callback) {
+        if (!forcedHolidayDatesUrl) {
+            if (callback) callback();
+            return;
+        }
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        // Range: first of current month to last of current month (+ buffer for nav)
+        const start = `${year}-${pad2(month + 1)}-01`;
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const end = `${year}-${pad2(month + 1)}-${pad2(lastDay)}`;
+        const fetchKey = `${start}_${end}`;
+        if (fetchKey === lastForcedFetchKey) {
+            if (callback) callback();
+            return;
+        }
+        lastForcedFetchKey = fetchKey;
+
+        fetch(`${forcedHolidayDatesUrl}?start=${start}&end=${end}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && Array.isArray(data.forced_dates)) {
+                // Merge (don't replace — may have other months cached)
+                data.forced_dates.forEach(d => forcedHolidayDatesSet.add(d));
+            }
+        })
+        .catch(() => {})
+        .finally(() => {
+            if (callback) callback();
+        });
+    }
+
+    // Initial load: fetch forced dates, then render
+    fetchForcedHolidayDates(() => {
+        renderMiniCalendar();
+    });
     loadAvailability();
 
     function renderMiniCalendar() {
@@ -1339,6 +1431,10 @@ function initVendorAvailability(config) {
             const isPast = date < minDateMidnight;
             const isSunday = date.getDay() === 0;
             const isHoliday = holidayData[dateStr];
+            const isSundayOrHol = isSunday || !!isHoliday;
+            const hasForced = forcedHolidayDatesSet.has(dateStr);
+            // Block Sunday/Holiday unless there are admin-forced times
+            const isBlocked = isPast || (isSundayOrHol && !hasForced);
 
             const dayDiv = document.createElement('div');
             dayDiv.className = 'av-calendar__day';
@@ -1346,20 +1442,24 @@ function initVendorAvailability(config) {
 
             if (isToday) dayDiv.classList.add('av-calendar__day--today');
             if (isSelected) dayDiv.classList.add('av-calendar__day--selected');
-            if (isPast) dayDiv.classList.add('av-calendar__day--disabled');
+            if (isBlocked) dayDiv.classList.add('av-calendar__day--disabled');
             if (isSunday) dayDiv.classList.add('av-calendar__day--sunday');
             if (isHoliday) dayDiv.classList.add('av-calendar__day--holiday');
 
-            if (!isPast) {
+            if (!isBlocked) {
                 dayDiv.style.cursor = 'pointer';
                 dayDiv.addEventListener('click', () => selectDate(dateStr));
             }
 
-            if (isSunday) {
-                dayDiv.setAttribute('data-vendor-tooltip', 'Sunday');
+            if (isSunday && !hasForced) {
+                dayDiv.setAttribute('data-vendor-tooltip', 'Sunday — Closed');
+            } else if (isSunday && hasForced) {
+                dayDiv.setAttribute('data-vendor-tooltip', 'Sunday (Partially Open)');
             }
-            if (isHoliday) {
-                dayDiv.setAttribute('data-vendor-tooltip', holidayData[dateStr]);
+            if (isHoliday && !hasForced) {
+                dayDiv.setAttribute('data-vendor-tooltip', holidayData[dateStr] + ' — Closed');
+            } else if (isHoliday && hasForced) {
+                dayDiv.setAttribute('data-vendor-tooltip', holidayData[dateStr] + ' (Partially Open)');
             }
 
             container.appendChild(dayDiv);
@@ -1408,7 +1508,9 @@ function initVendorAvailability(config) {
 
     window.changeMonth = function (direction) {
         currentDate.setMonth(currentDate.getMonth() + direction);
-        renderMiniCalendar();
+        fetchForcedHolidayDates(() => {
+            renderMiniCalendar();
+        });
     };
 
     window.selectDate = function (dateStr) {

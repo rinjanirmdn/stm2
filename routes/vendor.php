@@ -29,5 +29,6 @@ Route::middleware('vendor.portal')->prefix('vendor')->name('vendor.')->group(fun
         Route::get('/calendar-slots', [VendorBookingController::class, 'calendarSlots'])->name('calendar_slots')->middleware(['permission:vendor.ajax.calendar_slots', 'throttle:30,1']);
         Route::get('/po-search', [VendorBookingController::class, 'ajaxPoSearch'])->name('po_search')->middleware(['permission:vendor.ajax.po_search', 'throttle:20,1']);
         Route::get('/po/{poNumber}', [VendorBookingController::class, 'ajaxPoDetail'])->where('poNumber', '[A-Za-z0-9\-]+')->name('po_detail')->middleware(['permission:vendor.ajax.po_detail', 'throttle:20,1']);
+        Route::get('/forced-holiday-dates', [VendorBookingController::class, 'ajaxForcedHolidayDates'])->name('forced_holiday_dates')->middleware(['permission:vendor.ajax.available_slots', 'throttle:30,1']);
     });
 });

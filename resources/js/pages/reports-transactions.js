@@ -722,14 +722,26 @@ document.addEventListener('DOMContentLoaded', function () {
                         window.location.reload();
                     }, 2000);
                 } else {
-                    throw new Error(data.message || 'Error occurred');
+                    var errObj = new Error(data.message || 'Error occurred');
+                    errObj.errors = data.errors || [];
+                    throw errObj;
                 }
             })
             .catch(function(err) {
                 if (alertImportOffline) {
-                    var msg = err.message || (err.errors ? JSON.stringify(err.errors) : 'Gagal upload data');
+                    var msg = err.message || 'Failed to upload data';
+                    var html = '<div class="st-flex st-align-center"><i class="fa-solid fa-exclamation-circle st-mr-2"></i> <span>' + msg + '</span></div>';
+                    
+                    if (err.errors && err.errors.length > 0) {
+                        html += '<div class="st-mt-2"><button type="button" class="st-link st-text--sm" onclick="document.getElementById(\'import-error-details\').classList.toggle(\'st-hidden\')">Learn more</button></div>';
+                        html += '<div id="import-error-details" class="st-hidden st-mt-2 st-p-3 st-bg-white st-rounded st-border" style="max-height: 150px; overflow-y: auto; font-size: 0.875rem;">';
+                        html += '<ul class="st-pl-4 st-mb-0 st-text-danger">';
+                        err.errors.forEach(function(e) { html += '<li>' + String(e).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</li>'; });
+                        html += '</ul></div>';
+                    }
+                    
                     alertImportOffline.className = 'st-alert st-alert--danger st-mt-4';
-                    alertImportOffline.innerHTML = '<i class="fa-solid fa-exclamation-circle st-mr-2"></i> ' + msg;
+                    alertImportOffline.innerHTML = html;
                     alertImportOffline.classList.remove('st-hidden');
                 }
             })

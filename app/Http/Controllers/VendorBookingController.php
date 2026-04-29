@@ -219,7 +219,10 @@ class VendorBookingController extends Controller
             ->whereDate('planned_start', '<=', $rangeEnd);
 
         $pendingCount = (clone $brBase)->where('status', BookingRequest::STATUS_PENDING)->count();
-        $scheduledCount = (clone $slotBase)->where('status', Slot::STATUS_SCHEDULED)->count();
+        // Count approved BRs that have no slot as scheduled (to handle legacy data/seeders)
+        $approvedBrCount = (clone $brBase)->where('status', BookingRequest::STATUS_APPROVED)
+                                          ->whereNull('converted_slot_id')->count();
+        $scheduledCount = (clone $slotBase)->where('status', Slot::STATUS_SCHEDULED)->count() + $approvedBrCount;
         $waitingCount = (clone $slotBase)->where('status', Slot::STATUS_WAITING)->count();
         $inProgCount = (clone $slotBase)->where('status', Slot::STATUS_IN_PROGRESS)->count();
         $completedCount = (clone $slotBase)->where('status', Slot::STATUS_COMPLETED)->count();
@@ -583,20 +586,23 @@ class VendorBookingController extends Controller
             return back()->withInput()->with('error', 'Invalid planned schedule.');
         }
 
-        if ($plannedStartAt->isSunday()) {
-            return back()->withInput()->with('error', 'Booking date cannot be on Sunday.');
-        }
+        $forcedTimes = \Illuminate\Support\Facades\Cache::get('admin_gates_forced_times_'.$request->planned_date, []);
+        $forcedTimes = is_array($forcedTimes) ? $forcedTimes : [];
+        $timeStr = date('H:i', strtotime($request->planned_time));
+        $isForcedByAdmin = in_array($timeStr, $forcedTimes, true);
 
-        // Check if date is holiday using HolidayHelper
-        try {
-            if (HolidayHelper::isHoliday($plannedStartAt)) {
-                $holidayName = HolidayHelper::getHolidayName($plannedStartAt);
-                $msg = $holidayName ? "Booking date is a holiday: {$holidayName}." : 'Booking date cannot be on a holiday.';
+        // On Sunday/Holiday: block unless the specific time is forced open by WH team
+        $isSundayOrHoliday = $plannedStartAt->isSunday() || HolidayHelper::isHoliday($plannedStartAt);
 
-                return back()->withInput()->with('error', $msg);
+        if ($isSundayOrHoliday && ! $isForcedByAdmin) {
+            $holidayName = HolidayHelper::getHolidayName($plannedStartAt);
+            if ($plannedStartAt->isSunday()) {
+                return back()->withInput()->with('error', 'Booking on Sunday is not available. The warehouse team must open specific hours first.');
             }
-        } catch (\Exception $e) {
-            // If holiday check fails, continue with booking
+            $msg = $holidayName
+                ? "Booking on {$holidayName} is not available. The warehouse team must open specific hours first."
+                : 'Booking on this holiday is not available. The warehouse team must open specific hours first.';
+            return back()->withInput()->with('error', $msg);
         }
 
         if ($plannedStartAt->format('H:i') > '19:00') {
@@ -832,6 +838,33 @@ class VendorBookingController extends Controller
 
                 return preg_match('/^\d{2}:\d{2}$/', $val) ? $val : null;
             }, $forcedTimes))));
+            // Auto-block ALL times on Sunday or National Holiday.
+            // Only times explicitly forced ON by the WH team can override.
+            $isSundayOrHoliday = false;
+            try {
+                $dateObj = Carbon::parse($date);
+                $isSundayOrHoliday = $dateObj->isSunday() || HolidayHelper::isHoliday($dateObj);
+            } catch (\Throwable $e) {
+                // ignore parse error
+            }
+
+            if ($isSundayOrHoliday) {
+                // Block every time slot that is NOT in forced_times
+                $allTimeSlots = [];
+                $s = strtotime('07:00');
+                $e = strtotime('19:00');
+                while ($s <= $e) {
+                    $allTimeSlots[] = date('H:i', $s);
+                    $s = strtotime('+30 minutes', $s);
+                }
+                foreach ($allTimeSlots as $ts) {
+                    if (! in_array($ts, $forcedTimes, true)) {
+                        $disabledTimes[] = $ts;
+                    }
+                }
+                $disabledTimes = array_values(array_unique($disabledTimes));
+            }
+
             $disabledMap = array_fill_keys($disabledTimes, true);
             $forcedMap = array_fill_keys($forcedTimes, true);
 
@@ -1282,5 +1315,54 @@ class VendorBookingController extends Controller
                 return $gate->id;
             }
         }
+    }
+
+    /**
+     * AJAX: Get Sunday/Holiday dates that have admin-forced times.
+     * Used by calendar and datepicker to know which otherwise-blocked dates are available.
+     */
+    public function ajaxForcedHolidayDates(Request $request)
+    {
+        $request->validate([
+            'start' => 'required|date',
+            'end' => 'required|date|after_or_equal:start',
+        ]);
+
+        $start = Carbon::parse($request->start)->startOfDay();
+        $end = Carbon::parse($request->end)->endOfDay();
+
+        // Limit range to 90 days max
+        if ($start->diffInDays($end) > 90) {
+            $end = $start->copy()->addDays(90);
+        }
+
+        $holidays = HolidayHelper::getHolidayMap($start->format('Y-m-d'));
+        // If range spans two years, merge both
+        if ($start->year !== $end->year) {
+            $holidays = array_merge($holidays, HolidayHelper::getHolidayMap($end->format('Y-m-d')));
+        }
+
+        $forcedDates = [];
+        $current = $start->copy();
+
+        while ($current <= $end) {
+            $dateStr = $current->format('Y-m-d');
+            $isSundayOrHoliday = $current->isSunday() || isset($holidays[$dateStr]);
+
+            if ($isSundayOrHoliday) {
+                // Date is clickable only if admin has explicitly forced some times open
+                $forced = Cache::get('admin_gates_forced_times_'.$dateStr, []);
+                if (is_array($forced) && count($forced) > 0) {
+                    $forcedDates[] = $dateStr;
+                }
+            }
+
+            $current->addDay();
+        }
+
+        return response()->json([
+            'success' => true,
+            'forced_dates' => $forcedDates,
+        ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\TransactionsExport;
+use App\Helpers\HolidayHelper;
 use App\Models\BookingRequest;
 use App\Models\Slot;
 use App\Services\ExportService;
@@ -565,6 +566,33 @@ class ReportController extends Controller
         $warehouseIds = array_map('intval', $warehouseValues);
         $disabledTimes = $this->getAdminDisabledTimes($date);
         $forcedTimes = $this->getAdminForcedTimes($date);
+
+        // On Sunday or National Holiday: auto-disable ALL times that are NOT forced.
+        // This ensures the internal Gates view matches the vendor view.
+        $isSundayOrHoliday = false;
+        try {
+            $dateObj = Carbon::parse($date);
+            $isSundayOrHoliday = $dateObj->isSunday() || HolidayHelper::isHoliday($dateObj);
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        if ($isSundayOrHoliday) {
+            $allTimeSlots = [];
+            $ts = strtotime('07:00');
+            $te = strtotime('19:00');
+            while ($ts <= $te) {
+                $allTimeSlots[] = date('H:i', $ts);
+                $ts = strtotime('+30 minutes', $ts);
+            }
+            foreach ($allTimeSlots as $t) {
+                if (! in_array($t, $forcedTimes, true)) {
+                    $disabledTimes[] = $t;
+                }
+            }
+            $disabledTimes = array_values(array_unique($disabledTimes));
+        }
+
         $disabledMap = array_fill_keys($disabledTimes, true);
         $forcedMap = array_fill_keys($forcedTimes, true);
         $disabledSig = sha1(json_encode($disabledTimes));
@@ -717,7 +745,14 @@ class ReportController extends Controller
         $this->putAdminDisabledTimes($date, $current);
         $this->putAdminForcedTimes($date, $forced);
 
-        Cache::forget('vendor_availability_'.$date);
+        // Clear all cached availability for this date (vendor + admin)
+        foreach ([60, 120, 180, 240, 300, 360] as $dur) {
+            Cache::forget('vendor_availability_'.$date.'_'.$dur);
+        }
+        // Clear admin availability caches (pattern varies by warehouse filter)
+        $cachePattern = 'admin_gates_availability_'.$date;
+        // Since we can't pattern-delete, forget the common one
+        Cache::forget($cachePattern);
 
         return response()->json([
             'success' => true,
