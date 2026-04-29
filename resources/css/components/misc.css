@@ -4065,6 +4065,44 @@ input[type="datetime-local"].form-control {
     min-height: 0;
 }
 
+@media (max-width: 768px) {
+    .st-detail-grid--sm {
+        font-size: 15px;
+    }
+
+    .st-detail-grid--sm .st-detail-label,
+    .st-detail-grid--sm .st-detail-colon,
+    .st-detail-grid--sm .st-detail-value {
+        font-size: 14px;
+    }
+
+    .st-detail-label {
+        font-size: 14px;
+    }
+
+    .st-detail-value {
+        font-size: 14px;
+    }
+
+    .st-detail-value--primary-sm {
+        font-size: 15px;
+    }
+
+    .st-card__title {
+        font-size: 16px;
+    }
+
+    .st-text--xs-10 {
+        font-size: 13px;
+    }
+
+    .st-table__status-badge,
+    .badge,
+    .st-status-badge {
+        font-size: 12px;
+    }
+}
+
 @media (max-width: 520px) {
     .st-detail-item {
         grid-template-columns: 1fr;
@@ -4086,12 +4124,12 @@ input[type="datetime-local"].form-control {
     }
 
     .detail-label {
-        font-size: 0.7rem;
+        font-size: 0.8rem;
         min-width: 120px;
     }
 
     .detail-value {
-        font-size: 0.8rem;
+        font-size: 0.875rem;
     }
 
     .detail-value::before {
