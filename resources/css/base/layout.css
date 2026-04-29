@@ -1034,7 +1034,7 @@
     }
 
     table.st-table {
-        font-size: 10px;
+        font-size: var(--st-font-table);
     }
 
     /* ── Forms / filter-bar mobile ── */

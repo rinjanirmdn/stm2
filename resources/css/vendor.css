@@ -4846,3 +4846,92 @@
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
     transition: filter 0.2s ease;
 }
+
+/* Mobile: scale up vendor portal fonts for readability */
+@media (max-width: 768px) {
+    /* Badges */
+    .vendor-badge {
+        font-size: 13px;
+        padding: 4px 12px;
+    }
+
+    /* Text helpers */
+    .vendor-text--small-muted {
+        font-size: 13px;
+    }
+
+    .vendor-datepicker-tooltip {
+        font-size: 13px;
+    }
+
+    /* Detail items on vendor booking show page */
+    .mb-detail-label {
+        font-size: 14px;
+    }
+
+    .mb-detail-value {
+        font-size: 14px;
+    }
+
+    .mb-detail-colon {
+        font-size: 14px;
+    }
+
+    /* Vendor booking cards */
+    .mb-card-title {
+        font-size: 15px;
+    }
+
+    .mb-empty-text {
+        font-size: 14px;
+    }
+
+    /* Vendor form elements */
+    .vendor-form-label {
+        font-size: 14px;
+    }
+
+    .vendor-form-input,
+    .vendor-form-select,
+    .vendor-form-textarea {
+        font-size: 15px;
+    }
+
+    /* Vendor table overrides */
+    .vd-table th,
+    .vd-table td {
+        font-size: 14px;
+    }
+
+    /* Vendor dashboard stat cards */
+    .vd-stat-label {
+        font-size: 13px;
+    }
+
+    .vd-stat-value {
+        font-size: 16px;
+    }
+
+    /* Availability page */
+    .av-slot-label {
+        font-size: 13px;
+    }
+
+    .av-slot-time {
+        font-size: 14px;
+    }
+
+    /* Notification items */
+    .notification-action-btn {
+        font-size: 12px;
+    }
+
+    /* Bottom nav labels (keep slightly smaller for nav bar) */
+    .vendor-mobile-nav-link {
+        font-size: 12px;
+    }
+
+    .vendor-mobile-nav-badge {
+        font-size: 11px;
+    }
+}

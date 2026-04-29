@@ -423,3 +423,36 @@ table.st-table td .st-btn+form,
     border-color: #dc2626;
     color: #fff;
 }
+
+/* Mobile: scale up button fonts for readability */
+@media (max-width: 768px) {
+    .st-btn {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+
+    .st-btn--xs {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+
+    .st-btn--sm {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .st-table td .st-btn,
+    table.st-table td .st-btn,
+    .st-table tbody td .st-btn,
+    table.st-table tbody td .st-btn {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .st-table td .st-btn--sm,
+    table.st-table td .st-btn--sm,
+    .st-table tbody td .st-btn--sm,
+    table.st-table tbody td .st-btn--sm {
+        font-size: 12px !important;
+    }
+}
