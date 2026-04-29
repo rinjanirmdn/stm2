@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends(request()->boolean('popup') ? 'layouts.popup' : 'layouts.app')
 
 @section('title', 'Complete Unplanned - e-Docking Control System')
 @section('page_title', 'Complete Unplanned Process')
