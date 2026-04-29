@@ -154,6 +154,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const rejectReason = document.getElementById('rejectReason');
         const form = document.getElementById('cancel-booking-form');
 
+        // Close any open action dropdown menus (main.js uses 'show' class)
+        document.querySelectorAll('.st-action-menu.show').forEach(function(menu) {
+            menu.classList.remove('show');
+            menu.style.position = '';
+            menu.style.top = '';
+            menu.style.bottom = '';
+            menu.style.left = '';
+            menu.style.right = '';
+            menu.style.zIndex = '';
+            menu.style.width = '';
+        });
+
         if (dialog) {
             dialog.classList.remove('st-hidden');
             dialog.style.display = 'flex';

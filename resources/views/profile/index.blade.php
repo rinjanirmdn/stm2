@@ -40,14 +40,9 @@
             </div>
             <div class="st-profile-section-body">
                 <div class="st-profile-field">
-                    <label class="st-profile-label">Username</label>
+                    <label class="st-profile-label">NIK/Username</label>
                     <input type="text" class="st-profile-input st-profile-input--disabled" value="{{ $user->username ?? '-' }}" disabled>
-                    <span class="st-profile-hint">Username cannot be changed</span>
-                </div>
-                <div class="st-profile-field">
-                    <label class="st-profile-label">NIK</label>
-                    <input type="text" class="st-profile-input st-profile-input--disabled" value="{{ $user->nik ?? '-' }}" disabled>
-                    <span class="st-profile-hint">NIK cannot be changed</span>
+                    <span class="st-profile-hint">NIK/Username cannot be changed</span>
                 </div>
                 <div class="st-profile-field">
                     <label class="st-profile-label">Full Name</label>
