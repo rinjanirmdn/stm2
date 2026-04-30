@@ -93,12 +93,12 @@
     <div class="container">
         <div class="icon">🔒</div>
         <h1>Session Expired</h1>
-        <p>Sesi Anda telah berakhir karena tidak ada aktivitas.<br>Halaman akan dimuat ulang secara otomatis.</p>
+        <p>Sesi Anda telah berakhir karena tidak ada aktivitas.<br>Silakan login kembali untuk melanjutkan.</p>
         <div class="countdown">
-            <span class="spinner"></span> Memuat ulang dalam <span id="timer">3</span> detik...
+            <span class="spinner"></span> Mengarahkan ke halaman login dalam <span id="timer">3</span> detik...
         </div>
         <div>
-            <a href="javascript:location.reload()" class="btn btn-primary">Muat Ulang Sekarang</a>
+            <a href="/login" class="btn btn-primary">Login Sekarang</a>
             <a href="/" class="btn btn-ghost">Ke Halaman Utama</a>
         </div>
     </div>
@@ -110,7 +110,7 @@
             if (timerEl) timerEl.textContent = seconds;
             if (seconds <= 0) {
                 clearInterval(interval);
-                window.location.reload();
+                window.location.href = '/login';
             }
         }, 1000);
     </script>
