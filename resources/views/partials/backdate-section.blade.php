@@ -96,7 +96,9 @@
                 autoUpdateInput: true,
                 autoApply: true,
                 maxDate: moment(),
-                locale: { format: 'DD-MM-YYYY' }
+                locale: { format: 'DD-MM-YYYY' },
+                parentEl: 'body',
+                drops: 'auto'
             };
             if ($dateInput.val()) {
                 drpOptions.startDate = moment($dateInput.val(), 'DD-MM-YYYY');
