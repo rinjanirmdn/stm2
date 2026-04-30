@@ -98,7 +98,7 @@
                 maxDate: moment(),
                 locale: { format: 'DD-MM-YYYY' },
                 parentEl: 'body',
-                drops: 'auto'
+                drops: 'up'
             };
             if ($dateInput.val()) {
                 drpOptions.startDate = moment($dateInput.val(), 'DD-MM-YYYY');
