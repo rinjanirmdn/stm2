@@ -82,6 +82,7 @@
                         <input
                             type="text"
                             name="ticket_number"
+                            id="ticket_number_input"
                             class="st-input"
                             required
                             value="{{ old('ticket_number') }}"
@@ -91,6 +92,9 @@
                         <button type="button" id="btn_scan_ticket" class="st-btn st-btn--secondary st-btn--pad-md st-nowrap" title="Scan via Camera">
                             <i class="fas fa-camera"></i>
                         </button>
+                    </div>
+                    <div id="ticket_validation_msg" class="st-text--sm st-mt-4" style="color: #dc2626; display: none;">
+                        <i class="fas fa-times-circle st-mr-4"></i> <span>Ticket number does not match this booking.</span>
                     </div>
                     <div id="scan_camera_wrap" class="st-hidden-soft st-mt-8 st-border st-rounded-8 st-p-8 st-bg-slate-50">
                         <div class="st-flex st-align-center st-gap-8 st-justify-between">
@@ -429,6 +433,34 @@
         scanStopBtn.addEventListener('click', function () {
             stopCameraScan();
         });
+    }
+
+    // Real-time Ticket Validation
+    var expectedTicket = "{{ strtoupper($slot->ticket_number ?? '') }}";
+    var slotType = "{{ $slot->slot_type ?? 'planned' }}";
+    var submitBtn = document.querySelector('form button[type="submit"]');
+    var ticketValidationMsg = document.getElementById('ticket_validation_msg');
+
+    if (ticketInput && slotType !== 'unplanned') {
+        function validateTicket() {
+            var val = (ticketInput.value || '').trim().toUpperCase();
+            if (expectedTicket !== '' && val !== '' && val !== expectedTicket) {
+                ticketInput.style.borderColor = '#dc2626';
+                if (ticketValidationMsg) ticketValidationMsg.style.display = 'block';
+                if (submitBtn) submitBtn.disabled = true;
+            } else {
+                ticketInput.style.borderColor = '';
+                if (ticketValidationMsg) ticketValidationMsg.style.display = 'none';
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+        ticketInput.addEventListener('input', validateTicket);
+        ticketInput.addEventListener('change', validateTicket);
+        
+        // Initial check if there's already value
+        if (ticketInput.value) {
+            validateTicket();
+        }
     }
 
     // Photo Capture Logic
