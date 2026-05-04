@@ -264,14 +264,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (trigger) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             var parent = trigger.closest('.st-action-dropdown');
             var menu = parent ? parent.querySelector('.st-action-menu') : trigger.nextElementSibling;
-            
+
             if (menu && menu.classList.contains('st-action-menu')) {
                 // Close all other open menus
                 stCloseAllActionMenus(menu);
-                
+
                 if (!menu.classList.contains('show')) {
                     // Use position:fixed to escape overflow:auto containers (e.g. st-table-wrapper)
                     var triggerRect = trigger.getBoundingClientRect();
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     stResetMenuPosition(menu);
                 }
-                
+
                 menu.classList.toggle('show');
             }
             return;
@@ -2170,7 +2170,17 @@ document.addEventListener('DOMContentLoaded', function () {
             // Replace items with filtered urgent items
             items = urgentItems;
             countEl.textContent = items.length;
-            banner.style.display = 'block';
+            var hideReminder = false;
+            var sessionKey = 'st-hide-reminder-' + (stAppConfig ? stAppConfig.sessionId : 'default');
+            try {
+                hideReminder = sessionStorage.getItem(sessionKey) === '1';
+            } catch (e) {}
+
+            if (!hideReminder) {
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
 
             listEl.innerHTML = items.map(function (item) {
                 var label = item.request_number || item.po_number || ('Request #' + item.id);
