@@ -454,7 +454,7 @@
 /* Auto-dismiss alert animation */
 .vendor-alert--autodismiss {
     position: relative;
-    animation: vendorAlertSlideIn 0.3s ease-out, vendorAlertFadeOut 0.5s ease-in 4.5s forwards;
+    animation: vendorAlertSlideIn 0.3s ease-out, vendorAlertFadeOut 0.5s ease-in 5s forwards;
 }
 
 .vendor-alert__close {
