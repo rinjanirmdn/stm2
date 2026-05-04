@@ -15,7 +15,7 @@
                     <div class="st-form-field st-minw-80 st-flex st-flex-0 st-justify-end st-gap-8">
                         <a href="{{ route('users.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                         @can('users.create')
-                            <a href="{{ route('users.create') }}" class="st-btn st-btn--primary">Add User</a>
+                            <button type="button" id="btnOpenAddUser" class="st-btn st-btn--primary">Add User</button>
                         @endcan
                     </div>
                 </div>
@@ -365,8 +365,148 @@
             </div>
         </div>
     </div>
+
+    <!-- Add User Modal -->
+    @can('users.create')
+    <div id="addUserModal" class="st-dialog--overlay st-hidden">
+        <div class="st-dialog__card" style="max-width: 520px;">
+            <div class="st-dialog__header">
+                <h3 class="st-dialog__title">Add User</h3>
+            </div>
+            <div class="st-dialog__body">
+                <div id="addUserErrors" class="st-alert st-alert--error st-mb-12" style="display:none;">
+                    <div class="st-alert__title">Please check the form</div>
+                    <div class="st-alert__text">
+                        <ul id="addUserErrorList" class="st-ml-16"></ul>
+                    </div>
+                </div>
+
+                <form id="addUserForm" method="POST" action="{{ route('users.store') }}" class="st-form-block">
+                    @csrf
+
+                    <div class="st-form-field st-form-field--mb">
+                        <label class="st-label">NIK/Username</label>
+                        <input type="text" name="nik" class="st-input" maxlength="50" required>
+                    </div>
+
+                    <div class="st-form-field st-form-field--mb">
+                        <label class="st-label">Email</label>
+                        <input type="email" name="email" class="st-input" maxlength="255" required>
+                    </div>
+
+                    <div class="st-form-field st-form-field--mb">
+                        <label class="st-label">Full Name</label>
+                        <input type="text" name="name" class="st-input" maxlength="100" required>
+                    </div>
+
+                    <div class="st-form-field st-form-field--mb">
+                        <label class="st-label">Role</label>
+                        <select name="role" class="st-select" required id="modal-role">
+                            <option value="operator" selected>Operator</option>
+                            <option value="admin_wh">Admin WH</option>
+                            <option value="section_head">Section Head</option>
+                            <option value="admin">Admin</option>
+                            <option value="security">Security</option>
+                            <option value="super_account">Super Account</option>
+                            <option value="vendor">Vendor</option>
+                            <option value="display_account">Display Account</option>
+                        </select>
+                    </div>
+
+                    <div class="st-form-field st-form-field--mb st-form-field--hidden" id="modal-vendor-code-field">
+                        <label class="st-label">Vendor Code (SAP)</label>
+                        <input type="text" name="vendor_code" class="st-input" maxlength="20" placeholder="e.g. 1100000263">
+                        <div class="st-form-note st-mb-8">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
+
+                        <label class="st-flex st-align-center st-gap-6 st-cursor-pointer st-mt-2">
+                            <input type="checkbox" name="is_internal_vendor" value="1" class="st-checkbox--plain">
+                            <span>Internal Vendor</span>
+                        </label>
+                    </div>
+
+                    <div class="st-form-field st-form-field--mb">
+                        <label class="st-label">Password</label>
+                        <div class="st-input-wrap">
+                            <input type="password" name="password" id="modal-password" class="st-input st-input--pr-40" required>
+                            <button type="button" class="btn-toggle-password st-btn-toggle-password" data-target="modal-password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="st-form-field st-form-field--mb">
+                        <label class="st-label">Confirm Password</label>
+                        <div class="st-input-wrap">
+                            <input type="password" name="password_confirmation" id="modal-password-confirmation" class="st-input st-input--pr-40" required>
+                            <button type="button" class="btn-toggle-password st-btn-toggle-password" data-target="modal-password-confirmation">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="st-dialog__actions">
+                        <button type="submit" class="st-btn st-btn--primary st-dialog__btn">Save</button>
+                        <button type="button" id="btnCloseAddUser" class="st-btn st-btn--outline-primary st-dialog__btn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endcan
 @endsection
 
 @push('scripts')
     @vite(['resources/js/pages/users-index.js'])
+
+    @if ($errors->any())
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var modal = document.getElementById('addUserModal');
+            var errorsDiv = document.getElementById('addUserErrors');
+            var errorsList = document.getElementById('addUserErrorList');
+
+            if (modal) {
+                modal.classList.remove('st-hidden');
+                modal.style.display = 'flex';
+            }
+
+            if (errorsDiv && errorsList) {
+                errorsDiv.style.display = 'block';
+                errorsList.innerHTML = @json($errors->all()).map(function(e) {
+                    return '<li>' + e + '</li>';
+                }).join('');
+            }
+
+            // Restore old input values
+            var form = document.getElementById('addUserForm');
+            if (form) {
+                @if(old('nik'))
+                    var nikInput = form.querySelector('input[name="nik"]');
+                    if (nikInput) nikInput.value = @json(old('nik'));
+                @endif
+                @if(old('email'))
+                    var emailInput = form.querySelector('input[name="email"]');
+                    if (emailInput) emailInput.value = @json(old('email'));
+                @endif
+                @if(old('name'))
+                    var nameInput = form.querySelector('input[name="name"]');
+                    if (nameInput) nameInput.value = @json(old('name'));
+                @endif
+                @if(old('role'))
+                    var roleSelect = document.getElementById('modal-role');
+                    if (roleSelect) roleSelect.value = @json(old('role'));
+                    // Trigger vendor field sync
+                    var vendorField = document.getElementById('modal-vendor-code-field');
+                    if (roleSelect && vendorField) {
+                        vendorField.style.display = roleSelect.value === 'vendor' ? 'block' : 'none';
+                    }
+                @endif
+                @if(old('vendor_code'))
+                    var vcInput = form.querySelector('input[name="vendor_code"]');
+                    if (vcInput) vcInput.value = @json(old('vendor_code'));
+                @endif
+            }
+        });
+    </script>
+    @endif
 @endpush
