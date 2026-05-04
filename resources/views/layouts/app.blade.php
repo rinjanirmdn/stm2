@@ -304,9 +304,9 @@
                     <div class="st-reminder-banner__label">
                         <i class="fas fa-bell" aria-hidden="true"></i>
                         <span>Reminder: Pending bookings nearing schedule</span>
+                        <span id="st-reminder-count" class="st-reminder-banner__count">0</span>
                     </div>
-                    <span id="st-reminder-count" class="st-reminder-banner__count">0</span>
-                    <button type="button" class="st-reminder-banner__close" onclick="this.closest('.st-reminder-banner').style.display='none'" aria-label="Close">&times;</button>
+                    <button type="button" class="st-reminder-banner__close" onclick="this.closest('.st-reminder-banner').style.display='none'; try{var stAppConfig = JSON.parse(document.getElementById('st-app-config').textContent || '{}'); sessionStorage.setItem('st-hide-reminder-' + (stAppConfig.sessionId || 'default'), '1');}catch(e){}" aria-label="Close">&times;</button>
                 </div>
                 <div id="st-reminder-list" class="st-reminder-banner__list"></div>
             </div>
@@ -401,6 +401,7 @@
 @endphp
 <script type="application/json" id="st-app-config">{!! json_encode([
     'userId' => auth()->id(),
+    'sessionId' => session()->getId(),
     'reminderUrl' => $stReminderUrl,
     'latestUrl' => $stLatestUrl,
     'realtime' => [
@@ -532,7 +533,7 @@
                         errorHtml += `<li>${msg}</li>`;
                     }
                     errorHtml += '</ul>';
-                    
+
                     const errorBox = document.createElement('div');
                     errorBox.className = 'st-alert st-alert--error st-mb-12';
                     errorBox.innerHTML = `
@@ -564,7 +565,7 @@
     function closeGlobalAjaxModal() {
         const modal = document.getElementById('st-global-iframe-modal');
         const modalBody = document.getElementById('st-global-ajax-modal-body');
-        
+
         modal.classList.remove('active');
         document.body.style.overflow = '';
         setTimeout(() => { modalBody.innerHTML = ''; }, 200);

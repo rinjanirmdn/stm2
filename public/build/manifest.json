@@ -1,20 +1,20 @@
 {
-  "_client-DzYSRBXd.js": {
-    "file": "assets/client-DzYSRBXd.js",
+  "_client-MYcmZywi.js": {
+    "file": "assets/client-MYcmZywi.js",
     "name": "client",
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
-  "_react-vendor-C6WxKkic.js": {
-    "file": "assets/react-vendor-C6WxKkic.js",
+  "_react-vendor-N--QU9DW.js": {
+    "file": "assets/react-vendor-N--QU9DW.js",
     "name": "react-vendor"
   },
-  "_recharts-4-iG22hf.js": {
-    "file": "assets/recharts-4-iG22hf.js",
+  "_recharts-l8O6fVoK.js": {
+    "file": "assets/recharts-l8O6fVoK.js",
     "name": "recharts",
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "_search-highlight-CjsPCiQd.js": {
@@ -31,7 +31,7 @@
     ]
   },
   "resources/css/dashboard-react.css": {
-    "file": "assets/dashboard-react-CQ8OMHt-.css",
+    "file": "assets/dashboard-react-mvB9shJD.css",
     "src": "resources/css/dashboard-react.css",
     "isEntry": true,
     "name": "dashboard-react",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-Sah3xcKW.css",
+    "file": "assets/style-8hDKsNqW.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -58,7 +58,7 @@
     ]
   },
   "resources/css/vendor.css": {
-    "file": "assets/vendor-BlF2U067.css",
+    "file": "assets/vendor-DGc8MGuV.css",
     "src": "resources/css/vendor.css",
     "isEntry": true,
     "name": "vendor",
@@ -67,12 +67,12 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CZPMs-rA.js",
+    "file": "assets/app-BBG_585q.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "resources/js/pages/admin-bookings-index.js": {
@@ -124,7 +124,7 @@
     ]
   },
   "resources/js/pages/main.js": {
-    "file": "assets/main-CvMXG439.js",
+    "file": "assets/main-BcYdDPgU.js",
     "name": "main",
     "src": "resources/js/pages/main.js",
     "isEntry": true
@@ -262,25 +262,25 @@
     "isEntry": true
   },
   "resources/js/react/dashboard.jsx": {
-    "file": "assets/dashboard-BmTqZb9Q.js",
+    "file": "assets/dashboard-D6hcUrLV.js",
     "name": "dashboard",
     "src": "resources/js/react/dashboard.jsx",
     "isEntry": true,
     "imports": [
-      "_client-DzYSRBXd.js",
-      "_recharts-4-iG22hf.js",
-      "_react-vendor-C6WxKkic.js"
+      "_client-MYcmZywi.js",
+      "_recharts-l8O6fVoK.js",
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "resources/js/react/vendor-dashboard.jsx": {
-    "file": "assets/vendor-dashboard-BuFrP7sS.js",
+    "file": "assets/vendor-dashboard-20Gz-uOi.js",
     "name": "vendor-dashboard",
     "src": "resources/js/react/vendor-dashboard.jsx",
     "isEntry": true,
     "imports": [
-      "_client-DzYSRBXd.js",
-      "_recharts-4-iG22hf.js",
-      "_react-vendor-C6WxKkic.js"
+      "_client-MYcmZywi.js",
+      "_recharts-l8O6fVoK.js",
+      "_react-vendor-N--QU9DW.js"
     ]
   }
 }

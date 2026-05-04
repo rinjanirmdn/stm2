@@ -88,6 +88,7 @@
     </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
         document.querySelectorAll('.btn-toggle-password').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var targetId = this.getAttribute('data-target');
