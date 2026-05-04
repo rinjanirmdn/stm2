@@ -200,6 +200,69 @@ document.addEventListener('DOMContentLoaded', function() {
         showDeleteDialog(url, name);
     });
 
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var url = deleteForm.getAttribute('action');
+            var csrfToken = deleteForm.querySelector('input[name="_token"]');
+            
+            if (!url || !csrfToken) return;
+
+            var submitBtn = document.getElementById('confirmDeleteUserYes');
+            var originalText = '';
+            if (submitBtn) {
+                originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Deleting...';
+                submitBtn.disabled = true;
+            }
+
+            fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken.value,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(res) {
+                if (res.ok) {
+                    hideDeleteDialog();
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('User deleted permanently', true);
+                    } else if (typeof p === 'function') {
+                        p('User deleted permanently', true); // minified fallback
+                    } else {
+                        // Inline fallback
+                        var t = document.createElement('div');
+                        t.className = 'st-toast st-toast--success';
+                        t.textContent = 'User deleted permanently';
+                        document.body.appendChild(t);
+                        requestAnimationFrame(function(){ t.classList.add('st-toast--visible'); });
+                        setTimeout(function(){ t.classList.remove('st-toast--visible'); setTimeout(function(){ t.remove(); }, 300); }, 3500);
+                    }
+                    ajaxReload(false);
+                } else {
+                    res.json().then(function(data) {
+                        alert(data.message || 'Failed to delete user.');
+                    }).catch(function() {
+                        alert('Failed to delete user.');
+                    });
+                }
+            })
+            .catch(function(err) {
+                console.error('Delete error:', err);
+                alert('Network error. Please try again.');
+            })
+            .finally(function() {
+                if (submitBtn) {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+    }
+
     // Initial highlight on page load
     var searchInputHL = document.querySelector('.st-card.st-mb-12 input[name="q"]');
     if (searchInputHL && searchInputHL.value.trim().length >= 2) {

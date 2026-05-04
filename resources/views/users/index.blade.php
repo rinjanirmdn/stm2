@@ -458,6 +458,38 @@
 @push('scripts')
     @vite(['resources/js/pages/users-index.js'])
 
+    @if (session('success') || session('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var message = @json(session('success') ?: session('error'));
+            var isSuccess = {{ session('success') ? 'true' : 'false' }};
+
+            // Call the global showToast if available (from users-index.js)
+            if (typeof window.showToast === 'function') {
+                window.showToast(message, isSuccess);
+            } else {
+                // Fallback if showToast isn't exported globally yet
+                var existing = document.querySelector('.st-toast');
+                if (existing) existing.remove();
+
+                var toast = document.createElement('div');
+                toast.className = 'st-toast ' + (isSuccess ? 'st-toast--success' : 'st-toast--error');
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                requestAnimationFrame(function() {
+                    toast.classList.add('st-toast--visible');
+                });
+
+                setTimeout(function() {
+                    toast.classList.remove('st-toast--visible');
+                    setTimeout(function() { toast.remove(); }, 300);
+                }, 3500);
+            }
+        });
+    </script>
+    @endif
+
     @if ($errors->any())
     <script>
         document.addEventListener('DOMContentLoaded', function() {

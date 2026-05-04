@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
@@ -709,8 +710,9 @@ class UserController extends Controller
             ->orWhere('approved_by', $userId)
             ->count();
 
-        $usedInLogs = DB::table('slot_activity_logs')
-            ->where('user_id', $userId)
+        $logUserCol = Schema::hasColumn('activity_logs', 'created_by') ? 'created_by' : 'user_id';
+        $usedInLogs = DB::table('activity_logs')
+            ->where($logUserCol, $userId)
             ->count();
 
         if ($usedInSlots > 0 || $usedInLogs > 0) {
