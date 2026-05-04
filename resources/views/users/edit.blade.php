@@ -7,12 +7,6 @@
     <section class="st-row">
         <div class="st-col-6 st-flex st-flex-col">
             <div class="st-card st-card--narrow st-flex st-flex-col st-flex-1">
-                <div class="st-card-header-row">
-                    <div>
-                        <h2 class="st-card__title st-card-title-tight">Edit User</h2>
-                    </div>
-                </div>
-
                 @php
                     $fromResetEmail = (string) request()->query('from_reset_email', '') === '1';
                 @endphp

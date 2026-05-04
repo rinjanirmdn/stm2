@@ -288,4 +288,69 @@ document.addEventListener('DOMContentLoaded', function() {
             if (switchLabel) switchLabel.style.opacity = '1';
         });
     });
+
+    // ===== Add User Modal =====
+    var addUserModal = document.getElementById('addUserModal');
+    var btnOpenAddUser = document.getElementById('btnOpenAddUser');
+    var btnCloseAddUser = document.getElementById('btnCloseAddUser');
+    var modalRoleSelect = document.getElementById('modal-role');
+    var modalVendorField = document.getElementById('modal-vendor-code-field');
+
+    function openAddUserModal() {
+        if (!addUserModal) return;
+        addUserModal.classList.remove('st-hidden');
+        addUserModal.style.display = 'flex';
+    }
+
+    function closeAddUserModal() {
+        if (!addUserModal) return;
+        addUserModal.style.display = 'none';
+        addUserModal.classList.add('st-hidden');
+    }
+
+    if (btnOpenAddUser) {
+        btnOpenAddUser.addEventListener('click', openAddUserModal);
+    }
+
+    if (btnCloseAddUser) {
+        btnCloseAddUser.addEventListener('click', closeAddUserModal);
+    }
+
+    if (addUserModal) {
+        addUserModal.addEventListener('click', function(e) {
+            if (e.target === addUserModal) closeAddUserModal();
+        });
+    }
+
+    // Vendor code field toggle in modal
+    function syncModalVendorField() {
+        if (!modalRoleSelect || !modalVendorField) return;
+        var role = String(modalRoleSelect.value || '');
+        modalVendorField.style.display = role === 'vendor' ? 'block' : 'none';
+    }
+
+    if (modalRoleSelect) {
+        modalRoleSelect.addEventListener('change', syncModalVendorField);
+        syncModalVendorField();
+    }
+
+    // Password toggle in modal
+    addUserModal && addUserModal.querySelectorAll('.btn-toggle-password').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var targetId = this.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            var icon = this.querySelector('i');
+            if (!input || !icon) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    });
 });
