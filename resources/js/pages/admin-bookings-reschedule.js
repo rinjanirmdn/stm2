@@ -9,7 +9,7 @@ function stReadJson(id, fallback) {
 }
 
 (function() {
-    var config = stReadJson('admin_bookings_reschedule_config', {})();
+    var config = stReadJson('admin_bookings_reschedule_config', {});
     var bookingId = config.bookingId || null;
     var checkGateUrl = String(config.checkGateUrl || '').trim();
     var calendarBaseUrl = String(config.calendarBaseUrl || '').trim();
@@ -71,7 +71,7 @@ function stReadJson(id, fallback) {
             .catch(function() {
                 availabilityBox.textContent = 'Not Available';
                 availabilityBox.className = 'st-text-12 st-mt-4 st-text-danger';
-            })();
+            });
     }
 
     function loadAvailabilityList() {
@@ -89,14 +89,33 @@ function stReadJson(id, fallback) {
         }
 
         if (!dateVal || !gateId || !currentWarehouseId) {
-            availabilityList.innerHTML = '<p class="st-text-12 st-text--muted">Select a date and gate to see existing slots.</p>';
+            var missingParts = [];
+            if (!dateVal) missingParts.push('date');
+            if (!gateId) missingParts.push('gate');
+            availabilityList.innerHTML = '<div class="st-info-message st-info-message--neutral">' +
+                '<i class="fas fa-info-circle"></i> ' +
+                '<span>Please select a <strong>' + missingParts.join('</strong> and <strong>') + '</strong> to view existing schedules.</span>' +
+                '</div>';
             return;
+        }
+
+        // Format the date for display
+        var dateParts = dateVal.split('-');
+        var displayDate = dateParts.length === 3 ? (dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0]) : dateVal;
+
+        // Get gate label for display
+        var gateLabel = '';
+        if (gateSelect && gateSelect.selectedIndex >= 0) {
+            gateLabel = gateSelect.options[gateSelect.selectedIndex].textContent.trim();
         }
 
         var url = calendarBaseUrl + '?warehouse_id=' + encodeURIComponent(String(currentWarehouseId)) +
             '&date=' + encodeURIComponent(dateVal);
 
-        availabilityList.innerHTML = '<p class="st-text-12 st-text--muted"><i class="fas fa-spinner fa-spin"></i> Loading availability...</p>';
+        availabilityList.innerHTML = '<div class="st-info-message st-info-message--neutral">' +
+            '<i class="fas fa-spinner fa-spin"></i> ' +
+            '<span>Loading schedules for <strong>' + displayDate + '</strong>...</span>' +
+            '</div>';
 
         fetch(url, {
             method: 'GET',
@@ -106,7 +125,10 @@ function stReadJson(id, fallback) {
             .then(function(res) { return res.json(); })
             .then(function(data) {
                 if (!data || !data.success || !Array.isArray(data.gates)) {
-                    availabilityList.innerHTML = '<p class="st-text-12 st-text-danger">Failed to load availability.</p>';
+                    availabilityList.innerHTML = '<div class="st-info-message st-info-message--error">' +
+                        '<i class="fas fa-exclamation-circle"></i> ' +
+                        '<span>Failed to load schedule data. Please try again.</span>' +
+                        '</div>';
                     return;
                 }
 
@@ -116,10 +138,15 @@ function stReadJson(id, fallback) {
                     if (g && g.gate && String(g.gate.id) === String(gateId)) {
                         gateBlock = g;
                     }
-                })();
+                });
 
                 if (!gateBlock || !Array.isArray(gateBlock.slots) || gateBlock.slots.length === 0) {
-                    availabilityList.innerHTML = '<p class="st-text-12 st-text-success">No existing slots for this gate and date. All times are available.</p>';
+                    availabilityList.innerHTML = '<div class="st-info-message st-info-message--success">' +
+                        '<i class="fas fa-check-circle"></i> ' +
+                        '<span>No existing schedules on <strong>' + displayDate + '</strong>' +
+                        (gateLabel ? ' at <strong>' + gateLabel + '</strong>' : '') +
+                        '. All time slots are available.</span>' +
+                        '</div>';
                     return;
                 }
 
@@ -127,27 +154,38 @@ function stReadJson(id, fallback) {
                 var slots = gateBlock.slots.slice().sort(function(a, b) {
                     var ta = (a.start_time || '').localeCompare(b.start_time || '');
                     return ta;
-                })();
+                });
 
-                var html = '<ul class="reschedule-availability-ul">';
+                var html = '<div class="st-info-message st-info-message--warning">' +
+                    '<i class="fas fa-exclamation-triangle"></i> ' +
+                    '<span>There ' + (slots.length === 1 ? 'is <strong>1</strong> existing schedule' : 'are <strong>' + slots.length + '</strong> existing schedules') +
+                    ' on <strong>' + displayDate + '</strong>' +
+                    (gateLabel ? ' at <strong>' + gateLabel + '</strong>' : '') +
+                    '. Please choose a time that does not overlap.</span>' +
+                    '</div>';
+
+                html += '<ul class="reschedule-availability-ul">';
                 slots.forEach(function(s) {
                     var time = (s.start_time || '') + ' - ' + (s.end_time || '');
                     var vendor = s.vendor_name || '-';
                     var status = s.status_label || s.status || '';
                     html += '<li class="reschedule-availability-item">' +
-                        '<div class="reschedule-availability-time">' + time + '</div>' +
+                        '<div class="reschedule-availability-time"><i class="fas fa-clock"></i> ' + time + '</div>' +
                         '<div class="reschedule-availability-meta">' +
-                        '<span class="reschedule-availability-vendor">' + vendor + '</span>' +
+                        '<span class="reschedule-availability-vendor"><i class="fas fa-building"></i> ' + vendor + '</span>' +
                         (status ? '<span class="reschedule-availability-status">' + status + '</span>' : '') +
                         '</div>' +
                         '</li>';
-                })();
+                });
                 html += '</ul>';
                 availabilityList.innerHTML = html;
             })
             .catch(function() {
-                availabilityList.innerHTML = '<p class="st-text-12 st-text-danger">Failed to load availability.</p>';
-            })();
+                availabilityList.innerHTML = '<div class="st-info-message st-info-message--error">' +
+                    '<i class="fas fa-exclamation-circle"></i> ' +
+                    '<span>Network error. Failed to load schedules.</span>' +
+                    '</div>';
+            });
     }
 
     if (gateSelect) {
@@ -155,7 +193,7 @@ function stReadJson(id, fallback) {
             syncWarehouseFromGate();
             try { updateGateAvailability(); } catch (e) {}
             try { loadAvailabilityList(); } catch (e) {}
-        })();
+        });
         if (gateSelect.value) {
             syncWarehouseFromGate();
             try { updateGateAvailability(); } catch (e) {}
@@ -167,18 +205,18 @@ function stReadJson(id, fallback) {
         dateInput.addEventListener('change', function() {
             try { updateGateAvailability(); } catch (e) {}
             try { loadAvailabilityList(); } catch (e) {}
-        })();
+        });
     }
 
     if (timeInput) {
         timeInput.addEventListener('change', function() {
             try { updateGateAvailability(); } catch (e) {}
-        })();
+        });
     }
 
     if (durationInput) {
         durationInput.addEventListener('change', function() {
             try { updateGateAvailability(); } catch (e) {}
-        })();
+        });
     }
 })();

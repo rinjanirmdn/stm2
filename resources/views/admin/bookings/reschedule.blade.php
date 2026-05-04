@@ -215,7 +215,10 @@
                         <p class="reschedule-availability-subtitle">Inbound & Outbound planned for selected date and gate.</p>
                     </div>
                     <div id="reschedule_availability_list" class="reschedule-availability-list">
-                        <p class="st-text-12 st-text--muted">Select a date and gate to see existing planned/booking.</p>
+                        <div class="st-info-message st-info-message--neutral">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Please select a <strong>date</strong> and <strong>gate</strong> to view existing schedules.</span>
+                        </div>
                     </div>
                 </div>
             </div>
