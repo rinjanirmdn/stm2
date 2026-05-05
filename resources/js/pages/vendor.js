@@ -569,7 +569,13 @@ function initVendorBookingCreate(config) {
     function showLoading() {
         poStatus.classList.remove('show', 'valid', 'invalid');
         poMessage.classList.remove('valid', 'invalid');
-        poMessage.textContent = 'Checking...';
+        poMessage.textContent = 'Searching PO/SO number...';
+    }
+
+    function getDocTypeLabel(docType) {
+        if (docType === 'so') return 'SO Number';
+        if (docType === 'po') return 'PO Number';
+        return 'PO/SO number';
     }
 
     // Function to show valid state
@@ -587,7 +593,7 @@ function initVendorBookingCreate(config) {
         poStatus.classList.add('show', 'invalid');
         poMessage.classList.remove('valid');
         poMessage.classList.add('invalid');
-        poMessage.textContent = message || 'PO number not found / Invalid data';
+        poMessage.textContent = message || 'PO/SO number not found in SAP';
     }
 
     // Function to clear validation
@@ -614,33 +620,34 @@ function initVendorBookingCreate(config) {
                 .then(r => r.json())
                 .then(data => {
                     if (data.success && data.data.length > 0) {
-                        // PO found - valid
+                        // PO/SO found - valid
                         const po = data.data[0];
                         poSearch.value = po.po_number;
                         poHidden.value = po.po_number;
                         
+                        const docTypeLabel = getDocTypeLabel(po.doc_type || null);
                         const isInternal = config.isInternalVendor === true || config.isInternalVendor === 1;
                         
                         if (isInternal) {
                             // Construct detail string for internal vendor reference
-                            let detailHtml = `<strong>Validation Success</strong>`;
+                            let detailHtml = `<strong>Valid \u2014 ${docTypeLabel} found.</strong>`;
                             if (po.vendor_name) detailHtml += `<br>Vendor: ${po.vendor_name}`;
                             if (po.plant) detailHtml += `<br>Site / Plant: ${po.plant}`;
                             if (po.direction) detailHtml += `<br>Type: <span style="text-transform: capitalize;">${po.direction}</span>`;
                             
                             showValid(detailHtml);
                         } else {
-                            // For regular external vendors, just show a simple valid message to keep UI clean
-                            showValid('Data valid');
+                            // For regular external vendors, show doc type in the message
+                            showValid(`Valid \u2014 ${docTypeLabel} found.`);
                         }
                     } else {
-                        // PO not found - invalid
-                        showInvalid('PO number not found / Invalid data');
+                        // PO/SO not found - invalid
+                        showInvalid('PO/SO number not found in SAP. Please check and re-enter.');
                     }
                 })
                 .catch(err => {
                     console.error('Search error:', err);
-                    showInvalid('Error checking PO number');
+                    showInvalid('Error checking PO/SO number');
                 });
         }, 500);
     });
