@@ -218,12 +218,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        function showPoValid() {
+        function getDocTypeLabel(docType) {
+            if (docType === 'so') return 'SO Number';
+            if (docType === 'po') return 'PO Number';
+            return 'PO/SO number';
+        }
+
+        function showPoValid(docType) {
             setPoLoading(false); setPoStatus('valid');
             if (poInput) poInput.classList.remove('st-input--invalid');
             if (poFeedback) {
+                var label = getDocTypeLabel(docType);
                 poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--valid';
-                poFeedback.innerHTML = '<i class="fa-solid fa-circle-check"></i> Valid — PO/SO number found.';
+                poFeedback.innerHTML = '<i class="fa-solid fa-circle-check"></i> Valid \u2014 ' + label + ' found.';
                 poFeedback.style.display = 'flex';
             }
         }
@@ -233,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (poInput) poInput.classList.add('st-input--invalid');
             if (poFeedback) {
                 poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--invalid';
-                poFeedback.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Invalid — PO/SO number not found. Please check and re-enter the number.';
+                poFeedback.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Invalid \u2014 PO/SO number not found in SAP. Please check and re-enter the number.';
                 poFeedback.style.display = 'flex';
             }
         }
@@ -252,7 +259,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 var div = document.createElement('div');
                 div.className = 'po-item';
                 div.setAttribute('data-po', it.po_number || '');
-                div.innerHTML = '<div class="po-item__title">' + (it.po_number || '') + '</div>'
+                var docTypeBadge = '';
+                if (it.doc_type === 'so') {
+                    docTypeBadge = ' <span class="st-badge st-badge--warning st-badge--xs">SO</span>';
+                } else if (it.doc_type === 'po') {
+                    docTypeBadge = ' <span class="st-badge st-badge--primary st-badge--xs">PO</span>';
+                }
+                div.innerHTML = '<div class="po-item__title">' + (it.po_number || '') + docTypeBadge + '</div>'
                     + '<div class="po-item__sub">' + (it.vendor_name || '') + (it.plant ? (' \u2022 ' + it.plant) : '') + '</div>';
                 div.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;';
                 poSuggestions.appendChild(div);
@@ -295,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (vendorSearch && data.data.vendor_name) vendorSearch.value = data.data.vendor_name;
                                 poLastAutoFilledValue = q;
                                 closePoSuggestions();
-                                showPoValid();
+                                showPoValid(data.data.doc_type || null);
                             } else {
                                 poLastAutoFilledValue = '';
                                 showPoInvalid();
@@ -330,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (data.success && data.data) {
                                 if (vendorSearch && data.data.vendor_name) vendorSearch.value = data.data.vendor_name;
                                 poLastAutoFilledValue = current;
-                                showPoValid();
+                                showPoValid(data.data.doc_type || null);
                             } else {
                                 poLastAutoFilledValue = '';
                                 showPoInvalid();
@@ -361,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchPoDetail(poNumber, function(data) {
                     if (data.success && data.data) {
                         if (vendorSearch && data.data.vendor_name) vendorSearch.value = data.data.vendor_name;
-                        showPoValid();
+                        showPoValid(data.data.doc_type || null);
                     } else {
                         showPoInvalid();
                     }

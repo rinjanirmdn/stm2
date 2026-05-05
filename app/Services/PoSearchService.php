@@ -53,6 +53,7 @@ class PoSearchService
                         'doc_date' => $poDetail['doc_date'] ?? '',
                         'warehouse_name' => $poDetail['warehouse_name'] ?? '',
                         'direction' => $direction,
+                        'doc_type' => $direction === 'outbound' ? 'so' : 'po',
                         'source' => 'sap',
                     ];
                 }
@@ -93,8 +94,36 @@ class PoSearchService
                 'doc_date' => $r['doc_date'] ?? null,
                 'warehouse_name' => $r['warehouse_name'] ?? null,
                 'direction' => $r['direction'] ?? null,
+                'doc_type' => 'po',
                 'source' => 'sap',
             ];
+        }
+
+        // If PO search returned no results, try SO detail API as fallback
+        // SO API only has a detail endpoint (no search/list), so we try exact match
+        if (empty($out)) {
+            $digitsOnly = preg_replace('/\D+/', '', $q);
+            if (is_string($digitsOnly) && strlen($digitsOnly) >= 5) {
+                try {
+                    $soDetail = $this->sapSoService->getBySoNumber($digitsOnly);
+                    if ($soDetail !== null) {
+                        $out[] = [
+                            'po_number' => (string) ($soDetail['po_number'] ?? $digitsOnly),
+                            'vendor_name' => (string) ($soDetail['vendor_name'] ?? ''),
+                            'vendor_code' => (string) ($soDetail['vendor_code'] ?? ''),
+                            'vendor_type' => (string) ($soDetail['partner_role'] ?? 'customer'),
+                            'plant' => (string) ($soDetail['plant'] ?? ''),
+                            'doc_date' => (string) ($soDetail['doc_date'] ?? ''),
+                            'warehouse_name' => (string) ($soDetail['warehouse_name'] ?? ''),
+                            'direction' => 'outbound',
+                            'doc_type' => 'so',
+                            'source' => 'sap',
+                        ];
+                    }
+                } catch (\Throwable $e) {
+                    // Silent fail - SO API may be unavailable
+                }
+            }
         }
 
         return $out;

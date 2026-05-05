@@ -66,6 +66,7 @@
                         <span class="st-input-status" id="po_status" aria-hidden="true"></span>
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
+                    <div id="po_feedback" class="st-po-feedback st-mt-4" style="display:none;"></div>
                     @error('po_number')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
