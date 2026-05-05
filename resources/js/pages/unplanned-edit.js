@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
         var arrivalInput = document.getElementById('arrival_time_input');
         var arrivalDateInput = document.getElementById('arrival_date_input');
         var arrivalTimeInput = document.getElementById('arrival_time_only_input');
@@ -127,4 +127,228 @@
             if (arrivalDateInput) arrivalDateInput.value = parts[0] || '';
             if (arrivalTimeInput) arrivalTimeInput.value = (parts[1] || '').slice(0, 5);
         }
+
+        // PO/SO Validation Feedback
+        var poInput = document.getElementById('po_number');
+        var poSuggestions = document.getElementById('po_suggestions');
+        var poLoading = document.getElementById('po_loading');
+        var poStatus = document.getElementById('po_status');
+        var poFeedback = document.getElementById('po_feedback');
+        var vendorNameInput = document.getElementById('vendor_name');
+
+        var routesEl = document.getElementById('slot_routes_json');
+        var slotRoutes = {};
+        try {
+            slotRoutes = routesEl ? JSON.parse(routesEl.textContent || '{}') : {};
+        } catch (e) {
+            slotRoutes = {};
+        }
+        var urlPoSearch = slotRoutes.po_search || '';
+        var urlPoDetailTemplate = slotRoutes.po_detail_template || '';
+
+        function csrfToken() {
+            var el = document.querySelector('meta[name="csrf-token"]');
+            return el ? el.getAttribute('content') : '';
+        }
+
+        function getJson(url) {
+            return fetch(url, {
+                method: 'GET',
+                headers: { 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' }
+            }).then(function(res) { return res.json(); });
+        }
+
+        function setPoLoading(isLoading) {
+            if (!poLoading) return;
+            if (isLoading) { poLoading.classList.add('show'); if (poStatus) poStatus.classList.remove('show'); }
+            else { poLoading.classList.remove('show'); }
+        }
+
+        function setPoStatus(type) {
+            if (!poStatus) return;
+            poStatus.classList.remove('show', 'valid', 'invalid');
+            if (type === 'valid' || type === 'invalid') { poStatus.classList.add('show', type); }
+        }
+
+        function clearPoFeedback() {
+            setPoLoading(false); setPoStatus('');
+            if (poInput) poInput.classList.remove('st-input--invalid');
+            if (poFeedback) { poFeedback.style.display = 'none'; poFeedback.innerHTML = ''; poFeedback.className = 'st-po-feedback st-mt-4'; }
+        }
+
+        function showPoLoading() {
+            setPoLoading(true); setPoStatus('');
+            if (poFeedback) {
+                poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--searching';
+                poFeedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching PO/SO number...';
+                poFeedback.style.display = 'flex';
+            }
+        }
+
+        function getDocTypeLabel(docType) {
+            if (docType === 'so') return 'SO Number';
+            if (docType === 'po') return 'PO Number';
+            return 'PO/SO number';
+        }
+
+        function showPoValid(docType) {
+            setPoLoading(false); setPoStatus('valid');
+            if (poInput) poInput.classList.remove('st-input--invalid');
+            if (poFeedback) {
+                var label = getDocTypeLabel(docType);
+                poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--valid';
+                poFeedback.innerHTML = '<i class="fa-solid fa-circle-check"></i> Valid \u2014 ' + label + ' found.';
+                poFeedback.style.display = 'flex';
+            }
+        }
+
+        function showPoInvalid() {
+            setPoLoading(false); setPoStatus('invalid');
+            if (poInput) poInput.classList.add('st-input--invalid');
+            if (poFeedback) {
+                poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--invalid';
+                poFeedback.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Invalid \u2014 PO/SO number not found in SAP. Please check and re-enter the number.';
+                poFeedback.style.display = 'flex';
+            }
+        }
+
+        function closePoSuggestions() {
+            if (!poSuggestions) return;
+            poSuggestions.style.display = 'none';
+            poSuggestions.innerHTML = '';
+        }
+
+        function renderPoSuggestions(items) {
+            if (!poSuggestions) return;
+            if (!items || !items.length) { closePoSuggestions(); return; }
+            poSuggestions.innerHTML = '';
+            items.slice(0, 5).forEach(function(it) {
+                var div = document.createElement('div');
+                div.className = 'po-item';
+                div.setAttribute('data-po', it.po_number || '');
+                var docTypeBadge = '';
+                if (it.doc_type === 'so') {
+                    docTypeBadge = ' <span class="st-badge st-badge--warning st-badge--xs">SO</span>';
+                } else if (it.doc_type === 'po') {
+                    docTypeBadge = ' <span class="st-badge st-badge--primary st-badge--xs">PO</span>';
+                }
+                div.innerHTML = '<div class="po-item__title">' + (it.po_number || '') + docTypeBadge + '</div>'
+                    + '<div class="po-item__sub">' + (it.vendor_name || '') + (it.plant ? (' \u2022 ' + it.plant) : '') + '</div>';
+                div.style.cssText = 'padding:6px 8px;cursor:pointer;border-bottom:1px solid #f3f4f6;';
+                poSuggestions.appendChild(div);
+            });
+            poSuggestions.style.display = 'block';
+        }
+
+        function fetchPoDetail(poNumber, callback) {
+            if (!poNumber) { callback({ success: false }); return; }
+            showPoLoading();
+            var url = String(urlPoDetailTemplate || '').replace('__PO__', encodeURIComponent(poNumber));
+            getJson(url)
+                .then(function(data) {
+                    if (data && data.success && data.data) { callback({ success: true, data: data.data }); }
+                    else { callback({ success: false }); }
+                })
+                .catch(function() { callback({ success: false }); });
+        }
+
+        if (poInput) {
+            var poDebounceTimer = null;
+            var poLastAutoFilledValue = '';
+
+            poInput.addEventListener('input', function() {
+                var q = (poInput.value || '').trim();
+                clearPoFeedback();
+                poLastAutoFilledValue = '';
+
+                if (q.length < 2) {
+                    if (poDebounceTimer) clearTimeout(poDebounceTimer);
+                    closePoSuggestions();
+                    return;
+                }
+
+                if (poDebounceTimer) clearTimeout(poDebounceTimer);
+                poDebounceTimer = setTimeout(function() {
+                    if (q.length >= 10) {
+                        fetchPoDetail(q, function(data) {
+                            if (data.success && data.data) {
+                                if (vendorNameInput && data.data.vendor_name) vendorNameInput.value = data.data.vendor_name;
+                                poLastAutoFilledValue = q;
+                                closePoSuggestions();
+                                showPoValid(data.data.doc_type || null);
+                            } else {
+                                poLastAutoFilledValue = '';
+                                showPoInvalid();
+                            }
+                        });
+                        return;
+                    }
+                    getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
+                        .then(function(data) {
+                            if (!data || !data.success) { closePoSuggestions(); return; }
+                            renderPoSuggestions(data.data || []);
+                        })
+                        .catch(function() { closePoSuggestions(); });
+                }, 250);
+            });
+
+            function autoFetchDetail() {
+                var val = (poInput.value || '').trim();
+                if (val === '') { clearPoFeedback(); return; }
+                if (val === poLastAutoFilledValue) return;
+
+                setTimeout(function() {
+                    var current = (poInput.value || '').trim();
+                    if (current !== val) return;
+                    if (current === poLastAutoFilledValue) return;
+
+                    if (current.length >= 10) {
+                        fetchPoDetail(current, function(data) {
+                            if (data.success && data.data) {
+                                if (vendorNameInput && data.data.vendor_name) vendorNameInput.value = data.data.vendor_name;
+                                poLastAutoFilledValue = current;
+                                showPoValid(data.data.doc_type || null);
+                            } else {
+                                poLastAutoFilledValue = '';
+                                showPoInvalid();
+                            }
+                        });
+                    } else {
+                        poLastAutoFilledValue = '';
+                        showPoInvalid();
+                    }
+                }, 200);
+            }
+            poInput.addEventListener('change', autoFetchDetail);
+            poInput.addEventListener('blur', autoFetchDetail);
+
+            // Auto-validate on page load if value exists
+            if ((poInput.value || '').trim().length >= 10) {
+                autoFetchDetail();
+            }
+        }
+
+        if (poSuggestions) {
+            poSuggestions.addEventListener('click', function(e) {
+                var item = e.target.closest('.po-item');
+                if (!item || !poInput) return;
+                var poNumber = item.getAttribute('data-po') || '';
+                poInput.value = poNumber;
+                closePoSuggestions();
+                fetchPoDetail(poNumber, function(data) {
+                    if (data.success && data.data) {
+                        if (vendorNameInput && data.data.vendor_name) vendorNameInput.value = data.data.vendor_name;
+                        showPoValid(data.data.doc_type || null);
+                    } else {
+                        showPoInvalid();
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!poSuggestions || !poInput) return;
+            if (e.target === poInput || poSuggestions.contains(e.target)) return;
+            closePoSuggestions();
+        });
     });
