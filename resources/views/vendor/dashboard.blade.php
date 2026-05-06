@@ -189,12 +189,17 @@
                                         <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vd-recent-item">
                                             <div class="vd-recent-main">
                                                 <span class="vd-recent-ticket">{{ $ticketLabel }}</span>
+                                                @if($booking->po_number)
+                                                    <span style="font-size:0.78em;color:#475569;font-weight:500">
+                                                        {{ $booking->po_number }}
+                                                    </span>
+                                                @endif
                                                 <span class="vd-recent-time">{{ $booking->planned_start->format('d-m-Y H:i') }}</span>
                                             </div>
                                             <div class="vd-recent-meta">
                                                 @if(($isInternalVendor ?? false) && $booking->supplier_name)
                                                     <span
-                                                        style="font-size:0.78em;color:#64748b;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                                                        style="font-size:0.78em;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
                                                         title="{{ $booking->supplier_name }}">
                                                         <i class="fas fa-building"
                                                             style="margin-right:2px;opacity:0.5"></i>{{ $booking->supplier_name }}
