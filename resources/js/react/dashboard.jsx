@@ -583,9 +583,6 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
         }
         break;
       }
-      case 'Total':
-        goTo('/reports/transactions', {});
-        break;
       default:
         break;
     }
