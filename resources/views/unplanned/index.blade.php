@@ -15,7 +15,7 @@
                             name="q"
                             form="unplanned-filter-form"
                             class="st-input"
-                            placeholder="PO, SJ, Vendor, Etc"
+                            placeholder="PO/SO, SJ, Vendor, Etc"
                             value="{{ request('q') }}"
                         >
                     </div>

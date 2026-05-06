@@ -14,7 +14,7 @@
                         name="q"
                         form="transactions-filter-form"
                         class="st-input"
-                        placeholder="PO, Ticket, SJ, Vendor, Etc"
+                        placeholder="PO/SO, Ticket, SJ, Vendor, Etc"
                         value="{{ $q ?? '' }}"
                     >
                     <div id="transaction-search-suggestions" class="st-suggestions st-suggestions--transactions st-hidden"></div>
