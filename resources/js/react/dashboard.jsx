@@ -1036,7 +1036,7 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
               <div className="shrink-0 font-semibold text-gray-500 px-2 sticky z-20 bg-white border-r border-gray-100" style={{ width: gateColW, left: stickyNudgeX, fontSize: 'var(--ds-small)' }}>Gate</div>
               <div className="shrink-0 font-semibold text-gray-500 text-center sticky z-20 bg-white border-r border-gray-100" style={{ width: laneColW, left: gateColW + stickyNudgeX, fontSize: 'var(--ds-small)' }}>Lane</div>
               <div className="flex flex-1 min-w-[600px]" style={{ position: 'relative', overflow: 'visible' }}>
-                {hours.map((h, i) => <div key={i} className="flex-1 font-medium text-gray-400 border-l border-gray-100" style={{ fontSize: 'var(--ds-tiny)', position: 'relative', minHeight: 16 }}><span style={{ position: 'absolute', left: 0, transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>{String(h).padStart(2, '0')}:00</span></div>)}
+                {hours.map((h, i) => <div key={i} className="flex-1 font-medium text-gray-400 border-l border-gray-100" style={{ fontSize: 'var(--ds-tiny)', position: 'relative', minHeight: 16 }}><span style={{ position: 'absolute', left: 0, transform: i === 0 ? 'none' : 'translateX(-50%)', whiteSpace: 'nowrap' }}>{String(h).padStart(2, '0')}:00</span></div>)}
               </div>
             </div>
             {/* Gate rows - each row stretches to fill */}
