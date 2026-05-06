@@ -103,14 +103,14 @@
                                 <th class="st-table-col-40">#</th>
                                 <th>
                                     <div class="st-colhead">
-                                        <span class="st-colhead__label">PO</span>
+                                        <span class="st-colhead__label">PO/SO</span>
                                         <span class="st-colhead__icons">
                                             <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" title="Sort">â‡…</button>
                                             <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="truck" title="Filter">â·</button>
                                         </span>
                                         <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="truck">
-                                            <div class="st-font-semibold st-mb-6">PO Filter</div>
-                                            <input type="text" name="truck" form="slot-filter-form" class="st-input" placeholder="Search PO..." value="{{ $truck ?? '' }}">
+                                            <div class="st-font-semibold st-mb-6">PO/SO Filter</div>
+                                            <input type="text" name="truck" form="slot-filter-form" class="st-input" placeholder="Search PO/SO..." value="{{ $truck ?? '' }}">
                                             <div class="st-panel__actions">
                                                 <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="truck">Clear</button>
                                             </div>
