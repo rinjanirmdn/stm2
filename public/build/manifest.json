@@ -31,7 +31,7 @@
     ]
   },
   "resources/css/dashboard-react.css": {
-    "file": "assets/dashboard-react-mvB9shJD.css",
+    "file": "assets/dashboard-react-CQ8OMHt-.css",
     "src": "resources/css/dashboard-react.css",
     "isEntry": true,
     "name": "dashboard-react",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-DmqgDuuP.css",
+    "file": "assets/style-Sah3xcKW.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -58,7 +58,7 @@
     ]
   },
   "resources/css/vendor.css": {
-    "file": "assets/vendor-DGc8MGuV.css",
+    "file": "assets/vendor-CuN2yqR_.css",
     "src": "resources/css/vendor.css",
     "isEntry": true,
     "name": "vendor",
