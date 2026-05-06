@@ -123,14 +123,14 @@
                                     </th>
                                     <th>
                                         <div class="st-colhead">
-                                            <span class="st-colhead__label">PO</span>
+                                            <span class="st-colhead__label">PO/SO</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po" data-type="text" title="Sort">⇅</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po" title="Filter">⏷</button>
                                             </span>
                                             <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-st-position="fixed" data-filter-panel="po">
-                                                <div class="st-font-semibold st-mb-6">PO Filter</div>
-                                                <input type="text" name="po" class="st-input" placeholder="Search PO..." value="{{ $po ?? '' }}">
+                                                <div class="st-font-semibold st-mb-6">PO/SO Filter</div>
+                                                <input type="text" name="po" class="st-input" placeholder="Search PO/SO..." value="{{ $po ?? '' }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="po">Clear</button>
                                                 </div>

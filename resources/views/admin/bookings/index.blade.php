@@ -49,7 +49,7 @@
                     </div>
                     <div class="st-form-field st-maxw-220">
                         <label class="st-label st-text-12">Search</label>
-                        <input type="text" name="search" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Request No, PO..." value="{{ request('search') }}">
+                        <input type="text" name="search" form="booking-filter-form" class="st-input st-text-12 st-px-4 st-py-2" placeholder="Request No, PO/SO..." value="{{ request('search') }}">
                     </div>
                     <div class="st-form-field st-maxw-220 st-relative">
                         <label class="st-label st-text-12">Date Range</label>
@@ -105,14 +105,14 @@
                                     </th>
                                     <th class="st-text-center">
                                         <div class="st-colhead st-justify-center">
-                                            <span class="st-colhead__label">PO</span>
+                                            <span class="st-colhead__label">PO/SO</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="po_number" title="Sort">â‡…</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="po_number" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="po_number">
-                                                <div class="st-font-semibold st-mb-6">PO Filter</div>
-                                                <input type="text" name="po_number" form="booking-filter-form" class="st-input" placeholder="Search PO..." value="{{ request('po_number') }}">
+                                                <div class="st-font-semibold st-mb-6">PO/SO Filter</div>
+                                                <input type="text" name="po_number" form="booking-filter-form" class="st-input" placeholder="Search PO/SO..." value="{{ request('po_number') }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="po_number">Clear</button>
                                                 </div>

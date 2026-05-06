@@ -31,7 +31,7 @@ class BookingApprovalService
      */
     public const OPERATING_START_HOUR = 7;  // 07:00
 
-    public const OPERATING_END_HOUR = 20;   // 20:00 (still filtered to 19:00 max)
+    public const OPERATING_END_HOUR = 23;   // 23:00 (actual operational end)
 
     /**
      * Create a new booking request from vendor
@@ -397,8 +397,10 @@ class BookingApprovalService
         $endDt = clone $startDt;
         $endDt->modify("+{$durationMinutes} minutes");
         $endHour = (int) $endDt->format('H');
+        $endMinute = (int) $endDt->format('i');
 
-        if ($endHour >= self::OPERATING_END_HOUR && $endDt->format('i') > '00') {
+        // Reject if end time exceeds 23:00 (e.g. 23:30, or any hour > 23)
+        if ($endHour > self::OPERATING_END_HOUR || ($endHour === self::OPERATING_END_HOUR && $endMinute > 0)) {
             return [
                 'available' => false,
                 'reason' => 'Booking must finish before 23:00',

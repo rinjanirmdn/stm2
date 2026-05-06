@@ -609,6 +609,21 @@ class VendorBookingController extends Controller
         if ($plannedStartAt->format('H:i') > '19:00') {
             return back()->withInput()->with('error', 'Maximum booking time is 19:00.');
         }
+
+        // Validate booking doesn't overlap with admin-disabled time slots
+        $disabledTimes = Cache::get('admin_gates_disabled_times_'.$request->planned_date, []);
+        $disabledTimes = is_array($disabledTimes) ? $disabledTimes : [];
+        if (! empty($disabledTimes)) {
+            $disabledMap = array_fill_keys($disabledTimes, true);
+            $bookingStart = strtotime($request->planned_time);
+            $bookingEnd = strtotime('+'.$plannedDuration.' minutes', $bookingStart);
+            for ($t = $bookingStart; $t < $bookingEnd; $t = strtotime('+30 minutes', $t)) {
+                $sliceTime = date('H:i', $t);
+                if (! empty($disabledMap[$sliceTime]) && ! $isForcedByAdmin) {
+                    return back()->withInput()->with('error', 'The selected time is not available. Your booking duration ('.$plannedDuration.' min) overlaps with a blocked time slot ('.$sliceTime.'). Please choose a different time.');
+                }
+            }
+        }
         $plannedDuration = $this->resolvePlannedDuration($request->truck_type);
         if ($plannedDuration === null) {
             return back()->withInput()->with('error', 'Please select a truck type to determine duration.');
@@ -814,6 +829,7 @@ class VendorBookingController extends Controller
             ]);
 
             $date = $request->date;
+            $hasExplicitDuration = $request->has('planned_duration') && $request->input('planned_duration') !== null;
             $plannedDuration = (int) ($request->input('planned_duration') ?? 60);
             if ($plannedDuration <= 0) {
                 $plannedDuration = 60;
@@ -945,14 +961,21 @@ class VendorBookingController extends Controller
                     $durationSlices[] = date('H:i', $t);
                 }
 
-                // Admin disable/force rules must apply to the whole duration window.
-                // If ANY slice is disabled by admin, the start time should be unavailable (unless forced on the start time).
+                // Admin disable check:
+                // - With explicit duration (Create Booking): check full duration window.
+                //   e.g. admin disables 09:00, booking at 08:00 with 240min → blocked.
+                // - Without explicit duration (Availability page): check start time only,
+                //   matching the admin Gates view behavior.
                 $blockedByAdmin = false;
-                foreach ($durationSlices as $sliceTime) {
-                    if (! empty($disabledMap[$sliceTime])) {
-                        $blockedByAdmin = true;
-                        break;
+                if ($hasExplicitDuration) {
+                    foreach ($durationSlices as $sliceTime) {
+                        if (! empty($disabledMap[$sliceTime])) {
+                            $blockedByAdmin = true;
+                            break;
+                        }
                     }
+                } else {
+                    $blockedByAdmin = ! empty($disabledMap[$time]);
                 }
                 // Force is only evaluated on the selected start time.
                 $forcedByAdmin = ! empty($forcedMap[$time]);
