@@ -285,6 +285,9 @@ document.addEventListener('DOMContentLoaded', function () {
             isCustomDate: dateClassForMoment
         }, function (s, e) {
             updateRange(s, e);
+            // Auto-submit the form on date range selection
+            var form = el.closest('form');
+            if (form) form.submit();
         });
 
         bindPickerDecorators($(el));
@@ -297,6 +300,28 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     initVendorBookingsRangePicker();
+
+    // Debounced auto-submit for search input
+    (function () {
+        var searchInput = document.getElementById('vendor-search-input');
+        if (!searchInput) return;
+        var debounceTimer = null;
+        searchInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                var form = searchInput.closest('form');
+                if (form) form.submit();
+            }, 500);
+        });
+        // Also submit on Enter key
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                clearTimeout(debounceTimer);
+                var form = searchInput.closest('form');
+                if (form) form.submit();
+            }
+        });
+    })();
 
     var inputs = document.querySelectorAll('input.flatpickr-date');
     Array.prototype.slice.call(inputs).forEach(function (input) {
