@@ -40,7 +40,7 @@
     ]
   },
   "resources/css/gates.css": {
-    "file": "assets/gates-DfsnmdoT.css",
+    "file": "assets/gates-BpF6bDY_.css",
     "src": "resources/css/gates.css",
     "isEntry": true,
     "name": "gates",
@@ -103,7 +103,7 @@
     "isEntry": true
   },
   "resources/js/pages/gates-index.js": {
-    "file": "assets/gates-index-BUds2BYz.js",
+    "file": "assets/gates-index-DxDgvNUg.js",
     "name": "gates-index",
     "src": "resources/js/pages/gates-index.js",
     "isEntry": true

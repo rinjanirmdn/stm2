@@ -603,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
             line.style.display = '';
             line.style.top = (hourMap[h] * slotHeight + m) + 'px';
             line.setAttribute('title', 'Current Time: ' + pad2n(h) + ':' + pad2n(m));
+            line.setAttribute('data-time-label', 'Current Time · ' + pad2n(h) + ':' + pad2n(m));
         }
 
         // Initial update + keep updating
