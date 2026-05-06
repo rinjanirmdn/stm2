@@ -338,7 +338,7 @@ class DashboardStatsService
      */
     public function getRangeStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(COALESCE(actual_start, arrival_time, planned_start))');
+        $rangeDate = DB::raw('DATE(planned_start)');
 
         // Get pending count from booking_requests
         $pendingCount = DB::table('booking_requests')
@@ -374,7 +374,15 @@ class DashboardStatsService
                 SUM(CASE WHEN direction = 'inbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS inbound,
                 SUM(CASE WHEN direction = 'outbound' AND status != 'cancelled' THEN 1 ELSE 0 END) AS outbound,
                 SUM(CASE WHEN direction = 'inbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_inbound,
-                SUM(CASE WHEN direction = 'outbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_outbound
+                SUM(CASE WHEN direction = 'outbound' AND status = 'completed' THEN 1 ELSE 0 END) AS completed_outbound,
+                SUM(CASE WHEN status IN ('arrived', 'waiting') AND COALESCE(slot_type, 'planned') = 'planned' THEN 1 ELSE 0 END) AS waiting_planned,
+                SUM(CASE WHEN status IN ('arrived', 'waiting') AND slot_type = 'unplanned' THEN 1 ELSE 0 END) AS waiting_unplanned,
+                SUM(CASE WHEN status = 'in_progress' AND COALESCE(slot_type, 'planned') = 'planned' THEN 1 ELSE 0 END) AS active_planned,
+                SUM(CASE WHEN status = 'in_progress' AND slot_type = 'unplanned' THEN 1 ELSE 0 END) AS active_unplanned,
+                SUM(CASE WHEN status = 'cancelled' AND COALESCE(slot_type, 'planned') = 'planned' THEN 1 ELSE 0 END) AS cancelled_planned,
+                SUM(CASE WHEN status = 'cancelled' AND slot_type = 'unplanned' THEN 1 ELSE 0 END) AS cancelled_unplanned,
+                SUM(CASE WHEN status = 'completed' AND COALESCE(slot_type, 'planned') = 'planned' THEN 1 ELSE 0 END) AS completed_planned,
+                SUM(CASE WHEN status = 'completed' AND slot_type = 'unplanned' THEN 1 ELSE 0 END) AS completed_unplanned
             ")
             ->first();
 
@@ -392,6 +400,14 @@ class DashboardStatsService
             'outbound' => (int) ($stats->outbound ?? 0),
             'completed_inbound' => (int) ($stats->completed_inbound ?? 0),
             'completed_outbound' => (int) ($stats->completed_outbound ?? 0),
+            'waiting_planned' => (int) ($stats->waiting_planned ?? 0),
+            'waiting_unplanned' => (int) ($stats->waiting_unplanned ?? 0),
+            'active_planned' => (int) ($stats->active_planned ?? 0),
+            'active_unplanned' => (int) ($stats->active_unplanned ?? 0),
+            'cancelled_planned' => (int) ($stats->cancelled_planned ?? 0),
+            'cancelled_unplanned' => (int) ($stats->cancelled_unplanned ?? 0),
+            'completed_planned' => (int) ($stats->completed_planned ?? 0),
+            'completed_unplanned' => (int) ($stats->completed_unplanned ?? 0),
         ];
     }
 
