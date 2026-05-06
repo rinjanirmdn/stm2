@@ -629,7 +629,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
       {/* Stat cards - horizontal scroll on mobile, grid on md+ */}
       <div className="flex overflow-x-auto sm:grid sm:grid-cols-4 lg:grid-cols-7 gap-2 pb-1 snap-x scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {stats.map(s => {
-          const handleClick = !isDisplayOnly ? (e) => handleStatClick(s.label, e) : undefined;
+          const handleClick = !isDisplayOnly && s.label !== 'Total' ? (e) => handleStatClick(s.label, e) : undefined;
           return (
             <div key={s.label} className="min-w-[140px] sm:min-w-0 shrink-0 snap-start">
               <StatCard label={s.label} value={s.value} tip={STAT_TIPS[s.label]} isDisplayOnly={isDisplayOnly} onClick={handleClick} />
