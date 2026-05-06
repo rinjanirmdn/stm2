@@ -502,7 +502,7 @@ function getRealtimeVersionUrl() {
 
 function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
   const { pendingRange = 0, scheduledRange = 0, waitingRange = 0, activeRange = 0, completedStatusRange = 0, cancelledRange = 0, totalAllRange = 0, inboundRange = 0, outboundRange = 0, directionByGate = {} } = data;
-  const { waitingPlanned = 0, waitingUnplanned = 0, activePlanned = 0, activeUnplanned = 0, cancelledPlanned = 0, cancelledUnplanned = 0, completedPlanned = 0, completedUnplanned = 0 } = data;
+  const { waitingPlanned = 0, waitingUnplanned = 0, activePlanned = 0, activeUnplanned = 0, cancelledPlanned = 0, cancelledUnplanned = 0 } = data;
   const trendDays = toArr(data.trendDays), trendCounts = toArr(data.trendCounts), trendInbound = toArr(data.trendInbound), trendOutbound = toArr(data.trendOutbound);
   const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const [dirGate, setDirGate] = useState('all');
@@ -569,17 +569,9 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
         }
         break;
       }
-      case 'Completed': {
-        if (completedPlanned > 0 && completedUnplanned > 0) {
-          const rect = e.currentTarget.getBoundingClientRect();
-          setBreakdownPopup({ label: 'Completed', planned: completedPlanned, unplanned: completedUnplanned, statusPlanned: 'completed', statusUnplanned: 'completed', rect });
-        } else if (completedUnplanned > 0) {
-          goTo('/unplanned', { status: 'completed' });
-        } else {
-          goTo('/slots', { 'status[]': 'completed' });
-        }
+      case 'Completed':
+        goTo('/reports/transactions', { 'status[]': 'completed' });
         break;
-      }
       case 'Cancel': {
         if (cancelledPlanned > 0 && cancelledUnplanned > 0) {
           const rect = e.currentTarget.getBoundingClientRect();
