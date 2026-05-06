@@ -25,6 +25,25 @@
             <strong>Pending Approval</strong> - Your booking request is waiting for admin approval.
         </div>
     </div>
+    @elseif($booking->status === 'rejected')
+    <div class="vendor-alert vendor-alert--error">
+        <i class="fas fa-ban"></i>
+        <div>
+            <strong>Rejected</strong>
+            @if($booking->approval_notes)
+                — {{ $booking->approval_notes }}
+            @endif
+            @if($booking->approver)
+                <br><small style="opacity:0.7">by {{ $booking->approver->full_name }} · {{ $booking->approved_at?->format('d-m-Y H:i') }}</small>
+            @endif
+            <div class="vb-alert__action">
+                <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
+                    <i class="fas fa-redo"></i>
+                    Create New Booking
+                </a>
+            </div>
+        </div>
+    </div>
     @elseif($booking->status === 'cancelled')
     <div class="vendor-alert vendor-alert--error">
         <i class="fas fa-times-circle"></i>

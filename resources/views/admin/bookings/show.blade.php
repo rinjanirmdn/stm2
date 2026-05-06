@@ -38,6 +38,19 @@
             <i class="fas fa-check-circle"></i>
             <strong>Approved</strong> - This booking request has been approved.
         </div>
+        @elseif($booking->status === 'rejected')
+        <div class="st-alert st-alert--danger">
+            <i class="fas fa-ban"></i>
+            <div>
+                <strong>Rejected</strong>
+                @if($booking->approval_notes)
+                    — {{ $booking->approval_notes }}
+                @endif
+                @if($booking->approver)
+                    <br><small style="opacity:0.75">by {{ $booking->approver->full_name }} · {{ $booking->approved_at?->format('d-m-Y H:i') }}</small>
+                @endif
+            </div>
+        </div>
         @elseif($booking->status === 'cancelled')
         <div class="st-alert st-alert--danger">
             <i class="fas fa-times-circle"></i>
