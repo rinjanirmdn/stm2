@@ -561,7 +561,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
           const handleClick = filterConfig !== undefined ? () => {
             const p = { ...dateParams, ...(filterConfig.params || {}) };
             if (data.selected_vendor) p.vendor = data.selected_vendor;
-            navigateToSlots(p, filterConfig.baseUrl || '/slots');
+            navigateToSlots(p, filterConfig.baseUrl || '/transactions');
           } : undefined;
           return (
             <div key={s.label} className="min-w-[140px] sm:min-w-0 shrink-0 snap-start">
