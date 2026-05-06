@@ -31,7 +31,7 @@
     ]
   },
   "resources/css/dashboard-react.css": {
-    "file": "assets/dashboard-react-CQ8OMHt-.css",
+    "file": "assets/dashboard-react-DexGnLxR.css",
     "src": "resources/css/dashboard-react.css",
     "isEntry": true,
     "name": "dashboard-react",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-Sah3xcKW.css",
+    "file": "assets/style-Cius5Y3Q.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -262,7 +262,7 @@
     "isEntry": true
   },
   "resources/js/react/dashboard.jsx": {
-    "file": "assets/dashboard-Ba_vFQIJ.js",
+    "file": "assets/dashboard-Cf1easRW.js",
     "name": "dashboard",
     "src": "resources/js/react/dashboard.jsx",
     "isEntry": true,

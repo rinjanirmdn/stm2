@@ -120,7 +120,7 @@ class UnplannedSlotController extends Controller
 
         if ($request->filled('status')) {
             $status = (string) $request->get('status');
-            if (in_array($status, ['waiting', 'completed'], true)) {
+            if (in_array($status, ['waiting', 'in_progress', 'completed', 'cancelled'], true)) {
                 $query->where('s.status', $status);
             }
         }

@@ -502,20 +502,103 @@ function getRealtimeVersionUrl() {
 
 function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
   const { pendingRange = 0, scheduledRange = 0, waitingRange = 0, activeRange = 0, completedStatusRange = 0, cancelledRange = 0, totalAllRange = 0, inboundRange = 0, outboundRange = 0, directionByGate = {} } = data;
+  const { waitingPlanned = 0, waitingUnplanned = 0, activePlanned = 0, activeUnplanned = 0, cancelledPlanned = 0, cancelledUnplanned = 0, completedPlanned = 0, completedUnplanned = 0 } = data;
   const trendDays = toArr(data.trendDays), trendCounts = toArr(data.trendCounts), trendInbound = toArr(data.trendInbound), trendOutbound = toArr(data.trendOutbound);
   const rangeLabel = useMemo(() => fmtRangeDisplay(data.range_start, data.range_end), [data.range_start, data.range_end]);
   const [dirGate, setDirGate] = useState('all');
   const [isMobile, setIsMobile] = useState(false);
+  const [breakdownPopup, setBreakdownPopup] = useState(null); // { label, planned, unplanned, statusParam, rect }
+  const popupRef = useRef(null);
   const dateParams = { date_from: data.range_start || '', date_to: data.range_end || '', page_size: 'all' };
-  const statusLabelToFilter = { 
-    'Pending': { baseUrl: window.location.pathname.includes('/vendor') ? '/vendor/bookings' : '/bookings', params: { status: 'pending' } }, 
-    'Scheduled': { params: { 'status[]': 'scheduled' } }, 
-    'Waiting': { params: { 'status[]': ['waiting', 'arrived'] } }, 
-    'In Progress': { params: { 'status[]': 'in_progress' } }, 
-    'Completed': { params: { 'status[]': 'completed' } }, 
-    'Cancel': { params: { 'status[]': 'cancelled' } }, 
-    'Total': { params: {} } 
+
+  // Close popup on outside click
+  useEffect(() => {
+    if (!breakdownPopup) return;
+    const handler = (e) => { if (popupRef.current && !popupRef.current.contains(e.target)) setBreakdownPopup(null); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [breakdownPopup]);
+
+  const buildUrl = (baseUrl, extraParams) => {
+    let p = { ...dateParams, ...extraParams };
+    if (data.selected_vendor) p.vendor = data.selected_vendor;
+    // Unplanned page uses arrival_from/arrival_to instead of date_from/date_to
+    if (baseUrl === '/unplanned') {
+      const { date_from, date_to, ...rest } = p;
+      p = { ...rest };
+      if (date_from) p.arrival_from = date_from;
+      if (date_to) p.arrival_to = date_to;
+    }
+    const qs = Object.entries(p).flatMap(([k, v]) => Array.isArray(v) ? v.map(vi => `${encodeURIComponent(k)}=${encodeURIComponent(vi)}`) : [`${encodeURIComponent(k)}=${encodeURIComponent(v)}`]).join('&');
+    return `${baseUrl}?${qs}`;
   };
+
+  const goTo = (baseUrl, extraParams) => {
+    window.location.href = buildUrl(baseUrl, extraParams);
+  };
+
+  // Smart click handler: decides whether to navigate directly or show popup
+  const handleStatClick = (label, e) => {
+    const isVendor = window.location.pathname.includes('/vendor');
+    switch (label) {
+      case 'Pending':
+        goTo(isVendor ? '/vendor/bookings' : '/bookings', { status: 'pending' });
+        break;
+      case 'Scheduled':
+        goTo('/slots', { 'status[]': 'scheduled' });
+        break;
+      case 'Waiting': {
+        if (waitingPlanned > 0 && waitingUnplanned > 0) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setBreakdownPopup({ label: 'Waiting', planned: waitingPlanned, unplanned: waitingUnplanned, statusPlanned: ['waiting', 'arrived'], statusUnplanned: 'waiting', rect });
+        } else if (waitingUnplanned > 0) {
+          goTo('/unplanned', { status: 'waiting' });
+        } else {
+          goTo('/slots', { 'status[]': ['waiting', 'arrived'] });
+        }
+        break;
+      }
+      case 'In Progress': {
+        if (activePlanned > 0 && activeUnplanned > 0) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setBreakdownPopup({ label: 'In Progress', planned: activePlanned, unplanned: activeUnplanned, statusPlanned: 'in_progress', statusUnplanned: 'in_progress', rect });
+        } else if (activeUnplanned > 0) {
+          goTo('/unplanned', { status: 'in_progress' });
+        } else {
+          goTo('/slots', { 'status[]': 'in_progress' });
+        }
+        break;
+      }
+      case 'Completed': {
+        if (completedPlanned > 0 && completedUnplanned > 0) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setBreakdownPopup({ label: 'Completed', planned: completedPlanned, unplanned: completedUnplanned, statusPlanned: 'completed', statusUnplanned: 'completed', rect });
+        } else if (completedUnplanned > 0) {
+          goTo('/unplanned', { status: 'completed' });
+        } else {
+          goTo('/slots', { 'status[]': 'completed' });
+        }
+        break;
+      }
+      case 'Cancel': {
+        if (cancelledPlanned > 0 && cancelledUnplanned > 0) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setBreakdownPopup({ label: 'Cancelled', planned: cancelledPlanned, unplanned: cancelledUnplanned, statusPlanned: 'cancelled', statusUnplanned: 'cancelled', rect });
+        } else if (cancelledUnplanned > 0) {
+          goTo('/unplanned', { status: 'cancelled' });
+        } else {
+          goTo('/slots', { 'status[]': 'cancelled' });
+        }
+        break;
+      }
+      case 'Total':
+        goTo('/reports/transactions', {});
+        break;
+      default:
+        break;
+    }
+  };
+
   const stats = [
     { label: 'Pending', value: pendingRange }, { label: 'Scheduled', value: scheduledRange },
     { label: 'Waiting', value: waitingRange }, { label: 'In Progress', value: activeRange },
@@ -557,12 +640,7 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
       {/* Stat cards - horizontal scroll on mobile, grid on md+ */}
       <div className="flex overflow-x-auto sm:grid sm:grid-cols-4 lg:grid-cols-7 gap-2 pb-1 snap-x scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {stats.map(s => {
-          const filterConfig = statusLabelToFilter[s.label];
-          const handleClick = filterConfig !== undefined ? () => {
-            const p = { ...dateParams, ...(filterConfig.params || {}) };
-            if (data.selected_vendor) p.vendor = data.selected_vendor;
-            navigateToSlots(p, filterConfig.baseUrl || '/reports/transactions');
-          } : undefined;
+          const handleClick = !isDisplayOnly ? (e) => handleStatClick(s.label, e) : undefined;
           return (
             <div key={s.label} className="min-w-[140px] sm:min-w-0 shrink-0 snap-start">
               <StatCard label={s.label} value={s.value} tip={STAT_TIPS[s.label]} isDisplayOnly={isDisplayOnly} onClick={handleClick} />
@@ -570,6 +648,32 @@ function AnalyticsSlide({ data, isDisplayOnly = false, animateCharts = true }) {
           );
         })}
       </div>
+
+      {/* Breakdown Popup for mixed planned/unplanned */}
+      {breakdownPopup && (() => {
+        const { label, planned, unplanned, statusPlanned, statusUnplanned, rect } = breakdownPopup;
+        const popLeft = rect.left + rect.width / 2;
+        const popTop = rect.bottom + 8;
+        return (
+          <div ref={popupRef} className="fixed z-[9999] bg-white rounded-xl shadow-2xl border border-gray-200 p-3 min-w-[200px] animate-in fade-in"
+            style={{ left: popLeft, top: popTop, transform: 'translateX(-50%)' }}>
+            <div className="text-xs font-semibold text-gray-700 mb-2 text-center">{label} Breakdown</div>
+            <div className="flex flex-col gap-1.5">
+              <a href={buildUrl('/slots', Array.isArray(statusPlanned) ? { 'status[]': statusPlanned } : { 'status[]': statusPlanned })}
+                className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors cursor-pointer no-underline">
+                <span className="text-xs font-medium text-sky-800">📋 Planned</span>
+                <span className="text-sm font-bold text-sky-700">{planned}</span>
+              </a>
+              <a href={buildUrl('/unplanned', { status: statusUnplanned })}
+                className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors cursor-pointer no-underline">
+                <span className="text-xs font-medium text-amber-800">⚡ Unplanned</span>
+                <span className="text-sm font-bold text-amber-700">{unplanned}</span>
+              </a>
+            </div>
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-l border-t border-gray-200 rotate-45"></div>
+          </div>
+        );
+      })()}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 flex-1">
