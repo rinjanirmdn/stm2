@@ -706,7 +706,7 @@
     height: 2px;
     background-color: #ef4444;
     z-index: 50;
-    pointer-events: none;
+    cursor: default;
     box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
 }
 
@@ -719,6 +719,42 @@
     height: 10px;
     background-color: #ef4444;
     border-radius: 50%;
+}
+
+/* Invisible wider hover zone for easier interaction */
+.st-dock-time-line::after {
+    content: attr(data-time-label);
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -10px;
+    height: 22px;
+    cursor: default;
+    /* Tooltip styling - hidden by default */
+    color: transparent;
+    font-size: 0;
+    pointer-events: auto;
+}
+
+/* Tooltip on hover */
+.st-dock-time-line:hover::after {
+    content: attr(data-time-label);
+    position: absolute;
+    left: 50%;
+    right: auto;
+    top: -32px;
+    height: auto;
+    transform: translateX(-50%);
+    background: rgba(239, 68, 68, 0.9);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    z-index: 100;
 }
 
 /* Compact Mode Overrides */

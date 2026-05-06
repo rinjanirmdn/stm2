@@ -25,11 +25,42 @@
             <strong>Pending Approval</strong> - Your booking request is waiting for admin approval.
         </div>
     </div>
+    @elseif($booking->status === 'rejected')
+    <div class="vendor-alert vendor-alert--error">
+        <i class="fas fa-ban"></i>
+        <div>
+            <strong>Rejected</strong>
+            @if($booking->approval_notes)
+                — {{ $booking->approval_notes }}
+            @endif
+            @if($booking->approver)
+                <br><small style="opacity:0.7">by {{ $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
+            @else
+                <br><small style="opacity:0.7">{{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
+            @endif
+            <div class="vb-alert__action">
+                <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
+                    <i class="fas fa-redo"></i>
+                    Create New Booking
+                </a>
+            </div>
+        </div>
+    </div>
     @elseif($booking->status === 'cancelled')
     <div class="vendor-alert vendor-alert--error">
         <i class="fas fa-times-circle"></i>
         <div>
-            <strong>Cancelled</strong> - {{ $booking->approval_notes ?? 'Your booking was cancelled.' }}
+            <strong>Cancelled</strong>
+            @if($booking->approval_notes)
+                — {{ $booking->approval_notes }}
+            @else
+                — Your booking was cancelled.
+            @endif
+            @if($booking->approver)
+                <br><small style="opacity:0.7">by {{ $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
+            @else
+                <br><small style="opacity:0.7">{{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
+            @endif
             <div class="vb-alert__action">
                 <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
                     <i class="fas fa-redo"></i>
