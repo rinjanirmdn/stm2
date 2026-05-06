@@ -217,12 +217,16 @@ class SlotFilterService
         $dateFrom = trim($request->query('date_from', ''));
         $dateTo = trim($request->query('date_to', ''));
 
+        // Use COALESCE to match dashboard counting logic:
+        // Dashboard uses DATE(COALESCE(actual_start, arrival_time, planned_start))
+        $dateExpr = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
+
         if ($dateFrom !== '' && $dateTo !== '') {
-            $query->whereBetween('s.planned_start', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59']);
+            $query->whereBetween($dateExpr, [$dateFrom, $dateTo]);
         } elseif ($dateFrom !== '') {
-            $query->whereDate('s.planned_start', '>=', $dateFrom);
+            $query->where($dateExpr, '>=', $dateFrom);
         } elseif ($dateTo !== '') {
-            $query->whereDate('s.planned_start', '<=', $dateTo);
+            $query->where($dateExpr, '<=', $dateTo);
         }
     }
 
