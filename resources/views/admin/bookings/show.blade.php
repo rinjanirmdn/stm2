@@ -47,7 +47,9 @@
                     — {{ $booking->approval_notes }}
                 @endif
                 @if($booking->approver)
-                    <br><small style="opacity:0.75">by {{ $booking->approver->full_name }} · {{ $booking->approved_at?->format('d-m-Y H:i') }}</small>
+                    <br><small style="opacity:0.75">by {{ $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
+                @else
+                    <br><small style="opacity:0.75">{{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
                 @endif
             </div>
         </div>
@@ -59,9 +61,7 @@
                 @if($booking->approval_notes)
                     — {{ $booking->approval_notes }}
                 @endif
-                @if($booking->approver)
-                    <br><small style="opacity:0.75">by {{ $booking->approver->full_name }} · {{ $booking->approved_at?->format('d-m-Y H:i') }}</small>
-                @endif
+                <br><small style="opacity:0.75">{{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
             </div>
         </div>
         @endif
