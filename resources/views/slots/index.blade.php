@@ -57,7 +57,7 @@
                         <div class="st-form-field st-maxw-260">
                             <label class="st-label">Search</label>
                             <div class="st-input-wrap">
-                                <input type="text" name="q" form="slot-filter-form" class="st-input" placeholder="Truck, SJ, Vendor, Etc" value="{{ $search }}">
+                                <input type="text" name="q" form="slot-filter-form" class="st-input" placeholder="PO/SO,Truck, SJ, Vendor, Etc" value="{{ $search }}">
                                 <div id="slot-search-suggestions" class="st-suggestions st-hidden"></div>
                             </div>
                         </div>
