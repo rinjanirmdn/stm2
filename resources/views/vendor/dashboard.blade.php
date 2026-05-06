@@ -52,16 +52,13 @@
                             <input type="hidden" name="date_range" id="vd-date-range"
                                 value="{{ request('date_range', 'this_month') }}">
 
-                            <div id="vd_reportrange" class="date-range-input vd-range-picker" data-auto-submit="false">
+                            <div id="vd_reportrange" class="date-range-input vd-range-picker" data-auto-submit="true">
                                 <div class="date-range-input__left">
                                     <i class="fas fa-calendar date-range-icon vendor-icon"></i>
                                     <span></span>
                                 </div>
                                 <i class="fa fa-caret-down"></i>
                             </div>
-                            <button type="submit" class="vd-date-filter-btn">
-                                Filter
-                            </button>
                             <a href="{{ route('vendor.dashboard') }}" class="vd-date-reset-btn">
                                 Reset
                             </a>

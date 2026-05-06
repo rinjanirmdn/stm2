@@ -64,8 +64,8 @@
                         </select>
                     </div>
                     <input type="hidden" name="status" value="{{ $currentStatus }}">
-                    <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO{{ ($isInternalVendor ?? false) ? '/SO' : '' }}..." value="{{ request('search') }}">
-                    <div id="vendor_reportrange" class="mb-search__input date-range-input" data-auto-submit="false">
+                    <input type="text" name="search" id="vendor-search-input" class="mb-search__input" placeholder="Search ticket, vehicle, PO{{ ($isInternalVendor ?? false) ? '/SO' : '' }}..." value="{{ request('search') }}">
+                    <div id="vendor_reportrange" class="mb-search__input date-range-input" data-auto-submit="true">
                         <div class="date-range-input__left">
                             <i class="fas fa-calendar date-range-icon vendor-icon"></i>
                             <span></span>
@@ -74,7 +74,6 @@
                     </div>
                     <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
                     <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
-                    <button type="submit" class="vendor-btn vendor-btn--primary vendor-btn--sm">Search</button>
                     <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
                         <i class="fas fa-plus"></i> New Booking
                     </a>
