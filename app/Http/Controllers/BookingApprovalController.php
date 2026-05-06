@@ -201,11 +201,81 @@ class BookingApprovalController extends Controller
         }
         $bookings = $query->get();
 
-        // Get counts for tabs
-        $statusCounts = BookingRequest::query()
-            ->select('status', DB::raw('COUNT(*) as total'))
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        // Get counts for tabs — apply the same filters (except status) so summary reflects filtered data
+        $countsQuery = BookingRequest::query()
+            ->leftJoin('md_users as u_requester2', 'booking_requests.requested_by', '=', 'u_requester2.id')
+            ->leftJoin('slots as s_converted2', 'booking_requests.converted_slot_id', '=', 's_converted2.id')
+            ->leftJoin('md_gates as g_planned2', 's_converted2.planned_gate_id', '=', 'g_planned2.id');
+
+        // Reapply date range filter
+        if ($request->filled('date_from')) {
+            $countsQuery->whereDate('booking_requests.planned_start', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $countsQuery->whereDate('booking_requests.planned_start', '<=', $request->date_to);
+        }
+
+        // Reapply column filters
+        if ($requestNumber !== '') {
+            $countsQuery->where('booking_requests.request_number', 'like', '%'.$requestNumber.'%');
+        }
+        if ($poNumber !== '') {
+            $countsQuery->where('booking_requests.po_number', 'like', '%'.$poNumber.'%');
+        }
+        if ($supplierName !== '') {
+            $countsQuery->where('booking_requests.supplier_name', 'like', '%'.$supplierName.'%');
+        }
+        if ($requestedBy !== '') {
+            $countsQuery->where(function ($q) use ($requestedBy) {
+                $q->where('u_requester2.full_name', 'like', '%'.$requestedBy.'%')
+                    ->orWhere('u_requester2.email', 'like', '%'.$requestedBy.'%');
+            });
+        }
+        if ($plannedStart !== '') {
+            try {
+                $parsedDate = Carbon::createFromFormat('d-m-Y', $plannedStart)->format('Y-m-d');
+                $countsQuery->whereDate('booking_requests.planned_start', '=', $parsedDate);
+            } catch (\Exception $e) {
+                $countsQuery->whereDate('booking_requests.planned_start', '=', $plannedStart);
+            }
+        }
+        if ($convertedTicket !== '') {
+            $countsQuery->where('s_converted2.ticket_number', 'like', '%'.$convertedTicket.'%');
+        }
+        if ($plannedGateId > 0) {
+            $countsQuery->where('s_converted2.planned_gate_id', '=', $plannedGateId);
+        }
+        if ($direction !== '') {
+            $countsQuery->where('booking_requests.direction', '=', $direction);
+        }
+        if ($statusFilter !== '') {
+            $countsQuery->where('booking_requests.status', '=', $statusFilter);
+        }
+        if ($createdAt !== '') {
+            try {
+                $parsedCreatedAt = Carbon::createFromFormat('d-m-Y', $createdAt)->format('Y-m-d');
+                $countsQuery->whereDate('booking_requests.created_at', '=', $parsedCreatedAt);
+            } catch (\Exception $e) {
+                $countsQuery->whereDate('booking_requests.created_at', '=', $createdAt);
+            }
+        }
+        if ($request->filled('search')) {
+            $search = str_replace(['%', '_'], ['\%', '\_'], $request->search);
+            $like = '%'.strtolower($search).'%';
+            $countsQuery->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(CONCAT(\'req-\', CAST(booking_requests.id AS TEXT))) like ?', [$like])
+                    ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
+                    ->orWhereRaw('LOWER(s_converted2.ticket_number) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(u_requester2.full_name, u_requester2.email)) like ?', [$like]);
+            });
+        }
+
+        $statusCounts = $countsQuery
+            ->select('booking_requests.status', DB::raw('COUNT(*) as total'))
+            ->groupBy('booking_requests.status')
+            ->pluck('total', 'booking_requests.status');
 
         $pendingCount = (int) ($statusCounts[BookingRequest::STATUS_PENDING] ?? 0);
         $approvedCount = (int) ($statusCounts[BookingRequest::STATUS_APPROVED] ?? 0);

@@ -988,10 +988,13 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
     return arr;
   }, [fromH, toH]);
 
-  const applyTimeline = () => {
+  // Auto-apply when date or shift changes
+  const isFirstTlRender = useRef(true);
+  useEffect(() => {
+    if (isFirstTlRender.current) { isFirstTlRender.current = false; return; }
     const [sf, st] = shiftRanges[shift] || shiftRanges.shift1;
     if (onFilter) onFilter({ timeline_date: tlDate, timeline_from: sf, timeline_to: st });
-  };
+  }, [tlDate, shift]);
 
   const tlDateLabel = useMemo(() => fmtDisplay(tlDate || ''), [tlDate]);
 
@@ -1011,8 +1014,7 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
                   <option value="shift3">Shift 3 (23-07)</option>
                 </SelectInput>
               </div>
-              <button onClick={applyTimeline} className="px-4 py-1.5 text-[13px] font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors shadow-sm">Apply</button>
-              <button onClick={() => { setTlDate(today); setShift('shift1'); onFilter({ timeline_date: today, timeline_from: '07:00', timeline_to: '15:00' }); }} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
+              <button onClick={() => { setTlDate(today); setShift('shift1'); }} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
             </div>
           </CardB>
         </Card>
@@ -1164,10 +1166,13 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
   // Sync local state when data changes from AJAX
   useEffect(() => { setSchDate(schedule_date || today); }, [schedule_date, today]);
 
-  const applySchedule = () => {
+  // Auto-apply when date or shift changes
+  const isFirstSchRender = useRef(true);
+  useEffect(() => {
+    if (isFirstSchRender.current) { isFirstSchRender.current = false; return; }
     const [sf, st] = shiftRanges[schShift] || shiftRanges.shift1;
     if (onFilter) onFilter({ schedule_date: schDate, schedule_from: sf, schedule_to: st });
-  };
+  }, [schDate, schShift]);
 
   const schDateLabel = useMemo(() => fmtDisplay(schDate || ''), [schDate]);
 
@@ -1238,8 +1243,7 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
                   <option value="shift3">Shift 3 (23-07)</option>
                 </SelectInput>
               </div>
-              <button onClick={applySchedule} className="px-4 py-1.5 text-[13px] font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors shadow-sm">Apply</button>
-              <button onClick={() => { setSchDate(today); setSchShift('shift1'); onFilter({ schedule_date: today, schedule_from: '07:00', schedule_to: '15:00' }); }} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
+              <button onClick={() => { setSchDate(today); setSchShift('shift1'); }} className="px-4 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm">Reset</button>
             </div>
           </CardB>
         </Card>

@@ -195,6 +195,9 @@ function bootVendorDashboardDateRange() {
                     };
                     dateRange.value = presetMap[label] || 'custom';
                 }
+                // Auto-submit the form on date range selection
+                var form = rangePicker.closest('form');
+                if (form) form.submit();
             });
 
             bindPickerDecorators($(rangePicker));
