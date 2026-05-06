@@ -746,7 +746,8 @@ class ReportController extends Controller
         $this->putAdminForcedTimes($date, $forced);
 
         // Clear all cached availability for this date (vendor + admin)
-        foreach ([60, 120, 180, 240, 300, 360] as $dur) {
+        // Cover all possible truck type durations (30-min increments up to 12h)
+        for ($dur = 30; $dur <= 720; $dur += 30) {
             Cache::forget('vendor_availability_'.$date.'_'.$dur);
         }
         // Clear admin availability caches (pattern varies by warehouse filter)

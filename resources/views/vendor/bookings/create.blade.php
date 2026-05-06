@@ -33,15 +33,15 @@
                         <div class="cb-section">
                             <h3 class="cb-section__title">
                                 <i class="fas fa-file-invoice"></i>
-                                PO/SO Selection
+                                PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} Selection
                             </h3>
                             <div class="cb-field">
-                                <label class="cb-label cb-label--required">PO/SO Number</label>
+                                <label class="cb-label cb-label--required">PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} Number</label>
                                 <div class="cb-po-search">
                                     <input type="text"
                                            id="po-search"
                                            class="cb-input cb-input--pr-40"
-                                           placeholder="Search PO number..."
+                                           placeholder="Search PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} number..."
                                            autocomplete="off"
                                            value="{{ old('po_number') }}">
                                     <input type="hidden" name="po_number" id="po-number-hidden" value="{{ old('po_number') }}">

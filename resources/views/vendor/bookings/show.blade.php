@@ -114,7 +114,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="vb-table__label">PO Number</td>
+                    <td class="vb-table__label">{{ ($isInternalVendor ?? false) ? 'PO/SO Number' : 'PO Number' }}</td>
                     <td>{{ $booking->po_number ?? '-' }}</td>
                 </tr>
                 @if(($isInternalVendor ?? false) && $booking->supplier_name)

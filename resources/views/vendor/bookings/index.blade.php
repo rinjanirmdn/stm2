@@ -64,7 +64,7 @@
                         </select>
                     </div>
                     <input type="hidden" name="status" value="{{ $currentStatus }}">
-                    <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO..." value="{{ request('search') }}">
+                    <input type="text" name="search" class="mb-search__input" placeholder="Search ticket, vehicle, PO{{ ($isInternalVendor ?? false) ? '/SO' : '' }}..." value="{{ request('search') }}">
                     <div id="vendor_reportrange" class="mb-search__input date-range-input" data-auto-submit="false">
                         <div class="date-range-input__left">
                             <i class="fas fa-calendar date-range-icon vendor-icon"></i>
