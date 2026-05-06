@@ -323,7 +323,6 @@ function StatCard({ label, value, tip, isDisplayOnly = false, onClick }) {
       {tip && <div className="absolute top-1 right-1 text-gray-300 group-hover:text-gray-500 cursor-help" title={tip}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg></div>}
       <div className="text-gray-500 mb-0.5" style={{ fontSize: labelSize }}>{label}</div>
       <div className="font-bold text-gray-900" style={{ fontSize: valueSize }}>{typeof value === 'number' ? value.toLocaleString() : value}</div>
-      {clickable && <div className="text-[9px] text-sky-500 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">Click to view →</div>}
     </div>
   );
 }
