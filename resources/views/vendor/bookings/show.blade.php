@@ -48,7 +48,15 @@
     <div class="vendor-alert vendor-alert--error">
         <i class="fas fa-times-circle"></i>
         <div>
-            <strong>Cancelled</strong> - {{ $booking->approval_notes ?? 'Your booking was cancelled.' }}
+            <strong>Cancelled</strong>
+            @if($booking->approval_notes)
+                — {{ $booking->approval_notes }}
+            @else
+                — Your booking was cancelled.
+            @endif
+            @if($booking->approver)
+                <br><small style="opacity:0.7">by {{ $booking->approver->full_name }} · {{ $booking->approved_at?->format('d-m-Y H:i') }}</small>
+            @endif
             <div class="vb-alert__action">
                 <a href="{{ route('vendor.bookings.create') }}" class="vendor-btn vendor-btn--primary vendor-btn--sm">
                     <i class="fas fa-redo"></i>

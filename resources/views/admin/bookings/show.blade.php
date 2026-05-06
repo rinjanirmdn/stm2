@@ -54,7 +54,15 @@
         @elseif($booking->status === 'cancelled')
         <div class="st-alert st-alert--danger">
             <i class="fas fa-times-circle"></i>
-            <strong>Cancelled</strong> - {{ $booking->approval_notes }}
+            <div>
+                <strong>Cancelled</strong>
+                @if($booking->approval_notes)
+                    — {{ $booking->approval_notes }}
+                @endif
+                @if($booking->approver)
+                    <br><small style="opacity:0.75">by {{ $booking->approver->full_name }} · {{ $booking->approved_at?->format('d-m-Y H:i') }}</small>
+                @endif
+            </div>
         </div>
         @endif
     @endif
