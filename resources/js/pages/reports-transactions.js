@@ -733,36 +733,37 @@ document.addEventListener('DOMContentLoaded', function () {
                     var html = '<div class="st-flex st-align-center"><i class="fa-solid fa-exclamation-circle st-mr-2"></i> <span>' + msg + '</span></div>';
                     
                     if (err.errors && err.errors.length > 0) {
-                        html += '<div class="st-mt-2"><button type="button" class="st-link st-text--sm" onclick="document.getElementById(\'import-error-details\').classList.toggle(\'st-hidden\')">Lihat Detail Error (' + err.errors.length + ')</button></div>';
-                        html += '<div id="import-error-details" class="st-hidden st-mt-2 st-p-3 st-bg-white st-rounded st-border" style="max-height: 250px; overflow-y: auto; font-size: 0.8rem;">';
+                        html += '<div class="st-mt-4">';
+                        html += '<div class="st-mb-2"><button type="button" class="st-link st-text--sm" onclick="document.getElementById(\'import-error-details\').classList.toggle(\'st-hidden\')">View Error Details (' + err.errors.length + ')</button></div>';
+                        html += '<div id="import-error-details" class="st-mt-2" style="max-height: 200px; overflow-y: auto; overflow-x: auto; font-size: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px;">';
                         
                         // Check if errors are structured objects
                         if (err.errors[0] && typeof err.errors[0] === 'object' && err.errors[0].row) {
-                            html += '<table style="width:100%;border-collapse:collapse;font-size:0.8rem;">';
-                            html += '<thead><tr style="background:#f8f9fa;border-bottom:2px solid #dee2e6;">';
-                            html += '<th style="padding:4px 8px;text-align:left;">Row</th>';
-                            html += '<th style="padding:4px 8px;text-align:left;">Cell</th>';
-                            html += '<th style="padding:4px 8px;text-align:left;">Kolom</th>';
-                            html += '<th style="padding:4px 8px;text-align:left;">Nilai</th>';
-                            html += '<th style="padding:4px 8px;text-align:left;">Error</th>';
+                            html += '<table style="width:100%;border-collapse:collapse;font-size:0.75rem;white-space:nowrap;">';
+                            html += '<thead><tr style="background:#f8f9fa;border-bottom:2px solid #dee2e6;position:sticky;top:0;">';
+                            html += '<th style="padding:4px 6px;text-align:left;">Row</th>';
+                            html += '<th style="padding:4px 6px;text-align:left;">Cell</th>';
+                            html += '<th style="padding:4px 6px;text-align:left;">Column</th>';
+                            html += '<th style="padding:4px 6px;text-align:left;">Value</th>';
+                            html += '<th style="padding:4px 6px;text-align:left;white-space:normal;min-width:120px;">Error</th>';
                             html += '</tr></thead><tbody>';
                             err.errors.forEach(function(e) {
-                                html += '<tr style="border-bottom:1px solid #eee;">';
-                                html += '<td style="padding:3px 8px;">' + (e.row || '') + '</td>';
-                                html += '<td style="padding:3px 8px;font-family:monospace;color:#6366f1;">' + String(e.cell || '').replace(/</g, '&lt;') + '</td>';
-                                html += '<td style="padding:3px 8px;font-weight:500;">' + String(e.column || '').replace(/</g, '&lt;') + '</td>';
-                                html += '<td style="padding:3px 8px;color:#dc2626;font-style:italic;">' + String(e.value || '').replace(/</g, '&lt;') + '</td>';
-                                html += '<td style="padding:3px 8px;">' + String(e.message || '').replace(/</g, '&lt;') + '</td>';
+                                html += '<tr style="border-bottom:1px solid #f3f4f6;">';
+                                html += '<td style="padding:3px 6px;">' + (e.row || '') + '</td>';
+                                html += '<td style="padding:3px 6px;font-family:monospace;color:#6366f1;">' + String(e.cell || '').replace(/</g, '&lt;') + '</td>';
+                                html += '<td style="padding:3px 6px;font-weight:500;">' + String(e.column || '').replace(/</g, '&lt;') + '</td>';
+                                html += '<td style="padding:3px 6px;color:#dc2626;font-style:italic;">' + String(e.value || '').replace(/</g, '&lt;') + '</td>';
+                                html += '<td style="padding:3px 6px;white-space:normal;">' + String(e.message || '').replace(/</g, '&lt;') + '</td>';
                                 html += '</tr>';
                             });
                             html += '</tbody></table>';
                         } else {
                             // Fallback for plain string errors
-                            html += '<ul class="st-pl-4 st-mb-0 st-text-danger">';
+                            html += '<ul class="st-pl-4 st-mb-0 st-text-danger" style="padding:8px;">';
                             err.errors.forEach(function(e) { html += '<li>' + String(e).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</li>'; });
                             html += '</ul>';
                         }
-                        html += '</div>';
+                        html += '</div></div>';
                     }
                     
                     alertImportOffline.className = 'st-alert st-alert--danger st-mt-4';

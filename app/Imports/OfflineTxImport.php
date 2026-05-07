@@ -29,7 +29,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         'arrival_time' => ['Arrival Time', 'D'],
         'start_time' => ['Start Time', 'E'],
         'finish_time' => ['Finish Time', 'F'],
-        'po_number' => ['PO Number', 'G'],
+        'po_number' => ['PO/SO Number', 'G'],
         'sj_number' => ['SJ Number', 'H'],
         'vehicle_number' => ['Vehicle Number', 'I'],
         'driver_name' => ['Driver Name', 'J'],
@@ -96,78 +96,78 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             // --- Validate required fields ---
             $slotTypeRaw = trim($row['slot_type'] ?? '');
             if ($slotTypeRaw === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'slot_type', $slotTypeRaw, 'Wajib diisi. Pilihan: planned, unplanned');
+                $rowErrors[] = $this->formatError($excelRow, 'slot_type', $slotTypeRaw, 'Required. Options: planned, unplanned');
             } elseif (! in_array(strtolower($slotTypeRaw), ['planned', 'unplanned'])) {
-                $rowErrors[] = $this->formatError($excelRow, 'slot_type', $slotTypeRaw, 'Nilai tidak valid. Pilihan: planned, unplanned');
+                $rowErrors[] = $this->formatError($excelRow, 'slot_type', $slotTypeRaw, 'Invalid value. Options: planned, unplanned');
             }
 
             $directionRaw = trim($row['direction'] ?? '');
             if ($directionRaw === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'direction', $directionRaw, 'Wajib diisi. Pilihan: inbound, outbound');
+                $rowErrors[] = $this->formatError($excelRow, 'direction', $directionRaw, 'Required. Options: inbound, outbound');
             } elseif (! in_array(strtolower($directionRaw), ['inbound', 'outbound'])) {
-                $rowErrors[] = $this->formatError($excelRow, 'direction', $directionRaw, 'Nilai tidak valid. Pilihan: inbound, outbound');
+                $rowErrors[] = $this->formatError($excelRow, 'direction', $directionRaw, 'Invalid value. Options: inbound, outbound');
             }
 
             $truckType = trim($row['truck_type'] ?? '');
             if ($truckType === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'truck_type', $truckType, 'Wajib diisi. Pilihan: ' . implode(', ', $validTruckTypes));
+                $rowErrors[] = $this->formatError($excelRow, 'truck_type', $truckType, 'Required. Options: ' . implode(', ', $validTruckTypes));
             } elseif (! isset($truckTargetDurations[strtolower($truckType)])) {
-                $rowErrors[] = $this->formatError($excelRow, 'truck_type', $truckType, 'Tipe truk tidak ditemukan di master data. Pilihan: ' . implode(', ', $validTruckTypes));
+                $rowErrors[] = $this->formatError($excelRow, 'truck_type', $truckType, 'Truck type not found in master data. Options: ' . implode(', ', $validTruckTypes));
             }
 
             $arrivalRaw = $row['arrival_time'] ?? null;
             $arrivalStr = $this->parseDate($arrivalRaw);
             if (! $arrivalStr && $arrivalRaw !== null && trim((string)$arrivalRaw) !== '') {
-                $rowErrors[] = $this->formatError($excelRow, 'arrival_time', (string)$arrivalRaw, 'Format tanggal tidak valid. Format: DD-MM-YYYY HH:mm');
+                $rowErrors[] = $this->formatError($excelRow, 'arrival_time', (string)$arrivalRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
             } elseif (! $arrivalStr) {
-                $rowErrors[] = $this->formatError($excelRow, 'arrival_time', '', 'Wajib diisi. Format: DD-MM-YYYY HH:mm');
+                $rowErrors[] = $this->formatError($excelRow, 'arrival_time', '', 'Required. Format: DD-MM-YYYY HH:mm');
             }
 
             $startRaw = $row['start_time'] ?? null;
             $startStr = $this->parseDate($startRaw);
             if (! $startStr && $startRaw !== null && trim((string)$startRaw) !== '') {
-                $rowErrors[] = $this->formatError($excelRow, 'start_time', (string)$startRaw, 'Format tanggal tidak valid. Format: DD-MM-YYYY HH:mm');
+                $rowErrors[] = $this->formatError($excelRow, 'start_time', (string)$startRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
             } elseif (! $startStr) {
-                $rowErrors[] = $this->formatError($excelRow, 'start_time', '', 'Wajib diisi. Format: DD-MM-YYYY HH:mm');
+                $rowErrors[] = $this->formatError($excelRow, 'start_time', '', 'Required. Format: DD-MM-YYYY HH:mm');
             }
 
             $finishRaw = $row['finish_time'] ?? null;
             $finishStr = $this->parseDate($finishRaw);
             if (! $finishStr && $finishRaw !== null && trim((string)$finishRaw) !== '') {
-                $rowErrors[] = $this->formatError($excelRow, 'finish_time', (string)$finishRaw, 'Format tanggal tidak valid. Format: DD-MM-YYYY HH:mm');
+                $rowErrors[] = $this->formatError($excelRow, 'finish_time', (string)$finishRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
             } elseif (! $finishStr) {
-                $rowErrors[] = $this->formatError($excelRow, 'finish_time', '', 'Wajib diisi. Format: DD-MM-YYYY HH:mm');
+                $rowErrors[] = $this->formatError($excelRow, 'finish_time', '', 'Required. Format: DD-MM-YYYY HH:mm');
             }
 
             $poNumber = trim($row['po_number'] ?? '');
             if ($poNumber === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'po_number', $poNumber, 'Wajib diisi');
+                $rowErrors[] = $this->formatError($excelRow, 'po_number', $poNumber, 'Required');
             }
 
             $vehicleNumber = trim($row['vehicle_number'] ?? '');
             if ($vehicleNumber === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'vehicle_number', $vehicleNumber, 'Wajib diisi');
+                $rowErrors[] = $this->formatError($excelRow, 'vehicle_number', $vehicleNumber, 'Required');
             }
 
             $vendorName = trim($row['vendor_name'] ?? '');
             if ($vendorName === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'vendor_name', $vendorName, 'Wajib diisi');
+                $rowErrors[] = $this->formatError($excelRow, 'vendor_name', $vendorName, 'Required');
             }
 
             $whCode = trim($row['warehouse_code'] ?? '');
             $whId = null;
             if ($whCode === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'warehouse_code', $whCode, 'Wajib diisi. Pilihan: ' . implode(', ', $validWhCodes));
+                $rowErrors[] = $this->formatError($excelRow, 'warehouse_code', $whCode, 'Required. Options: ' . implode(', ', $validWhCodes));
             } elseif (isset($warehouses[strtoupper($whCode)])) {
                 $whId = $warehouses[strtoupper($whCode)];
             } else {
-                $rowErrors[] = $this->formatError($excelRow, 'warehouse_code', $whCode, 'Kode warehouse tidak ditemukan. Pilihan: ' . implode(', ', $validWhCodes));
+                $rowErrors[] = $this->formatError($excelRow, 'warehouse_code', $whCode, 'Warehouse code not found. Options: ' . implode(', ', $validWhCodes));
             }
 
             $gateNumber = trim($row['gate_number'] ?? '');
             $gateId = null;
             if ($gateNumber === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'gate_number', $gateNumber, 'Wajib diisi. Pilihan: ' . implode(', ', $validGateNumbers));
+                $rowErrors[] = $this->formatError($excelRow, 'gate_number', $gateNumber, 'Required. Options: ' . implode(', ', $validGateNumbers));
             } elseif ($whId) {
                 foreach ($allGates as $g) {
                     if (strtoupper($g->gate_number) == strtoupper($gateNumber) && $g->warehouse_id == $whId) {
@@ -176,7 +176,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     }
                 }
                 if (! $gateId) {
-                    $rowErrors[] = $this->formatError($excelRow, 'gate_number', $gateNumber, 'Gate tidak ditemukan untuk warehouse ' . strtoupper($whCode) . '. Pilihan: ' . implode(', ', $validGateNumbers));
+                    $rowErrors[] = $this->formatError($excelRow, 'gate_number', $gateNumber, 'Gate not found for warehouse ' . strtoupper($whCode) . '. Options: ' . implode(', ', $validGateNumbers));
                 }
             }
 
@@ -275,15 +275,31 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             return;
         }
         try {
+            // Reject time-only values like "00:00:00" or "12:30:00"
+            $strVal = trim((string) $str);
+            if (preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $strVal)) {
+                return;
+            }
+
             // Maatwebsite Excel might parse date to integer timestamp or carbon instance
             if (is_numeric($str)) {
-                return Date::excelToDateTimeObject($str)->format('Y-m-d H:i:s');
+                $dt = Date::excelToDateTimeObject($str);
+                // Reject if the result is epoch (1899/1900) — means it was just a time value
+                if ((int) $dt->format('Y') < 2000) {
+                    return;
+                }
+                return $dt->format('Y-m-d H:i:s');
             }
 
             // Convert slashes to dashes: 15/04/2026 -> 15-04-2026 to parse DD-MM-YYYY natively in PHP
-            $str = str_replace('/', '-', $str);
+            $strVal = str_replace('/', '-', $strVal);
 
-            $dt = new DateTime($str);
+            $dt = new DateTime($strVal);
+
+            // Reject dates before year 2000 (likely parsing errors)
+            if ((int) $dt->format('Y') < 2000) {
+                return;
+            }
 
             return $dt->format('Y-m-d H:i:s');
         } catch (Exception $e) {

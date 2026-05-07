@@ -111,7 +111,7 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
             'Arrival Time *',
             'Start Time *',
             'Finish Time *',
-            'PO Number *',
+            'PO/SO Number *',
             'SJ Number',
             'Vehicle Number *',
             'Driver Name',
