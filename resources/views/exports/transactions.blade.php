@@ -1,4 +1,4 @@
-<table class="st-table st-table--sm">
+﻿<table class="st-table st-table--sm">
     <thead>
         <tr>
             <th>Type</th>
@@ -25,23 +25,23 @@
         @foreach($transactions as $transaction)
             <tr>
                 <td>{{ ucfirst($transaction->slot_type ?? 'planned') }}</td>
-                <td>{{ $transaction->truck_number ?? '-' }}</td>
-                <td>{{ $transaction->ticket_number ?? '-' }}</td>
-                <td>{{ $transaction->mat_doc ?? '-' }}</td>
-                <td>{{ $transaction->vendor_name ?? '-' }}</td>
-                <td>{{ $transaction->truck_type ?? '-' }}</td>
-                <td>{{ $transaction->vehicle_number_snap ?? '-' }}</td>
-                <td>{{ $transaction->warehouse_name ?? '-' }}</td>
-                <td>{{ $transaction->gate_number ?? '-' }}</td>
-                <td>{{ ucfirst($transaction->direction ?? '-') }}</td>
+                <td>{{ $transaction->truck_number ?? 'N/A' }}</td>
+                <td>{{ $transaction->ticket_number ?? 'N/A' }}</td>
+                <td>{{ $transaction->mat_doc ?? 'N/A' }}</td>
+                <td>{{ $transaction->vendor_name ?? 'N/A' }}</td>
+                <td>{{ $transaction->truck_type ?? 'N/A' }}</td>
+                <td>{{ $transaction->vehicle_number_snap ?? 'N/A' }}</td>
+                <td>{{ $transaction->warehouse_name ?? 'N/A' }}</td>
+                <td>{{ $transaction->gate_number ?? 'N/A' }}</td>
+                <td>{{ ucfirst($transaction->direction ?? 'N/A') }}</td>
                 <td>{{ $transaction->arrival_time ? \Carbon\Carbon::parse($transaction->arrival_time)->format('d-m-Y H:i') : '-' }}</td>
                 <td>{{ !empty($transaction->actual_start) ? \Carbon\Carbon::parse($transaction->actual_start)->format('d-m-Y H:i') : '-' }}</td>
                 <td>{{ !empty($transaction->actual_finish) ? \Carbon\Carbon::parse($transaction->actual_finish)->format('d-m-Y H:i') : '-' }}</td>
-                <td>{{ $transaction->lead_time ?? '-' }}</td>
-                <td>{{ ucfirst($transaction->target_status ?? '-') }}</td>
+                <td>{{ $transaction->lead_time ?? 'N/A' }}</td>
+                <td>{{ ucfirst($transaction->target_status ?? 'N/A') }}</td>
                 <td>{{ $transaction->is_late ? 'Late' : 'On Time' }}</td>
-                <td>{{ ucfirst(str_replace('_', ' ', $transaction->status ?? '-')) }}</td>
-                <td>{{ $transaction->created_by_username ?? $transaction->created_by_nik ?? '-' }}</td>
+                <td>{{ ucfirst(str_replace('_', ' ', $transaction->status ?? 'N/A')) }}</td>
+                <td>{{ $transaction->created_by_username ?? $transaction->created_by_nik ?? 'N/A' }}</td>
             </tr>
         @endforeach
     </tbody>

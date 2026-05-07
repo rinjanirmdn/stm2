@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Security Dashboard - e-Docking Control System')
 @section('page_title', 'Security Dashboard')
@@ -117,10 +117,10 @@
                 </div>
                 <div class="sec-slot__body">
                     <div class="sec-slot__row-top">
-                        <span class="sec-slot__ticket">{{ $slot->ticket_number ?? '-' }}</span>
+                        <span class="sec-slot__ticket">{{ $slot->ticket_number ?? 'N/A' }}</span>
                         <span class="sec-slot__badge">{{ $statusEmoji }} {{ $statusLabel }}</span>
                     </div>
-                    <div class="sec-slot__vendor">{{ $slot->vendor_name ?? '-' }}</div>
+                    <div class="sec-slot__vendor">{{ $slot->vendor_name ?? 'N/A' }}</div>
                     <div class="sec-slot__meta">
                         <span><i class="fas fa-file-invoice"></i> {{ !empty($slot->po_number) && $slot->po_number !== '-' ? $slot->po_number : 'Tanpa PO' }}</span>
                         <span><i class="fas fa-door-open"></i> {{ $gateDisplay }}</span>

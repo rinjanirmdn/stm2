@@ -87,6 +87,9 @@ class SlotLifecycleController extends Controller
                 if ($bd->isFuture()) {
                     throw ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
                 }
+                if ($bd->lt(Carbon::now()->subDays(7)->startOfDay())) {
+                    throw ValidationException::withMessages(['backdate_datetime' => 'Backdate tidak boleh lebih dari 7 hari yang lalu.']);
+                }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }
         }
@@ -356,6 +359,9 @@ class SlotLifecycleController extends Controller
                 if ($bd->isFuture()) {
                     throw ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
                 }
+                if ($bd->lt(Carbon::now()->subDays(7)->startOfDay())) {
+                    throw ValidationException::withMessages(['backdate_datetime' => 'Backdate tidak boleh lebih dari 7 hari yang lalu.']);
+                }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }
         }
@@ -544,6 +550,9 @@ class SlotLifecycleController extends Controller
                 $bd = Carbon::parse($request->input('backdate_datetime'));
                 if ($bd->isFuture()) {
                     throw ValidationException::withMessages(['backdate_datetime' => 'Backdate time must be in the past.']);
+                }
+                if ($bd->lt(Carbon::now()->subDays(7)->startOfDay())) {
+                    throw ValidationException::withMessages(['backdate_datetime' => 'Backdate tidak boleh lebih dari 7 hari yang lalu.']);
                 }
                 $backdateTime = $bd->format('Y-m-d H:i:s');
             }

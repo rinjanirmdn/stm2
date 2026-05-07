@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -25,17 +25,17 @@
                 <tr>
                     <td class="label-col">Nomor {{ strtolower($slot->direction ?? '') === 'outbound' ? 'SO' : 'PO' }}</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ $slot->po_number ?? '-' }}</td>
+                    <td class="value-col">{{ $slot->po_number ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Vendor</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ $slot->vendor_name ?? '-' }}</td>
+                    <td class="value-col">{{ $slot->vendor_name ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Vehicle Number</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ $slot->vehicle_number_snap ?? '-' }}</td>
+                    <td class="value-col">{{ $slot->vehicle_number_snap ?? 'N/A' }}</td>
                 </tr>
 
                 <tr>

@@ -9,8 +9,8 @@
 
 <div class="st-card st-mb-12">
     <div class="st-text--sm st-text--muted">Unplanned #{{ $slot->id }}</div>
-    <div class="st-font-semibold">PO/SO: {{ $slot->truck_number ?? '-' }} | Warehouse:
-        {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
+    <div class="st-font-semibold">PO/SO: {{ $slot->truck_number ?? 'N/A' }} | Warehouse:
+        {{ $slot->warehouse_name ?? 'N/A' }} | Planned: {{ $slot->planned_start ?? 'N/A' }}</div>
     <div class="st-text--sm st-text--muted st-mt-4">
         Estimated Process Duration: {{ (int) $plannedDurationMinutes }} Minutes
     </div>
@@ -76,7 +76,7 @@
                                         $text .= ' (Available)';
                                     }
                                 @endphp
-                                <option value="{{ $gid }}" {{ (int) $selectedGateId === $gid ? 'selected' : '' }}>{{ $text }}
+                                <option value="{{ $gid }}" {{ (int) $selectedGateId === $gid ? 'selected' : '' }} data-available="{{ $isConflict ? '0' : '1' }}">{{ $text }}
                                 </option>
                             @endforeach
                         </optgroup>
@@ -99,12 +99,16 @@
                                         $text .= ' (Available)';
                                     }
                                 @endphp
-                                <option value="{{ $gid }}" {{ (int) $selectedGateId === $gid ? 'selected' : '' }}>{{ $text }}
+                                <option value="{{ $gid }}" {{ (int) $selectedGateId === $gid ? 'selected' : '' }} data-available="{{ $isConflict ? '0' : '1' }}">{{ $text }}
                                 </option>
                             @endforeach
                         </optgroup>
                     @endif
                 </select>
+                <div id="gate_availability_indicator" class="st-mt-6" style="display:none;">
+                    <span id="gate_avail_dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;"></span>
+                    <span id="gate_avail_text" class="st-text--sm" style="font-weight:500;"></span>
+                </div>
 
                 @if ($recommendedGateId)
                     <div class="st-text--sm st-text--muted st-mt-6">
@@ -445,4 +449,43 @@
             });
         }
     })();
+</script>
+
+<script>
+// Gate Availability Color Indicator
+(function() {
+    var gateSelect = document.querySelector('select[name="actual_gate_id"]');
+    var indicator = document.getElementById('gate_availability_indicator');
+    var dot = document.getElementById('gate_avail_dot');
+    var text = document.getElementById('gate_avail_text');
+    if (!gateSelect || !indicator || !dot || !text) return;
+
+    function updateGateIndicator() {
+        var selected = gateSelect.options[gateSelect.selectedIndex];
+        if (!selected || !selected.value) {
+            indicator.style.display = 'none';
+            gateSelect.style.borderColor = '';
+            return;
+        }
+        var isAvailable = selected.getAttribute('data-available') === '1';
+        indicator.style.display = 'flex';
+        indicator.style.alignItems = 'center';
+        if (isAvailable) {
+            dot.style.backgroundColor = '#22c55e';
+            text.textContent = 'Available';
+            text.style.color = '#16a34a';
+            gateSelect.style.borderColor = '#22c55e';
+            gateSelect.style.boxShadow = '0 0 0 2px rgba(34,197,94,0.15)';
+        } else {
+            dot.style.backgroundColor = '#ef4444';
+            text.textContent = 'Unavailable (In Use)';
+            text.style.color = '#dc2626';
+            gateSelect.style.borderColor = '#ef4444';
+            gateSelect.style.boxShadow = '0 0 0 2px rgba(239,68,68,0.15)';
+        }
+    }
+
+    gateSelect.addEventListener('change', updateGateIndicator);
+    updateGateIndicator();
+})();
 </script>

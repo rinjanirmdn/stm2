@@ -15,6 +15,69 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings, WithStyles
 {
+    private string $version = 'v1.0';
+
+    public function __construct()
+    {
+        $this->version = $this->resolveVersion();
+    }
+
+    public function getVersion(): string
+    {
+        return $this->version;
+    }
+
+    /**
+     * Resolve template version based on dropdown data hash.
+     * If data changes → increment minor version automatically.
+     */
+    private function resolveVersion(): string
+    {
+        $truckTypes = DB::table('md_truck')->pluck('truck_type')->sort()->implode(',');
+        $whCodes = DB::table('md_warehouse')->pluck('wh_code')->sort()->implode(',');
+        $gateNumbers = DB::table('md_gates')->pluck('gate_number')->unique()->sort()->implode(',');
+
+        $currentHash = md5($truckTypes . '|' . $whCodes . '|' . $gateNumbers);
+
+        $storedHash = DB::table('app_settings')->where('key', 'import_template_hash')->value('value') ?? '';
+        $storedVersion = DB::table('app_settings')->where('key', 'import_template_version')->value('value') ?? 'v1.0';
+
+        if ($storedHash === '' || $storedHash !== $currentHash) {
+            // Data has changed — increment minor version
+            $newVersion = $this->incrementMinor($storedVersion, $storedHash === '');
+            DB::table('app_settings')->updateOrInsert(
+                ['key' => 'import_template_hash'],
+                ['value' => $currentHash, 'updated_at' => now()]
+            );
+            DB::table('app_settings')->updateOrInsert(
+                ['key' => 'import_template_version'],
+                ['value' => $newVersion, 'updated_at' => now()]
+            );
+
+            return $newVersion;
+        }
+
+        return $storedVersion;
+    }
+
+    private function incrementMinor(string $version, bool $isFirst): string
+    {
+        // If first time (no hash stored yet), keep v1.0
+        if ($isFirst) {
+            return 'v1.0';
+        }
+
+        // Parse vX.Y → increment Y
+        if (preg_match('/^v(\d+)\.(\d+)$/', $version, $m)) {
+            $major = (int) $m[1];
+            $minor = (int) $m[2] + 1;
+
+            return "v{$major}.{$minor}";
+        }
+
+        return 'v1.1';
+    }
+
     public function array(): array
     {
         return [
@@ -117,6 +180,16 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
 
         // Row heights
         $sheet->getRowDimension(1)->setRowHeight(32);
+
+        // --- Version label in cell P1 ---
+        $sheet->setCellValue('P1', 'Template ' . $this->version);
+        $sheet->getStyle('P1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => '666666'], 'size' => 9, 'italic' => true],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F0F0F0']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D0D0D0']]],
+        ]);
+        $sheet->getColumnDimension('P')->setWidth(18);
 
         // --- Dropdown Validations (from row 2 onwards) ---
         $this->applyDropdown($sheet, 'A', '"planned,unplanned"', 'Select: planned or unplanned');

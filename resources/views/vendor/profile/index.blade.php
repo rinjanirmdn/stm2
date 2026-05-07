@@ -1,4 +1,4 @@
-@extends('vendor.layouts.vendor')
+﻿@extends('vendor.layouts.vendor')
 
 @section('title', 'Profile')
 
@@ -32,7 +32,7 @@
                                     </div>
                                     <div class="vendor-form__field">
                                         <label class="vendor-form__label">NIK/Username</label>
-                                        <input type="text" value="{{ $user->username ?? '-' }}"
+                                        <input type="text" value="{{ $user->username ?? 'N/A' }}"
                                                class="vendor-form__input vendor-form__input--disabled" disabled>
                                         <div class="vendor-form__hint">NIK/Username cannot be changed</div>
                                     </div>

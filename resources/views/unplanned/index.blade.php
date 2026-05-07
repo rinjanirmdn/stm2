@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Unplanned Transactions - e-Docking Control System')
 @section('page_title', 'Unplanned')
@@ -230,7 +230,7 @@
                             <td>{{ $idx + 1 }}</td>
                             <td>{{ $slot->truck_number ?? '' }}</td>
                             <td>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</td>
-                            <td>{{ $slot->vendor_name ?? '-' }}</td>
+                            <td>{{ $slot->vendor_name ?? 'N/A' }}</td>
                             <td class="st-text-center">{{ $label !== '' ? $label : '-' }}</td>
                             <td class="st-td-center">
                                 @php $dir = strtolower($slot->direction ?? ''); @endphp

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Transactions - e-Docking Control System')
 @section('page_title', 'Reports')
@@ -425,7 +425,7 @@
                                         <td>{{ $r->po_number ?? '' }}</td>
                                         <td>{{ $r->ticket_number ?? '' }}</td>
                                         <td>{{ $r->mat_doc ?? '' }}</td>
-                                        <td>{{ $r->vendor_name ?? '-' }}{{ !empty($r->destination) ? ' (' . $r->destination . ')' : '' }}</td>
+                                        <td>{{ $r->vendor_name ?? 'N/A' }}{{ !empty($r->destination) ? ' (' . $r->destination . ')' : '' }}</td>
                                         <td class="st-td-center st-nowrap">
                                             <div class="st-flex st-flex-col st-align-center">
                                                 <div class="st-font-semibold">{{ $r->warehouse_name }}</div>
@@ -495,7 +495,7 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td class="st-td-center">{{ $r->created_by_name ?? $r->created_by_email ?? '-' }}</td>
+                                        <td class="st-td-center">{{ $r->created_by_name ?? $r->created_by_email ?? 'N/A' }}</td>
                                         <td class="st-td-center">
                                             <div class="tw-actionbar">
                                                 <a href="{{ route('slots.show', ['slotId' => $r->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">

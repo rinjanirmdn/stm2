@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Booking Detail')
 
@@ -17,9 +17,9 @@
                 {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
             </h2>
             <div class="booking-detail__subtitle">
-                <span>{{ $booking->supplier_name ?? '-' }}</span>
+                <span>{{ $booking->supplier_name ?? 'N/A' }}</span>
                 <span class="booking-detail__dot">:</span>
-                <span>{{ $booking->planned_start?->format('d-m-Y H:i') ?? '-' }}</span>
+                <span>{{ $booking->planned_start?->format('d-m-Y H:i') ?? 'N/A' }}</span>
             </div>
         </div>
     </div>
@@ -115,15 +115,15 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">PO/SO Number</label>
-                        <div class="detail-value">{{ $booking->po_number ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->po_number ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Supplier</label>
-                        <div class="detail-value">{{ $booking->supplier_name ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->supplier_name ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Requested By</label>
-                        <div class="detail-value">{{ $booking->requester?->full_name ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->requester?->full_name ?? 'N/A' }}</div>
                     </div>
                 </div>
             </div>
@@ -141,7 +141,7 @@
                 <div class="detail-grid-compact">
                     <div class="detail-item">
                         <label class="detail-label">Warehouse</label>
-                        <div class="detail-value">{{ $booking->convertedSlot?->warehouse?->wh_code ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->convertedSlot?->warehouse?->wh_code ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Gate</label>
@@ -154,11 +154,11 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Date</label>
-                        <div class="detail-value">{{ $booking->planned_start?->format('d-m-Y') ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->planned_start?->format('d-m-Y') ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Time</label>
-                        <div class="detail-value">{{ $booking->planned_start?->format('H:i') ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->planned_start?->format('H:i') ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Duration</label>
@@ -166,7 +166,7 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Requested At</label>
-                        <div class="detail-value">{{ $booking->created_at?->format('d-m-Y H:i') ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</div>
                     </div>
                 </div>
             </div>
@@ -184,11 +184,11 @@
                 <div class="detail-grid-compact">
                     <div class="detail-item">
                         <label class="detail-label">Truck Type</label>
-                        <div class="detail-value">{{ $booking->truck_type ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->truck_type ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Vehicle Number</label>
-                        <div class="detail-value">{{ $booking->vehicle_number ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->vehicle_number ?? 'N/A' }}</div>
                     </div>
                     @if($booking->approved_at)
                     <div class="detail-item">
@@ -197,7 +197,7 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Processed By</label>
-                        <div class="detail-value">{{ $booking->approver?->full_name ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->approver?->full_name ?? 'N/A' }}</div>
                     </div>
                     @endif
                 </div>

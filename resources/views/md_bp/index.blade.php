@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Master Data BP - e-Docking Control System')
 @section('page_title', 'Master Data Business Partner')
@@ -84,11 +84,11 @@
                                         <span class="st-badge-modern st-badge-modern--outbound">Customer</span>
                                     @endif
                                 </td>
-                                <td class="st-table-cell">{{ $bp->city ?? '-' }}</td>
-                                <td class="st-table-cell">{{ $bp->phone ?? '-' }}</td>
-                                <td class="st-table-cell">{{ $bp->email ?? '-' }}</td>
+                                <td class="st-table-cell">{{ $bp->city ?? 'N/A' }}</td>
+                                <td class="st-table-cell">{{ $bp->phone ?? 'N/A' }}</td>
+                                <td class="st-table-cell">{{ $bp->email ?? 'N/A' }}</td>
                                 <td class="st-table-cell">
-                                    {{ $bp->pic_name ?? '-' }}
+                                    {{ $bp->pic_name ?? 'N/A' }}
                                     @if(!empty($bp->pic_phone))
                                         <div class="st-text--xs st-text--muted">{{ $bp->pic_phone }}</div>
                                     @endif

@@ -42,7 +42,7 @@
     <div id="backdate_fields" style="display: {{ old('use_backdate') ? 'block' : 'none' }};">
         <div class="st-flex st-align-center st-gap-6 st-mb-10 st-p-8 st-rounded-6" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);">
             <i class="fas fa-exclamation-triangle" style="color:#d97706;font-size:12px;"></i>
-            <span class="st-text--xs" style="color:#92400e;">Backdate time must be in the <strong>past</strong>. Future dates will be rejected.</span>
+            <span class="st-text--xs" style="color:#92400e;">Backdate time must be in the <strong>past</strong> (max <strong>7 days</strong> ago). Future dates will be rejected.</span>
         </div>
 
         <div class="st-form-field">
@@ -95,6 +95,7 @@
                 singleDatePicker: true,
                 autoUpdateInput: true,
                 autoApply: true,
+                minDate: moment().subtract(7, 'days'),
                 maxDate: moment(),
                 locale: { format: 'DD-MM-YYYY' },
                 parentEl: 'body',
@@ -144,8 +145,17 @@
             }
             var selected = new Date(val);
             var now = new Date();
+            var sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            sevenDaysAgo.setHours(0, 0, 0, 0);
             if (selected >= now) {
                 errorDiv.querySelector('span').textContent = 'Backdate must be in the past, not future.';
+                errorDiv.style.display = 'block';
+                $dateInput[0].style.borderColor = '#dc2626';
+                $timeInput[0].style.borderColor = '#dc2626';
+                return false;
+            } else if (selected < sevenDaysAgo) {
+                errorDiv.querySelector('span').textContent = 'Backdate tidak boleh lebih dari 7 hari yang lalu.';
                 errorDiv.style.display = 'block';
                 $dateInput[0].style.borderColor = '#dc2626';
                 $timeInput[0].style.borderColor = '#dc2626';
