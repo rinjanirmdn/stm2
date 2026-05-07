@@ -37,7 +37,7 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
         $whCodes = DB::table('md_warehouse')->pluck('wh_code')->sort()->implode(',');
         $gateNumbers = DB::table('md_gates')->pluck('gate_number')->unique()->sort()->implode(',');
 
-        $currentHash = md5($truckTypes . '|' . $whCodes . '|' . $gateNumbers);
+        $currentHash = md5($truckTypes.'|'.$whCodes.'|'.$gateNumbers);
 
         $storedHash = DB::table('app_settings')->where('key', 'import_template_hash')->value('value') ?? '';
         $storedVersion = DB::table('app_settings')->where('key', 'import_template_version')->value('value') ?? 'v1.0';
@@ -182,7 +182,7 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
         $sheet->getRowDimension(1)->setRowHeight(32);
 
         // --- Version label in cell P1 ---
-        $sheet->setCellValue('P1', 'Template ' . $this->version);
+        $sheet->setCellValue('P1', 'Template '.$this->version);
         $sheet->getStyle('P1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => '666666'], 'size' => 9, 'italic' => true],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],

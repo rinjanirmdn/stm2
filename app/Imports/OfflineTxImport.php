@@ -110,31 +110,31 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
             $truckType = trim($row['truck_type'] ?? '');
             if ($truckType === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'truck_type', $truckType, 'Required. Options: ' . implode(', ', $validTruckTypes));
+                $rowErrors[] = $this->formatError($excelRow, 'truck_type', $truckType, 'Required. Options: '.implode(', ', $validTruckTypes));
             } elseif (! isset($truckTargetDurations[strtolower($truckType)])) {
-                $rowErrors[] = $this->formatError($excelRow, 'truck_type', $truckType, 'Truck type not found in master data. Options: ' . implode(', ', $validTruckTypes));
+                $rowErrors[] = $this->formatError($excelRow, 'truck_type', $truckType, 'Truck type not found in master data. Options: '.implode(', ', $validTruckTypes));
             }
 
             $arrivalRaw = $row['arrival_time'] ?? null;
             $arrivalStr = $this->parseDate($arrivalRaw);
-            if (! $arrivalStr && $arrivalRaw !== null && trim((string)$arrivalRaw) !== '') {
-                $rowErrors[] = $this->formatError($excelRow, 'arrival_time', (string)$arrivalRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
+            if (! $arrivalStr && $arrivalRaw !== null && trim((string) $arrivalRaw) !== '') {
+                $rowErrors[] = $this->formatError($excelRow, 'arrival_time', (string) $arrivalRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
             } elseif (! $arrivalStr) {
                 $rowErrors[] = $this->formatError($excelRow, 'arrival_time', '', 'Required. Format: DD-MM-YYYY HH:mm');
             }
 
             $startRaw = $row['start_time'] ?? null;
             $startStr = $this->parseDate($startRaw);
-            if (! $startStr && $startRaw !== null && trim((string)$startRaw) !== '') {
-                $rowErrors[] = $this->formatError($excelRow, 'start_time', (string)$startRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
+            if (! $startStr && $startRaw !== null && trim((string) $startRaw) !== '') {
+                $rowErrors[] = $this->formatError($excelRow, 'start_time', (string) $startRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
             } elseif (! $startStr) {
                 $rowErrors[] = $this->formatError($excelRow, 'start_time', '', 'Required. Format: DD-MM-YYYY HH:mm');
             }
 
             $finishRaw = $row['finish_time'] ?? null;
             $finishStr = $this->parseDate($finishRaw);
-            if (! $finishStr && $finishRaw !== null && trim((string)$finishRaw) !== '') {
-                $rowErrors[] = $this->formatError($excelRow, 'finish_time', (string)$finishRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
+            if (! $finishStr && $finishRaw !== null && trim((string) $finishRaw) !== '') {
+                $rowErrors[] = $this->formatError($excelRow, 'finish_time', (string) $finishRaw, 'Invalid date format. Expected: DD-MM-YYYY HH:mm');
             } elseif (! $finishStr) {
                 $rowErrors[] = $this->formatError($excelRow, 'finish_time', '', 'Required. Format: DD-MM-YYYY HH:mm');
             }
@@ -157,17 +157,17 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             $whCode = trim($row['warehouse_code'] ?? '');
             $whId = null;
             if ($whCode === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'warehouse_code', $whCode, 'Required. Options: ' . implode(', ', $validWhCodes));
+                $rowErrors[] = $this->formatError($excelRow, 'warehouse_code', $whCode, 'Required. Options: '.implode(', ', $validWhCodes));
             } elseif (isset($warehouses[strtoupper($whCode)])) {
                 $whId = $warehouses[strtoupper($whCode)];
             } else {
-                $rowErrors[] = $this->formatError($excelRow, 'warehouse_code', $whCode, 'Warehouse code not found. Options: ' . implode(', ', $validWhCodes));
+                $rowErrors[] = $this->formatError($excelRow, 'warehouse_code', $whCode, 'Warehouse code not found. Options: '.implode(', ', $validWhCodes));
             }
 
             $gateNumber = trim($row['gate_number'] ?? '');
             $gateId = null;
             if ($gateNumber === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'gate_number', $gateNumber, 'Required. Options: ' . implode(', ', $validGateNumbers));
+                $rowErrors[] = $this->formatError($excelRow, 'gate_number', $gateNumber, 'Required. Options: '.implode(', ', $validGateNumbers));
             } elseif ($whId) {
                 foreach ($allGates as $g) {
                     if (strtoupper($g->gate_number) == strtoupper($gateNumber) && $g->warehouse_id == $whId) {
@@ -176,7 +176,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     }
                 }
                 if (! $gateId) {
-                    $rowErrors[] = $this->formatError($excelRow, 'gate_number', $gateNumber, 'Gate not found for warehouse ' . strtoupper($whCode) . '. Options: ' . implode(', ', $validGateNumbers));
+                    $rowErrors[] = $this->formatError($excelRow, 'gate_number', $gateNumber, 'Gate not found for warehouse '.strtoupper($whCode).'. Options: '.implode(', ', $validGateNumbers));
                 }
             }
 
@@ -186,6 +186,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 foreach ($rowErrors as $err) {
                     $this->errors[] = $err;
                 }
+
                 continue;
             }
 
@@ -244,7 +245,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     'column' => 'N/A',
                     'cell' => 'N/A',
                     'value' => 'N/A',
-                    'message' => 'Database error: ' . $e->getMessage(),
+                    'message' => 'Database error: '.$e->getMessage(),
                 ];
                 Log::error('Offline Import: Failed to process row '.$index.' - '.$e->getMessage());
             }
@@ -263,7 +264,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         return [
             'row' => $row,
             'column' => $colLabel,
-            'cell' => $colLetter . $row,
+            'cell' => $colLetter.$row,
             'value' => $value !== '' ? $value : '(kosong)',
             'message' => $message,
         ];
@@ -288,6 +289,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 if ((int) $dt->format('Y') < 2000) {
                     return;
                 }
+
                 return $dt->format('Y-m-d H:i:s');
             }
 
