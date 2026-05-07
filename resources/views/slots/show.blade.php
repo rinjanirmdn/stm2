@@ -104,7 +104,23 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Status</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ strtoupper($status) }}</div>
+                            <div class="st-detail-value">
+                                @php
+                                    $stClass = $status;
+                                    $stLabel = ucwords(str_replace('_', ' ', $status));
+                                    if ($status === 'arrived') { $stClass = 'waiting'; $stLabel = 'Waiting'; }
+                                    $badgeMap = [
+                                        'scheduled' => 'bg-scheduled',
+                                        'waiting' => 'bg-waiting',
+                                        'in_progress' => 'bg-in_progress',
+                                        'completed' => 'bg-completed',
+                                        'cancelled' => 'bg-danger',
+                                        'pending_approval' => 'bg-pending_approval',
+                                    ];
+                                    $badgeClass = $badgeMap[$stClass] ?? 'bg-secondary';
+                                @endphp
+                                <span class="badge {{ $badgeClass }}">{{ $stLabel }}</span>
+                            </div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
