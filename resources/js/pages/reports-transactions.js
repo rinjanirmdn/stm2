@@ -730,12 +730,13 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(function(err) {
                 if (alertImportOffline) {
                     var msg = err.message || 'Failed to upload data';
-                    var html = '<div class="st-flex st-align-center"><i class="fa-solid fa-exclamation-circle st-mr-2"></i> <span>' + msg + '</span></div>';
+                    var html = '<div style="display:block;width:100%;">';
+                    html += '<div style="display:flex;align-items:center;margin-bottom:8px;"><i class="fa-solid fa-exclamation-circle st-mr-2"></i> <span>' + msg + '</span></div>';
                     
                     if (err.errors && err.errors.length > 0) {
-                        html += '<div class="st-mt-4">';
-                        html += '<div class="st-mb-2"><button type="button" class="st-link st-text--sm" onclick="document.getElementById(\'import-error-details\').classList.toggle(\'st-hidden\')">View Error Details (' + err.errors.length + ')</button></div>';
-                        html += '<div id="import-error-details" class="st-mt-2" style="max-height: 200px; overflow-y: auto; overflow-x: auto; font-size: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px;">';
+                        html += '<div style="margin-top:8px;">';
+                        html += '<button type="button" class="st-link st-text--sm" onclick="document.getElementById(\'import-error-details\').classList.toggle(\'st-hidden\')" style="margin-bottom:6px;display:block;">View Error Details (' + err.errors.length + ')</button>';
+                        html += '<div id="import-error-details" class="st-hidden" style="max-height:180px;overflow-y:auto;overflow-x:auto;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:6px;margin-top:4px;">';
                         
                         // Check if errors are structured objects
                         if (err.errors[0] && typeof err.errors[0] === 'object' && err.errors[0].row) {
@@ -745,7 +746,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             html += '<th style="padding:4px 6px;text-align:left;">Cell</th>';
                             html += '<th style="padding:4px 6px;text-align:left;">Column</th>';
                             html += '<th style="padding:4px 6px;text-align:left;">Value</th>';
-                            html += '<th style="padding:4px 6px;text-align:left;white-space:normal;min-width:120px;">Error</th>';
+                            html += '<th style="padding:4px 6px;text-align:left;white-space:normal;min-width:100px;">Error</th>';
                             html += '</tr></thead><tbody>';
                             err.errors.forEach(function(e) {
                                 html += '<tr style="border-bottom:1px solid #f3f4f6;">';
@@ -758,15 +759,16 @@ document.addEventListener('DOMContentLoaded', function () {
                             });
                             html += '</tbody></table>';
                         } else {
-                            // Fallback for plain string errors
-                            html += '<ul class="st-pl-4 st-mb-0 st-text-danger" style="padding:8px;">';
+                            html += '<ul style="padding:8px 8px 8px 24px;margin:0;color:#dc2626;">';
                             err.errors.forEach(function(e) { html += '<li>' + String(e).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</li>'; });
                             html += '</ul>';
                         }
                         html += '</div></div>';
                     }
+                    html += '</div>';
                     
                     alertImportOffline.className = 'st-alert st-alert--danger st-mt-4';
+                    alertImportOffline.style.display = 'block';
                     alertImportOffline.innerHTML = html;
                     alertImportOffline.classList.remove('st-hidden');
                 }
