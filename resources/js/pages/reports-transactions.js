@@ -731,7 +731,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (alertImportOffline) {
                     var msg = err.message || 'Failed to upload data';
                     var html = '<div style="display:block;width:100%;">';
-                    html += '<div style="display:flex;align-items:center;margin-bottom:8px;"><i class="fa-solid fa-exclamation-circle st-mr-2"></i> <span>' + msg + '</span></div>';
+                    html += '<div style="display:flex;align-items:center;margin-bottom:8px;color:#dc2626;"><i class="fa-solid fa-exclamation-circle" style="margin-right:8px;font-size:1rem;flex-shrink:0;"></i> <span style="font-weight:500;">' + msg + '</span></div>';
                     
                     if (err.errors && err.errors.length > 0) {
                         html += '<div style="margin-top:8px;">';
