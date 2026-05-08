@@ -248,9 +248,9 @@
                         @endif
 
                         <div class="st-detail-item st-detail-item--compact">
-                            <div class="st-detail-label">Vendor</div>
+                            <div class="st-detail-label">{{ strtolower($slot->direction ?? '') === 'outbound' ? 'Customer' : 'Vendor' }}</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $slot->vendor_name ?? 'N/A' }}</div>
+                            <div class="st-detail-value">{{ trim($slot->vendor_name ?? '') !== '' ? $slot->vendor_name : 'N/A' }}</div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">

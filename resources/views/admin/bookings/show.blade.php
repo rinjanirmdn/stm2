@@ -118,7 +118,7 @@
                         <div class="detail-value">{{ $booking->po_number ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
-                        <label class="detail-label">Vendor</label>
+                        <label class="detail-label">{{ $booking->direction === 'outbound' ? 'Customer' : 'Vendor' }}</label>
                         <div class="detail-value">{{ trim($booking->supplier_name ?? '') !== '' ? $booking->supplier_name : 'N/A' }}</div>
                     </div>
                     <div class="detail-item">

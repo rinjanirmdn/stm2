@@ -130,8 +130,9 @@
                                     @if($isInternalVendor ?? false)
                                         <div class="vd-recent-filter-group">
                                             <select
-                                                onchange="var params=new URLSearchParams(window.location.search);if(this.value){params.set('vendor_filter',this.value)}else{params.delete('vendor_filter')};window.location.search=params.toString()"
-                                                style="font-size:0.8em;padding:3px 6px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#334155;max-width:160px">
+                                                id="vd-vendor-filter-select"
+                                                class="vendor-searchable-select"
+                                                style="width: 160px;">
                                                 <option value="">All Vendors</option>
                                                 @foreach(($vendorNames ?? []) as $vn)
                                                     <option value="{{ $vn }}" {{ ($vendorFilter ?? '') === $vn ? 'selected' : '' }}>
@@ -229,6 +230,62 @@
     @endif
 @endsection
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container .select2-selection--single {
+            height: 28px !important;
+            font-size: 0.8em;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 26px !important;
+            padding-left: 6px !important;
+            color: #334155 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 26px !important;
+        }
+        .select2-dropdown {
+            font-size: 0.8em;
+            border-color: #e2e8f0;
+            border-radius: 6px;
+        }
+    </style>
+@endpush
+
 @push('scripts')
     @vite(['resources/js/pages/vendor.js'])
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            if ($('#vd-vendor-filter-select').length > 0) {
+                $('#vd-vendor-filter-select').select2({
+                    width: '160px',
+                    placeholder: 'All Vendors',
+                    allowClear: true
+                });
+                
+                $('#vd-vendor-filter-select').on('select2:select', function (e) {
+                    var value = e.params.data.id;
+                    var params = new URLSearchParams(window.location.search);
+                    if (value) {
+                        params.set('vendor_filter', value);
+                    } else {
+                        params.delete('vendor_filter');
+                    }
+                    window.location.search = params.toString();
+                });
+
+                $('#vd-vendor-filter-select').on('select2:unselect', function (e) {
+                    var params = new URLSearchParams(window.location.search);
+                    params.delete('vendor_filter');
+                    window.location.search = params.toString();
+                });
+            }
+        });
+    </script>
 @endpush
