@@ -22,7 +22,7 @@ class OfflineImportController extends Controller
         // Generate the file directly into public/exports/ so Apache serves it as a static file
         $export = new OfflineTemplateExport();
         $version = $export->getVersion();
-        $fileName = 'offline_import_template_' . $version . '.xlsx';
+        $fileName = 'offline_import_template_'.$version.'.xlsx';
         $publicPath = $exportsDir.'/'.$fileName;
         $writer = Excel::raw($export, \Maatwebsite\Excel\Excel::XLSX);
         file_put_contents($publicPath, $writer);
