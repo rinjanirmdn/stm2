@@ -1,4 +1,4 @@
-@extends('vendor.layouts.vendor')
+﻿@extends('vendor.layouts.vendor')
 
 @section('title', 'My Bookings - Vendor Portal')
 
@@ -127,7 +127,7 @@
             @if($booking->status === 'approved' && $booking->convertedSlot)
             <span class="mb-row__ticket-number" title="Operational Ticket Number">{{ $booking->convertedSlot->ticket_number }}</span>
             @endif
-            <span class="mb-row__po">{{ $booking->po_number ?? '-' }}</span>
+            <span class="mb-row__po">{{ $booking->po_number ?? 'N/A' }}</span>
             @if(($isInternalVendor ?? false) && $booking->supplier_name)
             <span class="mb-row__vendor" style="color:#64748b;font-size:0.82em;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ $booking->supplier_name }}">
                 <i class="fas fa-building" style="margin-right:3px;opacity:0.6"></i>{{ $booking->supplier_name }}
@@ -135,7 +135,7 @@
             @endif
             <span class="mb-row__time">
                 <i class="fas fa-calendar mb-row__icon vendor-icon"></i>
-                {{ $booking->planned_start?->format('d-m-Y H:i') ?? '-' }}
+                {{ $booking->planned_start?->format('d-m-Y H:i') ?? 'N/A' }}
             </span>
             <span class="mb-row__status mb-row__status--{{ $statusClass }}">{{ $statusLabel }}</span>
             @if($isRescheduled)

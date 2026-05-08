@@ -1,4 +1,4 @@
-@extends(request()->boolean('popup') ? 'layouts.popup' : 'layouts.app')
+﻿@extends(request()->boolean('popup') ? 'layouts.popup' : 'layouts.app')
 
 @section('title', 'Complete Unplanned - e-Docking Control System')
 @section('page_title', 'Complete Unplanned Process')
@@ -6,7 +6,7 @@
 @section('content')
     <div class="st-card st-mb-12">
         <div class="st-text--sm st-text--muted">Unplanned #{{ $slot->id }}</div>
-        <div class="st-font-semibold">PO: {{ $slot->truck_number ?? '-' }} | Warehouse: {{ $slot->warehouse_name ?? '-' }} | Planned: {{ $slot->planned_start ?? '-' }}</div>
+        <div class="st-font-semibold">PO: {{ $slot->truck_number ?? 'N/A' }} | Warehouse: {{ $slot->warehouse_name ?? 'N/A' }} | Planned: {{ $slot->planned_start ?? 'N/A' }}</div>
     </div>
 
     <div>

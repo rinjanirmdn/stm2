@@ -69,12 +69,7 @@ class ResetPasswordController extends Controller
             'password' => [
                 'required',
                 'string',
-                Password::min(8)->letters()->numbers(),
-                function ($attribute, $value, $fail) {
-                    if (! preg_match('/^[A-Z]/', $value)) {
-                        $fail('Password harus diawali dengan huruf kapital.');
-                    }
-                },
+                Password::min(8)->letters()->mixedCase()->numbers(),
                 'confirmed',
             ],
         ]);

@@ -613,7 +613,7 @@ class BookingApprovalController extends Controller
     public function reschedule(Request $request, $id)
     {
         $request->validate([
-            'planned_date' => 'required|date|after_or_equal:today',
+            'planned_date' => 'required|date|after_or_equal:'.Carbon::today()->addDays(2)->format('Y-m-d'),
             'planned_time' => 'required|date_format:H:i',
             'planned_duration' => 'required|integer|min:30|max:480',
             'planned_gate_id' => 'required|integer|exists:md_gates,id',

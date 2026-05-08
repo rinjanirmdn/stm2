@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Booking Requests')
 @section('page_title', 'Booking Requests')
@@ -260,13 +260,13 @@
                                                     <strong>{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</strong>
                                                 </a>
                                             </td>
-                                            <td class="st-text-center">{{ $booking->po_number ?? '-' }}</td>
-                                            <td class="st-text-center">{{ $booking->supplier_name ?? '-' }}</td>
+                                            <td class="st-text-center">{{ $booking->po_number ?? 'N/A' }}</td>
+                                            <td class="st-text-center">{{ $booking->supplier_name ?? 'N/A' }}</td>
                                             <td class="st-text-center">
-                                                {{ $booking->planned_start?->format('d-m-Y') ?? '-' }}
+                                                {{ $booking->planned_start?->format('d-m-Y') ?? 'N/A' }}
                                                 <br><small class="st-text-muted">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>
                                             </td>
-                                                <td class="st-text-center">{{ $booking->convertedSlot?->ticket_number ?? '-' }}</td>
+                                                <td class="st-text-center">{{ $booking->convertedSlot?->ticket_number ?? 'N/A' }}</td>
                                             <td class="st-text-center">
                                                 @php
                                                     $gateDisplay = '-';
@@ -302,7 +302,7 @@
                                                 @endphp
                                                 <span class="st-badge st-badge--{{ $badgeColor }}">{{ $badgeLabel }}</span>
                                             </td>
-                                            <td class="st-td-center">{{ $booking->created_at?->format('d-m-Y H:i') ?? '-' }}</td>
+                                            <td class="st-td-center">{{ $booking->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
                                             <td class="st-td-center">
                                                 <div class="st-action-dropdown">
                                                     <button type="button" class="st-btn st-btn--ghost st-action-trigger st-action-trigger--compact">

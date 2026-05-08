@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', (($slot->slot_type ?? '') === 'unplanned' ? 'View Unplanned' : 'View Planned') . ' - e-Docking Control System')
 @section('page_title', ($slot->slot_type ?? '') === 'unplanned' ? 'Unplanned Detail' : 'Planned Detail')
@@ -230,7 +230,7 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">PO/SO Number</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value st-detail-value--primary st-detail-value--primary-sm">{{ $slot->po_number ?? ($slot->po->po_number ?? '-') }}</div>
+                            <div class="st-detail-value st-detail-value--primary st-detail-value--primary-sm">{{ $slot->po_number ?? ($slot->po->po_number ?? 'N/A') }}</div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
@@ -248,13 +248,13 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Vendor</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $slot->vendor_name ?? '-' }}</div>
+                            <div class="st-detail-value">{{ $slot->vendor_name ?? 'N/A' }}</div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Warehouse</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $slot->warehouse_name ?? '-' }}</div>
+                            <div class="st-detail-value">{{ $slot->warehouse_name ?? 'N/A' }}</div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
@@ -474,8 +474,8 @@
                             <tr class="st-table-row">
                                 <td class="st-table-cell">{{ $fmt($log->created_at ?? null) }}</td>
                                 <td class="st-table-cell">{{ $typeLabel }}</td>
-                                <td class="st-table-cell" style="line-height:1.5;">{{ $log->description ?? '-' }}</td>
-                                <td class="st-table-cell">{{ $log->username ?? '-' }}</td>
+                                <td class="st-table-cell" style="line-height:1.5;">{{ $log->description ?? 'N/A' }}</td>
+                                <td class="st-table-cell">{{ $log->username ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

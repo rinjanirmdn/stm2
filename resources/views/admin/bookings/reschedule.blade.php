@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Reschedule Booking')
 @section('page_title', 'Reschedule Booking')
@@ -56,15 +56,15 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">PO/SO Number</label>
-                        <div class="detail-value">{{ $booking->po_number ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->po_number ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Supplier</label>
-                        <div class="detail-value">{{ $booking->supplier_name ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->supplier_name ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Requested By</label>
-                        <div class="detail-value">{{ $booking->requester?->full_name ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->requester?->full_name ?? 'N/A' }}</div>
                     </div>
                 </div>
             </div>
@@ -82,7 +82,7 @@
                 <div class="detail-grid-compact">
                     <div class="detail-item">
                         <label class="detail-label">Warehouse</label>
-                        <div class="detail-value">{{ $booking->warehouse_id ? ($booking->convertedSlot?->warehouse?->wh_code ?? '-') : '-' }}</div>
+                        <div class="detail-value">{{ $booking->warehouse_id ? ($booking->convertedSlot?->warehouse?->wh_code ?? 'N/A') : '-' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Gate</label>
@@ -95,11 +95,11 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Date</label>
-                        <div class="detail-value">{{ $booking->planned_start?->format('d-m-Y') ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->planned_start?->format('d-m-Y') ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Time</label>
-                        <div class="detail-value">{{ $booking->planned_start?->format('H:i') ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->planned_start?->format('H:i') ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Duration</label>
@@ -121,11 +121,11 @@
                 <div class="detail-grid-compact">
                     <div class="detail-item">
                         <label class="detail-label">Truck Type</label>
-                        <div class="detail-value">{{ $booking->truck_type ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->truck_type ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Vehicle Number</label>
-                        <div class="detail-value">{{ $booking->vehicle_number ?? '-' }}</div>
+                        <div class="detail-value">{{ $booking->vehicle_number ?? 'N/A' }}</div>
                     </div>
                 </div>
             </div>
@@ -163,7 +163,7 @@
 
                     <div class="st-form-group">
                         <label class="st-label">Date <span class="st-required">*</span></label>
-                        <input type="date" name="planned_date" class="st-input" required min="{{ now()->format('Y-m-d') }}"
+                        <input type="date" name="planned_date" class="st-input" required min="{{ now()->addDays(2)->format('Y-m-d') }}"
                                value="{{ old('planned_date', $booking->planned_start?->format('Y-m-d')) }}"
                                id="planned_date" placeholder="Select Date">
                         @error('planned_date')
