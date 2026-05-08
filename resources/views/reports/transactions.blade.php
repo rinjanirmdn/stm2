@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Transactions - e-Docking Control System')
 @section('page_title', 'Reports')
@@ -405,7 +405,7 @@
                                         }
 
                                         $fmt = function ($v) {
-                                            if (empty($v)) return '-';
+                                            if (empty($v)) return 'N/A';
                                             try {
                                                 return \Carbon\Carbon::parse((string) $v)->format('d-m-Y H:i');
                                             } catch (\Throwable $e) {
@@ -422,9 +422,9 @@
                                                 <span class="badge bg-planned">Planned</span>
                                             @endif
                                         </td>
-                                        <td>{{ $r->po_number ?? '' }}</td>
-                                        <td>{{ $r->ticket_number ?? '' }}</td>
-                                        <td>{{ $r->mat_doc ?? '' }}</td>
+                                        <td>{{ $r->po_number ?? 'N/A' }}</td>
+                                        <td>{{ $r->ticket_number ?? 'N/A' }}</td>
+                                        <td>{{ $r->mat_doc ?? 'N/A' }}</td>
                                         <td>{{ $r->vendor_name ?? 'N/A' }}{{ !empty($r->destination) ? ' (' . $r->destination . ')' : '' }}</td>
                                         <td class="st-td-center st-nowrap">
                                             <div class="st-flex st-flex-col st-align-center">
@@ -446,7 +446,7 @@
                                                 {{ strtoupper((string) ($r->direction ?? '')) }}
                                             @endif
                                         </td>
-                                        <td>{{ !empty($r->arrival_time) ? $fmt($r->arrival_time) : '-' }}</td>
+                                        <td>{{ !empty($r->arrival_time) ? $fmt($r->arrival_time) : 'N/A' }}</td>
                                         <td class="st-td-center">
                                             @if ($leadTimeMinutes !== null)
                                                 @php
@@ -472,18 +472,18 @@
                                                     @endif
                                                 </div>
                                             @else
-                                                -
+                                                N/A
                                             @endif
                                         </td>
                                         <td class="st-td-center">
                                             @if ($targetDurationMinutes === null || $leadTimeMinutes === null)
-                                                -
+                                                N/A
                                             @elseif ($targetStatus === 'achieve')
                                                 <span class="st-table__status-badge st-status-on-time">Achieve</span>
                                             @elseif ($targetStatus === 'not_achieve')
                                                 <span class="st-table__status-badge st-status-late">Not Achieve</span>
                                             @else
-                                                -
+                                                N/A
                                             @endif
                                         </td>
                                         <td class="st-td-center">
@@ -492,7 +492,7 @@
                                             @elseif ($lateDisplay === 'on_time')
                                                 <span class="st-table__status-badge st-status-on-time">On Time</span>
                                             @else
-                                                -
+                                                N/A
                                             @endif
                                         </td>
                                         <td class="st-td-center">{{ $r->created_by_name ?? $r->created_by_email ?? 'N/A' }}</td>

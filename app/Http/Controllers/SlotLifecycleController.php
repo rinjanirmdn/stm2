@@ -131,6 +131,21 @@ class SlotLifecycleController extends Controller
             return redirect()->route('slots.index')->with('error', 'Data not found');
         }
 
+        $poNumber = trim((string) ($slot->po_number ?? ''));
+        if (trim((string) ($slot->vendor_name ?? '')) === '' && $poNumber !== '') {
+            try {
+                $poDetail = $this->poSearchService->getPoDetail($poNumber);
+                if (is_array($poDetail)) {
+                    $vn = trim((string) ($poDetail['vendor_name'] ?? ''));
+                    if ($vn !== '') {
+                        DB::table('slots')->where('id', $slotId)->update(['vendor_name' => $vn]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore SAP errors
+            }
+        }
+
         $pdfContent = app(SlotService::class)->generateTicketPdfContent($slotId);
         if (! $pdfContent) {
             return redirect()->route('slots.index')->with('error', 'Could not generate ticket');

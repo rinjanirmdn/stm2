@@ -1,4 +1,4 @@
-﻿<table class="st-table st-table--sm">
+<table class="st-table st-table--sm">
     <thead>
         <tr>
             <th>Type</th>
@@ -34,9 +34,9 @@
                 <td>{{ $transaction->warehouse_name ?? 'N/A' }}</td>
                 <td>{{ $transaction->gate_number ?? 'N/A' }}</td>
                 <td>{{ ucfirst($transaction->direction ?? 'N/A') }}</td>
-                <td>{{ $transaction->arrival_time ? \Carbon\Carbon::parse($transaction->arrival_time)->format('d-m-Y H:i') : '-' }}</td>
-                <td>{{ !empty($transaction->actual_start) ? \Carbon\Carbon::parse($transaction->actual_start)->format('d-m-Y H:i') : '-' }}</td>
-                <td>{{ !empty($transaction->actual_finish) ? \Carbon\Carbon::parse($transaction->actual_finish)->format('d-m-Y H:i') : '-' }}</td>
+                <td>{{ $transaction->arrival_time ? \Carbon\Carbon::parse($transaction->arrival_time)->format('d-m-Y H:i') : 'N/A' }}</td>
+                <td>{{ !empty($transaction->actual_start) ? \Carbon\Carbon::parse($transaction->actual_start)->format('d-m-Y H:i') : 'N/A' }}</td>
+                <td>{{ !empty($transaction->actual_finish) ? \Carbon\Carbon::parse($transaction->actual_finish)->format('d-m-Y H:i') : 'N/A' }}</td>
                 <td>{{ $transaction->lead_time ?? 'N/A' }}</td>
                 <td>{{ ucfirst($transaction->target_status ?? 'N/A') }}</td>
                 <td>{{ $transaction->is_late ? 'Late' : 'On Time' }}</td>

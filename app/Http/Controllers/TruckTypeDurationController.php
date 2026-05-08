@@ -45,6 +45,8 @@ class TruckTypeDurationController extends Controller
             'id' => $nextId,
             'truck_type' => $truckType,
             'target_duration_minutes' => $targetMinutes,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('trucks.index')->with('success', 'Truck Type duration created successfully');
@@ -77,6 +79,7 @@ class TruckTypeDurationController extends Controller
         DB::table('md_truck')->where('id', $truckTypeDurationId)->update([
             'truck_type' => $truckType,
             'target_duration_minutes' => $targetMinutes,
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('trucks.index')->with('success', 'Truck Type duration updated successfully');

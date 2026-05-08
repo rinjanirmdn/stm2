@@ -51,7 +51,7 @@
                         <tbody id="truck-table-body">
                         @php
                             $fmt = function ($v) {
-                                if (empty($v)) return '-';
+                                if (empty($v)) return 'N/A';
                                 try {
                                     return \Carbon\Carbon::parse((string) $v)->format('d-m-Y H:i');
                                 } catch (\Throwable $e) {

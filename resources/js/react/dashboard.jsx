@@ -11,6 +11,7 @@ import {
   ArrowDownLeft, ArrowUpRight, Timer, Gauge, Layers,
   Building2
 } from 'lucide-react';
+import Select from 'react-select';
 
 function getData() { return window.__DASHBOARD_DATA__ || {}; }
 function isDisplayOnlyMode() {
@@ -353,6 +354,35 @@ function SearchInput({ value, onChange, placeholder = 'Search...' }) {
     </div>
   );
 }
+/* react-select compact styles for dashboard filters */
+const rsStyles = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: 30, borderRadius: 8,
+    borderColor: state.isFocused ? '#38bdf8' : '#e5e7eb',
+    boxShadow: state.isFocused ? '0 0 0 1px #e0f2fe' : 'none',
+    fontSize: 12, cursor: 'pointer',
+    '&:hover': { borderColor: '#d1d5db' },
+  }),
+  valueContainer: (base) => ({ ...base, padding: '0 6px' }),
+  input: (base) => ({ ...base, margin: 0, padding: 0, fontSize: 12 }),
+  singleValue: (base) => ({ ...base, fontSize: 12, color: '#374151' }),
+  placeholder: (base) => ({ ...base, fontSize: 12, color: '#9ca3af' }),
+  indicatorSeparator: () => ({ display: 'none' }),
+  dropdownIndicator: (base) => ({ ...base, padding: '0 4px', color: '#9ca3af' }),
+  clearIndicator: (base) => ({ ...base, padding: '0 2px', color: '#9ca3af' }),
+  menu: (base) => ({ ...base, borderRadius: 10, overflow: 'hidden', zIndex: 50, fontSize: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }),
+  menuList: (base) => ({ ...base, maxHeight: 220, padding: 4 }),
+  option: (base, state) => ({
+    ...base, fontSize: 12, borderRadius: 6, padding: '6px 10px', cursor: 'pointer',
+    backgroundColor: state.isSelected ? '#e0f2fe' : state.isFocused ? '#f0f9ff' : 'transparent',
+    color: state.isSelected ? '#0369a1' : '#374151',
+    fontWeight: state.isSelected ? 500 : 400,
+    '&:active': { backgroundColor: '#e0f2fe' },
+  }),
+  noOptionsMessage: (base) => ({ ...base, fontSize: 12, color: '#9ca3af' }),
+  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+};
 function FilterPill({ label, active, onClick, count }) {
   return (
     <button onClick={onClick} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all border ${active ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}>
@@ -1023,15 +1053,27 @@ function KPISlide({ data, onFilter, isDisplayOnly = false, animateCharts = true 
             <option value="all">All Direction</option><option value="inbound">Inbound</option><option value="outbound">Outbound</option>
           </SelectInput>
           
-          {kpiDir === 'outbound' && (
-            <SelectInput value={data.selected_transporter || ''} onChange={(val) => onFilter && onFilter({ transporter: val })}>
-              <option value="">All Transporters</option>
-              <option value="internal">Internal Car</option>
-              {toArr(data.transporters).map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </SelectInput>
-          )}
+          {kpiDir === 'outbound' && (() => {
+            const tOpts = [
+              { value: '', label: 'All Transporters' },
+              { value: 'internal', label: 'Internal Car' },
+              ...toArr(data.transporters).map(t => ({ value: String(t.id), label: t.name }))
+            ];
+            const tVal = tOpts.find(o => o.value === (data.selected_transporter || '')) || tOpts[0];
+            return (
+              <div style={{ minWidth: 170 }}>
+                <Select
+                  styles={rsStyles}
+                  options={tOpts}
+                  value={tVal}
+                  onChange={(opt) => onFilter && onFilter({ transporter: opt ? opt.value : '' })}
+                  isSearchable
+                  placeholder="All Transporters"
+                  noOptionsMessage={() => 'No match'}
+                />
+              </div>
+            );
+          })()}
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
@@ -1712,18 +1754,29 @@ function Dashboard() {
               const selectedVendor = data.selected_vendor || '';
               if (vendors.length === 0) return null;
               return (
-                <div className="flex items-center gap-1 shrink-0 border-l border-gray-200 pl-2">
+                <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-200 pl-2">
                   <Building2 size={13} className="text-gray-400 shrink-0" />
-                  <select
-                    value={selectedVendor}
-                    onChange={(e) => onFilter({ vendor: e.target.value })}
-                    className="text-[12px] border border-gray-200 rounded-lg bg-white text-gray-700 outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-100 py-1 pl-1.5 pr-6 max-w-[200px] truncate cursor-pointer appearance-none"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 4px center', backgroundRepeat: 'no-repeat', backgroundSize: '16px' }}
-                    title={selectedVendor ? `Filtered: ${selectedVendor}` : 'All Vendors/Customers'}
-                  >
-                    <option value="">All Vendors</option>
-                    {vendors.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
+                  {(() => {
+                    const vOpts = [
+                      { value: '', label: 'All Vendors' },
+                      ...vendors.map(v => ({ value: v, label: v }))
+                    ];
+                    const vVal = vOpts.find(o => o.value === selectedVendor) || vOpts[0];
+                    return (
+                      <div style={{ minWidth: 180, maxWidth: 220 }}>
+                        <Select
+                          styles={rsStyles}
+                          options={vOpts}
+                          value={vVal}
+                          onChange={(opt) => onFilter({ vendor: opt ? opt.value : '' })}
+                          isSearchable
+                          placeholder="All Vendors"
+                          noOptionsMessage={() => 'No match'}
+                          menuPortalTarget={document.body}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}

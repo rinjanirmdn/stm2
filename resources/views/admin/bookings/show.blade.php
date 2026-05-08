@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Booking Detail')
 
@@ -118,8 +118,8 @@
                         <div class="detail-value">{{ $booking->po_number ?? 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
-                        <label class="detail-label">Supplier</label>
-                        <div class="detail-value">{{ $booking->supplier_name ?? 'N/A' }}</div>
+                        <label class="detail-label">Vendor</label>
+                        <div class="detail-value">{{ trim($booking->supplier_name ?? '') !== '' ? $booking->supplier_name : 'N/A' }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Requested By</label>
@@ -149,7 +149,7 @@
                             {{ app(\App\Services\SlotService::class)->getGateDisplayName(
                                 $booking->convertedSlot?->plannedGate?->warehouse->wh_code ?? '',
                                 $booking->convertedSlot?->plannedGate?->gate_number ?? ''
-                            ) ?: 'To be assigned' }}
+                            ) ?: 'N/A' }}
                         </div>
                     </div>
                     <div class="detail-item">

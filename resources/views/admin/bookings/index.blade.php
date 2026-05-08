@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Booking Requests')
 @section('page_title', 'Booking Requests')
@@ -121,14 +121,14 @@
                                     </th>
                                     <th class="st-text-center">
                                         <div class="st-colhead st-justify-center">
-                                            <span class="st-colhead__label">Supplier</span>
+                                            <span class="st-colhead__label">Vendor</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="supplier_name" title="Sort">â‡…</button>
                                                 <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="supplier_name" title="Filter">â·</button>
                                             </span>
                                             <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-filter-panel="supplier_name">
-                                                <div class="st-font-semibold st-mb-6">Supplier Filter</div>
-                                                <input type="text" name="supplier_name" form="booking-filter-form" class="st-input" placeholder="Search Supplier..." value="{{ request('supplier_name') }}">
+                                                <div class="st-font-semibold st-mb-6">Vendor Filter</div>
+                                                <input type="text" name="supplier_name" form="booking-filter-form" class="st-input" placeholder="Search Vendor..." value="{{ request('supplier_name') }}">
                                                 <div class="st-panel__actions">
                                                     <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="supplier_name">Clear</button>
                                                 </div>
@@ -261,7 +261,7 @@
                                                 </a>
                                             </td>
                                             <td class="st-text-center">{{ $booking->po_number ?? 'N/A' }}</td>
-                                            <td class="st-text-center">{{ $booking->supplier_name ?? 'N/A' }}</td>
+                                            <td class="st-text-center">{{ trim($booking->supplier_name ?? '') !== '' ? $booking->supplier_name : 'N/A' }}</td>
                                             <td class="st-text-center">
                                                 {{ $booking->planned_start?->format('d-m-Y') ?? 'N/A' }}
                                                 <br><small class="st-text-muted">{{ $booking->planned_start?->format('H:i') ?? '' }}</small>
@@ -269,14 +269,14 @@
                                                 <td class="st-text-center">{{ $booking->convertedSlot?->ticket_number ?? 'N/A' }}</td>
                                             <td class="st-text-center">
                                                 @php
-                                                    $gateDisplay = '-';
+                                                    $gateDisplay = 'N/A';
                                                     if ($booking->convertedSlot?->plannedGate) {
                                                         $whCode = (string) ($booking->convertedSlot?->warehouse?->wh_code ?? '');
                                                         $gateNo = (string) ($booking->convertedSlot?->plannedGate?->gate_number ?? '');
                                                         $gateDisplay = app(\App\Services\SlotService::class)->getGateDisplayName($whCode, $gateNo);
                                                     }
                                                 @endphp
-                                                {{ $gateDisplay !== '' ? $gateDisplay : '-' }}
+                                                {{ $gateDisplay !== '' ? $gateDisplay : 'N/A' }}
                                             </td>
                                             <td class="st-td-center">
                                                 <span class="st-badge st-badge--{{ $booking->direction }}">
