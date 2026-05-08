@@ -1,20 +1,20 @@
 {
-  "_client-DzYSRBXd.js": {
-    "file": "assets/client-DzYSRBXd.js",
+  "_client-MYcmZywi.js": {
+    "file": "assets/client-MYcmZywi.js",
     "name": "client",
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
-  "_react-vendor-C6WxKkic.js": {
-    "file": "assets/react-vendor-C6WxKkic.js",
+  "_react-vendor-N--QU9DW.js": {
+    "file": "assets/react-vendor-N--QU9DW.js",
     "name": "react-vendor"
   },
-  "_recharts-4-iG22hf.js": {
-    "file": "assets/recharts-4-iG22hf.js",
+  "_recharts-l8O6fVoK.js": {
+    "file": "assets/recharts-l8O6fVoK.js",
     "name": "recharts",
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "_search-highlight-CjsPCiQd.js": {
@@ -31,7 +31,7 @@
     ]
   },
   "resources/css/dashboard-react.css": {
-    "file": "assets/dashboard-react-D_HHxFcm.css",
+    "file": "assets/dashboard-react-D6x2pdOt.css",
     "src": "resources/css/dashboard-react.css",
     "isEntry": true,
     "name": "dashboard-react",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-DwfBgYm1.css",
+    "file": "assets/style-BcAinPJm.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -58,7 +58,7 @@
     ]
   },
   "resources/css/vendor.css": {
-    "file": "assets/vendor-CuN2yqR_.css",
+    "file": "assets/vendor-DfQD1EJ3.css",
     "src": "resources/css/vendor.css",
     "isEntry": true,
     "name": "vendor",
@@ -67,12 +67,12 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CZPMs-rA.js",
+    "file": "assets/app-BBG_585q.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_react-vendor-C6WxKkic.js"
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "resources/js/pages/admin-bookings-index.js": {
@@ -163,13 +163,13 @@
     "isEntry": true
   },
   "resources/js/pages/slots-create.js": {
-    "file": "assets/slots-create-C4W9FwDO.js",
+    "file": "assets/slots-create-DhmQFqzo.js",
     "name": "slots-create",
     "src": "resources/js/pages/slots-create.js",
     "isEntry": true
   },
   "resources/js/pages/slots-edit.js": {
-    "file": "assets/slots-edit-Ba5c80vI.js",
+    "file": "assets/slots-edit-1EY8UrnE.js",
     "name": "slots-edit",
     "src": "resources/js/pages/slots-edit.js",
     "isEntry": true
@@ -205,13 +205,13 @@
     "isEntry": true
   },
   "resources/js/pages/unplanned-create.js": {
-    "file": "assets/unplanned-create-D-_QSnbl.js",
+    "file": "assets/unplanned-create-BZUeRVI_.js",
     "name": "unplanned-create",
     "src": "resources/js/pages/unplanned-create.js",
     "isEntry": true
   },
   "resources/js/pages/unplanned-edit.js": {
-    "file": "assets/unplanned-edit-3PVnpfoz.js",
+    "file": "assets/unplanned-edit-Cmo4MTDY.js",
     "name": "unplanned-edit",
     "src": "resources/js/pages/unplanned-edit.js",
     "isEntry": true
@@ -256,31 +256,31 @@
     ]
   },
   "resources/js/pages/vendor.js": {
-    "file": "assets/vendor-D22UPVh4.js",
+    "file": "assets/vendor-Bm4hOYxC.js",
     "name": "vendor",
     "src": "resources/js/pages/vendor.js",
     "isEntry": true
   },
   "resources/js/react/dashboard.jsx": {
-    "file": "assets/dashboard-DkbYlcnQ.js",
+    "file": "assets/dashboard-DqchXi1S.js",
     "name": "dashboard",
     "src": "resources/js/react/dashboard.jsx",
     "isEntry": true,
     "imports": [
-      "_client-DzYSRBXd.js",
-      "_recharts-4-iG22hf.js",
-      "_react-vendor-C6WxKkic.js"
+      "_client-MYcmZywi.js",
+      "_recharts-l8O6fVoK.js",
+      "_react-vendor-N--QU9DW.js"
     ]
   },
   "resources/js/react/vendor-dashboard.jsx": {
-    "file": "assets/vendor-dashboard-BuFrP7sS.js",
+    "file": "assets/vendor-dashboard-20Gz-uOi.js",
     "name": "vendor-dashboard",
     "src": "resources/js/react/vendor-dashboard.jsx",
     "isEntry": true,
     "imports": [
-      "_client-DzYSRBXd.js",
-      "_recharts-4-iG22hf.js",
-      "_react-vendor-C6WxKkic.js"
+      "_client-MYcmZywi.js",
+      "_recharts-l8O6fVoK.js",
+      "_react-vendor-N--QU9DW.js"
     ]
   }
 }

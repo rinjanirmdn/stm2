@@ -446,6 +446,40 @@
         })();
     </script>
     <script type="application/json" id="indonesia_holidays_global">{!! json_encode($holidays ?? []) !!}</script>
+    <script>
+    /* MDTimePicker v2.0 inner-ring fix (vendor layout) */
+    (function(){
+        function fixInnerDigits(container) {
+            var digits = container.querySelectorAll('.mdtp__digit.inner--digit');
+            if (!digits.length) return;
+            digits.forEach(function(d) {
+                var span = d.querySelector('span');
+                if (!span) return;
+                var num = parseInt(span.textContent, 10);
+                if (isNaN(num)) return;
+                var deg = ((num % 12) * 30 + 90) % 360;
+                Array.from(d.classList).forEach(function(c) {
+                    if (/^rotate-\d+$/.test(c)) d.classList.remove(c);
+                });
+                d.style.transform = 'rotate(' + deg + 'deg)';
+                span.style.transform = 'rotate(-' + deg + 'deg)';
+            });
+        }
+        var obs = new MutationObserver(function(mutations) {
+            mutations.forEach(function(m) {
+                m.addedNodes.forEach(function(n) {
+                    if (n.nodeType === 1 && n.classList && n.classList.contains('mdtimepicker')) {
+                        setTimeout(function(){ fixInnerDigits(n); }, 80);
+                    }
+                });
+                if (m.type === 'attributes' && m.target.classList && m.target.classList.contains('mdtimepicker') && !m.target.classList.contains('hidden')) {
+                    setTimeout(function(){ fixInnerDigits(m.target); }, 80);
+                }
+            });
+        });
+        obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    })();
+    </script>
     @stack('scripts')
 
     <script>

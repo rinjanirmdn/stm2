@@ -224,9 +224,19 @@ class SlotController extends Controller
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
         $poNumber = $truckNumber;
-        $poDetail = $this->poSearchService->getPoDetail($poNumber);
-        if (! $poDetail) {
-            return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+        $bypassSap = (bool) $request->input('bypass_sap', false);
+        $poDetail = null;
+        if (! $bypassSap) {
+            $poDetail = $this->poSearchService->getPoDetail($poNumber);
+            if (! $poDetail) {
+                return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+            }
+        } else {
+            // Use manually entered vendor name when bypassing SAP
+            $manualVendorName = trim((string) $request->input('vendor_name_manual', ''));
+            if ($manualVendorName !== '') {
+                $poDetail = ['vendor_code' => null, 'vendor_name' => $manualVendorName, 'vendor_type' => null];
+            }
         }
 
         if ($truckNumber !== '' && strlen($truckNumber) > 12) {
@@ -278,7 +288,12 @@ class SlotController extends Controller
         }
 
         $slotId = 0;
-        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $poDetail, $transporterType, $vendorTransporterId) {
+        // For outbound, prefer customer_name from SAP for the vendor_name DB field
+        $storedVendorName = $poDetail['vendor_name'] ?? null;
+        if ($direction === 'outbound' && ! empty($poDetail['customer_name'])) {
+            $storedVendorName = $poDetail['customer_name'];
+        }
+        DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $poDetail, $transporterType, $vendorTransporterId, $storedVendorName) {
             $now = date('Y-m-d H:i:s');
             $ticket = $this->slotService->generateTicketNumber($warehouseId, $plannedGateId);
             $slotId = (int) DB::table('slots')->insertGetId([
@@ -286,7 +301,7 @@ class SlotController extends Controller
                 'direction' => $direction,
                 'warehouse_id' => $warehouseId,
                 'vendor_code' => $poDetail['vendor_code'] ?? null,
-                'vendor_name' => $poDetail['vendor_name'] ?? null,
+                'vendor_name' => $storedVendorName,
                 'vendor_type' => $poDetail['vendor_type'] ?? null,
                 'transporter_type' => $transporterType,
                 'vendor_transporter_id' => $vendorTransporterId,
@@ -349,7 +364,7 @@ class SlotController extends Controller
         }
 
         $user = Auth::user();
-        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head']);
+        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head', 'Admin']);
 
         // Super editors can edit any status except cancelled; other users only scheduled planned
         if ($isSuperEditor) {
@@ -402,7 +417,7 @@ class SlotController extends Controller
         }
 
         $user = Auth::user();
-        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head']);
+        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head', 'Admin']);
 
         if ($isSuperEditor) {
             if ((string) ($slot->status ?? '') === 'cancelled') {
@@ -620,7 +635,15 @@ class SlotController extends Controller
             try {
                 $poDetail = $this->poSearchService->getPoDetail($poNumber);
                 if (is_array($poDetail)) {
-                    $vn = trim((string) ($poDetail['vendor_name'] ?? ''));
+                    $isOutbound = strtolower((string) ($slot->direction ?? '')) === 'outbound';
+                    // For outbound, prefer customer_name; for inbound, prefer vendor_name
+                    $vn = '';
+                    if ($isOutbound) {
+                        $vn = trim((string) ($poDetail['customer_name'] ?? ''));
+                    }
+                    if ($vn === '') {
+                        $vn = trim((string) ($poDetail['vendor_name'] ?? ''));
+                    }
                     if ($vn !== '') {
                         $slot->vendor_name = $vn;
                     }

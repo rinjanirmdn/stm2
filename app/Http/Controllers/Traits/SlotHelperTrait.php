@@ -57,6 +57,7 @@ trait SlotHelperTrait
             ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
             ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
+            ->leftJoin('md_vendor_transporters as vt', 's.vendor_transporter_id', '=', 'vt.id')
             ->where('s.id', $slotId)
             ->select([
                 's.*',
@@ -70,6 +71,7 @@ trait SlotHelperTrait
                 'wpg.wh_code as planned_gate_warehouse_code',
                 'wag.wh_code as actual_gate_warehouse_code',
                 'td.target_duration_minutes',
+                'vt.name as vendor_transporter_name',
             ])
             ->first();
 

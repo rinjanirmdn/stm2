@@ -28,7 +28,7 @@
                     <td class="value-col">{{ $slot->po_number ?? 'N/A' }}</td>
                 </tr>
                 <tr>
-                    <td class="label-col">Vendor</td>
+                    <td class="label-col">{{ strtolower($slot->direction ?? '') === 'outbound' ? 'Customer' : 'Vendor' }}</td>
                     <td class="colon-col">:</td>
                     <td class="value-col">{{ $slot->vendor_name ?? 'N/A' }}</td>
                 </tr>

@@ -255,11 +255,91 @@ document.addEventListener('DOMContentLoaded', function() {
         if (poInput) {
             var poDebounceTimer = null;
             var poLastAutoFilledValue = '';
+            var poBypassSap = document.getElementById('po_bypass_sap');
+
+            function isBypassSap() {
+                return poBypassSap && poBypassSap.checked;
+            }
+
+            var vendorNameField = document.getElementById('vendor_name');
+            var vendorNameManual = document.getElementById('vendor_name_manual');
+
+            function toggleVendorBypass() {
+                if (!vendorNameField) return;
+                if (isBypassSap()) {
+                    vendorNameField.removeAttribute('readonly');
+                    vendorNameField.placeholder = 'Type vendor name manually';
+                    clearPoFeedback();
+                } else {
+                    vendorNameField.setAttribute('readonly', true);
+                    vendorNameField.placeholder = 'Vendor will auto-fill from PO';
+                    var currentPo = poInput ? (poInput.value || '').trim() : '';
+                    if (currentPo.length >= 10) {
+                        fetchPoDetail(currentPo, function (data) {
+                            if (data.success && data.data) {
+                                showPoValid(data.data.doc_type || null);
+                            } else {
+                                showPoInvalid();
+                            }
+                        });
+                    }
+                }
+            }
+
+            if (poBypassSap) {
+                poBypassSap.addEventListener('change', toggleVendorBypass);
+                toggleVendorBypass();
+            }
+
+            if (vendorNameField && vendorNameManual) {
+                vendorNameField.addEventListener('input', function () {
+                    if (isBypassSap()) {
+                        vendorNameManual.value = vendorNameField.value;
+                    }
+                });
+            }
+
+            // Vendor Transporter toggle (show on outbound)
+            var directionSelect = document.getElementById('direction');
+            var vtContainer = document.getElementById('vendor_transporter_container');
+            var vtCheckbox = document.getElementById('use_vendor_transporter');
+            var vtSelectContainer = document.getElementById('vendor_transporter_select_container');
+
+            function toggleVendorTransporter() {
+                if (!vtContainer || !directionSelect) return;
+                if (directionSelect.value === 'outbound') {
+                    vtContainer.classList.remove('st-hidden');
+                } else {
+                    vtContainer.classList.add('st-hidden');
+                    if (vtCheckbox) vtCheckbox.checked = false;
+                    if (vtSelectContainer) vtSelectContainer.classList.add('st-hidden');
+                }
+            }
+
+            if (directionSelect) {
+                directionSelect.addEventListener('change', toggleVendorTransporter);
+                toggleVendorTransporter();
+            }
+
+            if (vtCheckbox && vtSelectContainer) {
+                vtCheckbox.addEventListener('change', function () {
+                    if (vtCheckbox.checked) {
+                        vtSelectContainer.classList.remove('st-hidden');
+                    } else {
+                        vtSelectContainer.classList.add('st-hidden');
+                    }
+                });
+            }
 
             poInput.addEventListener('input', function() {
                 var q = (poInput.value || '').trim();
                 clearPoFeedback();
                 poLastAutoFilledValue = '';
+
+                if (isBypassSap()) {
+                    closePoSuggestions();
+                    return;
+                }
 
                 if (q.length < 2) {
                     if (poDebounceTimer) clearTimeout(poDebounceTimer);
@@ -293,6 +373,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             function autoFetchDetail() {
+                if (isBypassSap()) {
+                    clearPoFeedback();
+                    return;
+                }
                 var val = (poInput.value || '').trim();
                 if (val === '') { clearPoFeedback(); return; }
                 if (val === poLastAutoFilledValue) return;

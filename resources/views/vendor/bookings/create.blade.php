@@ -47,6 +47,8 @@
                                     <input type="hidden" name="po_number" id="po-number-hidden" value="{{ old('po_number') }}">
                                     <span class="cb-input-status" id="po-status" aria-hidden="true"></span>
                                 </div>
+                                <div class="cb-hint" style="font-style: italic; color: #9ca3af;">Only displays released PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} numbers from SAP.</div>
+
                                 <div class="cb-po-message" id="po-message"></div>
                                 @error('po_number')
                                     <div class="cb-hint cb-hint--error">{{ $message }}</div>
@@ -200,6 +202,10 @@
                                 @error('notes')
                                     <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                 @enderror
+                                <div class="cb-hint cb-hint--warning" id="submit-warning" hidden style="margin-top: 8px;">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Please select truck type and ensure time is available before submitting
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -213,10 +219,6 @@
                             <button type="submit" class="cb-btn cb-btn--primary" id="submit-btn" disabled>
                                 Submit
                             </button>
-                            <div class="cb-hint cb-hint--warning" id="submit-warning" hidden>
-                                <i class="fas fa-exclamation-triangle"></i>
-                                Please select truck type and ensure time is available before submitting
-                            </div>
                         </div>
                     </div>
                 </div>

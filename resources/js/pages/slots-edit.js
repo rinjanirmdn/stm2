@@ -288,11 +288,62 @@ document.addEventListener('DOMContentLoaded', function() {
         if (poInput) {
             var poDebounceTimer = null;
             var poLastAutoFilledValue = '';
+            var poBypassSap = document.getElementById('po_bypass_sap');
+
+            function isBypassSap() {
+                return poBypassSap && poBypassSap.checked;
+            }
+
+            var vendorSearchEdit = document.getElementById('vendor_search');
+            var vendorNameManual = document.getElementById('vendor_name_manual');
+
+            function toggleVendorBypass() {
+                if (!vendorSearchEdit) return;
+                if (isBypassSap()) {
+                    vendorSearchEdit.removeAttribute('readonly');
+                    vendorSearchEdit.removeAttribute('disabled');
+                    vendorSearchEdit.placeholder = 'Type vendor name manually';
+                    clearPoFeedback();
+                } else {
+                    vendorSearchEdit.setAttribute('disabled', true);
+                    vendorSearchEdit.placeholder = 'Vendor will auto-fill from PO';
+                    var currentPo = poInput ? (poInput.value || '').trim() : '';
+                    if (currentPo.length >= 10) {
+                        fetchPoDetail(currentPo, function(data) {
+                            if (data.success && data.data) {
+                                if (vendorSearchEdit && data.data.vendor_name) vendorSearchEdit.value = data.data.vendor_name;
+                                poLastAutoFilledValue = currentPo;
+                                showPoValid(data.data.doc_type || null);
+                            } else {
+                                showPoInvalid();
+                            }
+                        });
+                    }
+                }
+            }
+
+            if (poBypassSap) {
+                poBypassSap.addEventListener('change', toggleVendorBypass);
+                toggleVendorBypass();
+            }
+
+            if (vendorSearchEdit && vendorNameManual) {
+                vendorSearchEdit.addEventListener('input', function () {
+                    if (isBypassSap()) {
+                        vendorNameManual.value = vendorSearchEdit.value;
+                    }
+                });
+            }
 
             poInput.addEventListener('input', function() {
                 var q = (poInput.value || '').trim();
                 clearPoFeedback();
                 poLastAutoFilledValue = '';
+
+                if (isBypassSap()) {
+                    closePoSuggestions();
+                    return;
+                }
 
                 if (q.length < 2) {
                     if (poDebounceTimer) clearTimeout(poDebounceTimer);
@@ -326,6 +377,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             function autoFetchDetail() {
+                if (isBypassSap()) {
+                    clearPoFeedback();
+                    return;
+                }
                 var val = (poInput.value || '').trim();
                 if (val === '') {
                     clearPoFeedback();

@@ -43,16 +43,16 @@
                 <div class="st-form-field st-flex-0 st-flex st-align-center" style="gap: 8px;">
                     <button type="button" id="transactions-excel-link" class="st-btn st-btn--primary" data-export-url="{{ route('reports.transactions', array_merge(request()->query(), ['page_size' => 'all', 'export' => 'excel'])) }}">Export</button>
 
-                    @hasanyrole('Super Account|Section Head|super account|section head')
+                    @can('reports.offline_import')
                         <button type="button" class="st-btn st-btn--primary" id="btn-import-offline">Import</button>
-                    @endhasanyrole
+                    @endcan
                 </div>
             </div>
         </div>
     </div>
 
     {{-- Import Offline Modal --}}
-    @hasanyrole('Super Account|Section Head|super account|section head')
+    @can('reports.offline_import')
     <div id="modal-import-offline" class="st-modal">
         <div class="st-modal__content st-maxw-500">
             <div class="st-modal__header">
@@ -78,7 +78,7 @@
             </div>
         </div>
     </div>
-    @endhasanyrole
+    @endcan
 
     <section class="st-row st-flex-1 st-minh-0">
         <div class="st-col-12 st-flex-1 st-flex st-flex-col st-minh-0">
