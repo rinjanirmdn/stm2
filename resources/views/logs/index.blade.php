@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Activity Logs - e-Docking Control System')
 @section('page_title', 'Activity Logs')
@@ -93,7 +93,7 @@
                         <tbody>
                         @php
                             $formatDescription = function ($text) {
-                                if (empty($text)) return '-';
+                                if (empty($text)) return 'N/A';
                                 $conjunctions = [
                                     'and', 'or', 'but', 'nor', 'for', 'yet', 'so', 'a', 'an', 'the',
                                     'at', 'by', 'from', 'in', 'of', 'on', 'to', 'with',

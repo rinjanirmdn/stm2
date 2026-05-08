@@ -645,6 +645,9 @@ class SlotController extends Controller
                         $vn = trim((string) ($poDetail['vendor_name'] ?? ''));
                     }
                     if ($vn !== '') {
+                        if (trim((string) ($slot->vendor_name ?? '')) === '') {
+                            DB::table('slots')->where('id', $slotId)->update(['vendor_name' => $vn]);
+                        }
                         $slot->vendor_name = $vn;
                     }
                 }
