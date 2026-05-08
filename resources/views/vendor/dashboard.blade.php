@@ -145,7 +145,7 @@
                             </div>
                             <div class="vd-recent-body">
                                 @if($recentBookings->count() > 0)
-                                    @foreach($recentBookings->take(5) as $booking)
+                                    @foreach($recentBookings as $booking)
                                         @php
                                             // Show real booking status when booking has been converted to a slot
                                             $slot = $booking->convertedSlot;

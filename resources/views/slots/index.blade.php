@@ -582,9 +582,9 @@
                                         </button>
                                         <div class="st-action-menu">
                                             @if ($slotTypeVal === 'planned')
-                                                @if (auth()->user() && auth()->user()->hasAnyRole(['Super Account', 'Section Head']))
+                                                @can('slots.edit')
                                                     <a href="{{ route('slots.edit', ['slotId' => $row->id]) }}" class="st-action-item" style="color: orange; font-weight: bold;">Edit</a>
-                                                @endif
+                                                @endcan
 
                                                 @if (!$hasArrival && $status === 'scheduled')
                                                     @can('slots.arrival')

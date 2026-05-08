@@ -22,8 +22,8 @@ Route::prefix('slots')->name('slots.')->group(function () {
         Route::post('/trial-create', [SlotTrialController::class, 'store'])->name('trial.store');
     });
 
-    Route::get('/{slotId}/edit', [SlotController::class, 'edit'])->whereNumber('slotId')->name('edit')->middleware(['permission:slots.edit', 'role:super account|section head']);
-    Route::post('/{slotId}/edit', [SlotController::class, 'update'])->whereNumber('slotId')->name('update')->middleware(['permission:slots.update', 'role:super account|section head']);
+    Route::get('/{slotId}/edit', [SlotController::class, 'edit'])->whereNumber('slotId')->name('edit')->middleware('permission:slots.edit');
+    Route::post('/{slotId}/edit', [SlotController::class, 'update'])->whereNumber('slotId')->name('update')->middleware('permission:slots.update');
     Route::post('/{slotId}/delete', [SlotController::class, 'destroy'])->whereNumber('slotId')->name('delete')->middleware('permission:slots.delete');
 
     Route::prefix('ajax')->name('ajax.')->group(function () {

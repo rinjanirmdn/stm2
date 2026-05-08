@@ -66,6 +66,12 @@
                         <span class="st-input-status" id="po_status" aria-hidden="true"></span>
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
+                    <div class="st-po-hint">Only displays released PO/SO numbers from SAP.</div>
+                    <div class="st-po-bypass-row">
+                        <input type="checkbox" id="po_bypass_sap" name="bypass_sap" value="1" {{ old('bypass_sap') ? 'checked' : '' }}>
+                        <label for="po_bypass_sap">Without SAP API Integration</label>
+                    </div>
+
                     <div id="po_feedback" class="st-po-feedback st-mt-4" style="display:none;"></div>
                     @error('po_number')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
@@ -104,12 +110,30 @@
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
                     <label class="st-label">Vendor Name</label>
-                    <input type="text" id="vendor_name" class="st-input" placeholder="Vendor will auto-fill from PO" readonly value="{{ $slot->vendor_name ?? '' }}">
+                    <input type="text" id="vendor_name" class="st-input" placeholder="Vendor will auto-fill from PO" readonly value="{{ old('vendor_name_manual', $slot->vendor_name ?? '') }}">
+                    <input type="hidden" name="vendor_name_manual" id="vendor_name_manual" value="{{ old('vendor_name_manual', '') }}">
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Destination <span class="st-text--optional">(Optional)</span></label>
                     <input type="text" name="destination" class="st-input" value="{{ old('destination', $slot->destination ?? '') }}" placeholder="e.g., Surabaya">
                     @error('destination')
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field st-hidden" id="vendor_transporter_container">
+                    <label class="st-label" for="vendor_transporter_id">Vendor Transporter</label>
+                    <div class="st-flex st-align-center st-gap-8">
+                        <input type="checkbox" name="use_vendor_transporter" id="use_vendor_transporter" value="1" {{ old('use_vendor_transporter', ($slot->transporter_type ?? '') === 'vendor' ? '1' : '') ? 'checked' : '' }} style="flex-shrink:0;">
+                        <div id="vendor_transporter_select_container" class="st-flex-1 {{ old('use_vendor_transporter', ($slot->transporter_type ?? '') === 'vendor' ? '1' : '') ? '' : 'st-hidden' }}">
+                            <select name="vendor_transporter_id" id="vendor_transporter_id" class="st-select{{ $errors->has('vendor_transporter_id') ? ' st-input--invalid' : '' }}">
+                                <option value="">-- Select Vendor Transporter --</option>
+                                @foreach ($vendorTransporters ?? [] as $vt)
+                                    <option value="{{ $vt->id }}" {{ (string)old('vendor_transporter_id', $slot->vendor_transporter_id ?? '') === (string)$vt->id ? 'selected' : '' }}>{{ $vt->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    @error('vendor_transporter_id')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>

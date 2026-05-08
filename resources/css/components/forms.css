@@ -219,7 +219,35 @@
     border-radius: 4px;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 6px;
+    text-align: left;
+}
+
+.st-po-hint {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+.st-po-bypass-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.st-po-bypass-row input[type="checkbox"] {
+    margin: 0;
+    accent-color: #6b7280;
+}
+
+.st-po-bypass-row label {
+    font-size: 11px;
+    color: #6b7280;
+    cursor: pointer;
+    user-select: none;
 }
 
 .st-po-feedback--valid {
