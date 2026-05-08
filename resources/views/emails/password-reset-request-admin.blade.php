@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -50,23 +50,23 @@
                             </tr>
                             <tr>
                                 <td style="padding:4px 0;width:140px;color:#6b7280;">Name</td>
-                                <td style="padding:4px 0;">{{ $user->full_name ?? '-' }}</td>
+                                <td style="padding:4px 0;">{{ $user->full_name ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td style="padding:4px 0;color:#6b7280;">Username</td>
-                                <td style="padding:4px 0;">{{ $user->username ?? '-' }}</td>
+                                <td style="padding:4px 0;">{{ $user->username ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td style="padding:4px 0;color:#6b7280;">Email</td>
-                                <td style="padding:4px 0;">{{ $user->email ?? '-' }}</td>
+                                <td style="padding:4px 0;">{{ $user->email ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td style="padding:4px 0;color:#6b7280;">NIK</td>
-                                <td style="padding:4px 0;">{{ $user->nik ?? '-' }}</td>
+                                <td style="padding:4px 0;">{{ $user->nik ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td style="padding:4px 0;color:#6b7280;">Role</td>
-                                <td style="padding:4px 0;">{{ $user->getRoleNames()->first() ?? '-' }}</td>
+                                <td style="padding:4px 0;">{{ $user->getRoleNames()->first() ?? 'N/A' }}</td>
                             </tr>
                         </table>
                     </td>

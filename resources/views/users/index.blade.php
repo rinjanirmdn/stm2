@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Users - e-Docking Control System')
 @section('page_title', 'Users')
@@ -258,9 +258,9 @@
                                     @endphp
                                     <tr class="st-table-row st-row-clickable" data-href="{{ route('users.edit', ['userId' => $u->id]) }}">
                                         <td>{{ $loop->index + 1 }}</td>
-                                        <td class="st-font-semibold">{{ $u->nik ?? '-' }}</td>
-                                        <td>{{ $u->full_name ?? '-' }}</td>
-                                        <td class="st-td-center">{{ $u->email ?? '-' }}</td>
+                                        <td class="st-font-semibold">{{ $u->nik ?? 'N/A' }}</td>
+                                        <td>{{ $u->full_name ?? 'N/A' }}</td>
+                                        <td class="st-td-center">{{ $u->email ?? 'N/A' }}</td>
                                         <td class="st-td-center">
                                             <span class="st-font-semibold">{{ $roleText }}</span>
                                         </td>
@@ -315,7 +315,7 @@
                                                         <button type="button" class="tw-action tw-action--danger btn-delete-user"
                                                             data-tooltip="Delete" aria-label="Delete"
                                                             data-delete-url="{{ route('users.delete', ['userId' => $u->id]) }}"
-                                                            data-user-name="{{ $u->full_name ?? $u->nik ?? '-' }}">
+                                                            data-user-name="{{ $u->full_name ?? $u->nik ?? 'N/A' }}">
                                                             <i class="fa-solid fa-trash"></i>
                                                         </button>
                                                     @endcan

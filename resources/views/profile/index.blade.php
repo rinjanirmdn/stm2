@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Profile - e-Docking Control System')
 @section('page_title', 'Profile')
@@ -41,7 +41,7 @@
             <div class="st-profile-section-body">
                 <div class="st-profile-field">
                     <label class="st-profile-label">NIK/Username</label>
-                    <input type="text" class="st-profile-input st-profile-input--disabled" value="{{ $user->username ?? '-' }}" disabled>
+                    <input type="text" class="st-profile-input st-profile-input--disabled" value="{{ $user->username ?? 'N/A' }}" disabled>
                     <span class="st-profile-hint">NIK/Username cannot be changed</span>
                 </div>
                 <div class="st-profile-field">

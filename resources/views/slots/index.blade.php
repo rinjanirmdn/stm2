@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Planned - e-Docking Control System')
 @section('page_title', 'Planned')
@@ -499,8 +499,8 @@
                             <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown')) { window.location.href = '{{ route('slots.show', ['slotId' => $row->id]) }}'; }">
                                 <td class="st-table-cell">{{ $rowNumber }}</td>
                                 <td class="st-table-cell">{{ $row->truck_number }}</td>
-                                <td class="st-table-cell">{{ $row->mat_doc ?? '-' }}</td>
-                                <td class="st-table-cell">{{ $row->vendor_name ?? '-' }}{{ !empty($row->destination) ? ' (' . $row->destination . ')' : '' }}</td>
+                                <td class="st-table-cell">{{ $row->mat_doc ?? 'N/A' }}</td>
+                                <td class="st-table-cell">{{ $row->vendor_name ?? 'N/A' }}{{ !empty($row->destination) ? ' (' . $row->destination . ')' : '' }}</td>
                                 <td class="st-table-cell">{{ $whGateLabel }}</td>
                                 <td class="st-table-cell st-td-center">
                                     @php $dir = strtolower($row->direction ?? ''); @endphp

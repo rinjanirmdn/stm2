@@ -36,12 +36,7 @@ class ProfileController extends Controller
             'new_password' => [
                 'nullable',
                 'string',
-                Password::min(8)->letters()->numbers(),
-                function ($attribute, $value, $fail) {
-                    if ($value && ! preg_match('/^[A-Z]/', $value)) {
-                        $fail('Password harus diawali dengan huruf kapital.');
-                    }
-                },
+                Password::min(8)->letters()->mixedCase()->numbers(),
                 'confirmed',
             ],
         ]);

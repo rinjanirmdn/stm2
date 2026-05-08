@@ -23,14 +23,14 @@
                 <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-truck"></i></div>
                 <div>
                     <div class="st-text--xs st-text--muted">PO / SO</div>
-                    <div class="st-font-semibold">{{ $slot->truck_number ?? '-' }}</div>
+                    <div class="st-font-semibold">{{ $slot->truck_number ?? 'N/A' }}</div>
                 </div>
             </div>
             <div class="st-flex st-align-center st-gap-8">
                 <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-warehouse"></i></div>
                 <div>
                     <div class="st-text--xs st-text--muted">Warehouse</div>
-                    <div class="st-font-semibold">{{ $slot->warehouse_name ?? '-' }}</div>
+                    <div class="st-font-semibold">{{ $slot->warehouse_name ?? 'N/A' }}</div>
                 </div>
             </div>
             <div class="st-flex st-align-center st-gap-8">
@@ -113,7 +113,8 @@
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
                     <label class="st-label">Actual Gate <span class="st-text--danger-dark">*</span></label>
-                    <select name="actual_gate_id" class="st-select" required>
+                    {{-- Hidden select for form submission --}}
+                    <select name="actual_gate_id" id="gate_select_hidden" required style="display:none;">
                         <option value="">Choose Gate...</option>
                         @php
                             $slotWhId = (int) ($slot->warehouse_id ?? 0);
@@ -127,8 +128,25 @@
                                 }
                             }
                         @endphp
-                        @if (!empty($sameWh))
-                            <optgroup label="Same Warehouse">
+                        @foreach ($gates as $gate)
+                            @php $gid = (int)($gate->id ?? 0); @endphp
+                            <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $gid }}</option>
+                        @endforeach
+                    </select>
+
+                    {{-- Custom gate dropdown with color indicators --}}
+                    <div class="gate-dropdown" id="gate_custom_dropdown" style="position:relative;">
+                        <div class="gate-dropdown__trigger st-input" id="gate_dropdown_trigger" tabindex="0"
+                             style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;">
+                            <span id="gate_dropdown_label" style="display:flex;align-items:center;gap:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                <span style="color:#94a3b8;">Choose Gate...</span>
+                            </span>
+                            <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;color:#94a3b8;flex-shrink:0;"></i>
+                        </div>
+                        <div class="gate-dropdown__menu" id="gate_dropdown_menu"
+                             style="display:none;position:absolute;top:100%;left:0;right:0;z-index:999;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-height:240px;overflow-y:auto;margin-top:4px;">
+                            @if (!empty($sameWh))
+                                <div style="padding:6px 12px;font-size:0.7rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;background:#f8fafc;">Same Warehouse</div>
                                 @foreach ($sameWh as $gate)
                                     @php
                                         $gid = (int) ($gate->id ?? 0);
@@ -140,17 +158,22 @@
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
                                             $short = $row ? ('Planned #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Planned #' . $firstId) : 'Occupied');
-                                            $text .= ' (In Use: ' . $short . ')';
+                                            $statusLabel = 'In Use';
                                         } else {
-                                            $text .= ' (Available)';
+                                            $statusLabel = 'Available';
                                         }
                                     @endphp
-                                    <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $text }}</option>
+                                    <div class="gate-dropdown__item" data-value="{{ $gid }}" data-available="{{ $isConflict ? '0' : '1' }}" data-label="{{ $text }}" data-status="{{ $statusLabel }}"
+                                         style="padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:0.85rem;"
+                                         onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
+                                        <span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;background:{{ $isConflict ? '#ef4444' : '#22c55e' }};"></span>
+                                        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $text }}</span>
+                                        <span style="font-size:0.7rem;color:{{ $isConflict ? '#ef4444' : '#16a34a' }};font-weight:500;flex-shrink:0;">{{ $statusLabel }}</span>
+                                    </div>
                                 @endforeach
-                            </optgroup>
-                        @endif
-                        @if (!empty($otherWh))
-                            <optgroup label="Other Warehouses">
+                            @endif
+                            @if (!empty($otherWh))
+                                <div style="padding:6px 12px;font-size:0.7rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;background:#f8fafc;{{ !empty($sameWh) ? 'border-top:1px solid #e2e8f0;' : '' }}">Other Warehouses</div>
                                 @foreach ($otherWh as $gate)
                                     @php
                                         $gid = (int) ($gate->id ?? 0);
@@ -162,16 +185,22 @@
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
                                             $short = $row ? ('Planned #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Planned #' . $firstId) : 'Occupied');
-                                            $text .= ' (In Use: ' . $short . ')';
+                                            $statusLabel = 'In Use';
                                         } else {
-                                            $text .= ' (Available)';
+                                            $statusLabel = 'Available';
                                         }
                                     @endphp
-                                    <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $text }}</option>
+                                    <div class="gate-dropdown__item" data-value="{{ $gid }}" data-available="{{ $isConflict ? '0' : '1' }}" data-label="{{ $text }}" data-status="{{ $statusLabel }}"
+                                         style="padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:0.85rem;"
+                                         onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
+                                        <span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;background:{{ $isConflict ? '#ef4444' : '#22c55e' }};"></span>
+                                        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $text }}</span>
+                                        <span style="font-size:0.7rem;color:{{ $isConflict ? '#ef4444' : '#16a34a' }};font-weight:500;flex-shrink:0;">{{ $statusLabel }}</span>
+                                    </div>
                                 @endforeach
-                            </optgroup>
-                        @endif
-                    </select>
+                            @endif
+                        </div>
+                    </div>
 
                     @if ($recommendedGateId)
                         <div class="st-text--sm st-text--muted st-mt-6">
@@ -691,6 +720,81 @@
             photoInputHidden.files = selectedPhotos.files;
             updatePreviewView();
         });
+    }
+})();
+</script>
+
+<script>
+// Custom Gate Dropdown Controller
+(function() {
+    var trigger = document.getElementById('gate_dropdown_trigger');
+    var menu = document.getElementById('gate_dropdown_menu');
+    var label = document.getElementById('gate_dropdown_label');
+    var hiddenSelect = document.getElementById('gate_select_hidden');
+    if (!trigger || !menu || !label || !hiddenSelect) return;
+
+    var isOpen = false;
+
+    function toggleMenu() {
+        isOpen = !isOpen;
+        menu.style.display = isOpen ? 'block' : 'none';
+    }
+
+    function closeMenu() {
+        isOpen = false;
+        menu.style.display = 'none';
+    }
+
+    function selectItem(item) {
+        var value = item.getAttribute('data-value');
+        var itemLabel = item.getAttribute('data-label');
+        var available = item.getAttribute('data-available') === '1';
+        var status = item.getAttribute('data-status');
+        var dotColor = available ? '#22c55e' : '#ef4444';
+        var textColor = available ? '#16a34a' : '#dc2626';
+
+        // Update hidden select
+        hiddenSelect.value = value;
+
+        // Update trigger label
+        label.innerHTML = '<span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;background:' + dotColor + ';display:inline-block;"></span>' +
+            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + itemLabel + '</span>' +
+            '<span style="font-size:0.7rem;color:' + textColor + ';font-weight:500;flex-shrink:0;margin-left:auto;">' + status + '</span>';
+
+        // Update trigger border
+        trigger.style.borderColor = dotColor;
+        trigger.style.boxShadow = '0 0 0 2px ' + (available ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)');
+
+        // Highlight selected item
+        menu.querySelectorAll('.gate-dropdown__item').forEach(function(el) {
+            el.style.background = el === item ? '#f0f9ff' : '';
+            el.style.fontWeight = el === item ? '600' : '';
+        });
+
+        closeMenu();
+    }
+
+    trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleMenu();
+    });
+
+    menu.querySelectorAll('.gate-dropdown__item').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            selectItem(this);
+        });
+    });
+
+    document.addEventListener('click', function() {
+        closeMenu();
+    });
+
+    // Pre-select if there's a value
+    var currentVal = hiddenSelect.value;
+    if (currentVal) {
+        var preSelected = menu.querySelector('.gate-dropdown__item[data-value="' + currentVal + '"]');
+        if (preSelected) selectItem(preSelected);
     }
 })();
 </script>

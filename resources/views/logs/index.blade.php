@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Activity Logs - e-Docking Control System')
 @section('page_title', 'Activity Logs')
@@ -151,7 +151,7 @@
                                     </span>
                                 </td>
                                 <td>{{ $formatDescription($row->description ?? '') }}</td>
-                                <td class="st-td-center">{{ $row->created_by_name ?? $row->created_by_email ?? '-' }}</td>
+                                <td class="st-td-center">{{ $row->created_by_name ?? $row->created_by_email ?? 'N/A' }}</td>
                             </tr>
                         @empty
                             <tr>

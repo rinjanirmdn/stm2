@@ -1,4 +1,4 @@
-@extends(request()->boolean('popup') ? 'layouts.popup' : 'layouts.app')
+﻿@extends(request()->boolean('popup') ? 'layouts.popup' : 'layouts.app')
 
 @section('title', 'Complete Process - e-Docking Control System')
 @section('page_title', 'Complete Process')
@@ -14,14 +14,14 @@
                 <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-truck"></i></div>
                 <div>
                     <div class="st-text--xs st-text--muted">PO / SO</div>
-                    <div class="st-font-semibold">{{ $slot->truck_number ?? '-' }}</div>
+                    <div class="st-font-semibold">{{ $slot->truck_number ?? 'N/A' }}</div>
                 </div>
             </div>
             <div class="st-flex st-align-center st-gap-8">
                 <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-warehouse"></i></div>
                 <div>
                     <div class="st-text--xs st-text--muted">Warehouse</div>
-                    <div class="st-font-semibold">{{ $slot->warehouse_name ?? '-' }}</div>
+                    <div class="st-font-semibold">{{ $slot->warehouse_name ?? 'N/A' }}</div>
                 </div>
             </div>
             <div class="st-flex st-align-center st-gap-8">

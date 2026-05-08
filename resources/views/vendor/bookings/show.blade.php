@@ -1,4 +1,4 @@
-@extends('vendor.layouts.vendor')
+﻿@extends('vendor.layouts.vendor')
 
 @section('title', 'Booking Detail - Vendor Portal')
 
@@ -146,7 +146,7 @@
                 </tr>
                 <tr>
                     <td class="vb-table__label">{{ ($isInternalVendor ?? false) ? 'PO/SO Number' : 'PO Number' }}</td>
-                    <td>{{ $booking->po_number ?? '-' }}</td>
+                    <td>{{ $booking->po_number ?? 'N/A' }}</td>
                 </tr>
                 @if(($isInternalVendor ?? false) && $booking->supplier_name)
                 <tr>
@@ -174,11 +174,11 @@
                 @endif
                 <tr>
                     <td class="vb-table__label">Scheduled Date</td>
-                    <td class="vb-table__value--strong">{{ $booking->planned_start?->format('d-m-Y') ?? '-' }}</td>
+                    <td class="vb-table__value--strong">{{ $booking->planned_start?->format('d-m-Y') ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="vb-table__label">Scheduled Time</td>
-                    <td class="vb-table__value--strong">{{ $booking->planned_start?->format('H:i') ?? '-' }}</td>
+                    <td class="vb-table__value--strong">{{ $booking->planned_start?->format('H:i') ?? 'N/A' }}</td>
                 </tr>
                 @php
                     $slot = $booking->convertedSlot;
@@ -232,7 +232,7 @@
                 @endif
                 <tr>
                     <td class="vb-table__label">Requested At</td>
-                    <td>{{ $booking->created_at?->format('d-m-Y H:i') ?? '-' }}</td>
+                    <td>{{ $booking->created_at?->format('d-m-Y H:i') ?? 'N/A' }}</td>
                 </tr>
                 @if($booking->approved_at)
                 <tr>
@@ -252,15 +252,15 @@
             <table class="vb-table">
                 <tr>
                     <td class="vb-table__label">Truck Type</td>
-                    <td>{{ $booking->truck_type ?? '-' }}</td>
+                    <td>{{ $booking->truck_type ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="vb-table__label">Vehicle Number</td>
-                    <td>{{ $booking->vehicle_number ?? '-' }}</td>
+                    <td>{{ $booking->vehicle_number ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="vb-table__label">Driver Number</td>
-                    <td>{{ $booking->driver_number ?? '-' }}</td>
+                    <td>{{ $booking->driver_number ?? 'N/A' }}</td>
                 </tr>
             </table>
         </div>

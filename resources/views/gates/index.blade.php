@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Gates Management - e-Docking Control System')
 @section('page_title', 'Gates')
@@ -277,13 +277,13 @@
                              data-top="{{ $minutesFrom7 }}"
                              data-height="{{ $duration }}"
                              ondblclick="window.location.href='{{ $targetRoute }}'"
-                             title="{{ $slot->ticket_number }} ({{ $slot->status }}) - {{ $slot->vendor_name ?? '-' }}{{ !empty($slot->destination) ? ' (' . $slot->destination . ')' : '' }}">
+                             title="{{ $slot->ticket_number }} ({{ $slot->status }}) - {{ $slot->vendor_name ?? 'N/A' }}{{ !empty($slot->destination) ? ' (' . $slot->destination . ')' : '' }}">
 
                             <div class="st-dock-card__main-content">
                                 <!-- Header: Ticket & Time -->
                                 <div class="st-dock-card__header">
                                     <div class="st-dock-card__title {{ $titleClass }}">
-                                        {{ $slot->ticket_number ?? '-' }}
+                                        {{ $slot->ticket_number ?? 'N/A' }}
                                     </div>
                                     <div class="st-dock-card__time {{ $vendorClass }}">
                                         {{ $timeLabel }}
@@ -293,7 +293,7 @@
                                 <!-- Body: Vendor (Hide if too small) -->
                                 @if($h >= 35)
                                 <div class="st-dock-card__vendor st-dock-card__vendor--clamp {{ $vendorClass }} {{ $h < 60 ? 'st-line-clamp-1' : ($h < 120 ? 'st-line-clamp-3' : 'st-line-clamp-10') }}">
-                                    {{ $slot->vendor_name ?? '-' }}{{ !empty($slot->destination) ? ' (' . $slot->destination . ')' : '' }}
+                                    {{ $slot->vendor_name ?? 'N/A' }}{{ !empty($slot->destination) ? ' (' . $slot->destination . ')' : '' }}
 
                                     @php
                                         $activeStatuses = ['scheduled', 'arrived', 'waiting', 'in_progress', 'completed'];

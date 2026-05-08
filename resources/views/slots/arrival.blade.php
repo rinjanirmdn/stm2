@@ -1,4 +1,4 @@
-<div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
+﻿<div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
     <div class="st-flex st-justify-between st-align-center st-mb-12">
         <h3 class="st-m-0 st-text-16">Arrival Registration</h3>
         <div class="st-flex st-align-center st-gap-8">
@@ -19,21 +19,21 @@
             <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-file-invoice"></i></div>
             <div>
                 <div class="st-text--xs st-text--muted">{{ $docType }}</div>
-                <div class="st-font-semibold">{{ $slot->po_number ?? $slot->truck_number ?? '-' }}</div>
+                <div class="st-font-semibold">{{ $slot->po_number ?? $slot->truck_number ?? 'N/A' }}</div>
             </div>
         </div>
         <div class="st-flex st-align-center st-gap-8">
             <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-id-card"></i></div>
             <div>
                 <div class="st-text--xs st-text--muted">Vehicle Number</div>
-                <div class="st-font-semibold">{{ $slot->vehicle_number_snap ?? '-' }}</div>
+                <div class="st-font-semibold">{{ $slot->vehicle_number_snap ?? 'N/A' }}</div>
             </div>
         </div>
         <div class="st-flex st-align-center st-gap-8">
             <div class="st-icon-circle st-bg-slate-100 st-text--slate"><i class="fas fa-warehouse"></i></div>
             <div>
                 <div class="st-text--xs st-text--muted">Warehouse</div>
-                <div class="st-font-semibold">{{ $slot->warehouse_name ?? '-' }}</div>
+                <div class="st-font-semibold">{{ $slot->warehouse_name ?? 'N/A' }}</div>
             </div>
         </div>
         <div class="st-flex st-align-center st-gap-8">
@@ -117,12 +117,12 @@
                             <div class="st-text--sm st-text--muted st-mb-4">
                                 {{ $isOutbound ? 'Customer' : 'Vendor / Supplier' }}
                             </div>
-                            <div class="st-font-semibold st-text-15">{{ $slot->vendor_name ?? '-' }}</div>
+                            <div class="st-font-semibold st-text-15">{{ $slot->vendor_name ?? 'N/A' }}</div>
                         </div>
                         <div>
                             <div class="st-text--sm st-text--muted st-mb-4">{{ $docType }}</div>
                             <div class="st-font-semibold st-text-15">
-                                {{ $slot->po_number ?? $slot->truck_number ?? '-' }}
+                                {{ $slot->po_number ?? $slot->truck_number ?? 'N/A' }}
                                 <span class="st-badge st-badge--{{ $isOutbound ? 'warning' : 'primary' }} st-text--xs st-ml-6">
                                     {{ $isOutbound ? 'SO' : 'PO' }}
                                 </span>
@@ -130,19 +130,19 @@
                         </div>
                         <div>
                             <div class="st-text--sm st-text--muted st-mb-4">Vehicle Number</div>
-                            <div class="st-font-semibold st-text-15">{{ $slot->vehicle_number_snap ?? '-' }}</div>
+                            <div class="st-font-semibold st-text-15">{{ $slot->vehicle_number_snap ?? 'N/A' }}</div>
                         </div>
                         <div>
                             <div class="st-text--sm st-text--muted st-mb-4">Activity Direction</div>
                             <div class="st-font-semibold st-text-15 st-text--primary">
-                                {{ ucfirst($slot->direction ?? '-') }}
+                                {{ ucfirst($slot->direction ?? 'N/A') }}
                             </div>
                         </div>
                     </div>
                     <div class="st-flex st-flex-col st-gap-16">
                         <div>
                             <div class="st-text--sm st-text--muted st-mb-4">Warehouse</div>
-                            <div class="st-font-semibold st-text-15">{{ $slot->warehouse_name ?? '-' }}</div>
+                            <div class="st-font-semibold st-text-15">{{ $slot->warehouse_name ?? 'N/A' }}</div>
                         </div>
                         <div>
                             <div class="st-text--sm st-text--muted st-mb-4">Assigned Gate</div>
