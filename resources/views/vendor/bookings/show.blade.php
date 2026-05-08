@@ -148,12 +148,10 @@
                     <td class="vb-table__label">{{ ($isInternalVendor ?? false) ? 'PO/SO Number' : 'PO Number' }}</td>
                     <td>{{ $booking->po_number ?? 'N/A' }}</td>
                 </tr>
-                @if(($isInternalVendor ?? false) && $booking->supplier_name)
                 <tr>
-                    <td class="vb-table__label">Vendor Name</td>
-                    <td class="vb-table__value--strong">{{ $booking->supplier_name }}</td>
+                    <td class="vb-table__label">{{ $booking->direction === 'outbound' ? 'Customer Name' : 'Vendor Name' }}</td>
+                    <td class="vb-table__value--strong">{{ trim($booking->supplier_name ?? '') !== '' ? $booking->supplier_name : 'N/A' }}</td>
                 </tr>
-                @endif
             </table>
         </div>
 
