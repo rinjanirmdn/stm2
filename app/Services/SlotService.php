@@ -898,7 +898,7 @@ class SlotService
             $poNumber = trim((string) ($slot->po_number ?? ''));
             if ($poNumber !== '') {
                 try {
-                    $poSearchService = app(\App\Services\PoSearchService::class);
+                    $poSearchService = app(PoSearchService::class);
                     $poDetail = $poSearchService->getPoDetail($poNumber);
                     if (is_array($poDetail)) {
                         $cn = trim((string) ($poDetail['customer_name'] ?? ''));
@@ -909,7 +909,7 @@ class SlotService
                             $slot->vendor_name = $cn;
                         }
                     }
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     // ignore
                 }
             }

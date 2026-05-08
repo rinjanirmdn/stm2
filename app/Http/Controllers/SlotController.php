@@ -290,7 +290,7 @@ class SlotController extends Controller
         $slotId = 0;
         // For outbound, prefer customer_name from SAP for the vendor_name DB field
         $storedVendorName = $poDetail['vendor_name'] ?? null;
-        if ($direction === 'outbound' && !empty($poDetail['customer_name'])) {
+        if ($direction === 'outbound' && ! empty($poDetail['customer_name'])) {
             $storedVendorName = $poDetail['customer_name'];
         }
         DB::transaction(function () use (&$slotId, $truckNumber, $direction, $warehouseId, $plannedGateId, $plannedStart, $plannedDurationMinutes, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $poDetail, $transporterType, $vendorTransporterId, $storedVendorName) {

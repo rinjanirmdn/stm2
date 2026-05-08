@@ -299,10 +299,12 @@ class RolePermissionSeeder extends Seeder
         // Admin == Super Administrator/IT (full access to all internal features except Security dashboard)
         $adminRole = Role::findOrCreate('Admin');
         $securityOnly = ['security.dashboard', 'security.scan', 'security.confirm_arrival', 'security.ajax.today_slots'];
-        $vendorOnly = array_filter($permissions, function ($p) { return str_starts_with($p, 'vendor.'); });
+        $vendorOnly = array_filter($permissions, function ($p) {
+            return str_starts_with($p, 'vendor.');
+        });
         $adminExclude = array_merge($securityOnly, array_values($vendorOnly));
         $adminPermissions = array_values(array_filter($permissions, function ($p) use ($adminExclude) {
-            return !in_array($p, $adminExclude, true);
+            return ! in_array($p, $adminExclude, true);
         }));
         $adminRole->syncPermissions($adminPermissions);
 

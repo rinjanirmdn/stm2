@@ -344,7 +344,7 @@ class UnplannedSlotController extends Controller
 
         // For outbound, prefer customer_name from SAP for the vendor_name DB field
         $storedVendorName = $poDetail['vendor_name'] ?? null;
-        if ($direction === 'outbound' && !empty($poDetail['customer_name'])) {
+        if ($direction === 'outbound' && ! empty($poDetail['customer_name'])) {
             $storedVendorName = $poDetail['customer_name'];
         }
 
