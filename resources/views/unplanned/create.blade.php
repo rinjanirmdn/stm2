@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Create Unplanned Transaction - e-Docking Control System')
-@section('page_title', 'Create Unplanned Transaction')
+@section('title', 'Create Unplanned - e-Docking Control System')
+@section('page_title', 'Create Unplanned')
 
 @section('content')
     @php
@@ -25,7 +25,8 @@
                             </ul>
                         </div>
                     </div>
-                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()" aria-label="Close">&times;</button>
+                    <button type="button" class="st-alert__close" onclick="this.parentElement.remove()"
+                        aria-label="Close">&times;</button>
                 </div>
             @endif
 
@@ -33,10 +34,17 @@
                 <div class="st-form-field">
                     <label class="st-label">PO/SO Number <span class="st-text--danger-dark">*</span></label>
                     <div class="st-relative">
-                        <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off" class="st-input st-input--pr-40{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}" required value="{{ old('po_number', old('truck_number')) }}">
+                        <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off"
+                            class="st-input st-input--pr-40{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}"
+                            required value="{{ old('po_number', old('truck_number')) }}">
                         <span class="st-input-loader" id="po_loading" aria-hidden="true"></span>
                         <span class="st-input-status" id="po_status" aria-hidden="true"></span>
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
+                    </div>
+                    <div class="st-po-hint">Only displays released PO/SO numbers from SAP.</div>
+                    <div class="st-po-bypass-row">
+                        <input type="checkbox" id="po_bypass_sap" name="bypass_sap" value="1" {{ old('bypass_sap') ? 'checked' : '' }}>
+                        <label for="po_bypass_sap">Without SAP API Integration</label>
                     </div>
                     <div id="po_feedback" class="st-po-feedback st-mt-4" style="display:none;"></div>
                     @error('po_number')
@@ -45,7 +53,8 @@
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Direction</label>
-                    <select name="direction" id="direction" class="st-select{{ $errors->has('direction') ? ' st-input--invalid' : '' }}">
+                    <select name="direction" id="direction"
+                        class="st-select{{ $errors->has('direction') ? ' st-input--invalid' : '' }}">
                         <option value="">Choose...</option>
                         <option value="inbound" @if (old('direction') === 'inbound') selected @endif>Inbound</option>
                         <option value="outbound" @if (old('direction') === 'outbound') selected @endif>Outbound</option>
@@ -56,13 +65,14 @@
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Gate (Actual) <span class="st-text--danger-dark">*</span></label>
-                    <select name="actual_gate_id" id="unplanned-gate" class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}" required>
+                    <select name="actual_gate_id" id="unplanned-gate"
+                        class="st-select{{ $errors->has('actual_gate_id') ? ' st-input--invalid' : '' }}" required>
                         <option value="">Choose Gate...</option>
                         @foreach ($gates as $gate)
                             @php
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
                             @endphp
-                            <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('actual_gate_id') === (string)$gate->id ? 'selected' : '' }}>
+                            <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string) old('actual_gate_id') === (string) $gate->id ? 'selected' : '' }}>
                                 {{ $gateLabel }}
                             </option>
                         @endforeach
@@ -76,12 +86,33 @@
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
                     <label class="st-label">Vendor Name</label>
-                    <input type="text" id="vendor_name" class="st-input" placeholder="Vendor will auto-fill from PO" readonly>
+                    <input type="text" id="vendor_name" class="st-input" placeholder="Vendor will auto-fill from PO"
+                        readonly value="{{ old('vendor_name_manual', '') }}">
+                    <input type="hidden" name="vendor_name_manual" id="vendor_name_manual"
+                        value="{{ old('vendor_name_manual', '') }}">
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">Destination <span class="st-text--optional">(Optional)</span></label>
-                    <input type="text" name="destination" class="st-input" value="{{ old('destination') }}" placeholder="e.g., Surabaya">
+                    <input type="text" name="destination" class="st-input" value="{{ old('destination') }}"
+                        placeholder="e.g., Surabaya">
                     @error('destination')
+                        <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="st-form-field st-hidden" id="vendor_transporter_container">
+                    <label class="st-label" for="vendor_transporter_id">Vendor Transporter</label>
+                    <div class="st-flex st-align-center st-gap-8">
+                        <input type="checkbox" name="use_vendor_transporter" id="use_vendor_transporter" value="1" {{ old('use_vendor_transporter') ? 'checked' : '' }} style="flex-shrink:0;">
+                        <div id="vendor_transporter_select_container" class="st-flex-1 {{ old('use_vendor_transporter') ? '' : 'st-hidden' }}">
+                            <select name="vendor_transporter_id" id="vendor_transporter_id" class="st-select{{ $errors->has('vendor_transporter_id') ? ' st-input--invalid' : '' }}">
+                                <option value="">-- Select Vendor Transporter --</option>
+                                @foreach ($vendorTransporters ?? [] as $vt)
+                                    <option value="{{ $vt->id }}" {{ (string) old('vendor_transporter_id') === (string) $vt->id ? 'selected' : '' }}>{{ $vt->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    @error('vendor_transporter_id')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
                 </div>
@@ -93,7 +124,8 @@
                     <select name="warehouse_id" id="unplanned-warehouse" class="st-select">
                         <option value="">Choose...</option>
                         @foreach ($warehouses as $wh)
-                            <option value="{{ $wh->id }}" {{ (string)old('warehouse_id') === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                            <option value="{{ $wh->id }}" {{ (string) old('warehouse_id') === (string) $wh->id ? 'selected' : '' }}>
+                                {{ $wh->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -102,10 +134,13 @@
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
                     <label class="st-label">Arrival Time <span class="st-text--danger-dark">*</span></label>
-                    <input type="hidden" name="actual_arrival" id="actual_arrival_input" value="{{ old('actual_arrival') }}">
+                    <input type="hidden" name="actual_arrival" id="actual_arrival_input"
+                        value="{{ old('actual_arrival') }}">
                     <div class="st-grid st-grid-cols-2 st-gap-8">
-                        <input type="text" id="actual_arrival_date_input" class="st-input" placeholder="Select Date" autocomplete="off" min="{{ now()->format('Y-m-d') }}">
-                        <input type="text" id="actual_arrival_time_input" class="st-input" placeholder="Select Time" autocomplete="off" inputmode="none" readonly>
+                        <input type="text" id="actual_arrival_date_input" class="st-input" placeholder="Select Date"
+                            autocomplete="off" min="{{ now()->format('Y-m-d') }}">
+                        <input type="text" id="actual_arrival_time_input" class="st-input" placeholder="Select Time"
+                            autocomplete="off" inputmode="none" readonly>
                     </div>
                     @error('actual_arrival')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
@@ -179,6 +214,5 @@
 @endsection
 
 @push('scripts')
-@vite(['resources/js/pages/unplanned-create.js'])
+    @vite(['resources/js/pages/unplanned-create.js'])
 @endpush
-

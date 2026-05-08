@@ -70,6 +70,7 @@ class RolePermissionSeeder extends Seeder
             'reports.transactions',
             'reports.search_suggestions',
             'reports.export',
+            'reports.offline_import',
             'reports.gate_status',
             'reports.gates.toggle',
             'reports.gates_index',
@@ -229,6 +230,7 @@ class RolePermissionSeeder extends Seeder
 
             'reports.transactions',
             'reports.export',
+            'reports.offline_import',
 
             'trucks.index',
             'trucks.create',
@@ -294,9 +296,15 @@ class RolePermissionSeeder extends Seeder
             'notifications.latest',
         ];
 
-        // Admin == Super Administrator/IT (full internal operations + user management)
+        // Admin == Super Administrator/IT (full access to all internal features except Security dashboard)
         $adminRole = Role::findOrCreate('Admin');
-        $adminRole->syncPermissions(array_values(array_unique(array_merge($coreInternal, $techInternal))));
+        $securityOnly = ['security.dashboard', 'security.scan', 'security.confirm_arrival', 'security.ajax.today_slots'];
+        $vendorOnly = array_filter($permissions, function ($p) { return str_starts_with($p, 'vendor.'); });
+        $adminExclude = array_merge($securityOnly, array_values($vendorOnly));
+        $adminPermissions = array_values(array_filter($permissions, function ($p) use ($adminExclude) {
+            return !in_array($p, $adminExclude, true);
+        }));
+        $adminRole->syncPermissions($adminPermissions);
 
         // Create vendor role based on master role name
         $vendorRole = Role::findOrCreate('Vendor');
@@ -349,6 +357,7 @@ class RolePermissionSeeder extends Seeder
             'slots.arrival',
             'slots.arrival.store',
             'gates.index',
+            'gates.availability',
             'profile.index',
             'gates.stream',
             'gates.api_index',

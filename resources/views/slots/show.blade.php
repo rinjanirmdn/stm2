@@ -276,6 +276,13 @@
                             </div>
                         </div>
 
+                        @if (!empty($slot->vendor_transporter_name))
+                        <div class="st-detail-item st-detail-item--compact">
+                            <div class="st-detail-label">Vendor Transporter</div>
+                            <div class="st-detail-colon">:</div>
+                            <div class="st-detail-value">{{ $slot->vendor_transporter_name }}</div>
+                        </div>
+                        @endif
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Truck Details</div>
                             <div class="st-detail-colon">:</div>
@@ -375,11 +382,11 @@
             </div>
 
             <div class="st-flex st-gap-6 st-flex-wrap st-align-center st-justify-end st-mb-8">
-                @if(auth()->user() && (auth()->user()->can('slots.edit') || auth()->user()->hasAnyRole(['Super Account', 'Section Head', 'super account', 'section head', 'Super Admin', 'super admin', 'Admin', 'admin'])))
+                @can($isUnplanned ? 'unplanned.edit' : 'slots.edit')
                     <a href="{{ route($isUnplanned ? 'unplanned.edit' : 'slots.edit', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
                         <i class="fa-solid fa-pen st-mr-4"></i> Edit
                     </a>
-                @endif
+                @endcan
 
                 @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
                     @can('slots.ticket')

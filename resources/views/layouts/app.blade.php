@@ -581,6 +581,50 @@
     });
 </script>
 
+<script>
+/**
+ * MDTimePicker v2.0 inner-ring fix.
+ * The library assigns wrong rotation classes to inner ring digits (24h mode).
+ * This fix reads each inner digit's displayed number and directly sets the
+ * correct CSS transform: rotate((N%12)*30  deg) on the element, and the
+ * counter-rotation on the inner span so text stays upright.
+ */
+(function(){
+    function fixInnerDigits(container) {
+        var digits = container.querySelectorAll('.mdtp__digit.inner--digit');
+        if (!digits.length) return;
+        digits.forEach(function(d) {
+            var span = d.querySelector('span');
+            if (!span) return;
+            var num = parseInt(span.textContent, 10);
+            if (isNaN(num)) return;
+            // CSS rotate(0deg) = 9 o'clock (left). Add 90° so 12 is at top.
+            var deg = ((num % 12) * 30 + 90) % 360;
+            // Remove any existing rotate-* class
+            Array.from(d.classList).forEach(function(c) {
+                if (/^rotate-\d+$/.test(c)) d.classList.remove(c);
+            });
+            // Apply correct rotation via inline style
+            d.style.transform = 'rotate(' + deg + 'deg)';
+            span.style.transform = 'rotate(-' + deg + 'deg)';
+        });
+    }
+    var obs = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            m.addedNodes.forEach(function(n) {
+                if (n.nodeType === 1 && n.classList && n.classList.contains('mdtimepicker')) {
+                    setTimeout(function(){ fixInnerDigits(n); }, 80);
+                }
+            });
+            if (m.type === 'attributes' && m.target.classList && m.target.classList.contains('mdtimepicker') && !m.target.classList.contains('hidden')) {
+                setTimeout(function(){ fixInnerDigits(m.target); }, 80);
+            }
+        });
+    });
+    obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+
 @stack('scripts')
 </body>
 </html>

@@ -607,8 +607,34 @@ function initVendorBookingCreate(config) {
         poHidden.value = '';
     }
 
+    const poBypassSap = document.getElementById('po_bypass_sap');
+    function isBypassSap() {
+        return poBypassSap && poBypassSap.checked;
+    }
+
+    // When bypass is toggled, sync hidden field and clear validation
+    if (poBypassSap) {
+        poBypassSap.addEventListener('change', function() {
+            if (isBypassSap()) {
+                clearValidation();
+                // Sync hidden value from visible input
+                poHidden.value = poSearch.value.trim();
+            } else {
+                poHidden.value = '';
+                clearValidation();
+            }
+        });
+    }
+
     poSearch.addEventListener('input', function () {
         const q = this.value.trim();
+
+        if (isBypassSap()) {
+            // In bypass mode, sync hidden value directly
+            poHidden.value = q;
+            clearValidation();
+            return;
+        }
 
         if (q.length < 2) {
             clearValidation();
@@ -670,11 +696,14 @@ function initVendorBookingCreate(config) {
                 alertBox.textContent = '';
             }
 
-            const poNumber = poHidden.value.trim();
+            const poNumber = isBypassSap() ? poSearch.value.trim() : poHidden.value.trim();
+            if (isBypassSap()) {
+                poHidden.value = poSearch.value.trim();
+            }
             if (!poNumber) {
                 e.preventDefault();
                 if (alertBox) {
-                    alertBox.textContent = 'Mohon lengkapi data: pilih PO/SO number.';
+                    alertBox.textContent = 'Please complete the required data: select a PO/SO number.';
                     alertBox.hidden = false;
                 }
                 poSearch.focus();

@@ -211,15 +211,87 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    var poBypassSap = document.getElementById('po_bypass_sap');
+    function isBypassSap() {
+        return poBypassSap && poBypassSap.checked;
+    }
+
+    var vendorNameField = document.getElementById('vendor_name');
+    var vendorNameManual = document.getElementById('vendor_name_manual');
+
+    function toggleVendorBypass() {
+        if (!vendorNameField) return;
+        if (isBypassSap()) {
+            vendorNameField.removeAttribute('readonly');
+            vendorNameField.placeholder = 'Type vendor name manually';
+            clearPoFeedback();
+        } else {
+            vendorNameField.setAttribute('readonly', true);
+            vendorNameField.placeholder = 'Vendor will auto-fill from PO';
+            // Re-validate if there's a PO value when switching back to SAP mode
+            var currentPo = poInput ? (poInput.value || '').trim() : '';
+            if (currentPo.length >= 10) {
+                tryAutoFillFromTypedPo(currentPo);
+            }
+        }
+    }
+
+    if (poBypassSap) {
+        poBypassSap.addEventListener('change', toggleVendorBypass);
+        toggleVendorBypass();
+    }
+
+    if (vendorNameField && vendorNameManual) {
+        vendorNameField.addEventListener('input', function () {
+            if (isBypassSap()) {
+                vendorNameManual.value = vendorNameField.value;
+            }
+        });
+    }
+
+    // Vendor Transporter toggle (show on outbound)
+    var vtContainer = document.getElementById('vendor_transporter_container');
+    var vtCheckbox = document.getElementById('use_vendor_transporter');
+    var vtSelectContainer = document.getElementById('vendor_transporter_select_container');
+
+    function toggleVendorTransporter() {
+        if (!vtContainer || !directionSelect) return;
+        var dir = directionSelect.value;
+        if (dir === 'outbound') {
+            vtContainer.classList.remove('st-hidden');
+        } else {
+            vtContainer.classList.add('st-hidden');
+            if (vtCheckbox) vtCheckbox.checked = false;
+            if (vtSelectContainer) vtSelectContainer.classList.add('st-hidden');
+        }
+    }
+
+    if (directionSelect) {
+        directionSelect.addEventListener('change', toggleVendorTransporter);
+        toggleVendorTransporter();
+    }
+
+    if (vtCheckbox && vtSelectContainer) {
+        vtCheckbox.addEventListener('change', function () {
+            if (vtCheckbox.checked) {
+                vtSelectContainer.classList.remove('st-hidden');
+            } else {
+                vtSelectContainer.classList.add('st-hidden');
+            }
+        });
+    }
+
     if (poInput) {
         poInput.addEventListener('input', function () {
             var q = (poInput.value || '').trim();
             if (vendorNameInput) vendorNameInput.value = '';
             setPoStatus('');
             poLastAutoFilledValue = '';
-            if (q.length > 10) {
-                q = q.slice(0, 10);
-                poInput.value = q;
+
+            if (isBypassSap()) {
+                clearPoFeedback();
+                closePoSuggestions();
+                return;
             }
 
             if (q.length < 2) {
@@ -252,6 +324,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         poInput.addEventListener('focus', function () {
+            if (isBypassSap()) return;
             var q = (poInput.value || '').trim();
             if (q.length < 3) return;
             getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
@@ -267,14 +340,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
 
+        // Auto-fetch detail on blur/change — validate any input length
         function autoFetchDetail() {
+            if (isBypassSap()) {
+                clearPoFeedback();
+                return;
+            }
             var val = (poInput.value || '').trim();
-            if (val.length >= 10) {
-                setTimeout(function () {
-                    fetchPoDetail(val, function (data) {
+            if (val === '') {
+                clearPoFeedback();
+                return;
+            }
+            if (val === poLastAutoFilledValue) return;
+
+            setTimeout(function () {
+                var current = (poInput.value || '').trim();
+                if (current !== val) return;
+                if (current === poLastAutoFilledValue) return;
+
+                if (current.length >= 10) {
+                    fetchPoDetail(current, function (data) {
                         if (data.success && data.data) {
                             applyPoDetail(data.data);
-                            poLastAutoFilledValue = val;
+                            poLastAutoFilledValue = current;
                             showPoValid(data.data.doc_type || null);
                         } else {
                             poLastAutoFilledValue = '';
@@ -282,10 +370,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             showPoInvalid();
                         }
                     });
-                }, 200);
-            } else if (val === '') {
-                clearPoFeedback();
-            }
+                } else {
+                    poLastAutoFilledValue = '';
+                    showPoInvalid();
+                }
+            }, 200);
         }
         poInput.addEventListener('change', autoFetchDetail);
         poInput.addEventListener('blur', autoFetchDetail);

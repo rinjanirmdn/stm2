@@ -16,9 +16,9 @@ Route::prefix('unplanned')->name('unplanned.')->group(function () {
     });
 
     Route::get('/{slotId}/edit', [UnplannedSlotController::class, 'edit'])->whereNumber('slotId')->name('edit')
-        ->middleware(['permission:unplanned.edit', 'role:super account|section head']);
+        ->middleware('permission:unplanned.edit');
     Route::post('/{slotId}/edit', [UnplannedSlotController::class, 'update'])->whereNumber('slotId')->name('update')
-        ->middleware(['permission:unplanned.update', 'role:super account|section head']);
+        ->middleware('permission:unplanned.update');
     Route::post('/{slotId}/delete', [UnplannedSlotController::class, 'destroy'])->whereNumber('slotId')->name('delete')
         ->middleware(['permission:unplanned.delete', 'role:admin|super account|section head|security|operator|admin wh']);
 

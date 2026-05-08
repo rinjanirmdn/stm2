@@ -74,6 +74,11 @@
                         <span class="st-input-status" id="po_status" aria-hidden="true"></span>
                         <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
                     </div>
+                    <div class="st-po-hint">Only displays released PO/SO numbers from SAP.</div>
+                    <div class="st-po-bypass-row">
+                        <input type="checkbox" id="po_bypass_sap" name="bypass_sap" value="1" {{ old('bypass_sap') ? 'checked' : '' }}>
+                        <label for="po_bypass_sap">Without SAP API Integration</label>
+                    </div>
                     <div id="po_feedback" class="st-po-feedback st-mt-4" style="display:none;"></div>
                     @error('po_number')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
@@ -116,6 +121,7 @@
                         disabled
                     >
                     <input type="hidden" name="vendor_id" id="vendor_id" value="{{ old('vendor_id', $slot->vendor_id ?? '') }}">
+                    <input type="hidden" name="vendor_name_manual" id="vendor_name_manual" value="{{ old('vendor_name_manual', '') }}">
                     <div id="vendor_suggestions" class="st-suggestions st-hidden"></div>
                     @error('vendor_id')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>

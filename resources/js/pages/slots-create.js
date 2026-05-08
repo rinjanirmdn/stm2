@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var poLoading = document.getElementById('po_loading');
     var poStatus = document.getElementById('po_status');
     var poFeedback = document.getElementById('po_feedback');
+    var poBypassSap = document.getElementById('po_bypass_sap');
     var poDetailRequestSeq = 0;
     var poLastAutoFilledValue = '';
 
@@ -931,12 +932,54 @@ document.addEventListener('DOMContentLoaded', function () {
     if (poInput) {
         var poDebounceTimer = null;
 
+        function isBypassSap() {
+            return poBypassSap && poBypassSap.checked;
+        }
+
+        var vendorNameManual = document.getElementById('vendor_name_manual');
+
+        function toggleVendorBypass() {
+            if (!vendorSearch) return;
+            if (isBypassSap()) {
+                vendorSearch.removeAttribute('readonly');
+                vendorSearch.removeAttribute('disabled');
+                vendorSearch.placeholder = 'Type vendor name manually';
+                clearPoFeedback();
+            } else {
+                vendorSearch.setAttribute('readonly', true);
+                vendorSearch.placeholder = 'Vendor will auto-fill from PO';
+                var currentPo = poInput ? (poInput.value || '').trim() : '';
+                if (currentPo.length >= 10) {
+                    tryAutoFillFromTypedPo(currentPo);
+                }
+            }
+        }
+
+        if (poBypassSap) {
+            poBypassSap.addEventListener('change', toggleVendorBypass);
+            toggleVendorBypass(); // apply initial state
+        }
+
+        if (vendorSearch && vendorNameManual) {
+            vendorSearch.addEventListener('input', function () {
+                if (isBypassSap()) {
+                    vendorNameManual.value = vendorSearch.value;
+                }
+            });
+        }
+
         poInput.addEventListener('input', function () {
             var q = (poInput.value || '').trim();
             if (vendorNameInput) vendorNameInput.value = '';
             if (vendorSearch) vendorSearch.value = '';
             setPoStatus('');
             poLastAutoFilledValue = '';
+
+            if (isBypassSap()) {
+                clearPoFeedback();
+                closePoSuggestions();
+                return;
+            }
 
             if (q.length < 2) {
                 if (poDebounceTimer) clearTimeout(poDebounceTimer);
@@ -967,6 +1010,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         poInput.addEventListener('focus', function () {
+            if (isBypassSap()) return;
             var q = (poInput.value || '').trim();
             if (q.length < 3) return; // Don't search on focus if empty/short
             getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
@@ -984,6 +1028,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Auto-fetch detail on blur/change — validate any input length
         function autoFetchDetail() {
+            if (isBypassSap()) {
+                clearPoFeedback();
+                return;
+            }
             var val = (poInput.value || '').trim();
             if (val === '') {
                 clearPoFeedback();

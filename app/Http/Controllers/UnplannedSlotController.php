@@ -252,7 +252,12 @@ class UnplannedSlotController extends Controller
 
         $truckTypes = $this->getTruckTypeOptions();
 
-        return view('unplanned.create', compact('warehouses', 'gates', 'truckTypes'));
+        $vendorTransporters = DB::table('md_vendor_transporters')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('unplanned.create', compact('warehouses', 'gates', 'truckTypes', 'vendorTransporters'));
     }
 
     public function store(Request $request)
@@ -310,9 +315,26 @@ class UnplannedSlotController extends Controller
         $destination = trim((string) $request->input('destination', ''));
         $notes = trim((string) $request->input('notes', ''));
 
-        $poDetail = $this->poSearchService->getPoDetail($poNumber);
-        if (! $poDetail) {
-            return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+        $useVendorTransporter = (bool) $request->input('use_vendor_transporter', false);
+        $vendorTransporterId = $request->input('vendor_transporter_id') !== null && (string) $request->input('vendor_transporter_id') !== '' ? (int) $request->input('vendor_transporter_id') : null;
+        $transporterType = $useVendorTransporter ? 'vendor' : 'internal';
+
+        if ($useVendorTransporter && ! $vendorTransporterId) {
+            return back()->withInput()->withErrors(['vendor_transporter_id' => 'Vendor Transporter must be selected if checked']);
+        }
+
+        $bypassSap = (bool) $request->input('bypass_sap', false);
+        $poDetail = null;
+        if (! $bypassSap) {
+            $poDetail = $this->poSearchService->getPoDetail($poNumber);
+            if (! $poDetail) {
+                return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+            }
+        } else {
+            $manualVendorName = trim((string) $request->input('vendor_name_manual', ''));
+            if ($manualVendorName !== '') {
+                $poDetail = ['vendor_code' => null, 'vendor_name' => $manualVendorName, 'vendor_type' => null];
+            }
         }
 
         $setWaiting = $request->filled('set_waiting') && (string) $request->input('set_waiting') === '1';
@@ -320,14 +342,22 @@ class UnplannedSlotController extends Controller
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $poDetail) {
+        // For outbound, prefer customer_name from SAP for the vendor_name DB field
+        $storedVendorName = $poDetail['vendor_name'] ?? null;
+        if ($direction === 'outbound' && !empty($poDetail['customer_name'])) {
+            $storedVendorName = $poDetail['customer_name'];
+        }
+
+        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $poDetail, $transporterType, $vendorTransporterId, $storedVendorName) {
             $slotId = (int) DB::table('slots')->insertGetId([
                 'po_number' => $poNumber,
                 'direction' => $direction,
                 'warehouse_id' => $warehouseId,
                 'vendor_code' => $poDetail['vendor_code'] ?? null,
-                'vendor_name' => $poDetail['vendor_name'] ?? null,
+                'vendor_name' => $storedVendorName,
                 'vendor_type' => $poDetail['vendor_type'] ?? null,
+                'transporter_type' => $transporterType,
+                'vendor_transporter_id' => $vendorTransporterId,
                 'actual_gate_id' => $actualGateId,
                 'planned_start' => $arrivalTime,
                 'arrival_time' => $arrivalTime,
@@ -357,7 +387,7 @@ class UnplannedSlotController extends Controller
         // Notify Section Head & Super Account about new unplanned transaction
         $this->notifyInternalSlotCreated($slotId, 'unplanned', $poNumber, $poDetail, $arrivalTime, $truckType, $vehicleNumber);
 
-        return redirect()->route('unplanned.show', ['slotId' => $slotId])->with('success', 'Unplanned transaction recorded successfully');
+        return redirect()->route('unplanned.index')->with('success', 'Unplanned transaction recorded successfully');
     }
 
     public function edit(int $slotId)
@@ -368,7 +398,7 @@ class UnplannedSlotController extends Controller
         }
 
         $user = Auth::user();
-        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head']);
+        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head', 'Admin']);
 
         if ($isSuperEditor) {
             if ((string) ($slot->status ?? '') === 'cancelled') {
@@ -397,6 +427,11 @@ class UnplannedSlotController extends Controller
 
         $truckTypes = $this->getTruckTypeOptions();
 
+        $vendorTransporters = DB::table('md_vendor_transporters')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         return view('unplanned.edit', [
             'slot' => $slot,
             'warehouses' => $warehouses,
@@ -404,6 +439,7 @@ class UnplannedSlotController extends Controller
             'gates' => $gates,
             'truckTypes' => $truckTypes,
             'isSuperEditor' => $isSuperEditor,
+            'vendorTransporters' => $vendorTransporters,
         ]);
     }
 
@@ -415,7 +451,7 @@ class UnplannedSlotController extends Controller
         }
 
         $user = Auth::user();
-        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head']);
+        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head', 'Admin']);
 
         if ($isSuperEditor) {
             if ((string) ($slot->status ?? '') === 'cancelled') {

@@ -1628,6 +1628,7 @@
     display: grid;
     /* Kolom 1 untuk bar chart, kolom 2 fixed, kolom 3 (Recent Bookings) fleksibel isi sisa lebar */
     grid-template-columns: minmax(0, 1.05fr) 280px minmax(360px, 1fr);
+    grid-template-rows: 1fr;
     gap: 16px;
     padding: 16px 20px 20px;
     /* Dasar putih menyatu dengan status strip dan cards, mirip My Bookings */
@@ -1635,6 +1636,7 @@
     flex: 1;
     min-height: 0;
     min-width: 0;
+    max-height: calc(100vh - 260px);
 }
 
 .vendor-page--dashboard .vd-top-filters {
@@ -1656,6 +1658,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .vendor-page--dashboard .vd-chart-header {
@@ -2480,8 +2483,8 @@
 .vendor-page--dashboard .vd-recent-body {
     padding: 8px;
     flex: 1;
-    overflow-y: visible;
-    max-height: none;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .vendor-page--dashboard .vd-recent-item {

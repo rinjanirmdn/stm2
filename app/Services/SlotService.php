@@ -893,6 +893,28 @@ class SlotService
             return null;
         }
 
+        // For outbound, if vendor_name is empty, try fetching customer_name from SAP
+        if (empty($slot->vendor_name) && strtolower((string) ($slot->direction ?? '')) === 'outbound') {
+            $poNumber = trim((string) ($slot->po_number ?? ''));
+            if ($poNumber !== '') {
+                try {
+                    $poSearchService = app(\App\Services\PoSearchService::class);
+                    $poDetail = $poSearchService->getPoDetail($poNumber);
+                    if (is_array($poDetail)) {
+                        $cn = trim((string) ($poDetail['customer_name'] ?? ''));
+                        if ($cn === '') {
+                            $cn = trim((string) ($poDetail['vendor_name'] ?? ''));
+                        }
+                        if ($cn !== '') {
+                            $slot->vendor_name = $cn;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // ignore
+                }
+            }
+        }
+
         $cacheKey = 'ticket_pdf_'.$slotId.'_'.md5(json_encode([
             $slot->ticket_number ?? '',
             $slot->truck_number ?? '',

@@ -646,15 +646,22 @@ class VendorBookingController extends Controller
 
         // Validate against SAP remaining quantities
         $vendorCode = $this->getVendorCodeForUser();
-        $poDetail = $this->poSearchService->getPoDetail($poNumber);
-        if (! $poDetail) {
-            return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+        $bypassSap = (bool) $request->input('bypass_sap', false);
+        $poDetail = null;
+        $direction = null;
+        if (! $bypassSap) {
+            $poDetail = $this->poSearchService->getPoDetail($poNumber);
+            if (! $poDetail) {
+                return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+            }
+            $poVendorCode = trim((string) ($poDetail['vendor_code'] ?? ''));
+            if (! $user->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
+                return back()->withInput()->with('error', 'PO/SO is not assigned to your vendor.');
+            }
+            $direction = $this->resolveDirection($poDetail);
+        } else {
+            $direction = 'inbound'; // Default direction for bypass mode
         }
-        $poVendorCode = trim((string) ($poDetail['vendor_code'] ?? ''));
-        if (! $user->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
-            return back()->withInput()->with('error', 'PO/SO is not assigned to your vendor.');
-        }
-        $direction = $this->resolveDirection($poDetail);
 
         try {
             $notes = (string) $request->notes;
