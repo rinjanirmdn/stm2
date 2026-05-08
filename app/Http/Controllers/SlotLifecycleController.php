@@ -141,7 +141,7 @@ class SlotLifecycleController extends Controller
                         DB::table('slots')->where('id', $slotId)->update(['vendor_name' => $vn]);
                     }
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // ignore SAP errors
             }
         }
