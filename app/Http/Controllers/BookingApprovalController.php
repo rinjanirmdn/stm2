@@ -10,6 +10,7 @@ use App\Models\TruckTypeDuration;
 use App\Models\Warehouse;
 use App\Notifications\BookingRejected;
 use App\Services\BookingApprovalService;
+use App\Services\PoSearchService;
 use App\Services\SlotService;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Http\Request;
@@ -418,6 +419,31 @@ class BookingApprovalController extends Controller
             'convertedSlot.plannedGate',
             'convertedSlot.actualGate',
         ])->findOrFail($id);
+
+        // Auto-fetch vendor name from SAP if it's currently empty
+        if (trim($booking->supplier_name ?? '') === '') {
+            $poNumber = trim($booking->po_number ?? '');
+            if ($poNumber !== '') {
+                try {
+                    $poService = app(PoSearchService::class);
+                    $result = $poService->getDetailParallel($poNumber);
+                    if ($result && ! empty($result['vendor_name'])) {
+                        $booking->supplier_name = $result['vendor_name'];
+                        if (! empty($result['vendor_code'])) {
+                            $booking->supplier_code = $result['vendor_code'];
+                        }
+                        DB::table('booking_requests')
+                            ->where('id', $booking->id)
+                            ->update([
+                                'supplier_name' => $booking->supplier_name,
+                                'supplier_code' => $booking->supplier_code ?? '',
+                            ]);
+                    }
+                } catch (\Exception $e) {
+                    // Silent fail
+                }
+            }
+        }
 
         $warehouses = Warehouse::all();
 
