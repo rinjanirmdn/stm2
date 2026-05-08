@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Planned - e-Docking Control System')
 @section('page_title', 'Planned')
@@ -388,7 +388,7 @@
                                 $slotTypeVal = strval($row->slot_type ?? 'planned');
 
                                 $fmt = function ($v) {
-                                    if (empty($v)) return '-';
+                                    if (empty($v)) return 'N/A';
                                     try {
                                         return \Carbon\Carbon::parse((string) $v)->format('d-m-Y H:i');
                                     } catch (\Throwable $e) {
@@ -475,10 +475,10 @@
                                 $blockingLabel = $blockingLevel >= 2 ? 'High' : ($blockingLevel === 1 ? 'Medium' : 'Low');
                                 $blockingClass = $blockingLevel >= 2 ? 'st-status-late' : ($blockingLevel === 1 ? 'st-status-processing' : 'st-status-on-time');
 
-                                $whGateLabel = '-';
+                                $whGateLabel = 'N/A';
                                 $gateNumber = $row->gate_number ?? '';
                                 if ($gateNumber === '' || $gateNumber === null) {
-                                    $whGateLabel = trim((string) ($row->warehouse_name ?? '')) !== '' ? (string) ($row->warehouse_name ?? '') : '-';
+                                    $whGateLabel = trim((string) ($row->warehouse_name ?? '')) !== '' ? (string) ($row->warehouse_name ?? '') : 'N/A';
                                 } else {
                                     $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName((string) ($row->warehouse_code ?? ''), (string) $gateNumber);
                                     $whGateLabel = trim(((string) ($row->warehouse_name ?? '')) !== '' ? (((string) ($row->warehouse_name ?? '')) . ' - ' . $gateLabel) : $gateLabel);
@@ -498,9 +498,9 @@
                             @endphp
                             <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown')) { window.location.href = '{{ route('slots.show', ['slotId' => $row->id]) }}'; }">
                                 <td class="st-table-cell">{{ $rowNumber }}</td>
-                                <td class="st-table-cell">{{ $row->truck_number }}</td>
+                                <td class="st-table-cell">{{ !empty($row->truck_number) ? $row->truck_number : 'N/A' }}</td>
                                 <td class="st-table-cell">{{ $row->mat_doc ?? 'N/A' }}</td>
-                                <td class="st-table-cell">{{ $row->vendor_name ?? 'N/A' }}{{ !empty($row->destination) ? ' (' . $row->destination . ')' : '' }}</td>
+                                <td class="st-table-cell">{{ trim($row->vendor_name ?? '') !== '' ? $row->vendor_name : 'N/A' }}{{ !empty($row->destination) ? ' (' . $row->destination . ')' : '' }}</td>
                                 <td class="st-table-cell">{{ $whGateLabel }}</td>
                                 <td class="st-table-cell st-td-center">
                                     @php $dir = strtolower($row->direction ?? ''); @endphp
@@ -517,8 +517,8 @@
                                     @endif
                                 </td>
                                 <td class="st-table-cell">{{ $fmt($row->planned_start ?? null) }}</td>
-                                <td class="st-table-cell">{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</td>
-                                <td class="st-table-cell">{{ !empty($row->arrival_time) ? $fmt($row->arrival_time) : '-' }}</td>
+                                <td class="st-table-cell">{{ $plannedFinish ? $fmt($plannedFinish) : 'N/A' }}</td>
+                                <td class="st-table-cell">{{ !empty($row->arrival_time) ? $fmt($row->arrival_time) : 'N/A' }}</td>
                                 <td class="st-table-cell st-td-center">
                                     @if ($leadTimeMinutes !== null)
                                         @php
@@ -544,20 +544,20 @@
                                             @endif
                                         </div>
                                     @else
-                                        -
+                                        N/A
                                     @endif
                                 </td>
                                 <td class="st-table-cell st-td-center">
                                     @if ($status === 'completed' && (empty($row->actual_start) || empty($row->actual_finish)))
                                         <span class="badge bg-status-changes">Data Error</span>
                                     @elseif ($plannedDurationMinutes === null || $plannedDurationMinutes <= 0 || $leadTimeMinutes === null)
-                                        -
+                                        N/A
                                     @elseif ($targetStatus === 'achieve')
                                         <span class="st-table__status-badge st-status-on-time">Achieve</span>
                                     @elseif ($targetStatus === 'not_achieve')
                                         <span class="st-table__status-badge st-status-late">Not Achieve</span>
                                     @else
-                                        -
+                                        N/A
                                     @endif
                                 </td>
                                 <td class="st-table-cell st-td-center">
@@ -566,7 +566,7 @@
                                     @elseif ($lateDisplay === 'on_time')
                                         <span class="st-table__status-badge st-status-on-time">On Time</span>
                                     @else
-                                        -
+                                        N/A
                                     @endif
                                 </td>
                                 <td class="st-table-cell st-td-center">

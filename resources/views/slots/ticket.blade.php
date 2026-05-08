@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -30,7 +30,7 @@
                 <tr>
                     <td class="label-col">{{ strtolower($slot->direction ?? '') === 'outbound' ? 'Customer' : 'Vendor' }}</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ $slot->vendor_name ?? 'N/A' }}</td>
+                    <td class="value-col">{{ trim($slot->vendor_name ?? '') !== '' ? $slot->vendor_name : 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">Vehicle Number</td>
@@ -46,7 +46,7 @@
                 <tr>
                     <td class="label-col">Gate</td>
                     <td class="colon-col">:</td>
-                    <td class="value-col">{{ isset($gateLetter) && $gateLetter !== null ? 'Gate '.str_replace(['A', 'B', 'C'], ['1', '2', '3'], $gateLetter) : '-' }}</td>
+                    <td class="value-col">{{ isset($gateLetter) && $gateLetter !== null ? 'Gate '.str_replace(['A', 'B', 'C'], ['1', '2', '3'], $gateLetter) : 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="label-col">ETA</td>

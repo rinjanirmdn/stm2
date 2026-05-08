@@ -317,7 +317,7 @@ class SlotService
     public function getGateDisplayName(?string $warehouseCode, ?string $gateNumber): string
     {
         if ($gateNumber === null || $gateNumber === '') {
-            return '-';
+            return 'N/A';
         }
 
         $raw = trim((string) $gateNumber);

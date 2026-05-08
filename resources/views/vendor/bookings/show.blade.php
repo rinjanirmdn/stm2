@@ -1,4 +1,4 @@
-﻿@extends('vendor.layouts.vendor')
+@extends('vendor.layouts.vendor')
 
 @section('title', 'Booking Detail - Vendor Portal')
 
@@ -119,7 +119,7 @@
                                 }
                             }
                         @endphp
-                        {{ (string)$gateDisplay !== '' ? $gateDisplay : '-' }}
+                        {{ (string)$gateDisplay !== '' ? $gateDisplay : 'N/A' }}
                     </td>
                 </tr>
                 <tr>

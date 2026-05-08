@@ -454,6 +454,9 @@
     }
 
     async function doScan(ticketNumber) {
+        if (document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
+        }
         scanBtn.disabled = true;
         scanBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         try {

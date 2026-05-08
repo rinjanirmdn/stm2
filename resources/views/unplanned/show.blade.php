@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'View Unplanned - e-Docking Control System')
 @section('page_title', 'Unplanned Detail')
@@ -13,7 +13,7 @@
         $hasArrival = !empty($slot->arrival_time);
 
         $fmt = function ($v) {
-            if (empty($v)) return '-';
+            if (empty($v)) return 'N/A';
             try {
                 return \Carbon\Carbon::parse((string) $v)->format('d-m-Y H:i');
             } catch (\Throwable $e) {
@@ -22,7 +22,7 @@
         };
 
         $minutesLabel = function ($minutes) {
-            if ($minutes === null) return '-';
+            if ($minutes === null) return 'N/A';
             $m = (int) $minutes;
             $h = $m / 60;
             $out = $m . ' Min';
@@ -33,7 +33,7 @@
         };
 
         $plannedDurationMinutes = isset($slot->planned_duration) ? (int) $slot->planned_duration : 0;
-        $plannedDurationLabel = $plannedDurationMinutes > 0 ? $minutesLabel($plannedDurationMinutes) : '-';
+        $plannedDurationLabel = $plannedDurationMinutes > 0 ? $minutesLabel($plannedDurationMinutes) : 'N/A';
 
         $plannedGateLabel = app(\App\Services\SlotService::class)->getGateDisplayName((string) ($slot->warehouse_code ?? ''), (string) ($slot->planned_gate_number ?? ''));
         $actualGateLabel = app(\App\Services\SlotService::class)->getGateDisplayName((string) ($slot->warehouse_code ?? ''), (string) ($slot->actual_gate_number ?? ''));
@@ -86,13 +86,13 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Est. Finish</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $plannedFinish ? $fmt($plannedFinish) : '-' }}</div>
+                            <div class="st-detail-value">{{ $plannedFinish ? $fmt($plannedFinish) : 'N/A' }}</div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Planned Gate</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->planned_gate_number) ? $plannedGateLabel : '-' }}</div>
+                            <div class="st-detail-value">{{ !empty($slot->planned_gate_number) ? $plannedGateLabel : 'N/A' }}</div>
                         </div>
                     </div>
 
@@ -128,7 +128,7 @@
                             <div class="st-detail-colon">:</div>
                             <div class="st-detail-value">
                             @if ($isUnplanned || $status === 'cancelled')
-                                -
+                                N/A
                             @else
                                 @if ($blockingRisk >= 2)
                                     <span class="st-table__status-badge st-status-late st-status-badge--xs">High</span>
@@ -146,13 +146,13 @@
                             <div class="st-detail-colon">:</div>
                             <div class="st-detail-value">
                             @if ($isUnplanned)
-                                -
+                                N/A
                             @elseif ($lateDisplay === 'late')
                                 Late
                             @elseif ($lateDisplay === 'on_time')
                                 On Time
                             @else
-                                -
+                                N/A
                             @endif
                             </div>
                         </div>
@@ -186,19 +186,19 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Waiting Time (Arrival → Start)</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $leadMinutes !== null ? $minutesLabel($leadMinutes) : '-' }}</div>
+                            <div class="st-detail-value">{{ $leadMinutes !== null ? $minutesLabel($leadMinutes) : 'N/A' }}</div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Process Time (Start → Finish)</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $processMinutes !== null ? $minutesLabel($processMinutes) : '-' }}</div>
+                            <div class="st-detail-value">{{ $processMinutes !== null ? $minutesLabel($processMinutes) : 'N/A' }}</div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Total Lead Time</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ $totalLeadTimeMinutes !== null ? $minutesLabel($totalLeadTimeMinutes) : '-' }}</div>
+                            <div class="st-detail-value">{{ $totalLeadTimeMinutes !== null ? $minutesLabel($totalLeadTimeMinutes) : 'N/A' }}</div>
                         </div>
 
                         <div class="st-detail-item st-detail-item--compact">
@@ -210,7 +210,7 @@
                             @elseif ($targetStatus === 'not_achieve')
                                 <span class="st-table__status-badge st-status-late st-status-badge--xs">Not Achieve</span>
                             @else
-                                -
+                                N/A
                             @endif
                             </div>
                         </div>
@@ -218,7 +218,7 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Actual Gate</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->actual_gate_number) ? $actualGateLabel : '-' }}</div>
+                            <div class="st-detail-value">{{ !empty($slot->actual_gate_number) ? $actualGateLabel : 'N/A' }}</div>
                         </div>
                     </div>
                 </div>
@@ -236,14 +236,16 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">SJ</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</div>
+                            <div class="st-detail-value">{{ !empty($slot->mat_doc) ? $slot->mat_doc : 'N/A' }}</div>
                         </div>
 
+                        @if(!$isUnplanned)
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Ticket Number</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->ticket_number) ? $slot->ticket_number : '-' }}</div>
+                            <div class="st-detail-value">{{ !empty($slot->ticket_number) ? $slot->ticket_number : 'N/A' }}</div>
                         </div>
+                        @endif
 
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Vendor</div>
@@ -310,7 +312,7 @@
                                     <div class="st-text--xs-10">{{ $part }}</div>
                                 @endforeach
                             @else
-                                -
+                                N/A
                             @endif
                             </div>
                         </div>
@@ -426,7 +428,7 @@
                         @foreach ($logs as $log)
                             @php
                                 $type = (string) ($log->activity_type ?? '');
-                                $typeLabel = $type !== '' ? ucwords(str_replace('_', ' ', $type)) : '-';
+                                $typeLabel = $type !== '' ? ucwords(str_replace('_', ' ', $type)) : 'N/A';
                             @endphp
                             <tr class="st-table-row">
                                 <td class="st-table-cell">{{ $fmt($log->created_at ?? null) }}</td>

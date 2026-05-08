@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Unplanned Transactions - e-Docking Control System')
 @section('page_title', 'Unplanned')
@@ -228,10 +228,10 @@
                         @endphp
                         <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('unplanned.show', ['slotId' => $slot->id]) }}'; }">
                             <td>{{ $idx + 1 }}</td>
-                            <td>{{ $slot->truck_number ?? '' }}</td>
-                            <td>{{ !empty($slot->mat_doc) ? $slot->mat_doc : '-' }}</td>
+                            <td>{{ !empty($slot->truck_number) ? $slot->truck_number : 'N/A' }}</td>
+                            <td>{{ !empty($slot->mat_doc) ? $slot->mat_doc : 'N/A' }}</td>
                             <td>{{ $slot->vendor_name ?? 'N/A' }}</td>
-                            <td class="st-text-center">{{ $label !== '' ? $label : '-' }}</td>
+                            <td class="st-text-center">{{ $label !== '' ? $label : 'N/A' }}</td>
                             <td class="st-td-center">
                                 @php $dir = strtolower($slot->direction ?? ''); @endphp
                                 @if($dir === 'inbound')
@@ -260,7 +260,7 @@
                                 @if (!empty($slot->arrival_time))
                                     {{ \Carbon\Carbon::parse((string) $slot->arrival_time)->format('d-m-Y H:i') }}
                                 @else
-                                    -
+                                    N/A
                                 @endif
                             </td>
                             <td class="st-td-center">
