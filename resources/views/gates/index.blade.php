@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Gates Management - e-Docking Control System')
 @section('page_title', 'Gates')
@@ -450,11 +450,25 @@
 @endsection
 
 @push('scripts')
+@php
+    $user = auth()->user();
+    $canToggleTimes = false;
+    if ($user) {
+        if (method_exists($user, 'hasRole') && $user->hasRole(['Admin', 'Administrator', 'Section Head', 'Super Account'])) {
+            $canToggleTimes = true;
+        } else if ($user->role_id) {
+            $roleName = \Illuminate\Support\Facades\DB::table('md_roles')->where('id', $user->role_id)->value('roles_name');
+            if ($roleName && in_array(strtolower($roleName), ['admin', 'administrator', 'section head', 'super account'])) {
+                $canToggleTimes = true;
+            }
+        }
+    }
+@endphp
 <script type="application/json" id="gates_index_config">{!! json_encode([
     'paramDate' => $paramDate,
     'gatesIndexUrl' => route('gates.index'),
     'availabilityUrl' => auth()->user()->can('gates.availability') ? route('gates.ajax.available_slots') : null,
-    'disabledTimesUrl' => auth()->user()->can('gates.availability') ? route('gates.ajax.disabled_times') : null,
+    'disabledTimesUrl' => auth()->user()->can('gates.availability') && $canToggleTimes ? route('gates.ajax.disabled_times') : null,
     'selectedWarehouseIds' => (array) ($warehouse_id ?? []),
     'bookingsBaseUrl' => url('/bookings'),
 ]) !!}</script>
