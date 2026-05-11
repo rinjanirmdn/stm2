@@ -7,7 +7,6 @@ use App\Http\Controllers\BookingApprovalController;
 use App\Http\Controllers\GateStatusController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\Master\VendorTransporterController;
-use App\Http\Controllers\MdBpController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SapController;
@@ -154,8 +153,6 @@ Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('book
     Route::get('/ajax/reminders', [BookingApprovalController::class, 'reminderData'])->name('ajax.reminders')->middleware(['permission:bookings.ajax.reminders', 'throttle:30,1']);
     Route::get('/ajax/check-gate', [BookingApprovalController::class, 'ajaxCheckGateAvailability'])->name('ajax.check_gate')->middleware(['permission:bookings.ajax.check_gate', 'throttle:30,1']);
 });
-
-
 
 // -----------------------------------------------------------------------------
 // Master Data: Vendor Transporters

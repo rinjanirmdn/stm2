@@ -6,7 +6,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SlotAjaxController;
 use App\Http\Controllers\SlotController;
 use App\Http\Controllers\SlotLifecycleController;
-use App\Http\Controllers\SlotTrialController;
 
 Route::prefix('slots')->name('slots.')->group(function () {
     Route::get('/', [SlotController::class, 'index'])->name('index')->middleware('permission:slots.index');
@@ -16,8 +15,6 @@ Route::prefix('slots')->name('slots.')->group(function () {
     Route::middleware(['permission:slots.create'])->group(function () {
         Route::get('/create', [SlotController::class, 'create'])->name('create');
         Route::post('/', [SlotController::class, 'store'])->name('store');
-
-
     });
 
     Route::get('/{slotId}/edit', [SlotController::class, 'edit'])->whereNumber('slotId')->name('edit')->middleware('permission:slots.edit');
