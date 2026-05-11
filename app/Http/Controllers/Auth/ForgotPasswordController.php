@@ -50,7 +50,7 @@ class ForgotPasswordController extends Controller
         }
 
         // ── Admin: send direct reset link to their own email ──
-        if ($user->hasRole('Admin')) {
+        if ($user->can('auth.direct_reset')) {
             return $this->sendAdminResetLink($user, $reason);
         }
 
@@ -183,7 +183,7 @@ class ForgotPasswordController extends Controller
             abort(403);
         }
 
-        if ($user->hasAnyRole(['Admin', 'Super Admin', 'Super Account', 'admin'])) {
+        if ($user->can('profile.change_password')) {
             return back()->with('error', 'Administrator dapat mengganti password langsung dari form profile.');
         }
 
