@@ -140,6 +140,7 @@ class SlotController extends Controller
 
         $truckTypes = $this->getTruckTypeOptions();
         $truckTypeDurations = DB::table('md_truck')
+            ->whereNull('deleted_at')
             ->orderBy('truck_type')
             ->pluck('target_duration_minutes', 'truck_type')
             ->all();
@@ -147,6 +148,7 @@ class SlotController extends Controller
         $vendors = [];
 
         $vendorTransporters = DB::table('md_vendor_transporters')
+            ->whereNull('deleted_at')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -394,6 +396,7 @@ class SlotController extends Controller
 
         $truckTypes = $this->getTruckTypeOptions();
         $truckTypeDurations = DB::table('md_truck')
+            ->whereNull('deleted_at')
             ->orderBy('truck_type')
             ->pluck('target_duration_minutes', 'truck_type')
             ->all();

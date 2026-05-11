@@ -29,6 +29,7 @@ class LoginController extends Controller
 
         // Check if user is permanently locked in database
         $userRecord = DB::table('md_users')
+            ->whereNull('deleted_at')
             ->where(function ($q) use ($loginLower) {
                 $q->whereRaw('LOWER(username) = ?', [$loginLower])
                     ->orWhereRaw('LOWER(nik) = ?', [$loginLower])
