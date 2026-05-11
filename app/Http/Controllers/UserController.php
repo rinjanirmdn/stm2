@@ -73,6 +73,7 @@ class UserController extends Controller
         $allowedRoles = ['admin', 'section_head', 'operator', 'admin_wh', 'vendor', 'security', 'super_account', 'display_account'];
 
         $usersQ = DB::table('md_users')
+            ->whereNull('md_users.deleted_at')
             ->leftJoin($modelHasRolesTable.' as mhr', function ($join) {
                 $join
                     ->on('mhr.model_id', '=', 'md_users.id')
@@ -694,7 +695,7 @@ class UserController extends Controller
 
     public function destroy(Request $request, int $userId)
     {
-        $user = DB::table('md_users')->where('id', $userId)->select(['id', 'role_id'])->first();
+        $user = DB::table('md_users')->whereNull('deleted_at')->where('id', $userId)->select(['id', 'role_id'])->first();
         if (! $user) {
             return redirect()->route('users.index')->with('error', 'User not found');
         }
@@ -726,23 +727,10 @@ class UserController extends Controller
             }
         }
 
-        // Check if user is in use in slots or activity logs
-        $usedInSlots = DB::table('slots')
-            ->where('created_by', $userId)
-            ->orWhere('approved_by', $userId)
-            ->count();
+        DB::table('md_users')->where('id', $userId)->update([
+            'deleted_at' => now(),
+        ]);
 
-        $logUserCol = Schema::hasColumn('activity_logs', 'created_by') ? 'created_by' : 'user_id';
-        $usedInLogs = DB::table('activity_logs')
-            ->where($logUserCol, $userId)
-            ->count();
-
-        if ($usedInSlots > 0 || $usedInLogs > 0) {
-            return redirect()->route('users.index')->with('error', 'User cannot be deleted because they are associated with existing transactions or logs. Please deactivate the user instead.');
-        }
-
-        DB::table('md_users')->where('id', $userId)->delete();
-
-        return redirect()->route('users.index')->with('success', 'User deleted permanently');
+        return redirect()->route('users.index')->with('success', 'User deleted successfully');
     }
 }

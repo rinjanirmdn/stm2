@@ -253,6 +253,7 @@ class UnplannedSlotController extends Controller
         $truckTypes = $this->getTruckTypeOptions();
 
         $vendorTransporters = DB::table('md_vendor_transporters')
+            ->whereNull('deleted_at')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -428,6 +429,7 @@ class UnplannedSlotController extends Controller
         $truckTypes = $this->getTruckTypeOptions();
 
         $vendorTransporters = DB::table('md_vendor_transporters')
+            ->whereNull('deleted_at')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();

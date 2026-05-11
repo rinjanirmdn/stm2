@@ -14,6 +14,7 @@ class TruckTypeDurationController extends Controller
         $pageSizeAllowed = ['10', '25', '50', 'all'];
 
         $rows = DB::table('md_truck')
+            ->whereNull('deleted_at')
             ->select(['id', 'truck_type', 'target_duration_minutes', 'created_at'])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
@@ -54,7 +55,7 @@ class TruckTypeDurationController extends Controller
 
     public function edit(Request $request, int $truckTypeDurationId)
     {
-        $row = DB::table('md_truck')->where('id', $truckTypeDurationId)->first();
+        $row = DB::table('md_truck')->whereNull('deleted_at')->where('id', $truckTypeDurationId)->first();
         if (! $row) {
             return redirect()->route('trucks.index')->with('error', 'Truck Type duration not found');
         }
@@ -66,7 +67,7 @@ class TruckTypeDurationController extends Controller
 
     public function update(TruckTypeDurationUpdateRequest $request, int $truckTypeDurationId)
     {
-        $row = DB::table('md_truck')->where('id', $truckTypeDurationId)->first();
+        $row = DB::table('md_truck')->whereNull('deleted_at')->where('id', $truckTypeDurationId)->first();
         if (! $row) {
             return redirect()->route('trucks.index')->with('error', 'Truck Type duration not found');
         }
@@ -87,17 +88,14 @@ class TruckTypeDurationController extends Controller
 
     public function destroy(Request $request, int $truckTypeDurationId)
     {
-        $row = DB::table('md_truck')->where('id', $truckTypeDurationId)->first();
+        $row = DB::table('md_truck')->whereNull('deleted_at')->where('id', $truckTypeDurationId)->first();
         if (! $row) {
             return redirect()->route('trucks.index')->with('error', 'Truck Type duration not found');
         }
 
-        $usedCount = DB::table('slots')->where('truck_type', $row->truck_type)->count();
-        if ($usedCount > 0) {
-            return redirect()->route('trucks.index')->with('error', 'Data cannot be deleted because it is currently in use.');
-        }
-
-        DB::table('md_truck')->where('id', $truckTypeDurationId)->delete();
+        DB::table('md_truck')->where('id', $truckTypeDurationId)->update([
+            'deleted_at' => now(),
+        ]);
 
         return redirect()->route('trucks.index')->with('success', 'Truck Type duration deleted successfully');
     }

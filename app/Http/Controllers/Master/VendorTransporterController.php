@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class VendorTransporterController extends Controller
 {
@@ -12,7 +13,7 @@ class VendorTransporterController extends Controller
     {
         $pageSizeAllowed = ['10', '25', '50', 'all'];
 
-        $transporters = DB::table('md_vendor_transporters')->orderBy('name')->get();
+        $transporters = DB::table('md_vendor_transporters')->whereNull('deleted_at')->orderBy('name')->get();
 
         return view('master.transporters.index', [
             'transporters' => $transporters,
@@ -28,7 +29,10 @@ class VendorTransporterController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:md_vendor_transporters,name',
+            'name' => [
+                'required', 'string', 'max:255',
+                Rule::unique('md_vendor_transporters', 'name')->whereNull('deleted_at'),
+            ],
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -44,7 +48,7 @@ class VendorTransporterController extends Controller
 
     public function edit(int $id)
     {
-        $transporter = DB::table('md_vendor_transporters')->where('id', $id)->first();
+        $transporter = DB::table('md_vendor_transporters')->whereNull('deleted_at')->where('id', $id)->first();
         if (! $transporter) {
             return redirect()->route('master.transporters.index')->with('error', 'Data not found.');
         }
@@ -54,13 +58,16 @@ class VendorTransporterController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $transporter = DB::table('md_vendor_transporters')->where('id', $id)->first();
+        $transporter = DB::table('md_vendor_transporters')->whereNull('deleted_at')->where('id', $id)->first();
         if (! $transporter) {
             return redirect()->route('master.transporters.index')->with('error', 'Data not found.');
         }
 
         $request->validate([
-            'name' => "required|string|max:255|unique:md_vendor_transporters,name,{$id}",
+            'name' => [
+                'required', 'string', 'max:255',
+                Rule::unique('md_vendor_transporters', 'name')->ignore($id)->whereNull('deleted_at'),
+            ],
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -75,18 +82,14 @@ class VendorTransporterController extends Controller
 
     public function destroy(int $id)
     {
-        $transporter = DB::table('md_vendor_transporters')->where('id', $id)->first();
+        $transporter = DB::table('md_vendor_transporters')->whereNull('deleted_at')->where('id', $id)->first();
         if (! $transporter) {
             return redirect()->route('master.transporters.index')->with('error', 'Data not found.');
         }
 
-        // Check if it's used in slots
-        $usedCount = DB::table('slots')->where('vendor_transporter_id', $id)->count();
-        if ($usedCount > 0) {
-            return redirect()->route('master.transporters.index')->with('error', 'Data cannot be deleted because it is currently in use.');
-        }
-
-        DB::table('md_vendor_transporters')->where('id', $id)->delete();
+        DB::table('md_vendor_transporters')->where('id', $id)->update([
+            'deleted_at' => now(),
+        ]);
 
         return redirect()->route('master.transporters.index')->with('success', 'Vendor Transporter deleted successfully.');
     }

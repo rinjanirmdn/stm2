@@ -27,7 +27,7 @@ class TruckTypeDurationUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('md_truck', 'truck_type')->ignore($truckTypeDurationId),
+                Rule::unique('md_truck', 'truck_type')->ignore($truckTypeDurationId)->whereNull('deleted_at'),
             ],
             'target_duration_minutes' => [
                 'required',

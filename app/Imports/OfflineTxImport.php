@@ -62,6 +62,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         $allGates = DB::table('md_gates')->select('id', 'gate_number', 'warehouse_id')->get();
 
         $truckTargets = DB::table('md_truck')
+            ->whereNull('deleted_at')
             ->whereNotNull('truck_type')
             ->pluck('target_duration_minutes', 'truck_type')
             ->toArray();

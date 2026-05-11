@@ -353,7 +353,7 @@ class DashboardController extends Controller
             'holidays' => $this->getHolidaysForYear($today),
             'vendors' => $this->getVendorList(),
             'selected_vendor' => $vendorName ?? '',
-            'transporters' => DB::table('md_vendor_transporters')->where('is_active', true)->orderBy('name')->get(),
+            'transporters' => DB::table('md_vendor_transporters')->whereNull('deleted_at')->where('is_active', true)->orderBy('name')->get(),
             'selected_transporter' => $transporter ?? '',
         ];
     }

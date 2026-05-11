@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TruckTypeDurationStoreRequest extends FormRequest
 {
@@ -24,7 +25,7 @@ class TruckTypeDurationStoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                'unique:md_truck,truck_type',
+                Rule::unique('md_truck', 'truck_type')->whereNull('deleted_at'),
             ],
             'target_duration_minutes' => [
                 'required',

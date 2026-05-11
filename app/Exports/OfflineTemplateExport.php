@@ -33,7 +33,7 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
      */
     private function resolveVersion(): string
     {
-        $truckTypes = DB::table('md_truck')->pluck('truck_type')->sort()->implode(',');
+        $truckTypes = DB::table('md_truck')->whereNull('deleted_at')->pluck('truck_type')->sort()->implode(',');
         $whCodes = DB::table('md_warehouse')->pluck('wh_code')->sort()->implode(',');
         $gateNumbers = DB::table('md_gates')->pluck('gate_number')->unique()->sort()->implode(',');
 
@@ -195,7 +195,7 @@ class OfflineTemplateExport implements FromArray, WithColumnWidths, WithHeadings
         $this->applyDropdown($sheet, 'A', '"planned,unplanned"', 'Select: planned or unplanned');
         $this->applyDropdown($sheet, 'B', '"inbound,outbound"', 'Select: inbound or outbound');
 
-        $truckTypes = DB::table('md_truck')->pluck('truck_type')->implode(',');
+        $truckTypes = DB::table('md_truck')->whereNull('deleted_at')->pluck('truck_type')->implode(',');
         if ($truckTypes) {
             $this->applyDropdown($sheet, 'C', '"'.$truckTypes.'"', 'Select truck type');
         }
