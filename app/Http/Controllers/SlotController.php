@@ -585,7 +585,7 @@ class SlotController extends Controller
 
             // Build descriptive log message
             $vendorName = trim((string) ($slot->vendor_name ?? ''));
-            $actorName = trim((string) (Auth::user()->name ?? Auth::user()->full_name ?? Auth::user()->username ?? Auth::user()->nik ?? 'Unknown'));
+            $actorName = Auth::user()->display_name ?? 'Unknown';
 
             if (! empty($changes)) {
                 // Log each significant change separately for detailed audit trail
@@ -727,7 +727,7 @@ class SlotController extends Controller
                 'al.activity_type',
                 'al.description',
                 'al.created_at',
-                'u.nik as username',
+                DB::raw("CASE WHEN u.is_internal_vendor = 1 AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END as username"),
             ])
             ->get();
 
@@ -777,7 +777,7 @@ class SlotController extends Controller
         }
 
         $actor = Auth::user();
-        $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Admin'));
+        $actorName = trim((string) ($actor->display_name ?? $actor->name ?? $actor->full_name ?? $actor->username ?? 'Admin'));
         if ($actorName === '') {
             $actorName = 'Admin';
         }
@@ -901,7 +901,7 @@ class SlotController extends Controller
     ): void {
         try {
             $actor = Auth::user();
-            $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Internal'));
+            $actorName = trim((string) ($actor->display_name ?? $actor->name ?? $actor->full_name ?? $actor->username ?? 'Internal'));
             $vendorName = trim((string) ($poDetail['vendor_name'] ?? ''));
             $direction = ucfirst(trim((string) ($poDetail['direction'] ?? '')));
 

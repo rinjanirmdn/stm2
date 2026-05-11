@@ -565,7 +565,7 @@ class UnplannedSlotController extends Controller
             DB::table('slots')->where('id', $slotId)->update($updateData);
 
             // Build descriptive log message
-            $actorName = trim((string) (Auth::user()->name ?? Auth::user()->full_name ?? Auth::user()->username ?? Auth::user()->nik ?? 'Unknown'));
+            $actorName = Auth::user()->display_name ?? 'Unknown';
 
             if (! empty($changes)) {
                 $changeDesc = 'Unplanned transaction edited by '.$actorName.': '.implode(', ', $changes);
@@ -598,7 +598,7 @@ class UnplannedSlotController extends Controller
     ): void {
         try {
             $actor = Auth::user();
-            $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'Internal'));
+            $actorName = trim((string) ($actor->display_name ?? $actor->name ?? $actor->full_name ?? $actor->username ?? 'Internal'));
             $vendorName = trim((string) ($poDetail['vendor_name'] ?? ''));
             $direction = ucfirst(trim((string) ($poDetail['direction'] ?? '')));
 

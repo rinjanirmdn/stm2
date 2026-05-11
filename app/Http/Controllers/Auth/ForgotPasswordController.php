@@ -46,7 +46,7 @@ class ForgotPasswordController extends Controller
         }
 
         if (! $user) {
-            return back()->with('error', 'User not found with the provided Email/Username/NIK.');
+            return back()->with('error', 'User not found with the provided Email/NIK.');
         }
 
         // ── Admin: send direct reset link to their own email ──

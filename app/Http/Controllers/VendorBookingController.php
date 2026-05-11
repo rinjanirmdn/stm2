@@ -671,8 +671,8 @@ class VendorBookingController extends Controller
                 'request_number' => null,
                 'requested_by' => $user->id,
                 'po_number' => $poNumber,
-                'supplier_code' => $poDetail['supplier_code'] ?? null,
-                'supplier_name' => $poDetail['supplier_name'] ?? ($poDetail['vendor_name'] ?? null),
+                'supplier_code' => ! empty($poDetail['supplier_code']) ? $poDetail['supplier_code'] : ($poDetail['vendor_code'] ?? null),
+                'supplier_name' => ! empty($poDetail['supplier_name']) ? $poDetail['supplier_name'] : ($poDetail['vendor_name'] ?? null),
                 'doc_date' => ! empty($poDetail['doc_date']) ? $poDetail['doc_date'] : null,
                 'direction' => $direction,
                 'planned_start' => $plannedStart,
@@ -739,7 +739,7 @@ class VendorBookingController extends Controller
 
         try {
             $reason = trim((string) $request->reason);
-            $actorName = trim((string) ($user->name ?? $user->full_name ?? $user->username ?? 'Vendor'));
+            $actorName = trim((string) ($user->display_name ?? $user->name ?? $user->full_name ?? $user->username ?? 'Vendor'));
             $notes = 'Cancelled by '.$actorName;
             if ($reason !== '') {
                 $notes .= ': '.$reason;

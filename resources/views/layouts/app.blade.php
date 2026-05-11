@@ -226,7 +226,7 @@
                         </summary>
                         <div class="st-topbar__menu-dropdown" role="menu">
                             <div class="st-topbar__user-info">
-                                <span class="st-topbar__user-name">{{ auth()->user()->name ?? 'User' }}</span>
+                                <span class="st-topbar__user-name">{{ auth()->user()->display_name ?? auth()->user()->name ?? 'User' }}</span>
                                 <span class="st-topbar__user-role">{{ auth()->user()?->getRoleNames()?->first() ?? 'User' }}</span>
                             </div>
                             <div class="st-topbar__user-actions">

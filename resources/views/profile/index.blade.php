@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Profile - e-Docking Control System')
 @section('page_title', 'Profile')
@@ -12,7 +12,7 @@
             <i class="fas fa-user-circle"></i>
         </div>
         <div class="st-profile-header-info">
-            <h2 class="st-profile-name">{{ $user->full_name ?? $user->username ?? 'User' }}</h2>
+            <h2 class="st-profile-name">{{ $user->display_name ?? $user->full_name ?? $user->username ?? 'User' }}</h2>
             <span class="st-profile-role-badge">
                 <i class="fas fa-shield-halved"></i>
                 {{ ucfirst($user->getRoleNames()->first() ?? 'User') }}
@@ -38,9 +38,9 @@
             </div>
             <div class="st-profile-section-body">
                 <div class="st-profile-field">
-                    <label class="st-profile-label">NIK/Username</label>
+                    <label class="st-profile-label">NIK</label>
                     <input type="text" class="st-profile-input st-profile-input--disabled" value="{{ $user->username ?? 'N/A' }}" disabled>
-                    <span class="st-profile-hint">NIK/Username cannot be changed</span>
+                    <span class="st-profile-hint">NIK cannot be changed</span>
                 </div>
                 <div class="st-profile-field">
                     <label class="st-profile-label">Full Name</label>
