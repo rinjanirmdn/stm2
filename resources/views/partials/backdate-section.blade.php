@@ -1,24 +1,4 @@
-{{-- Backdate Section - Only visible for Admin and Section Head --}}
-@php
-    $__bdUser = auth()->user();
-    $__bdAllowed = false;
-    $__bdRoleName = '';
-    if ($__bdUser) {
-        // Primary: Spatie hasRole
-        if (method_exists($__bdUser, 'hasRole') && $__bdUser->hasRole(['Admin', 'Section Head'])) {
-            $__bdAllowed = true;
-            $__bdRoleName = $__bdUser->hasRole('Admin') ? 'Admin' : 'Section Head';
-        }
-        // Fallback: role_id column
-        if (!$__bdAllowed && $__bdUser->role_id) {
-            $__bdRoleName = \Illuminate\Support\Facades\DB::table('md_roles')->where('id', $__bdUser->role_id)->value('roles_name') ?? '';
-            if (in_array($__bdRoleName, ['Admin', 'Section Head'])) {
-                $__bdAllowed = true;
-            }
-        }
-    }
-@endphp
-@if($__bdAllowed)
+@can('slots.backdate')
 <div class="st-border st-rounded-10 st-p-16 st-mb-16 st-backdate-section" style="border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);">
     <div class="st-flex st-align-center st-gap-8 st-mb-12">
         <div class="st-flex st-align-center st-justify-center" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;color:#fff;font-size:14px;">
@@ -26,7 +6,7 @@
         </div>
         <div class="st-font-semibold st-text-14" style="color:#92400e;">
             <i class="fas fa-bolt st-mr-4" style="color:#f59e0b;"></i> Backdate
-            <span class="st-text--xs st-font-normal" style="color:#a16207;">({{ $__bdRoleName }})</span>
+            <span class="st-text--xs st-font-normal" style="color:#a16207;">(Authorized)</span>
         </div>
     </div>
 
@@ -220,4 +200,4 @@
     }
 })();
 </script>
-@endif
+@endcan

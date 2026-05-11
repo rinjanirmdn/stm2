@@ -79,7 +79,7 @@ class SlotLifecycleController extends Controller
             throw ValidationException::withMessages(['ticket_number' => 'Ticket number does not match this slot.']);
         }
 
-        // Handle backdate for Admin / Section Head
+        // Handle backdate if user has permission (Admin, Section Head, Super Account)
         $backdateTime = null;
         if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
             if ($this->isBackdateAllowed()) {
@@ -366,7 +366,7 @@ class SlotLifecycleController extends Controller
             throw ValidationException::withMessages(['waiting_reason' => 'Waiting has exceeded 60 minutes. Please provide the reason for the long wait.']);
         }
 
-        // Handle backdate for Admin / Section Head
+        // Handle backdate if user has permission (Admin, Section Head, Super Account)
         $backdateTime = null;
         if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
             if ($this->isBackdateAllowed()) {
@@ -558,7 +558,7 @@ class SlotLifecycleController extends Controller
             throw ValidationException::withMessages(['mat_doc' => 'All required fields must be filled']);
         }
 
-        // Handle backdate for Admin / Section Head
+        // Handle backdate if user has permission (Admin, Section Head, Super Account)
         $backdateTime = null;
         if ($request->boolean('use_backdate') && $request->filled('backdate_datetime')) {
             if ($this->isBackdateAllowed()) {
@@ -738,7 +738,7 @@ class SlotLifecycleController extends Controller
     }
 
     /**
-     * Check if the current user is allowed to use backdate (Admin or Section Head)
+     * Check if the current user is allowed to use backdate (permission-based)
      */
     private function isBackdateAllowed(): bool
     {
@@ -747,20 +747,8 @@ class SlotLifecycleController extends Controller
             return false;
         }
 
-        // Primary: Spatie hasRole
-        if (method_exists($user, 'hasRole') && $user->hasRole(['Admin', 'Section Head'])) {
-            return true;
-        }
-
-        // Fallback: role_id column (same pattern as RoleMiddleware)
-        if ($user->role_id) {
-            $roleName = DB::table('md_roles')->where('id', $user->role_id)->value('roles_name');
-            if ($roleName && in_array($roleName, ['Admin', 'Section Head'])) {
-                return true;
-            }
-        }
-
-        return false;
+        // Use permission system instead of hardcoded roles
+        return $user->can('slots.backdate');
     }
 
     /**
