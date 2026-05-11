@@ -154,9 +154,9 @@ class TransactionReportService
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
                 's.vendor_name',
-                DB::raw("CASE WHEN u.is_internal_vendor = 1 AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END as created_by_name"),
+                DB::raw("CASE WHEN u.is_internal_vendor = true AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END as created_by_name"),
                 'u.email as created_by_email',
-                DB::raw("CASE WHEN u.is_internal_vendor = 1 AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END as created_by_username"),
+                DB::raw("CASE WHEN u.is_internal_vendor = true AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END as created_by_username"),
                 'u.nik as created_by_nik',
                 'td.target_duration_minutes',
             ])
@@ -379,7 +379,7 @@ class TransactionReportService
             'arrival' => 's.arrival_time',
             'lead_time' => DB::raw($leadExpr),
             'late' => DB::raw("CASE WHEN (COALESCE(s.slot_type, 'planned') = 'planned' AND s.arrival_time IS NOT NULL) AND s.arrival_time > {$lateAddExpr} THEN 1 WHEN ((s.arrival_time IS NULL OR COALESCE(s.slot_type, 'planned') <> 'planned') AND COALESCE(s.is_late, false) = true) THEN 1 ELSE 0 END"),
-            'user' => DB::raw("CASE WHEN u.is_internal_vendor = 1 AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END"),
+            'user' => DB::raw("CASE WHEN u.is_internal_vendor = true AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END"),
         ];
     }
 
