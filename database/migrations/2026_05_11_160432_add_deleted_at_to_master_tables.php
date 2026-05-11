@@ -13,21 +13,21 @@ return new class extends Migration
     public function up(): void
     {
         // Truck Types
-        if (Schema::hasTable('md_truck') && !Schema::hasColumn('md_truck', 'deleted_at')) {
+        if (Schema::hasTable('md_truck') && ! Schema::hasColumn('md_truck', 'deleted_at')) {
             Schema::table('md_truck', function (Blueprint $table) {
                 $table->softDeletes();
             });
         }
 
         // Vendor Transporters
-        if (Schema::hasTable('md_vendor_transporters') && !Schema::hasColumn('md_vendor_transporters', 'deleted_at')) {
+        if (Schema::hasTable('md_vendor_transporters') && ! Schema::hasColumn('md_vendor_transporters', 'deleted_at')) {
             Schema::table('md_vendor_transporters', function (Blueprint $table) {
                 $table->softDeletes();
             });
         }
 
         // Users
-        if (Schema::hasTable('md_users') && !Schema::hasColumn('md_users', 'deleted_at')) {
+        if (Schema::hasTable('md_users') && ! Schema::hasColumn('md_users', 'deleted_at')) {
             Schema::table('md_users', function (Blueprint $table) {
                 $table->softDeletes();
             });
