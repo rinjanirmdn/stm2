@@ -130,7 +130,7 @@ class LogController extends Controller
                 DB::raw('al.'.$createdByCol.' as created_by'),
                 'al.created_at',
                 DB::raw(($hasNik ? 'u.nik' : 'NULL').' as created_by_nik'),
-                DB::raw("CASE WHEN u.is_internal_vendor = 1 AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(".($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : "'User'")).", ' (', UPPER(u.vendor_code), ')') ELSE ".($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : ($hasEmail ? 'u.email' : 'NULL'))).' END as created_by_name'),
+                DB::raw("CASE WHEN u.is_internal_vendor = true AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(".($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : "'User'")).", ' (', UPPER(u.vendor_code), ')') ELSE ".($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : ($hasEmail ? 'u.email' : 'NULL'))).' END as created_by_name'),
                 DB::raw(($hasEmail ? 'u.email' : 'NULL').' as created_by_email'),
                 's.mat_doc as slot_mat_doc',
                 's.po_number as slot_po_number',

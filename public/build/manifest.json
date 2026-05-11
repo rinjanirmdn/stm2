@@ -31,7 +31,7 @@
     ]
   },
   "resources/css/dashboard-react.css": {
-    "file": "assets/dashboard-react-BvqqME9p.css",
+    "file": "assets/dashboard-react-BHUX8s29.css",
     "src": "resources/css/dashboard-react.css",
     "isEntry": true,
     "name": "dashboard-react",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-ChdtFXi6.css",
+    "file": "assets/style-BbZlGKNW.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -136,7 +136,7 @@
     "isEntry": true
   },
   "resources/js/pages/reports-transactions.js": {
-    "file": "assets/reports-transactions-DSQVCta_.js",
+    "file": "assets/reports-transactions-Cf8Suvif.js",
     "name": "reports-transactions",
     "src": "resources/js/pages/reports-transactions.js",
     "isEntry": true,

@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Services\SlotService;
 use DateTime;
 use Exception;
 use Illuminate\Support\Collection;
@@ -58,8 +59,6 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
     public function collection(Collection $rows)
     {
         $warehouses = DB::table('md_warehouse')->pluck('id', 'wh_code')->toArray();
-        $gates = DB::table('md_gates')->pluck('id', 'gate_number')->toArray(); // this is rough, since gates are linked to warehouse. We'll do it safely below.
-
         $allGates = DB::table('md_gates')->select('id', 'gate_number', 'warehouse_id')->get();
 
         $truckTargets = DB::table('md_truck')
@@ -77,6 +76,13 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
         $validWhCodes = array_keys($warehouses);
         $validGateNumbers = $allGates->pluck('gate_number')->unique()->values()->toArray();
+
+        $slotService = app(SlotService::class);
+        $dateAddExpr = $slotService->getDateAddExpression('planned_start', 'planned_duration');
+
+        $validRowsToInsert = [];
+        $seenSjs = [];
+        $seenSlots = [];
 
         foreach ($rows as $index => $row) {
             $excelRow = $index + 2; // heading is row 1, data starts row 2
@@ -180,7 +186,70 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 }
             }
 
-            // If there are validation errors, skip this row
+            // SJ Number validation (Uniqueness)
+            $sjNumber = trim($row['sj_number'] ?? '');
+            if ($sjNumber !== '') {
+                // Check within the excel file
+                if (isset($seenSjs[$sjNumber])) {
+                    $rowErrors[] = $this->formatError($excelRow, 'sj_number', $sjNumber, "Duplicate SJ Number within this Excel file (Row {$seenSjs[$sjNumber]}).");
+                } else {
+                    $seenSjs[$sjNumber] = $excelRow;
+                    // Check against DB
+                    $sjExists = DB::table('slots')->where('mat_doc', $sjNumber)->exists();
+                    if ($sjExists) {
+                        $rowErrors[] = $this->formatError($excelRow, 'sj_number', $sjNumber, 'SJ Number already exists in the database.');
+                    }
+                }
+            }
+
+            // Gate Overlap validation
+            if ($gateId && $startStr && $finishStr) {
+                if (strtotime($startStr) >= strtotime($finishStr)) {
+                    $rowErrors[] = $this->formatError($excelRow, 'finish_time', $finishStr, 'Finish time must be after start time.');
+                } else {
+                    $laneGroup = $slotService->getGateLaneGroup($gateId);
+                    $laneGateIds = $laneGroup ? $slotService->getGateIdsByLaneGroup($laneGroup) : [$gateId];
+                    if (empty($laneGateIds)) {
+                        $laneGateIds = [$gateId];
+                    }
+
+                    // Check overlap within the excel file
+                    $overlapInExcel = false;
+                    foreach ($seenSlots as $seenSlot) {
+                        if (array_intersect($laneGateIds, $seenSlot['laneGateIds'])) {
+                            if (strtotime($seenSlot['start']) < strtotime($finishStr) && strtotime($seenSlot['finish']) > strtotime($startStr)) {
+                                $rowErrors[] = $this->formatError($excelRow, 'start_time', $startStr, "Time overlaps with another row in this Excel file (Row {$seenSlot['row']}) on the same gate/lane.");
+                                $overlapInExcel = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (! $overlapInExcel) {
+                        $seenSlots[] = [
+                            'laneGateIds' => $laneGateIds,
+                            'start' => $startStr,
+                            'finish' => $finishStr,
+                            'row' => $excelRow,
+                        ];
+
+                        // Check overlap against DB
+                        $overlapDb = DB::table('slots')
+                            ->whereIn('planned_gate_id', $laneGateIds)
+                            ->where('status', '!=', 'cancelled')
+                            ->whereRaw('COALESCE(actual_start, planned_start) < ?', [$finishStr])
+                            ->whereRaw("COALESCE(actual_finish, {$dateAddExpr}) > ?", [$startStr])
+                            ->first(['id', 'ticket_number']);
+
+                        if ($overlapDb) {
+                            $ticket = $overlapDb->ticket_number ?? ('Ref #'.$overlapDb->id);
+                            $rowErrors[] = $this->formatError($excelRow, 'start_time', $startStr, "Time overlaps with existing transaction in database ({$ticket}) on the same gate/lane.");
+                        }
+                    }
+                }
+            }
+
+            // If there are validation errors, add them and skip adding to valid rows
             if (! empty($rowErrors)) {
                 $this->errorCount++;
                 foreach ($rowErrors as $err) {
@@ -190,65 +259,67 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            try {
-                $duration = 0;
-                $leadTime = 0;
+            // If we reached here, the row is valid
+            $duration = 0;
+            $leadTime = 0;
 
-                if ($startStr && $finishStr) {
-                    $duration = round((strtotime($finishStr) - strtotime($startStr)) / 60);
-                }
-
-                if ($arrivalStr && $startStr) {
-                    $leadTime = round((strtotime($startStr) - strtotime($arrivalStr)) / 60);
-                }
-
-                $slotType = strtolower(trim($row['slot_type'] ?? 'unplanned'));
-                $direction = strtolower(trim($row['direction'] ?? 'inbound'));
-
-                $targetDuration = null;
-                if ($truckType && isset($truckTargetDurations[strtolower(trim($truckType))])) {
-                    $targetDuration = $truckTargetDurations[strtolower(trim($truckType))];
-                }
-
-                $slotId = DB::table('slots')->insertGetId([
-                    'warehouse_id' => $whId,
-                    'planned_gate_id' => $gateId,
-                    'actual_gate_id' => $gateId,
-                    'arrival_time' => $arrivalStr,
-                    'planned_start' => $startStr ?: ($arrivalStr ?: now()),
-                    'planned_duration' => $targetDuration > 0 ? (int) $targetDuration : 0,
-                    'actual_start' => $startStr,
-                    'actual_finish' => $finishStr,
-                    'status' => 'completed',
-                    'vendor_name' => substr($vendorName, 0, 100),
-                    'vehicle_number_snap' => substr($vehicleNumber, 0, 50),
-                    'po_number' => substr($poNumber, 0, 50),
-                    'driver_name' => substr($row['driver_name'] ?? '', 0, 100) ?: null,
-                    'driver_number' => substr($row['driver_number'] ?? '', 0, 50) ?: null,
-                    'mat_doc' => substr($row['sj_number'] ?? '', 0, 50) ?: null,
-                    'truck_type' => $truckType ?: null,
-                    'slot_type' => $slotType === 'planned' ? 'planned' : 'unplanned',
-                    'direction' => $direction === 'outbound' ? 'outbound' : 'inbound',
-                    'target_duration_minutes' => $targetDuration,
-                    'actual_duration_minutes' => $duration >= 0 ? (int) $duration : null,
-                    'lead_time_minutes' => $leadTime >= 0 ? (int) $leadTime : null,
-                    'created_by' => auth()->id(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'approval_notes' => 'Imported via Offline Excel. '.($row['notes'] ?? ''),
-                ]);
-                $this->successCount++;
-            } catch (Exception $e) {
-                $this->errorCount++;
-                $this->errors[] = [
-                    'row' => $excelRow,
-                    'column' => 'N/A',
-                    'cell' => 'N/A',
-                    'value' => 'N/A',
-                    'message' => 'Database error: '.$e->getMessage(),
-                ];
-                Log::error('Offline Import: Failed to process row '.$index.' - '.$e->getMessage());
+            if ($startStr && $finishStr) {
+                $duration = round((strtotime($finishStr) - strtotime($startStr)) / 60);
             }
+            if ($arrivalStr && $startStr) {
+                $leadTime = round((strtotime($startStr) - strtotime($arrivalStr)) / 60);
+            }
+
+            $slotType = strtolower(trim($row['slot_type'] ?? 'unplanned'));
+            $direction = strtolower(trim($row['direction'] ?? 'inbound'));
+
+            $targetDuration = null;
+            if ($truckType && isset($truckTargetDurations[strtolower(trim($truckType))])) {
+                $targetDuration = $truckTargetDurations[strtolower(trim($truckType))];
+            }
+
+            $validRowsToInsert[] = [
+                'warehouse_id' => $whId,
+                'planned_gate_id' => $gateId,
+                'actual_gate_id' => $gateId,
+                'arrival_time' => $arrivalStr,
+                'planned_start' => $startStr ?: ($arrivalStr ?: now()),
+                'planned_duration' => $targetDuration > 0 ? (int) $targetDuration : 0,
+                'actual_start' => $startStr,
+                'actual_finish' => $finishStr,
+                'status' => 'completed',
+                'vendor_name' => substr($vendorName, 0, 100),
+                'vehicle_number_snap' => substr($vehicleNumber, 0, 50),
+                'po_number' => substr($poNumber, 0, 50),
+                'driver_name' => substr($row['driver_name'] ?? '', 0, 100) ?: null,
+                'driver_number' => substr($row['driver_number'] ?? '', 0, 50) ?: null,
+                'mat_doc' => substr($sjNumber, 0, 50) ?: null,
+                'truck_type' => $truckType ?: null,
+                'slot_type' => $slotType === 'planned' ? 'planned' : 'unplanned',
+                'direction' => $direction === 'outbound' ? 'outbound' : 'inbound',
+                'target_duration_minutes' => $targetDuration,
+                'actual_duration_minutes' => $duration >= 0 ? (int) $duration : null,
+                'lead_time_minutes' => $leadTime >= 0 ? (int) $leadTime : null,
+                'created_by' => auth()->id(),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'approval_notes' => 'Imported via Offline Excel. '.($row['notes'] ?? ''),
+            ];
+        }
+
+        // All-or-Nothing Approach: Only insert if there are ZERO errors
+        if (empty($this->errors) && count($validRowsToInsert) > 0) {
+            DB::transaction(function () use ($validRowsToInsert) {
+                foreach ($validRowsToInsert as $insertData) {
+                    try {
+                        DB::table('slots')->insertGetId($insertData);
+                        $this->successCount++;
+                    } catch (Exception $e) {
+                        Log::error('Offline Import Transaction Failed: '.$e->getMessage());
+                        throw $e; // Rollback transaction
+                    }
+                }
+            });
         }
     }
 

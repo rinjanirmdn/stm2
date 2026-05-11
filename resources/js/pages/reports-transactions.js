@@ -734,32 +734,32 @@ document.addEventListener('DOMContentLoaded', function () {
                     html += '<div style="display:flex;align-items:center;margin-bottom:8px;color:#dc2626;"><i class="fa-solid fa-exclamation-circle" style="margin-right:8px;font-size:1rem;flex-shrink:0;"></i> <span style="font-weight:500;">' + msg + '</span></div>';
                     
                     if (err.errors && err.errors.length > 0) {
-                        html += '<div style="margin-top:8px;">';
+                        html += '<div style="margin-top:12px; width:100%; max-width:100%; overflow:hidden;">';
                         html += '<button type="button" class="st-link st-text--sm" onclick="document.getElementById(\'import-error-details\').classList.toggle(\'st-hidden\')" style="margin-bottom:6px;display:block;">View Error Details (' + err.errors.length + ')</button>';
-                        html += '<div id="import-error-details" class="st-hidden" style="max-height:180px;overflow-y:auto;overflow-x:auto;font-size:0.75rem;border:1px solid #e5e7eb;border-radius:6px;margin-top:4px;">';
+                        html += '<div id="import-error-details" class="st-hidden" style="max-height:200px; overflow-y:auto; overflow-x:auto; font-size:0.75rem; border:1px solid #fca5a5; border-radius:6px; background:#fff; width:100%;">';
                         
                         // Check if errors are structured objects
                         if (err.errors[0] && typeof err.errors[0] === 'object' && err.errors[0].row) {
-                            html += '<table style="width:100%;border-collapse:collapse;font-size:0.75rem;white-space:nowrap;">';
-                            html += '<thead><tr style="background:#f8f9fa;border-bottom:2px solid #dee2e6;position:sticky;top:0;">';
-                            html += '<th style="padding:4px 6px;text-align:left;">Row</th>';
-                            html += '<th style="padding:4px 6px;text-align:left;">Cell</th>';
-                            html += '<th style="padding:4px 6px;text-align:left;">Column</th>';
-                            html += '<th style="padding:4px 6px;text-align:left;">Value</th>';
-                            html += '<th style="padding:4px 6px;text-align:left;white-space:normal;min-width:100px;">Error</th>';
+                            html += '<table style="width:100%; border-collapse:collapse; font-size:0.75rem; table-layout:fixed;">';
+                            html += '<thead><tr style="background:#fef2f2; border-bottom:1px solid #fca5a5; position:sticky; top:0; z-index:1;">';
+                            html += '<th style="padding:6px; text-align:left; width:45px; color:#991b1b;">Row</th>';
+                            html += '<th style="padding:6px; text-align:left; width:45px; color:#991b1b;">Cell</th>';
+                            html += '<th style="padding:6px; text-align:left; width:90px; color:#991b1b;">Column</th>';
+                            html += '<th style="padding:6px; text-align:left; width:100px; color:#991b1b;">Value</th>';
+                            html += '<th style="padding:6px; text-align:left; color:#991b1b;">Error</th>';
                             html += '</tr></thead><tbody>';
                             err.errors.forEach(function(e) {
-                                html += '<tr style="border-bottom:1px solid #f3f4f6;">';
-                                html += '<td style="padding:3px 6px;">' + (e.row || '') + '</td>';
-                                html += '<td style="padding:3px 6px;font-family:monospace;color:#6366f1;">' + String(e.cell || '').replace(/</g, '&lt;') + '</td>';
-                                html += '<td style="padding:3px 6px;font-weight:500;">' + String(e.column || '').replace(/</g, '&lt;') + '</td>';
-                                html += '<td style="padding:3px 6px;color:#dc2626;font-style:italic;">' + String(e.value || '').replace(/</g, '&lt;') + '</td>';
-                                html += '<td style="padding:3px 6px;white-space:normal;">' + String(e.message || '').replace(/</g, '&lt;') + '</td>';
+                                html += '<tr style="border-bottom:1px solid #fee2e2;">';
+                                html += '<td style="padding:4px 6px; vertical-align:top;">' + (e.row || '') + '</td>';
+                                html += '<td style="padding:4px 6px; vertical-align:top; font-family:monospace; color:#4338ca;">' + String(e.cell || '').replace(/</g, '&lt;') + '</td>';
+                                html += '<td style="padding:4px 6px; vertical-align:top; font-weight:500; word-wrap:break-word;">' + String(e.column || '').replace(/</g, '&lt;') + '</td>';
+                                html += '<td style="padding:4px 6px; vertical-align:top; color:#b91c1c; font-style:italic; word-wrap:break-word;">' + String(e.value || '').replace(/</g, '&lt;') + '</td>';
+                                html += '<td style="padding:4px 6px; vertical-align:top; white-space:normal; word-wrap:break-word; color:#1f2937;">' + String(e.message || '').replace(/</g, '&lt;') + '</td>';
                                 html += '</tr>';
                             });
                             html += '</tbody></table>';
                         } else {
-                            html += '<ul style="padding:8px 8px 8px 24px;margin:0;color:#dc2626;">';
+                            html += '<ul style="padding:8px 8px 8px 24px; margin:0; color:#b91c1c;">';
                             err.errors.forEach(function(e) { html += '<li>' + String(e).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</li>'; });
                             html += '</ul>';
                         }
@@ -774,10 +774,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .finally(function() {
-                btnImportSubmit.disabled = false;
                 btnImportSubmit.innerHTML = 'Upload & Import';
+                // Only re-enable if there wasn't a validation error shown
+                if (!alertImportOffline || !alertImportOffline.classList.contains('st-alert--danger')) {
+                    btnImportSubmit.disabled = false;
+                }
             });
         });
+        
+        // Re-enable submit button and hide errors when a new file is selected
+        var fileInput = formImportOffline.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                if (btnImportSubmit) btnImportSubmit.disabled = false;
+                if (alertImportOffline) {
+                    alertImportOffline.classList.add('st-hidden');
+                    alertImportOffline.style.display = 'none';
+                    alertImportOffline.innerHTML = '';
+                }
+            });
+        }
     }
 
 });
