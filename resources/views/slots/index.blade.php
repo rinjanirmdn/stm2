@@ -73,7 +73,6 @@
                             <a href="{{ route('slots.index') }}" class="st-btn st-btn--outline-primary">Reset</a>
                             @can('slots.create')
                             <a href="{{ route('slots.create') }}" class="st-btn st-btn--primary">Create Planned</a>
-                            <a href="{{ route('slots.trial.create') }}" class="st-btn st-btn--outline-primary" title="Buat planned tanpa koneksi SAP, menggunakan data vendor lokal (md_bp)">Create Planned Uji Coba</a>
                             @endcan
                         </div>
             </div>

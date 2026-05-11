@@ -1,4 +1,4 @@
-﻿@extends(request()->boolean('popup') ? 'layouts.popup' : 'layouts.app')
+@extends(request()->boolean('popup') ? 'layouts.popup' : 'layouts.app')
 
 @section('title', 'Complete Process - e-Docking Control System')
 @section('page_title', 'Complete Process')
@@ -81,7 +81,7 @@
                     </div>
                     <div class="st-flex st-gap-8 st-mt-4">
                         <button type="button" id="btn_add_seal" class="st-btn st-btn--outline-primary st-btn--xs st-btn--pad-sm">
-                            <i class="fas fa-plus st-mr-4"></i> Tambah Seal
+                            <i class="fas fa-plus st-mr-4"></i> Add Seal
                         </button>
                     </div>
                     <div id="seal_scan_camera_wrap" class="st-hidden-soft st-mt-8 st-border st-rounded-8 st-p-8 st-bg-slate-50">
@@ -292,7 +292,7 @@
 
     function openCameraView() {
         if (selectedPhotos.files.length >= 5) {
-            alert('Maksimal 5 foto telah dipilih.');
+            alert('Maximum 5 photos selected.');
             return;
         }
         viewInitial.style.display = 'none';
@@ -578,7 +578,7 @@
         div.innerHTML =
             '<input type="text" name="seal_number[]" class="st-input seal-input" required placeholder="Enter or scan seal number...">' +
             '<button type="button" class="st-btn st-btn--secondary st-btn--pad-md st-nowrap btn-scan-seal" title="Scan via Camera"><i class="fas fa-camera"></i></button>' +
-            '<button type="button" class="st-btn st-btn--danger st-btn--pad-md st-nowrap btn-remove-seal" title="Hapus"><i class="fas fa-trash-alt"></i></button>';
+            '<button type="button" class="st-btn st-btn--danger st-btn--pad-md st-nowrap btn-remove-seal" title="Delete"><i class="fas fa-trash-alt"></i></button>';
         return div;
     }
 

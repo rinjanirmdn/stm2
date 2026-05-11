@@ -59,7 +59,7 @@
                     <label class="st-label">&nbsp;</label>
                     <div class="st-text--xs st-text--muted" style="padding-top: 8px;">
                         <i class="fa-solid fa-shield-halved" style="color: #4A90D9;"></i>
-                        Perubahan status & tipe akan tercatat di Activity Log
+                        Status & type changes will be recorded in Activity Log
                     </div>
                 </div>
             </div>
