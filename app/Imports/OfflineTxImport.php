@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Services\SlotService;
 use DateTime;
 use Exception;
 use Illuminate\Support\Collection;
@@ -76,7 +77,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         $validWhCodes = array_keys($warehouses);
         $validGateNumbers = $allGates->pluck('gate_number')->unique()->values()->toArray();
 
-        $slotService = app(\App\Services\SlotService::class);
+        $slotService = app(SlotService::class);
         $dateAddExpr = $slotService->getDateAddExpression('planned_start', 'planned_duration');
 
         $validRowsToInsert = [];
@@ -196,7 +197,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                     // Check against DB
                     $sjExists = DB::table('slots')->where('mat_doc', $sjNumber)->exists();
                     if ($sjExists) {
-                        $rowErrors[] = $this->formatError($excelRow, 'sj_number', $sjNumber, "SJ Number already exists in the database.");
+                        $rowErrors[] = $this->formatError($excelRow, 'sj_number', $sjNumber, 'SJ Number already exists in the database.');
                     }
                 }
             }
@@ -204,7 +205,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             // Gate Overlap validation
             if ($gateId && $startStr && $finishStr) {
                 if (strtotime($startStr) >= strtotime($finishStr)) {
-                    $rowErrors[] = $this->formatError($excelRow, 'finish_time', $finishStr, "Finish time must be after start time.");
+                    $rowErrors[] = $this->formatError($excelRow, 'finish_time', $finishStr, 'Finish time must be after start time.');
                 } else {
                     $laneGroup = $slotService->getGateLaneGroup($gateId);
                     $laneGateIds = $laneGroup ? $slotService->getGateIdsByLaneGroup($laneGroup) : [$gateId];
@@ -224,19 +225,19 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                         }
                     }
 
-                    if (!$overlapInExcel) {
+                    if (! $overlapInExcel) {
                         $seenSlots[] = [
                             'laneGateIds' => $laneGateIds,
                             'start' => $startStr,
                             'finish' => $finishStr,
-                            'row' => $excelRow
+                            'row' => $excelRow,
                         ];
 
                         // Check overlap against DB
                         $overlapDb = DB::table('slots')
                             ->whereIn('planned_gate_id', $laneGateIds)
                             ->where('status', '!=', 'cancelled')
-                            ->whereRaw("COALESCE(actual_start, planned_start) < ?", [$finishStr])
+                            ->whereRaw('COALESCE(actual_start, planned_start) < ?', [$finishStr])
                             ->whereRaw("COALESCE(actual_finish, {$dateAddExpr}) > ?", [$startStr])
                             ->first(['id', 'ticket_number']);
 
@@ -254,6 +255,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 foreach ($rowErrors as $err) {
                     $this->errors[] = $err;
                 }
+
                 continue;
             }
 
@@ -307,7 +309,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
         // All-or-Nothing Approach: Only insert if there are ZERO errors
         if (empty($this->errors) && count($validRowsToInsert) > 0) {
-            DB::transaction(function() use ($validRowsToInsert) {
+            DB::transaction(function () use ($validRowsToInsert) {
                 foreach ($validRowsToInsert as $insertData) {
                     try {
                         DB::table('slots')->insertGetId($insertData);
