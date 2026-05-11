@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Users - e-Docking Control System')
 @section('page_title', 'Users')
@@ -43,7 +43,7 @@
                                     <th class="st-table-col-60">#</th>
                                     <th class="st-table-col-180">
                                         <div class="st-colhead">
-                                            <span class="st-colhead__label">NIK/Username</span>
+                                            <span class="st-colhead__label">NIK</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger"
                                                     data-sort="nik" data-type="text" title="Sort">â‡…</button>
@@ -385,7 +385,7 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">NIK/Username</label>
+                        <label class="st-label">NIK</label>
                         <input type="text" name="nik" class="st-input" maxlength="50" required>
                     </div>
 
@@ -414,12 +414,12 @@
                     </div>
 
                     <div class="st-form-field st-form-field--mb st-form-field--hidden" id="modal-vendor-code-field">
-                        <label class="st-label">Vendor Code (SAP)</label>
-                        <input type="text" name="vendor_code" class="st-input" maxlength="20" placeholder="e.g. 1100000263">
-                        <div class="st-form-note st-mb-8">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
+                        <label class="st-label" id="modal-vendor-code-label">Vendor Code (SAP)</label>
+                        <input type="text" name="vendor_code" id="modal-vendor-code-input" class="st-input" maxlength="50" placeholder="e.g. 1100000263">
+                        <div class="st-form-note st-mb-8" id="modal-vendor-code-hint">Will be validated against SAP to get company name.</div>
 
                         <label class="st-flex st-align-center st-gap-6 st-cursor-pointer st-mt-2">
-                            <input type="checkbox" name="is_internal_vendor" value="1" class="st-checkbox--plain">
+                            <input type="checkbox" name="is_internal_vendor" value="1" class="st-checkbox--plain" id="modal-internal-vendor-cb">
                             <span>Internal Vendor</span>
                         </label>
                     </div>
@@ -541,4 +541,28 @@
         });
     </script>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var cb = document.getElementById('modal-internal-vendor-cb');
+            if (cb) {
+                function syncVendorLabels() {
+                    var label = document.getElementById('modal-vendor-code-label');
+                    var input = document.getElementById('modal-vendor-code-input');
+                    var hint = document.getElementById('modal-vendor-code-hint');
+                    if (cb.checked) {
+                        if (label) label.textContent = 'Division';
+                        if (input) input.placeholder = 'e.g. PPIC, EXIM, Purchasing';
+                        if (hint) hint.textContent = 'Division name will be shown alongside the user name.';
+                    } else {
+                        if (label) label.textContent = 'Vendor Code (SAP)';
+                        if (input) input.placeholder = 'e.g. 1100000263';
+                        if (hint) hint.textContent = 'Will be validated against SAP to get company name.';
+                    }
+                }
+                cb.addEventListener('change', syncVendorLabels);
+                syncVendorLabels();
+            }
+        });
+    </script>
 @endpush

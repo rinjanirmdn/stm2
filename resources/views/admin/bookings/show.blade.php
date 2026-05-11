@@ -47,7 +47,7 @@
                     — {{ $booking->approval_notes }}
                 @endif
                 @if($booking->approver)
-                    <br><small style="opacity:0.75">by {{ $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
+                    <br><small style="opacity:0.75">by {{ $booking->approver->display_name ?? $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
                 @else
                     <br><small style="opacity:0.75">{{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
                 @endif
@@ -123,7 +123,7 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Requested By</label>
-                        <div class="detail-value">{{ $booking->requester?->full_name ?? 'N/A' }}</div>
+                        <div class="detail-value">{{ $booking->requester?->display_name ?? $booking->requester?->full_name ?? 'N/A' }}</div>
                     </div>
                 </div>
             </div>
@@ -197,7 +197,7 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Processed By</label>
-                        <div class="detail-value">{{ $booking->approver?->full_name ?? 'N/A' }}</div>
+                        <div class="detail-value">{{ $booking->approver?->display_name ?? $booking->approver?->full_name ?? 'N/A' }}</div>
                     </div>
                     @endif
                 </div>

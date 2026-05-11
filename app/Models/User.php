@@ -91,4 +91,48 @@ class User extends Authenticatable
     {
         return $this->hasMany(Slot::class, 'requested_by');
     }
+
+    /**
+     * Display name with department/company context.
+     * Internal vendor: "Full Name (DEPARTMENT)"
+     * External vendor: "Full Name (Company Name)"
+     * Others: "Full Name"
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        $name = trim((string) ($this->full_name ?? ''));
+        if ($name === '') {
+            $name = 'User';
+        }
+
+        // Internal vendor → append division from vendor_code
+        if ($this->is_internal_vendor && ! empty($this->vendor_code)) {
+            return $name.' ('.strtoupper(trim($this->vendor_code)).')';
+        }
+
+        // External vendor → get company name from cache, fallback to slots table
+        if (! empty($this->vendor_code) && ! $this->is_internal_vendor) {
+            $cacheKey = 'vendor_company_'.$this->vendor_code;
+            $companyName = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+            // Fallback: lookup from slots table if cache is empty
+            if (! $companyName) {
+                $companyName = \Illuminate\Support\Facades\DB::table('slots')
+                    ->where('vendor_code', $this->vendor_code)
+                    ->whereNotNull('vendor_name')
+                    ->where('vendor_name', '!=', '')
+                    ->value('vendor_name');
+
+                if ($companyName) {
+                    \Illuminate\Support\Facades\Cache::put($cacheKey, $companyName, now()->addDays(30));
+                }
+            }
+
+            if ($companyName) {
+                return $name.' ('.$companyName.')';
+            }
+        }
+
+        return $name;
+    }
 }

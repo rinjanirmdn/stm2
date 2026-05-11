@@ -66,7 +66,7 @@ class LoginController extends Controller
             Cache::put($attemptsKey, $newAttempts, now()->addMinutes(30));
 
             $remainingAttempts = 3 - $newAttempts;
-            $message = 'Invalid Email/NIK/username or password';
+            $message = 'Invalid Email/NIK or password';
 
             if ($remainingAttempts > 0) {
                 $message .= ". {$remainingAttempts} attempts remaining.";

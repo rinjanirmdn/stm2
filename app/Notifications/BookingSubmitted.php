@@ -29,7 +29,7 @@ class BookingSubmitted extends Notification
 
         return (new MailMessage())
             ->subject('Booking Request Submitted - PO '.$poNumber)
-            ->greeting('Hello '.$notifiable->name.',')
+            ->greeting('Hello '.($notifiable->display_name ?? $notifiable->name).',')
             ->line('Your booking request has been submitted successfully and is waiting for approval.')
             ->line('**PO/SO Number:** '.$poNumber)
             ->line('**Scheduled Time:** '.$plannedDate)

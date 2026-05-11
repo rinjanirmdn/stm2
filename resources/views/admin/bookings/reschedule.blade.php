@@ -64,7 +64,7 @@
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Requested By</label>
-                        <div class="detail-value">{{ $booking->requester?->full_name ?? 'N/A' }}</div>
+                        <div class="detail-value">{{ $booking->requester?->display_name ?? $booking->requester?->full_name ?? 'N/A' }}</div>
                     </div>
                 </div>
             </div>

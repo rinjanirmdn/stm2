@@ -14,12 +14,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use App\Services\SapPoService;
 use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
 {
     public function __construct(
-        private readonly UserRoleService $roleService
+        private readonly UserRoleService $roleService,
+        private readonly SapPoService $sapPoService
     ) {}
 
     public function index(Request $request)
@@ -268,6 +270,15 @@ class UserController extends Controller
         // Assign role using service with proper name
         if (! $this->roleService->assignRole($userId, $roleRecord->roles_name)) {
             return back()->withInput()->with('error', 'Failed to assign role');
+        }
+
+        // Validate external vendor code against SAP and cache company name
+        if ($role === 'vendor' && $vendorCode !== '' && ! ($validated['is_internal_vendor'] ?? false)) {
+            try {
+                $this->sapPoService->getVendorNameByCode($vendorCode);
+            } catch (\Throwable $e) {
+                // Non-blocking: vendor name lookup failure shouldn't prevent user creation
+            }
         }
 
         return redirect()->route('users.index')->with('success', 'User created successfully');
@@ -522,6 +533,17 @@ class UserController extends Controller
         }
 
         DB::table('md_users')->where('id', $userId)->update($update);
+
+        // Validate external vendor code against SAP and cache company name
+        if (($update['vendor_code'] ?? '') !== '' && ! ($update['is_internal_vendor'] ?? false)) {
+            try {
+                // Clear old cache to force re-lookup
+                Cache::forget('vendor_company_'.$update['vendor_code']);
+                $this->sapPoService->getVendorNameByCode($update['vendor_code']);
+            } catch (\Throwable $e) {
+                // Non-blocking
+            }
+        }
 
         // Clear login lockout cache for this user so they can log in with the new password immediately
         $loginIdentifiers = [];

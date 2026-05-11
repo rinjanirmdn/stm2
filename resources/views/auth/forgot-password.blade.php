@@ -46,7 +46,7 @@
                 @csrf
 
                 <div class="st-form-field">
-                    <label class="st-label" for="login">Email, Username, or NIK</label>
+                    <label class="st-label" for="login">Email / NIK</label>
                     <input type="text" class="st-input" id="login" name="login" value="{{ old('login') }}" required autofocus>
                 </div>
 

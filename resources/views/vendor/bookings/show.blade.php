@@ -34,7 +34,7 @@
                 — {{ $booking->approval_notes }}
             @endif
             @if($booking->approver)
-                <br><small style="opacity:0.7">by {{ $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
+                <br><small style="opacity:0.7">by {{ $booking->approver->display_name ?? $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
             @else
                 <br><small style="opacity:0.7">{{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
             @endif
@@ -57,7 +57,7 @@
                 — Your booking was cancelled.
             @endif
             @if($booking->approver)
-                <br><small style="opacity:0.7">by {{ $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
+                <br><small style="opacity:0.7">by {{ $booking->approver->display_name ?? $booking->approver->full_name }} · {{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
             @else
                 <br><small style="opacity:0.7">{{ ($booking->approved_at ?? $booking->updated_at)?->format('d-m-Y H:i') }}</small>
             @endif
@@ -274,7 +274,7 @@
                 @if($booking->approver)
                 <tr>
                     <td class="vb-table__label">Processed By</td>
-                    <td>{{ $booking->approver->full_name }}</td>
+                    <td>{{ $booking->approver->display_name ?? $booking->approver->full_name }}</td>
                 </tr>
                 @endif
                 @if($booking->approval_notes)
