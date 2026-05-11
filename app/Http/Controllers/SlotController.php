@@ -727,7 +727,7 @@ class SlotController extends Controller
                 'al.activity_type',
                 'al.description',
                 'al.created_at',
-                DB::raw("CASE WHEN u.is_internal_vendor = 1 AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END as username"),
+                DB::raw("CASE WHEN u.is_internal_vendor = true AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(u.full_name, ' (', UPPER(u.vendor_code), ')') ELSE u.full_name END as username"),
             ])
             ->get();
 
