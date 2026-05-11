@@ -75,6 +75,7 @@ class TimeCalculationService
     public function getTruckTypeDuration(string $truckType): int
     {
         $row = DB::table('md_truck')
+            ->whereNull('deleted_at')
             ->where('truck_type', $truckType)
             ->select(['target_duration_minutes'])
             ->first();
@@ -285,7 +286,7 @@ class TimeCalculationService
      */
     public function getTruckTypeOptions(): array
     {
-        $fromDb = DB::table('md_truck')->orderBy('truck_type')->pluck('truck_type')->all();
+        $fromDb = DB::table('md_truck')->whereNull('deleted_at')->orderBy('truck_type')->pluck('truck_type')->all();
 
         if (! empty($fromDb)) {
             return array_values(array_filter(array_map('strval', $fromDb)));
