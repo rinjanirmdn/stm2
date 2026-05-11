@@ -771,7 +771,7 @@ class SlotLifecycleController extends Controller
     {
         try {
             $actor = Auth::user();
-            $actorName = trim((string) ($actor->name ?? $actor->full_name ?? $actor->username ?? 'System'));
+            $actorName = trim((string) ($actor->display_name ?? $actor->name ?? $actor->full_name ?? $actor->username ?? 'System'));
             $poNumber = trim((string) ($slot->po_number ?? ''));
             $vendorName = trim((string) ($slot->vendor_name ?? ''));
             $ticketNumber = trim((string) ($slot->ticket_number ?? ''));

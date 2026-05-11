@@ -25,11 +25,11 @@ class BookingRequested extends Notification
     {
         $plannedDate = $this->slot->planned_start?->format('d-m-Y H:i') ?? '-';
         $poNumber = $this->slot->po_number ?? '-';
-        $vendorName = $this->slot->vendor_name ?? $this->slot->requester?->name ?? 'Vendor';
+        $vendorName = $this->slot->vendor_name ?? $this->slot->requester?->display_name ?? $this->slot->requester?->name ?? 'Vendor';
 
         return (new MailMessage())
             ->subject('New Booking Request - PO '.$poNumber)
-            ->greeting('Hello '.$notifiable->name.',')
+            ->greeting('Hello '.($notifiable->display_name ?? $notifiable->name).',')
             ->line('A new booking request has been submitted and requires your review.')
             ->line('**Vendor:** '.$vendorName)
             ->line('**PO/SO Number:** '.$poNumber)
@@ -42,7 +42,7 @@ class BookingRequested extends Notification
 
     public function toArray(object $notifiable): array
     {
-        $vendorName = $this->slot->vendor_name ?? $this->slot->requester?->name ?? 'Vendor';
+        $vendorName = $this->slot->vendor_name ?? $this->slot->requester?->display_name ?? $this->slot->requester?->name ?? 'Vendor';
         $poNumber = $this->slot->po_number ?? '-';
 
         return [

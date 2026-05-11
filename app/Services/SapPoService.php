@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class SapPoService
@@ -517,5 +518,120 @@ class SapPoService
         }
 
         return $req;
+    }
+
+    /**
+     * Look up a vendor/customer company name by their SAP code.
+     * Searches ZPOA_DTL_LIST for any PO with matching SupplierCode or CustomerCode.
+     * Result is cached for 30 days.
+     */
+    public function getVendorNameByCode(string $vendorCode): ?string
+    {
+        $vendorCode = trim($vendorCode);
+        if ($vendorCode === '') {
+            return null;
+        }
+
+        // Check cache first
+        $cacheKey = 'vendor_company_'.$vendorCode;
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null) {
+            return $cached ?: null;
+        }
+
+        $baseUrl = trim((string) config('services.sap_po.base_url', ''));
+        $servicePath = trim((string) config('services.sap_po.service_path', ''));
+        $token = trim((string) config('services.sap_po.token', ''));
+        $username = trim((string) config('services.sap_po.username', ''));
+        $password = (string) config('services.sap_po.password', '');
+        $timeout = (int) config('services.sap_po.timeout', 15);
+        $sapClient = trim((string) config('services.sap_po.sap_client', '210'));
+        $verifySsl = (bool) config('services.sap_po.verify_ssl', false);
+
+        // Fallback: dummy data
+        if ($baseUrl === '') {
+            foreach ($this->dummyPurchaseOrders as $po) {
+                if (($po['vendor_code'] ?? '') === $vendorCode || ($po['supplier_code'] ?? '') === $vendorCode) {
+                    $name = (string) ($po['vendor_name'] ?? $po['supplier_name'] ?? '');
+                    if ($name !== '') {
+                        Cache::put($cacheKey, $name, now()->addDays(30));
+
+                        return $name;
+                    }
+                }
+            }
+            Cache::put($cacheKey, '', now()->addHours(1));
+
+            return null;
+        }
+
+        // Search SAP ZPOA_DTL_LIST for matching SupplierCode/CustomerCode
+        $urlWithSet = rtrim($baseUrl, '/').$servicePath.'/ZPOA_DTL_LIST/Set';
+        $urlWithoutSet = rtrim($baseUrl, '/').$servicePath.'/ZPOA_DTL_LIST';
+
+        try {
+            $req = $this->buildSapRequest($timeout, $token, $username, $password, $sapClient, $verifySsl)->acceptJson();
+
+            $queryParams = [
+                '$select' => 'SupplierCode,SupplierName,CustomerCode,CustomerName',
+            ];
+
+            foreach ([$urlWithSet, $urlWithoutSet] as $baseListUrl) {
+                $maxPages = 3;
+                $page = 0;
+                $nextUrl = $baseListUrl;
+
+                while ($nextUrl !== '' && $page < $maxPages) {
+                    $page++;
+                    $response = $req->get($nextUrl, $nextUrl === $baseListUrl ? $queryParams : []);
+
+                    if (! $response->successful()) {
+                        break;
+                    }
+
+                    $json = $response->json();
+                    $rows = is_array($json) ? ($json['value'] ?? []) : [];
+
+                    foreach ($rows as $item) {
+                        if (! is_array($item)) {
+                            continue;
+                        }
+
+                        $supplierCode = trim((string) ($item['SupplierCode'] ?? ''));
+                        $customerCode = trim((string) ($item['CustomerCode'] ?? ''));
+
+                        if ($supplierCode === $vendorCode) {
+                            $name = trim((string) ($item['SupplierName'] ?? ''));
+                            if ($name !== '') {
+                                Cache::put($cacheKey, $name, now()->addDays(30));
+
+                                return $name;
+                            }
+                        }
+
+                        if ($customerCode === $vendorCode) {
+                            $name = trim((string) ($item['CustomerName'] ?? ''));
+                            if ($name !== '') {
+                                Cache::put($cacheKey, $name, now()->addDays(30));
+
+                                return $name;
+                            }
+                        }
+                    }
+
+                    $nextUrl = '';
+                    if (is_array($json)) {
+                        $nextUrl = (string) ($json['@odata.nextLink'] ?? $json['odata.nextLink'] ?? '');
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('SAP Vendor Lookup Error', ['code' => $vendorCode, 'error' => $e->getMessage()]);
+        }
+
+        // Cache empty result for 1 hour to avoid hammering SAP
+        Cache::put($cacheKey, '', now()->addHours(1));
+
+        return null;
     }
 }

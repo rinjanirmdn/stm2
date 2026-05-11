@@ -25,6 +25,7 @@ class BookingRequestSubmitted extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $vendorName = $this->bookingRequest->supplier_name
+            ?? $this->bookingRequest->requester?->display_name
             ?? $this->bookingRequest->requester?->name
             ?? 'Vendor';
         $poNumber = $this->bookingRequest->po_number ?? '-';
@@ -65,6 +66,7 @@ class BookingRequestSubmitted extends Notification
     public function toArray(object $notifiable): array
     {
         $vendorName = $this->bookingRequest->supplier_name
+            ?? $this->bookingRequest->requester?->display_name
             ?? $this->bookingRequest->requester?->name
             ?? 'Vendor';
 

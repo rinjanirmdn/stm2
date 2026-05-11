@@ -28,7 +28,7 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">NIK/Username</label>
+                        <label class="st-label">NIK</label>
                         <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik', $editUser->nik) }}" required>
                     </div>
 
@@ -58,12 +58,12 @@
                     </div>
 
                     <div class="st-form-field st-form-field--mb st-form-field--hidden" id="vendor_code_field">
-                        <label class="st-label">Vendor Code (SAP)</label>
-                        <input type="text" name="vendor_code" class="st-input" maxlength="20" value="{{ old('vendor_code', $editUser->vendor_code ?? '') }}" placeholder="e.g. 1100000263">
-                        <div class="st-form-note st-mb-8">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
+                        <label class="st-label" id="edit-vendor-code-label">Vendor Code (SAP)</label>
+                        <input type="text" name="vendor_code" id="edit-vendor-code-input" class="st-input" maxlength="50" value="{{ old('vendor_code', $editUser->vendor_code ?? '') }}" placeholder="e.g. 1100000263">
+                        <div class="st-form-note st-mb-8" id="edit-vendor-code-hint">Will be validated against SAP to get company name.</div>
                         
                         <label class="st-flex st-align-center st-gap-6 st-cursor-pointer st-mt-2">
-                            <input type="checkbox" name="is_internal_vendor" value="1" form="user_edit_form" {{ old('is_internal_vendor', $editUser->is_internal_vendor) == '1' ? 'checked' : '' }} class="st-checkbox--plain">
+                            <input type="checkbox" name="is_internal_vendor" value="1" form="user_edit_form" id="edit-internal-vendor-cb" {{ old('is_internal_vendor', $editUser->is_internal_vendor) == '1' ? 'checked' : '' }} class="st-checkbox--plain">
                             <span>Internal Vendor</span>
                         </label>
                     </div>
@@ -174,5 +174,27 @@
 
 @push('scripts')
 @vite(['resources/js/pages/users-edit.js'])
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var cb = document.getElementById('edit-internal-vendor-cb');
+        if (cb) {
+            function syncEditVendorLabels() {
+                var label = document.getElementById('edit-vendor-code-label');
+                var input = document.getElementById('edit-vendor-code-input');
+                var hint = document.getElementById('edit-vendor-code-hint');
+                if (cb.checked) {
+                    if (label) label.textContent = 'Division';
+                    if (input) input.placeholder = 'e.g. PPIC, EXIM, Purchasing';
+                    if (hint) hint.textContent = 'Division name will be shown alongside the user name.';
+                } else {
+                    if (label) label.textContent = 'Vendor Code (SAP)';
+                    if (input) input.placeholder = 'e.g. 1100000263';
+                    if (hint) hint.textContent = 'Will be validated against SAP to get company name.';
+                }
+            }
+            cb.addEventListener('change', syncEditVendorLabels);
+            syncEditVendorLabels();
+        }
+    });
+</script>
 @endpush
-

@@ -48,7 +48,7 @@ class SlotCancelled extends Notification
 
         return (new MailMessage())
             ->subject('Booking Cancelled - '.$ticketNumber)
-            ->greeting('Hello '.$notifiable->name.',')
+            ->greeting('Hello '.($notifiable->display_name ?? $notifiable->name).',')
             ->line('Your booking has been cancelled.')
             ->line('**PO/SO Number:** '.$poNumber)
             ->line('**Scheduled Time:** '.$plannedDate)

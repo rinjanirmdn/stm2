@@ -739,7 +739,7 @@ class VendorBookingController extends Controller
 
         try {
             $reason = trim((string) $request->reason);
-            $actorName = trim((string) ($user->name ?? $user->full_name ?? $user->username ?? 'Vendor'));
+            $actorName = trim((string) ($user->display_name ?? $user->name ?? $user->full_name ?? $user->username ?? 'Vendor'));
             $notes = 'Cancelled by '.$actorName;
             if ($reason !== '') {
                 $notes .= ': '.$reason;

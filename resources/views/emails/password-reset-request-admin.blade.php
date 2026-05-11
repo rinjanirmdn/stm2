@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,7 +20,7 @@
                             <tr>
                                 <td style="padding-top:12px;">
                                     <div style="font-size:18px;font-weight:600;">Password Reset Request</div>
-                                    <div style="font-size:13px;opacity:0.9;">{{ $user->full_name ?? $user->username ?? 'Vendor' }} &mdash; {{ $appName }}</div>
+                                    <div style="font-size:13px;opacity:0.9;">{{ $user->display_name ?? $user->full_name ?? 'Vendor' }} &mdash; {{ $appName }}</div>
                                 </td>
                             </tr>
                         </table>
@@ -50,11 +50,7 @@
                             </tr>
                             <tr>
                                 <td style="padding:4px 0;width:140px;color:#6b7280;">Name</td>
-                                <td style="padding:4px 0;">{{ $user->full_name ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:4px 0;color:#6b7280;">Username</td>
-                                <td style="padding:4px 0;">{{ $user->username ?? 'N/A' }}</td>
+                                <td style="padding:4px 0;">{{ $user->display_name ?? $user->full_name ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td style="padding:4px 0;color:#6b7280;">Email</td>
