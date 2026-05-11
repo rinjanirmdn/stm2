@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -113,18 +115,18 @@ class User extends Authenticatable
         // External vendor → get company name from cache, fallback to slots table
         if (! empty($this->vendor_code) && ! $this->is_internal_vendor) {
             $cacheKey = 'vendor_company_'.$this->vendor_code;
-            $companyName = \Illuminate\Support\Facades\Cache::get($cacheKey);
+            $companyName = Cache::get($cacheKey);
 
             // Fallback: lookup from slots table if cache is empty
             if (! $companyName) {
-                $companyName = \Illuminate\Support\Facades\DB::table('slots')
+                $companyName = DB::table('slots')
                     ->where('vendor_code', $this->vendor_code)
                     ->whereNotNull('vendor_name')
                     ->where('vendor_name', '!=', '')
                     ->value('vendor_name');
 
                 if ($companyName) {
-                    \Illuminate\Support\Facades\Cache::put($cacheKey, $companyName, now()->addDays(30));
+                    Cache::put($cacheKey, $companyName, now()->addDays(30));
                 }
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class SapPoService
@@ -518,6 +519,7 @@ class SapPoService
 
         return $req;
     }
+
     /**
      * Look up a vendor/customer company name by their SAP code.
      * Searches ZPOA_DTL_LIST for any PO with matching SupplierCode or CustomerCode.
@@ -532,7 +534,7 @@ class SapPoService
 
         // Check cache first
         $cacheKey = 'vendor_company_'.$vendorCode;
-        $cached = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        $cached = Cache::get($cacheKey);
         if ($cached !== null) {
             return $cached ?: null;
         }
@@ -552,13 +554,13 @@ class SapPoService
                 if (($po['vendor_code'] ?? '') === $vendorCode || ($po['supplier_code'] ?? '') === $vendorCode) {
                     $name = (string) ($po['vendor_name'] ?? $po['supplier_name'] ?? '');
                     if ($name !== '') {
-                        \Illuminate\Support\Facades\Cache::put($cacheKey, $name, now()->addDays(30));
+                        Cache::put($cacheKey, $name, now()->addDays(30));
 
                         return $name;
                     }
                 }
             }
-            \Illuminate\Support\Facades\Cache::put($cacheKey, '', now()->addHours(1));
+            Cache::put($cacheKey, '', now()->addHours(1));
 
             return null;
         }
@@ -601,7 +603,7 @@ class SapPoService
                         if ($supplierCode === $vendorCode) {
                             $name = trim((string) ($item['SupplierName'] ?? ''));
                             if ($name !== '') {
-                                \Illuminate\Support\Facades\Cache::put($cacheKey, $name, now()->addDays(30));
+                                Cache::put($cacheKey, $name, now()->addDays(30));
 
                                 return $name;
                             }
@@ -610,7 +612,7 @@ class SapPoService
                         if ($customerCode === $vendorCode) {
                             $name = trim((string) ($item['CustomerName'] ?? ''));
                             if ($name !== '') {
-                                \Illuminate\Support\Facades\Cache::put($cacheKey, $name, now()->addDays(30));
+                                Cache::put($cacheKey, $name, now()->addDays(30));
 
                                 return $name;
                             }
@@ -628,7 +630,7 @@ class SapPoService
         }
 
         // Cache empty result for 1 hour to avoid hammering SAP
-        \Illuminate\Support\Facades\Cache::put($cacheKey, '', now()->addHours(1));
+        Cache::put($cacheKey, '', now()->addHours(1));
 
         return null;
     }
