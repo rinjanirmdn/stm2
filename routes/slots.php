@@ -17,9 +17,7 @@ Route::prefix('slots')->name('slots.')->group(function () {
         Route::get('/create', [SlotController::class, 'create'])->name('create');
         Route::post('/', [SlotController::class, 'store'])->name('store');
 
-        // Uji Coba (Trial) — tanpa koneksi SAP, vendor dari md_bp lokal
-        Route::get('/trial-create', [SlotTrialController::class, 'create'])->name('trial.create');
-        Route::post('/trial-create', [SlotTrialController::class, 'store'])->name('trial.store');
+
     });
 
     Route::get('/{slotId}/edit', [SlotController::class, 'edit'])->whereNumber('slotId')->name('edit')->middleware('permission:slots.edit');

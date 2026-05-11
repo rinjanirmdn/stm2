@@ -155,19 +155,7 @@ Route::middleware(['permission:bookings.index'])->prefix('bookings')->name('book
     Route::get('/ajax/check-gate', [BookingApprovalController::class, 'ajaxCheckGateAvailability'])->name('ajax.check_gate')->middleware(['permission:bookings.ajax.check_gate', 'throttle:30,1']);
 });
 
-// -----------------------------------------------------------------------------
-// Master Data: Business Partner (md_bp) — Vendor & Customer lokal
-// Dibutuhkan untuk form 'Create Planned Uji Coba' (tanpa SAP)
-// -----------------------------------------------------------------------------
-Route::prefix('md-bp')->name('md_bp.')->middleware('permission:master.bp.index')->group(function () {
-    Route::get('/', [MdBpController::class, 'index'])->name('index');
-    Route::get('/create', [MdBpController::class, 'create'])->name('create');
-    Route::post('/', [MdBpController::class, 'store'])->name('store');
-    Route::get('/{id}/edit', [MdBpController::class, 'edit'])->whereNumber('id')->name('edit');
-    Route::post('/{id}/edit', [MdBpController::class, 'update'])->whereNumber('id')->name('update');
-    Route::post('/{id}/delete', [MdBpController::class, 'destroy'])->whereNumber('id')->name('destroy');
-    Route::get('/ajax/search', [MdBpController::class, 'ajaxSearch'])->name('ajax.search');
-});
+
 
 // -----------------------------------------------------------------------------
 // Master Data: Vendor Transporters

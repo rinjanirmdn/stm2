@@ -584,7 +584,7 @@
 
     function openCameraView() {
         if (selectedPhotos.files.length >= 5) {
-            alert('Maksimal 5 foto telah dipilih.');
+            alert('Maximum 5 photos selected.');
             return;
         }
         viewInitial.style.display = 'none';
