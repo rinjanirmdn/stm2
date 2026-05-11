@@ -93,13 +93,13 @@
     <div class="container">
         <div class="icon">🔒</div>
         <h1>Session Expired</h1>
-        <p>Sesi Anda telah berakhir karena tidak ada aktivitas.<br>Silakan login kembali untuk melanjutkan.</p>
+        <p>Your session has expired due to inactivity.<br>Please login again to continue.</p>
         <div class="countdown">
-            <span class="spinner"></span> Mengarahkan ke halaman login dalam <span id="timer">3</span> detik...
+            <span class="spinner"></span> Redirecting to login page in <span id="timer">3</span> seconds...
         </div>
         <div>
-            <a href="/login" class="btn btn-primary">Login Sekarang</a>
-            <a href="/" class="btn btn-ghost">Ke Halaman Utama</a>
+            <a href="/login" class="btn btn-primary">Login Now</a>
+            <a href="/" class="btn btn-ghost">Go to Homepage</a>
         </div>
     </div>
     <script>
