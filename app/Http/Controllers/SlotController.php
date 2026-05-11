@@ -364,7 +364,7 @@ class SlotController extends Controller
         }
 
         $user = Auth::user();
-        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head', 'Admin']);
+        $isSuperEditor = $user && $user->can('slots.super_edit');
 
         // Super editors can edit any status except cancelled; other users only scheduled planned
         if ($isSuperEditor) {
@@ -417,7 +417,7 @@ class SlotController extends Controller
         }
 
         $user = Auth::user();
-        $isSuperEditor = $user && $user->hasAnyRole(['Super Account', 'Section Head', 'Admin']);
+        $isSuperEditor = $user && $user->can('slots.super_edit');
 
         if ($isSuperEditor) {
             if ((string) ($slot->status ?? '') === 'cancelled') {

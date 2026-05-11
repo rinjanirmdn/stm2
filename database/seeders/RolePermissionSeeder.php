@@ -38,6 +38,7 @@ class RolePermissionSeeder extends Seeder
             'slots.edit',
             'slots.update',
             'slots.delete',
+            'slots.super_edit',
             'slots.arrival',
             'slots.arrival.store',
             'slots.start',
@@ -46,6 +47,7 @@ class RolePermissionSeeder extends Seeder
             'slots.complete.store',
             'slots.cancel',
             'slots.cancel.store',
+            'slots.backdate',
             'slots.ticket',
             'slots.search_suggestions',
             'slots.ajax.po_search',
@@ -163,6 +165,7 @@ class RolePermissionSeeder extends Seeder
 
             'login.index',
             'login.store',
+            'auth.direct_reset',
             'logout',
         ];
 
@@ -339,12 +342,14 @@ class RolePermissionSeeder extends Seeder
             'dashboard.view',
         ]);
 
-        // Section Head: same as Admin but without user management
-        $sectionHeadRole = Role::findOrCreate('Section Head');
-        $sectionHeadPermissions = array_values(array_filter(array_merge($coreInternal, $techInternal), function ($perm) {
-            return ! str_starts_with($perm, 'users.');
+        // Section Head & Super Account: same as Admin but without user management
+        $internalPowerExclude = $adminExclude;
+        $internalPowerPermissions = array_values(array_filter($permissions, function ($p) use ($internalPowerExclude) {
+            return ! in_array($p, $internalPowerExclude, true) && ! str_starts_with($p, 'users.');
         }));
-        $sectionHeadRole->syncPermissions($sectionHeadPermissions);
+
+        $sectionHeadRole = Role::findOrCreate('Section Head');
+        $sectionHeadRole->syncPermissions($internalPowerPermissions);
 
         // Optional mappings for existing master roles
         // Security: verify tickets and record arrival only
@@ -451,12 +456,9 @@ class RolePermissionSeeder extends Seeder
             'notifications.latest',
         ]);
 
-        // Super Account: Admin-equivalent but cannot manage user accounts
+        // Super Account: Admin-equivalent but cannot manage user accounts (identical to Section Head)
         $superAccountRole = Role::findOrCreate('Super Account');
-        $superAccountPermissions = array_values(array_filter(array_merge($coreInternal, $techInternal), function ($perm) {
-            return ! str_starts_with($perm, 'users.');
-        }));
-        $superAccountRole->syncPermissions($superAccountPermissions);
+        $superAccountRole->syncPermissions($internalPowerPermissions);
 
         // Enforce role whitelist: keep only required roles
         $rolesToKeep = [
