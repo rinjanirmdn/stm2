@@ -33,7 +33,7 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">NIK/Username</label>
+                        <label class="st-label">NIK</label>
                         <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik') }}" required>
                     </div>
 
@@ -69,13 +69,13 @@
                     </div>
 
                     <div class="st-form-field st-form-field--mb st-form-field--hidden" id="vendor_code_field">
-                        <label class="st-label">Vendor Code (SAP)</label>
-                        <input type="text" name="vendor_code" class="st-input" maxlength="20"
+                        <label class="st-label" id="create-vendor-code-label">Vendor Code (SAP)</label>
+                        <input type="text" name="vendor_code" id="create-vendor-code-input" class="st-input" maxlength="50"
                             value="{{ old('vendor_code') }}" placeholder="e.g. 1100000263">
-                        <div class="st-form-note st-mb-8">Isi dengan SupplierCode/CustomerCode dari SAP untuk filter PO.</div>
+                        <div class="st-form-note st-mb-8" id="create-vendor-code-hint">Will be validated against SAP to get company name.</div>
                         
                         <label class="st-flex st-align-center st-gap-6 st-cursor-pointer st-mt-2">
-                            <input type="checkbox" name="is_internal_vendor" value="1" {{ old('is_internal_vendor') == '1' ? 'checked' : '' }} class="st-checkbox--plain">
+                            <input type="checkbox" name="is_internal_vendor" value="1" id="create-internal-vendor-cb" {{ old('is_internal_vendor') == '1' ? 'checked' : '' }} class="st-checkbox--plain">
                             <span>Internal Vendor</span>
                         </label>
                     </div>
@@ -114,4 +114,27 @@
 
 @push('scripts')
     @vite(['resources/js/pages/users-create.js'])
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var cb = document.getElementById('create-internal-vendor-cb');
+            if (cb) {
+                function syncCreateVendorLabels() {
+                    var label = document.getElementById('create-vendor-code-label');
+                    var input = document.getElementById('create-vendor-code-input');
+                    var hint = document.getElementById('create-vendor-code-hint');
+                    if (cb.checked) {
+                        if (label) label.textContent = 'Division';
+                        if (input) input.placeholder = 'e.g. PPIC, EXIM, Purchasing';
+                        if (hint) hint.textContent = 'Division name will be shown alongside the user name.';
+                    } else {
+                        if (label) label.textContent = 'Vendor Code (SAP)';
+                        if (input) input.placeholder = 'e.g. 1100000263';
+                        if (hint) hint.textContent = 'Will be validated against SAP to get company name.';
+                    }
+                }
+                cb.addEventListener('change', syncCreateVendorLabels);
+                syncCreateVendorLabels();
+            }
+        });
+    </script>
 @endpush

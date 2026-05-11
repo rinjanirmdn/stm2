@@ -44,7 +44,7 @@
                         <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background-color:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;">
                             <tr>
                                 <td style="padding:14px 16px;font-size:13px;color:#0f172a;border-bottom:1px solid #e5e7eb;">
-                                    <strong>Email / Username</strong><br>
+                                    <strong>Email / NIK</strong><br>
                                     <span style="color:#334155;">{{ $userEmail }}</span>
                                 </td>
                             </tr>
