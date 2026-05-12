@@ -1,15 +1,21 @@
 <?php
+
+use App\Models\BookingRequest;
+use App\Models\Slot;
+use App\Models\User;
+use Illuminate\Contracts\Console\Kernel;
+
 require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
-$user = App\Models\User::where('vendor_code', '1100000298')->first();
+$user = User::where('vendor_code', '1100000298')->first();
 $rangeStart = '2026-05-01';
 $rangeEnd = '2026-05-31';
 
-$slots = App\Models\Slot::where('requested_by', $user->id)
-    ->where(function($q) {
+$slots = Slot::where('requested_by', $user->id)
+    ->where(function ($q) {
         $q->whereNull('slot_type')->orWhere('slot_type', '!=', 'unplanned');
     })
     ->whereDate('planned_start', '>=', $rangeStart)
@@ -18,11 +24,11 @@ $slots = App\Models\Slot::where('requested_by', $user->id)
     ->get();
 
 echo "PLANNED SLOTS IN MAY:\n";
-foreach($slots as $s) {
+foreach ($slots as $s) {
     echo "- Slot ID: {$s->id}, Ticket: {$s->ticket_number}, Type: {$s->slot_type}\n";
 }
 
-$unplanned = App\Models\Slot::where('requested_by', $user->id)
+$unplanned = Slot::where('requested_by', $user->id)
     ->where('slot_type', 'unplanned')
     ->whereDate('planned_start', '>=', $rangeStart)
     ->whereDate('planned_start', '<=', $rangeEnd)
@@ -30,11 +36,11 @@ $unplanned = App\Models\Slot::where('requested_by', $user->id)
     ->get();
 
 echo "\nUNPLANNED SLOTS IN MAY:\n";
-foreach($unplanned as $s) {
+foreach ($unplanned as $s) {
     echo "- Slot ID: {$s->id}, Ticket: {$s->ticket_number}, Type: {$s->slot_type}\n";
 }
 
-$brs = App\Models\BookingRequest::where('requested_by', $user->id)
+$brs = BookingRequest::where('requested_by', $user->id)
     ->where('status', 'approved')
     ->whereNull('converted_slot_id')
     ->whereDate('planned_start', '>=', $rangeStart)
@@ -42,6 +48,6 @@ $brs = App\Models\BookingRequest::where('requested_by', $user->id)
     ->get();
 
 echo "\nBRs IN MAY:\n";
-foreach($brs as $b) {
+foreach ($brs as $b) {
     echo "- BR ID: {$b->id}, Req: {$b->request_number}\n";
 }
