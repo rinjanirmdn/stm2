@@ -59,6 +59,11 @@ class UserStoreRequest extends FormRequest
                     return (string) $this->input('role') === 'vendor' && ! $this->input('is_internal_vendor');
                 }),
             ],
+            'company_name' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
             'is_internal_vendor' => [
                 'nullable',
                 'boolean',

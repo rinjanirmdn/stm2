@@ -112,25 +112,31 @@ class User extends Authenticatable
             return $name.' ('.strtoupper(trim($this->vendor_code)).')';
         }
 
-        // External vendor → get company name from cache, fallback to slots table
+        // External vendor → use company_name field first, then cache, then slots fallback
         if (! empty($this->vendor_code) && ! $this->is_internal_vendor) {
-            $cacheKey = 'vendor_company_'.$this->vendor_code;
-            $companyName = Cache::get($cacheKey);
+            // Priority 1: company_name column on user record
+            $companyName = trim((string) ($this->company_name ?? ''));
 
-            // Fallback: lookup from slots table if cache is empty
-            if (! $companyName) {
-                $companyName = DB::table('slots')
+            // Priority 2: cache
+            if ($companyName === '') {
+                $cacheKey = 'vendor_company_'.$this->vendor_code;
+                $companyName = Cache::get($cacheKey) ?? '';
+            }
+
+            // Priority 3: fallback to slots table
+            if ($companyName === '') {
+                $companyName = (string) (DB::table('slots')
                     ->where('vendor_code', $this->vendor_code)
                     ->whereNotNull('vendor_name')
                     ->where('vendor_name', '!=', '')
-                    ->value('vendor_name');
+                    ->value('vendor_name') ?? '');
 
-                if ($companyName) {
-                    Cache::put($cacheKey, $companyName, now()->addDays(30));
+                if ($companyName !== '') {
+                    Cache::put('vendor_company_'.$this->vendor_code, $companyName, now()->addDays(30));
                 }
             }
 
-            if ($companyName) {
+            if ($companyName !== '') {
                 return $name.' ('.$companyName.')';
             }
         }
