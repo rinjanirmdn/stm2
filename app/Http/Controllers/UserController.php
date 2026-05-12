@@ -259,6 +259,7 @@ class UserController extends Controller
             'full_name' => $name,
             'role_id' => $roleId,
             'vendor_code' => $role === 'vendor' ? $vendorCode : null,
+            'company_name' => $role === 'vendor' ? trim((string) ($request->input('company_name', ''))) ?: null : null,
             'is_internal_vendor' => $role === 'vendor' ? (bool) ($validated['is_internal_vendor'] ?? false) : false,
             'is_active' => true,
             'must_change_password' => true,
@@ -403,6 +404,7 @@ class UserController extends Controller
                 md_users.email,
                 md_users.username,
                 md_users.vendor_code,
+                md_users.company_name,
                 md_users.role_id,
                 COALESCE(r_user.roles_name, r_spatie.roles_name) as role_name,
                 LOWER(REPLACE(COALESCE(r_user.roles_name, r_spatie.roles_name), ' ', '_')) as role_slug,
@@ -477,6 +479,7 @@ class UserController extends Controller
             'email' => trim($validated['email']),
             'full_name' => trim($validated['name']),
             'vendor_code' => $validated['role'] === 'vendor' ? trim((string) ($validated['vendor_code'] ?? '')) : null,
+            'company_name' => $validated['role'] === 'vendor' ? trim((string) ($request->input('company_name', ''))) ?: null : null,
             'is_internal_vendor' => $validated['role'] === 'vendor' ? (bool) ($validated['is_internal_vendor'] ?? false) : false,
         ];
         $newRole = $validated['role'];

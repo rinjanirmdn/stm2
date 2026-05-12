@@ -106,7 +106,7 @@
                     <div class="vendor-header__user-name">
                         {{ auth()->user()->full_name ?? auth()->user()->name ?? auth()->user()->email ?? '' }}
                     </div>
-                    <div class="vendor-header__user-company">{{ \Illuminate\Support\Facades\Cache::get('vendor_company_' . auth()->user()->vendor_code) ?? (auth()->user()->is_internal_vendor ? strtoupper(auth()->user()->vendor_code ?? '') : (auth()->user()->vendor_code ?? 'Vendor')) }}</div>
+                    <div class="vendor-header__user-company">{{ auth()->user()->company_name ?? \Illuminate\Support\Facades\Cache::get('vendor_company_' . auth()->user()->vendor_code) ?? (auth()->user()->is_internal_vendor ? strtoupper(auth()->user()->vendor_code ?? '') : (auth()->user()->vendor_code ?? 'Vendor')) }}</div>
                 </div>
                 <div class="vendor-header__user-menu-actions">
                     <a href="{{ route('profile') }}" class="vendor-btn vendor-btn--secondary vendor-btn--sm"
@@ -204,7 +204,7 @@
             <div class="vendor-header__user-info">
                 <span
                     class="vendor-header__user-name">{{ auth()->user()->full_name ?? auth()->user()->name ?? auth()->user()->email ?? '' }}</span>
-                <span class="vendor-header__user-company">{{ \Illuminate\Support\Facades\Cache::get('vendor_company_' . auth()->user()->vendor_code) ?? (auth()->user()->is_internal_vendor ? strtoupper(auth()->user()->vendor_code ?? '') : (auth()->user()->vendor_code ?? 'Vendor')) }}</span>
+                <span class="vendor-header__user-company">{{ auth()->user()->company_name ?? \Illuminate\Support\Facades\Cache::get('vendor_company_' . auth()->user()->vendor_code) ?? (auth()->user()->is_internal_vendor ? strtoupper(auth()->user()->vendor_code ?? '') : (auth()->user()->vendor_code ?? 'Vendor')) }}</span>
             </div>
 
             <!-- Notification Component -->

@@ -66,6 +66,13 @@
                             <input type="checkbox" name="is_internal_vendor" value="1" form="user_edit_form" id="edit-internal-vendor-cb" {{ old('is_internal_vendor', $editUser->is_internal_vendor) == '1' ? 'checked' : '' }} class="st-checkbox--plain">
                             <span>Internal Vendor</span>
                         </label>
+
+                        <div id="edit_company_name_field" class="st-mt-8" style="display:none;">
+                            <label class="st-label">Company Name (PT)</label>
+                            <input type="text" name="company_name" id="edit-company-name-input" class="st-input" maxlength="255"
+                                value="{{ old('company_name', $editUser->company_name ?? '') }}" placeholder="e.g. PT. Vendor Example">
+                            <div class="st-form-note">Company name displayed alongside the user name.</div>
+                        </div>
                     </div>
 
                     <div class="st-divider"></div>
@@ -182,14 +189,17 @@
                 var label = document.getElementById('edit-vendor-code-label');
                 var input = document.getElementById('edit-vendor-code-input');
                 var hint = document.getElementById('edit-vendor-code-hint');
+                var companyField = document.getElementById('edit_company_name_field');
                 if (cb.checked) {
                     if (label) label.textContent = 'Division';
                     if (input) input.placeholder = 'e.g. PPIC, EXIM, Purchasing';
                     if (hint) hint.textContent = 'Division name will be shown alongside the user name.';
+                    if (companyField) companyField.style.display = 'none';
                 } else {
                     if (label) label.textContent = 'Vendor Code (SAP)';
                     if (input) input.placeholder = 'e.g. 1100000263';
                     if (hint) hint.textContent = 'Will be validated against SAP to get company name.';
+                    if (companyField) companyField.style.display = 'block';
                 }
             }
             cb.addEventListener('change', syncEditVendorLabels);
