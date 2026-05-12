@@ -95,6 +95,44 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the vendor's company name with fallback logic.
+     */
+    public function getVendorCompanyNameAttribute(): string
+    {
+        if ($this->is_internal_vendor) {
+            return strtoupper(trim((string) ($this->vendor_code ?? '')));
+        }
+
+        if (! empty($this->vendor_code)) {
+            $companyName = trim((string) ($this->company_name ?? ''));
+
+            if ($companyName === '') {
+                $companyName = Cache::get('vendor_company_'.$this->vendor_code) ?? '';
+            }
+
+            if ($companyName === '') {
+                $companyName = (string) (DB::table('slots')
+                    ->where('vendor_code', $this->vendor_code)
+                    ->whereNotNull('vendor_name')
+                    ->where('vendor_name', '!=', '')
+                    ->value('vendor_name') ?? '');
+
+                if ($companyName !== '') {
+                    Cache::put('vendor_company_'.$this->vendor_code, $companyName, now()->addDays(30));
+                }
+            }
+
+            if ($companyName !== '') {
+                return $companyName;
+            }
+
+            return $this->vendor_code;
+        }
+
+        return 'Vendor';
+    }
+
+    /**
      * Display name with department/company context.
      * Internal vendor: "Full Name (DEPARTMENT)"
      * External vendor: "Full Name (Company Name)"
@@ -114,29 +152,9 @@ class User extends Authenticatable
 
         // External vendor → use company_name field first, then cache, then slots fallback
         if (! empty($this->vendor_code) && ! $this->is_internal_vendor) {
-            // Priority 1: company_name column on user record
-            $companyName = trim((string) ($this->company_name ?? ''));
+            $companyName = $this->vendor_company_name;
 
-            // Priority 2: cache
-            if ($companyName === '') {
-                $cacheKey = 'vendor_company_'.$this->vendor_code;
-                $companyName = Cache::get($cacheKey) ?? '';
-            }
-
-            // Priority 3: fallback to slots table
-            if ($companyName === '') {
-                $companyName = (string) (DB::table('slots')
-                    ->where('vendor_code', $this->vendor_code)
-                    ->whereNotNull('vendor_name')
-                    ->where('vendor_name', '!=', '')
-                    ->value('vendor_name') ?? '');
-
-                if ($companyName !== '') {
-                    Cache::put('vendor_company_'.$this->vendor_code, $companyName, now()->addDays(30));
-                }
-            }
-
-            if ($companyName !== '') {
+            if ($companyName !== '' && $companyName !== $this->vendor_code) {
                 return $name.' ('.$companyName.')';
             }
         }
