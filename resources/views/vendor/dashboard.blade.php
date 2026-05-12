@@ -80,7 +80,7 @@
                             <div class="vd-chart-body">
                                 <script type="application/json"
                                     id="vendor-status-overview-data">{!! json_encode(['stats' => $stats]) !!}</script>
-                                <div id="vendor-status-overview-react" class="w-full"></div>
+                                <div id="vendor-status-overview-react" class="w-full" style="min-height: 160px; min-width: 100%; width: 100%;"></div>
                             </div>
                         </div>
 
@@ -97,7 +97,7 @@
                             <div class="vd-chart-body vd-chart-body--pie">
                                 <script type="application/json"
                                     id="vendor-ontime-data">{!! json_encode($performance ?? []) !!}</script>
-                                <div id="vendor-ontime-react" class="w-full"></div>
+                                <div id="vendor-ontime-react" class="w-full" style="min-height: 220px; min-width: 100%; width: 100%;"></div>
                             </div>
                         </div>
 

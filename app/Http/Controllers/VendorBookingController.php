@@ -215,6 +215,9 @@ class VendorBookingController extends Controller
 
         // Slot stats (operational statuses live on slots table)
         $slotBase = Slot::where('requested_by', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('slot_type')->orWhere('slot_type', '!=', 'unplanned');
+            })
             ->whereDate('planned_start', '>=', $rangeStart)
             ->whereDate('planned_start', '<=', $rangeEnd);
 
@@ -313,6 +316,9 @@ class VendorBookingController extends Controller
         // terlepas dari statusnya (termasuk in_progress, waiting, dll.).
         // Range tanggal mengikuti planned_start agar konsisten dengan komponen dashboard lain.
         $arrivalSlots = Slot::where('requested_by', $userId)
+            ->where(function ($q) {
+                $q->whereNull('slot_type')->orWhere('slot_type', '!=', 'unplanned');
+            })
             ->whereNotNull('arrival_time')
             ->whereNotNull('planned_start')
             ->whereBetween('planned_start', [$rangeStart.' 00:00:00', $rangeEnd.' 23:59:59'])
@@ -320,6 +326,9 @@ class VendorBookingController extends Controller
 
         // Untuk rata-rata waiting & process, tetap gunakan slot yang sudah completed
         $completedSlots = Slot::where('requested_by', $userId)
+            ->where(function ($q) {
+                $q->whereNull('slot_type')->orWhere('slot_type', '!=', 'unplanned');
+            })
             ->where('status', Slot::STATUS_COMPLETED)
             ->whereNotNull('actual_finish')
             ->whereBetween('actual_finish', [$rangeStart.' 00:00:00', $rangeEnd.' 23:59:59'])
