@@ -51,15 +51,15 @@ class SecurityDashboardController extends Controller
 
         // Schedule for selected date
         $schedule = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id_gates')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id_wh')
             ->whereDate('s.planned_start', $selectedDate)
             ->where('s.slot_type', 'planned')
             ->whereIn('s.status', ['scheduled', 'waiting', 'in_progress', 'completed'])
             ->orderBy('s.planned_start')
             ->select([
-                's.id',
+                's.id_slots',
                 's.ticket_number',
                 's.po_number',
                 's.vendor_name',
@@ -101,12 +101,12 @@ class SecurityDashboardController extends Controller
         }
 
         $slot = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id_gates')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id_wh')
             ->where('s.ticket_number', $ticketNumber)
             ->select([
-                's.id',
+                's.id_slots',
                 's.ticket_number',
                 's.po_number',
                 's.vendor_name',
@@ -186,7 +186,7 @@ class SecurityDashboardController extends Controller
             'is_late' => $isLate,
             'warnings' => $warnings,
             'slot' => [
-                'id' => $slot->id,
+                'id_slots' => $slot->id_slots,
                 'ticket_number' => $slot->ticket_number,
                 'po_number' => $slot->po_number,
                 'vendor_name' => $slot->vendor_name ?? '-',
@@ -205,7 +205,7 @@ class SecurityDashboardController extends Controller
      */
     public function confirmArrival(Request $request, int $slotId)
     {
-        $slot = DB::table('slots')->where('id', $slotId)->first();
+        $slot = DB::table('slots')->where('id_slots', $slotId)->first();
 
         if (! $slot) {
             return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.']);
@@ -226,7 +226,7 @@ class SecurityDashboardController extends Controller
 
         $now = date('Y-m-d H:i:s');
 
-        DB::table('slots')->where('id', $slotId)->update([
+        DB::table('slots')->where('id_slots', $slotId)->update([
             'arrival_time' => $now,
             'ticket_number' => $ticketNumber,
             'status' => 'waiting',
@@ -270,15 +270,15 @@ class SecurityDashboardController extends Controller
         }
 
         $slots = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id_gates')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id_wh')
             ->whereDate('s.planned_start', $selectedDate)
             ->where('s.slot_type', 'planned')
             ->whereIn('s.status', ['scheduled', 'waiting', 'in_progress', 'completed'])
             ->orderBy('s.planned_start')
             ->select([
-                's.id',
+                's.id_slots',
                 's.ticket_number',
                 's.po_number',
                 's.vendor_name',
@@ -318,7 +318,7 @@ class SecurityDashboardController extends Controller
                 }
 
                 return [
-                    'id' => $s->id,
+                    'id_slots' => $s->id_slots,
                     'ticket_number' => $s->ticket_number ?? '-',
                     'po_number' => $s->po_number ?? '-',
                     'vendor_name' => $s->vendor_name ?? '-',
@@ -340,12 +340,12 @@ class SecurityDashboardController extends Controller
     public function slotDetail(int $slotId)
     {
         $slot = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
-            ->where('s.id', $slotId)
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id_gates')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id_wh')
+            ->where('s.id_slots', $slotId)
             ->select([
-                's.id',
+                's.id_slots',
                 's.ticket_number',
                 's.po_number',
                 's.vendor_name',
@@ -405,7 +405,7 @@ class SecurityDashboardController extends Controller
             'is_late' => $isLate,
             'warnings' => $warnings,
             'slot' => [
-                'id' => $slot->id,
+                'id_slots' => $slot->id_slots,
                 'ticket_number' => $slot->ticket_number ?? '-',
                 'po_number' => $slot->po_number ?? '-',
                 'vendor_name' => $slot->vendor_name ?? '-',

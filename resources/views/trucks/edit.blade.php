@@ -13,7 +13,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('trucks.update', ['truckTypeDurationId' => $row->id]) }}" class="st-mt-14">
+                <form method="POST" action="{{ route('trucks.update', ['truckTypeDurationId' => $row->id_truck]) }}" class="st-mt-14">
                     @csrf
 
                     <div class="st-form-field st-mb-10">

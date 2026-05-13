@@ -67,7 +67,7 @@ class SlotCancelled extends Notification
             : route('vendor.bookings.index', [], false);
 
         return [
-            'slot_id' => $this->slot->id,
+            'slot_id' => $this->slot->id_slots,
             'title' => 'Booking Cancelled',
             'message' => 'Your booking '.$ticketNumber.' has been cancelled.',
             'action_url' => $actionUrl,

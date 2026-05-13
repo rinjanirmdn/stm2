@@ -7,7 +7,7 @@
     <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Complete Registration</h3>
-            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id }}</span>
+            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id_slots }}</span>
         </div>
         <div class="st-form-row--grid-3 st-text--sm">
             <div class="st-flex st-align-center st-gap-8">
@@ -43,7 +43,7 @@
     </div>
 
     <div>
-        <form method="POST" action="{{ route('slots.complete.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('slots.complete.store', ['slotId' => $slot->id_slots, 'popup' => request()->boolean('popup') ? 1 : null]) }}" enctype="multipart/form-data">
             @csrf
 
             <div class="st-form-row st-form-field--mb-12">

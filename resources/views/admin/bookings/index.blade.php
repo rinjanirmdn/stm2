@@ -253,11 +253,11 @@
                             <tbody>
                                 @if($bookings->count() > 0)
                                     @foreach($bookings as $booking)
-                                        <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('bookings.show', $booking->id) }}'; }">
+                                        <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('bookings.show', $booking->id_booking_requests) }}'; }">
                                             <td class="st-text-center">{{ $loop->index + 1 }}</td>
                                             <td class="st-text-center">
-                                                <a href="{{ route('bookings.show', $booking->id) }}" class="st-link">
-                                                    <strong>{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</strong>
+                                                <a href="{{ route('bookings.show', $booking->id_booking_requests) }}" class="st-link">
+                                                    <strong>{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}</strong>
                                                 </a>
                                             </td>
                                             <td class="st-text-center">{{ $booking->po_number ?? 'N/A' }}</td>
@@ -309,21 +309,21 @@
                                                         &#x22ee;
                                                     </button>
                                                     <div class="st-action-menu">
-                                                        <a href="{{ route('bookings.show', $booking->id) }}" class="st-action-item">View</a>
+                                                        <a href="{{ route('bookings.show', $booking->id_booking_requests) }}" class="st-action-item">View</a>
 
                                                         @if($booking->status === 'pending')
                                                             @can('bookings.approve')
-                                                                <button type="button" class="st-action-item" onclick="openApproveModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">Approve</button>
+                                                                <button type="button" class="st-action-item" onclick="openApproveModal({{ $booking->id_booking_requests }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}')">Approve</button>
                                                             @endcan
 
                                                             @can('bookings.reject')
-                                                                <button type="button" class="st-action-item st-action-item--danger" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+                                                                <button type="button" class="st-action-item st-action-item--danger" onclick="openRejectModal({{ $booking->id_booking_requests }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}')">
                                                                     Reject
                                                                 </button>
                                                             @endcan
 
                                                             @can('bookings.reschedule')
-                                                                <a href="{{ route('bookings.reschedule', $booking->id) }}" class="st-action-item">Reschedule</a>
+                                                                <a href="{{ route('bookings.reschedule', $booking->id_booking_requests) }}" class="st-action-item">Reschedule</a>
                                                             @endcan
                                                         @endif
                                                     </div>

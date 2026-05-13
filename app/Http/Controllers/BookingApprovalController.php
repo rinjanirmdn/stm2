@@ -34,9 +34,9 @@ class BookingApprovalController extends Controller
     {
         $query = BookingRequest::query()
             ->with(['requester', 'approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate'])
-            ->leftJoin('md_users as u_requester', 'booking_requests.requested_by', '=', 'u_requester.id')
-            ->leftJoin('slots as s_converted', 'booking_requests.converted_slot_id', '=', 's_converted.id')
-            ->leftJoin('md_gates as g_planned', 's_converted.planned_gate_id', '=', 'g_planned.id')
+            ->leftJoin('md_users as u_requester', 'booking_requests.requested_by', '=', 'u_requester.id_users')
+            ->leftJoin('slots as s_converted', 'booking_requests.converted_slot_id', '=', 's_converted.id_slots')
+            ->leftJoin('md_gates as g_planned', 's_converted.planned_gate_id', '=', 'g_planned.id_gates')
             ->select('booking_requests.*');
 
         // Default to all
@@ -146,7 +146,7 @@ class BookingApprovalController extends Controller
             $like = '%'.strtolower($search).'%';
             $query->where(function ($q) use ($like) {
                 $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
-                    ->orWhereRaw('LOWER(CONCAT(\'req-\', CAST(booking_requests.id AS TEXT))) like ?', [$like])
+                    ->orWhereRaw('LOWER(CONCAT(\'req-\', CAST(booking_requests.id_booking_requests AS TEXT))) like ?', [$like])
                     ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
                     ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
                     ->orWhereRaw('LOWER(s_converted.ticket_number) like ?', [$like])
@@ -204,9 +204,9 @@ class BookingApprovalController extends Controller
 
         // Get counts for tabs — apply the same filters (except status) so summary reflects filtered data
         $countsQuery = BookingRequest::query()
-            ->leftJoin('md_users as u_requester2', 'booking_requests.requested_by', '=', 'u_requester2.id')
-            ->leftJoin('slots as s_converted2', 'booking_requests.converted_slot_id', '=', 's_converted2.id')
-            ->leftJoin('md_gates as g_planned2', 's_converted2.planned_gate_id', '=', 'g_planned2.id');
+            ->leftJoin('md_users as u_requester2', 'booking_requests.requested_by', '=', 'u_requester2.id_users')
+            ->leftJoin('slots as s_converted2', 'booking_requests.converted_slot_id', '=', 's_converted2.id_slots')
+            ->leftJoin('md_gates as g_planned2', 's_converted2.planned_gate_id', '=', 'g_planned2.id_gates');
 
         // Reapply date range filter
         if ($request->filled('date_from')) {
@@ -265,7 +265,7 @@ class BookingApprovalController extends Controller
             $like = '%'.strtolower($search).'%';
             $countsQuery->where(function ($q) use ($like) {
                 $q->whereRaw('LOWER(booking_requests.request_number) like ?', [$like])
-                    ->orWhereRaw('LOWER(CONCAT(\'req-\', CAST(booking_requests.id AS TEXT))) like ?', [$like])
+                    ->orWhereRaw('LOWER(CONCAT(\'req-\', CAST(booking_requests.id_booking_requests AS TEXT))) like ?', [$like])
                     ->orWhereRaw('LOWER(booking_requests.po_number) like ?', [$like])
                     ->orWhereRaw('LOWER(booking_requests.supplier_name) like ?', [$like])
                     ->orWhereRaw('LOWER(s_converted2.ticket_number) like ?', [$like])
@@ -295,18 +295,18 @@ class BookingApprovalController extends Controller
         $gateOptions = Cache::remember('bookings:index:gate_options', now()->addMinutes(10), function () {
             return Gate::query()
                 ->from('md_gates', 'g')
-                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
                 ->where('g.is_active', true)
                 ->orderBy('w.wh_code')
                 ->orderBy('g.gate_number')
-                ->get(['g.id', 'g.gate_number', 'w.wh_code'])
+                ->get(['g.id_gates', 'g.gate_number', 'w.wh_code'])
                 ->map(function ($g) {
                     $whCode = (string) ($g->wh_code ?? '');
                     $gateNo = (string) ($g->gate_number ?? '');
                     $display = $this->slotService->getGateDisplayName($whCode, $gateNo);
 
                     return [
-                        'id' => (int) ($g->id ?? 0),
+                        'id' => (int) ($g->id_gates ?? 0),
                         'label' => trim(($whCode !== '' ? ($whCode.' - ') : '').$display),
                     ];
                 })
@@ -319,16 +319,16 @@ class BookingApprovalController extends Controller
     public function ajaxCheckGateAvailability(Request $request)
     {
         $request->validate([
-            'booking_id' => 'required|integer|exists:booking_requests,id',
-            'planned_gate_id' => 'required|integer|exists:md_gates,id',
+            'booking_id' => 'required|integer|exists:booking_requests,id_booking_requests',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id_gates',
         ]);
 
         $bookingRequest = BookingRequest::query()
-            ->where('id', (int) $request->booking_id)
+            ->where('id_booking_requests', (int) $request->booking_id)
             ->firstOrFail();
 
         $plannedGateId = (int) $request->planned_gate_id;
-        $gate = Gate::where('id', $plannedGateId)
+        $gate = Gate::where('id_gates', $plannedGateId)
             ->where('is_active', true)
             ->with('warehouse')
             ->first();
@@ -433,7 +433,7 @@ class BookingApprovalController extends Controller
                             $booking->supplier_code = $result['vendor_code'];
                         }
                         DB::table('booking_requests')
-                            ->where('id', $booking->id)
+                            ->where('id_booking_requests', $booking->id_booking_requests)
                             ->update([
                                 'supplier_name' => $booking->supplier_name,
                                 'supplier_code' => $booking->supplier_code ?? '',
@@ -463,10 +463,10 @@ class BookingApprovalController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string|max:500',
-            'planned_gate_id' => 'required|integer|exists:md_gates,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id_gates',
         ]);
 
-        $bookingRequest = BookingRequest::where('id', $id)
+        $bookingRequest = BookingRequest::where('id_booking_requests', $id)
             ->where('status', BookingRequest::STATUS_PENDING)
             ->with(['requester'])
             ->firstOrFail();
@@ -474,7 +474,7 @@ class BookingApprovalController extends Controller
         try {
             // Get warehouse from selected gate
             $plannedGateId = $request->planned_gate_id;
-            $gate = Gate::where('id', $plannedGateId)
+            $gate = Gate::where('id_gates', $plannedGateId)
                 ->where('is_active', true)
                 ->with('warehouse')
                 ->first();
@@ -536,11 +536,11 @@ class BookingApprovalController extends Controller
                     $slot,
                     Auth::user(),
                     $request->notes,
-                    (int) $bookingRequest->id,
+                    (int) $bookingRequest->id_booking_requests,
                     $approvalAction
                 );
 
-                Log::info('Booking service approve completed', ['slot_id' => $slot->id]);
+                Log::info('Booking service approve completed', ['slot_id' => $slot->id_slots]);
 
                 $bookingRequest->update([
                     'status' => BookingRequest::STATUS_APPROVED,
@@ -549,10 +549,10 @@ class BookingApprovalController extends Controller
                     'approval_notes' => $request->notes,
                     'planned_gate_id' => $plannedGateId,
                     'warehouse_id' => $warehouseId,
-                    'converted_slot_id' => $slot->id,
+                    'converted_slot_id' => $slot->id_slots,
                 ]);
 
-                Log::info('Booking request updated to approved', ['booking_id' => $bookingRequest->id]);
+                Log::info('Booking request updated to approved', ['booking_id' => $bookingRequest->id_booking_requests]);
 
                 return $slot;
             });
@@ -568,7 +568,7 @@ class BookingApprovalController extends Controller
             // Do NOT dispatch again here to avoid double notification (#31/#32)
 
             return redirect()
-                ->route('bookings.show', $bookingRequest->id)
+                ->route('bookings.show', $bookingRequest->id_booking_requests)
                 ->with('success', 'Booking approved successfully.');
         } catch (\Throwable $e) {
             return back()->with('error', 'Failed to approve booking: '.$e->getMessage());
@@ -584,7 +584,7 @@ class BookingApprovalController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $bookingRequest = BookingRequest::where('id', $id)
+        $bookingRequest = BookingRequest::where('id_booking_requests', $id)
             ->where('status', BookingRequest::STATUS_PENDING)
             ->with(['requester'])
             ->firstOrFail();
@@ -621,7 +621,7 @@ class BookingApprovalController extends Controller
      */
     public function rescheduleForm($id)
     {
-        $booking = BookingRequest::where('id', $id)
+        $booking = BookingRequest::where('id_booking_requests', $id)
             ->where('status', BookingRequest::STATUS_PENDING)
             ->with(['requester'])
             ->findOrFail($id);
@@ -642,18 +642,18 @@ class BookingApprovalController extends Controller
             'planned_date' => 'required|date|after_or_equal:'.Carbon::today()->addDays(2)->format('Y-m-d'),
             'planned_time' => 'required|date_format:H:i',
             'planned_duration' => 'required|integer|min:30|max:480',
-            'planned_gate_id' => 'required|integer|exists:md_gates,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id_gates',
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $bookingRequest = BookingRequest::where('id', $id)
+        $bookingRequest = BookingRequest::where('id_booking_requests', $id)
             ->where('status', BookingRequest::STATUS_PENDING)
             ->with(['requester'])
             ->firstOrFail();
 
         // Get warehouse from selected gate
         $plannedGateId = $request->planned_gate_id;
-        $gate = Gate::where('id', $plannedGateId)
+        $gate = Gate::where('id_gates', $plannedGateId)
             ->where('is_active', true)
             ->with('warehouse')
             ->first();
@@ -674,7 +674,7 @@ class BookingApprovalController extends Controller
         $dateAddExpr = $this->slotService->getDateAddExpression('br.planned_start', 'br.planned_duration');
         $pendingOverlap = (int) DB::table('booking_requests as br')
             ->where('br.status', BookingRequest::STATUS_PENDING)
-            ->where('br.id', '<>', (int) $bookingRequest->id)
+            ->where('br.id_booking_requests', '<>', (int) $bookingRequest->id_booking_requests)
             ->whereRaw("? < {$dateAddExpr}", [$plannedStart])
             ->whereRaw('? > br.planned_start', [$plannedEnd])
             ->count();
@@ -707,7 +707,7 @@ class BookingApprovalController extends Controller
     public function calendarData(Request $request)
     {
         $request->validate([
-            'warehouse_id' => 'required|exists:md_warehouse,id',
+            'warehouse_id' => 'required|exists:md_warehouse,id_wh',
             'date' => 'required|date',
         ]);
 
@@ -731,15 +731,17 @@ class BookingApprovalController extends Controller
 
         $calendarData = [];
         foreach ($gates as $gate) {
-            $gateSlots = $slots->get($gate->id, collect());
+            $gateSlots = $slots->get($gate->id_gates, collect());
             $calendarData[] = [
                 'gate' => [
-                    'id' => $gate->id,
+                    'id_gates' => $gate->id_gates,
+                    'id' => $gate->id_gates,
                     'name' => $gate->name ?? ($gate->warehouse->wh_code.'-'.$gate->gate_number),
                 ],
                 'slots' => $gateSlots->map(fn ($s) => [
                     /** @var Slot $s */
-                    'id' => $s->id,
+                    'id_slots' => $s->id_slots,
+                    'id' => $s->id_slots,
                     'ticket_number' => $s->ticket_number,
                     'vendor_name' => $s->vendor_name ?? '-',
                     'requester_name' => $s->requester?->full_name ?? '-',
@@ -799,20 +801,21 @@ class BookingApprovalController extends Controller
             ->whereBetween('planned_start', [$now, $limit])
             ->orderBy('planned_start')
             ->limit(20)
-            ->get(['id', 'request_number', 'po_number', 'supplier_name', 'planned_start']);
+            ->get(['id_booking_requests', 'request_number', 'po_number', 'supplier_name', 'planned_start']);
 
         $items = $pending->map(function (BookingRequest $booking) use ($now) {
             $plannedStart = $booking->planned_start;
             $minutesToStart = $plannedStart ? (int) $now->diffInMinutes($plannedStart, false) : null;
 
             return [
-                'id' => $booking->id,
+                'id_booking_requests' => $booking->id_booking_requests,
+                'id' => $booking->id_booking_requests,
                 'request_number' => $booking->request_number,
                 'po_number' => $booking->po_number,
                 'supplier_name' => $booking->supplier_name,
                 'planned_start' => $plannedStart ? $plannedStart->format('d-m-Y H:i') : null,
                 'minutes_to_start' => $minutesToStart,
-                'show_url' => route('bookings.show', $booking->id, false),
+                'show_url' => route('bookings.show', $booking->id_booking_requests, false),
             ];
         })->values();
 

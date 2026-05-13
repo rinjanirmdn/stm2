@@ -35,7 +35,7 @@ class BookingSubmitted extends Notification
             ->line('**Scheduled Time:** '.$plannedDate)
             ->line('**Gate:** '.$gateName)
             ->line('**Direction:** '.ucfirst((string) ($this->slot->direction ?? '')))
-            ->action('View Booking Details', url('/vendor/bookings/'.$this->slot->id))
+            ->action('View Booking Details', url('/vendor/bookings/'.$this->slot->id_slots))
             ->line('Thank you for using our service.');
     }
 
@@ -44,10 +44,10 @@ class BookingSubmitted extends Notification
         $poNumber = $this->slot->po_number ?? '-';
 
         return [
-            'slot_id' => $this->slot->id,
+            'slot_id' => $this->slot->id_slots,
             'title' => 'Booking Request Submitted',
             'message' => 'Your booking request for PO '.$poNumber.' has been submitted and is waiting for approval.',
-            'action_url' => route('vendor.bookings.show', $this->slot->id, false),
+            'action_url' => route('vendor.bookings.show', $this->slot->id_slots, false),
             'icon' => 'fas fa-paper-plane',
             'color' => 'blue',
         ];

@@ -24,7 +24,7 @@
                     </div>
                 @endif
 
-                <form id="user_edit_form" method="POST" action="{{ route('users.update', ['userId' => $editUser->id, 'from_reset_email' => $fromResetEmail ? 1 : null]) }}" class="st-form-block">
+                <form id="user_edit_form" method="POST" action="{{ route('users.update', ['userId' => $editUser->id_users, 'from_reset_email' => $fromResetEmail ? 1 : null]) }}" class="st-form-block">
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">

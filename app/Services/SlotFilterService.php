@@ -78,7 +78,7 @@ class SlotFilterService
 
         return [
             'po' => 's.po_number',
-            'mat_doc' => 's.mat_doc',
+            'sj_no' => 's.sj_no',
             'vendor' => 's.vendor_name',
             'warehouse' => 'w.wh_name',
             'gate' => 'g.gate_number',
@@ -119,9 +119,9 @@ class SlotFilterService
                 'g.gate_number',
                 'td.target_duration_minutes',
             ])
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->leftJoin(DB::raw('(SELECT truck_type, MAX(target_duration_minutes) as target_duration_minutes FROM md_truck GROUP BY truck_type) as td'), 's.truck_type', '=', 'td.truck_type')
@@ -152,7 +152,7 @@ class SlotFilterService
                 $like = '%'.strtolower($tok).'%';
                 $query->where(function ($sub) use ($like) {
                     $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
-                        ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
+                        ->orWhereRaw('LOWER(COALESCE(s.sj_no, \'\')) like ?', [$like])
                         ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like])
                         ->orWhereRaw('LOWER(w.wh_name) like ?', [$like]);
                 });
@@ -172,10 +172,10 @@ class SlotFilterService
             $query->whereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', ['%'.strtolower($vendorSearch).'%']);
         }
 
-        $matDocSearch = trim($request->query('mat_doc', ''));
-        if ($matDocSearch !== '') {
-            $matDocSearch = str_replace(['%', '_'], ['\%', '\_'], $matDocSearch);
-            $query->whereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', ['%'.strtolower($matDocSearch).'%']);
+        $sjNoSearch = trim($request->query('sj_no', $request->query('mat_doc', '')));
+        if ($sjNoSearch !== '') {
+            $sjNoSearch = str_replace(['%', '_'], ['\%', '\_'], $sjNoSearch);
+            $query->whereRaw('LOWER(COALESCE(s.sj_no, \'\')) like ?', ['%'.strtolower($sjNoSearch).'%']);
         }
     }
 
@@ -372,9 +372,9 @@ class SlotFilterService
         // Cache filter options for 30 minutes to reduce database queries
         return Cache::remember('slot_filter_options', now()->addMinutes(30), function () {
             return [
-                'warehouses' => DB::table('md_warehouse')->select(['id', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
+                'warehouses' => DB::table('md_warehouse')->select(['id_wh', 'wh_name as name', 'wh_code as code'])->orderBy('wh_name')->get(),
                 'gates' => DB::table('md_gates as g')
-                    ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+                    ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
                     ->select(['g.gate_number', 'g.warehouse_id', 'w.wh_code as warehouse_code'])
                     ->orderBy('w.wh_code')
                     ->orderBy('g.gate_number')

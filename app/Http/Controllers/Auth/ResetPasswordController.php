@@ -113,7 +113,7 @@ class ResetPasswordController extends Controller
         ]);
 
         // Also clear lock and must_change_password flags
-        DB::table('md_users')->where('id', $user->id)->update([
+        DB::table('md_users')->where('id_users', $user->id_users)->update([
             'is_locked' => false,
             'must_change_password' => false,
             'password_changed_at' => now(),
@@ -133,7 +133,7 @@ class ResetPasswordController extends Controller
         DB::table('password_reset_tokens')->where('email', $email)->delete();
 
         Log::info('Admin password reset completed via email token', [
-            'user_id' => $user->id,
+            'user_id' => $user->id_users,
             'email' => $email,
         ]);
 

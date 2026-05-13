@@ -30,7 +30,7 @@ class DashboardController extends Controller
         // Redirect vendor users to vendor dashboard
         if (Auth::check()) {
             $isVendor = DB::table('model_has_roles')
-                ->join('md_roles', 'model_has_roles.role_id', '=', 'md_roles.id')
+                ->join('md_roles', 'model_has_roles.role_id', '=', 'md_roles.id_roles')
                 ->where('model_has_roles.model_id', Auth::id())
                 ->where(DB::raw('LOWER(md_roles.roles_name)'), 'vendor')
                 ->exists();
@@ -170,10 +170,11 @@ class DashboardController extends Controller
                 return $q->whereDate('planned_start', $scheduleDate);
             })
             ->when($vendorName, fn ($q) => $q->where('supplier_name', $vendorName))
-            ->get(['id', 'status', 'direction', 'planned_start', 'supplier_name', 'po_number', 'request_number'])
+            ->get(['id_booking_requests', 'status', 'direction', 'planned_start', 'supplier_name', 'po_number', 'request_number'])
             ->map(function ($booking) {
                 return [
-                    'id' => null,
+                    'id_booking_requests' => $booking->id_booking_requests,
+                    'id' => $booking->id_booking_requests,
                     'status' => $booking->status,
                     'direction' => $booking->direction,
                     'planned_start' => $booking->planned_start,

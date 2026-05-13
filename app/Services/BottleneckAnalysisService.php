@@ -20,9 +20,9 @@ class BottleneckAnalysisService
             $waitExpr = "GREATEST({$diffExpr}, 0)";
 
             $bottle = DB::table('slots as s')
-                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
                 ->leftJoin('md_gates as g', function ($join) {
-                    $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
                 ->whereNotNull('s.arrival_time')
@@ -130,9 +130,9 @@ class BottleneckAnalysisService
             $waitExpr = "GREATEST({$diffExpr}, 0)";
 
             $rows = DB::table('slots as s')
-                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
                 ->leftJoin('md_gates as g', function ($join) {
-                    $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
                 ->whereNotNull('s.arrival_time')
@@ -143,7 +143,7 @@ class BottleneckAnalysisService
                 ->where('g.gate_number', $gateNumber)
                 ->where('s.direction', $direction)
                 ->selectRaw("
-                    s.id,
+                    s.id_slots,
                     s.ticket_number,
                     s.po_number,
                     s.vendor_name,
@@ -160,7 +160,7 @@ class BottleneckAnalysisService
             $result = [];
             foreach ($rows as $r) {
                 $result[] = [
-                    'id' => (int) $r->id,
+                    'id' => (int) $r->id_slots,
                     'ticket_number' => (string) ($r->ticket_number ?? ''),
                     'po_number' => (string) ($r->po_number ?? ''),
                     'vendor_name' => (string) ($r->vendor_name ?? ''),
@@ -186,10 +186,10 @@ class BottleneckAnalysisService
     public function getGateUtilization(string $date): array
     {
         $gates = DB::table('md_gates as g')
-            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('g.is_active', true)
             ->select([
-                'g.id',
+                'g.id_gates',
                 'g.gate_number',
                 'g.is_active',
                 'w.wh_name as warehouse_name',
@@ -202,7 +202,7 @@ class BottleneckAnalysisService
         $gateStats = [];
 
         foreach ($gates as $gate) {
-            $gateId = (int) ($gate->id ?? 0);
+            $gateId = (int) ($gate->id_gates ?? 0);
             $stats = $this->calculateGateStats($gateId, $date);
 
             $gateStats[] = [
@@ -239,10 +239,10 @@ class BottleneckAnalysisService
             // Get total and completed slots
             $slotStats = DB::table('slots as s')
                 ->join('md_gates as g', function ($join) {
-                    $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
-                ->where('g.id', $gateId)
+                ->where('g.id_gates', $gateId)
                 ->whereDate('s.planned_start', $date)
                 ->selectRaw('
                     COUNT(*) as total_slots,
@@ -264,10 +264,10 @@ class BottleneckAnalysisService
             $diffExpr = $this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_start');
             $avgWait = DB::table('slots as s')
                 ->join('md_gates as g', function ($join) {
-                    $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
-                ->where('g.id', $gateId)
+                ->where('g.id_gates', $gateId)
                 ->whereDate('s.planned_start', $date)
                 ->whereNotNull('s.arrival_time')
                 ->whereNotNull('s.actual_start')
@@ -283,10 +283,10 @@ class BottleneckAnalysisService
             }
             $peakHour = DB::table('slots as s')
                 ->join('md_gates as g', function ($join) {
-                    $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
-                ->where('g.id', $gateId)
+                ->where('g.id_gates', $gateId)
                 ->whereDate('s.planned_start', $date)
                 ->selectRaw($hourExpr.' as hour, COUNT(*) as slot_count')
                 ->groupBy('hour')
@@ -356,9 +356,9 @@ class BottleneckAnalysisService
         try {
             $diffExpr = $this->slotService->getTimestampDiffMinutesExpression('s.arrival_time', 's.actual_start');
             $critical = DB::table('slots as s')
-                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
                 ->leftJoin('md_gates as g', function ($join) {
-                    $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
                 ->whereDate('s.arrival_time', $date)

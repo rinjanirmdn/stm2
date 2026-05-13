@@ -26,14 +26,14 @@ class UserStoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                'unique:md_users,nik',
+                Rule::unique('md_users', 'nik')->whereNull('deleted_at'),
             ],
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:50',
-                'unique:md_users,email',
+                Rule::unique('md_users', 'email')->whereNull('deleted_at'),
             ],
             'name' => [
                 'required',

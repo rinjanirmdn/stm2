@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Security Dashboard - e-Docking Control System')
 @section('page_title', 'Security Dashboard')
@@ -6,7 +6,7 @@
 
 @section('content')
 
-    {{-- ─── Top Bar: Date + Scan + Shift (single row) ─── --}}
+    {{-- --- Top Bar: Date + Scan + Shift (single row) --- --}}
     <div class="sec-topbar">
         <div class="sec-topbar__date-group">
             <button class="sec-date-nav" id="datePrev" title="Hari Sebelumnya"><i class="fas fa-chevron-left"></i></button>
@@ -44,7 +44,7 @@
         </select>
     </div>
 
-    {{-- ─── Stats Row ─── --}}
+    {{-- --- Stats Row --- --}}
     <div class="sec-stats" id="secStatsBar">
         <div class="sec-stat sec-stat--total sec-stat--active-filter" data-filter="all" role="button" tabindex="0">
             <div class="sec-stat__val" id="summary-total">{{ $summary['total'] }}</div>
@@ -68,7 +68,7 @@
         </div>
     </div>
 
-    {{-- ─── Schedule List ─── --}}
+    {{-- --- Schedule List --- --}}
     <div class="sec-schedule" id="security-schedule-list">
         @forelse ($schedule as $slot)
             @php
@@ -94,10 +94,10 @@
                     default => '',
                 };
                 $statusEmoji = match($status) {
-                    'scheduled' => '🕐',
-                    'waiting' => '✅',
-                    'in_progress' => '🔄',
-                    'completed' => '✔️',
+                    'scheduled' => '??',
+                    'waiting' => '?',
+                    'in_progress' => '??',
+                    'completed' => '??',
                     default => '•',
                 };
                 $statusLabel = match($status) {
@@ -108,7 +108,7 @@
                     default => ucwords(str_replace('_', ' ', $status)),
                 };
             @endphp
-            <a href="{{ route('slots.show', $slot->id) }}" class="sec-slot {{ $statusClass }}{{ $isLate ? ' sec-slot--late' : '' }}" data-slot-id="{{ $slot->id }}">
+            <a href="{{ route('slots.show', $slot->id_slots) }}" class="sec-slot {{ $statusClass }}{{ $isLate ? ' sec-slot--late' : '' }}" data-slot-id="{{ $slot->id_slots }}">
                 <div class="sec-slot__left">
                     <div class="sec-slot__eta">{{ $eta }}</div>
                     @if (!empty($slot->arrival_time))
@@ -134,7 +134,7 @@
                     @endif
                 </div>
                 @if ($status === 'scheduled')
-                    <button type="button" class="sec-slot__arrival-btn" data-arrival-id="{{ $slot->id }}" title="Catat Kedatangan" onclick="event.stopPropagation();">
+                    <button type="button" class="sec-slot__arrival-btn" data-arrival-id="{{ $slot->id_slots }}" title="Catat Kedatangan" onclick="event.stopPropagation();">
                         <i class="fas fa-right-to-bracket"></i>
                         <span>Arrival</span>
                     </button>
@@ -148,7 +148,7 @@
         @endforelse
     </div>
 
-    {{-- ─── Camera Scanner Modal ─── --}}
+    {{-- --- Camera Scanner Modal --- --}}
     <div class="sec-camera-overlay" id="secCameraOverlay" style="display:none;">
         <div class="sec-camera-panel">
             <div class="sec-camera-panel__header">
@@ -160,7 +160,7 @@
         </div>
     </div>
 
-    {{-- ─── Result Modal ─── --}}
+    {{-- --- Result Modal --- --}}
     <div class="sec-result-overlay" id="securityScanModal" style="display:none;">
         <div class="sec-result-card">
             <div class="sec-result-card__header" id="scanModalHeader">
@@ -301,7 +301,7 @@
 
 @push('styles')
 <style>
-/* ═══════ Security Dashboard v5 ═══════ */
+/* ------- Security Dashboard v5 ------- */
 :root {
     --sec-indigo: #5c6bc0;
     --sec-indigo-dark: #3949ab;
@@ -313,7 +313,7 @@
     --sec-red: #ef5350;
 }
 
-/* ═══════ Top Bar: [Date] [Scan] [Shift] ═══════ */
+/* ------- Top Bar: [Date] [Scan] [Shift] ------- */
 .sec-topbar {
     display: flex;
     align-items: center;
@@ -402,7 +402,7 @@
     flex-shrink: 0; height: 32px;
 }
 
-/* ═══════ Stats Row ═══════ */
+/* ------- Stats Row ------- */
 .sec-stats {
     display: flex; gap: 6px;
     overflow-x: auto; scrollbar-width: none;
@@ -433,7 +433,7 @@
 .sec-stat--done { border-bottom-color: var(--sec-green); }
 .sec-stat--done .sec-stat__val { color: #43a047; }
 
-/* ═══════ Schedule ═══════ */
+/* ------- Schedule ------- */
 .sec-schedule { padding-bottom: 8px; }
 .sec-schedule__empty { text-align: center; padding: 48px 16px; color: #bbb; }
 .sec-schedule__empty i { font-size: 44px; margin-bottom: 10px; display: block; }
@@ -486,7 +486,7 @@
 .sec-slot__arrival-btn span { font-size: 9px; font-weight: 700; letter-spacing: .3px; }
 .sec-slot__arrival-btn:hover { box-shadow: 0 4px 14px rgba(0,172,193,.4); transform: scale(1.05); }
 
-/* ═══════ Camera Overlay ═══════ */
+/* ------- Camera Overlay ------- */
 .sec-camera-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
 .sec-camera-panel { background: #fff; border-radius: 16px; overflow: hidden; width: 340px; max-width: 92vw; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
 .sec-camera-panel__header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; font-weight: 700; color: #1a1a2e; border-bottom: 1px solid #eee; }
@@ -495,7 +495,7 @@
 .sec-camera-panel__preview { width: 100%; min-height: 260px; background: #111; }
 .sec-camera-panel__hint { text-align: center; padding: 10px; font-size: 11px; color: #888; }
 
-/* ═══════ Result Modal ═══════ */
+/* ------- Result Modal ------- */
 .sec-result-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
 .sec-result-card { background: #fff; border-radius: 16px; width: 400px; max-width: 92vw; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.2); animation: sec-modalIn .2s ease; }
 @keyframes sec-modalIn { from { opacity:0; transform: scale(.95); } }
@@ -520,7 +520,7 @@
 .sec-btn--close { background: #f5f5f5; color: #555; }
 .sec-btn--close:hover { background: #eee; }
 
-/* ═══════ Arrival Modal ═══════ */
+/* ------- Arrival Modal ------- */
 .sec-result-card--arrival { width: 460px; max-width: 94vw; }
 .sec-arrival-loading {
     display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -631,7 +631,7 @@
     object-fit: cover;
 }
 
-/* ═══════ RESPONSIVE ═══════ */
+/* ------- RESPONSIVE ------- */
 @media (max-width: 768px) {
     .sec-topbar { gap: 6px; }
     .sec-topbar__scan { order: 3; flex-basis: 100%; }

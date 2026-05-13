@@ -9,7 +9,7 @@
         $urlPoDetailTemplate = route('slots.ajax.po_detail', ['poNumber' => '__PO__']);
     @endphp
     <div class="st-card st-text--sm">
-        <form method="POST" action="{{ route('unplanned.update', ['slotId' => $slot->id]) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('unplanned.update', ['slotId' => $slot->id_slots]) }}" enctype="multipart/form-data">
             @csrf
 
             @if ($errors->any())
@@ -96,7 +96,7 @@
                             @php
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
                             @endphp
-                            <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string) old('actual_gate_id', $slot->actual_gate_id ?? '') === (string) $gate->id ? 'selected' : '' }}>
+                            <option value="{{ $gate->id_gates }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string) old('actual_gate_id', $slot->actual_gate_id ?? '') === (string) $gate->id_gates ? 'selected' : '' }}>
                                 {{ $gateLabel }}
                             </option>
                         @endforeach
@@ -128,7 +128,7 @@
                             <select name="vendor_transporter_id" id="vendor_transporter_id" class="st-select{{ $errors->has('vendor_transporter_id') ? ' st-input--invalid' : '' }}">
                                 <option value="">-- Select Vendor Transporter --</option>
                                 @foreach ($vendorTransporters ?? [] as $vt)
-                                    <option value="{{ $vt->id }}" {{ (string)old('vendor_transporter_id', $slot->vendor_transporter_id ?? '') === (string)$vt->id ? 'selected' : '' }}>{{ $vt->name }}</option>
+                                    <option value="{{ $vt->id_vendor_transporters }}" {{ (string)old('vendor_transporter_id', $slot->vendor_transporter_id ?? '') === (string)$vt->id_vendor_transporters ? 'selected' : '' }}>{{ $vt->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -145,7 +145,7 @@
                     <select name="warehouse_id" id="unplanned-warehouse" class="st-select">
                         <option value="">Choose...</option>
                         @foreach ($warehouses as $wh)
-                            <option value="{{ $wh->id }}" {{ (string)old('warehouse_id', $slot->warehouse_id ?? '') === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                            <option value="{{ $wh->id_wh }}" {{ (string)old('warehouse_id', $slot->warehouse_id ?? '') === (string)$wh->id_wh ? 'selected' : '' }}>{{ $wh->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -171,7 +171,7 @@
                 </div>
                 <div class="st-form-field">
                     <label class="st-label">SJ <span class="st-text--optional">(Optional)</span></label>
-                    <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc', $slot->mat_doc ?? '') }}">
+                    <input type="text" name="mat_doc" class="st-input" value="{{ old('mat_doc', $slot->sj_no ?? '') }}">
                 </div>
             </div>
 

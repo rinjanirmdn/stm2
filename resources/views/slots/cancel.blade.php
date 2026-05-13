@@ -1,19 +1,18 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Cancel Planned - e-Docking Control System')
 @section('page_title', 'Cancel Planned')
 
 @section('content')
     <div class="st-card st-mb-12">
-        <div class="st-text--sm st-text--muted">Booking #{{ $slot->id }}</div>
-        <div class="st-font-semibold">PO: {{ $slot->truck_number ?? 'N/A' }} | Warehouse: {{ $slot->warehouse_name ?? 'N/A' }} | Planned: {{ $slot->planned_start ?? 'N/A' }}</div>
+        <div class="st-text--sm st-text--muted">Booking #{{ $slot->id_slots }}</div>        <div class="st-font-semibold">PO: {{ $slot->truck_number ?? 'N/A' }} | Warehouse: {{ $slot->warehouse_name ?? 'N/A' }} | Planned: {{ $slot->planned_start ?? 'N/A' }}</div>
     </div>
 
 
 
 
     <div class="st-card">
-        <form method="POST" action="{{ route('slots.cancel.store', ['slotId' => $slot->id]) }}">
+        <form method="POST" action="{{ route('slots.cancel.store', ['slotId' => $slot->id_slots]) }}">
             @csrf
 
             <div class="st-mb-10">Are You Sure You Want to Cancel This Planned?</div>

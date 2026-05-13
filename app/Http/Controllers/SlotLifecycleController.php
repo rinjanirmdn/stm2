@@ -96,17 +96,17 @@ class SlotLifecycleController extends Controller
 
         DB::transaction(function () use ($slotId, $ticketNumber, $backdateTime) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
-            DB::table('slots')->where('id', $slotId)->update([
+            DB::table('slots')->where('id_slots', $slotId)->update([
                 'arrival_time' => $now,
                 'ticket_number' => $ticketNumber,
                 'status' => Slot::STATUS_WAITING,
             ]);
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Status Changed to Waiting After Arrival');
-            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket '.strtoupper($ticketNumber));
+            $this->slotService->logActivity($slotId, 'status_change', 'Status Changed to Waiting After Arrival', feature: 'Planned');
+            $this->slotService->logActivity($slotId, 'arrival_recorded', 'Arrival Recorded with Ticket '.strtoupper($ticketNumber), feature: 'Planned');
             if ($backdateTime) {
                 $bdFmt = Carbon::parse($backdateTime)->format('d-m-Y H:i');
-                $this->slotService->logActivity($slotId, 'backdate', 'Arrival Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
+                $this->slotService->logActivity($slotId, 'backdate', 'Arrival Backdated to '.$bdFmt.' by '.auth()->user()->full_name, feature: 'Planned');
             }
         });
 
@@ -138,7 +138,7 @@ class SlotLifecycleController extends Controller
                 if (is_array($poDetail)) {
                     $vn = trim((string) ($poDetail['vendor_name'] ?? ''));
                     if ($vn !== '') {
-                        DB::table('slots')->where('id', $slotId)->update(['vendor_name' => $vn]);
+                        DB::table('slots')->where('id_slots', $slotId)->update(['vendor_name' => $vn]);
                     }
                 }
             } catch (Throwable $e) {
@@ -151,7 +151,7 @@ class SlotLifecycleController extends Controller
             return redirect()->route('slots.index')->with('error', 'Could not generate ticket');
         }
 
-        $filename = 'ticket-'.($slot->ticket_number ?? $slot->id).'.pdf';
+        $filename = 'ticket-'.($slot->ticket_number ?? $slot->id_slots).'.pdf';
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
@@ -182,12 +182,16 @@ class SlotLifecycleController extends Controller
         }
 
         $gates = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
             ->select([
-                'g.*',
+                'g.id_gates',
+                'g.warehouse_id',
+                'g.gate_number',
+                'g.is_active',
+                'g.is_backup',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
             ])
@@ -198,7 +202,7 @@ class SlotLifecycleController extends Controller
         $gateStatuses = [];
         $allConflict = [];
         foreach ($gates as $g) {
-            $gid = (int) ($g->id ?? 0);
+            $gid = (int) ($g->id_gates ?? 0);
             if ($gid <= 0) {
                 continue;
             }
@@ -217,11 +221,11 @@ class SlotLifecycleController extends Controller
         $conflictDetails = [];
         if (! empty($conflictSlotIds)) {
             $rows = DB::table('slots')
-                ->whereIn('id', $conflictSlotIds)
-                ->select(['id', 'ticket_number'])
+                ->whereIn('id_slots', $conflictSlotIds)
+                ->select(['id_slots', 'ticket_number'])
                 ->get();
             foreach ($rows as $r) {
-                $rid = (int) ($r->id ?? 0);
+                $rid = (int) ($r->id_slots ?? 0);
                 if ($rid <= 0) {
                     continue;
                 }
@@ -238,7 +242,7 @@ class SlotLifecycleController extends Controller
         }
         if ($recommendedGateId === null) {
             foreach ($gates as $g) {
-                $gid = (int) ($g->id ?? 0);
+                $gid = (int) ($g->id_gates ?? 0);
                 if ($gid <= 0) {
                     continue;
                 }
@@ -253,7 +257,7 @@ class SlotLifecycleController extends Controller
         }
         if ($recommendedGateId === null) {
             foreach ($gates as $g) {
-                $gid = (int) ($g->id ?? 0);
+                $gid = (int) ($g->id_gates ?? 0);
                 if ($gid <= 0) {
                     continue;
                 }
@@ -328,7 +332,7 @@ class SlotLifecycleController extends Controller
             return back()->withInput()->with('error', 'Actual gate is required');
         }
 
-        $gateRow = DB::table('md_gates')->where('id', $actualGateId)->where('is_active', true)->select(['id', 'warehouse_id'])->first();
+        $gateRow = DB::table('md_gates')->where('id_gates', $actualGateId)->where('is_active', true)->select(['id_gates', 'warehouse_id'])->first();
         if (! $gateRow) {
             if ($request->ajax() || $request->wantsJson()) {
                 throw ValidationException::withMessages(['actual_gate_id' => 'Selected gate is not active']);
@@ -391,7 +395,7 @@ class SlotLifecycleController extends Controller
             $pdo = DB::connection()->getPdo();
             foreach ($request->file('photos') as $photo) {
                 $stmt = $pdo->prepare(
-                    'INSERT INTO slot_photos (slot_id, phase, filename, mime_type, photo_data, created_at) VALUES (?, ?, ?, ?, ?, NOW()) RETURNING id'
+                    'INSERT INTO slot_photos (slot_id, phase, filename, mime_type, photo_data, created_at) VALUES (?, ?, ?, ?, ?, NOW()) RETURNING id_slot_photos'
                 );
                 $stmt->bindValue(1, $slotId, \PDO::PARAM_INT);
                 $stmt->bindValue(2, 'start', \PDO::PARAM_STR);
@@ -400,7 +404,7 @@ class SlotLifecycleController extends Controller
                 $stmt->bindValue(5, file_get_contents($photo->getRealPath()), \PDO::PARAM_LOB);
                 $stmt->execute();
                 $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-                $photoIds[] = (int) ($row['id'] ?? 0);
+                $photoIds[] = (int) ($row['id_slot_photos'] ?? 0);
             }
             $photoPaths = json_encode($photoIds);
         }
@@ -430,25 +434,25 @@ class SlotLifecycleController extends Controller
                 $updateData['start_photo_path'] = $photoPaths;
             }
 
-            DB::table('slots')->where('id', $slotId)->update($updateData);
+            DB::table('slots')->where('id_slots', $slotId)->update($updateData);
 
             $gateMeta = $this->slotService->getGateMetaById($actualGateId);
             $gateName = strtoupper($this->buildGateLabel((string) ($gateMeta['warehouse_code'] ?? ''), (string) ($gateMeta['gate_number'] ?? '')));
 
             if (((string) ($slot->slot_type ?? 'planned')) !== 'unplanned') {
                 if ($isLate) {
-                    $this->slotService->logActivity($slotId, 'late_arrival', 'Truck Arrived Late at '.$gateName);
+                    $this->slotService->logActivity($slotId, 'late_arrival', 'Truck Arrived Late at '.$gateName, feature: 'Planned');
                 } else {
-                    $this->slotService->logActivity($slotId, 'early_arrival', 'Truck Arrived on Time/Early at '.$gateName);
+                    $this->slotService->logActivity($slotId, 'early_arrival', 'Truck Arrived on Time/Early at '.$gateName, feature: 'Planned');
                 }
             }
-            $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at '.$gateName);
+            $this->slotService->logActivity($slotId, 'status_change', 'Booking Started at '.$gateName, feature: 'Planned');
             if ($warehouseChanged) {
-                $this->slotService->logActivity($slotId, 'gate_change', 'Gate changed to different warehouse area: '.$gateName);
+                $this->slotService->logActivity($slotId, 'gate_change', 'Gate changed to different warehouse area: '.$gateName, feature: 'Planned');
             }
             if ($backdateTime) {
                 $bdFmt = Carbon::parse($backdateTime)->format('d-m-Y H:i');
-                $this->slotService->logActivity($slotId, 'backdate', 'Start Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
+                $this->slotService->logActivity($slotId, 'backdate', 'Start Backdated to '.$bdFmt.' by '.auth()->user()->full_name, feature: 'Planned');
             }
         });
 
@@ -511,7 +515,7 @@ class SlotLifecycleController extends Controller
             throw ValidationException::withMessages(['general' => 'Cannot complete: actual start time is missing. Please start the booking first.']);
         }
 
-        $matDoc = trim((string) $request->input('mat_doc', ''));
+        $sjNo = trim((string) $request->input('mat_doc', ''));
         $truckType = trim((string) $request->input('truck_type', ''));
         if ($truckType === '') {
             $truckType = trim((string) ($slot->truck_type ?? ''));
@@ -520,7 +524,7 @@ class SlotLifecycleController extends Controller
         $driverName = trim((string) $request->input('driver_name', ''));
         $driverNumber = trim((string) $request->input('driver_number', ''));
         $notes = trim((string) $request->input('notes', ''));
-        $matDocNumber = trim((string) $request->input('mat_doc_number', ''));
+        $sjDocNumber = trim((string) $request->input('mat_doc_number', ''));
 
         // Handle multiple seal numbers (array from form)
         $sealNumberRaw = $request->input('seal_number', []);
@@ -538,8 +542,8 @@ class SlotLifecycleController extends Controller
         $sealNumber = ! empty($sealNumbers) ? implode(', ', $sealNumbers) : '';
 
         // Surat Jalan is now required
-        if ($matDoc === '') {
-            throw ValidationException::withMessages(['mat_doc' => 'Nomor Surat Jalan wajib diisi']);
+        if ($sjNo === '') {
+            throw ValidationException::withMessages(['mat_doc' => 'SJ Number is required']);
         }
 
         // Seal number is required for outbound direction
@@ -583,7 +587,7 @@ class SlotLifecycleController extends Controller
             $pdo = DB::connection()->getPdo();
             foreach ($request->file('photos') as $photo) {
                 $stmt = $pdo->prepare(
-                    'INSERT INTO slot_photos (slot_id, phase, filename, mime_type, photo_data, created_at) VALUES (?, ?, ?, ?, ?, NOW()) RETURNING id'
+                    'INSERT INTO slot_photos (slot_id, phase, filename, mime_type, photo_data, created_at) VALUES (?, ?, ?, ?, ?, NOW()) RETURNING id_slot_photos'
                 );
                 $stmt->bindValue(1, $slotId, \PDO::PARAM_INT);
                 $stmt->bindValue(2, 'complete', \PDO::PARAM_STR);
@@ -592,16 +596,16 @@ class SlotLifecycleController extends Controller
                 $stmt->bindValue(5, file_get_contents($photo->getRealPath()), \PDO::PARAM_LOB);
                 $stmt->execute();
                 $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-                $photoIds[] = (int) ($row['id'] ?? 0);
+                $photoIds[] = (int) ($row['id_slot_photos'] ?? 0);
             }
             $photoPaths = json_encode($photoIds);
         }
 
-        DB::transaction(function () use ($slotId, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $matDocNumber, $sealNumber, $backdateTime, $photoPaths) {
+        DB::transaction(function () use ($slotId, $sjNo, $truckType, $vehicleNumber, $driverName, $driverNumber, $notes, $sjDocNumber, $sealNumber, $backdateTime, $photoPaths) {
             $now = $backdateTime ?? date('Y-m-d H:i:s');
 
             // Get slot info before updating
-            $slotInfo = DB::table('slots')->where('id', $slotId)->first();
+            $slotInfo = DB::table('slots')->where('id_slots', $slotId)->first();
 
             if (! $slotInfo || empty($slotInfo->actual_start)) {
                 throw new RuntimeException('Cannot complete: actual start time is missing.');
@@ -610,12 +614,12 @@ class SlotLifecycleController extends Controller
             $updateData = [
                 'status' => 'completed',
                 'actual_finish' => $now,
-                'mat_doc' => $matDoc !== '' ? $matDoc : null,
+                'sj_no' => $sjNo !== '' ? $sjNo : null,
                 'truck_type' => $truckType,
                 'vehicle_number_snap' => $vehicleNumber,
                 'driver_name' => $driverName !== '' ? $driverName : null,
                 'driver_number' => $driverNumber !== '' ? $driverNumber : null,
-                'mat_doc_number' => $matDocNumber !== '' ? $matDocNumber : null,
+                'mat_doc_number' => $sjDocNumber !== '' ? $sjDocNumber : null,
                 'seal_number' => $sealNumber !== '' ? $sealNumber : null,
                 'late_reason' => $notes !== '' ? $notes : null,
             ];
@@ -624,17 +628,17 @@ class SlotLifecycleController extends Controller
                 $updateData['complete_photo_path'] = $photoPaths;
             }
 
-            DB::table('slots')->where('id', $slotId)->update($updateData);
+            DB::table('slots')->where('id_slots', $slotId)->update($updateData);
 
             // Auto-cancel obsolete scheduled slots when a slot is completed
             if ($slotInfo && $slotInfo->actual_gate_id) {
                 $this->autoCancelObsoleteSlots($slotInfo->actual_gate_id, $slotInfo->actual_start, $now, $slotId);
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (SJ: '.strtoupper($matDoc).', Truck: '.$truckType.', Vehicle: '.strtoupper($vehicleNumber).', Driver: '.$driverNumber.')');
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot completed (SJ: '.strtoupper($sjNo).', Truck: '.$truckType.', Vehicle: '.strtoupper($vehicleNumber).', Driver: '.$driverNumber.')', feature: 'Planned');
             if ($backdateTime) {
                 $bdFmt = Carbon::parse($backdateTime)->format('d-m-Y H:i');
-                $this->slotService->logActivity($slotId, 'backdate', 'Complete Backdated to '.$bdFmt.' by '.auth()->user()->full_name);
+                $this->slotService->logActivity($slotId, 'backdate', 'Complete Backdated to '.$bdFmt.' by '.auth()->user()->full_name, feature: 'Planned');
             }
         });
 
@@ -664,7 +668,7 @@ class SlotLifecycleController extends Controller
         // For in-progress slots, estimate finish time based on planned duration
         $estimatedFinish = $actualFinish;
         if ($estimatedFinish === null) {
-            $currentSlot = DB::table('slots')->where('id', $excludeSlotId)->first();
+            $currentSlot = DB::table('slots')->where('id_slots', $excludeSlotId)->first();
             if ($currentSlot && $currentSlot->planned_duration) {
                 $finishTime = new DateTime($actualStart);
                 $finishTime->modify('+'.(int) $currentSlot->planned_duration.' minutes');
@@ -680,7 +684,7 @@ class SlotLifecycleController extends Controller
         $obsoleteSlots = DB::table('slots')
             ->whereIn('actual_gate_id', $laneGateIds)
             ->where('status', 'scheduled')
-            ->where('id', '<>', $excludeSlotId)
+            ->where('id_slots', '<>', $excludeSlotId)
             ->where(function ($query) use ($actualStart, $estimatedFinish) {
                 $query->where(function ($sub) use ($actualStart, $estimatedFinish) {
                     $sub->where('planned_start', '>=', $actualStart)
@@ -699,7 +703,7 @@ class SlotLifecycleController extends Controller
         // Cancel obsolete scheduled slots
         foreach ($obsoleteSlots as $obsoleteSlot) {
             DB::table('slots')
-                ->where('id', $obsoleteSlot->id)
+                ->where('id_slots', $obsoleteSlot->id_slots)
                 ->update([
                     'status' => 'cancelled',
                     'blocking_risk' => 0,
@@ -708,9 +712,10 @@ class SlotLifecycleController extends Controller
                 ]);
 
             $this->slotService->logActivity(
-                $obsoleteSlot->id,
+                $obsoleteSlot->id_slots,
                 'status_change',
-                'Auto-cancelled due to earlier operation start at same gate'
+                'Auto-cancelled due to earlier operation start at same gate',
+                feature: 'Planned'
             );
         }
     }
@@ -809,7 +814,7 @@ class SlotLifecycleController extends Controller
                     Log::warning('Failed to send lifecycle notification: '.$e->getMessage(), [
                         'slot_id' => $slotId,
                         'event' => $event,
-                        'recipient_id' => $recipient->id,
+                        'recipient_id' => $recipient->id_users,
                     ]);
                 }
             }

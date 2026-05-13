@@ -1,8 +1,8 @@
-﻿<div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
+<div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
     <div class="st-flex st-justify-between st-align-center st-mb-12">
         <h3 class="st-m-0 st-text-16">Arrival Registration</h3>
         <div class="st-flex st-align-center st-gap-8">
-            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id }}</span>
+            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id_slots }}</span>
         </div>
     </div>
     <div class="st-form-row--grid-3 st-text--sm">
@@ -58,7 +58,7 @@
 
 <div>
     <form method="POST"
-        action="{{ route('slots.arrival.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}">
+        action="{{ route('slots.arrival.store', ['slotId' => $slot->id_slots, 'popup' => request()->boolean('popup') ? 1 : null]) }}">
         @csrf
 
         <div class="st-form-row st-form-field--mb-12">
@@ -73,7 +73,7 @@
                     </button>
                     @if (!empty($slot->ticket_number) && in_array((string) ($slot->status ?? ''), ['scheduled', 'waiting', 'in_progress'], true))
                         @can('slots.ticket')
-                            <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}"
+                            <a href="{{ route('slots.ticket', ['slotId' => $slot->id_slots]) }}"
                                 class="st-btn st-btn--outline-primary st-btn--pad-md" title="Print Ticket"
                                 onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
                                 <i class="fas fa-print"></i>

@@ -73,7 +73,7 @@ class BookingRequestSubmitted extends Notification
         return [
             'title' => 'New Booking Request',
             'message' => 'Request from '.$vendorName.' for PO '.($this->bookingRequest->po_number ?? '-'),
-            'action_url' => route('bookings.show', $this->bookingRequest->id, false),
+            'action_url' => route('bookings.show', $this->bookingRequest->id_booking_requests, false),
             'icon' => 'fas fa-plus-circle',
             'color' => 'blue',
         ];

@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 class Slot extends Model
 {
     use HasFactory;
+    
+    protected $table = 'slots';
+    protected $primaryKey = 'id_slots';
 
     /**
      * Status constants
@@ -38,7 +41,7 @@ class Slot extends Model
 
     protected $fillable = [
         'ticket_number',
-        'mat_doc',
+        'sj_no',
         'seal_number',
         'truck_type',
         'vehicle_number_snap',
@@ -249,21 +252,21 @@ class Slot extends Model
     {
         static::created(function ($model) {
             try {
-                broadcast(new SlotDataChanged('slot', 'created', $model->id));
+                broadcast(new SlotDataChanged('slot', 'created', $model->id_slots));
             } catch (\Throwable $e) {
             }
         });
 
         static::updated(function ($model) {
             try {
-                broadcast(new SlotDataChanged('slot', 'updated', $model->id));
+                broadcast(new SlotDataChanged('slot', 'updated', $model->id_slots));
             } catch (\Throwable $e) {
             }
         });
 
         static::deleted(function ($model) {
             try {
-                broadcast(new SlotDataChanged('slot', 'deleted', $model->id));
+                broadcast(new SlotDataChanged('slot', 'deleted', $model->id_slots));
             } catch (\Throwable $e) {
             }
         });

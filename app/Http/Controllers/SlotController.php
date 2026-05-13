@@ -99,7 +99,7 @@ class SlotController extends Controller
             'search' => trim($request->query('q', '')),
             'truck' => trim($request->query('truck', '')),
             'vendor' => trim($request->query('vendor', '')),
-            'mat_doc' => trim($request->query('mat_doc', '')),
+            'sj_no' => trim($request->query('sj_no', $request->query('mat_doc', ''))),
             'arrival_from' => trim($request->query('arrival_from', '')),
             'arrival_to' => trim($request->query('arrival_to', '')),
             'lead_time_min' => trim($request->query('lead_time_min', '')),
@@ -127,11 +127,11 @@ class SlotController extends Controller
     public function create()
     {
         $warehouses = DB::table('md_warehouse')
-            ->select(['id', 'wh_name as name', 'wh_code as code'])
+            ->select(['id_wh', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
         $gates = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
@@ -169,14 +169,14 @@ class SlotController extends Controller
             'po_number' => 'required|string|max:12',
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
-            'planned_gate_id' => 'required|integer|exists:md_gates,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id_gates',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
             'vehicle_number_snap' => 'nullable|string|max:50',
             'driver_name' => 'nullable|string|max:50',
             'driver_number' => 'nullable|string|max:50',
             'use_vendor_transporter' => 'nullable|boolean',
-            'vendor_transporter_id' => 'nullable|exists:md_vendor_transporters,id',
+            'vendor_transporter_id' => 'nullable|exists:md_vendor_transporters,id_vendor_transporters',
             'destination' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
         ]);
@@ -216,9 +216,9 @@ class SlotController extends Controller
         }
 
         $gateRow = DB::table('md_gates')
-            ->where('id', $plannedGateId)
+            ->where('id_gates', $plannedGateId)
             ->where('is_active', true)
-            ->select(['id', 'warehouse_id'])
+            ->select(['id_gates', 'warehouse_id'])
             ->first();
         if (! $gateRow) {
             return back()->withInput()->with('error', 'Selected gate is not active');
@@ -331,7 +331,7 @@ class SlotController extends Controller
                     $parts = array_filter([$vendorLabel, $truckNumber !== '' ? 'PO/SO '.$truckNumber : '']);
                     $logDesc .= ' ('.implode(' - ', $parts).')';
                 }
-                $this->slotService->logActivity($slotId, 'status_change', $logDesc);
+                $this->slotService->logActivity($slotId, 'status_change', $logDesc, feature: 'Planned');
             }
         });
 
@@ -347,7 +347,7 @@ class SlotController extends Controller
             $plannedDurationMinutes,
             $slotId
         );
-        DB::table('slots')->where('id', $slotId)->update([
+        DB::table('slots')->where('id_slots', $slotId)->update([
             'blocking_risk' => $blockingRisk,
             'blocking_risk_cached_at' => now(),
         ]);
@@ -380,18 +380,18 @@ class SlotController extends Controller
         }
 
         $warehouses = DB::table('md_warehouse')
-            ->select(['id', 'wh_name as name', 'wh_code as code'])
+            ->select(['id_wh', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
 
         $vendors = [];
 
         $gates = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
-            ->select(['g.*', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code', 'w.id as warehouse_id'])
+            ->select(['g.*', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code', 'w.id_wh as warehouse_id'])
             ->get();
 
         $truckTypes = $this->getTruckTypeOptions();
@@ -437,7 +437,7 @@ class SlotController extends Controller
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
             'vendor_id' => 'nullable|string|max:255',
-            'planned_gate_id' => 'required|integer|exists:md_gates,id',
+            'planned_gate_id' => 'required|integer|exists:md_gates,id_gates',
             'planned_start' => 'required|string',
             'planned_duration' => 'required|integer|min:1|max:1440',
             'vehicle_number_snap' => 'nullable|string|max:50',
@@ -466,9 +466,9 @@ class SlotController extends Controller
         }
 
         $gateRow = DB::table('md_gates')
-            ->where('id', $plannedGateId)
+            ->where('id_gates', $plannedGateId)
             ->where('is_active', true)
-            ->select(['id', 'warehouse_id'])
+            ->select(['id_gates', 'warehouse_id'])
             ->first();
         if (! $gateRow) {
             return back()->withInput()->with('error', 'Selected gate is not active');
@@ -480,7 +480,7 @@ class SlotController extends Controller
         }
 
         if ($plannedGateId !== null) {
-            $gate = DB::table('md_gates')->where('id', $plannedGateId)->where('is_active', true)->select(['warehouse_id'])->first();
+            $gate = DB::table('md_gates')->where('id_gates', $plannedGateId)->where('is_active', true)->select(['warehouse_id'])->first();
             if (! $gate || (int) ($gate->warehouse_id ?? 0) !== $warehouseId) {
                 return back()->withInput()->with('error', 'Selected gate does not belong to chosen warehouse or is inactive');
             }
@@ -506,7 +506,7 @@ class SlotController extends Controller
             $endStr = $plannedEndDt->format('Y-m-d H:i:s');
 
             $overlapCount = (int) DB::table('slots')
-                ->where('id', '<>', $slotId)
+                ->where('id_slots', '<>', $slotId)
                 ->whereIn('planned_gate_id', $laneGateIds)
                 ->whereIn('status', ['scheduled', 'waiting', 'in_progress'])
                 ->whereRaw('? < '.$this->slotService->getDateAddExpression('planned_start', 'planned_duration'), [$startStr])
@@ -584,7 +584,7 @@ class SlotController extends Controller
                 $changes[] = 'Type: '.ucfirst($oldSlotType).' → '.ucfirst($newSlotType);
             }
 
-            DB::table('slots')->where('id', $slotId)->update($updateData);
+            DB::table('slots')->where('id_slots', $slotId)->update($updateData);
 
             // Build descriptive log message
             $vendorName = trim((string) ($slot->vendor_name ?? ''));
@@ -598,7 +598,8 @@ class SlotController extends Controller
                     'status_change',
                     $changeDesc,
                     ['status' => $oldStatus, 'slot_type' => $oldSlotType],
-                    ['status' => $newStatus ?? $oldStatus, 'slot_type' => $newSlotType ?? $oldSlotType]
+                    ['status' => $newStatus ?? $oldStatus, 'slot_type' => $newSlotType ?? $oldSlotType],
+                    feature: 'Planned'
                 );
             } else {
                 $logDesc = 'Slot updated by '.$actorName;
@@ -606,7 +607,7 @@ class SlotController extends Controller
                     $parts = array_filter([$vendorName, $truckNumber !== '' ? 'PO/SO '.$truckNumber : '']);
                     $logDesc .= ' ('.implode(' - ', $parts).')';
                 }
-                $this->slotService->logActivity($slotId, 'status_change', $logDesc);
+                $this->slotService->logActivity($slotId, 'status_change', $logDesc, feature: 'Planned');
             }
         });
 
@@ -618,7 +619,7 @@ class SlotController extends Controller
             $plannedDurationMinutes,
             $slotId
         );
-        DB::table('slots')->where('id', $slotId)->update([
+        DB::table('slots')->where('id_slots', $slotId)->update([
             'blocking_risk' => $blockingRisk,
             'blocking_risk_cached_at' => now(),
         ]);
@@ -649,7 +650,7 @@ class SlotController extends Controller
                     }
                     if ($vn !== '') {
                         if (trim((string) ($slot->vendor_name ?? '')) === '') {
-                            DB::table('slots')->where('id', $slotId)->update(['vendor_name' => $vn]);
+                            DB::table('slots')->where('id_slots', $slotId)->update(['vendor_name' => $vn]);
                         }
                         $slot->vendor_name = $vn;
                     }
@@ -669,12 +670,12 @@ class SlotController extends Controller
                 $slot->planned_gate_id ? (int) $slot->planned_gate_id : null,
                 (string) ($slot->planned_start ?? ''),
                 (int) ($slot->planned_duration ?? 0),
-                (int) $slot->id
+                (int) $slot->id_slots
             );
             $slot->blocking = $currentRiskLevel;
 
             // Also update the database so list page shows accurate value
-            DB::table('slots')->where('id', $slotId)->update([
+            DB::table('slots')->where('id_slots', $slotId)->update([
                 'blocking_risk' => $currentRiskLevel,
                 'blocking_risk_cached_at' => now(),
             ]);
@@ -686,7 +687,7 @@ class SlotController extends Controller
                 $warehouseId = (int) ($slot->warehouse_id ?? 0);
                 $gateId = ! empty($slot->planned_gate_id) ? (int) $slot->planned_gate_id : null;
                 $ticket = $this->slotService->generateTicketNumber($warehouseId, $gateId);
-                DB::table('slots')->where('id', $slotId)->update([
+                DB::table('slots')->where('id_slots', $slotId)->update([
                     'ticket_number' => $ticket,
                     'updated_at' => now(),
                 ]);
@@ -721,11 +722,11 @@ class SlotController extends Controller
         }
 
         $logs = DB::table('activity_logs as al')
-            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id')
+            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id_users')
             ->where('al.slot_id', $slotId)
             ->orderBy('al.created_at', 'desc')
             ->select([
-                'al.id',
+                'al.id_activity_logs as id',
                 'al.slot_id',
                 'al.activity_type',
                 'al.description',
@@ -789,9 +790,9 @@ class SlotController extends Controller
             $now = date('Y-m-d H:i:s');
 
             // Get slot info before updating for cache clearing
-            $slot = DB::table('slots')->where('id', $slotId)->first();
+            $slot = DB::table('slots')->where('id_slots', $slotId)->first();
 
-            DB::table('slots')->where('id', $slotId)->update([
+            DB::table('slots')->where('id_slots', $slotId)->update([
                 'status' => 'cancelled',
                 'cancelled_reason' => $reason,
                 'cancelled_at' => $now,
@@ -828,7 +829,7 @@ class SlotController extends Controller
                 }
             }
 
-            $this->slotService->logActivity($slotId, 'status_change', 'Slot Cancelled', null, ['reason' => $reason, 'cancelled_at' => $now]);
+            $this->slotService->logActivity($slotId, 'status_change', 'Slot Cancelled', null, ['reason' => $reason, 'cancelled_at' => $now], feature: 'Planned');
 
             // Notify vendor (requester) and internal users after successful DB commit
             DB::afterCommit(function () use ($slotId, $reason, $now, $actorName) {
@@ -846,7 +847,7 @@ class SlotController extends Controller
 
                     $bookingRequestId = null;
                     try {
-                        $bookingRequestId = (int) BookingRequest::where('converted_slot_id', $slotId)->value('id');
+                        $bookingRequestId = (int) BookingRequest::where('converted_slot_id', $slotId)->value('id_booking_requests');
                         if ($bookingRequestId <= 0) {
                             $bookingRequestId = null;
                         }
@@ -915,7 +916,7 @@ class SlotController extends Controller
                 // ignore
             }
 
-            $ticketNumber = DB::table('slots')->where('id', $slotId)->value('ticket_number');
+            $ticketNumber = DB::table('slots')->where('id_slots', $slotId)->value('ticket_number');
 
             $recipients = User::where('is_active', true)
                 ->whereHas('roles', function ($q) {
@@ -953,7 +954,7 @@ class SlotController extends Controller
                 } catch (\Throwable $e) {
                     Log::warning('Failed to notify recipient for internal slot: '.$e->getMessage(), [
                         'slot_id' => $slotId,
-                        'recipient_id' => $recipient->id,
+                        'recipient_id' => $recipient->id_users,
                     ]);
                 }
             }

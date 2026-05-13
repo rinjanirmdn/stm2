@@ -236,7 +236,7 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">SJ</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->mat_doc) ? $slot->mat_doc : 'N/A' }}</div>
+                            <div class="st-detail-value">{{ !empty($slot->sj_no) ? $slot->sj_no : 'N/A' }}</div>
                         </div>
 
                         @if(!$isUnplanned)
@@ -343,13 +343,13 @@
                                     <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Start Process</div>
                                     @foreach($slot->start_photos as $idx => $photo)
                                         @php
-                                            $imgUrl = !empty($photo->id) ? route('slot-photos.show', $photo->id) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
-                                            $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
+                                            $imgUrl = !empty($photo->id_slot_photos) ? route('slot-photos.show', $photo->id_slot_photos) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
+                                            $dlUrl = !empty($photo->id_slot_photos) ? route('slot-photos.download', $photo->id_slot_photos) : $imgUrl;
                                         @endphp
                                         <div class="st-photo-preview st-text-center">
                                             <img src="{{ $imgUrl }}" alt="Start Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.closest('.st-photo-preview').style.display='none'">
                                             <div class="st-mt-4">
-                                                <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id_slots }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -363,13 +363,13 @@
                                     <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Complete Process</div>
                                     @foreach($slot->complete_photos as $idx => $photo)
                                         @php
-                                            $imgUrl = !empty($photo->id) ? route('slot-photos.show', $photo->id) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
-                                            $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
+                                            $imgUrl = !empty($photo->id_slot_photos) ? route('slot-photos.show', $photo->id_slot_photos) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
+                                            $dlUrl = !empty($photo->id_slot_photos) ? route('slot-photos.download', $photo->id_slot_photos) : $imgUrl;
                                         @endphp
                                         <div class="st-photo-preview st-text-center">
                                             <img src="{{ $imgUrl }}" alt="Complete Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.closest('.st-photo-preview').style.display='none'">
                                             <div class="st-mt-4">
-                                                <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id_slots }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -385,18 +385,18 @@
 
             <div class="st-flex st-gap-6 st-flex-wrap st-align-center st-justify-end st-mb-8">
                 @can('unplanned.edit')
-                    <a href="{{ route('unplanned.edit', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
+                    <a href="{{ route('unplanned.edit', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
                         <i class="fa-solid fa-pen st-mr-4"></i> Edit
                     </a>
                 @endcan
 
                 @if ($status === 'waiting')
                     @can('slots.start')
-                    <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">Start</a>
+                    <a href="{{ route('unplanned.start', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">Start</a>
                     @endcan
                 @elseif ($status === 'in_progress')
                     @can('slots.complete')
-                    <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">Complete</a>
+                    <a href="{{ route('unplanned.complete', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">Complete</a>
                     @endcan
                 @endif
 

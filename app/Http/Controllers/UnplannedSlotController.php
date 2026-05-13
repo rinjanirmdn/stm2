@@ -66,8 +66,8 @@ class UnplannedSlotController extends Controller
 
         // Build query
         $query = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as g', 's.actual_gate_id', '=', 'g.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_gates as g', 's.actual_gate_id', '=', 'g.id_gates')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'unplanned'")
             ->select([
@@ -86,7 +86,7 @@ class UnplannedSlotController extends Controller
             $like = '%'.strtolower($searchRaw).'%';
             $query->where(function ($q) use ($like) {
                 $q->whereRaw('LOWER(s.po_number) like ?', [$like])
-                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.sj_no, \'\')) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like]);
             });
         }
@@ -96,9 +96,9 @@ class UnplannedSlotController extends Controller
             $query->whereRaw('LOWER(s.po_number) like ?', ['%'.strtolower($val).'%']);
         }
 
-        if ($request->filled('mat_doc')) {
-            $val = str_replace(['%', '_'], ['\%', '\_'], $request->get('mat_doc'));
-            $query->whereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', ['%'.strtolower($val).'%']);
+        if ($request->filled('sj_no')) {
+            $val = str_replace(['%', '_'], ['\%', '\_'], $request->get('sj_no'));
+            $query->whereRaw('LOWER(COALESCE(s.sj_no, \'\')) like ?', ['%'.strtolower($val).'%']);
         }
 
         if ($request->filled('vendor')) {
@@ -137,7 +137,7 @@ class UnplannedSlotController extends Controller
 
         // Apply sorting
         $allowedSorts = [
-            'po_number', 'mat_doc', 'vendor_name', 'warehouse_name',
+            'po_number', 'sj_no', 'vendor_name', 'warehouse_name',
             'direction', 'arrival_time', 'created_at',
         ];
 
@@ -178,7 +178,7 @@ class UnplannedSlotController extends Controller
             }
         }
 
-        $query->orderByDesc('s.created_at')->orderByDesc('s.id');
+        $query->orderByDesc('s.created_at')->orderByDesc('s.id_slots');
 
         // Apply pagination
         if ($pageSize === 'all') {
@@ -200,7 +200,7 @@ class UnplannedSlotController extends Controller
         // Get warehouses and gates for filter dropdowns
         $warehouses = Cache::remember('unplanned:index:warehouses', now()->addMinutes(10), function () {
             return DB::table('md_warehouse')
-                ->select(['id', 'wh_name as name', 'wh_code as code'])
+                ->select(['id_wh', 'wh_name as name', 'wh_code as code'])
                 ->orderBy('wh_name')
                 ->get();
         });
@@ -236,13 +236,13 @@ class UnplannedSlotController extends Controller
     {
         $warehouses = Cache::remember('unplanned:create:warehouses', now()->addMinutes(10), function () {
             return DB::table('md_warehouse')
-                ->select(['id', 'wh_name as name', 'wh_code as code'])
+                ->select(['id_wh', 'wh_name as name', 'wh_code as code'])
                 ->orderBy('wh_name')
                 ->get();
         });
         $gates = Cache::remember('unplanned:create:gates', now()->addMinutes(10), function () {
             return DB::table('md_gates as g')
-                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
                 ->where('g.is_active', true)
                 ->orderBy('w.wh_name')
                 ->orderBy('g.gate_number')
@@ -265,7 +265,7 @@ class UnplannedSlotController extends Controller
     {
         $request->validate([
             'driver_name' => 'nullable|string|max:50',
-            'actual_gate_id' => 'required|integer|exists:md_gates,id',
+            'actual_gate_id' => 'required|integer|exists:md_gates,id_gates',
             'destination' => 'nullable|string|max:255',
         ]);
 
@@ -279,9 +279,9 @@ class UnplannedSlotController extends Controller
         }
 
         $gateRow = DB::table('md_gates')
-            ->where('id', $actualGateId)
+            ->where('id_gates', $actualGateId)
             ->where('is_active', true)
-            ->select(['id', 'warehouse_id'])
+            ->select(['id_gates', 'warehouse_id'])
             ->first();
         if (! $gateRow) {
             return back()->withInput()->with('error', 'Selected gate is not active');
@@ -308,7 +308,7 @@ class UnplannedSlotController extends Controller
 
         $arrivalTime = $arrivalDt->format('Y-m-d H:i:s');
 
-        $matDoc = trim((string) $request->input('mat_doc', ''));
+        $sjNo = trim((string) $request->input('mat_doc', ''));
         $truckType = trim((string) $request->input('truck_type', ''));
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
@@ -362,7 +362,7 @@ class UnplannedSlotController extends Controller
                 'actual_gate_id' => $actualGateId,
                 'planned_start' => $arrivalTime,
                 'arrival_time' => $arrivalTime,
-                'mat_doc' => $matDoc !== '' ? $matDoc : null,
+                'sj_no' => $sjNo !== '' ? $sjNo : null,
                 'truck_type' => $truckType !== '' ? $truckType : null,
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
@@ -379,7 +379,7 @@ class UnplannedSlotController extends Controller
             ]);
 
             if ($slotId > 0) {
-                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Recorded as '.$status);
+                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Recorded as '.$status, feature: 'Unplanned');
             }
 
             return $slotId;
@@ -412,14 +412,14 @@ class UnplannedSlotController extends Controller
         }
 
         $warehouses = DB::table('md_warehouse')
-            ->select(['id', 'wh_name as name', 'wh_code as code'])
+            ->select(['id_wh', 'wh_name as name', 'wh_code as code'])
             ->orderBy('wh_name')
             ->get();
 
         $vendors = collect(); // Business partner table removed, vendors now stored in slots
 
         $gates = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('g.is_active', true)
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
@@ -469,7 +469,7 @@ class UnplannedSlotController extends Controller
             'po_number' => 'required|string|max:12',
             'direction' => 'required|in:inbound,outbound',
             'vendor_id' => 'nullable|string|max:255',
-            'actual_gate_id' => 'required|integer|exists:md_gates,id',
+            'actual_gate_id' => 'required|integer|exists:md_gates,id_gates',
             'arrival_time' => 'required|string',
             'destination' => 'nullable|string|max:255',
         ]);
@@ -485,9 +485,9 @@ class UnplannedSlotController extends Controller
         }
 
         $gateRow = DB::table('md_gates')
-            ->where('id', $actualGateId)
+            ->where('id_gates', $actualGateId)
             ->where('is_active', true)
-            ->select(['id', 'warehouse_id'])
+            ->select(['id_gates', 'warehouse_id'])
             ->first();
         if (! $gateRow) {
             return back()->withInput()->with('error', 'Selected gate is not active');
@@ -498,7 +498,7 @@ class UnplannedSlotController extends Controller
             return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
         }
 
-        $matDoc = trim((string) $request->input('mat_doc', ''));
+        $sjNo = trim((string) $request->input('mat_doc', ''));
         $truckType = trim((string) $request->input('truck_type', ''));
         $vehicleNumber = trim((string) $request->input('vehicle_number_snap', ''));
         $driverName = trim((string) $request->input('driver_name', ''));
@@ -537,7 +537,7 @@ class UnplannedSlotController extends Controller
                 'warehouse_id' => $warehouseId,
                 'actual_gate_id' => $actualGateId,
                 'arrival_time' => $arrivalTime,
-                'mat_doc' => $matDoc !== '' ? $matDoc : null,
+                'sj_no' => $sjNo !== '' ? $sjNo : null,
                 'truck_type' => $truckType !== '' ? $truckType : null,
                 'vehicle_number_snap' => $vehicleNumber !== '' ? $vehicleNumber : null,
                 'driver_name' => $driverName !== '' ? $driverName : null,
@@ -564,7 +564,7 @@ class UnplannedSlotController extends Controller
                 $changes[] = 'Type: '.ucfirst($oldSlotType).' → '.ucfirst($newSlotType);
             }
 
-            DB::table('slots')->where('id', $slotId)->update($updateData);
+            DB::table('slots')->where('id_slots', $slotId)->update($updateData);
 
             // Build descriptive log message
             $actorName = Auth::user()->display_name ?? 'Unknown';
@@ -576,10 +576,11 @@ class UnplannedSlotController extends Controller
                     'status_change',
                     $changeDesc,
                     ['status' => $oldStatus, 'slot_type' => $oldSlotType],
-                    ['status' => $newStatus ?? $oldStatus, 'slot_type' => $newSlotType ?? $oldSlotType]
+                    ['status' => $newStatus ?? $oldStatus, 'slot_type' => $newSlotType ?? $oldSlotType],
+                    feature: 'Unplanned'
                 );
             } else {
-                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned transaction updated by '.$actorName);
+                $this->slotService->logActivity($slotId, 'status_change', 'Unplanned transaction updated by '.$actorName, feature: 'Unplanned');
             }
         });
 
@@ -646,7 +647,7 @@ class UnplannedSlotController extends Controller
                 } catch (\Throwable $e) {
                     Log::warning('Failed to notify recipient for internal slot: '.$e->getMessage(), [
                         'slot_id' => $slotId,
-                        'recipient_id' => $recipient->id,
+                        'recipient_id' => $recipient->id_users,
                     ]);
                 }
             }

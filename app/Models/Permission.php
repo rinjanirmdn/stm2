@@ -8,6 +8,7 @@ use Spatie\Permission\Models\Permission as SpatiePermission;
 class Permission extends SpatiePermission
 {
     protected $table = 'md_permissions';
+    protected $primaryKey = 'id_permission';
 
     protected $fillable = [
         'perm_name',

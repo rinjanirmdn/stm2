@@ -184,9 +184,9 @@
                                                 'cancelled' => 'cancelled',
                                                 default => 'secondary',
                                             };
-                                            $ticketLabel = $slot ? ($slot->ticket_number ?? $booking->request_number ?? 'REQ-' . $booking->id) : ($booking->request_number ?? 'REQ-' . $booking->id);
+                                            $ticketLabel = $slot ? ($slot->ticket_number ?? $booking->request_number ?? 'REQ-' . $booking->id_booking_requests) : ($booking->request_number ?? 'REQ-' . $booking->id_booking_requests);
                                         @endphp
-                                        <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vd-recent-item"
+                                        <a href="{{ route('vendor.bookings.show', $booking->id_booking_requests) }}" class="vd-recent-item"
                                             data-arrival="{{ $arrivalLabel ? strtolower($arrivalLabel === 'On Time' ? 'ontime' : 'late') : '' }}"
                                             data-vendor="{{ $booking->supplier_name ?? '' }}">
                                             <div class="vd-recent-main">

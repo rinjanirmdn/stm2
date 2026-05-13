@@ -23,9 +23,9 @@ class DashboardStatsService
         $rangeDate = DB::raw('DATE(COALESCE(s.actual_start, s.arrival_time, s.planned_start))');
 
         $rows = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->whereBetween($rangeDate, [$start, $end])
@@ -102,7 +102,7 @@ class DashboardStatsService
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->where('s.status', 'completed')
@@ -181,7 +181,7 @@ class DashboardStatsService
         $rows = DB::table('slots as s')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->where('s.status', 'completed')
@@ -261,7 +261,7 @@ class DashboardStatsService
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->whereBetween($rangeDate, [$start, $end])
@@ -551,7 +551,7 @@ class DashboardStatsService
     public function getCompletionStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $completionRows = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->whereBetween(DB::raw('DATE(s.planned_start)'), [$start, $end])
             ->where('s.status', '!=', 'cancelled')
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
@@ -603,7 +603,7 @@ class DashboardStatsService
 
         $segRows = DB::table('slots as s')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->where('s.status', 'completed')
             ->whereNotNull('td.target_duration_minutes')
             ->whereNotNull('s.actual_finish')
@@ -831,7 +831,7 @@ class DashboardStatsService
         $lateCaseExpr = "CASE WHEN s.slot_type = 'planned' AND s.arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (s.is_late = true) END";
 
         $rows = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->where('s.status', 'completed')
             ->whereBetween($rangeDate, [$start, $end])
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
@@ -880,7 +880,7 @@ class DashboardStatsService
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->where('s.status', 'completed')
             ->whereNotNull('td.target_duration_minutes')
             ->whereNotNull('s.actual_finish')
@@ -939,11 +939,11 @@ class DashboardStatsService
     public function getActivityStats(string $date, int $warehouseId = 0, int $userId = 0, ?string $vendorName = null, ?string $transporter = null): array
     {
         $activityQ = DB::table('activity_logs as al')
-            ->leftJoin('slots as s', 'al.slot_id', '=', 's.id')
-            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id')
-            ->leftJoin('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->leftJoin('slots as s', 'al.slot_id', '=', 's.id_slots')
+            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id_users')
+            ->leftJoin('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->select([
-                'al.id',
+                'al.id_activity_logs as id',
                 'al.activity_type',
                 'al.description',
                 'al.created_at',
@@ -970,8 +970,8 @@ class DashboardStatsService
                 ->orderByDesc('al.created_at')
                 ->limit(50)
                 ->get(),
-            'warehouses' => DB::table('md_warehouse')->select(['id', 'wh_name as name'])->orderBy('wh_name')->get(),
-            'users' => DB::table('md_users')->select(['id', 'nik'])->orderBy('nik')->get(),
+            'warehouses' => DB::table('md_warehouse')->select(['id_wh', 'wh_name as name'])->orderBy('wh_name')->get(),
+            'users' => DB::table('md_users')->select(['id_users', 'nik'])->orderBy('nik')->get(),
         ];
     }
 

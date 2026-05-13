@@ -9,7 +9,7 @@
     <div class="vendor-card__header">
         <h1 class="vendor-card__title">
             <i class="fas fa-ticket"></i>
-            Booking {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
+            Booking {{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}
         </h1>
     </div>
 
@@ -335,7 +335,7 @@
     @if(in_array($booking->status, ['pending', 'approved']))
     <div class="vb-actions">
             @if($booking->status === 'approved' && ($booking->converted_slot_id || $booking->convertedSlot))
-            <a href="{{ route('vendor.bookings.ticket', ['slotId' => $booking->converted_slot_id ?? $booking->convertedSlot->id]) }}" 
+            <a href="{{ route('vendor.bookings.ticket', ['slotId' => $booking->converted_slot_id ?? $booking->convertedSlot->id_slots]) }}" 
                class="vendor-btn vendor-btn--primary" 
                target="_blank">
                 <i class="fas fa-print"></i>
@@ -351,7 +351,7 @@
             @if($booking->status === 'pending' && auth()->user()->hasRole('vendor'))
                 <button type="button"
                         class="vendor-btn vendor-btn--danger"
-                        onclick="openVendorCancelModal('{{ route('vendor.bookings.cancel', $booking->id) }}', '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+                        onclick="openVendorCancelModal('{{ route('vendor.bookings.cancel', $booking->id_booking_requests) }}', '{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}')">
                     <i class="fas fa-times"></i>
                     Cancel Booking
                 </button>

@@ -71,8 +71,8 @@ class BookingApprovalService
                 'approval_notes' => $notes !== '' ? $notes : null,
                 'status' => Slot::STATUS_PENDING_APPROVAL,
                 'slot_type' => 'planned',
-                'created_by' => $vendor->id,
-                'requested_by' => $vendor->id,
+                'created_by' => $vendor->id_users,
+                'requested_by' => $vendor->id_users,
                 'requested_at' => now(),
             ]);
 
@@ -80,9 +80,9 @@ class BookingApprovalService
 
             // Log booking history
             BookingHistory::logAction(
-                $slot->id,
+                $slot->id_slots,
                 BookingHistory::ACTION_REQUESTED,
-                $vendor->id,
+                $vendor->id_users,
                 Slot::STATUS_PENDING_APPROVAL,
                 null,
                 $notes !== '' ? $notes : null,
@@ -95,16 +95,18 @@ class BookingApprovalService
 
             // Log activity
             $this->safeActivityLog('booking_requested', [
-                'type' => 'booking_requested',
+                'activity_type' => 'booking_requested',
                 'description' => "New booking request submitted for PO: {$slot->po_number}",
-                'po_number' => $slot->po_number,
-                'mat_doc' => $slot->mat_doc ?? null,
-                'slot_id' => $slot->id,
-                'user_id' => $vendor->id,
+                'feature' => 'Booking Requests',
+                'slot_id' => $slot->id_slots,
+                'created_by' => $vendor->id_users,
+                'old_value' => null,
+                'new_value' => json_encode($slot->only(['direction', 'warehouse_id', 'po_number', 'planned_start', 'planned_duration', 'status'])),
+                'booking_request_id' => $bookingRequestId ?? null,
             ], [
-                'slot_id' => $slot->id,
+                'slot_id' => $slot->id_slots,
                 'po_number' => $slot->po_number,
-                'vendor_id' => $vendor->id,
+                'vendor_id' => $vendor->id_users,
             ]);
 
             // Notify admins about new booking request
@@ -164,9 +166,9 @@ class BookingApprovalService
 
             // Log booking history
             BookingHistory::logAction(
-                $slot->id,
+                $slot->id_slots,
                 BookingHistory::ACTION_APPROVED,
-                $admin->id,
+                $admin->id_users,
                 Slot::STATUS_SCHEDULED,
                 $oldStatus,
                 $notes
@@ -175,18 +177,24 @@ class BookingApprovalService
             // Notify vendor immediately (avoid relying solely on afterCommit which may not fire in some setups)
             $this->notifyVendorApproved($slot, $bookingRequestId, $action === Slot::APPROVAL_RESCHEDULED);
 
-            $slotId = (int) $slot->id;
+            $slotId = (int) $slot->id_slots;
             $poNumber = (string) ($slot->po_number ?? '');
-            $matDoc = $slot->mat_doc ?? null;
-            $adminId = (int) $admin->id;
-            DB::afterCommit(function () use ($slotId, $poNumber, $matDoc, $adminId) {
+            $sjNo = $slot->sj_no ?? null;
+            $oldValues = json_encode($slot->only(['status', 'approved_by', 'approval_action', 'approval_notes', 'approved_at']));
+            $adminId = (int) $admin->id_users;
+            DB::afterCommit(function () use ($slotId, $poNumber, $sjNo, $adminId, $oldValues, $bookingRequestId) {
+                $currentSlot = Slot::find($slotId);
+                $newValues = $currentSlot ? json_encode($currentSlot->only(['status', 'approved_by', 'approval_action', 'approval_notes', 'approved_at'])) : null;
+
                 $this->safeActivityLog('booking_approved', [
-                    'type' => 'booking_approved',
+                    'activity_type' => 'booking_approved',
                     'description' => "Approved booking request for PO: {$poNumber}",
-                    'po_number' => $poNumber !== '' ? $poNumber : null,
-                    'mat_doc' => $matDoc,
+                    'feature' => 'Booking Requests',
                     'slot_id' => $slotId,
-                    'user_id' => $adminId,
+                    'created_by' => $adminId,
+                    'old_value' => $oldValues,
+                    'new_value' => $newValues,
+                    'booking_request_id' => $bookingRequestId,
                 ], [
                     'slot_id' => $slotId,
                     'po_number' => $poNumber,
@@ -228,7 +236,7 @@ class BookingApprovalService
                 $gid,
                 $plannedStart,
                 $durationMinutes,
-                (int) ($slot->id ?? 0)
+                (int) ($slot->id_slots ?? 0)
             );
             if (empty($check['available'])) {
                 continue;
@@ -257,13 +265,13 @@ class BookingApprovalService
             return $vendor->notifications()
                 ->where('type', BookingApproved::class)
                 ->where(function ($q) use ($slot, $actionUrl) {
-                    $q->where('data->slot_id', $slot->id)
+                    $q->where('data->slot_id', $slot->id_slots)
                         ->orWhere('data->action_url', $actionUrl);
                 })
                 ->exists();
         }
 
-        $slotIdNeedle = '"slot_id":'.(int) $slot->id;
+        $slotIdNeedle = '"slot_id":'.(int) $slot->id_slots;
         $urlNeedle = '"action_url":"'.str_replace('"', '\\"', $actionUrl).'"';
 
         return $vendor->notifications()
@@ -314,9 +322,9 @@ class BookingApprovalService
 
             // Log booking history
             BookingHistory::logAction(
-                $slot->id,
+                $slot->id_slots,
                 BookingHistory::ACTION_REJECTED,
-                $admin->id,
+                $admin->id_users,
                 Slot::STATUS_CANCELLED,
                 $oldStatus,
                 $reason
@@ -324,16 +332,18 @@ class BookingApprovalService
 
             // Log activity
             $this->safeActivityLog('booking_rejected', [
-                'type' => 'booking_rejected',
+                'activity_type' => 'booking_rejected',
                 'description' => "Rejected booking request for PO: {$slot->po_number} - Reason: {$reason}",
-                'po_number' => $slot->po_number,
-                'mat_doc' => $slot->mat_doc ?? null,
-                'slot_id' => $slot->id,
-                'user_id' => $admin->id,
+                'feature' => 'Booking Requests',
+                'slot_id' => $slot->id_slots,
+                'created_by' => $admin->id_users,
+                'old_value' => json_encode(['status' => $oldStatus]),
+                'new_value' => json_encode(['status' => Slot::STATUS_CANCELLED, 'approval_notes' => $reason]),
+                'booking_request_id' => $bookingRequestId ?? null,
             ], [
-                'slot_id' => $slot->id,
+                'slot_id' => $slot->id_slots,
                 'po_number' => $slot->po_number,
-                'admin_id' => $admin->id,
+                'admin_id' => $admin->id_users,
                 'reason' => $reason,
             ]);
 
@@ -360,9 +370,9 @@ class BookingApprovalService
 
             // Log booking history
             BookingHistory::logAction(
-                $slot->id,
+                $slot->id_slots,
                 BookingHistory::ACTION_CANCELLED,
-                $user->id,
+                $user->id_users,
                 Slot::STATUS_CANCELLED,
                 $oldStatus,
                 $reason
@@ -594,7 +604,7 @@ class BookingApprovalService
 
             if ($admins->isEmpty()) {
                 Log::warning('No admin recipients found for booking notification', [
-                    'slot_id' => $slot->id,
+                    'slot_id' => $slot->id_slots,
                     'ticket_number' => $slot->ticket_number,
                 ]);
             }
@@ -614,7 +624,7 @@ class BookingApprovalService
     {
         try {
             Log::info('Dispatching vendor approval notification', [
-                'slot_id' => $slot->id,
+                'slot_id' => $slot->id_slots,
                 'ticket_number' => $slot->ticket_number,
                 'requested_by' => $slot->requested_by,
                 'booking_request_id' => $bookingRequestId,
@@ -624,7 +634,7 @@ class BookingApprovalService
             $vendorId = (int) ($slot->requested_by ?? 0);
             if ($vendorId <= 0) {
                 Log::warning('Approval notification skipped: slot has no requested_by', [
-                    'slot_id' => $slot->id,
+                    'slot_id' => $slot->id_slots,
                     'ticket_number' => $slot->ticket_number,
                 ]);
 
@@ -634,7 +644,7 @@ class BookingApprovalService
             $vendor = User::find($vendorId);
             if (! $vendor) {
                 Log::warning('Approval notification skipped: vendor user not found', [
-                    'slot_id' => $slot->id,
+                    'slot_id' => $slot->id_slots,
                     'ticket_number' => $slot->ticket_number,
                     'vendor_id' => $vendorId,
                 ]);
@@ -643,27 +653,27 @@ class BookingApprovalService
             }
 
             if ($vendor) {
-                $targetId = $bookingRequestId ?: $slot->id;
+                $targetId = $bookingRequestId ?: $slot->id_slots;
                 $actionUrl = url('/vendor/bookings/'.$targetId);
-
+ 
                 Log::info('Resolved vendor recipient for approval notification', [
-                    'slot_id' => $slot->id,
-                    'vendor_id' => $vendor->id,
+                    'slot_id' => $slot->id_slots,
+                    'vendor_id' => $vendor->id_users,
                     'vendor_email' => $vendor->email,
                     'action_url' => $actionUrl,
                 ]);
-
+ 
                 $alreadyNotified = $this->vendorAlreadyNotifiedApproved($vendor, $slot, $actionUrl);
                 if ($alreadyNotified) {
                     Log::info('Approval notification skipped: already notified', [
-                        'slot_id' => $slot->id,
-                        'vendor_id' => $vendor->id,
+                        'slot_id' => $slot->id_slots,
+                        'vendor_id' => $vendor->id_users,
                         'action_url' => $actionUrl,
                     ]);
-
+ 
                     return;
                 }
-
+ 
                 // Ensure gate/warehouse relations are loaded for email content (avoid TBD due to missing relations)
                 try {
                     $slot->loadMissing([
@@ -674,27 +684,27 @@ class BookingApprovalService
                 } catch (\Throwable $e) {
                     // ignore; email template has fallbacks
                 }
-
+ 
                 $notification = new BookingApproved($slot, $targetId, $isRescheduled);
-
+ 
                 // When calling channels directly (DatabaseChannel/MailChannel), Laravel's NotificationSender
                 // does not auto-assign the UUID notification id. Ensure it's set so DB insert won't fail.
                 if (empty($notification->id)) {
                     $notification->id = (string) Str::uuid();
                 }
-
+ 
                 // Always try to store database notification even if email fails.
                 $storedDatabase = false;
                 try {
                     app(DatabaseChannel::class)->send($vendor, $notification);
                     $storedDatabase = true;
-
+ 
                     Log::info('Stored approval notification (database)', [
-                        'slot_id' => $slot->id,
-                        'vendor_id' => $vendor->id,
+                        'slot_id' => $slot->id_slots,
+                        'vendor_id' => $vendor->id_users,
                         'type' => BookingApproved::class,
                     ]);
-
+ 
                     // Manually broadcast WebSocket notification to vendor.
                     // Since we call DatabaseChannel::send() directly (not $vendor->notify()),
                     // the NotificationSent event is never fired, so BroadcastNotification
@@ -702,7 +712,7 @@ class BookingApprovalService
                     try {
                         $data = $notification->toArray($vendor);
                         broadcast(new NewNotification(
-                            userId: (int) $vendor->id,
+                            userId: (int) $vendor->id_users,
                             title: $data['title'] ?? 'Notification',
                             message: $data['message'] ?? '',
                             url: $data['action_url'] ?? null,
@@ -715,15 +725,15 @@ class BookingApprovalService
                     }
                 } catch (\Throwable $e) {
                     Log::warning('Failed to store approval notification (database): '.$e->getMessage(), [
-                        'slot_id' => $slot->id,
-                        'vendor_id' => $vendor->id,
+                        'slot_id' => $slot->id_slots,
+                        'vendor_id' => $vendor->id_users,
                     ]);
                 }
-
+ 
                 // Send email only AFTER successful DB commit so it is guaranteed the approval succeeded.
                 if ($storedDatabase && ! empty($vendor->email)) {
-                    $slotId = (int) $slot->id;
-                    $vendorId = (int) $vendor->id;
+                    $slotId = (int) $slot->id_slots;
+                    $vendorId = (int) $vendor->id_users;
                     $email = (string) $vendor->email;
                     DB::afterCommit(function () use ($vendor, $notification, $slotId, $vendorId, $email) {
                         try {
@@ -746,7 +756,7 @@ class BookingApprovalService
             }
         } catch (\Throwable $e) {
             Log::warning('Failed to send approval notification: '.$e->getMessage(), [
-                'slot_id' => $slot->id,
+                'slot_id' => $slot->id_slots,
                 'requested_by' => $slot->requested_by,
             ]);
         }

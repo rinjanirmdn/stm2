@@ -14,7 +14,7 @@
         <div>
             <h2 class="st-card__title">
                 <i class="fas fa-ticket"></i>
-                {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
+                {{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}
             </h2>
             <div class="booking-detail__subtitle">
                 <span>{{ $booking->supplier_name ?? 'N/A' }}</span>
@@ -81,7 +81,7 @@
                 <div class="detail-grid-compact">
                     <div class="detail-item">
                         <label class="detail-label">Request Number</label>
-                        <div class="detail-value">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</div>
+                        <div class="detail-value">{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Status</label>
@@ -212,17 +212,17 @@
             Back
         </a>
         @if($booking->status === 'pending')
-            <button type="button" class="st-btn st-btn--success" onclick="openApproveModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+            <button type="button" class="st-btn st-btn--success" onclick="openApproveModal({{ $booking->id_booking_requests }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}')">
                 <i class="fas fa-check"></i>
                 Approve
             </button>
             @can('bookings.reschedule')
-                <a href="{{ route('bookings.reschedule', $booking->id) }}" class="st-btn st-btn--warning">
+                <a href="{{ route('bookings.reschedule', $booking->id_booking_requests) }}" class="st-btn st-btn--warning">
                     <i class="fas fa-calendar-alt"></i>
                     Reschedule
                 </a>
             @endcan
-            <button type="button" class="st-btn st-btn--danger" onclick="openRejectModal({{ $booking->id }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+            <button type="button" class="st-btn st-btn--danger" onclick="openRejectModal({{ $booking->id_booking_requests }}, '{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}')">
                 <i class="fas fa-times"></i>
                 Reject
             </button>
@@ -251,7 +251,7 @@
                         <option value="">Select Gate...</option>
                         @foreach($allGates as $g)
                             @php
-                                $gid = $g->id ?? null;
+                                $gid = $g->id_gates ?? null;
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($g->warehouse?->wh_code ?? '', $g->gate_number ?? '');
                                 $whDisplay = str_replace('WH', 'WH ', ($g->warehouse?->wh_code ?? ''));
                                 $gateLabel .= ' (' . $whDisplay . ')';
@@ -304,7 +304,7 @@
     $arr = [];
     foreach ($coll as $g) {
         $arr[] = [
-            'id' => (int) ($g->id ?? 0),
+            'id' => (int) ($g->id_gates ?? 0),
             'warehouse_id' => (int) ($g->warehouse_id ?? 0),
             'gate_number' => (string) ($g->gate_number ?? ''),
             'name' => (string) ($g->name ?? ''),

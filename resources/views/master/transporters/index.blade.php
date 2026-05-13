@@ -60,7 +60,7 @@
                             </tr>
                         @else
                             @foreach ($transporters as $i => $t)
-                                <tr class="st-table-row" data-row-id="{{ $t->id }}" data-name="{{ strtolower($t->name) }}" data-status="{{ $t->is_active ? 'active' : 'inactive' }}">
+                                <tr class="st-table-row" data-row-id="{{ $t->id_vendor_transporters }}" data-name="{{ strtolower($t->name) }}" data-status="{{ $t->is_active ? 'active' : 'inactive' }}">
                                 <td class="st-table-cell">{{ $i + 1 }}</td>
                                 <td class="st-table-cell"><strong>{{ $t->name }}</strong></td>
                                 <td class="st-table-cell">
@@ -72,10 +72,10 @@
                                 </td>
                                 <td class="st-table-cell">
                                     <div class="tw-actionbar">
-                                        <button type="button" class="tw-action btn-edit-transporter" data-id="{{ $t->id }}" data-name="{{ $t->name }}" data-status="{{ $t->is_active ? '1' : '0' }}" data-tooltip="Edit" aria-label="Edit">
+                                        <button type="button" class="tw-action btn-edit-transporter" data-id="{{ $t->id_vendor_transporters }}" data-name="{{ $t->name }}" data-status="{{ $t->is_active ? '1' : '0' }}" data-tooltip="Edit" aria-label="Edit">
                                             <i class="fa-solid fa-pencil"></i>
                                         </button>
-                                        <button type="button" class="tw-action tw-action--danger btn-delete-transporter" data-tooltip="Delete" aria-label="Delete" data-delete-url="{{ route('master.transporters.destroy', $t->id) }}" data-name="{{ $t->name }}">
+                                        <button type="button" class="tw-action tw-action--danger btn-delete-transporter" data-tooltip="Delete" aria-label="Delete" data-delete-url="{{ route('master.transporters.destroy', $t->id_vendor_transporters) }}" data-name="{{ $t->name }}">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </div>

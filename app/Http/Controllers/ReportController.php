@@ -107,26 +107,26 @@ class ReportController extends Controller
         $like = '%'.strtolower($qEscaped).'%';
 
         $rows = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->where('s.status', 'completed')
             ->where(function ($sub) use ($like) {
                 $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(s.ticket_number, \'\')) like ?', [$like])
-                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.sj_no, \'\')) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like])
                     ->orWhereRaw('LOWER(w.wh_name) like ?', [$like]);
             })
             ->select([
                 's.po_number',
                 's.ticket_number',
-                's.mat_doc',
+                's.sj_no',
                 's.vendor_name',
                 'w.wh_name as warehouse_name',
             ])
             ->orderByRaw("CASE
                 WHEN LOWER(s.po_number) LIKE ? THEN 1
                 WHEN LOWER(COALESCE(s.ticket_number, '')) LIKE ? THEN 2
-                WHEN LOWER(COALESCE(s.mat_doc, '')) LIKE ? THEN 3
+                WHEN LOWER(COALESCE(s.sj_no, '')) LIKE ? THEN 3
                 WHEN LOWER(COALESCE(s.vendor_name, '')) LIKE ? THEN 4
                 WHEN LOWER(w.wh_name) LIKE ? THEN 5
                 ELSE 6
@@ -161,7 +161,7 @@ class ReportController extends Controller
         foreach ($rows as $row) {
             $truck = trim((string) ($row->po_number ?? ''));
             $ticket = trim((string) ($row->ticket_number ?? ''));
-            $matDoc = trim((string) ($row->mat_doc ?? ''));
+            $sjNo = trim((string) ($row->sj_no ?? ''));
             $vendor = trim((string) ($row->vendor_name ?? ''));
             $warehouse = trim((string) ($row->warehouse_name ?? ''));
 
@@ -178,9 +178,9 @@ class ReportController extends Controller
                 $results[] = ['text' => $truck, 'highlighted' => $highlight($truck)];
             }
 
-            if ($matDoc !== '' && ! in_array($matDoc, $seen, true)) {
-                $seen[] = $matDoc;
-                $results[] = ['text' => $matDoc, 'highlighted' => $highlight($matDoc)];
+            if ($sjNo !== '' && ! in_array($sjNo, $seen, true)) {
+                $seen[] = $sjNo;
+                $results[] = ['text' => $sjNo, 'highlighted' => $highlight($sjNo)];
             }
 
             if ($vendor !== '' && ! in_array($vendor, $seen, true)) {
@@ -288,7 +288,7 @@ class ReportController extends Controller
             'date_to' => trim($request->query('date_to', '')),
             'po' => trim($request->query('po', '')),
             'ticket' => trim($request->query('ticket', '')),
-            'mat_doc' => trim($request->query('mat_doc', '')),
+            'sj_no' => trim($request->query('sj_no', $request->query('mat_doc', ''))),
             'user' => trim($request->query('user', '')),
             'vendor' => trim($request->query('vendor', '')),
             'arrival_date_from' => trim($request->query('arrival_date_from', '')),
@@ -410,15 +410,15 @@ class ReportController extends Controller
 
         $warehouses = Cache::remember('reports:gate_status:warehouses', now()->addMinutes(10), function () {
             return DB::table('md_warehouse')
-                ->select(['id', 'wh_name as name', 'wh_code as code'])
+                ->select(['id_wh', 'wh_name as name', 'wh_code as code'])
                 ->orderBy('wh_name')
                 ->get();
         });
 
         $rowsQ = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('g.warehouse_id', '=', 's.warehouse_id');
             })
             ->whereRaw("COALESCE(s.slot_type, 'planned') = 'planned'")
@@ -464,9 +464,9 @@ class ReportController extends Controller
         $gateCacheKey = 'reports:gate_status:gates:'.sha1(json_encode(array_map('intval', $warehouseValues)));
         $gates = Cache::remember($gateCacheKey, now()->addSeconds(30), function () use ($warehouseValues) {
             $gatesQ = DB::table('md_gates as g')
-                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
                 ->select([
-                    'g.id',
+                    'g.id_gates',
                     'g.warehouse_id',
                     'g.gate_number',
                     'g.is_active',
@@ -499,10 +499,10 @@ class ReportController extends Controller
         $expectsJson = $request->expectsJson() || $request->ajax();
 
         $gate = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
-            ->where('g.id', $gateId)
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
+            ->where('g.id_gates', $gateId)
             ->select([
-                'g.id',
+                'g.id_gates',
                 'g.gate_number',
                 'g.is_active',
                 'g.is_backup',
@@ -534,13 +534,13 @@ class ReportController extends Controller
 
         $old = (int) ($gate->is_active ?? 0);
         $new = $old === 1 ? 0 : 1;
-        DB::table('md_gates')->where('id', $gateId)->update(['is_active' => $new]);
+        DB::table('md_gates')->where('id_gates', $gateId)->update(['is_active' => $new]);
 
         $slotService = app(SlotService::class);
         $label = $slotService->getGateDisplayName((string) ($gate->warehouse_code ?? ''), (string) ($gate->gate_number ?? ''));
         $activityType = $new === 1 ? 'gate_activation' : 'gate_deactivation';
         $desc = $new === 1 ? "Gate Activated: {$label}" : "Gate Deactivated: {$label}";
-        $slotService->logActivity(null, $activityType, $desc, $old, $new);
+        $slotService->logActivity(null, $activityType, $desc, $old, $new, feature: 'Gate Management');
 
         if ($expectsJson) {
             return response()->json([

@@ -63,10 +63,10 @@ class BookingRejected extends Notification
     private function getNotificationId(): int
     {
         if ($this->slot) {
-            return (int) $this->slot->id;
+            return (int) $this->slot->id_slots;
         }
 
-        return (int) $this->bookingRequest->id;
+        return (int) $this->bookingRequest->id_booking_requests;
     }
 
     public function toMail(object $notifiable): MailMessage

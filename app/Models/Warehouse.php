@@ -11,6 +11,7 @@ class Warehouse extends Model
     use HasFactory;
 
     protected $table = 'md_warehouse';
+    protected $primaryKey = 'id_wh';
 
     protected $fillable = [
         'wh_code',

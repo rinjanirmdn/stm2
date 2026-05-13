@@ -1,13 +1,14 @@
 <?php
-
+ 
 namespace App\Http\Controllers;
-
+ 
 use App\Http\Requests\UserStoreRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Models\Permission;
 use App\Models\User;
 use App\Services\SapPoService;
 use App\Services\UserRoleService;
+use App\Services\SlotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -15,19 +16,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\PermissionRegistrar;
-
+use Illuminate\Database\UniqueConstraintViolationException;
+ 
 class UserController extends Controller
 {
     public function __construct(
         private readonly UserRoleService $roleService,
-        private readonly SapPoService $sapPoService
+        private readonly SapPoService $sapPoService,
+        private readonly SlotService $slotService
     ) {}
-
+ 
     public function index(Request $request)
     {
         $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
-        // Get all filter parameters
+        
         $q = trim((string) $request->query('q', ''));
         $nik = trim((string) $request->query('nik', ''));
         $full_name = trim((string) $request->query('full_name', ''));
@@ -35,706 +38,355 @@ class UserController extends Controller
         $is_active = trim((string) $request->query('is_active', ''));
         $status = trim((string) $request->query('status', ''));
         $active = trim((string) $request->query('active', ''));
-
-        // Get sort parameters (supports multi-sort via sort[]/dir[])
+ 
         $rawSort = $request->query('sort', []);
         $rawDir = $request->query('dir', []);
-
         $sorts = is_array($rawSort) ? $rawSort : [trim((string) $rawSort)];
         $dirs = is_array($rawDir) ? $rawDir : [trim((string) $rawDir)];
-
-        // Validate sort column
-        $allowedSorts = ['id', 'nik', 'email', 'name', 'role', 'created_at'];
-
+ 
+        $allowedSorts = ['id_users', 'nik', 'email', 'name', 'role', 'created_at'];
         $sorts = array_values(array_filter(array_map(fn ($v) => trim((string) $v), $sorts), fn ($v) => $v !== ''));
-        $dirs = array_values(array_map(function ($v) {
-            $v = strtolower(trim((string) $v));
-
-            return $v === 'desc' ? 'desc' : 'asc';
-        }, $dirs));
-
+        $dirs = array_values(array_map(fn ($v) => strtolower(trim((string) $v)) === 'desc' ? 'desc' : 'asc', $dirs));
+ 
         $validatedSorts = [];
         $validatedDirs = [];
         foreach ($sorts as $i => $s) {
-            if (! in_array($s, $allowedSorts, true)) {
-                continue;
-            }
+            if (! in_array($s, $allowedSorts, true)) continue;
             $validatedSorts[] = $s;
             $validatedDirs[] = $dirs[$i] ?? 'asc';
         }
         $sorts = $validatedSorts;
         $dirs = $validatedDirs;
-
-        // Backward-compatible single sort/dir values (used by view/JS)
         $sort = $sorts[0] ?? '';
         $dir = $dirs[0] ?? 'desc';
-
+ 
         $allowedRoles = ['admin', 'section_head', 'operator', 'admin_wh', 'vendor', 'security', 'super_account', 'display_account'];
-
-        $usersQ = DB::table('md_users')
-            ->whereNull('md_users.deleted_at')
+ 
+        $usersQ = User::query()
             ->leftJoin($modelHasRolesTable.' as mhr', function ($join) {
-                $join
-                    ->on('mhr.model_id', '=', 'md_users.id')
+                $join->on('mhr.model_id', '=', 'md_users.id_users')
                     ->where('mhr.model_type', '=', 'App\\Models\\User');
             })
-            ->leftJoin($rolesTable.' as r_spatie', 'r_spatie.id', '=', 'mhr.role_id')
-            ->leftJoin($rolesTable.' as r_user', 'r_user.id', '=', 'md_users.role_id')
+            ->leftJoin($rolesTable.' as r_spatie', 'r_spatie.id_roles', '=', 'mhr.role_id')
+            ->leftJoin($rolesTable.' as r_user', 'r_user.id_roles', '=', 'md_users.role_id')
             ->select([
-                'md_users.id',
-                'md_users.nik',
-                'md_users.email',
-                'md_users.full_name',
-                'md_users.role_id',
+                'md_users.*',
                 DB::raw('COALESCE(r_user.roles_name, r_spatie.roles_name) as role_name'),
-                'md_users.is_active',
-                'md_users.created_at',
-                'md_users.updated_at',
             ]);
-
-        // Apply individual column filters
-        if ($nik !== '') {
-            $usersQ->where('md_users.nik', 'like', '%'.$nik.'%');
-        }
-
-        if ($full_name !== '') {
-            $usersQ->where('md_users.full_name', 'like', '%'.$full_name.'%');
-        }
-
+ 
+        if ($nik !== '') $usersQ->where('md_users.nik', 'like', '%'.$nik.'%');
+        if ($full_name !== '') $usersQ->where('md_users.full_name', 'like', '%'.$full_name.'%');
+        
         if ($role !== '' && in_array($role, $allowedRoles, true)) {
             $roleFilter = str_replace('_', ' ', strtolower($role));
             $usersQ->where(function ($q) use ($roleFilter) {
                 $q->whereRaw('LOWER(r_user.roles_name) = ?', [$roleFilter])
                     ->orWhereRaw('LOWER(r_spatie.roles_name) = ?', [$roleFilter]);
             });
-        } else {
-            $role = '';
         }
-
-        if ($is_active !== '') {
-            $usersQ->where('md_users.is_active', $is_active === '1' ? 1 : 0);
-        }
-
-        // Legacy search filter (q parameter - uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
+ 
+        if ($is_active !== '') $usersQ->where('md_users.is_active', $is_active === '1' ? 1 : 0);
+ 
         if ($q !== '') {
             $qEscaped = str_replace(['%', '_'], ['\%', '\_'], $q);
             $like = '%'.strtolower($qEscaped).'%';
             $usersQ->where(function ($sub) use ($like) {
-                $sub
-                    ->whereRaw('LOWER(md_users.nik) like ?', [$like])
+                $sub->whereRaw('LOWER(md_users.nik) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(md_users.full_name, \'\')) like ?', [$like]);
             });
         }
-
-        // Legacy query param: status=active|inactive.
-        if ($status === 'active') {
-            $usersQ->where('md_users.is_active', 1);
-        } elseif ($status === 'inactive') {
-            $usersQ->where('md_users.is_active', 0);
-        } elseif ($active === '1') {
-            // Backward compat if any existing link still uses active=1/0.
-            $usersQ->where('md_users.is_active', 1);
-            $status = 'active';
-        } elseif ($active === '0') {
-            $usersQ->where('md_users.is_active', 0);
-            $status = 'inactive';
-        } else {
-            $status = '';
-        }
-
-        // Apply sorting
+ 
+        if ($status === 'active' || $active === '1') $usersQ->where('md_users.is_active', 1);
+        elseif ($status === 'inactive' || $active === '0') $usersQ->where('md_users.is_active', 0);
+ 
         if (count($sorts) > 0) {
             foreach ($sorts as $i => $s) {
                 $d = $dirs[$i] ?? 'asc';
-                if ($s === 'role') {
-                    $usersQ->orderByRaw('COALESCE(r_user.roles_name, r_spatie.roles_name) '.$d);
-                } elseif ($s === 'name') {
-                    $usersQ->orderBy('md_users.full_name', $d);
-                } else {
-                    $usersQ->orderBy('md_users.'.$s, $d);
-                }
+                if ($s === 'role') $usersQ->orderByRaw('COALESCE(r_user.roles_name, r_spatie.roles_name) '.$d);
+                elseif ($s === 'name') $usersQ->orderBy('md_users.full_name', $d);
+                else $usersQ->orderBy('md_users.'.$s, $d);
             }
-            $usersQ->orderByDesc('md_users.created_at')->orderByDesc('md_users.id');
-        } else {
-            $usersQ
-                ->orderByDesc('md_users.created_at')
-                ->orderByDesc('md_users.id');
         }
-
-        $usersQ->limit(200);
-
-        $usersCacheKey = 'users:index:data:'.sha1(json_encode([
-            'uid' => Auth::id(),
-            'query' => $request->query(),
-            'version' => (string) Cache::get('st_realtime_version', '0'),
-        ]));
-        $users = Cache::remember($usersCacheKey, now()->addSeconds(10), function () use ($usersQ) {
-            return $usersQ->get();
-        });
-
-        return view('users.index', [
-            'users' => $users,
-            'q' => $q,
-            'nik' => $nik,
-            'full_name' => $full_name,
-            'role' => $role,
-            'is_active' => $is_active,
-            'status' => $status,
-            'sort' => $sort,
-            'dir' => $dir,
-            'sorts' => $sorts,
-            'dirs' => $dirs,
-        ]);
+        $usersQ->orderByDesc('md_users.created_at')->orderByDesc('md_users.id_users');
+ 
+        $usersCacheKey = 'users:index:data:'.sha1(json_encode(['uid' => Auth::id(), 'query' => $request->query(), 'version' => (string) Cache::get('st_realtime_version', '0')]));
+        $users = Cache::remember($usersCacheKey, now()->addSeconds(10), fn () => $usersQ->limit(200)->get());
+ 
+        return view('users.index', compact('users', 'q', 'nik', 'full_name', 'role', 'is_active', 'status', 'sort', 'dir', 'sorts', 'dirs'));
     }
-
+ 
     public function create(Request $request)
     {
         return view('users.create');
     }
-
+ 
     public function store(UserStoreRequest $request)
     {
-        $validated = $request->validated();
-
-        $nik = trim($validated['nik']);
-        $email = trim($validated['email']);
-        $name = trim($validated['name']);
-        $role = $validated['role'];
-        $vendorCode = isset($validated['vendor_code']) ? trim((string) $validated['vendor_code']) : '';
-        $password = $validated['password'];
-
-        // Convert role slug to proper name (admin -> Admin, section_head -> Section Head)
-        $roleDisplayName = ucwords(str_replace('_', ' ', $role));
-
-        $normalizeRoleName = static function (string $value): string {
-            $value = strtolower(trim($value));
-            $value = str_replace([' ', '_', '-'], '', $value);
-
-            return preg_replace('/[^a-z0-9]/', '', $value) ?? '';
-        };
-
-        $roleNeedleA = $normalizeRoleName($role);
-        $roleNeedleB = $normalizeRoleName($roleDisplayName);
-
-        // Get role ID
-        $allRoles = $this->roleService->getAllRoles();
-        $roleRecord = $allRoles->first(function ($r) use ($roleDisplayName) {
-            return strtolower($r->roles_name) === strtolower($roleDisplayName);
-        });
-        $roleId = $roleRecord ? $roleRecord->id : null;
-
-        if (! $roleId) {
-            $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB) {
-                $candidate = $normalizeRoleName((string) ($r->roles_name ?? ''));
-
-                return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
-            });
-            $roleId = $roleRecord ? $roleRecord->id : null;
-        }
-
-        if (! $roleId) {
-            Cache::forget('users:roles:all');
+        try {
+            $validated = $request->validated();
+            $nik = trim($validated['nik']);
+            $email = trim($validated['email']);
+            $name = trim($validated['name']);
+            $role = $validated['role'];
+            $vendorCode = isset($validated['vendor_code']) ? trim((string) $validated['vendor_code']) : '';
+            $password = $validated['password'];
+ 
+            $roleDisplayName = ucwords(str_replace('_', ' ', $role));
             $allRoles = $this->roleService->getAllRoles();
-            $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB, $roleDisplayName) {
-                $name = (string) ($r->roles_name ?? '');
-                if (strtolower($name) === strtolower($roleDisplayName)) {
-                    return true;
-                }
-                $candidate = $normalizeRoleName($name);
-
-                return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
-            });
-            $roleId = $roleRecord ? $roleRecord->id : null;
-        }
-
-        if (! $roleId) {
-            return back()->withInput()->with('error', 'Invalid role: '.$roleDisplayName);
-        }
-
-        // Create user
-        $userId = DB::table('md_users')->insertGetId([
-            'nik' => $nik,
-            'username' => $nik,
-            'email' => $email,
-            'full_name' => $name,
-            'role_id' => $roleId,
-            'vendor_code' => $role === 'vendor' ? $vendorCode : null,
-            'company_name' => $role === 'vendor' ? trim((string) ($request->input('company_name', ''))) ?: null : null,
-            'is_internal_vendor' => $role === 'vendor' ? (bool) ($validated['is_internal_vendor'] ?? false) : false,
-            'is_active' => true,
-            'must_change_password' => true,
-            'password' => Hash::make($password),
-            'password_changed_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Assign role using service with proper name
-        if (! $this->roleService->assignRole($userId, $roleRecord->roles_name)) {
-            return back()->withInput()->with('error', 'Failed to assign role');
-        }
-
-        // Validate external vendor code against SAP and cache company name
-        if ($role === 'vendor' && $vendorCode !== '' && ! ($validated['is_internal_vendor'] ?? false)) {
-            try {
-                $this->sapPoService->getVendorNameByCode($vendorCode);
-            } catch (\Throwable $e) {
-                // Non-blocking: vendor name lookup failure shouldn't prevent user creation
+            
+            $roleRecord = $allRoles->first(fn ($r) => strtolower($r->roles_name) === strtolower($roleDisplayName));
+            if (! $roleRecord) {
+                $roleRecord = $allRoles->first(function ($r) use ($role, $roleDisplayName) {
+                    $rn = strtolower(str_replace([' ', '_', '-'], '', $r->roles_name));
+                    return $rn === strtolower(str_replace([' ', '_', '-'], '', $role)) || $rn === strtolower(str_replace([' ', '_', '-'], '', $roleDisplayName));
+                });
             }
+ 
+            if (! $roleRecord) return back()->withInput()->with('error', 'Invalid role: '.$roleDisplayName);
+            $roleId = $roleRecord->id_roles;
+ 
+            $existing = User::withTrashed()
+                ->where(function ($q) use ($nik, $email) {
+                    $q->where('nik', $nik)->orWhere('email', $email);
+                })
+                ->first();
+ 
+            if ($existing) {
+                if ($existing->trashed()) {
+                    $existing->restore();
+                    $existing->update([
+                        'full_name' => $name,
+                        'role_id' => $roleId,
+                        'vendor_code' => $role === 'vendor' ? $vendorCode : null,
+                        'company_name' => $role === 'vendor' ? trim((string) ($request->input('company_name', ''))) ?: null : null,
+                        'is_internal_vendor' => $role === 'vendor' ? (bool) ($validated['is_internal_vendor'] ?? false) : false,
+                        'is_active' => true,
+                        'must_change_password' => true,
+                        'password' => Hash::make($password),
+                        'password_changed_at' => now(),
+                    ]);
+ 
+                    $this->roleService->removeRole($existing->id_users);
+                    $this->roleService->assignRole($existing->id_users, $roleRecord->roles_name);
+ 
+                    $this->slotService->logActivity(
+                        null,
+                        'insert',
+                        "Restored User: {$name} ({$nik})",
+                        null,
+                        $existing->toArray(),
+                        feature: 'User Management'
+                    );
+ 
+                    return redirect()->route('users.index')->with('success', "User with NIK/Email '{$nik}/{$email}' was restored from deleted records.");
+                }
+                return back()->withInput()->with('error', 'User already exists.');
+            }
+ 
+            $user = User::create([
+                'nik' => $nik,
+                'username' => $nik,
+                'email' => $email,
+                'full_name' => $name,
+                'role_id' => $roleId,
+                'vendor_code' => $role === 'vendor' ? $vendorCode : null,
+                'company_name' => $role === 'vendor' ? trim((string) ($request->input('company_name', ''))) ?: null : null,
+                'is_internal_vendor' => $role === 'vendor' ? (bool) ($validated['is_internal_vendor'] ?? false) : false,
+                'is_active' => true,
+                'must_change_password' => true,
+                'password' => Hash::make($password),
+                'password_changed_at' => now(),
+            ]);
+ 
+            $this->roleService->assignRole($user->id_users, $roleRecord->roles_name);
+ 
+            $this->slotService->logActivity(
+                null,
+                'insert',
+                "Created User: {$name} ({$nik})",
+                null,
+                $user->toArray(),
+                feature: 'User Management'
+            );
+ 
+            if ($role === 'vendor' && $vendorCode !== '' && ! ($validated['is_internal_vendor'] ?? false)) {
+                try { $this->sapPoService->getVendorNameByCode($vendorCode); } catch (\Throwable $e) {}
+            }
+ 
+            return redirect()->route('users.index')->with('success', 'User created successfully');
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->withInput()->with('error', 'Gagal: NIK atau Email sudah terdaftar dalam sistem.');
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'An error occurred: '.$e->getMessage());
         }
-
-        return redirect()->route('users.index')->with('success', 'User created successfully');
     }
-
+ 
     public function edit(Request $request, int $userId)
     {
-        $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
-        $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
-        $permissionsTable = (string) (config('permission.table_names.permissions') ?? 'permissions');
-        $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
-        $modelHasPermissionsTable = (string) (config('permission.table_names.model_has_permissions') ?? 'model_has_permissions');
-
-        $userModel = User::query()->find($userId);
-        if (! $userModel) {
-            return redirect()->route('users.index')->with('error', 'User not found');
-        }
-
+        $userModel = User::find($userId);
+        if (! $userModel) return redirect()->route('users.index')->with('error', 'User not found');
+ 
         $currentUser = $request->user();
         $canManagePermissions = $currentUser && $currentUser->hasRole('Admin');
-
+ 
         $allPermissions = [];
         if ($canManagePermissions) {
             $curated = [
-                'dashboard.view',
-                'dashboard.range_filter',
-
-                'slots.index',
-                'slots.create',
-                'slots.store',
-                'slots.show',
-                'slots.edit',
-                'slots.update',
-                'slots.delete',
-                'slots.arrival',
-                'slots.arrival.store',
-                'slots.start',
-                'slots.start.store',
-                'slots.complete',
-                'slots.complete.store',
-                'slots.cancel',
-                'slots.cancel.store',
-
-                'gates.index',
-                'gates.toggle',
-                'gates.availability',
-
-                'bookings.index',
-                'bookings.show',
-                'bookings.approve',
-                'bookings.reject',
-                'bookings.reschedule',
-
-                'unplanned.index',
-                'unplanned.create',
-                'unplanned.store',
-                'unplanned.edit',
-                'unplanned.update',
-                'unplanned.delete',
-                'unplanned.show',
-                'unplanned.start',
-                'unplanned.start.store',
-                'unplanned.complete',
-                'unplanned.complete.store',
-
-                'reports.transactions',
-                'reports.export',
-
-                'trucks.index',
-                'trucks.create',
-                'trucks.store',
-                'trucks.edit',
-                'trucks.update',
-                'trucks.delete',
-
-                'master.transporters.index',
-                'master.bp.index',
-
-                'users.index',
-                'users.create',
-                'users.store',
-                'users.edit',
-                'users.update',
-                'users.delete',
-                'users.toggle',
-
-                'logs.index',
-                'logs.filter',
-
-                'vendor.dashboard',
-                'vendor.bookings.index',
-                'vendor.bookings.create',
-                'vendor.bookings.store',
-                'vendor.bookings.show',
-                'vendor.bookings.cancel',
-                'vendor.bookings.ticket',
-                'vendor.availability',
+                'dashboard.view', 'dashboard.range_filter', 'slots.index', 'slots.create', 'slots.store', 'slots.show', 'slots.edit', 'slots.update', 'slots.delete',
+                'slots.arrival', 'slots.arrival.store', 'slots.start', 'slots.start.store', 'slots.complete', 'slots.complete.store', 'slots.cancel', 'slots.cancel.store',
+                'gates.index', 'gates.toggle', 'gates.availability', 'bookings.index', 'bookings.show', 'bookings.approve', 'bookings.reject', 'bookings.reschedule',
+                'unplanned.index', 'unplanned.create', 'unplanned.store', 'unplanned.edit', 'unplanned.update', 'unplanned.delete', 'unplanned.show', 'unplanned.start',
+                'unplanned.start.store', 'unplanned.complete', 'unplanned.complete.store', 'reports.transactions', 'reports.export', 'trucks.index', 'trucks.create',
+                'trucks.store', 'trucks.edit', 'trucks.update', 'trucks.delete', 'master.transporters.index', 'master.bp.index', 'users.index', 'users.create',
+                'users.store', 'users.edit', 'users.update', 'users.delete', 'users.toggle', 'logs.index', 'logs.filter', 'vendor.dashboard', 'vendor.bookings.index',
+                'vendor.bookings.create', 'vendor.bookings.store', 'vendor.bookings.show', 'vendor.bookings.cancel', 'vendor.bookings.ticket', 'vendor.availability',
             ];
-
-            $allPermissions = Permission::query()
-                ->whereIn('perm_name', $curated)
-                ->orderBy('perm_name')
-                ->pluck('perm_name')
-                ->map(fn ($v) => (string) $v)
-                ->values()
-                ->all();
+            $allPermissions = Permission::whereIn('perm_name', $curated)->orderBy('perm_name')->pluck('perm_name')->map(fn ($v) => (string) $v)->values()->all();
         }
-
-        $user = DB::table('md_users')
-            ->leftJoin($modelHasRolesTable.' as mhr', function ($join) {
-                $join
-                    ->on('mhr.model_id', '=', 'md_users.id')
-                    ->where('mhr.model_type', '=', 'App\\Models\\User');
-            })
-            ->leftJoin($rolesTable.' as r_spatie', 'r_spatie.id', '=', 'mhr.role_id')
-            ->leftJoin($rolesTable.' as r_user', 'r_user.id', '=', 'md_users.role_id')
-            ->where('md_users.id', $userId)
-            ->selectRaw("
-                md_users.id,
-                md_users.nik,
-                md_users.full_name,
-                md_users.email,
-                md_users.username,
-                md_users.vendor_code,
-                md_users.company_name,
-                md_users.role_id,
-                COALESCE(r_user.roles_name, r_spatie.roles_name) as role_name,
-                LOWER(REPLACE(COALESCE(r_user.roles_name, r_spatie.roles_name), ' ', '_')) as role_slug,
-                md_users.is_active,
-                md_users.is_internal_vendor
-            ")
-            ->first();
-
-        if (! $user) {
-            return redirect()->route('users.index')->with('error', 'User not found');
-        }
-
-        $rolePermissions = [];
-        $directPermissions = [];
-        if ($canManagePermissions) {
-            if (! empty($user->role_id)) {
-                $rolePermissions = DB::table($roleHasPermissionsTable.' as rhp')
-                    ->join($permissionsTable.' as p', 'rhp.permission_id', '=', 'p.id')
-                    ->where('rhp.role_id', (int) $user->role_id)
-                    ->orderBy('p.perm_name')
-                    ->pluck('p.perm_name')
-                    ->map(fn ($v) => (string) $v)
-                    ->all();
-            }
-
-            $directPermissions = DB::table($modelHasPermissionsTable.' as mhp')
-                ->join($permissionsTable.' as p', 'mhp.permission_id', '=', 'p.id')
-                ->where('mhp.model_type', 'App\\Models\\User')
-                ->where('mhp.model_id', (int) $userId)
-                ->orderBy('p.perm_name')
-                ->pluck('p.perm_name')
-                ->map(fn ($v) => (string) $v)
-                ->all();
-        }
-
+ 
+        $rolePermissions = $userModel->getPermissionsViaRoles()->pluck('perm_name')->all();
+        $directPermissions = $userModel->getDirectPermissions()->pluck('perm_name')->all();
+ 
         return view('users.edit', [
-            'editUser' => $user,
+            'editUser' => $userModel,
             'allPermissions' => $allPermissions,
             'rolePermissions' => $rolePermissions,
             'directPermissions' => $directPermissions,
             'canManagePermissions' => $canManagePermissions,
         ]);
     }
-
+ 
     public function update(UserUpdateRequest $request, int $userId)
     {
-        $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
-        $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
-        $permissionsTable = (string) (config('permission.table_names.permissions') ?? 'permissions');
-
-        $user = DB::table('md_users')
-            ->where('id', $userId)
-            ->select(['id', 'nik', 'email', 'username'])
-            ->first();
-
-        if (! $user) {
-            return redirect()->route('users.index')->with('error', 'User not found');
-        }
-
-        $userModel = User::query()->find($userId);
-        if (! $userModel) {
-            return redirect()->route('users.index')->with('error', 'User not found');
-        }
-
+        $userModel = User::find($userId);
+        if (! $userModel) return redirect()->route('users.index')->with('error', 'User not found');
+ 
         $validated = $request->validated();
-
-        $currentUserId = $request->user()->id ?? 0;
-
-        $update = [
-            'nik' => trim($validated['nik']),
-            'username' => trim($validated['nik']),
-            'email' => trim($validated['email']),
-            'full_name' => trim($validated['name']),
-            'vendor_code' => $validated['role'] === 'vendor' ? trim((string) ($validated['vendor_code'] ?? '')) : null,
-            'company_name' => $validated['role'] === 'vendor' ? trim((string) ($request->input('company_name', ''))) ?: null : null,
-            'is_internal_vendor' => $validated['role'] === 'vendor' ? (bool) ($validated['is_internal_vendor'] ?? false) : false,
-        ];
-        $newRole = $validated['role'];
-        $roleDisplayName = ucwords(str_replace('_', ' ', (string) $newRole));
-
-        $normalizeRoleName = static function (string $value): string {
-            $value = strtolower(trim($value));
-            $value = str_replace([' ', '_', '-'], '', $value);
-
-            return preg_replace('/[^a-z0-9]/', '', $value) ?? '';
-        };
-
-        $roleNeedleA = $normalizeRoleName((string) $newRole);
-        $roleNeedleB = $normalizeRoleName($roleDisplayName);
-
-        $allRoles = $this->roleService->getAllRoles();
-        $roleRecord = $allRoles->first(function ($r) use ($roleDisplayName) {
-            return strtolower((string) ($r->roles_name ?? '')) === strtolower($roleDisplayName);
-        });
-        $newRoleId = $roleRecord ? $roleRecord->id : null;
-
-        if (! $newRoleId) {
-            $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB) {
-                $candidate = $normalizeRoleName((string) ($r->roles_name ?? ''));
-
-                return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
-            });
-            $newRoleId = $roleRecord ? $roleRecord->id : null;
-        }
-
-        if (! $newRoleId) {
-            Cache::forget('users:roles:all');
+        try {
+            $oldData = $userModel->toArray();
+            $update = [
+                'nik' => trim($validated['nik']),
+                'username' => trim($validated['nik']),
+                'email' => trim($validated['email']),
+                'full_name' => trim($validated['name']),
+                'vendor_code' => $validated['role'] === 'vendor' ? trim((string) ($validated['vendor_code'] ?? '')) : null,
+                'company_name' => $validated['role'] === 'vendor' ? trim((string) ($request->input('company_name', ''))) ?: null : null,
+                'is_internal_vendor' => $validated['role'] === 'vendor' ? (bool) ($validated['is_internal_vendor'] ?? false) : false,
+            ];
+            
+            $newRole = $validated['role'];
+            $roleDisplayName = ucwords(str_replace('_', ' ', (string) $newRole));
             $allRoles = $this->roleService->getAllRoles();
-            $roleRecord = $allRoles->first(function ($r) use ($normalizeRoleName, $roleNeedleA, $roleNeedleB, $roleDisplayName) {
-                $name = (string) ($r->roles_name ?? '');
-                if (strtolower($name) === strtolower($roleDisplayName)) {
-                    return true;
-                }
-                $candidate = $normalizeRoleName($name);
-
-                return $candidate !== '' && ($candidate === $roleNeedleA || $candidate === $roleNeedleB);
-            });
-            $newRoleId = $roleRecord ? $roleRecord->id : null;
-        }
-        $update['role_id'] = $newRoleId;
-
-        $password = trim($request->input('password', ''));
-        $passwordChanged = false;
-        if ($password !== '') {
-            $update['password'] = Hash::make($password);
-            $update['must_change_password'] = true;
-            $update['is_locked'] = false;
-            $update['password_changed_at'] = now();
-            $passwordChanged = true;
-        }
-
-        DB::table('md_users')->where('id', $userId)->update($update);
-
-        // Validate external vendor code against SAP and cache company name
-        if (($update['vendor_code'] ?? '') !== '' && ! ($update['is_internal_vendor'] ?? false)) {
-            try {
-                // Clear old cache to force re-lookup
+            $roleRecord = $allRoles->first(fn ($r) => strtolower($r->roles_name) === strtolower($roleDisplayName));
+            
+            if (! $roleRecord) {
+                $roleRecord = $allRoles->first(function ($r) use ($newRole, $roleDisplayName) {
+                    $rn = strtolower(str_replace([' ', '_', '-'], '', $r->roles_name));
+                    return $rn === strtolower(str_replace([' ', '_', '-'], '', $newRole)) || $rn === strtolower(str_replace([' ', '_', '-'], '', $roleDisplayName));
+                });
+            }
+ 
+            if ($roleRecord) $update['role_id'] = $roleRecord->id_roles;
+ 
+            $password = trim($request->input('password', ''));
+            if ($password !== '') {
+                $update['password'] = Hash::make($password);
+                $update['must_change_password'] = true;
+                $update['is_locked'] = false;
+                $update['password_changed_at'] = now();
+            }
+ 
+            $userModel->update($update);
+            
+            $this->slotService->logActivity(
+                null,
+                'update',
+                "Updated User: {$userModel->full_name} ({$userModel->nik})",
+                $oldData,
+                $userModel->toArray(),
+                feature: 'User Management'
+            );
+ 
+            if (($update['vendor_code'] ?? '') !== '' && ! ($update['is_internal_vendor'] ?? false)) {
                 Cache::forget('vendor_company_'.$update['vendor_code']);
-                $this->sapPoService->getVendorNameByCode($update['vendor_code']);
-            } catch (\Throwable $e) {
-                // Non-blocking
+                try { $this->sapPoService->getVendorNameByCode($update['vendor_code']); } catch (\Throwable $e) {}
             }
-        }
-
-        // Clear login lockout cache for this user so they can log in with the new password immediately
-        $loginIdentifiers = [];
-        // Old identifiers (before update)
-        $loginIdentifiers[] = strtolower(trim((string) ($user->nik ?? '')));
-        $loginIdentifiers[] = strtolower(trim((string) ($user->email ?? '')));
-        $loginIdentifiers[] = strtolower(trim((string) ($user->username ?? '')));
-        // New identifiers (after update)
-        $loginIdentifiers[] = strtolower(trim((string) ($update['nik'] ?? '')));
-        $loginIdentifiers[] = strtolower(trim((string) ($update['email'] ?? '')));
-        $loginIdentifiers[] = strtolower(trim((string) ($update['username'] ?? '')));
-
-        foreach (array_unique($loginIdentifiers) as $identifier) {
-            if ($identifier !== '') {
-                Cache::forget('login_attempts_'.$identifier);
+ 
+            $loginIdentifiers = array_unique([strtolower($userModel->nik), strtolower($userModel->email), strtolower($userModel->username)]);
+            foreach ($loginIdentifiers as $identifier) { if ($identifier !== '') Cache::forget('login_attempts_'.$identifier); }
+ 
+            if ($roleRecord) {
+                $this->roleService->removeRole($userId);
+                $this->roleService->assignRole($userId, $roleRecord->roles_name);
             }
-        }
-
-        // Update role using service
-        if ($newRoleId) {
-            $this->roleService->removeRole($userId);
-            $this->roleService->assignRole($userId, (string) $roleRecord->roles_name);
-        }
-
-        $actor = $request->user();
-        $canManagePermissions = $actor && $actor->hasRole('Admin');
-
-        if ($canManagePermissions && (int) $currentUserId !== (int) $userId) {
-            $permissionsInput = $request->input('permissions', []);
-            $permissions = is_array($permissionsInput) ? array_values(array_filter(array_map(fn ($v) => trim((string) $v), $permissionsInput), fn ($v) => $v !== '')) : [];
-
-            if (count($permissions) > 0) {
-                $validNames = DB::table($permissionsTable)
-                    ->whereIn('perm_name', $permissions)
-                    ->pluck('perm_name')
-                    ->map(fn ($v) => (string) $v)
-                    ->all();
-                $permissions = $validNames;
+ 
+            $actor = $request->user();
+            if ($actor && $actor->hasRole('Admin') && (int) $actor->id_users !== (int) $userId) {
+                $permissions = $request->input('permissions', []);
+                $userModel->syncPermissions($permissions);
+                app(PermissionRegistrar::class)->forgetCachedPermissions();
             }
-
-            if ($newRoleId && count($permissions) > 0) {
-                $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
-
-                $rolePermissionNames = DB::table($roleHasPermissionsTable.' as rhp')
-                    ->join($permissionsTable.' as p', 'rhp.permission_id', '=', 'p.id')
-                    ->where('rhp.role_id', (int) $newRoleId)
-                    ->pluck('p.perm_name')
-                    ->map(fn ($v) => (string) $v)
-                    ->all();
-
-                if (count($rolePermissionNames) > 0) {
-                    $permissions = array_values(array_diff($permissions, $rolePermissionNames));
-                }
-            }
-
-            $userModel->syncPermissions($permissions);
-            app(PermissionRegistrar::class)->forgetCachedPermissions();
+ 
+            return redirect()->route('users.index')->with('success', 'User updated successfully');
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->withInput()->with('error', 'Gagal: NIK atau Email sudah digunakan oleh user lain.');
         }
-
-        // Notify user via email when password is changed by admin
-        $resetFlagKey = 'password_reset_requested_user_'.(int) $userId;
-        $hadResetRequest = Cache::has($resetFlagKey);
-        $sendResetEmailAfterResponse = $passwordChanged && $hadResetRequest;
-
-        if ($sendResetEmailAfterResponse) {
-            $userEmail = trim((string) ($validated['email'] ?? ''));
-            $userName = trim((string) ($validated['name'] ?? ''));
-            $plainPassword = $password;
-
-            app()->terminating(function () use ($userEmail, $userName, $plainPassword, $resetFlagKey) {
-                try {
-                    if ($userEmail !== '') {
-                        $appName = 'e-Docking Control System';
-
-                        $html = view('emails.password-reset-user', [
-                            'appName' => $appName,
-                            'userName' => $userName,
-                            'userEmail' => $userEmail,
-                            'plainPassword' => $plainPassword,
-                        ])->render();
-
-                        Mail::html($html, function ($message) use ($userEmail, $userName, $appName) {
-                            $message->to($userEmail, $userName)
-                                ->subject('['.$appName.'] Your password has been reset by admin');
-                        });
-                    }
-                } catch (\Throwable $e) {
-                    // Intentionally swallow to avoid breaking response lifecycle.
-                } finally {
-                    Cache::forget($resetFlagKey);
-                }
-            });
-        }
-
-        $successMessage = 'User updated successfully';
-        if ($sendResetEmailAfterResponse) {
-            $successMessage = 'Password reset completed. Email will be sent to the user.';
-        }
-
-        return redirect()->route('users.index')->with('success', $successMessage);
     }
-
+ 
     public function toggle(Request $request, int $userId)
     {
-        $user = DB::table('md_users')->where('id', $userId)->select(['id', 'is_active', 'full_name'])->first();
-        if (! $user) {
-            if ($request->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'User not found'], 404);
-            }
-
-            return redirect()->route('users.index')->with('error', 'User not found');
+        $user = User::find($userId);
+        if (! $user) return $request->expectsJson() ? response()->json(['success' => false, 'message' => 'User not found'], 404) : redirect()->route('users.index')->with('error', 'User not found');
+ 
+        $currentUserId = (int) ($request->user()->id_users ?? 0);
+        if ((int) $user->id_users === $currentUserId && $user->is_active) {
+            return $request->expectsJson() ? response()->json(['success' => false, 'message' => 'You cannot deactivate your own account.'], 403) : redirect()->route('users.index')->with('error', 'You cannot deactivate your own account.');
         }
-
-        $currentUserId = (int) ($request->user()->id ?? 0);
-        $currentActive = ! empty($user->is_active);
-
-        // Check if user is trying to deactivate themselves
-        if ((int) $user->id === $currentUserId && $currentActive) {
-            if ($request->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'You cannot deactivate your own account.'], 403);
-            }
-
-            return redirect()->route('users.index')->with('error', 'You cannot deactivate your own account.');
+ 
+        if ($user->is_active && ! $this->roleService->canDeactivateUser($userId)) {
+            return $request->expectsJson() ? response()->json(['success' => false, 'message' => 'Cannot deactivate the last admin user.'], 403) : redirect()->route('users.index')->with('error', 'Cannot deactivate the last admin user.');
         }
-
-        // Check if user can be deactivated (not last admin)
-        if ($currentActive && ! $this->roleService->canDeactivateUser($userId)) {
-            if ($request->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'Cannot deactivate the last admin user.'], 403);
-            }
-
-            return redirect()->route('users.index')->with('error', 'Cannot deactivate the last admin user.');
-        }
-
-        $newActive = $currentActive ? 0 : 1;
-        DB::table('md_users')->where('id', $userId)->update(['is_active' => $newActive]);
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'is_active' => (bool) $newActive,
-                'message' => ($newActive ? 'Activated' : 'Deactivated').' user '.($user->full_name ?? ''),
-            ]);
-        }
-
-        return redirect()->route('users.index')->with('success', 'User status updated');
+ 
+        $oldValue = $user->is_active;
+        $user->update(['is_active' => ! $user->is_active]);
+        
+        $this->slotService->logActivity(
+            null,
+            'update',
+            ($user->is_active ? 'Activated' : 'Deactivated')." user {$user->full_name}",
+            ['is_active' => $oldValue],
+            ['is_active' => $user->is_active],
+            feature: 'User Management'
+        );
+ 
+        return $request->expectsJson() ? response()->json(['success' => true, 'is_active' => (bool) $user->is_active, 'message' => ($user->is_active ? 'Activated' : 'Deactivated').' user '.$user->full_name]) : redirect()->route('users.index')->with('success', 'User status updated');
     }
-
+ 
     public function destroy(Request $request, int $userId)
     {
-        $user = DB::table('md_users')->whereNull('deleted_at')->where('id', $userId)->select(['id', 'role_id'])->first();
-        if (! $user) {
-            return redirect()->route('users.index')->with('error', 'User not found');
+        $user = User::find($userId);
+        if (! $user) return redirect()->route('users.index')->with('error', 'User not found');
+ 
+        if ((int) $user->id_users === (int) ($request->user()->id_users ?? 0)) return redirect()->route('users.index')->with('error', 'You cannot delete your own account.');
+ 
+        if ($user->hasRole('Admin')) {
+            $remainingAdmins = User::role('Admin')->where('id_users', '<>', $userId)->count();
+            if ($remainingAdmins === 0) return redirect()->route('users.index')->with('error', 'You cannot delete the last admin user.');
         }
-
-        $currentUserId = $request->user()->id ?? 0;
-        if ($user->id === $currentUserId) {
-            return redirect()->route('users.index')->with('error', 'You cannot delete your own account.');
-        }
-
-        // Check if user is admin and if it's the last admin
-        // Look up role via Spatie model_has_roles table
-        $rolesTable = (string) (config('permission.table_names.roles') ?? 'roles');
-        $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
-        $userRoleName = DB::table($modelHasRolesTable.' as mhr')
-            ->join($rolesTable.' as r', 'r.id', '=', 'mhr.role_id')
-            ->where('mhr.model_id', $userId)
-            ->where('mhr.model_type', 'App\\Models\\User')
-            ->value('r.roles_name');
-
-        if ($userRoleName && strtolower($userRoleName) === 'admin') {
-            $remainingAdmins = DB::table($modelHasRolesTable.' as mhr')
-                ->join($rolesTable.' as r', 'r.id', '=', 'mhr.role_id')
-                ->where('mhr.model_type', 'App\\Models\\User')
-                ->whereRaw('LOWER(r.roles_name) = ?', ['admin'])
-                ->where('mhr.model_id', '<>', $userId)
-                ->count();
-            if ($remainingAdmins === 0) {
-                return redirect()->route('users.index')->with('error', 'You cannot delete the last admin user.');
-            }
-        }
-
-        DB::table('md_users')->where('id', $userId)->update([
-            'deleted_at' => now(),
-        ]);
-
+ 
+        $oldData = $user->toArray();
+        $name = $user->full_name;
+        $user->delete();
+        
+        $this->slotService->logActivity(
+            null,
+            'delete',
+            "Deleted User: {$name}",
+            $oldData,
+            null,
+            feature: 'User Management'
+        );
+        
         return redirect()->route('users.index')->with('success', 'User deleted successfully');
     }
 }

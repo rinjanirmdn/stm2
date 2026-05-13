@@ -14,6 +14,17 @@ class ActivityLogMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Capture old values BEFORE the request is processed (for edit/update tracking)
+        $oldRowData = null;
+        try {
+            $method = strtoupper((string) $request->getMethod());
+            if (in_array($method, ['PUT', 'PATCH', 'DELETE'], true)) {
+                $oldRowData = $this->captureOldValues($request);
+            }
+        } catch (\Throwable $e) {
+            // swallow
+        }
+
         $response = $next($request);
 
         try {
@@ -34,9 +45,9 @@ class ActivityLogMiddleware
                                 ->where('email', $login)
                                 ->orWhere('username', $login)
                                 ->orWhere('nik', $login)
-                                ->select(['id'])
+                                ->select(['id_users'])
                                 ->first();
-                            $userId = $user ? (int) $user->id : null;
+                            $userId = $user ? (int) $user->id_users : null;
                         } catch (\Throwable $e) {
                             $userId = null;
                         }
@@ -294,15 +305,16 @@ class ActivityLogMiddleware
 
             $insert = [];
 
-            $logType = 'crud';
-            if (in_array($routeName, ['login.store', 'logout'], true)) {
-                $logType = 'auth';
-            }
+            [$logType, $logFeature] = $this->resolveActivityTypeAndFeature($routeName, $method);
 
             if ($has('activity_type')) {
                 $insert['activity_type'] = $logType;
             } elseif ($has('type')) {
                 $insert['type'] = $logType;
+            }
+
+            if ($has('feature')) {
+                $insert['feature'] = $logFeature;
             }
 
             if ($has('description')) {
@@ -319,8 +331,8 @@ class ActivityLogMiddleware
                 $insert['user_id'] = (int) $userId;
             }
 
-            if ($has('mat_doc')) {
-                $insert['mat_doc'] = $getString($payload, 'mat_doc') ?: null;
+            if ($has('sj_no')) {
+                $insert['sj_no'] = $getString($payload, 'sj_no') ?: ($getString($payload, 'mat_doc') ?: null);
             }
 
             if ($has('po_number')) {
@@ -329,10 +341,19 @@ class ActivityLogMiddleware
 
             if ($has('old_value')) {
                 $insert['old_value'] = null;
+                if ($oldRowData !== null && !empty($oldRowData)) {
+                    $insert['old_value'] = json_encode($oldRowData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
             }
 
             if ($has('new_value')) {
                 $insert['new_value'] = null;
+                if (in_array($logType, ['insert', 'update'], true) && !empty($payload)) {
+                    $newData = array_filter($payload, fn ($k) => !in_array($k, ['_token', '_method', 'password', 'password_confirmation', 'current_password'], true), ARRAY_FILTER_USE_KEY);
+                    if (!empty($newData)) {
+                        $insert['new_value'] = json_encode($newData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    }
+                }
             }
 
             if ($has('created_at')) {
@@ -361,5 +382,127 @@ class ActivityLogMiddleware
         }
 
         return $response;
+    }
+
+    /**
+     * Resolve the activity type and feature module based on route name and HTTP method.
+     * Returns [type, feature] where type is 'insert', 'update', 'delete', or 'auth'.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function resolveActivityTypeAndFeature(string $routeName, string $method): array
+    {
+        // Route → [type, feature] mapping
+        $routeMap = [
+            // Auth
+            'login.store'              => ['auth', 'Auth'],
+            'logout'                   => ['auth', 'Auth'],
+            'forgot-password.send'     => ['update', 'Auth'],
+            'profile.password-request' => ['update', 'Auth'],
+            'password.force-change.store' => ['update', 'Auth'],
+            'profile.update'           => ['update', 'Profile'],
+
+            // User management
+            'users.store'              => ['insert', 'User Management'],
+            'users.update'             => ['update', 'User Management'],
+            'users.delete'             => ['delete', 'User Management'],
+            'users.toggle'             => ['update', 'User Management'],
+
+            // Planned slots
+            'slots.store'              => ['insert', 'Planned'],
+            'slots.update'             => ['update', 'Planned'],
+            'slots.delete'             => ['delete', 'Planned'],
+
+            // Unplanned slots
+            'unplanned.store'          => ['insert', 'Unplanned'],
+            'unplanned.update'         => ['update', 'Unplanned'],
+            'unplanned.delete'         => ['delete', 'Unplanned'],
+
+            // Booking requests
+            'bookings.approve'         => ['update', 'Booking Requests'],
+            'bookings.reject'          => ['update', 'Booking Requests'],
+            'bookings.reschedule.store' => ['update', 'Booking Requests'],
+            'vendor.bookings.store'    => ['insert', 'Booking Requests'],
+            'vendor.bookings.cancel'   => ['update', 'Booking Requests'],
+
+            // Truck types
+            'trucks.store'             => ['insert', 'Truck Type'],
+            'trucks.update'            => ['update', 'Truck Type'],
+            'trucks.delete'            => ['delete', 'Truck Type'],
+        ];
+
+        if (isset($routeMap[$routeName])) {
+            return $routeMap[$routeName];
+        }
+
+        // Fallback by HTTP method
+        if ($method === 'DELETE') {
+            return ['delete', 'System'];
+        }
+
+        return ['update', 'System'];
+    }
+
+    /**
+     * Capture old row values before an update/delete operation for change tracking.
+     */
+    private function captureOldValues(Request $request): ?array
+    {
+        $routeName = (string) ($request->route()?->getName() ?? '');
+        $routeParams = (array) ($request->route()?->parameters() ?? []);
+
+        // Resolve table and row ID based on route
+        $table = null;
+        $rowId = null;
+
+        // Slot update/delete
+        if (str_starts_with($routeName, 'slots.') || str_starts_with($routeName, 'unplanned.')) {
+            $table = 'slots';
+            $rowId = $routeParams['slotId'] ?? $routeParams['slot_id'] ?? $routeParams['id'] ?? null;
+        }
+        // User update/delete/toggle
+        elseif (str_starts_with($routeName, 'users.')) {
+            $table = 'md_users';
+            $rowId = $routeParams['userId'] ?? $routeParams['id'] ?? null;
+        }
+        // Truck type update/delete
+        elseif (str_starts_with($routeName, 'trucks.')) {
+            $table = 'md_truck';
+            $rowId = $routeParams['id'] ?? $routeParams['truckId'] ?? null;
+        }
+
+        if ($table === null || $rowId === null || !is_numeric($rowId)) {
+            return null;
+        }
+
+        try {
+            $pkMap = [
+                'slots' => 'id_slots',
+                'md_users' => 'id_users',
+                'md_truck' => 'id_truck',
+                'md_warehouse' => 'id_wh',
+                'md_gates' => 'id_gates',
+                'booking_requests' => 'id_booking_requests',
+                'md_roles' => 'id_roles',
+                'md_permissions' => 'id_permission',
+                'md_vendor_transporters' => 'id_vendor_transporters',
+                'activity_logs' => 'id_activity_logs',
+                'notifications' => 'id_notifications'
+            ];
+            $pk = $pkMap[$table] ?? 'id';
+            $row = DB::table($table)->where($pk, (int) $rowId)->first();
+            if (!$row) {
+                return null;
+            }
+
+            $data = (array) $row;
+
+            // Remove sensitive fields
+            unset($data['password'], $data['remember_token']);
+
+            return $data;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

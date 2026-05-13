@@ -8,21 +8,27 @@ use Illuminate\Database\Eloquent\Model;
 class ActivityLog extends Model
 {
     use HasFactory;
+    
+    protected $table = 'activity_logs';
+    protected $primaryKey = 'id_activity_logs';
+    public $timestamps = false;
 
     protected $fillable = [
-        'type',
+        'activity_type',
         'description',
-        'mat_doc',
-        'po_number',
+        'feature',
+        'old_value',
+        'new_value',
         'slot_id',
-        'user_id',
+        'booking_request_id',
+        'created_by',
         'created_at',
-        'updated_at',
     ];
 
     protected $casts = [
         'slot_id' => 'integer',
-        'user_id' => 'integer',
+        'created_by' => 'integer',
+        'booking_request_id' => 'integer',
     ];
 
     // Relasi
@@ -33,6 +39,6 @@ class ActivityLog extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 class BookingRequest extends Model
 {
     use HasFactory;
+    
+    protected $table = 'booking_requests';
+    protected $primaryKey = 'id_booking_requests';
 
     public const STATUS_PENDING = 'pending';
 
@@ -68,21 +71,21 @@ class BookingRequest extends Model
     {
         static::created(function ($model) {
             try {
-                broadcast(new SlotDataChanged('booking', 'created', $model->id));
+                broadcast(new SlotDataChanged('booking', 'created', $model->id_booking_requests));
             } catch (\Throwable $e) {
             }
         });
 
         static::updated(function ($model) {
             try {
-                broadcast(new SlotDataChanged('booking', 'updated', $model->id));
+                broadcast(new SlotDataChanged('booking', 'updated', $model->id_booking_requests));
             } catch (\Throwable $e) {
             }
         });
 
         static::deleted(function ($model) {
             try {
-                broadcast(new SlotDataChanged('booking', 'deleted', $model->id));
+                broadcast(new SlotDataChanged('booking', 'deleted', $model->id_booking_requests));
             } catch (\Throwable $e) {
             }
         });
