@@ -12,7 +12,7 @@ class ForcePasswordChangeController extends Controller
     public function show()
     {
         $user = auth()->user();
-        if (! $user->must_change_password) {
+        if (! $user->must_change_password && ! $user->isPasswordExpired()) {
             return redirect($this->getRedirectRoute($user));
         }
 
@@ -23,7 +23,7 @@ class ForcePasswordChangeController extends Controller
     {
         $user = auth()->user();
 
-        if (! $user->must_change_password) {
+        if (! $user->must_change_password && ! $user->isPasswordExpired()) {
             return redirect($this->getRedirectRoute($user));
         }
 
@@ -42,6 +42,7 @@ class ForcePasswordChangeController extends Controller
         $user->forceFill([
             'password' => Hash::make($request->new_password),
             'must_change_password' => false,
+            'password_changed_at' => now(),
         ])->save();
 
         return redirect($this->getRedirectRoute($user))->with('success', 'Your password has been successfully changed.');
