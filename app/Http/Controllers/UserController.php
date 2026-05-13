@@ -264,6 +264,7 @@ class UserController extends Controller
             'is_active' => true,
             'must_change_password' => true,
             'password' => Hash::make($password),
+            'password_changed_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -532,6 +533,7 @@ class UserController extends Controller
             $update['password'] = Hash::make($password);
             $update['must_change_password'] = true;
             $update['is_locked'] = false;
+            $update['password_changed_at'] = now();
             $passwordChanged = true;
         }
 
