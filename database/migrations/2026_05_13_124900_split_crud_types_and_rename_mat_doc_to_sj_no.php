@@ -1,9 +1,9 @@
 <?php
- 
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
- 
+
 return new class extends Migration
 {
     /**
@@ -18,10 +18,10 @@ return new class extends Migration
         // --- 1. Convert activity_type to VARCHAR if it's not already ---
         try {
             DB::statement('ALTER TABLE activity_logs ALTER COLUMN activity_type TYPE VARCHAR(50) USING activity_type::text');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Ignore
         }
- 
+
         // --- 2. Migrate existing 'crud' rows to specific types ---
         if (Schema::hasTable('activity_logs')) {
             try {
@@ -29,44 +29,44 @@ return new class extends Migration
                     ->where('activity_type', 'crud')
                     ->where('description', 'ilike', '%deleted%')
                     ->update(['activity_type' => 'delete']);
- 
+
                 DB::table('activity_logs')
                     ->where('activity_type', 'crud')
                     ->where(function ($q) {
                         $q->where('description', 'ilike', '%created%')
-                          ->orWhere('description', 'ilike', '%submitted%')
-                          ->orWhere('description', 'ilike', '%logged in%')
-                          ->orWhere('description', 'ilike', '%logged out%');
+                            ->orWhere('description', 'ilike', '%submitted%')
+                            ->orWhere('description', 'ilike', '%logged in%')
+                            ->orWhere('description', 'ilike', '%logged out%');
                     })
                     ->update(['activity_type' => 'create']);
- 
+
                 DB::table('activity_logs')
                     ->where('activity_type', 'crud')
                     ->update(['activity_type' => 'edit']);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Ignore
             }
         }
- 
+
         // --- 3. Rename mat_doc -> sj_no in slots table ---
         if (Schema::hasColumn('slots', 'mat_doc') && ! Schema::hasColumn('slots', 'sj_no')) {
             try {
                 DB::statement('ALTER TABLE slots RENAME COLUMN mat_doc TO sj_no');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Ignore
             }
         }
- 
+
         // --- 4. Rename mat_doc -> sj_no in activity_logs table ---
         if (Schema::hasColumn('activity_logs', 'mat_doc') && ! Schema::hasColumn('activity_logs', 'sj_no')) {
             try {
                 DB::statement('ALTER TABLE activity_logs RENAME COLUMN mat_doc TO sj_no');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Ignore
             }
         }
     }
- 
+
     /**
      * Reverse the migrations.
      */
