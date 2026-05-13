@@ -157,14 +157,14 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">SJ</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" data-type="text" title="Sort">⇅</button>
-                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">⏷</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="sj_no" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="sj_no" title="Filter">⏷</button>
                                             </span>
-                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-st-position="fixed" data-filter-panel="mat_doc">
-                                                <div class="st-font-semibold st-mb-6">SJ Filter</div>
-                                                <input type="text" name="mat_doc" class="st-input" placeholder="Search SJ..." value="{{ $mat_doc ?? '' }}">
+                                            <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240 st-maxh-220" data-st-position="fixed" data-filter-panel="sj_no">
+                                                <div class="st-font-semibold st-mb-6">SJ No</div>
+                                                <input type="text" name="sj_no" class="st-input" placeholder="Search SJ..." value="{{ $sj_no ?? '' }}">
                                                 <div class="st-panel__actions">
-                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="sj_no">Clear</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -199,7 +199,7 @@
                                                     <select name="warehouse_id[]" class="st-select st-filter-warehouse-select st-select--panel">
                                                         <option value="">(All Wh)</option>
                                                         @foreach ($warehouses as $wh)
-                                                            <option value="{{ $wh->id }}" {{ in_array((string) $wh->id, array_map('strval', $warehouseFilter ?? []), true) ? 'selected' : '' }}>{{ $wh->name }}</option>
+                                                            <option value="{{ $wh->id_wh }}" {{ in_array((string) $wh->id_wh, array_map('strval', $warehouseFilter ?? []), true) ? 'selected' : '' }}>{{ $wh->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -413,7 +413,7 @@
                                             }
                                         };
                                     @endphp
-                                    <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('slots.show', ['slotId' => $r->id]) }}'; }">
+                                    <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('slots.show', ['slotId' => $r->id_slots]) }}'; }">
                                         <td>{{ $i + 1 }}</td>
                                         <td>
                                             @if ($slotTypeVal === 'unplanned')
@@ -424,7 +424,7 @@
                                         </td>
                                         <td>{{ $r->po_number ?? 'N/A' }}</td>
                                         <td>{{ $r->ticket_number ?? 'N/A' }}</td>
-                                        <td>{{ $r->mat_doc ?? 'N/A' }}</td>
+                                        <td>{{ $r->sj_no ?? 'N/A' }}</td>
                                         <td>{{ $r->vendor_name ?? 'N/A' }}{{ !empty($r->destination) ? ' (' . $r->destination . ')' : '' }}</td>
                                         <td class="st-td-center st-nowrap">
                                             <div class="st-flex st-flex-col st-align-center">
@@ -498,7 +498,7 @@
                                         <td class="st-td-center">{{ $r->created_by_name ?? $r->created_by_email ?? 'N/A' }}</td>
                                         <td class="st-td-center">
                                             <div class="tw-actionbar">
-                                                <a href="{{ route('slots.show', ['slotId' => $r->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
+                                                <a href="{{ route('slots.show', ['slotId' => $r->id_slots]) }}" class="tw-action" data-tooltip="View" aria-label="View">
                                                     <i class="fa-solid fa-eye"></i>
                                                 </a>
                                             </div>

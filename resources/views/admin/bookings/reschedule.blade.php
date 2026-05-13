@@ -12,7 +12,7 @@
     <div class="st-card__header">
         <h2 class="st-card__title">
             <i class="fas fa-calendar-alt"></i>
-            Reschedule Request {{ $booking->request_number ?? ('REQ-' . $booking->id) }}
+            Reschedule Request {{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}
         </h2>
     </div>
 
@@ -30,7 +30,7 @@
                 <div class="detail-grid-compact">
                     <div class="detail-item">
                         <label class="detail-label">Request Number</label>
-                        <div class="detail-value">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</div>
+                        <div class="detail-value">{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}</div>
                     </div>
                     <div class="detail-item">
                         <label class="detail-label">Status</label>
@@ -132,7 +132,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('bookings.reschedule.store', $booking->id) }}">
+    <form method="POST" action="{{ route('bookings.reschedule.store', $booking->id_booking_requests) }}">
         @csrf
 
         <div class="st-form-grid">
@@ -152,7 +152,7 @@
                                 @php
                                     $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse?->wh_code ?? '', $gate->gate_number ?? '');
                                 @endphp
-                                <option value="{{ $gate->id }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('planned_gate_id', $booking->planned_gate_id ?? '') === (string)$gate->id ? 'selected' : '' }}>
+                                <option value="{{ $gate->id_gates }}" data-warehouse-id="{{ $gate->warehouse_id }}" {{ (string)old('planned_gate_id', $booking->planned_gate_id ?? '') === (string)$gate->id_gates ? 'selected' : '' }}>
                                     {{ $gateLabel }}
                                 </option>
                             @endforeach
@@ -240,7 +240,7 @@
 
 @push('scripts')
 <script type="application/json" id="admin_bookings_reschedule_config">{!! json_encode([
-    'bookingId' => (int) ($booking->id ?? 0),
+    'bookingId' => (int) ($booking->id_booking_requests ?? 0),
     'checkGateUrl' => route('bookings.ajax.check_gate', [], false),
     'warehouseId' => (int) ($booking->warehouse_id ?? 0),
     'calendarBaseUrl' => route('bookings.ajax.calendar', [], false),

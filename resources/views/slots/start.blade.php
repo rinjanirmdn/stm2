@@ -16,7 +16,7 @@
     <div class="st-card st-mb-16 st-border-l-4 st-card--primary-accent">
         <div class="st-flex st-justify-between st-align-center st-mb-12">
             <h3 class="st-m-0 st-text-16">Start Process</h3>
-            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id }}</span>
+            <span class="st-badge st-badge--primary st-text--sm">Ref #{{ $slot->id_slots }}</span>
         </div>
         <div class="st-form-row--grid-3 st-text--sm">
             <div class="st-flex st-align-center st-gap-8">
@@ -72,7 +72,7 @@
     @endif
 
     <div>
-        <form method="POST" action="{{ route('slots.start.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('slots.start.store', ['slotId' => $slot->id_slots, 'popup' => request()->boolean('popup') ? 1 : null]) }}" enctype="multipart/form-data">
             @csrf
 
             <div class="st-form-row st-form-field--mb-12">
@@ -129,7 +129,7 @@
                             }
                         @endphp
                         @foreach ($gates as $gate)
-                            @php $gid = (int)($gate->id ?? 0); @endphp
+                            @php $gid = (int)($gate->id_gates ?? 0); @endphp
                             <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $gid }}</option>
                         @endforeach
                     </select>
@@ -149,7 +149,7 @@
                                 <div style="padding:6px 12px;font-size:0.7rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;background:#f8fafc;">Same Warehouse</div>
                                 @foreach ($sameWh as $gate)
                                     @php
-                                        $gid = (int) ($gate->id ?? 0);
+                                        $gid = (int) ($gate->id_gates ?? 0);
                                         $st = $gateStatuses[$gid] ?? ['is_conflict' => false, 'overlapping_slots' => []];
                                         $isConflict = !empty($st['is_conflict']);
                                         $label = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
@@ -157,7 +157,7 @@
                                         if ($isConflict) {
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
-                                            $short = $row ? ('Planned #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Planned #' . $firstId) : 'Occupied');
+                                            $short = $row ? ('Planned #' . (int)$row->id_slots . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Planned #' . $firstId) : 'Occupied');
                                             $statusLabel = 'In Use';
                                         } else {
                                             $statusLabel = 'Available';
@@ -176,7 +176,7 @@
                                 <div style="padding:6px 12px;font-size:0.7rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;background:#f8fafc;{{ !empty($sameWh) ? 'border-top:1px solid #e2e8f0;' : '' }}">Other Warehouses</div>
                                 @foreach ($otherWh as $gate)
                                     @php
-                                        $gid = (int) ($gate->id ?? 0);
+                                        $gid = (int) ($gate->id_gates ?? 0);
                                         $st = $gateStatuses[$gid] ?? ['is_conflict' => false, 'overlapping_slots' => []];
                                         $isConflict = !empty($st['is_conflict']);
                                         $label = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
@@ -184,7 +184,7 @@
                                         if ($isConflict) {
                                             $firstId = !empty($st['overlapping_slots']) ? (int) $st['overlapping_slots'][0] : 0;
                                             $row = $firstId ? ($conflictDetails[$firstId] ?? null) : null;
-                                            $short = $row ? ('Planned #' . (int)$row->id . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Planned #' . $firstId) : 'Occupied');
+                                            $short = $row ? ('Planned #' . (int)$row->id_slots . ' ' . (string)($row->ticket_number ?? '')) : ($firstId ? ('Planned #' . $firstId) : 'Occupied');
                                             $statusLabel = 'In Use';
                                         } else {
                                             $statusLabel = 'Available';

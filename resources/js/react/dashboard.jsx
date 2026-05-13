@@ -937,8 +937,8 @@ function BottleneckSlide({ data, isDisplayOnly = false, animateCharts = true }) 
                   </thead>
                   <tbody>
                     {reasonsModal.rows.map((r, i) => (
-                      <tr key={r.id || i} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fafafa' : '#fff' }}>
-                        <td style={{ padding: '8px 6px', fontWeight: 500 }}>{r.ticket_number || `#${r.id}`}</td>
+                      <tr key={(r.id_slots || r.id_booking_requests || r.id) || i} style={{ borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fafafa' : '#fff' }}>
+                        <td style={{ padding: '8px 6px', fontWeight: 500 }}>{r.ticket_number || `#${(r.id_slots || r.id_booking_requests || r.id)}`}</td>
                         <td style={{ padding: '8px 6px', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.vendor_name + (r.destination ? ` (${r.destination})` : '')}>
                           {r.vendor_name || '-'}
                           {r.destination && <span className="text-gray-400 font-normal ml-1">({r.destination})</span>}
@@ -1057,7 +1057,7 @@ function KPISlide({ data, onFilter, isDisplayOnly = false, animateCharts = true 
             const tOpts = [
               { value: '', label: 'All Transporters' },
               { value: 'internal', label: 'Internal Car' },
-              ...toArr(data.transporters).map(t => ({ value: String(t.id), label: t.name }))
+              ...toArr(data.transporters).map(t => ({ value: String(t.id_transporters || t.id), label: t.name }))
             ];
             const tVal = tOpts.find(o => o.value === (data.selected_transporter || '')) || tOpts[0];
             return (
@@ -1192,8 +1192,8 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
                   onMouseEnter={(e) => setTip({ x: e.clientX, y: e.clientY, block: b })}
                   onMouseMove={(e) => setTip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
                   onMouseLeave={() => setTip(null)}
-                  onClick={(e) => { e.stopPropagation(); if (b.id) window.location.href = `/slots/${b.id}`; }}
-                >{b.po_number || `#${b.id || ''}`}</div>;
+                  onClick={(e) => { e.stopPropagation(); const rid = (b.id_slots || b.id_booking_requests || b.id); if (rid) window.location.href = `/slots/${rid}`; }}
+                >{b.po_number || `#${(b.id_slots || b.id_booking_requests || b.id) || ''}`}</div>;
               });
               return (
                 <div key={gi} className="flex border-b border-gray-100 hover:bg-sky-50/20 transition-colors" style={{ flex: '1 1 0%', minHeight: 40 }}>
@@ -1241,7 +1241,7 @@ function TimelineSlide({ data, onFilter, isDisplayOnly = false }) {
               {/* Header */}
               <div style={{ padding: '10px 14px 8px', borderBottom: `1px solid ${th.border}`, background: th.headerBg }}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold" style={{ fontSize: 14, color: th.text }}>{b.po_number || `#${b.id || '-'}`}</span>
+                  <span className="font-bold" style={{ fontSize: 14, color: th.text }}>{b.po_number || `#${(b.id_slots || b.id_booking_requests || b.id) || '-'}`}</span>
                   <span className="uppercase font-semibold tracking-wide" style={{ fontSize: 9, color: th.badgeText, background: th.badgeBg, padding: '2px 8px', borderRadius: 6 }}>{stLabel}</span>
                 </div>
                 {b.vendor_name && <div className="truncate mt-0.5" style={{ fontSize: 11, color: th.label, maxWidth: 240 }}>{b.vendor_name}{b.destination && ` (${b.destination})`}</div>}
@@ -1319,7 +1319,7 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
   const statusChartData = useMemo(() => Object.entries(processStatusCounts || {}).map(([k, v]) => ({ name: k.replace(/_/g, ' '), key: k, value: +v, fill: (scMap[k] || scMap.scheduled).accent })), [processStatusCounts]);
   const badgeMap = { scheduled: 'gray', waiting: 'yellow', arrived: 'yellow', active: 'blue', in_progress: 'blue', completed: 'green', cancelled: 'red', pending: 'orange', pending_approval: 'orange' };
 
-  const allRows = useMemo(() => schedule.filter(r => r.id || r.is_pending_booking || r.po_number || r.ticket_number || r.request_number), [schedule]);
+  const allRows = useMemo(() => schedule.filter(r => (r.id_slots || r.id_booking_requests || r.id) || r.is_pending_booking || r.po_number || r.ticket_number || r.request_number), [schedule]);
 
   // Status counts for pills
   const statusCounts = useMemo(() => {
@@ -1472,7 +1472,8 @@ function ScheduleSlide({ data, onFilter, isDisplayOnly = false, animateCharts = 
                 {rows.length > 0 ? rows.map((row, i) => {
                   const st = row.status || 'scheduled';
                   const label = st === 'arrived' ? 'waiting' : st;
-                  const detailUrl = row.id ? `/slots/${row.id}` : null;
+                  const rid = (row.id_slots || row.id_booking_requests || row.id);
+                  const detailUrl = rid ? `/slots/${rid}` : null;
                   return (
                     <tr key={i} className={`border-b border-gray-100 hover:bg-sky-50/30 transition-colors ${detailUrl ? 'cursor-pointer' : ''}`}
                       onClick={() => { if (detailUrl) window.location.href = detailUrl; }}

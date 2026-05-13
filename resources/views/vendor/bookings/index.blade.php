@@ -1,4 +1,4 @@
-﻿@extends('vendor.layouts.vendor')
+@extends('vendor.layouts.vendor')
 
 @section('title', 'My Bookings - Vendor Portal')
 
@@ -122,8 +122,8 @@
                 }
             }
         @endphp
-        <div class="mb-row" @if($isInternalVendor ?? false) onclick="window.location='{{ route('vendor.bookings.show', $booking->id) }}'" style="cursor:pointer" @endif>
-            <span class="mb-row__ticket">{{ $booking->request_number ?? ('REQ-' . $booking->id) }}</span>
+        <div class="mb-row" @if($isInternalVendor ?? false) onclick="window.location='{{ route('vendor.bookings.show', $booking->id_booking_requests) }}'" style="cursor:pointer" @endif>
+            <span class="mb-row__ticket">{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}</span>
             @if($booking->status === 'approved' && $booking->convertedSlot)
             <span class="mb-row__ticket-number" title="Operational Ticket Number">{{ $booking->convertedSlot->ticket_number }}</span>
             @endif
@@ -161,14 +161,14 @@
                 </span>
             @endif
             <div class="mb-row__actions" @if($isInternalVendor ?? false) onclick="event.stopPropagation()" @endif>
-				<a href="{{ route('vendor.bookings.show', $booking->id) }}" class="mb-row__btn mb-row__btn--view" title="View">
+				<a href="{{ route('vendor.bookings.show', $booking->id_booking_requests) }}" class="mb-row__btn mb-row__btn--view" title="View">
 					<i class="fas fa-eye"></i>
 				</a>
 				@if(in_array($booking->status, ['pending']))
 				<button type="button"
 				        class="mb-row__btn mb-row__btn--cancel"
 				        title="Cancel"
-				        onclick="openVendorCancelModal('{{ route('vendor.bookings.cancel', $booking->id) }}', '{{ $booking->request_number ?? ('REQ-' . $booking->id) }}')">
+				        onclick="openVendorCancelModal('{{ route('vendor.bookings.cancel', $booking->id_booking_requests) }}', '{{ $booking->request_number ?? ('REQ-' . $booking->id_booking_requests) }}')">
 					<i class="fas fa-times"></i>
 				</button>
 				@endif

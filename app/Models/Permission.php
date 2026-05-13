@@ -9,6 +9,8 @@ class Permission extends SpatiePermission
 {
     protected $table = 'md_permissions';
 
+    protected $primaryKey = 'id_permission';
+
     protected $fillable = [
         'perm_name',
         'perm_guard_name',

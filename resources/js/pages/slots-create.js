@@ -711,7 +711,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                var recId = (data.gate_id !== undefined && data.gate_id !== null) ? String(data.gate_id) : '';
+                var recId = (data.gate_id_gates !== undefined && data.gate_id_gates !== null) ? String(data.gate_id_gates) : '';
                 var selectedId = gateSelect && gateSelect.value ? String(gateSelect.value) : '';
                 if (selectedId !== '' && recId !== '' && selectedId === recId) {
                     gateRecommendation.textContent = '';

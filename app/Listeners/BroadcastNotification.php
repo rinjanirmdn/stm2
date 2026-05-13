@@ -19,7 +19,7 @@ class BroadcastNotification
         }
 
         $notifiable = $event->notifiable;
-        if (! $notifiable || ! isset($notifiable->id)) {
+        if (! $notifiable || ! isset($notifiable->id_users)) {
             return;
         }
 
@@ -30,8 +30,8 @@ class BroadcastNotification
 
         try {
             $notifId = null;
-            if (is_object($event->response) && isset($event->response->id)) {
-                $notifId = (string) $event->response->id;
+            if (is_object($event->response) && isset($event->response->id_notifications)) {
+                $notifId = (string) $event->response->id_notifications;
             } elseif (is_array($event->response) && isset($event->response['id'])) {
                 $notifId = (string) $event->response['id'];
             } elseif (is_string($event->response)) {
@@ -39,7 +39,7 @@ class BroadcastNotification
             }
 
             broadcast(new NewNotification(
-                userId: (int) $notifiable->id,
+                userId: (int) $notifiable->id_users,
                 title: $data['title'] ?? 'Notification',
                 message: $data['message'] ?? '',
                 url: $data['action_url'] ?? null,

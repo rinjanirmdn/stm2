@@ -139,12 +139,12 @@ class TransactionReportService
     private function buildBaseTransactionQuery()
     {
         return DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('g.warehouse_id', '=', 's.warehouse_id');
             })
-            ->leftJoin('md_users as u', 's.created_by', '=', 'u.id')
+            ->leftJoin('md_users as u', 's.created_by', '=', 'u.id_users')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
             ->select([
                 's.*',
@@ -175,7 +175,7 @@ class TransactionReportService
             $query->where(function ($sub) use ($like) {
                 $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(s.ticket_number, \'\')) like ?', [$like])
-                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.sj_no, \'\')) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(s.vendor_name, \'\')) like ?', [$like])
                     ->orWhereRaw('LOWER(w.wh_name) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(s.truck_type, \'\')) like ?', [$like])
@@ -198,10 +198,10 @@ class TransactionReportService
             $query->whereRaw('LOWER(COALESCE(s.ticket_number, \'\')) like ?', ['%'.strtolower($ticketSearch).'%']);
         }
 
-        $matDocSearch = trim($request->query('mat_doc', ''));
-        if ($matDocSearch !== '') {
-            $matDocSearch = str_replace(['%', '_'], ['\%', '\_'], $matDocSearch);
-            $query->whereRaw('LOWER(COALESCE(s.mat_doc, \'\')) like ?', ['%'.strtolower($matDocSearch).'%']);
+        $sjNoSearch = trim($request->query('sj_no', $request->query('mat_doc', '')));
+        if ($sjNoSearch !== '') {
+            $sjNoSearch = str_replace(['%', '_'], ['\%', '\_'], $sjNoSearch);
+            $query->whereRaw('LOWER(COALESCE(s.sj_no, \'\')) like ?', ['%'.strtolower($sjNoSearch).'%']);
         }
 
         $userSearch = trim($request->query('user', ''));
@@ -372,7 +372,7 @@ class TransactionReportService
         return [
             'po' => 's.po_number',
             'ticket' => 's.ticket_number',
-            'mat_doc' => 's.mat_doc',
+            'sj_no' => 's.sj_no',
             'vendor' => 's.vendor_name',
             'warehouse' => 'w.wh_name',
             'direction' => 's.direction',
@@ -391,7 +391,7 @@ class TransactionReportService
         return Cache::remember('reports:transactions:filter_options', now()->addMinutes(10), function () {
             return [
                 'warehouses' => DB::table('md_warehouse')
-                    ->select(['id', 'wh_name as name', 'wh_code as code'])
+                    ->select(['id_wh', 'wh_name as name', 'wh_code as code'])
                     ->orderBy('wh_name')
                     ->get(),
                 'gates' => DB::table('md_gates')

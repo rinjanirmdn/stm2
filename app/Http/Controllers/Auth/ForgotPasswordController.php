@@ -55,7 +55,7 @@ class ForgotPasswordController extends Controller
         }
 
         // ── Non-admin: send request to administrator (original flow) ──
-        $resetFlagKey = 'password_reset_requested_user_'.(int) $user->id;
+        $resetFlagKey = 'password_reset_requested_user_'.(int) $user->id_users;
 
         // Get admin email
         $adminEmail = config('mail.admin_email', 'admin@example.com');
@@ -63,7 +63,7 @@ class ForgotPasswordController extends Controller
         $appName = 'e-Docking Control System';
         $companyName = 'PT Oneject Indonesia';
         $logoUrl = url('/img/e-Docking Control System.png');
-        $adminEditUrl = route('users.edit', ['userId' => $user->id, 'from_reset_email' => 1]);
+        $adminEditUrl = route('users.edit', ['userId' => $user->id_users, 'from_reset_email' => 1]);
 
         try {
             $html = view('emails.password-reset-request-admin', [
@@ -81,7 +81,7 @@ class ForgotPasswordController extends Controller
                     ->subject('['.$appName.'] Password Reset Request - '.($user->full_name ?? $user->username ?? 'Vendor'));
             });
 
-            $resetFlagKey = 'password_reset_requested_user_'.(int) $user->id;
+            $resetFlagKey = 'password_reset_requested_user_'.(int) $user->id_users;
             Cache::put($resetFlagKey, now()->toDateTimeString(), now()->addHours(6));
 
             // Store request to prevent spam
@@ -113,7 +113,7 @@ class ForgotPasswordController extends Controller
         }
 
         // Rate limit: one request per 5 minutes per admin
-        $rateLimitKey = 'admin_reset_link_'.(int) $user->id;
+        $rateLimitKey = 'admin_reset_link_'.(int) $user->id_users;
         if (Cache::has($rateLimitKey)) {
             return back()->with('error', 'A reset link was already sent recently. Please check your email or wait a few minutes before trying again.');
         }
@@ -157,14 +157,14 @@ class ForgotPasswordController extends Controller
             Cache::put($rateLimitKey, true, now()->addMinutes(5));
 
             Log::info('Admin password reset link sent', [
-                'user_id' => $user->id,
+                'user_id' => $user->id_users,
                 'email' => $email,
             ]);
 
             return back()->with('success', 'A password reset link has been sent to your registered email address. The link will expire in '.self::TOKEN_LIFETIME_MINUTES.' minutes.');
         } catch (\Exception $e) {
             Log::error('Admin password reset link failed: '.$e->getMessage(), [
-                'user_id' => $user->id,
+                'user_id' => $user->id_users,
                 'exception' => $e,
             ]);
 
@@ -195,7 +195,7 @@ class ForgotPasswordController extends Controller
         $appName = 'e-Docking Control System';
         $companyName = 'PT Oneject Indonesia';
         $logoUrl = url('/img/e-Docking Control System.png');
-        $adminEditUrl = route('users.edit', ['userId' => $user->id, 'from_reset_email' => 1]);
+        $adminEditUrl = route('users.edit', ['userId' => $user->id_users, 'from_reset_email' => 1]);
 
         try {
             $html = view('emails.password-reset-request-admin', [

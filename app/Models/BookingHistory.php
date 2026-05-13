@@ -10,6 +10,10 @@ class BookingHistory extends Model
 {
     use HasFactory;
 
+    protected $table = 'booking_histories';
+
+    protected $primaryKey = 'id_booking_histories';
+
     protected $fillable = [
         'slot_id',
         'action',
@@ -98,13 +102,7 @@ class BookingHistory extends Model
         return $this->belongsTo(Slot::class);
     }
 
-    /**
-     * Relationship: User who performed the action
-     */
-    public function performer(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'performed_by');
-    }
+    // Relationship: User who performed the action is removed because performed_by now stores the full name directly.
 
     /**
      * Relationship: Old gate
@@ -128,16 +126,22 @@ class BookingHistory extends Model
     public static function logAction(
         int $slotId,
         string $action,
-        int $performedBy,
+        $performedBy, // can be int (ID) or string (name)
         string $newStatus,
         ?string $oldStatus = null,
         ?string $notes = null,
         ?array $scheduleData = []
     ): self {
+        $performerName = $performedBy;
+        if (is_numeric($performedBy)) {
+            $user = User::find((int) $performedBy);
+            $performerName = $user ? $user->full_name : "User #{$performedBy}";
+        }
+
         return self::create([
             'slot_id' => $slotId,
             'action' => $action,
-            'performed_by' => $performedBy,
+            'performed_by' => $performerName,
             'notes' => $notes,
             'old_status' => $oldStatus,
             'new_status' => $newStatus,

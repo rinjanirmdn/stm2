@@ -5,12 +5,12 @@
 
 @section('content')
     <div class="st-card st-mb-12">
-        <div class="st-text--sm st-text--muted">Unplanned #{{ $slot->id }}</div>
+        <div class="st-text--sm st-text--muted">Unplanned #{{ $slot->id_slots }}</div>
         <div class="st-font-semibold">PO: {{ $slot->truck_number ?? 'N/A' }} | Warehouse: {{ $slot->warehouse_name ?? 'N/A' }} | Planned: {{ $slot->planned_start ?? 'N/A' }}</div>
     </div>
 
     <div>
-        <form method="POST" action="{{ route('unplanned.complete.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('unplanned.complete.store', ['slotId' => $slot->id_slots, 'popup' => request()->boolean('popup') ? 1 : null]) }}" enctype="multipart/form-data">
             @csrf
 
             <div class="st-form-row st-form-field--mb-12">

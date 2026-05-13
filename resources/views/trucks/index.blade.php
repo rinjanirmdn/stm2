@@ -65,9 +65,9 @@
                                 <td colspan="5" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No trucks found</td>
                             </tr>
                         @else
-                            @foreach ($rows as $row)
+                             @foreach ($rows as $row)
                                 <tr
-                                    data-row-id="{{ (int) $row->id }}"
+                                    data-row-id="{{ (int) $row->id_truck }}"
                                     data-truck-type="{{ (string) ($row->truck_type ?? '') }}"
                                 >
                                     <td>{{ $loop->index + 1 }}</td>
@@ -77,13 +77,13 @@
                                     <td class="st-td-center">
                                         <div class="tw-actionbar">
                                             @can('trucks.edit')
-                                                <button type="button" class="tw-action btn-edit-truck" data-id="{{ $row->id }}" data-truck-type="{{ $row->truck_type }}" data-duration="{{ $row->target_duration_minutes }}" data-tooltip="Edit" aria-label="Edit">
+                                                <button type="button" class="tw-action btn-edit-truck" data-id="{{ $row->id_truck }}" data-truck-type="{{ $row->truck_type }}" data-duration="{{ $row->target_duration_minutes }}" data-tooltip="Edit" aria-label="Edit">
                                                     <i class="fa-solid fa-pencil"></i>
                                                 </button>
                                             @endcan
 
                                             @can('trucks.delete')
-                                                <button type="button" class="tw-action tw-action--danger btn-delete-truck" data-tooltip="Delete" aria-label="Delete" data-delete-url="{{ route('trucks.delete', ['truckTypeDurationId' => $row->id]) }}" data-truck-name="{{ $row->truck_type }}">
+                                                <button type="button" class="tw-action tw-action--danger btn-delete-truck" data-tooltip="Delete" aria-label="Delete" data-delete-url="{{ route('trucks.delete', ['truckTypeDurationId' => $row->id_truck]) }}" data-truck-name="{{ $row->truck_type }}">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </button>
                                             @endcan

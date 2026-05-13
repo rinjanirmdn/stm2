@@ -12,6 +12,8 @@ class Warehouse extends Model
 
     protected $table = 'md_warehouse';
 
+    protected $primaryKey = 'id_wh';
+
     protected $fillable = [
         'wh_code',
         'wh_name',

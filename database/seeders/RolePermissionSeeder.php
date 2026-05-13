@@ -476,19 +476,19 @@ class RolePermissionSeeder extends Seeder
         $modelHasRolesTable = (string) (config('permission.table_names.model_has_roles') ?? 'model_has_roles');
         $roleHasPermissionsTable = (string) (config('permission.table_names.role_has_permissions') ?? 'role_has_permissions');
 
-        $keepRoleIds = Role::query()->whereIn('roles_name', $rolesToKeep)->pluck('id')->all();
-        $rolesToDelete = Role::query()->whereNotIn('roles_name', $rolesToKeep)->pluck('id')->all();
+        $keepRoleIds = Role::query()->whereIn('roles_name', $rolesToKeep)->pluck('id_roles')->all();
+        $rolesToDelete = Role::query()->whereNotIn('roles_name', $rolesToKeep)->pluck('id_roles')->all();
 
         // Migrate known legacy roles
-        $adminRoleId = Role::query()->where('roles_name', 'Admin')->value('id');
-        $displayRoleId = Role::query()->where('roles_name', 'Display Account')->value('id');
+        $adminRoleId = Role::query()->where('roles_name', 'Admin')->value('id_roles');
+        $displayRoleId = Role::query()->where('roles_name', 'Display Account')->value('id_roles');
 
-        $superAdminRoleId = Role::query()->where('roles_name', 'Super Admin')->value('id');
+        $superAdminRoleId = Role::query()->where('roles_name', 'Super Admin')->value('id_roles');
         if ($superAdminRoleId && $adminRoleId) {
             DB::table($modelHasRolesTable)->where('role_id', $superAdminRoleId)->update(['role_id' => $adminRoleId]);
         }
 
-        $viewerRoleId = Role::query()->where('roles_name', 'Viewer')->value('id');
+        $viewerRoleId = Role::query()->where('roles_name', 'Viewer')->value('id_roles');
         if ($viewerRoleId && $displayRoleId) {
             DB::table($modelHasRolesTable)->where('role_id', $viewerRoleId)->update(['role_id' => $displayRoleId]);
         }
@@ -500,7 +500,7 @@ class RolePermissionSeeder extends Seeder
 
         if (! empty($rolesToDelete)) {
             DB::table($roleHasPermissionsTable)->whereIn('role_id', $rolesToDelete)->delete();
-            Role::query()->whereIn('id', $rolesToDelete)->delete();
+            Role::query()->whereIn('id_roles', $rolesToDelete)->delete();
         }
 
         // Assign admin role to user with username admin or first user

@@ -156,9 +156,9 @@
             var label = { scheduled:'Dijadwalkan', waiting:'Sudah Tiba', in_progress:'Sedang Proses', completed:'Selesai' }[s.status] || s.status;
             var dir = (s.direction || '').toLowerCase();
             var dirCls = dir === 'inbound' ? 'sec-slot__dir--inbound' : dir === 'outbound' ? 'sec-slot__dir--outbound' : '';
-            var detailUrl = config.slotShowUrl.replace('__SLOT_ID__', s.id);
+            var detailUrl = config.slotShowUrl.replace('__SLOT_ID__', s.id_slots);
 
-            html += '<a href="' + detailUrl + '" class="sec-slot ' + sc + '" data-slot-id="' + s.id + '">';
+            html += '<a href="' + detailUrl + '" class="sec-slot ' + sc + '" data-slot-id="' + s.id_slots + '">';
             html += '<div class="sec-slot__left"><div class="sec-slot__eta">' + esc(s.eta) + '</div>';
             if (s.arrival_time) html += '<div class="sec-slot__arrived">Tiba ' + esc(s.arrival_time) + '</div>';
             html += '</div><div class="sec-slot__body">';
@@ -176,7 +176,7 @@
 
             // Arrival button for scheduled slots
             if (s.status === 'scheduled') {
-                html += '<button type="button" class="sec-slot__arrival-btn" data-arrival-id="' + s.id + '" title="Catat Kedatangan" onclick="event.preventDefault();event.stopPropagation();">';
+                html += '<button type="button" class="sec-slot__arrival-btn" data-arrival-id="' + s.id_slots + '" title="Catat Kedatangan" onclick="event.preventDefault();event.stopPropagation();">';
                 html += '<i class="fas fa-right-to-bracket"></i><span>Arrival</span></button>';
             }
 
@@ -583,7 +583,7 @@
                 .forEach(function (id) { var el = document.getElementById(id); if (el) el.textContent = '-'; });
         } else {
             var slot = data.slot;
-            currentSlotId = slot.id;
+            currentSlotId = slot.id_slots;
             if (!data.can_proceed) {
                 header.className = 'sec-result-card__header sec-result-card__header--warning';
                 header.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Perhatian</span>';

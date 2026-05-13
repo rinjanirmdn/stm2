@@ -64,7 +64,7 @@ class SlotService
             ->whereRaw('? > s.planned_start', [$end]);
 
         if ($excludeSlotId) {
-            $query->where('s.id', '<>', $excludeSlotId);
+            $query->where('s.id_slots', '<>', $excludeSlotId);
         }
 
         return $query->count();
@@ -91,7 +91,7 @@ class SlotService
             ->whereRaw('? > s.planned_start', [$end]);
 
         if ($excludeSlotId) {
-            $query->where('s.id', '<>', $excludeSlotId);
+            $query->where('s.id_slots', '<>', $excludeSlotId);
         }
 
         return $query->count();
@@ -157,20 +157,20 @@ class SlotService
 
         foreach ($gates as $gate) {
             $activeCount = DB::table('slots')
-                ->where('actual_gate_id', $gate->id)
+                ->where('actual_gate_id', $gate->id_gates)
                 ->where('status', '!=', 'completed')
                 ->count();
 
             if ($activeCount < $minLoad) {
                 $minLoad = $activeCount;
-                $optimalGate = $gate->id;
+                $optimalGate = $gate->id_gates;
             }
         }
 
         return $optimalGate;
     }
 
-    public function logActivity(?int $slotId, string $activityType, string $description, $oldValue = null, $newValue = null, ?int $userId = null): bool
+    public function logActivity(?int $slotId, string $activityType, string $description, $oldValue = null, $newValue = null, ?int $userId = null, ?string $feature = null): bool
     {
         $createdBy = $userId ?? Auth::id();
 
@@ -184,25 +184,42 @@ class SlotService
         // Capitalize description properly
         $description = $this->capitalizeDescription($description);
 
-        $allowedTypes = [
-            'gate_change',
-            'status_change',
-            'late_arrival',
-            'early_arrival',
-            'waiting_time',
-            'gate_activation',
-            'gate_deactivation',
+        // Map old activity types → new system (insert / update / delete / auth)
+        $typeFeatureMap = [
+            'gate_change' => ['update', 'Planned'],
+            'status_change' => ['update', null],    // feature determined by caller
+            'late_arrival' => ['update', null],
+            'early_arrival' => ['update', null],
+            'waiting_time' => ['update', null],
+            'gate_activation' => ['update', 'Gate Management'],
+            'gate_deactivation' => ['update', 'Gate Management'],
+            'backdate' => ['update', null],
+            'arrival_recorded' => ['update', null],
+            'arrival_updated' => ['update', null],
+            'create' => ['insert', null],
+            'insert' => ['insert', null],
+            'edit' => ['update', null],
+            'update' => ['update', null],
+            'crud' => ['update', null],
+            'delete' => ['delete', null],
         ];
 
-        $mappedTypes = [
-            'arrival_recorded' => 'status_change',
-            'arrival_updated' => 'status_change',
-        ];
+        $mapped = $typeFeatureMap[$activityType] ?? ['update', null];
+        $activityType = $mapped[0];
 
-        $activityType = $mappedTypes[$activityType] ?? $activityType;
-        if (! in_array($activityType, $allowedTypes, true)) {
-            $activityType = 'status_change';
+        // Normalize feature name (handle legacy names)
+        if ($feature === 'Planned') {
+            $feature = 'Planned';
         }
+        if ($feature === 'Unplanned') {
+            $feature = 'Unplanned';
+        }
+        if ($feature === 'Booking Requests' || $feature === 'Booking') {
+            $feature = 'Booking Requests';
+        }
+
+        // Use explicitly passed feature, then mapped feature, then fallback 'System'
+        $feature = $feature ?? $mapped[1] ?? 'System';
 
         $payload = [];
 
@@ -210,8 +227,8 @@ class SlotService
             $payload['description'] = $description;
         }
 
-        if (Schema::hasColumn('activity_logs', 'mat_doc')) {
-            $payload['mat_doc'] = null;
+        if (Schema::hasColumn('activity_logs', 'sj_no')) {
+            $payload['sj_no'] = null;
         }
 
         if (Schema::hasColumn('activity_logs', 'po_number')) {
@@ -226,6 +243,10 @@ class SlotService
             $payload['activity_type'] = $activityType;
         } elseif (Schema::hasColumn('activity_logs', 'type')) {
             $payload['type'] = $activityType;
+        }
+
+        if (Schema::hasColumn('activity_logs', 'feature')) {
+            $payload['feature'] = $feature;
         }
 
         if (Schema::hasColumn('activity_logs', 'created_by')) {
@@ -259,14 +280,23 @@ class SlotService
      */
     private function capitalizeDescription(string $description): string
     {
-        $conjunctions = ['and', 'or', 'but', 'for', 'nor', 'on', 'at', 'to', 'from', 'with', 'in', 'at'];
-
+        // Split description into template part and data part (in parentheses)
+        // e.g. "Arrival Recorded with Ticket A26E0001" -> capitalize words but preserve data tokens
+        // Data tokens: anything that looks like a code (contains digits+letters mixed, or is all-uppercase)
         $words = explode(' ', $description);
         $capitalized = [];
 
+        $conjunctions = ['and', 'or', 'but', 'for', 'nor', 'on', 'at', 'to', 'from', 'with', 'in'];
+
         foreach ($words as $index => $word) {
-            // Skip empty words
             if (trim($word) === '') {
+                $capitalized[] = $word;
+
+                continue;
+            }
+
+            // Preserve data tokens: contains digits, is all-uppercase, or looks like a code/identifier
+            if (preg_match('/\d/', $word) || preg_match('/^[A-Z0-9_\-\/\.#]+$/', $word) || preg_match('/^[A-Z]{2,}/', $word)) {
                 $capitalized[] = $word;
 
                 continue;
@@ -274,7 +304,7 @@ class SlotService
 
             // Always capitalize first word
             if ($index === 0) {
-                $capitalized[] = ucfirst(strtolower($word));
+                $capitalized[] = ucfirst($word);
 
                 continue;
             }
@@ -284,7 +314,7 @@ class SlotService
             if (in_array($lowerWord, $conjunctions, true)) {
                 $capitalized[] = strtolower($word);
             } else {
-                $capitalized[] = ucfirst(strtolower($word));
+                $capitalized[] = ucfirst($word);
             }
         }
 
@@ -357,8 +387,8 @@ class SlotService
     public function getGateMetaById(int $gateId): ?array
     {
         $row = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
-            ->where('g.id', $gateId)
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
+            ->where('g.id_gates', $gateId)
             ->select(['g.gate_number', 'w.wh_code as warehouse_code'])
             ->first();
 
@@ -394,16 +424,16 @@ class SlotService
         }
 
         $rows = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('g.is_active', 1)
-            ->select(['g.id', 'g.gate_number', 'w.wh_code as warehouse_code'])
+            ->select(['g.id_gates', 'g.gate_number', 'w.wh_code as warehouse_code'])
             ->get();
 
         $ids = [];
         foreach ($rows as $row) {
-            $group = $this->buildLaneGroupFromMeta((string) ($row->warehouse_code ?? ''), (string) ($row->gate_number ?? ''), (int) $row->id);
+            $group = $this->buildLaneGroupFromMeta((string) ($row->warehouse_code ?? ''), (string) ($row->gate_number ?? ''), (int) $row->id_gates);
             if ($group === $laneGroup) {
-                $ids[] = (int) $row->id;
+                $ids[] = (int) $row->id_gates;
             }
         }
 
@@ -419,16 +449,16 @@ class SlotService
         }
 
         $rows = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('w.wh_code', $warehouseCode)
             ->where('g.is_active', 1)
-            ->select(['g.id', 'g.gate_number'])
+            ->select(['g.id_gates', 'g.gate_number'])
             ->get();
 
         foreach ($rows as $row) {
             $l = $this->getGateLetterByWarehouseAndNumber($warehouseCode, (string) ($row->gate_number ?? ''));
             if ($l === $letter) {
-                return (int) $row->id;
+                return (int) $row->id_gates;
             }
         }
 
@@ -470,10 +500,10 @@ class SlotService
             ->whereRaw("? < {$dateAddExpr}", [$start])
             ->whereRaw('? > planned_start', [$end])
             ->orderBy('planned_start', 'asc')
-            ->select(['id', 'planned_start', 'planned_duration']);
+            ->select(['id_slots', 'planned_start', 'planned_duration']);
 
         if ($excludeSlotId !== null) {
-            $q->where('id', '<>', $excludeSlotId);
+            $q->where('id_slots', '<>', $excludeSlotId);
         }
 
         $rows = $q->get();
@@ -522,8 +552,8 @@ class SlotService
 
         if ($gateId) {
             $row = DB::table('md_gates as g')
-                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
-                ->where('g.id', $gateId)
+                ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
+                ->where('g.id_gates', $gateId)
                 ->select(['g.gate_number', 'w.wh_code as warehouse_code'])
                 ->first();
 
@@ -555,7 +585,7 @@ class SlotService
         }
 
         if ($groupLetter === 'T') {
-            $row = DB::table('md_warehouse')->where('id', $warehouseId)->select(['wh_code'])->first();
+            $row = DB::table('md_warehouse')->where('id_wh', $warehouseId)->select(['wh_code'])->first();
             if ($row) {
                 $whCode = (string) ($row->wh_code ?? '');
                 if ($whCode === 'WH1') {
@@ -605,7 +635,7 @@ class SlotService
             ->whereDate('s.planned_start', $dateOnly);
 
         if ($excludeSlotId) {
-            $query->where('s.id', '<>', $excludeSlotId);
+            $query->where('s.id_slots', '<>', $excludeSlotId);
         }
 
         return $query->select(['s.planned_start', 's.planned_duration'])->get();
@@ -629,7 +659,7 @@ class SlotService
             ->whereRaw('? > s.planned_start', [$end]);
 
         if ($excludeSlotId) {
-            $query->where('s.id', '<>', $excludeSlotId);
+            $query->where('s.id_slots', '<>', $excludeSlotId);
         }
 
         return $query->select(['s.planned_start', 's.planned_duration'])->get();
@@ -639,7 +669,7 @@ class SlotService
     {
         // If excludeSlotId is provided, check if it's cancelled - if so, return low risk
         if ($excludeSlotId) {
-            $slotStatus = DB::table('slots')->where('id', $excludeSlotId)->value('status');
+            $slotStatus = DB::table('slots')->where('id_slots', $excludeSlotId)->value('status');
             if ($slotStatus === 'cancelled') {
                 return 0; // Low risk for cancelled slots
             }
@@ -790,7 +820,7 @@ class SlotService
             ->whereRaw('? > planned_start', [$end]);
 
         if ($excludeSlotId) {
-            $overlapWarehouseQuery->where('s.id', '<>', $excludeSlotId);
+            $overlapWarehouseQuery->where('s.id_slots', '<>', $excludeSlotId);
         }
 
         // WH2 Gate 2/3 rule: do not count the paired gate as "warehouse overlap".
@@ -829,17 +859,17 @@ class SlotService
         }
 
         $warehouseCode = null;
-        $row = DB::table('md_warehouse')->where('id', $warehouseId)->select(['wh_code'])->first();
+        $row = DB::table('md_warehouse')->where('id_wh', $warehouseId)->select(['wh_code'])->first();
         if ($row) {
             $warehouseCode = $row->wh_code ?? null;
         }
 
         $overlapWH1 = 0;
         if ($warehouseCode === 'WH2') {
-            $wh1 = DB::table('md_warehouse')->where('wh_code', 'WH1')->select(['id'])->first();
+            $wh1 = DB::table('md_warehouse')->where('wh_code', 'WH1')->select(['id_wh'])->first();
             if ($wh1) {
                 $overlapWH1 = (int) DB::table('slots as s')
-                    ->where('warehouse_id', (int) $wh1->id)
+                    ->where('warehouse_id', (int) $wh1->id_wh)
                     ->whereIn('status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
                     ->whereRaw("? < {$dateAddExpr}", [$start])
                     ->whereRaw('? > planned_start', [$end])
@@ -869,14 +899,15 @@ class SlotService
     public function generateTicketPdfContent(int $slotId): ?string
     {
         $slot = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id')
-            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
-            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id')
-            ->where('s.id', $slotId)
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id_gates')
+            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id_gates')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id_wh')
+            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id_wh')
+            ->where('s.id_slots', $slotId)
             ->select([
                 's.*',
+                's.id_slots',
                 's.po_number as po_number',
                 's.po_number as truck_number',
                 'w.wh_name as warehouse_name',

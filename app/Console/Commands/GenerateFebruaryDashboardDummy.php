@@ -54,7 +54,7 @@ class GenerateFebruaryDashboardDummy extends Command
         if (Schema::hasColumn('md_warehouse', 'is_active')) {
             $warehouseQuery->where('is_active', true);
         }
-        $warehouse = $warehouseQuery->orderBy('id')->first();
+        $warehouse = $warehouseQuery->orderBy('id_wh')->first();
 
         if (! $warehouse) {
             $this->error('No active warehouse found in md_warehouse.');
@@ -62,7 +62,7 @@ class GenerateFebruaryDashboardDummy extends Command
             return self::FAILURE;
         }
 
-        $gateQuery = DB::table('md_gates')->where('warehouse_id', $warehouse->id);
+        $gateQuery = DB::table('md_gates')->where('warehouse_id', $warehouse->id_wh);
         if (Schema::hasColumn('md_gates', 'is_active')) {
             $gateQuery->where('is_active', true);
         }
@@ -71,7 +71,7 @@ class GenerateFebruaryDashboardDummy extends Command
         } elseif (Schema::hasColumn('md_gates', 'name')) {
             $gateQuery->whereIn('name', ['Gate 1', 'Gate 2', 'Gate 3']);
         }
-        $gates = $gateQuery->orderBy('id')->get();
+        $gates = $gateQuery->orderBy('id_gates')->get();
 
         if ($gates->isEmpty()) {
             $this->error('No active Gate 1/2/3 found for selected warehouse.');
@@ -236,7 +236,7 @@ class GenerateFebruaryDashboardDummy extends Command
 
                 $slot = [
                     'ticket_number' => $ticketNumber,
-                    'mat_doc' => null,
+                    'sj_no' => null,
                     'sj_start_number' => null,
                     'sj_complete_number' => null,
                     'truck_type' => (string) ($truckType->truck_type ?? 'Cargo'),
@@ -246,13 +246,13 @@ class GenerateFebruaryDashboardDummy extends Command
                     'direction' => $direction,
                     'po_id' => null,
                     'po_number' => $poNumber,
-                    'warehouse_id' => $warehouse->id,
+                    'warehouse_id' => $warehouse->id_wh,
                     'vendor_id' => null,
                     'vendor_code' => (string) ($vendor->code ?? null),
                     'vendor_name' => (string) ($vendor->name ?? 'Vendor'),
                     'vendor_type' => $vendorType,
-                    'planned_gate_id' => $gate->id,
-                    'actual_gate_id' => $gate->id,
+                    'planned_gate_id' => $gate->id_gates,
+                    'actual_gate_id' => $gate->id_gates,
                     'planned_start' => $plannedStart->format('Y-m-d H:i:s'),
                     'arrival_time' => $arrivalTime->format('Y-m-d H:i:s'),
                     'actual_start' => $actualStart->format('Y-m-d H:i:s'),

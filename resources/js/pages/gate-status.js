@@ -73,7 +73,8 @@ class GateStatusMonitor {
     handleUpdate(data) {
         if (data.type === 'gate_status') {
             data.data.forEach(gate => {
-                this.gateStatuses.set(gate.id, gate);
+                const gid = gate.id_gates || gate.id;
+                this.gateStatuses.set(gid, gate);
                 this.updateGateUI(gate);
             });
 
@@ -82,7 +83,8 @@ class GateStatusMonitor {
     }
 
     updateGateUI(gate) {
-        const gateElement = document.querySelector(`[data-gate-id="${gate.id}"]`);
+        const gid = gate.id_gates || gate.id;
+        const gateElement = document.querySelector(`[data-gate-id="${gid}"]`);
         if (!gateElement) return;
 
         // Update status indicator
@@ -100,9 +102,10 @@ class GateStatusMonitor {
         // Update current slot info
         const slotInfo = gateElement.querySelector('.current-slot-info');
         if (slotInfo && gate.current_slot) {
+            const sid = gate.current_slot.id_slots || gate.current_slot.id;
             slotInfo.innerHTML = `
-                <div class="slot-number">Slot #${gate.current_slot.id}</div>
-                <div class="slot-ticket">${gate.current_slot.ticket_number}</div>
+                <div class="slot-number">Slot #${sid}</div>
+                <div class="slot-ticket">${gate.current_slot.ticket_number || gate.current_slot.po_number || '-'}</div>
                 <div class="slot-time">${this.formatTime(gate.current_slot.planned_start)} - ${this.formatTime(gate.current_slot.planned_finish)}</div>
             `;
         } else if (slotInfo) {

@@ -198,7 +198,7 @@
                             </div>
                             <div class="st-notification-list">
                                 @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
-                                    <a href="{{ $notification->data['action_url'] ?? '#' }}" class="st-notification-item {{ $notification->read_at ? '' : 'st-notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                    <a href="{{ $notification->data['action_url'] ?? '#' }}" class="st-notification-item {{ $notification->read_at ? '' : 'st-notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id_notifications }}', '{{ $notification->data['action_url'] ?? '#' }}');">
                                         <div class="st-notification-icon st-notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
                                             <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
                                         </div>

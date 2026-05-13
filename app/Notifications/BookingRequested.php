@@ -35,7 +35,7 @@ class BookingRequested extends Notification
             ->line('**PO/SO Number:** '.$poNumber)
             ->line('**Scheduled Time:** '.$plannedDate)
             ->line('**Direction:** '.ucfirst((string) ($this->slot->direction ?? '')))
-            ->action('Review Booking', url('/unplanned/approval/'.$this->slot->id))
+            ->action('Review Booking', url('/unplanned/approval/'.$this->slot->id_slots))
             ->line('Please review and approve or reject this booking request.')
             ->salutation('Regards,\nWarehouse – SCM – PT Oneject Indonesia');
     }
@@ -46,10 +46,10 @@ class BookingRequested extends Notification
         $poNumber = $this->slot->po_number ?? '-';
 
         return [
-            'slot_id' => $this->slot->id,
+            'slot_id' => $this->slot->id_slots,
             'title' => 'New Booking Request',
             'message' => 'Request from '.$vendorName.' for PO '.$poNumber,
-            'action_url' => url('/unplanned/approval/'.$this->slot->id),
+            'action_url' => url('/unplanned/approval/'.$this->slot->id_slots),
             'icon' => 'fas fa-plus-circle',
             'color' => 'blue',
         ];

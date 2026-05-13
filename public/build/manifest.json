@@ -31,7 +31,7 @@
     ]
   },
   "resources/css/dashboard-react.css": {
-    "file": "assets/dashboard-react-BlkK14y4.css",
+    "file": "assets/dashboard-react-BvqqME9p.css",
     "src": "resources/css/dashboard-react.css",
     "isEntry": true,
     "name": "dashboard-react",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-DMyEyzH4.css",
+    "file": "assets/style-DzbUI5zb.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -115,7 +115,7 @@
     "isEntry": true
   },
   "resources/js/pages/logs-index.js": {
-    "file": "assets/logs-index-DmVMdi1K.js",
+    "file": "assets/logs-index-BDG20opD.js",
     "name": "logs-index",
     "src": "resources/js/pages/logs-index.js",
     "isEntry": true,
@@ -175,7 +175,7 @@
     "isEntry": true
   },
   "resources/js/pages/slots-index.js": {
-    "file": "assets/slots-index-D86fEcWG.js",
+    "file": "assets/slots-index-DXoJjkpq.js",
     "name": "slots-index",
     "src": "resources/js/pages/slots-index.js",
     "isEntry": true,

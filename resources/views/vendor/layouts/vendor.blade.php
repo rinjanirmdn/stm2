@@ -145,8 +145,8 @@
                         @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
                             <a href="{{ $notification->data['action_url'] ?? '#' }}"
                                 class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}"
-                                data-notification-id="{{ $notification->id }}"
-                                onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                data-notification-id="{{ $notification->id_notifications }}"
+                                onclick="return markAsReadAndGo(event, '{{ $notification->id_notifications }}', '{{ $notification->data['action_url'] ?? '#' }}');">
                                 <div
                                     class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
                                     <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
@@ -232,8 +232,8 @@
                             @forelse(auth()->user()->notifications()->limit(10)->get() as $notification)
                                 <a href="{{ $notification->data['action_url'] ?? '#' }}"
                                     class="notification-item {{ $notification->read_at ? '' : 'notification-item--unread' }}"
-                                    data-notification-id="{{ $notification->id }}"
-                                    onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ $notification->data['action_url'] ?? '#' }}');">
+                                    data-notification-id="{{ $notification->id_notifications }}"
+                                    onclick="return markAsReadAndGo(event, '{{ $notification->id_notifications }}', '{{ $notification->data['action_url'] ?? '#' }}');">
                                     <div
                                         class="notification-icon notification-icon--{{ $notification->data['color'] === 'red' ? 'red' : ($notification->data['color'] === 'green' ? 'green' : 'blue') }}">
                                         <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>

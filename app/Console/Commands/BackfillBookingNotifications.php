@@ -57,8 +57,8 @@ class BackfillBookingNotifications extends Command
         $skipped = 0;
 
         foreach ($slots as $slot) {
-            $adminUrl = route('bookings.show', $slot->id, false);
-            $vendorUrl = route('vendor.bookings.show', $slot->id, false);
+            $adminUrl = route('bookings.show', $slot->id_slots, false);
+            $vendorUrl = route('vendor.bookings.show', $slot->id_slots, false);
 
             // Admin notifications (inline — no separate notification class needed)
             foreach ($admins as $admin) {
@@ -72,10 +72,10 @@ class BackfillBookingNotifications extends Command
                 if (! $dryRun) {
                     try {
                         DB::table('notifications')->insert([
-                            'id' => Str::uuid()->toString(),
+                            'id_notifications' => Str::uuid()->toString(),
                             'type' => 'App\\Notifications\\BookingRequestSubmitted',
                             'notifiable_type' => get_class($admin),
-                            'notifiable_id' => $admin->id,
+                            'notifiable_id' => $admin->id_users,
                             'data' => json_encode([
                                 'title' => 'New Booking Request',
                                 'message' => 'Request from '.($slot->vendor_name ?? 'Vendor').' for '.($slot->ticket_number ?? '-'),
@@ -88,8 +88,8 @@ class BackfillBookingNotifications extends Command
                         ]);
                     } catch (\Throwable $e) {
                         Log::warning('Backfill admin notify failed: '.$e->getMessage(), [
-                            'admin_id' => $admin->id,
-                            'slot_id' => $slot->id,
+                            'admin_id' => $admin->id_users,
+                            'slot_id' => $slot->id_slots,
                         ]);
                     }
                 }
@@ -105,10 +105,10 @@ class BackfillBookingNotifications extends Command
                         if (! $dryRun) {
                             try {
                                 DB::table('notifications')->insert([
-                                    'id' => Str::uuid()->toString(),
+                                    'id_notifications' => Str::uuid()->toString(),
                                     'type' => 'App\\Notifications\\BookingApproved',
                                     'notifiable_type' => get_class($vendor),
-                                    'notifiable_id' => $vendor->id,
+                                    'notifiable_id' => $vendor->id_users,
                                     'data' => json_encode([
                                         'title' => 'Booking Submitted',
                                         'message' => 'Your booking request '.($slot->ticket_number ?? '-').' has been submitted.',
@@ -121,8 +121,8 @@ class BackfillBookingNotifications extends Command
                                 ]);
                             } catch (\Throwable $e) {
                                 Log::warning('Backfill vendor notify failed: '.$e->getMessage(), [
-                                    'vendor_user_id' => $vendor->id,
-                                    'slot_id' => $slot->id,
+                                    'vendor_user_id' => $vendor->id_users,
+                                    'slot_id' => $slot->id_slots,
                                 ]);
                             }
                         }
@@ -148,7 +148,7 @@ class BackfillBookingNotifications extends Command
     {
         return DatabaseNotification::query()
             ->where('notifiable_type', get_class($user))
-            ->where('notifiable_id', $user->id)
+            ->where('notifiable_id', $user->id_users)
             ->where('data', 'like', '%"action_url":"'.addcslashes($actionUrl, '"\\').'"%')
             ->exists();
     }
