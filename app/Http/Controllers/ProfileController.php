@@ -63,6 +63,7 @@ class ProfileController extends Controller
                 return back()->with('error', 'Current password is incorrect.');
             }
             $user->password = $request->new_password; // Will be auto-hashed via cast
+            $user->password_changed_at = now();
         }
 
         $user->save();
