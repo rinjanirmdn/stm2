@@ -280,10 +280,11 @@
             }
 
             var msgs = [];
-            if (value.length < 8) msgs.push('Minimal 8 karatker.');
-            if (!/^[A-Z]/.test(value)) msgs.push('Harus diawali huruf kapital.');
-            if (!/[a-zA-Z]/.test(value)) msgs.push('Harus ada huruf.');
-            if (!/[0-9]/.test(value)) msgs.push('Harus ada angka.');
+            if (value.length < 8) msgs.push('Min. 8 characters.');
+            if (!/[A-Z]/.test(value)) msgs.push('Must contain uppercase letter.');
+            if (!/[a-z]/.test(value)) msgs.push('Must contain lowercase letter.');
+            if (!/[0-9]/.test(value)) msgs.push('Must contain number.');
+            if (!/[^A-Za-z0-9\s]/.test(value)) msgs.push('Must contain symbol.');
 
             if (msgs.length === 0) {
                 errEl.style.display = 'none';

@@ -109,6 +109,8 @@
                         </div>
                     </div>
 
+                    @include('partials.password-validator', ['passwordId' => 'password', 'confirmId' => 'password_confirmation', 'submitBtnSelector' => '.st-form-actions .st-btn--primary'])
+
                     <div class="st-form-actions">
                         <button type="submit" class="st-btn st-btn--primary">Save</button>
                         <a href="{{ route('users.index') }}" class="st-btn st-btn--outline-primary">Cancel</a>

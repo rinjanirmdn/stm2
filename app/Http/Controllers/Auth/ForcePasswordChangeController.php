@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ForcePasswordChangeController extends Controller
 {
@@ -27,7 +28,15 @@ class ForcePasswordChangeController extends Controller
         }
 
         $request->validate([
-            'new_password' => ['required', 'string', 'min:6', 'confirmed'],
+            'new_password' => [
+                'required',
+                'string',
+                Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
+                'confirmed',
+            ],
+        ], [
+            'new_password' => 'Password must be at least 8 characters and contain uppercase, lowercase, number, and symbol.',
+            'new_password.confirmed' => 'Password confirmation does not match.',
         ]);
 
         $user->forceFill([

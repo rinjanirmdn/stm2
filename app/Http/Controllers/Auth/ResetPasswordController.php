@@ -69,9 +69,12 @@ class ResetPasswordController extends Controller
             'password' => [
                 'required',
                 'string',
-                Password::min(8)->letters()->mixedCase()->numbers(),
+                Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
                 'confirmed',
             ],
+        ], [
+            'password' => 'Password must be at least 8 characters and contain uppercase, lowercase, number, and symbol.',
+            'password.confirmed' => 'Password confirmation does not match.',
         ]);
 
         $email = $request->input('email');

@@ -112,7 +112,26 @@ function StatusOverviewChart() {
           <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${tk('--border-light', '#e2e8f0')}`, boxShadow: '0 6px 16px rgba(15,23,42,0.12)', fontSize: 12 }} />
           <Bar dataKey="value" radius={[8, 8, 0, 0]}>
             {data.map((d) => (
-              <Cell key={d.key} fill={d.color} />
+              <Cell 
+                key={d.key} 
+                fill={d.color} 
+                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                  const params = new URLSearchParams(window.location.search);
+                  // Send the operational status directly — backend handles the mapping
+                  const statusFilter = d.key;
+                  
+                  params.set('status', statusFilter);
+                  
+                  // Forward the dashboard date filter to the list view
+                  const elStart = document.getElementById('vd-range-start');
+                  const elEnd = document.getElementById('vd-range-end');
+                  if (elStart && elStart.value) params.set('date_from', elStart.value);
+                  if (elEnd && elEnd.value) params.set('date_to', elEnd.value);
+                  
+                  window.location.href = '/vendor/bookings?' + params.toString();
+                }}
+              />
             ))}
             <LabelList dataKey="value" content={(p) => <BarValueLabel {...p} data={data} />} />
           </Bar>
