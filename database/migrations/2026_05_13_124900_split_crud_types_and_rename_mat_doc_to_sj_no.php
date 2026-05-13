@@ -31,15 +31,18 @@ return new class extends Migration
                     ) AS e
                 ", [$val]);
 
-                if ($exists && !$exists->e) {
+                if ($exists && ! $exists->e) {
                     // Commit current transaction, add enum value, start new transaction
                     DB::commit();
                     DB::statement("ALTER TYPE activity_logs_activity_type ADD VALUE '{$val}'");
                     DB::beginTransaction();
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Swallow: enum type may not exist or value may already exist
-                try { DB::beginTransaction(); } catch (\Throwable $e2) {}
+                try {
+                    DB::beginTransaction();
+                } catch (Throwable $e2) {
+                }
             }
         }
 
@@ -58,9 +61,9 @@ return new class extends Migration
                 ->where('activity_type', 'crud')
                 ->where(function ($q) {
                     $q->where('description', 'ilike', '%created%')
-                      ->orWhere('description', 'ilike', '%submitted%')
-                      ->orWhere('description', 'ilike', '%logged in%')
-                      ->orWhere('description', 'ilike', '%logged out%');
+                        ->orWhere('description', 'ilike', '%submitted%')
+                        ->orWhere('description', 'ilike', '%logged in%')
+                        ->orWhere('description', 'ilike', '%logged out%');
                 })
                 ->update(['activity_type' => 'create']);
 
@@ -68,7 +71,7 @@ return new class extends Migration
             DB::table('activity_logs')
                 ->where('activity_type', 'crud')
                 ->update(['activity_type' => 'edit']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Swallow: data migration should not break deployment
         }
 
@@ -76,7 +79,7 @@ return new class extends Migration
         if (Schema::hasColumn('slots', 'mat_doc') && ! Schema::hasColumn('slots', 'sj_no')) {
             try {
                 DB::statement('ALTER TABLE slots RENAME COLUMN mat_doc TO sj_no');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Swallow
             }
         }
@@ -85,7 +88,7 @@ return new class extends Migration
         if (Schema::hasColumn('activity_logs', 'mat_doc') && ! Schema::hasColumn('activity_logs', 'sj_no')) {
             try {
                 DB::statement('ALTER TABLE activity_logs RENAME COLUMN mat_doc TO sj_no');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Swallow
             }
         }
@@ -100,7 +103,7 @@ return new class extends Migration
         if (Schema::hasColumn('slots', 'sj_no') && ! Schema::hasColumn('slots', 'mat_doc')) {
             try {
                 DB::statement('ALTER TABLE slots RENAME COLUMN sj_no TO mat_doc');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Swallow
             }
         }
@@ -109,7 +112,7 @@ return new class extends Migration
         if (Schema::hasColumn('activity_logs', 'sj_no') && ! Schema::hasColumn('activity_logs', 'mat_doc')) {
             try {
                 DB::statement('ALTER TABLE activity_logs RENAME COLUMN sj_no TO mat_doc');
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Swallow
             }
         }
@@ -119,7 +122,7 @@ return new class extends Migration
             DB::table('activity_logs')
                 ->whereIn('activity_type', ['create', 'edit', 'delete'])
                 ->update(['activity_type' => 'crud']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Swallow
         }
     }

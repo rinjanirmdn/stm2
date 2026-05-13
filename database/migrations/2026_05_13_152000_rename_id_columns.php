@@ -21,7 +21,7 @@ return new class extends Migration
             'md_warehouse' => 'id_warehouse',
             'notifications' => 'id_notifications',
             'slot_photos' => 'id_slot_photos',
-            'slots' => 'id_slots'
+            'slots' => 'id_slots',
         ];
 
         foreach ($renames as $table => $newId) {
@@ -48,7 +48,7 @@ return new class extends Migration
             'md_warehouse' => 'id_warehouse',
             'notifications' => 'id_notifications',
             'slot_photos' => 'id_slot_photos',
-            'slots' => 'id_slots'
+            'slots' => 'id_slots',
         ];
 
         foreach ($renames as $table => $newId) {

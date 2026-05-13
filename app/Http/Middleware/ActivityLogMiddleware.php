@@ -341,16 +341,16 @@ class ActivityLogMiddleware
 
             if ($has('old_value')) {
                 $insert['old_value'] = null;
-                if ($oldRowData !== null && !empty($oldRowData)) {
+                if ($oldRowData !== null && ! empty($oldRowData)) {
                     $insert['old_value'] = json_encode($oldRowData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
             }
 
             if ($has('new_value')) {
                 $insert['new_value'] = null;
-                if (in_array($logType, ['insert', 'update'], true) && !empty($payload)) {
-                    $newData = array_filter($payload, fn ($k) => !in_array($k, ['_token', '_method', 'password', 'password_confirmation', 'current_password'], true), ARRAY_FILTER_USE_KEY);
-                    if (!empty($newData)) {
+                if (in_array($logType, ['insert', 'update'], true) && ! empty($payload)) {
+                    $newData = array_filter($payload, fn ($k) => ! in_array($k, ['_token', '_method', 'password', 'password_confirmation', 'current_password'], true), ARRAY_FILTER_USE_KEY);
+                    if (! empty($newData)) {
                         $insert['new_value'] = json_encode($newData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                     }
                 }
@@ -395,40 +395,40 @@ class ActivityLogMiddleware
         // Route → [type, feature] mapping
         $routeMap = [
             // Auth
-            'login.store'              => ['auth', 'Auth'],
-            'logout'                   => ['auth', 'Auth'],
-            'forgot-password.send'     => ['update', 'Auth'],
+            'login.store' => ['auth', 'Auth'],
+            'logout' => ['auth', 'Auth'],
+            'forgot-password.send' => ['update', 'Auth'],
             'profile.password-request' => ['update', 'Auth'],
             'password.force-change.store' => ['update', 'Auth'],
-            'profile.update'           => ['update', 'Profile'],
+            'profile.update' => ['update', 'Profile'],
 
             // User management
-            'users.store'              => ['insert', 'User Management'],
-            'users.update'             => ['update', 'User Management'],
-            'users.delete'             => ['delete', 'User Management'],
-            'users.toggle'             => ['update', 'User Management'],
+            'users.store' => ['insert', 'User Management'],
+            'users.update' => ['update', 'User Management'],
+            'users.delete' => ['delete', 'User Management'],
+            'users.toggle' => ['update', 'User Management'],
 
             // Planned slots
-            'slots.store'              => ['insert', 'Planned'],
-            'slots.update'             => ['update', 'Planned'],
-            'slots.delete'             => ['delete', 'Planned'],
+            'slots.store' => ['insert', 'Planned'],
+            'slots.update' => ['update', 'Planned'],
+            'slots.delete' => ['delete', 'Planned'],
 
             // Unplanned slots
-            'unplanned.store'          => ['insert', 'Unplanned'],
-            'unplanned.update'         => ['update', 'Unplanned'],
-            'unplanned.delete'         => ['delete', 'Unplanned'],
+            'unplanned.store' => ['insert', 'Unplanned'],
+            'unplanned.update' => ['update', 'Unplanned'],
+            'unplanned.delete' => ['delete', 'Unplanned'],
 
             // Booking requests
-            'bookings.approve'         => ['update', 'Booking Requests'],
-            'bookings.reject'          => ['update', 'Booking Requests'],
+            'bookings.approve' => ['update', 'Booking Requests'],
+            'bookings.reject' => ['update', 'Booking Requests'],
             'bookings.reschedule.store' => ['update', 'Booking Requests'],
-            'vendor.bookings.store'    => ['insert', 'Booking Requests'],
-            'vendor.bookings.cancel'   => ['update', 'Booking Requests'],
+            'vendor.bookings.store' => ['insert', 'Booking Requests'],
+            'vendor.bookings.cancel' => ['update', 'Booking Requests'],
 
             // Truck types
-            'trucks.store'             => ['insert', 'Truck Type'],
-            'trucks.update'            => ['update', 'Truck Type'],
-            'trucks.delete'            => ['delete', 'Truck Type'],
+            'trucks.store' => ['insert', 'Truck Type'],
+            'trucks.update' => ['update', 'Truck Type'],
+            'trucks.delete' => ['delete', 'Truck Type'],
         ];
 
         if (isset($routeMap[$routeName])) {
@@ -471,7 +471,7 @@ class ActivityLogMiddleware
             $rowId = $routeParams['id'] ?? $routeParams['truckId'] ?? null;
         }
 
-        if ($table === null || $rowId === null || !is_numeric($rowId)) {
+        if ($table === null || $rowId === null || ! is_numeric($rowId)) {
             return null;
         }
 
@@ -487,11 +487,11 @@ class ActivityLogMiddleware
                 'md_permissions' => 'id_permission',
                 'md_vendor_transporters' => 'id_vendor_transporters',
                 'activity_logs' => 'id_activity_logs',
-                'notifications' => 'id_notifications'
+                'notifications' => 'id_notifications',
             ];
             $pk = $pkMap[$table] ?? 'id';
             $row = DB::table($table)->where($pk, (int) $rowId)->first();
-            if (!$row) {
+            if (! $row) {
                 return null;
             }
 

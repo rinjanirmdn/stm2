@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class ActivityLog extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'activity_logs';
+
     protected $primaryKey = 'id_activity_logs';
+
     public $timestamps = false;
 
     protected $fillable = [

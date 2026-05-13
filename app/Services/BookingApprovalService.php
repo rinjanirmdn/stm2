@@ -182,7 +182,7 @@ class BookingApprovalService
             $sjNo = $slot->sj_no ?? null;
             $oldValues = json_encode($slot->only(['status', 'approved_by', 'approval_action', 'approval_notes', 'approved_at']));
             $adminId = (int) $admin->id_users;
-            DB::afterCommit(function () use ($slotId, $poNumber, $sjNo, $adminId, $oldValues, $bookingRequestId) {
+            DB::afterCommit(function () use ($slotId, $poNumber, $adminId, $oldValues, $bookingRequestId) {
                 $currentSlot = Slot::find($slotId);
                 $newValues = $currentSlot ? json_encode($currentSlot->only(['status', 'approved_by', 'approval_action', 'approval_notes', 'approved_at'])) : null;
 
@@ -655,14 +655,14 @@ class BookingApprovalService
             if ($vendor) {
                 $targetId = $bookingRequestId ?: $slot->id_slots;
                 $actionUrl = url('/vendor/bookings/'.$targetId);
- 
+
                 Log::info('Resolved vendor recipient for approval notification', [
                     'slot_id' => $slot->id_slots,
                     'vendor_id' => $vendor->id_users,
                     'vendor_email' => $vendor->email,
                     'action_url' => $actionUrl,
                 ]);
- 
+
                 $alreadyNotified = $this->vendorAlreadyNotifiedApproved($vendor, $slot, $actionUrl);
                 if ($alreadyNotified) {
                     Log::info('Approval notification skipped: already notified', [
@@ -670,10 +670,10 @@ class BookingApprovalService
                         'vendor_id' => $vendor->id_users,
                         'action_url' => $actionUrl,
                     ]);
- 
+
                     return;
                 }
- 
+
                 // Ensure gate/warehouse relations are loaded for email content (avoid TBD due to missing relations)
                 try {
                     $slot->loadMissing([
@@ -684,27 +684,27 @@ class BookingApprovalService
                 } catch (\Throwable $e) {
                     // ignore; email template has fallbacks
                 }
- 
+
                 $notification = new BookingApproved($slot, $targetId, $isRescheduled);
- 
+
                 // When calling channels directly (DatabaseChannel/MailChannel), Laravel's NotificationSender
                 // does not auto-assign the UUID notification id. Ensure it's set so DB insert won't fail.
                 if (empty($notification->id)) {
                     $notification->id = (string) Str::uuid();
                 }
- 
+
                 // Always try to store database notification even if email fails.
                 $storedDatabase = false;
                 try {
                     app(DatabaseChannel::class)->send($vendor, $notification);
                     $storedDatabase = true;
- 
+
                     Log::info('Stored approval notification (database)', [
                         'slot_id' => $slot->id_slots,
                         'vendor_id' => $vendor->id_users,
                         'type' => BookingApproved::class,
                     ]);
- 
+
                     // Manually broadcast WebSocket notification to vendor.
                     // Since we call DatabaseChannel::send() directly (not $vendor->notify()),
                     // the NotificationSent event is never fired, so BroadcastNotification
@@ -729,7 +729,7 @@ class BookingApprovalService
                         'vendor_id' => $vendor->id_users,
                     ]);
                 }
- 
+
                 // Send email only AFTER successful DB commit so it is guaranteed the approval succeeded.
                 if ($storedDatabase && ! empty($vendor->email)) {
                     $slotId = (int) $slot->id_slots;

@@ -11,6 +11,7 @@ class TruckTypeDuration extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'md_truck'; // Explicitly define table name
+
     protected $primaryKey = 'id_truck';
 
     protected $fillable = [

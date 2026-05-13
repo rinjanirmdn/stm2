@@ -138,7 +138,7 @@ class LogController extends Controller
                 'al.id_activity_logs as id',
                 'al.slot_id',
                 DB::raw('al.'.$activityTypeCol.' as activity_type'),
-                DB::raw(($cachedSchema['hasFeature'] ? 'al.feature' : "NULL").' as feature'),
+                DB::raw(($cachedSchema['hasFeature'] ? 'al.feature' : 'NULL').' as feature'),
                 'al.description',
                 DB::raw('al.'.$createdByCol.' as created_by'),
                 'al.created_at',

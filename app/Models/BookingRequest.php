@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 class BookingRequest extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'booking_requests';
+
     protected $primaryKey = 'id_booking_requests';
 
     public const STATUS_PENDING = 'pending';

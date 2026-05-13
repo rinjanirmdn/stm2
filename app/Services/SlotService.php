@@ -186,31 +186,37 @@ class SlotService
 
         // Map old activity types → new system (insert / update / delete / auth)
         $typeFeatureMap = [
-            'gate_change'        => ['update', 'Planned'],
-            'status_change'      => ['update', null],    // feature determined by caller
-            'late_arrival'       => ['update', null],
-            'early_arrival'      => ['update', null],
-            'waiting_time'       => ['update', null],
-            'gate_activation'    => ['update', 'Gate Management'],
-            'gate_deactivation'  => ['update', 'Gate Management'],
-            'backdate'           => ['update', null],
-            'arrival_recorded'   => ['update', null],
-            'arrival_updated'    => ['update', null],
-            'create'             => ['insert', null],
-            'insert'             => ['insert', null],
-            'edit'               => ['update', null],
-            'update'             => ['update', null],
-            'crud'               => ['update', null],
-            'delete'             => ['delete', null],
+            'gate_change' => ['update', 'Planned'],
+            'status_change' => ['update', null],    // feature determined by caller
+            'late_arrival' => ['update', null],
+            'early_arrival' => ['update', null],
+            'waiting_time' => ['update', null],
+            'gate_activation' => ['update', 'Gate Management'],
+            'gate_deactivation' => ['update', 'Gate Management'],
+            'backdate' => ['update', null],
+            'arrival_recorded' => ['update', null],
+            'arrival_updated' => ['update', null],
+            'create' => ['insert', null],
+            'insert' => ['insert', null],
+            'edit' => ['update', null],
+            'update' => ['update', null],
+            'crud' => ['update', null],
+            'delete' => ['delete', null],
         ];
 
         $mapped = $typeFeatureMap[$activityType] ?? ['update', null];
         $activityType = $mapped[0];
-        
+
         // Normalize feature name (handle legacy names)
-        if ($feature === 'Planned') $feature = 'Planned';
-        if ($feature === 'Unplanned') $feature = 'Unplanned';
-        if ($feature === 'Booking Requests' || $feature === 'Booking') $feature = 'Booking Requests';
+        if ($feature === 'Planned') {
+            $feature = 'Planned';
+        }
+        if ($feature === 'Unplanned') {
+            $feature = 'Unplanned';
+        }
+        if ($feature === 'Booking Requests' || $feature === 'Booking') {
+            $feature = 'Booking Requests';
+        }
 
         // Use explicitly passed feature, then mapped feature, then fallback 'System'
         $feature = $feature ?? $mapped[1] ?? 'System';
@@ -285,18 +291,21 @@ class SlotService
         foreach ($words as $index => $word) {
             if (trim($word) === '') {
                 $capitalized[] = $word;
+
                 continue;
             }
 
             // Preserve data tokens: contains digits, is all-uppercase, or looks like a code/identifier
             if (preg_match('/\d/', $word) || preg_match('/^[A-Z0-9_\-\/\.#]+$/', $word) || preg_match('/^[A-Z]{2,}/', $word)) {
                 $capitalized[] = $word;
+
                 continue;
             }
 
             // Always capitalize first word
             if ($index === 0) {
                 $capitalized[] = ucfirst($word);
+
                 continue;
             }
 
