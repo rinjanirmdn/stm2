@@ -116,6 +116,7 @@ class ResetPasswordController extends Controller
         DB::table('md_users')->where('id', $user->id)->update([
             'is_locked' => false,
             'must_change_password' => false,
+            'password_changed_at' => now(),
         ]);
 
         // Clear login lockout cache

@@ -56,7 +56,20 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'is_internal_vendor' => 'boolean',
+            'password_changed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Check if the user's password has expired (older than 90 days).
+     */
+    public function isPasswordExpired(): bool
+    {
+        if (! $this->password_changed_at) {
+            return true;
+        }
+
+        return $this->password_changed_at->addDays(90)->isPast();
     }
 
     // Accessor and Mutator for 'name' to map to 'full_name'
