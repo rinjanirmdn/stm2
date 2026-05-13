@@ -43,7 +43,7 @@ class UserStoreRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
-                Password::min(8)->letters()->mixedCase()->numbers(),
+                Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
                 'confirmed',
             ],
             'role' => [
@@ -83,6 +83,7 @@ class UserStoreRequest extends FormRequest
             'email.unique' => 'Email already exists.',
             'password.required' => 'Password is required.',
             'password.confirmed' => 'Password confirmation does not match.',
+            'password' => 'Password must be at least 8 characters and contain uppercase, lowercase, number, and symbol.',
             'role.required' => 'Role must be selected.',
             'role.in' => 'Invalid role selected.',
             'vendor_code.required' => 'Vendor Code (SAP) is required for vendor role.',

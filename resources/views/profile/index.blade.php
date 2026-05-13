@@ -115,6 +115,8 @@
                             </div>
                         </div>
                     </div>
+
+                    @include('partials.password-validator', ['passwordId' => 'new_password', 'confirmId' => 'new_password_confirmation', 'submitBtnSelector' => '.st-profile-btn--primary', 'isOptional' => true])
                 @else
                     <div class="vendor-form__field-group">
                         <div class="vendor-form__info">

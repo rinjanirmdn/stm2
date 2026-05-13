@@ -51,6 +51,8 @@
                     </div>
                 </div>
 
+                @include('partials.password-validator', ['passwordId' => 'new_password', 'confirmId' => 'new_password_confirmation', 'submitBtnSelector' => 'form .st-btn'])
+
                 <button type="submit" class="st-btn st-w-full st-justify-center">Set Password</button>
             </form>
 
