@@ -59,7 +59,7 @@ class UserUpdateRequest extends FormRequest
             'password' => [
                 'nullable',
                 'string',
-                Password::min(8)->letters()->mixedCase()->numbers(),
+                Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
                 'confirmed',
             ],
             'role' => [
@@ -106,6 +106,7 @@ class UserUpdateRequest extends FormRequest
             'email.required' => 'Email is required.',
             'email.unique' => 'Email already exists.',
             'password.confirmed' => 'Password confirmation does not match.',
+            'password' => 'Password must be at least 8 characters and contain uppercase, lowercase, number, and symbol.',
             'role.required' => 'Role must be selected.',
             'role.in' => 'Invalid role selected.',
         ];

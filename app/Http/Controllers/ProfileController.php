@@ -36,9 +36,12 @@ class ProfileController extends Controller
             'new_password' => [
                 'nullable',
                 'string',
-                Password::min(8)->letters()->mixedCase()->numbers(),
+                Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
                 'confirmed',
             ],
+        ], [
+            'new_password' => 'Password must be at least 8 characters and contain uppercase, lowercase, number, and symbol.',
+            'new_password.confirmed' => 'Password confirmation does not match.',
         ]);
 
         // Update email

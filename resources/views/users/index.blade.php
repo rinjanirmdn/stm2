@@ -444,6 +444,8 @@
                         </div>
                     </div>
 
+                    @include('partials.password-validator', ['passwordId' => 'modal-password', 'confirmId' => 'modal-password-confirmation', 'submitBtnSelector' => '#addUserForm .st-btn--primary'])
+
                     <div class="st-dialog__actions">
                         <button type="submit" class="st-btn st-btn--primary st-dialog__btn">Save</button>
                         <button type="button" id="btnCloseAddUser" class="st-btn st-btn--outline-primary st-dialog__btn">Cancel</button>

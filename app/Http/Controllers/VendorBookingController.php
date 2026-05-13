@@ -214,7 +214,16 @@ class VendorBookingController extends Controller
             ->whereDate('planned_start', '<=', $rangeEnd);
 
         // Slot stats (operational statuses live on slots table)
-        $slotBase = Slot::where('requested_by', $user->id)
+        // Ensure we only count slots that are actually tied to a BookingRequest visible to the vendor
+        $slotBase = Slot::whereIn('id', function ($q) use ($user) {
+            $q->select('converted_slot_id')
+                ->from('booking_requests')
+                ->where('requested_by', $user->id)
+                ->whereNotNull('converted_slot_id');
+        })
+            ->where(function ($q) {
+                $q->whereNull('slot_type')->orWhere('slot_type', '!=', 'unplanned');
+            })
             ->whereDate('planned_start', '>=', $rangeStart)
             ->whereDate('planned_start', '<=', $rangeEnd);
 
@@ -254,25 +263,10 @@ class VendorBookingController extends Controller
 
         $recentBookings = $recentBookingsQuery->get();
 
-        $arrivalFilter = (string) $request->query('arrival_filter', '');
-        if (in_array($arrivalFilter, ['ontime', 'late'], true)) {
-            $recentBookings = $recentBookings->filter(function ($booking) use ($arrivalFilter) {
-                $slot = $booking->convertedSlot;
-                if (! $slot || ! $slot->planned_start || ! $slot->arrival_time) {
-                    return false;
-                }
+        // Arrival and vendor filters are now handled client-side (no page reload)
+        $arrivalFilter = '';
 
-                $diffMin = $slot->planned_start->diffInMinutes($slot->arrival_time, false);
-
-                if ($arrivalFilter === 'late') {
-                    return $diffMin > 15;
-                }
-
-                return $diffMin <= 15;
-            })->values();
-        }
-
-        $recentBookings = $recentBookings->take(5);
+        $recentBookings = $recentBookings->take(20);
 
         // Performance metrics
         $performance = $this->computeVendorPerformance($user->id, $rangeStart, $rangeEnd);
@@ -283,7 +277,6 @@ class VendorBookingController extends Controller
         $vendorNames = [];
         $vendorFilter = '';
         if ($isInternalVendor) {
-            $vendorFilter = trim((string) $request->query('vendor_filter', ''));
             $vendorNames = BookingRequest::where('requested_by', $user->id)
                 ->whereNotNull('supplier_name')
                 ->where('supplier_name', '!=', '')
@@ -292,13 +285,6 @@ class VendorBookingController extends Controller
                 ->sort()
                 ->values()
                 ->all();
-
-            // Apply vendor filter to recent bookings
-            if ($vendorFilter !== '') {
-                $recentBookings = $recentBookings->filter(function ($booking) use ($vendorFilter) {
-                    return stripos((string) ($booking->supplier_name ?? ''), $vendorFilter) !== false;
-                })->values()->take(5);
-            }
         }
 
         return view('vendor.dashboard', compact('stats', 'recentBookings', 'performance', 'rangeStart', 'rangeEnd', 'arrivalFilter', 'isInternalVendor', 'vendorNames', 'vendorFilter'));
@@ -313,6 +299,9 @@ class VendorBookingController extends Controller
         // terlepas dari statusnya (termasuk in_progress, waiting, dll.).
         // Range tanggal mengikuti planned_start agar konsisten dengan komponen dashboard lain.
         $arrivalSlots = Slot::where('requested_by', $userId)
+            ->where(function ($q) {
+                $q->whereNull('slot_type')->orWhere('slot_type', '!=', 'unplanned');
+            })
             ->whereNotNull('arrival_time')
             ->whereNotNull('planned_start')
             ->whereBetween('planned_start', [$rangeStart.' 00:00:00', $rangeEnd.' 23:59:59'])
@@ -320,6 +309,9 @@ class VendorBookingController extends Controller
 
         // Untuk rata-rata waiting & process, tetap gunakan slot yang sudah completed
         $completedSlots = Slot::where('requested_by', $userId)
+            ->where(function ($q) {
+                $q->whereNull('slot_type')->orWhere('slot_type', '!=', 'unplanned');
+            })
             ->where('status', Slot::STATUS_COMPLETED)
             ->whereNotNull('actual_finish')
             ->whereBetween('actual_finish', [$rangeStart.' 00:00:00', $rangeEnd.' 23:59:59'])
@@ -383,12 +375,28 @@ class VendorBookingController extends Controller
 
         $baseQuery = BookingRequest::where('requested_by', $user->id);
 
-        // Filter by date range
+        // Filter by date range (align with Dashboard logic: prioritize Slot's date if converted)
         if ($request->filled('date_from')) {
-            $baseQuery->whereDate('planned_start', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $baseQuery->whereDate('planned_start', '<=', $request->date_to);
+            $dateFrom = $request->date_from;
+            $dateTo = $request->date_to; // date_to can be empty, but usually filled together
+
+            $baseQuery->where(function ($q) use ($dateFrom, $dateTo) {
+                // Condition 1: Has a slot, and the slot's date is in range
+                $q->whereHas('convertedSlot', function ($qSlot) use ($dateFrom, $dateTo) {
+                    $qSlot->whereDate('planned_start', '>=', $dateFrom);
+                    if ($dateTo) {
+                        $qSlot->whereDate('planned_start', '<=', $dateTo);
+                    }
+                })
+                // Condition 2: No slot yet, and the booking request's date is in range
+                    ->orWhere(function ($qBr) use ($dateFrom, $dateTo) {
+                        $qBr->whereNull('converted_slot_id')
+                            ->whereDate('planned_start', '>=', $dateFrom);
+                        if ($dateTo) {
+                            $qBr->whereDate('planned_start', '<=', $dateTo);
+                        }
+                    });
+            });
         }
 
         // Search (uses LOWER + table-qualified columns, consistent with Activity Logs pattern)
@@ -433,8 +441,21 @@ class VendorBookingController extends Controller
             ->with(['convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate', 'approver']);
 
         // Filter by status
+        // Dashboard drill-down may send operational slot statuses (waiting, in_progress, completed, scheduled)
+        // which don't exist on BookingRequest. Map these to slot-level filters.
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $statusParam = $request->status;
+            $slotStatuses = ['waiting', 'in_progress', 'completed', 'scheduled'];
+
+            if (in_array($statusParam, $slotStatuses)) {
+                // Filter by the converted slot's operational status
+                $query->whereHas('convertedSlot', function ($qSlot) use ($statusParam) {
+                    $qSlot->where('status', $statusParam);
+                });
+            } else {
+                // Standard BR status filter (pending, approved, cancelled, rejected)
+                $query->where('status', $statusParam);
+            }
         }
 
         // Handle dynamic page size

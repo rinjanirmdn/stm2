@@ -14,28 +14,28 @@
                     <!-- Status Cards -->
                     <div class="vd-status-strip"
                         title="Summary of your latest booking statuses (from planned & booking requests).">
-                        <a href="{{ route('vendor.bookings.index', ['status' => 'approved']) }}"
+                        <a href="{{ route('vendor.bookings.index', ['status' => 'scheduled', 'date_from' => $rangeStart, 'date_to' => $rangeEnd]) }}"
                             class="vd-status-item vd-status-item--scheduled"
                             title="Scheduled bookings (approved and not yet arrived).">
                             <div class="vd-status-item__count">{{ $stats['scheduled'] ?? 0 }}</div>
                             <div class="vd-status-item__label">Scheduled</div>
                         </a>
-                        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--waiting"
+                        <a href="{{ route('vendor.bookings.index', ['status' => 'waiting', 'date_from' => $rangeStart, 'date_to' => $rangeEnd]) }}" class="vd-status-item vd-status-item--waiting"
                             title="Truck arrived, waiting in queue.">
                             <div class="vd-status-item__count">{{ $stats['waiting'] ?? 0 }}</div>
                             <div class="vd-status-item__label">Waiting</div>
                         </a>
-                        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--inprogress"
+                        <a href="{{ route('vendor.bookings.index', ['status' => 'in_progress', 'date_from' => $rangeStart, 'date_to' => $rangeEnd]) }}" class="vd-status-item vd-status-item--inprogress"
                             title="Loading/Unloading in progress.">
                             <div class="vd-status-item__count">{{ $stats['in_progress'] ?? 0 }}</div>
                             <div class="vd-status-item__label">In progress</div>
                         </a>
-                        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--completed"
+                        <a href="{{ route('vendor.bookings.index', ['status' => 'completed', 'date_from' => $rangeStart, 'date_to' => $rangeEnd]) }}" class="vd-status-item vd-status-item--completed"
                             title="Process finished.">
                             <div class="vd-status-item__count">{{ $stats['completed'] ?? 0 }}</div>
                             <div class="vd-status-item__label">Completed</div>
                         </a>
-                        <a href="{{ route('vendor.bookings.index') }}" class="vd-status-item vd-status-item--total"
+                        <a href="{{ route('vendor.bookings.index', ['date_from' => $rangeStart, 'date_to' => $rangeEnd]) }}" class="vd-status-item vd-status-item--total"
                             title="Total bookings.">
                             <div class="vd-status-item__count">{{ $stats['total'] ?? 0 }}</div>
                             <div class="vd-status-item__label">Total</div>
@@ -119,12 +119,11 @@
                                         ];
                                     @endphp
                                     <div class="vd-recent-filter-group">
-                                        <select
-                                            onchange="var params=new URLSearchParams(window.location.search);if(this.value){params.set('arrival_filter',this.value)}else{params.delete('arrival_filter')};window.location.search=params.toString()"
+                                        <select id="vd-arrival-filter"
                                             style="font-size:0.8em;padding:3px 6px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#334155;max-width:160px">
-                                            <option value="" {{ $arrivalFilter === '' ? 'selected' : '' }}>All Arrival</option>
-                                            <option value="ontime" {{ $arrivalFilter === 'ontime' ? 'selected' : '' }}>On Time</option>
-                                            <option value="late" {{ $arrivalFilter === 'late' ? 'selected' : '' }}>Late</option>
+                                            <option value="">All Arrival</option>
+                                            <option value="ontime">On Time</option>
+                                            <option value="late">Late</option>
                                         </select>
                                     </div>
                                     @if($isInternalVendor ?? false)
@@ -187,7 +186,9 @@
                                             };
                                             $ticketLabel = $slot ? ($slot->ticket_number ?? $booking->request_number ?? 'REQ-' . $booking->id) : ($booking->request_number ?? 'REQ-' . $booking->id);
                                         @endphp
-                                        <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vd-recent-item">
+                                        <a href="{{ route('vendor.bookings.show', $booking->id) }}" class="vd-recent-item"
+                                            data-arrival="{{ $arrivalLabel ? strtolower($arrivalLabel === 'On Time' ? 'ontime' : 'late') : '' }}"
+                                            data-vendor="{{ $booking->supplier_name ?? '' }}">
                                             <div class="vd-recent-main">
                                                 <span class="vd-recent-ticket">{{ $ticketLabel }}</span>
                                                 @if($booking->po_number)
@@ -233,26 +234,77 @@
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        .select2-container .select2-selection--single {
-            height: 28px !important;
+        /* Select2 vendor filter — match arrival dropdown style */
+        .vd-recent-filters .select2-container {
             font-size: 0.8em;
+        }
+        .vd-recent-filters .select2-container--default .select2-selection--single {
+            height: 28px !important;
+            min-height: 28px !important;
             border-radius: 6px;
             border: 1px solid #e2e8f0;
+            background: #fff;
             display: flex;
             align-items: center;
+            position: relative;
         }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
+        .vd-recent-filters .select2-container--default .select2-selection--single .select2-selection__rendered {
             line-height: 26px !important;
             padding-left: 6px !important;
+            padding-right: 20px !important;
             color: #334155 !important;
+            font-size: 1em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
+        .vd-recent-filters .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 26px !important;
+            right: 2px;
+        }
+        .vd-recent-filters .select2-container--default .select2-selection--single .select2-selection__clear {
+            font-size: 1.1em;
+            color: #94a3b8;
+            margin-right: 0;
+            font-weight: 400;
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            line-height: 1;
+        }
+        .vd-recent-filters .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+            color: #ef4444;
         }
         .select2-dropdown {
             font-size: 0.8em;
             border-color: #e2e8f0;
             border-radius: 6px;
+        }
+        /* Fix grid restrictions that push cards out of bounds on laptops */
+        .vendor-page--dashboard .vd-charts-section {
+            max-height: none !important;
+            grid-template-rows: auto !important;
+        }
+
+        /* Prevent CSS Grid collapse bug for spanning flex items */
+        .vendor-page--dashboard .vd-chart-card,
+        .vendor-page--dashboard .vd-recent-card {
+            min-height: 360px !important;
+        }
+        
+        /* Ensure React containers take up remaining space */
+        #vendor-status-overview-react,
+        #vendor-ontime-react {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 240px !important;
+        }
+        .vendor-page--dashboard .vd-chart-body {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
         }
     </style>
 @endpush
@@ -262,6 +314,53 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
+            // --- Client-side Recent Bookings filters (no page reload) ---
+            var MAX_VISIBLE = 5;
+
+            function applyRecentFilters() {
+                var arrivalVal = $('#vd-arrival-filter').val() || '';
+                var vendorVal = '';
+                if ($('#vd-vendor-filter-select').length > 0) {
+                    vendorVal = ($('#vd-vendor-filter-select').val() || '').trim();
+                }
+
+                var items = $('.vd-recent-item');
+                var shown = 0;
+                items.each(function() {
+                    var el = $(this);
+                    var itemArrival = (el.attr('data-arrival') || '').toLowerCase();
+                    var itemVendor = (el.attr('data-vendor') || '');
+
+                    var matchArrival = !arrivalVal || itemArrival === arrivalVal;
+                    var matchVendor = !vendorVal || itemVendor === vendorVal;
+
+                    if (matchArrival && matchVendor && shown < MAX_VISIBLE) {
+                        el.show();
+                        shown++;
+                    } else {
+                        el.hide();
+                    }
+                });
+
+                // Show/hide empty state
+                var emptyEl = $('.vd-recent-empty');
+                if (shown === 0 && items.length > 0) {
+                    if (emptyEl.length === 0) {
+                        $('.vd-recent-body').append('<div class="vd-recent-empty vd-recent-empty--filter"><i class="fas fa-filter"></i><span>No matches for filter</span></div>');
+                    } else {
+                        emptyEl.show();
+                    }
+                } else {
+                    $('.vd-recent-empty--filter').remove();
+                }
+            }
+
+            // Arrival dropdown
+            $('#vd-arrival-filter').on('change', function() {
+                applyRecentFilters();
+            });
+
+            // Vendor Select2 dropdown
             if ($('#vd-vendor-filter-select').length > 0) {
                 $('#vd-vendor-filter-select').select2({
                     width: '160px',
@@ -269,23 +368,13 @@
                     allowClear: true
                 });
                 
-                $('#vd-vendor-filter-select').on('select2:select', function (e) {
-                    var value = e.params.data.id;
-                    var params = new URLSearchParams(window.location.search);
-                    if (value) {
-                        params.set('vendor_filter', value);
-                    } else {
-                        params.delete('vendor_filter');
-                    }
-                    window.location.search = params.toString();
-                });
-
-                $('#vd-vendor-filter-select').on('select2:unselect', function (e) {
-                    var params = new URLSearchParams(window.location.search);
-                    params.delete('vendor_filter');
-                    window.location.search = params.toString();
+                $('#vd-vendor-filter-select').on('select2:select select2:unselect', function () {
+                    applyRecentFilters();
                 });
             }
+
+            // Apply initial filter (show first 5)
+            applyRecentFilters();
         });
     </script>
 @endpush
