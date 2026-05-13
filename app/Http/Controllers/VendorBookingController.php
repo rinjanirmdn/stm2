@@ -215,12 +215,12 @@ class VendorBookingController extends Controller
 
         // Slot stats (operational statuses live on slots table)
         // Ensure we only count slots that are actually tied to a BookingRequest visible to the vendor
-        $slotBase = Slot::whereIn('id', function($q) use ($user) {
-                $q->select('converted_slot_id')
-                  ->from('booking_requests')
-                  ->where('requested_by', $user->id)
-                  ->whereNotNull('converted_slot_id');
-            })
+        $slotBase = Slot::whereIn('id', function ($q) use ($user) {
+            $q->select('converted_slot_id')
+                ->from('booking_requests')
+                ->where('requested_by', $user->id)
+                ->whereNotNull('converted_slot_id');
+        })
             ->where(function ($q) {
                 $q->whereNull('slot_type')->orWhere('slot_type', '!=', 'unplanned');
             })
@@ -380,22 +380,22 @@ class VendorBookingController extends Controller
             $dateFrom = $request->date_from;
             $dateTo = $request->date_to; // date_to can be empty, but usually filled together
 
-            $baseQuery->where(function($q) use ($dateFrom, $dateTo) {
+            $baseQuery->where(function ($q) use ($dateFrom, $dateTo) {
                 // Condition 1: Has a slot, and the slot's date is in range
-                $q->whereHas('convertedSlot', function($qSlot) use ($dateFrom, $dateTo) {
+                $q->whereHas('convertedSlot', function ($qSlot) use ($dateFrom, $dateTo) {
                     $qSlot->whereDate('planned_start', '>=', $dateFrom);
                     if ($dateTo) {
                         $qSlot->whereDate('planned_start', '<=', $dateTo);
                     }
                 })
                 // Condition 2: No slot yet, and the booking request's date is in range
-                ->orWhere(function($qBr) use ($dateFrom, $dateTo) {
-                    $qBr->whereNull('converted_slot_id')
-                        ->whereDate('planned_start', '>=', $dateFrom);
-                    if ($dateTo) {
-                        $qBr->whereDate('planned_start', '<=', $dateTo);
-                    }
-                });
+                    ->orWhere(function ($qBr) use ($dateFrom, $dateTo) {
+                        $qBr->whereNull('converted_slot_id')
+                            ->whereDate('planned_start', '>=', $dateFrom);
+                        if ($dateTo) {
+                            $qBr->whereDate('planned_start', '<=', $dateTo);
+                        }
+                    });
             });
         }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ForcePasswordChangeController extends Controller
 {
@@ -30,7 +31,7 @@ class ForcePasswordChangeController extends Controller
             'new_password' => [
                 'required',
                 'string',
-                \Illuminate\Validation\Rules\Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
+                Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
                 'confirmed',
             ],
         ], [
