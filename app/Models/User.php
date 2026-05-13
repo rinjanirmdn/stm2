@@ -65,7 +65,7 @@ class User extends Authenticatable
      */
     public function isPasswordExpired(): bool
     {
-        if (!$this->password_changed_at) {
+        if (! $this->password_changed_at) {
             return true;
         }
 
