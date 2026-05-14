@@ -349,7 +349,7 @@ class UnplannedSlotController extends Controller
             $storedVendorName = $poDetail['customer_name'];
         }
 
-        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $poDetail, $transporterType, $vendorTransporterId, $storedVendorName) {
+        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $poDetail, $transporterType, $vendorTransporterId, $storedVendorName) {
             $slotId = (int) DB::table('slots')->insertGetId([
                 'po_number' => $poNumber,
                 'direction' => $direction,
@@ -530,7 +530,7 @@ class UnplannedSlotController extends Controller
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $matDoc, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $newStatus, $newSlotType) {
+        DB::transaction(function () use ($slotId, $slot, $truckNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $newStatus, $newSlotType) {
             $updateData = [
                 'po_number' => $truckNumber,
                 'direction' => $direction,

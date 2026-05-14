@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 class Slot extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'slots';
+
     protected $primaryKey = 'id_slots';
 
     /**

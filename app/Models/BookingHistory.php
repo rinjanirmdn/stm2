@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class BookingHistory extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'booking_histories';
+
     protected $primaryKey = 'id_booking_histories';
 
     protected $fillable = [
@@ -102,7 +103,6 @@ class BookingHistory extends Model
     }
 
     // Relationship: User who performed the action is removed because performed_by now stores the full name directly.
-
 
     /**
      * Relationship: Old gate

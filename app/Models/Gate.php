@@ -12,6 +12,7 @@ class Gate extends Model
     use HasFactory;
 
     protected $table = 'md_gates';
+
     protected $primaryKey = 'id_gates';
 
     protected $fillable = [
