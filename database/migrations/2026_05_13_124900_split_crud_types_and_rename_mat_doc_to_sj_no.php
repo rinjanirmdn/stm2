@@ -9,21 +9,34 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * 1. Ensure activity_logs.activity_type is a string (VARCHAR) to avoid ENUM constraints in Postgres
-     * 2. Update existing 'crud' rows to more specific types based on description
-     * 3. Rename 'mat_doc' to 'sj_no' in slots and activity_logs tables
+     * 1. Ensure activity_logs.activity_type column exists (rename from 'type' if needed)
+     * 2. Convert activity_type to VARCHAR (Postgres safety)
+     * 3. Update existing 'crud' rows to more specific types
+     * 4. Rename 'mat_doc' to 'sj_no'
      */
     public function up(): void
     {
-        // --- 1. Convert activity_type to VARCHAR if it's not already ---
-        try {
-            DB::statement('ALTER TABLE activity_logs ALTER COLUMN activity_type TYPE VARCHAR(50) USING activity_type::text');
-        } catch (Throwable $e) {
-            // Ignore
-        }
-
-        // --- 2. Migrate existing 'crud' rows to specific types ---
+        // --- 1. Handle activity_type column naming ---
         if (Schema::hasTable('activity_logs')) {
+            // Rename 'type' to 'activity_type' if it exists and activity_type doesn't
+            if (Schema::hasColumn('activity_logs', 'type') && ! Schema::hasColumn('activity_logs', 'activity_type')) {
+                try {
+                    DB::statement('ALTER TABLE activity_logs RENAME COLUMN "type" TO activity_type');
+                } catch (Throwable $e) {
+                    // Ignore if rename fails (e.g. column already exists somehow)
+                }
+            }
+
+            // --- 2. Convert activity_type to VARCHAR if it's not already ---
+            if (Schema::hasColumn('activity_logs', 'activity_type')) {
+                try {
+                    DB::statement('ALTER TABLE activity_logs ALTER COLUMN activity_type TYPE VARCHAR(50) USING activity_type::text');
+                } catch (Throwable $e) {
+                    // Ignore
+                }
+            }
+
+            // --- 3. Migrate existing 'crud' rows to specific types ---
             try {
                 DB::table('activity_logs')
                     ->where('activity_type', 'crud')
@@ -48,7 +61,7 @@ return new class extends Migration
             }
         }
 
-        // --- 3. Rename mat_doc -> sj_no in slots table ---
+        // --- 4. Rename mat_doc -> sj_no in slots table ---
         if (Schema::hasColumn('slots', 'mat_doc') && ! Schema::hasColumn('slots', 'sj_no')) {
             try {
                 DB::statement('ALTER TABLE slots RENAME COLUMN mat_doc TO sj_no');
@@ -57,7 +70,7 @@ return new class extends Migration
             }
         }
 
-        // --- 4. Rename mat_doc -> sj_no in activity_logs table ---
+        // --- 5. Rename mat_doc -> sj_no in activity_logs table ---
         if (Schema::hasColumn('activity_logs', 'mat_doc') && ! Schema::hasColumn('activity_logs', 'sj_no')) {
             try {
                 DB::statement('ALTER TABLE activity_logs RENAME COLUMN mat_doc TO sj_no');

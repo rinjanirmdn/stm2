@@ -16,17 +16,26 @@ return new class extends Migration
             });
         }
 
-        // 2. Ensure activity_type is string (standardize from previous migrations)
+        // 2. Ensure activity_type column exists and is string
         if (Schema::hasTable('activity_logs')) {
-            try {
-                DB::statement('ALTER TABLE activity_logs ALTER COLUMN activity_type TYPE VARCHAR(50) USING activity_type::text');
-            } catch (Throwable $e) {
-                // Ignore
+            // Handle legacy 'type' column
+            if (Schema::hasColumn('activity_logs', 'type') && ! Schema::hasColumn('activity_logs', 'activity_type')) {
+                try {
+                    DB::statement('ALTER TABLE activity_logs RENAME COLUMN "type" TO activity_type');
+                } catch (Throwable $e) {
+                }
+            }
+
+            if (Schema::hasColumn('activity_logs', 'activity_type')) {
+                try {
+                    DB::statement('ALTER TABLE activity_logs ALTER COLUMN activity_type TYPE VARCHAR(50) USING activity_type::text');
+                } catch (Throwable $e) {
+                }
             }
         }
 
         // 3. Update activity_type values to standard lowercase CRUD
-        if (Schema::hasTable('activity_logs')) {
+        if (Schema::hasTable('activity_logs') && Schema::hasColumn('activity_logs', 'activity_type')) {
             try {
                 DB::table('activity_logs')->where('activity_type', 'create')->update(['activity_type' => 'insert']);
                 DB::table('activity_logs')->where('activity_type', 'edit')->update(['activity_type' => 'update']);
@@ -43,7 +52,7 @@ return new class extends Migration
         }
 
         // 4. Populate feature column based on description patterns
-        if (Schema::hasTable('activity_logs')) {
+        if (Schema::hasTable('activity_logs') && Schema::hasColumn('activity_logs', 'feature')) {
             $featureMap = [
                 'Planned Slot' => [
                     'scheduled slot', 'booking started', 'slot completed', 'slot cancelled',
@@ -82,7 +91,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (Schema::hasTable('activity_logs')) {
+        if (Schema::hasTable('activity_logs') && Schema::hasColumn('activity_logs', 'activity_type')) {
             DB::table('activity_logs')->where('activity_type', 'insert')->update(['activity_type' => 'create']);
             DB::table('activity_logs')->where('activity_type', 'update')->update(['activity_type' => 'edit']);
         }
