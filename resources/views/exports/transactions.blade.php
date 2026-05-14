@@ -27,7 +27,7 @@
                 <td>{{ ucfirst($transaction->slot_type ?? 'planned') }}</td>
                 <td>{{ $transaction->truck_number ?? 'N/A' }}</td>
                 <td>{{ $transaction->ticket_number ?? 'N/A' }}</td>
-                <td>{{ $transaction->mat_doc ?? 'N/A' }}</td>
+                <td>{{ $transaction->sj_no ?? 'N/A' }}</td>
                 <td>{{ $transaction->vendor_name ?? 'N/A' }}</td>
                 <td>{{ $transaction->truck_type ?? 'N/A' }}</td>
                 <td>{{ $transaction->vehicle_number_snap ?? 'N/A' }}</td>

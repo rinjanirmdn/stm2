@@ -8,7 +8,7 @@
 @endphp
 
 <div class="st-card st-mb-12">
-    <div class="st-text--sm st-text--muted">Unplanned #{{ $slot->id }}</div>
+    <div class="st-text--sm st-text--muted">Unplanned #{{ $slot->id_slots }}</div>
     <div class="st-font-semibold">PO/SO: {{ $slot->truck_number ?? 'N/A' }} | Warehouse:
         {{ $slot->warehouse_name ?? 'N/A' }} | Planned: {{ $slot->planned_start ?? 'N/A' }}</div>
     <div class="st-text--sm st-text--muted st-mt-4">
@@ -35,7 +35,7 @@
 
 <div>
     <form method="POST"
-        action="{{ route('unplanned.start.store', ['slotId' => $slot->id, 'popup' => request()->boolean('popup') ? 1 : null]) }}"
+        action="{{ route('unplanned.start.store', ['slotId' => $slot->id_slots, 'popup' => request()->boolean('popup') ? 1 : null]) }}"
         enctype="multipart/form-data">
         @csrf
 
@@ -59,7 +59,7 @@
                         }
                     @endphp
                     @foreach ($gates as $gate)
-                        @php $gid = (int)($gate->id ?? 0); @endphp
+                        @php $gid = (int)($gate->id_gates ?? 0); @endphp
                         <option value="{{ $gid }}" {{ (int)$selectedGateId === $gid ? 'selected' : '' }}>{{ $gid }}</option>
                     @endforeach
                 </select>
@@ -78,7 +78,7 @@
                             <div style="padding:6px 12px;font-size:0.7rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;background:#f8fafc;">Same Warehouse</div>
                             @foreach ($sameWh as $gate)
                                 @php
-                                    $gid = (int) ($gate->id ?? 0);
+                                    $gid = (int) ($gate->id_gates ?? 0);
                                     $st = $gateStatuses[$gid] ?? ['is_conflict' => false, 'overlapping_slots' => []];
                                     $isConflict = !empty($st['is_conflict']);
                                     $label = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
@@ -98,7 +98,7 @@
                             <div style="padding:6px 12px;font-size:0.7rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;background:#f8fafc;{{ !empty($sameWh) ? 'border-top:1px solid #e2e8f0;' : '' }}">Other Warehouses</div>
                             @foreach ($otherWh as $gate)
                                 @php
-                                    $gid = (int) ($gate->id ?? 0);
+                                    $gid = (int) ($gate->id_gates ?? 0);
                                     $st = $gateStatuses[$gid] ?? ['is_conflict' => false, 'overlapping_slots' => []];
                                     $isConflict = !empty($st['is_conflict']);
                                     $label = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');

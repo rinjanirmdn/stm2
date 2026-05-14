@@ -2137,7 +2137,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             var first = items[0];
-            var label = first.request_number || first.po_number || ('Request #' + first.id);
+            var label = first.request_number || first.po_number || ('Request #' + (first.id_booking_requests || first.id));
             var minutes = typeof first.minutes_to_start === 'number'
                 ? Math.floor(Math.max(first.minutes_to_start, 0))
                 : null;
@@ -2183,7 +2183,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             listEl.innerHTML = items.map(function (item) {
-                var label = item.request_number || item.po_number || ('Request #' + item.id);
+                var label = item.request_number || item.po_number || ('Request #' + (item.id_booking_requests || item.id));
                 var supplier = item.supplier_name ? (' - ' + item.supplier_name) : '';
                 var minutes = typeof item.minutes_to_start === 'number'
                     ? Math.floor(Math.max(item.minutes_to_start, 0))
@@ -2254,13 +2254,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!data || !data.success || !data.notification) {
                         return;
                     }
+                    var currentId = data.notification.id_notifications || data.notification.id;
                     var lastId = localStorage.getItem(storageKey);
                     if (!lastId) {
-                        localStorage.setItem(storageKey, data.notification.id);
+                        localStorage.setItem(storageKey, currentId);
                         return;
                     }
-                    if (lastId !== data.notification.id) {
-                        localStorage.setItem(storageKey, data.notification.id);
+                    if (lastId !== String(currentId)) {
+                        localStorage.setItem(storageKey, currentId);
                         showNotification(data.notification);
                     }
                 })

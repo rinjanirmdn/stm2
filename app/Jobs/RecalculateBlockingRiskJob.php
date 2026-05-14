@@ -32,14 +32,14 @@ class RecalculateBlockingRiskJob implements ShouldQueue
             ->whereIn('status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
             ->whereRaw("COALESCE(slot_type, 'planned') <> 'unplanned'")
             ->select([
-                'id',
+                'id_slots',
                 'warehouse_id',
                 'planned_gate_id',
                 'planned_start',
                 'planned_duration',
                 'blocking_risk',
             ])
-            ->orderBy('id')
+            ->orderBy('id_slots')
             ->get();
 
         // Collect all updates first, then batch update
@@ -52,17 +52,17 @@ class RecalculateBlockingRiskJob implements ShouldQueue
                     $slot->planned_gate_id ? (int) $slot->planned_gate_id : null,
                     (string) ($slot->planned_start ?? ''),
                     (int) ($slot->planned_duration ?? 0),
-                    (int) $slot->id
+                    (int) $slot->id_slots
                 );
 
                 // Only update if value changed
                 if ((int) ($slot->blocking_risk ?? 0) !== $newRisk) {
-                    $pendingUpdates[$slot->id] = $newRisk;
+                    $pendingUpdates[$slot->id_slots] = $newRisk;
                     $updated++;
                 }
             } catch (\Throwable $e) {
                 $errors++;
-                Log::warning('Failed to recalculate blocking risk for slot '.$slot->id.': '.$e->getMessage());
+                Log::warning('Failed to recalculate blocking risk for slot '.$slot->id_slots.': '.$e->getMessage());
             }
         }
 
@@ -74,7 +74,7 @@ class RecalculateBlockingRiskJob implements ShouldQueue
                 $bindings = [];
 
                 foreach ($pendingUpdates as $id => $risk) {
-                    $cases[] = 'WHEN id = ? THEN ?';
+                    $cases[] = 'WHEN id_slots = ? THEN ?';
                     $bindings[] = $id;
                     $bindings[] = $risk;
                 }
@@ -86,7 +86,7 @@ class RecalculateBlockingRiskJob implements ShouldQueue
                 $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
                 DB::statement(
-                    "UPDATE slots SET blocking_risk = CASE {$casesSql} END, blocking_risk_cached_at = ? WHERE id IN ({$placeholders})",
+                    "UPDATE slots SET blocking_risk = CASE {$casesSql} END, blocking_risk_cached_at = ? WHERE id_slots IN ({$placeholders})",
                     $bindings
                 );
             } catch (\Throwable $e) {

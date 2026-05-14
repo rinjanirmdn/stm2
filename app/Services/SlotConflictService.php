@@ -27,7 +27,7 @@ class SlotConflictService
 
         $conflicts = $this->queryConflictingSlots($laneGateIds, $today, $now, $excludeSlotId);
 
-        return $conflicts->pluck('id')->map(fn ($v) => (int) $v)->all();
+        return $conflicts->pluck('id_slots')->map(fn ($v) => (int) $v)->all();
     }
 
     /**
@@ -72,11 +72,11 @@ class SlotConflictService
         }
 
         $rows = DB::table('slots as s')
-            ->leftJoin('md_gates as g', 's.actual_gate_id', '=', 'g.id')
-            ->leftJoin('md_warehouse as w2', 'g.warehouse_id', '=', 'w2.id')
-            ->whereIn('s.id', $slotIds)
+            ->leftJoin('md_gates as g', 's.actual_gate_id', '=', 'g.id_gates')
+            ->leftJoin('md_warehouse as w2', 'g.warehouse_id', '=', 'w2.id_wh')
+            ->whereIn('s.id_slots', $slotIds)
             ->select([
-                's.id',
+                's.id_slots',
                 's.ticket_number',
                 's.status',
                 's.actual_start',
@@ -88,7 +88,7 @@ class SlotConflictService
 
         $details = [];
         foreach ($rows as $r) {
-            $details[(int) $r->id] = $r;
+            $details[(int) $r->id_slots] = $r;
         }
 
         return $details;
@@ -109,7 +109,7 @@ class SlotConflictService
         $startStr = ! empty($row->actual_start) ? (string) $row->actual_start : '';
 
         $parts = [
-            $ticket !== '' ? ('Ticket '.$ticket) : ('Slot #'.(int) $row->id),
+            $ticket !== '' ? ('Ticket '.$ticket) : ('Slot #'.(int) $row->id_slots),
         ];
 
         if ($po !== '') {
@@ -163,7 +163,7 @@ class SlotConflictService
             });
 
         if ($excludeSlotId > 0) {
-            $query->where('id', '<>', $excludeSlotId);
+            $query->where('id_slots', '<>', $excludeSlotId);
         }
 
         return $query->get();
@@ -182,7 +182,7 @@ class SlotConflictService
 
         $conflictingSlots = DB::table('slots')
             ->whereIn('actual_gate_id', $laneGateIds)
-            ->where('id', '<>', $excludeSlotId)
+            ->where('id_slots', '<>', $excludeSlotId)
             ->where(function ($query) {
                 $query->where('status', 'in_progress')
                     ->orWhere('status', 'arrived')
@@ -214,12 +214,12 @@ class SlotConflictService
     public function getAlternativeGates(int $warehouseId, int $excludeGateId = 0): array
     {
         $availableGates = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('g.warehouse_id', $warehouseId)
             ->where('g.is_active', 1)
-            ->where('g.id', '<>', $excludeGateId)
+            ->where('g.id_gates', '<>', $excludeGateId)
             ->select([
-                'g.id',
+                'g.id_gates',
                 'g.gate_number',
                 'w.wh_code as warehouse_code',
                 'w.wh_name as warehouse_name',
@@ -230,7 +230,7 @@ class SlotConflictService
         $alternatives = [];
 
         foreach ($availableGates as $gate) {
-            $gateId = (int) $gate->id;
+            $gateId = (int) $gate->id_gates;
             $conflictCount = $this->getCurrentConflictCount($gateId);
 
             $alternatives[] = [
@@ -266,7 +266,7 @@ class SlotConflictService
         $completedSlots = DB::table('slots')
             ->whereIn('actual_gate_id', $laneGateIds)
             ->where('status', 'completed')
-            ->where('id', '<>', $excludeSlotId)
+            ->where('id_slots', '<>', $excludeSlotId)
             ->where(function ($query) use ($startTime, $endTime) {
                 $query->where(function ($sub) use ($startTime) {
                     // Completed slot overlaps with new booking time
@@ -288,7 +288,7 @@ class SlotConflictService
             DB::table('slots')
                 ->whereIn('actual_gate_id', $laneGateIds)
                 ->where('status', 'scheduled')
-                ->where('id', '<>', $excludeSlotId)
+                ->where('id_slots', '<>', $excludeSlotId)
                 ->where(function ($query) use ($completedSlot) {
                     $query->where('planned_start', '>=', $completedSlot->actual_start)
                         ->where('planned_start', '<=', $completedSlot->actual_finish);

@@ -236,7 +236,7 @@
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">SJ</div>
                             <div class="st-detail-colon">:</div>
-                            <div class="st-detail-value">{{ !empty($slot->mat_doc) ? $slot->mat_doc : 'N/A' }}</div>
+                            <div class="st-detail-value">{{ !empty($slot->sj_no) ? $slot->sj_no : 'N/A' }}</div>
                         </div>
 
                         @if(!$isUnplanned)
@@ -343,13 +343,13 @@
                                     <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Start Process</div>
                                     @foreach($slot->start_photos as $idx => $photo)
                                         @php
-                                            $imgUrl = !empty($photo->id) ? route('slot-photos.show', $photo->id) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
-                                            $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
+                                            $imgUrl = !empty($photo->id_slot_photos) ? route('slot-photos.show', $photo->id_slot_photos) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
+                                            $dlUrl = !empty($photo->id_slot_photos) ? route('slot-photos.download', $photo->id_slot_photos) : $imgUrl;
                                         @endphp
                                         <div class="st-photo-preview st-text-center">
                                             <img src="{{ $imgUrl }}" alt="Start Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.closest('.st-photo-preview').style.display='none'">
                                             <div class="st-mt-4">
-                                                <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id_slots }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -363,13 +363,13 @@
                                     <div class="st-w-full st-font-semibold st-text--sm st-mb-4 st-text--slate">Complete Process</div>
                                     @foreach($slot->complete_photos as $idx => $photo)
                                         @php
-                                            $imgUrl = !empty($photo->id) ? route('slot-photos.show', $photo->id) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
-                                            $dlUrl = !empty($photo->id) ? route('slot-photos.download', $photo->id) : $imgUrl;
+                                            $imgUrl = !empty($photo->id_slot_photos) ? route('slot-photos.show', $photo->id_slot_photos) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
+                                            $dlUrl = !empty($photo->id_slot_photos) ? route('slot-photos.download', $photo->id_slot_photos) : $imgUrl;
                                         @endphp
                                         <div class="st-photo-preview st-text-center">
                                             <img src="{{ $imgUrl }}" alt="Complete Photo {{ $idx + 1 }}" loading="lazy" style="width: 120px; height: 120px; cursor: zoom-in; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: cover;" onclick="openPhotoModal(this.src)" onerror="this.closest('.st-photo-preview').style.display='none'">
                                             <div class="st-mt-4">
-                                                <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
+                                                <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id_slots }}_{{ $idx + 1 }}.jpg" class="st-btn st-btn--secondary st-btn--xs">
                                                     <i class="fas fa-download"></i> Save
                                                 </a>
                                             </div>
@@ -385,14 +385,14 @@
 
             <div class="st-flex st-gap-6 st-flex-wrap st-align-center st-justify-end st-mb-8">
                 @can($isUnplanned ? 'unplanned.edit' : 'slots.edit')
-                    <a href="{{ route($isUnplanned ? 'unplanned.edit' : 'slots.edit', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
+                    <a href="{{ route($isUnplanned ? 'unplanned.edit' : 'slots.edit', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
                         <i class="fa-solid fa-pen st-mr-4"></i> Edit
                     </a>
                 @endcan
 
                 @if (! $isUnplanned && !empty($slot->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
                     @can('slots.ticket')
-                    <a href="{{ route('slots.ticket', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
+                    <a href="{{ route('slots.ticket', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">
                         Print Ticket
                     </a>
                     @endcan
@@ -401,14 +401,14 @@
                 @if($status === 'pending_approval')
                     @can('bookings.reschedule')
                         @if (!empty($slot->requested_by) && in_array($status, ['pending_approval', 'scheduled'], true))
-                            <a href="{{ route('bookings.reschedule', ['id' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
+                            <a href="{{ route('bookings.reschedule', ['id' => $slot->id_slots]) }}" class="st-btn st-btn--outline-primary st-btn--xs">
                                 <i class="fa-solid fa-calendar st-mr-4"></i> Reschedule
                             </a>
                         @endif
                     @endcan
 
                     @can('bookings.approve')
-                        <form action="{{ route('bookings.approve', $slot->id) }}" method="POST" class="st-inline-block">
+                        <form action="{{ route('bookings.approve', $slot->id_slots) }}" method="POST" class="st-inline-block">
                             @csrf
                             @method('POST')
                             <button type="submit" class="st-btn st-btn--primary st-btn--xs" onclick="return confirm('Are You Sure You Want to Approve This Booking?')">
@@ -427,25 +427,25 @@
                 @if (! $isUnplanned)
                     @if (in_array($status, ['scheduled'], true))
                         @can('slots.arrival')
-                        <a href="{{ route('slots.arrival', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Arrival', this.href);">Arrival</a>
+                        <a href="{{ route('slots.arrival', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--outline-primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Arrival', this.href);">Arrival</a>
                         @endcan
                     @elseif ($status === 'waiting')
                         @can('slots.start')
-                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Start Processing', this.href);">Start</a>
+                        <a href="{{ route('slots.start', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Start Processing', this.href);">Start</a>
                         @endcan
                     @elseif ($status === 'in_progress')
                         @can('slots.complete')
-                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Booking', this.href);">Complete</a>
+                        <a href="{{ route('slots.complete', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Booking', this.href);">Complete</a>
                         @endcan
                     @endif
                 @else
                     @if ($status === 'waiting')
                         @can('slots.start')
-                        <a href="{{ route('slots.start', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">Start</a>
+                        <a href="{{ route('slots.start', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">Start</a>
                         @endcan
                     @elseif ($status === 'in_progress')
                         @can('slots.complete')
-                        <a href="{{ route('slots.complete', ['slotId' => $slot->id]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">Complete</a>
+                        <a href="{{ route('slots.complete', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--primary st-btn--xs" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">Complete</a>
                         @endcan
                     @endif
                 @endif
@@ -497,7 +497,7 @@
     <div id="reject-dialog" class="st-dialog-overlay st-dialog-overlay--hidden">
         <div class="st-card st-w-full st-maxw-400 st-p-20">
             <h3 class="st-card__title">Reject Booking</h3>
-            <form action="{{ route('bookings.reject', $slot->id) }}" method="POST">
+            <form action="{{ route('bookings.reject', $slot->id_slots) }}" method="POST">
                 @csrf
                 <div class="st-form-field">
                     <label class="st-label">Reason</label>

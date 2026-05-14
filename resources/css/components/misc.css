@@ -1892,34 +1892,29 @@ body {
     color: var(--late-arrival);
 }
 
-.st-activity-type--status-change {
-    background: var(--status-change-bg);
-    color: var(--status-change);
+.st-activity-type--insert {
+    background: #dcfce7;
+    color: #15803d;
 }
 
-.st-activity-type--gate-activation {
-    background: var(--gate-activation-bg);
-    color: var(--gate-activation);
+.st-activity-type--update {
+    background: #dbeafe;
+    color: #1d4ed8;
 }
 
-.st-activity-type--gate-deactivation {
-    background: var(--gate-deactivation-bg);
-    color: var(--gate-deactivation);
+.st-activity-type--delete {
+    background: #fee2e2;
+    color: #b91c1c;
 }
 
-.st-activity-type--late-arrival {
-    background: var(--late-arrival-bg);
-    color: var(--late-arrival);
+.st-activity-type--auth {
+    background: #f3e8ff;
+    color: #7c3aed;
 }
 
 .st-activity-type--other {
     background: var(--standby-bg);
     color: var(--standby);
-}
-
-.st-activity-type--early-arrival {
-    background: var(--early-arrival-bg);
-    color: var(--early-arrival);
 }
 
 /* Search result highlight */

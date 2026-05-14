@@ -30,7 +30,7 @@
                     $actionUrl = $actionUrl !== '' ? $actionUrl : '/';
                 }
             @endphp
-            <a href="{{ $actionUrl }}" class="notification-item vendor-border vendor-rounded-12 {{ $notification->read_at ? '' : 'notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ e($actionUrl) }}');">
+            <a href="{{ $actionUrl }}" class="notification-item vendor-border vendor-rounded-12 {{ $notification->read_at ? '' : 'notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id_notifications }}', '{{ e($actionUrl) }}');">
                 <div class="notification-icon {{ ($notification->data['color'] ?? '') === 'red' ? 'notification-icon--red' : ((($notification->data['color'] ?? '') === 'green') ? 'notification-icon--green' : 'notification-icon--blue') }}">
                     <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
                 </div>
@@ -74,7 +74,7 @@
                     $actionUrl = $actionUrl !== '' ? $actionUrl : '/';
                 }
             @endphp
-            <a href="{{ $actionUrl }}" class="st-notification-item st-rounded-12 st-mb-8 {{ $notification->read_at ? '' : 'st-notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id }}', '{{ e($actionUrl) }}');">
+            <a href="{{ $actionUrl }}" class="st-notification-item st-rounded-12 st-mb-8 {{ $notification->read_at ? '' : 'st-notification-item--unread' }}" onclick="return markAsReadAndGo(event, '{{ $notification->id_notifications }}', '{{ e($actionUrl) }}');">
                 <div class="st-notification-icon {{ ($notification->data['color'] ?? '') === 'red' ? 'st-notification-icon--red' : ((($notification->data['color'] ?? '') === 'green') ? 'st-notification-icon--green' : 'st-notification-icon--blue') }}">
                     <i class="{{ $notification->data['icon'] ?? 'fas fa-info' }}"></i>
                 </div>

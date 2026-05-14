@@ -16,7 +16,7 @@ class SlotPhotoController extends Controller
     public function show(int $id)
     {
         $photo = DB::table('slot_photos')
-            ->where('id', $id)
+            ->where('id_slot_photos', $id)
             ->select(['photo_data', 'mime_type', 'filename'])
             ->first();
 
@@ -45,7 +45,7 @@ class SlotPhotoController extends Controller
     public function download(int $id)
     {
         $photo = DB::table('slot_photos')
-            ->where('id', $id)
+            ->where('id_slot_photos', $id)
             ->select(['photo_data', 'mime_type', 'filename'])
             ->first();
 

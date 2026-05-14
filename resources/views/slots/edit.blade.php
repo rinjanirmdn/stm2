@@ -7,17 +7,17 @@
     <div class="st-card st-mb-12">
         <div class="st-flex-between st-gap-8 st-flex-wrap">
             <div>
-                <h2 class="st-page-title st-mb-0">Edit Planned #{{ $slot->id }}</h2>
+                <h2 class="st-page-title st-mb-0">Edit Planned #{{ $slot->id_slots }}</h2>
                 <div class="st-text--sm st-text--muted">{{ ($isSuperEditor ?? false) ? 'Super Editor Mode — All changes will be logged' : 'Only Scheduled Planned Can Be Edited' }}</div>
             </div>
             <div class="st-flex st-gap-6 st-flex-wrap">
-                <a href="{{ route('slots.show', ['slotId' => $slot->id]) }}" class="st-btn st-btn--outline-primary st-btn--sm">Back</a>
+                <a href="{{ route('slots.show', ['slotId' => $slot->id_slots]) }}" class="st-btn st-btn--outline-primary st-btn--sm">Back</a>
             </div>
         </div>
     </div>
 
     <div class="st-card">
-        <form method="POST" action="{{ route('slots.update', ['slotId' => $slot->id]) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('slots.update', ['slotId' => $slot->id_slots]) }}" enctype="multipart/form-data">
             @csrf
 
             @if ($errors->any())
@@ -136,9 +136,9 @@
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
                             @endphp
                             <option
-                                value="{{ $gate->id }}"
+                                value="{{ $gate->id_gates }}"
                                 data-warehouse-id="{{ $gate->warehouse_id }}"
-                                {{ (string) old('planned_gate_id', $slot->planned_gate_id ?? '') == (string) $gate->id ? 'selected' : '' }}
+                                {{ (string) old('planned_gate_id', $slot->planned_gate_id ?? '') == (string) $gate->id_gates ? 'selected' : '' }}
                             >
                                 {{ $gateLabel }}
                             </option>
@@ -166,7 +166,7 @@
                 <select name="warehouse_id" id="warehouse_id" class="st-select">
                     <option value="">Choose Warehouse...</option>
                     @foreach ($warehouses as $wh)
-                        <option value="{{ $wh->id }}" {{ old('warehouse_id', $slot->warehouse_id ?? '') === (string) $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                        <option value="{{ $wh->id_wh }}" {{ old('warehouse_id', $slot->warehouse_id ?? '') === (string) $wh->id_wh ? 'selected' : '' }}>{{ $wh->name }}</option>
                     @endforeach
                 </select>
             </div>

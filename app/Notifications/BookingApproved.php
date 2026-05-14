@@ -43,7 +43,7 @@ class BookingApproved extends Notification
         $messageLine = $this->isRescheduled
             ? 'Your booking has been rescheduled and approved.'
             : 'Great news! Your booking request has been approved.';
-        $targetId = $this->bookingRequestId ?: $this->slot->id;
+        $targetId = $this->bookingRequestId ?: $this->slot->id_slots;
 
         $mailMessage = (new MailMessage())
             ->subject($subjectPrefix.' - '.$this->slot->ticket_number)
@@ -58,9 +58,9 @@ class BookingApproved extends Notification
             ]);
 
         try {
-            $pdfContent = app(SlotService::class)->generateTicketPdfContent($this->slot->id);
+            $pdfContent = app(SlotService::class)->generateTicketPdfContent($this->slot->id_slots);
             if ($pdfContent) {
-                $filename = 'ticket-'.($this->slot->ticket_number ?? $this->slot->id).'.pdf';
+                $filename = 'ticket-'.($this->slot->ticket_number ?? $this->slot->id_slots).'.pdf';
                 $mailMessage->attachData($pdfContent, $filename, [
                     'mime' => 'application/pdf',
                 ]);
@@ -74,14 +74,14 @@ class BookingApproved extends Notification
 
     public function toArray(object $notifiable): array
     {
-        $targetId = $this->bookingRequestId ?: $this->slot->id;
+        $targetId = $this->bookingRequestId ?: $this->slot->id_slots;
         $title = $this->isRescheduled ? 'Booking Approved (Rescheduled)' : 'Booking Approved';
         $message = $this->isRescheduled
             ? 'Your booking '.$this->slot->ticket_number.' has been rescheduled and approved.'
             : 'Your booking '.$this->slot->ticket_number.' has been approved.';
 
         return [
-            'slot_id' => $this->slot->id,
+            'slot_id' => $this->slot->id_slots,
             'title' => $title,
             'message' => $message,
             'action_url' => url('/vendor/bookings/'.$targetId),

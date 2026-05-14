@@ -31,10 +31,10 @@ class FixBlockingRisk extends Command
                 $slot->planned_gate_id,
                 $slot->planned_start,
                 $slot->planned_duration,
-                (int) $slot->id
+                (int) $slot->id_slots
             );
 
-            DB::table('slots')->where('id', $slot->id)->update(['blocking_risk' => $risk]);
+            DB::table('slots')->where('id_slots', $slot->id_slots)->update(['blocking_risk' => $risk]);
 
             $riskLevel = $risk >= 2 ? 'High' : ($risk === 1 ? 'Medium' : 'Low');
             $this->info("Slot {$slot->ticket_number}: {$riskLevel} ({$risk})");

@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var searchInput = document.getElementById('logs-search-input');
     var typeFilter = document.getElementById('logs-type-filter');
+    var featureFilter = document.getElementById('logs-feature-filter');
     var isLoading = false;
     var searchTimeout = null;
 
@@ -134,11 +135,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Sync top controls into hidden form inputs
         var hiddenQ = logsFilterForm.querySelector('input[name="q"]');
         var hiddenType = logsFilterForm.querySelector('input[name="type"]');
+        var hiddenFeature = logsFilterForm.querySelector('input[name="feature"]');
         var hiddenDateFrom = logsFilterForm.querySelector('input[name="date_from"]');
         var hiddenDateTo = logsFilterForm.querySelector('input[name="date_to"]');
 
         if (hiddenQ && searchInput) hiddenQ.value = searchInput.value;
         if (hiddenType && typeFilter) hiddenType.value = typeFilter.value;
+        if (hiddenFeature && featureFilter) hiddenFeature.value = featureFilter.value;
         if (hiddenDateFrom && dateFromInput) hiddenDateFrom.value = dateFromInput.value;
         if (hiddenDateTo && dateToInput) hiddenDateTo.value = dateToInput.value;
     }
@@ -267,6 +270,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Live feature filter: filter on change
+    if (featureFilter) {
+        featureFilter.addEventListener('change', function() {
+            ajaxReload(true);
+        });
+    }
+
     // Sort triggers in table headers
     logsFilterForm.addEventListener('change', function(e) {
         if (e.target.tagName === 'SELECT') {
@@ -294,6 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var params = new URLSearchParams(window.location.search);
         if (searchInput) searchInput.value = params.get('q') || '';
         if (typeFilter) typeFilter.value = params.get('type') || '';
+        if (featureFilter) featureFilter.value = params.get('feature') || '';
         if (dateFromInput) dateFromInput.value = params.get('date_from') || '';
         if (dateToInput) dateToInput.value = params.get('date_to') || '';
         ajaxReload(false);

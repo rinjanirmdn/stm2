@@ -9,6 +9,8 @@ class Role extends SpatieRole
 {
     protected $table = 'md_roles';
 
+    protected $primaryKey = 'id_roles';
+
     protected $fillable = [
         'roles_name',
         'roles_guard_name',

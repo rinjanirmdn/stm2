@@ -20,7 +20,16 @@
                     <select id="logs-type-filter" class="st-select">
                         <option value="">All</option>
                         @foreach ($allowedTypes as $t)
-                            <option value="{{ $t }}" {{ ($type ?? '') === $t ? 'selected' : '' }}>{{ strtolower((string) $t) === 'crud' ? 'CRUD' : ucwords(str_replace('_', ' ', $t)) }}</option>
+                            <option value="{{ $t }}" {{ ($type ?? '') === $t ? 'selected' : '' }}>{{ ucfirst($t) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="st-form-field">
+                    <label class="st-label">Feature</label>
+                    <select id="logs-feature-filter" class="st-select">
+                        <option value="">All</option>
+                        @foreach ($allowedFeatures as $f)
+                            <option value="{{ $f }}" {{ ($feature ?? '') === $f ? 'selected' : '' }}>{{ $f }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -42,6 +51,7 @@
                     <form method="GET" id="logs-filter-form" data-multi-sort="1" action="{{ route('logs.index') }}">
                         <input type="hidden" name="q" value="{{ $q ?? '' }}">
                         <input type="hidden" name="type" value="{{ $type ?? '' }}">
+                        <input type="hidden" name="feature" value="{{ $feature ?? '' }}">
                         <input type="hidden" name="date_from" value="{{ $date_from ?? '' }}">
                         <input type="hidden" name="date_to" value="{{ $date_to ?? '' }}">
                         @php
@@ -69,6 +79,14 @@
                                             <span class="st-colhead__label">Type</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="activity_type" data-type="text" title="Sort">â‡…</button>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="st-table-col-160 st-th-center">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Feature</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="feature" data-type="text" title="Sort">⇅</button>
                                             </span>
                                         </div>
                                     </th>
@@ -133,29 +151,52 @@
                                 <td class="st-td-center">
                                     @php
                                         $t = (string) ($row->activity_type ?? '');
-                                        $typeClass = 'st-activity-type--other';
-                                        if ($t === 'status_change') {
-                                            $typeClass = 'st-activity-type--status-change';
-                                        } elseif ($t === 'gate_activation') {
-                                            $typeClass = 'st-activity-type--gate-activation';
-                                        } elseif ($t === 'gate_deactivation') {
-                                            $typeClass = 'st-activity-type--gate-deactivation';
-                                        } elseif ($t === 'late_arrival') {
-                                            $typeClass = 'st-activity-type--late-arrival';
-                                        } elseif ($t === 'early_arrival') {
-                                            $typeClass = 'st-activity-type--early-arrival';
-                                        }
+                                        $typeClass = match($t) {
+                                            'insert' => 'st-activity-type--insert',
+                                            'update' => 'st-activity-type--update',
+                                            'delete' => 'st-activity-type--delete',
+                                            'auth'   => 'st-activity-type--auth',
+                                            default  => 'st-activity-type--other',
+                                        };
                                     @endphp
                                     <span class="st-table__status-badge {{ $typeClass }}">
-                                        {{ strtolower((string) $t) === 'crud' ? 'CRUD' : ucwords(str_replace('_', ' ', $t)) }}
+                                        {{ ucfirst($t) }}
                                     </span>
                                 </td>
-                                <td>{{ $formatDescription($row->description ?? '') }}</td>
+                                <td class="st-td-center">
+                                    <span class="st-text--small">{{ $row->feature ?? '-' }}</span>
+                                </td>
+                                <td>
+                                    <div class="st-flex st-items-center st-justify-between">
+                                        <span>{{ $formatDescription($row->description ?? '') }}</span>
+                                        @if(!empty($row->old_value) || !empty($row->new_value))
+                                            <button type="button" class="st-btn st-btn--icon st-ml-8 st-log-details-toggle" title="View Details" onclick="toggleLogDetails(this)">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                    @if(!empty($row->old_value) || !empty($row->new_value))
+                                        <div class="st-log-details st-hidden st-mt-8 st-p-8 st-bg-light st-rounded st-text--small">
+                                            @if(!empty($row->old_value))
+                                                <div class="st-mb-4">
+                                                    <strong>Old Value:</strong>
+                                                    <pre class="st-code-block">{{ json_encode(json_decode($row->old_value), JSON_PRETTY_PRINT) }}</pre>
+                                                </div>
+                                            @endif
+                                            @if(!empty($row->new_value))
+                                                <div>
+                                                    <strong>New Value:</strong>
+                                                    <pre class="st-code-block">{{ json_encode(json_decode($row->new_value), JSON_PRETTY_PRINT) }}</pre>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </td>
                                 <td class="st-td-center">{{ $row->created_by_name ?? $row->created_by_email ?? 'N/A' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Logs Found</td>
+                                <td colspan="5" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Logs Found</td>
                             </tr>
                         @endforelse
                         </tbody>
@@ -170,6 +211,15 @@
 <!-- Flatpickr JS - loaded globally in layout -->
 
 @push('scripts')
-@vite(['resources/js/pages/logs-index.js'])
+    <script>
+        function toggleLogDetails(btn) {
+            const details = btn.closest('td').querySelector('.st-log-details');
+            if (details) {
+                details.classList.toggle('st-hidden');
+                btn.classList.toggle('st-btn--active');
+            }
+        }
+    </script>
+    @vite(['resources/js/pages/logs-index.js'])
 @endpush
 

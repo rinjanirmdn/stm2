@@ -72,7 +72,7 @@
                             <div class="st-dock-legend-card-header st-justify-between st-w-full">
                                 <span class="st-dock-legend-card-ticket">{{ $sl->ticket_number }}</span>
                                 <div class="st-dock-legend-card-actions">
-                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $sl->id }})" title="View on grid">
+                                    <div class="st-dock-legend-card-btn" onclick="focusSlot({{ $sl->id_slots }})" title="View on grid">
                                         <i class="fas fa-eye"></i>
                                     </div>
                                 </div>
@@ -127,10 +127,10 @@
                     <!-- Active Toggle for Backup Gates Only -->
                     @if($isBackup)
                         @can('gates.toggle')
-                        <form method="POST" action="{{ route('gates.toggle', ['gateId' => $g->id]) }}" id="toggle-gate-{{ $g->id }}">
+                        <form method="POST" action="{{ route('gates.toggle', ['gateId' => $g->id_gates]) }}" id="toggle-gate-{{ $g->id_gates }}">
                             @csrf
                             <label class="st-dock-toggle">
-                                <input type="checkbox" class="st-gate-active-toggle" data-form-id="toggle-gate-{{ $g->id }}" {{ $isActive ? 'checked' : '' }}>
+                                <input type="checkbox" class="st-gate-active-toggle" data-form-id="toggle-gate-{{ $g->id_gates }}" {{ $isActive ? 'checked' : '' }}>
                                 <span class="st-dock-toggle-slider"></span>
                             </label>
                         </form>
@@ -168,7 +168,7 @@
                 <div class="st-dock-gate-col">
                     @php
                         // Filter slots for this gate using 'planned_gate_id'
-                        $gateSlots = $daySlots->where('planned_gate_id', $g->id);
+                        $gateSlots = $daySlots->where('planned_gate_id', $g->id_gates);
                     @endphp
 
                     @foreach($gateSlots as $slot)
@@ -268,12 +268,12 @@
 
                         @php
                             $targetRoute = in_array($slot->status, ['pending_approval', 'pending'])
-                                ? route('bookings.show', $slot->id)
-                                : route('slots.show', $slot->id);
+                                ? route('bookings.show', $slot->id_slots)
+                                : route('slots.show', $slot->id_slots);
                         @endphp
 
                         <!-- Planned Card -->
-                        <div id="slot-{{ $slot->id }}" class="st-dock-card {{ $bgClass }} {{ $paddingClass }}"
+                        <div id="slot-{{ $slot->id_slots }}" class="st-dock-card {{ $bgClass }} {{ $paddingClass }}"
                              data-top="{{ $minutesFrom7 }}"
                              data-height="{{ $duration }}"
                              ondblclick="window.location.href='{{ $targetRoute }}'"
@@ -320,19 +320,19 @@
                                 <!-- Dynamic Status Icons -->
                                 @if($slot->status === 'scheduled')
                                     @can('slots.arrival')
-                                    <div class="st-dock-icon-circle st-dock-icon-circle--green" onclick="event.stopPropagation(); openGlobalAjaxModal('Arrival', '{{ route('slots.arrival', $slot->id) }}')" title="Click to mark arrival">
+                                    <div class="st-dock-icon-circle st-dock-icon-circle--green" onclick="event.stopPropagation(); openGlobalAjaxModal('Arrival', '{{ route('slots.arrival', $slot->id_slots) }}')" title="Click to mark arrival">
                                         <i class="fas fa-sign-in-alt st-text-10"></i>
                                     </div>
                                     @endcan
                                 @elseif($slot->status === 'waiting')
                                     @can('slots.start')
-                                    <div class="st-dock-icon-circle st-dock-icon-circle--orange" onclick="event.stopPropagation(); openGlobalAjaxModal('Start Processing', '{{ route('slots.start', $slot->id) }}')" title="Click to start">
+                                    <div class="st-dock-icon-circle st-dock-icon-circle--orange" onclick="event.stopPropagation(); openGlobalAjaxModal('Start Processing', '{{ route('slots.start', $slot->id_slots) }}')" title="Click to start">
                                         <i class="fas fa-play st-text-10"></i>
                                     </div>
                                     @endcan
                                 @elseif($slot->status === 'in_progress')
                                     @can('slots.complete')
-                                    <div class="st-dock-icon-circle st-dock-icon-circle--teal" onclick="event.stopPropagation(); openGlobalAjaxModal('Complete Booking', '{{ route('slots.complete', $slot->id) }}')" title="Click to complete">
+                                    <div class="st-dock-icon-circle st-dock-icon-circle--teal" onclick="event.stopPropagation(); openGlobalAjaxModal('Complete Booking', '{{ route('slots.complete', $slot->id_slots) }}')" title="Click to complete">
                                         <i class="fas fa-check st-text-10"></i>
                                     </div>
                                     @endcan
@@ -340,21 +340,21 @@
 
                                 @if($slot->status === 'pending_approval')
                                     <div class="st-dock-action-group">
-                                        <button type="button" class="st-dock-action-btn st-dock-action-btn--approve" onclick="event.stopPropagation(); openApproveModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Confirm Booking">
+                                        <button type="button" class="st-dock-action-btn st-dock-action-btn--approve" onclick="event.stopPropagation(); openApproveModal({{ $slot->id_slots }}, '{{ $slot->ticket_number }}')" title="Confirm Booking">
                                             <i class="fas fa-check"></i>
                                         </button>
-                                        <a href="{{ route('bookings.reschedule', $slot->id) }}" class="st-dock-action-btn st-dock-action-btn--reschedule" onclick="event.stopPropagation();" title="Reschedule">
+                                        <a href="{{ route('bookings.reschedule', $slot->id_slots) }}" class="st-dock-action-btn st-dock-action-btn--reschedule" onclick="event.stopPropagation();" title="Reschedule">
                                             <i class="fas fa-calendar-alt"></i>
                                         </a>
-                                        <button type="button" class="st-dock-action-btn st-dock-action-btn--reject" onclick="event.stopPropagation(); openRejectModal({{ $slot->id }}, '{{ $slot->ticket_number }}')" title="Reject Booking">
+                                        <button type="button" class="st-dock-action-btn st-dock-action-btn--reject" onclick="event.stopPropagation(); openRejectModal({{ $slot->id_slots }}, '{{ $slot->ticket_number }}')" title="Reject Booking">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
                                 @elseif(in_array($slot->status, ['pending']))
                                     @if($h >= 40)
-                                    <button class="st-dock-btn-confirm st-dock-btn-confirm--sm" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">Act</button>
+                                    <button class="st-dock-btn-confirm st-dock-btn-confirm--sm" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id_slots) }}'">Act</button>
                                     @else
-                                    <button class="st-dock-btn-confirm st-dock-btn-confirm--xs" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id) }}'">!</button>
+                                    <button class="st-dock-btn-confirm st-dock-btn-confirm--xs" onclick="event.stopPropagation(); window.location.href='{{ route('slots.show', $slot->id_slots) }}'">!</button>
                                     @endif
                                 @endif
                             </div>

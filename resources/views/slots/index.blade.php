@@ -120,14 +120,14 @@
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">SJ</span>
                                         <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" title="Sort">â‡…</button>
-                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">â·</button>
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="sj_no" title="Sort">↕</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="sj_no" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="mat_doc">
-                                            <div class="st-font-semibold st-mb-6">SJ Filter</div>
-                                            <input type="text" name="mat_doc" form="slot-filter-form" class="st-input" placeholder="Search SJ..." value="{{ $mat_doc ?? '' }}">
-                                            <div class="st-panel__actions">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
+                                        <div class="st-filter-panel st-panel st-panel--wide st-panel--scroll st-panel--z9" data-filter-panel="sj_no">
+                                            <label class="st-filter-label">SJ No</label>
+                                            <input type="text" name="sj_no" form="slot-filter-form" class="st-input" placeholder="Search SJ..." value="{{ $sj_no ?? '' }}">
+                                            <div class="st-filter-actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="sj_no">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -163,7 +163,7 @@
                                                     <select name="warehouse_id[]" form="slot-filter-form" class="st-select st-filter-warehouse-select st-select--panel">
                                                         <option value="">(All)</option>
                                                         @foreach ($warehouses as $wh)
-                                                            <option value="{{ $wh->id }}" {{ in_array((string)$wh->id, array_map('strval', $warehouseFilter), true) ? 'selected' : '' }}>
+                                                            <option value="{{ $wh->id_wh }}" {{ in_array((string)$wh->id_wh, array_map('strval', $warehouseFilter), true) ? 'selected' : '' }}>
                                                                 {{ $wh->name }}
                                                             </option>
                                                         @endforeach
@@ -495,10 +495,10 @@
                                 ];
                                 $badgeClass = $badgeMap[$status] ?? 'bg-secondary';
                             @endphp
-                            <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown')) { window.location.href = '{{ route('slots.show', ['slotId' => $row->id]) }}'; }">
+                            <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown')) { window.location.href = '{{ route('slots.show', ['slotId' => $row->id_slots]) }}'; }">
                                 <td class="st-table-cell">{{ $rowNumber }}</td>
                                 <td class="st-table-cell">{{ !empty($row->truck_number) ? $row->truck_number : 'N/A' }}</td>
-                                <td class="st-table-cell">{{ $row->mat_doc ?? 'N/A' }}</td>
+                                <td class="st-table-cell">{{ $row->sj_no ?? 'N/A' }}</td>
                                 <td class="st-table-cell">{{ trim($row->vendor_name ?? '') !== '' ? $row->vendor_name : 'N/A' }}{{ !empty($row->destination) ? ' (' . $row->destination . ')' : '' }}</td>
                                 <td class="st-table-cell">{{ $whGateLabel }}</td>
                                 <td class="st-table-cell st-td-center">
@@ -582,40 +582,40 @@
                                         <div class="st-action-menu">
                                             @if ($slotTypeVal === 'planned')
                                                 @can('slots.edit')
-                                                    <a href="{{ route('slots.edit', ['slotId' => $row->id]) }}" class="st-action-item" style="color: orange; font-weight: bold;">Edit</a>
+                                                    <a href="{{ route('slots.edit', ['slotId' => $row->id_slots]) }}" class="st-action-item" style="color: orange; font-weight: bold;">Edit</a>
                                                 @endcan
 
                                                 @if (!$hasArrival && $status === 'scheduled')
                                                     @can('slots.arrival')
-                                                    <a href="{{ route('slots.arrival', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Arrival', this.href);">Arrival</a>
+                                                    <a href="{{ route('slots.arrival', ['slotId' => $row->id_slots]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Arrival', this.href);">Arrival</a>
                                                     @endcan
                                                 @endif
                                                 @if (in_array($status, ['waiting'], true))
                                                     @can('slots.start')
-                                                    <a href="{{ route('slots.start', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Start Processing', this.href);">Start</a>
+                                                    <a href="{{ route('slots.start', ['slotId' => $row->id_slots]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Start Processing', this.href);">Start</a>
                                                     @endcan
                                                 @endif
                                             @endif
 
                                             @if ($status === 'in_progress')
                                                 @can('slots.complete')
-                                                <a href="{{ route('slots.complete', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Booking', this.href);">Complete</a>
+                                                <a href="{{ route('slots.complete', ['slotId' => $row->id_slots]) }}" class="st-action-item" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Booking', this.href);">Complete</a>
                                                 @endcan
                                             @endif
 
                                             @if ($status === 'scheduled')
                                                 @can('slots.cancel')
-                                                <a href="{{ route('slots.cancel', ['slotId' => $row->id]) }}" class="st-action-item st-action-item--danger btn-cancel-slot">Cancel</a>
+                                                <a href="{{ route('slots.cancel', ['slotId' => $row->id_slots]) }}" class="st-action-item st-action-item--danger btn-cancel-slot">Cancel</a>
                                                 @endcan
                                             @endif
 
                                             @if (!empty($row->ticket_number) && in_array($status, ['scheduled', 'waiting', 'in_progress'], true))
                                                 @can('slots.ticket')
-                                                <a href="{{ route('slots.ticket', ['slotId' => $row->id]) }}" class="st-action-item" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">Print Ticket</a>
+                                                <a href="{{ route('slots.ticket', ['slotId' => $row->id_slots]) }}" class="st-action-item" onclick="event.preventDefault(); if (window.stPrintTicket) window.stPrintTicket(this.href);">Print Ticket</a>
                                                 @endcan
                                             @endif
 
-                                            <a href="{{ route('slots.show', ['slotId' => $row->id]) }}" class="st-action-item">View</a>
+                                            <a href="{{ route('slots.show', ['slotId' => $row->id_slots]) }}" class="st-action-item">View</a>
                                         </div>
                                     </div>
                                 </td>

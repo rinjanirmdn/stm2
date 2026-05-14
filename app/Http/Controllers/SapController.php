@@ -127,7 +127,7 @@ class SapController extends Controller
     public function syncSlot(Request $request)
     {
         $request->validate([
-            'slot_id' => 'required|integer|exists:slots,id',
+            'slot_id' => 'required|integer|exists:slots,id_slots',
             'status' => 'required|string|in:scheduled,arrived,waiting,in_progress,completed,cancelled',
             'data' => 'nullable|array',
         ]);

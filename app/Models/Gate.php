@@ -13,6 +13,8 @@ class Gate extends Model
 
     protected $table = 'md_gates';
 
+    protected $primaryKey = 'id_gates';
+
     protected $fillable = [
         'warehouse_id',
         'gate_number',

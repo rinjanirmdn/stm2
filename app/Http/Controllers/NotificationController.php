@@ -70,7 +70,8 @@ class NotificationController extends Controller
         return response()->json([
             'success' => true,
             'notification' => [
-                'id' => $notification->id,
+                'id_notifications' => $notification->id_notifications,
+                'id' => $notification->id_notifications,
                 'title' => $notification->data['title'] ?? 'Notification',
                 'message' => $notification->data['message'] ?? '',
                 'action_url' => $notification->data['action_url'] ?? '#',

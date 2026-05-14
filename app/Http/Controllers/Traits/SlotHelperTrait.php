@@ -50,15 +50,15 @@ trait SlotHelperTrait
     private function loadSlotDetailRow(int $slotId): ?object
     {
         $slot = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_users as ru', 's.requested_by', '=', 'ru.id')
-            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id')
-            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
-            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_users as ru', 's.requested_by', '=', 'ru.id_users')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id_gates')
+            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id_gates')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id_wh')
+            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id_wh')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
-            ->leftJoin('md_vendor_transporters as vt', 's.vendor_transporter_id', '=', 'vt.id')
-            ->where('s.id', $slotId)
+            ->leftJoin('md_vendor_transporters as vt', 's.vendor_transporter_id', '=', 'vt.id_vendor_transporters')
+            ->where('s.id_slots', $slotId)
             ->select([
                 's.*',
                 's.po_number as po_number',
@@ -79,14 +79,14 @@ trait SlotHelperTrait
             // Load photos from slot_photos table (new DB storage)
             $dbPhotos = DB::table('slot_photos')
                 ->where('slot_id', $slotId)
-                ->select(['id', 'phase', 'filename'])
-                ->orderBy('id')
+                ->select(['id_slot_photos', 'phase', 'filename'])
+                ->orderBy('id_slot_photos')
                 ->get();
 
             $startPhotos = [];
             $completePhotos = [];
             foreach ($dbPhotos as $p) {
-                $photoObj = (object) ['id' => $p->id, 'filename' => $p->filename];
+                $photoObj = (object) ['id_slot_photos' => $p->id_slot_photos, 'filename' => $p->filename];
                 if ($p->phase === 'start') {
                     $startPhotos[] = $photoObj;
                 } elseif ($p->phase === 'complete') {
@@ -134,13 +134,13 @@ trait SlotHelperTrait
             if (ctype_digit($item)) {
                 // Only accept if this photo belongs to this slot AND correct phase
                 $row = DB::table('slot_photos')
-                    ->where('id', (int) $item)
+                    ->where('id_slot_photos', (int) $item)
                     ->where('slot_id', $slotId)
                     ->where('phase', $phase)
-                    ->select(['id', 'filename'])
+                    ->select(['id_slot_photos', 'filename'])
                     ->first();
                 if ($row) {
-                    $photos[] = (object) ['id' => $row->id, 'filename' => $row->filename];
+                    $photos[] = (object) ['id_slot_photos' => $row->id_slot_photos, 'filename' => $row->filename];
                 }
 
                 // Skip if ID doesn't match slot+phase
@@ -149,7 +149,7 @@ trait SlotHelperTrait
 
             // Must look like a real file path (contains '/' or has a file extension)
             if (str_contains($item, '/') || preg_match('/\.\w{2,4}$/', $item)) {
-                $photos[] = (object) ['id' => null, 'filename' => basename($item), 'legacy_path' => $item];
+                $photos[] = (object) ['id_slot_photos' => null, 'filename' => basename($item), 'legacy_path' => $item];
             }
             // Otherwise skip invalid values
         }

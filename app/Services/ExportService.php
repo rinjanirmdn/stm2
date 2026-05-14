@@ -40,7 +40,7 @@ class ExportService
                     (string) ($row->slot_type ?? 'planned'),
                     (string) ($row->truck_number ?? ''),
                     (string) ($row->ticket_number ?? ''),
-                    (string) ($row->mat_doc ?? ''),
+                    (string) ($row->sj_no ?? ''),
                     (string) ($row->vendor_name ?? ''),
                     (string) ($row->warehouse_name ?? ''),
                     (string) ($row->direction ?? ''),
@@ -231,7 +231,7 @@ class ExportService
             <td class="center">'.htmlspecialchars($typeLabel).'</td>
             <td>'.htmlspecialchars((string) ($row->po_number ?? $row->truck_number ?? '')).'</td>
             <td>'.htmlspecialchars((string) ($row->ticket_number ?? '')).'</td>
-            <td>'.htmlspecialchars((string) ($row->mat_doc ?? '')).'</td>
+            <td>'.htmlspecialchars((string) ($row->sj_no ?? '')).'</td>
             <td>'.htmlspecialchars((string) ($row->vendor_name ?? '')).'</td>
             <td class="center">'.htmlspecialchars((string) ($row->warehouse_code ?? '')).'</td>
             <td class="center">'.htmlspecialchars(ucfirst((string) ($row->direction ?? ''))).'</td>

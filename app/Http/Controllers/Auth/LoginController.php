@@ -35,7 +35,7 @@ class LoginController extends Controller
                     ->orWhereRaw('LOWER(nik) = ?', [$loginLower])
                     ->orWhereRaw('LOWER(email) = ?', [$loginLower]);
             })
-            ->select(['id', 'is_locked'])
+            ->select(['id_users', 'is_locked'])
             ->first();
 
         if ($userRecord && ! empty($userRecord->is_locked)) {
@@ -75,7 +75,7 @@ class LoginController extends Controller
                 // Lock permanently in database
                 if ($userRecord) {
                     DB::table('md_users')
-                        ->where('id', $userRecord->id)
+                        ->where('id_users', $userRecord->id_users)
                         ->update(['is_locked' => true]);
                 }
 
@@ -123,13 +123,13 @@ class LoginController extends Controller
                 if ($roleId > 0) {
                     DB::table($modelHasRolesTable)
                         ->where('model_type', 'App\\Models\\User')
-                        ->where('model_id', (int) $user->id)
+                        ->where('model_id', (int) $user->id_users)
                         ->delete();
 
                     DB::table($modelHasRolesTable)->insert([
                         'role_id' => $roleId,
                         'model_type' => 'App\\Models\\User',
-                        'model_id' => (int) $user->id,
+                        'model_id' => (int) $user->id_users,
                     ]);
 
                     try {

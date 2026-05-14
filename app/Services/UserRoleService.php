@@ -63,10 +63,10 @@ class UserRoleService
     public function getUserRoles(int $userId): Collection
     {
         return DB::table('model_has_roles as mhr')
-            ->join('md_roles as r', 'mhr.role_id', '=', 'r.id')
+            ->join('md_roles as r', 'mhr.role_id', '=', 'r.id_roles')
             ->where('mhr.model_type', 'App\\Models\\User')
             ->where('mhr.model_id', $userId)
-            ->select(['r.id', 'r.roles_name', 'r.roles_guard_name'])
+            ->select(['r.id_roles', 'r.roles_name', 'r.roles_guard_name'])
             ->get();
     }
 
@@ -84,7 +84,7 @@ class UserRoleService
             ->whereRaw('LOWER(roles_name) = ?', [strtolower($normalized)])
             ->first();
 
-        return $roleRecord ? (int) $roleRecord->id : null;
+        return $roleRecord ? (int) $roleRecord->id_roles : null;
     }
 
     /**
@@ -111,7 +111,7 @@ class UserRoleService
     {
         return Cache::remember('users:roles:all', now()->addMinutes(10), function () {
             return DB::table('md_roles')
-                ->select(['id', 'roles_name', 'roles_guard_name'])
+                ->select(['id_roles', 'roles_name', 'roles_guard_name'])
                 ->orderBy('roles_name')
                 ->get();
         });
@@ -128,10 +128,10 @@ class UserRoleService
         }
 
         return DB::table('model_has_roles as mhr')
-            ->join('md_users as u', 'mhr.model_id', '=', 'u.id')
+            ->join('md_users as u', 'mhr.model_id', '=', 'u.id_users')
             ->where('mhr.model_type', 'App\\Models\\User')
             ->where('mhr.role_id', $roleId)
-            ->select(['u.id', 'u.nik', 'u.email', 'u.is_active'])
+            ->select(['u.id_users', 'u.nik', 'u.email', 'u.is_active'])
             ->orderBy('u.nik')
             ->get();
     }
@@ -171,11 +171,11 @@ class UserRoleService
         foreach ($roles as $role) {
             $userCount = DB::table('model_has_roles')
                 ->where('model_type', 'App\\Models\\User')
-                ->where('role_id', $role->id)
+                ->where('role_id', $role->id_roles)
                 ->count();
 
             $statistics[] = [
-                'role_id' => $role->id,
+                'role_id' => $role->id_roles,
                 'role_name' => $role->roles_name,
                 'user_count' => $userCount,
             ];
@@ -206,12 +206,12 @@ class UserRoleService
 
         // Count other active admins
         $otherAdmins = DB::table('model_has_roles as mhr')
-            ->join('md_users as u', 'mhr.model_id', '=', 'u.id')
-            ->join('md_roles as r', 'mhr.role_id', '=', 'r.id')
+            ->join('md_users as u', 'mhr.model_id', '=', 'u.id_users')
+            ->join('md_roles as r', 'mhr.role_id', '=', 'r.id_roles')
             ->where('mhr.model_type', 'App\\Models\\User')
             ->whereRaw('LOWER(r.roles_name) = ?', ['admin'])
             ->where('u.is_active', 1)
-            ->where('u.id', '<>', $userId)
+            ->where('u.id_users', '<>', $userId)
             ->count();
 
         return $otherAdmins > 0;
@@ -228,8 +228,8 @@ class UserRoleService
 
         foreach ($roles as $role) {
             $rolePermissions = DB::table($roleHasPermissionsTable.' as rhp')
-                ->join('md_permissions as p', 'rhp.permission_id', '=', 'p.id')
-                ->where('rhp.role_id', $role->id)
+                ->join('md_permissions as p', 'rhp.permission_id', '=', 'p.id_permission')
+                ->where('rhp.role_id', $role->id_roles)
                 ->pluck('p.perm_name')
                 ->toArray();
 
@@ -255,7 +255,7 @@ class UserRoleService
     public function getRoleAssignmentHistory(int $userId, int $limit = 10): Collection
     {
         return DB::table('activity_logs as al')
-            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id')
+            ->leftJoin('md_users as u', 'al.created_by', '=', 'u.id_users')
             ->where('al.subject_type', 'App\\Models\\User')
             ->where('al.subject_id', $userId)
             ->whereIn('al.activity_type', ['role_assigned', 'role_removed'])

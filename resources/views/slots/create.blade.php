@@ -101,10 +101,10 @@
                         <option value="">- Optional -</option>
                         @foreach ($vendors as $vendor)
                             <option
-                                value="{{ $vendor->id }}"
+                                value="{{ $vendor->id_vendors ?? $vendor->id ?? '' }}"
                                 data-type="{{ $vendor->type ?? 'supplier' }}"
                                 data-name="{{ strtolower($vendor->name ?? '') }}"
-                                {{ (string)old('vendor_id') === (string)$vendor->id ? 'selected' : '' }}
+                                {{ (string)old('vendor_id') === (string)($vendor->id_vendors ?? $vendor->id ?? '') ? 'selected' : '' }}
                             >
                                 {{ $vendor->name }}
                             </option>
@@ -123,9 +123,9 @@
                                 $gateLabel = app(\App\Services\SlotService::class)->getGateDisplayName($gate->warehouse_code ?? '', $gate->gate_number ?? '');
                             @endphp
                             <option
-                                value="{{ $gate->id }}"
+                                value="{{ $gate->id_gates }}"
                                 data-warehouse-id="{{ $gate->warehouse_id }}"
-                                {{ (string)old('planned_gate_id') === (string)$gate->id ? 'selected' : '' }}
+                                {{ (string)old('planned_gate_id') === (string)$gate->id_gates ? 'selected' : '' }}
                             >
                                 {{ $gateLabel }}
                             </option>
@@ -204,7 +204,7 @@
                         <select name="vendor_transporter_id" id="vendor_transporter_id" class="st-select{{ $errors->has('vendor_transporter_id') ? ' st-input--invalid' : '' }}">
                             <option value="">-- Select Vendor Transporter --</option>
                             @foreach ($vendorTransporters ?? [] as $vt)
-                                <option value="{{ $vt->id }}" {{ (string)old('vendor_transporter_id') === (string)$vt->id ? 'selected' : '' }}>{{ $vt->name }}</option>
+                                <option value="{{ $vt->id_vendor_transporters }}" {{ (string)old('vendor_transporter_id') === (string)$vt->id_vendor_transporters ? 'selected' : '' }}>{{ $vt->name }}</option>
                             @endforeach
                         </select>
                         @error('vendor_transporter_id')
@@ -242,7 +242,7 @@
                 <select name="warehouse_id" id="warehouse_id" class="st-select">
                     <option value="">Choose...</option>
                     @foreach ($warehouses as $wh)
-                        <option value="{{ $wh->id }}" {{ (string)old('warehouse_id') === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                        <option value="{{ $wh->id_wh }}" {{ (string)old('warehouse_id') === (string)$wh->id_wh ? 'selected' : '' }}>{{ $wh->name }}</option>
                     @endforeach
                 </select>
             </div>

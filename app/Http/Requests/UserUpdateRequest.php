@@ -33,8 +33,8 @@ class UserUpdateRequest extends FormRequest
     public function rules(): array
     {
         $userId = $this->route('userId') ?? $this->route('user') ?? $this->route('id');
-        if (is_object($userId) && isset($userId->id)) {
-            $userId = $userId->id;
+        if (is_object($userId) && isset($userId->id_users)) {
+            $userId = $userId->id_users;
         }
 
         return [
@@ -42,14 +42,14 @@ class UserUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('md_users', 'nik')->ignore($userId),
+                Rule::unique('md_users', 'nik')->ignore($userId, 'id_users')->whereNull('deleted_at'),
             ],
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:50',
-                Rule::unique('md_users', 'email')->ignore($userId),
+                Rule::unique('md_users', 'email')->ignore($userId, 'id_users')->whereNull('deleted_at'),
             ],
             'name' => [
                 'required',

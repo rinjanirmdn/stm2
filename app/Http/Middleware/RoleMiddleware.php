@@ -35,7 +35,7 @@ class RoleMiddleware
         // 2. Fallback: Check via DB role_id (only if Spatie check didn't match)
         if (! $hasRole && $user->role_id) {
             $userRoleName = DB::table('md_roles')
-                ->where('id', $user->role_id)
+                ->where('id_roles', $user->role_id)
                 ->value('roles_name');
 
             $allowedRoles = array_map('strtolower', $roles);
@@ -47,7 +47,7 @@ class RoleMiddleware
         if (! $hasRole) {
             // Log details for debugging, but do NOT expose to user (#41)
             Log::warning('Role authorization failed', [
-                'user_id' => $user->id,
+                'user_id' => $user->id_users,
                 'required_roles' => $roles,
                 'path' => $request->path(),
             ]);

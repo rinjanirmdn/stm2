@@ -87,11 +87,11 @@ class SlotAjaxController extends Controller
         $like = '%'.$q.'%';
 
         $rowsQ = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->where('s.status', '<>', 'completed')
             ->select([
                 's.po_number as truck_number',
-                's.mat_doc',
+                's.sj_no',
                 's.vendor_name',
                 'w.wh_name as warehouse_name',
             ]);
@@ -100,7 +100,7 @@ class SlotAjaxController extends Controller
             $tl = '%'.$tok.'%';
             $rowsQ->where(function ($sub) use ($tl) {
                 $sub->where('s.po_number', 'like', $tl)
-                    ->orWhere('s.mat_doc', 'like', $tl)
+                    ->orWhere('s.sj_no', 'like', $tl)
                     ->orWhere('s.vendor_name', 'like', $tl);
             });
         }
@@ -108,7 +108,7 @@ class SlotAjaxController extends Controller
         $rows = $rowsQ
             ->orderByRaw("CASE
                 WHEN s.po_number LIKE ? THEN 1
-                WHEN COALESCE(s.mat_doc, '') LIKE ? THEN 2
+                WHEN COALESCE(s.sj_no, '') LIKE ? THEN 2
                 WHEN s.vendor_name LIKE ? THEN 3
                 ELSE 4
             END", [$q.'%', $q.'%', $q.'%'])
@@ -141,7 +141,7 @@ class SlotAjaxController extends Controller
 
         foreach ($rows as $row) {
             $truck = trim((string) ($row->truck_number ?? ''));
-            $matDoc = trim((string) ($row->mat_doc ?? ''));
+            $sjNo = trim((string) ($row->sj_no ?? ''));
             $vendor = trim((string) ($row->vendor_name ?? ''));
 
             // 1. Truck - Vendor
@@ -165,12 +165,12 @@ class SlotAjaxController extends Controller
                 ];
             }
 
-            // 3. MAT DOC
-            if ($matDoc !== '' && ! in_array($matDoc, $seen, true)) {
-                $seen[] = $matDoc;
+            // 3. SJ No
+            if ($sjNo !== '' && ! in_array($sjNo, $seen, true)) {
+                $seen[] = $sjNo;
                 $results[] = [
-                    'text' => $matDoc,
-                    'highlighted' => $highlight($matDoc),
+                    'text' => $sjNo,
+                    'highlighted' => $highlight($sjNo),
                 ];
             }
 
@@ -365,11 +365,11 @@ class SlotAjaxController extends Controller
         $endStr = $endDt->format('Y-m-d H:i:s');
 
         $gates = DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->where('g.warehouse_id', $warehouseId)
             ->where('g.is_active', true)
             ->orderBy('g.gate_number')
-            ->select(['g.id', 'g.gate_number', 'w.wh_code as warehouse_code', 'w.wh_name as warehouse_name'])
+            ->select(['g.id_gates', 'g.gate_number', 'w.wh_code as warehouse_code', 'w.wh_name as warehouse_name'])
             ->get();
 
         if ($gates->isEmpty()) {
@@ -380,7 +380,7 @@ class SlotAjaxController extends Controller
         $bestRisk = null;
 
         foreach ($gates as $gate) {
-            $gid = (int) $gate->id;
+            $gid = (int) $gate->id_gates;
 
             $laneGroup = $this->slotService->getGateLaneGroup($gid);
             $laneGateIds = $laneGroup ? $this->slotService->getGateIdsByLaneGroup($laneGroup) : [$gid];
@@ -423,7 +423,7 @@ class SlotAjaxController extends Controller
             if ($pick) {
                 $bestRisk = $risk;
                 $bestGate = (object) ([
-                    'id' => (int) $gate->id,
+                    'id_gates' => (int) $gate->id_gates,
                     'gate_number' => (string) ($gate->gate_number ?? ''),
                     'warehouse_code' => (string) ($gate->warehouse_code ?? ''),
                     'warehouse_name' => (string) ($gate->warehouse_name ?? ''),
@@ -457,7 +457,7 @@ class SlotAjaxController extends Controller
 
         return response()->json([
             'success' => true,
-            'gate_id' => (int) $bestGate->id,
+            'gate_id_gates' => (int) $bestGate->id_gates,
             'gate_label' => $gateLabel,
             'risk_level' => (int) $bestGate->risk,
             'risk_label' => $label,
@@ -487,13 +487,13 @@ class SlotAjaxController extends Controller
         }
 
         $q = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as g', 's.planned_gate_id', '=', 'g.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_gates as g', 's.planned_gate_id', '=', 'g.id_gates')
             ->where('s.warehouse_id', $warehouseId)
             ->whereRaw('DATE(s.planned_start) = ?', [$date])
             ->whereIn('s.status', ['scheduled', 'waiting', 'in_progress'])
             ->orderBy('s.planned_start', 'asc')
-            ->select(['s.id', 's.po_number', 's.vehicle_number_snap', 's.vendor_name', 's.planned_start', 's.planned_duration', 's.status', 'g.gate_number', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code']);
+            ->select(['s.id_slots', 's.po_number', 's.vehicle_number_snap', 's.vendor_name', 's.planned_start', 's.planned_duration', 's.status', 'g.gate_number', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code']);
 
         if ($plannedGateId !== null) {
             $q->where('s.planned_gate_id', $plannedGateId);
@@ -518,7 +518,7 @@ class SlotAjaxController extends Controller
             $gateLabel = $this->slotService->getGateDisplayName((string) ($row->warehouse_code ?? ''), (string) ($row->gate_number ?? ''));
 
             $data[] = [
-                'id' => (int) ($row->id ?? 0),
+                'id_slots' => (int) ($row->id_slots ?? 0),
                 'planned_start' => $start,
                 'planned_finish' => $finish,
                 'po_number' => (string) ($row->po_number ?? '-'),

@@ -250,13 +250,13 @@
                             <tbody>
                                 @forelse ($users as $u)
                                     @php
-                                        $isCurrentUser = auth()->check() && (int) (auth()->user()->id ?? 0) === (int) $u->id;
+                                        $isCurrentUser = auth()->check() && (int) (auth()->user()->id_users ?? 0) === (int) $u->id_users;
                                         $roleTextRaw = (string) ($u->role_name ?? '');
                                         $roleVal = $roleTextRaw !== '' ? strtolower(str_replace(' ', '_', $roleTextRaw)) : 'operator';
                                         $roleText = ucwords(str_replace('_', ' ', $roleVal));
                                         $deleteConfirmMsg = 'Are you sure you want to delete this user?';
                                     @endphp
-                                    <tr class="st-table-row st-row-clickable" data-href="{{ route('users.edit', ['userId' => $u->id]) }}">
+                                    <tr class="st-table-row st-row-clickable" data-href="{{ route('users.edit', ['userId' => $u->id_users]) }}">
                                         <td>{{ $loop->index + 1 }}</td>
                                         <td class="st-font-semibold">{{ $u->nik ?? 'N/A' }}</td>
                                         <td>{{ $u->full_name ?? 'N/A' }}</td>
@@ -269,7 +269,7 @@
                                                 @can('users.toggle')
                                                     <label class="st-switch" title="{{ $u->is_active ? 'Click to Deactivate' : 'Click to Activate' }}">
                                                         <input type="checkbox" class="st-toggle-active"
-                                                            data-toggle-url="{{ route('users.toggle', ['userId' => $u->id]) }}"
+                                                            data-toggle-url="{{ route('users.toggle', ['userId' => $u->id_users]) }}"
                                                             data-user-name="{{ $u->full_name ?? $u->nik ?? '' }}"
                                                             {{ $u->is_active ? 'checked' : '' }}>
                                                         <span class="st-switch__slider"></span>
@@ -304,7 +304,7 @@
                                         <td class="st-td-center">
                                             <div class="tw-actionbar">
                                                 @can('users.edit')
-                                                    <a href="{{ route('users.edit', ['userId' => $u->id]) }}" class="tw-action"
+                                                    <a href="{{ route('users.edit', ['userId' => $u->id_users]) }}" class="tw-action"
                                                         data-tooltip="Edit" aria-label="Edit">
                                                         <i class="fa-solid fa-pencil"></i>
                                                     </a>
@@ -314,7 +314,7 @@
                                                     @can('users.delete')
                                                         <button type="button" class="tw-action tw-action--danger btn-delete-user"
                                                             data-tooltip="Delete" aria-label="Delete"
-                                                            data-delete-url="{{ route('users.delete', ['userId' => $u->id]) }}"
+                                                            data-delete-url="{{ route('users.delete', ['userId' => $u->id_users]) }}"
                                                             data-user-name="{{ $u->full_name ?? $u->nik ?? 'N/A' }}">
                                                             <i class="fa-solid fa-trash"></i>
                                                         </button>

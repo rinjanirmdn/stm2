@@ -15,12 +15,13 @@ class LogController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $type = trim((string) $request->query('type', ''));
+        $featureFilter = trim((string) $request->query('feature', ''));
         $dateFrom = trim((string) $request->query('date_from', ''));
         $dateTo = trim((string) $request->query('date_to', ''));
 
         // Per-column filters
         $fDesc = trim((string) $request->query('desc', ''));
-        $fMatDoc = trim((string) $request->query('mat_doc', ''));
+        $fSjNo = trim((string) $request->query('sj_no', ''));
         $fPo = trim((string) $request->query('po', ''));
         $fUser = trim((string) $request->query('user', ''));
 
@@ -32,20 +33,32 @@ class LogController extends Controller
         $dirs = is_array($rawDir) ? $rawDir : [trim((string) $rawDir)];
 
         $allowedTypes = [
-            'status_change',
-            'early_arrival',
-            'late_arrival',
-            'gate_activation',
-            'gate_deactivation',
+            'insert',
+            'update',
+            'delete',
             'auth',
-            'crud',
+        ];
+
+        $allowedFeatures = [
+            'Planned',
+            'Unplanned',
+            'Booking Requests',
+            'User Management',
+            'Gate Management',
+            'Vendor Transporters',
+            'Truck Types',
+            'Truck Type',
+            'Auth',
+            'Profile',
+            'System',
         ];
 
         $allowedSorts = [
             'created_at' => 'al.created_at',
             'activity_type' => 'al.activity_type',
+            'feature' => 'al.feature',
             'description' => 'al.description',
-            'mat_doc' => 's.mat_doc',
+            'sj_no' => 's.sj_no',
             'po' => 's.po_number',
             'user' => DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)'),
         ];
@@ -64,6 +77,7 @@ class LogController extends Controller
             $cachedSchema['hasEmail'] = Schema::hasColumn($cachedSchema['usersTable'], 'email');
             $cachedSchema['hasOldValue'] = Schema::hasColumn('activity_logs', 'old_value');
             $cachedSchema['hasNewValue'] = Schema::hasColumn('activity_logs', 'new_value');
+            $cachedSchema['hasFeature'] = Schema::hasColumn('activity_logs', 'feature');
         }
 
         $activityTypeCol = $cachedSchema['activityTypeCol'];
@@ -118,21 +132,20 @@ class LogController extends Controller
         $dir = $dirs[0] ?? 'desc';
 
         $logsQ = DB::table('activity_logs as al')
-            ->leftJoin($usersTable.' as u', 'al.'.$createdByCol, '=', 'u.id')
-            ->leftJoin('slots as s', 'al.slot_id', '=', 's.id')
+            ->leftJoin($usersTable.' as u', 'al.'.$createdByCol, '=', 'u.id_users')
+            ->leftJoin('slots as s', 'al.slot_id', '=', 's.id_slots')
             ->select([
-                'al.id',
+                'al.id_activity_logs as id',
                 'al.slot_id',
                 DB::raw('al.'.$activityTypeCol.' as activity_type'),
+                DB::raw(($cachedSchema['hasFeature'] ? 'al.feature' : 'NULL').' as feature'),
                 'al.description',
-                DB::raw('NULL as old_value'),
-                DB::raw('NULL as new_value'),
                 DB::raw('al.'.$createdByCol.' as created_by'),
                 'al.created_at',
                 DB::raw(($hasNik ? 'u.nik' : 'NULL').' as created_by_nik'),
                 DB::raw("CASE WHEN u.is_internal_vendor = true AND u.vendor_code IS NOT NULL AND u.vendor_code != '' THEN CONCAT(".($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : "'User'")).", ' (', UPPER(u.vendor_code), ')') ELSE ".($hasFullName ? 'u.full_name' : ($hasName ? 'u.name' : ($hasEmail ? 'u.email' : 'NULL'))).' END as created_by_name'),
                 DB::raw(($hasEmail ? 'u.email' : 'NULL').' as created_by_email'),
-                's.mat_doc as slot_mat_doc',
+                's.sj_no as slot_sj_no',
                 's.po_number as slot_po_number',
             ]);
 
@@ -148,7 +161,7 @@ class LogController extends Controller
             $logsQ->where(function ($sub) use ($like, $nameColParts) {
                 $sub
                     ->whereRaw('LOWER(al.description) like ?', [$like])
-                    ->orWhereRaw('LOWER(COALESCE(s.mat_doc, cast(\'\'  as varchar))) like ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s.sj_no, cast(\'\'  as varchar))) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(s.po_number, cast(\'\'  as varchar))) like ?', [$like]);
                 if (! empty($nameColParts)) {
                     $coalesce = 'LOWER(COALESCE('.implode(', ', $nameColParts).')) like ?';
@@ -163,6 +176,12 @@ class LogController extends Controller
             $type = '';
         }
 
+        if ($featureFilter !== '' && in_array($featureFilter, $allowedFeatures, true)) {
+            $logsQ->where('al.feature', $featureFilter);
+        } else {
+            $featureFilter = '';
+        }
+
         if ($dateFrom !== '' && $dateTo !== '') {
             $logsQ->whereBetween('al.created_at', [$dateFrom.' 00:00:00', $dateTo.' 23:59:59']);
         } elseif ($dateFrom !== '') {
@@ -175,8 +194,8 @@ class LogController extends Controller
         if ($fDesc !== '') {
             $logsQ->where('al.description', 'like', '%'.$fDesc.'%');
         }
-        if ($fMatDoc !== '') {
-            $logsQ->where('s.mat_doc', 'like', '%'.$fMatDoc.'%');
+        if ($fSjNo !== '') {
+            $logsQ->where('s.sj_no', 'like', '%'.$fSjNo.'%');
         }
         if ($fPo !== '') {
             $logsQ->where('s.po_number', 'like', '%'.$fPo.'%');
@@ -205,7 +224,7 @@ class LogController extends Controller
         }
 
         $logsQ
-            ->orderBy('al.id', ($dir === 'asc') ? 'asc' : 'desc')
+            ->orderBy('al.id_activity_logs', ($dir === 'asc') ? 'asc' : 'desc')
             ->limit(200);
 
         $logsCacheKey = 'logs:index:data:'.sha1(json_encode([
@@ -221,11 +240,12 @@ class LogController extends Controller
             'logs' => $logs,
             'q' => $q,
             'type' => $type,
+            'feature' => $featureFilter,
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
             // expose per-column and sorting state
             'f_desc' => $fDesc,
-            'f_mat_doc' => $fMatDoc,
+            'f_sj_no' => $fSjNo,
             'f_po' => $fPo,
             'f_user' => $fUser,
             'sort' => $sort,
@@ -233,6 +253,7 @@ class LogController extends Controller
             'sorts' => $sorts,
             'dirs' => $dirs,
             'allowedTypes' => $allowedTypes,
+            'allowedFeatures' => $allowedFeatures,
         ]);
     }
 }

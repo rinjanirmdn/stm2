@@ -19,7 +19,7 @@ class GateStatusService
     public function getGateCards(string $today): array
     {
         $gates = $this->getActiveGates();
-        $allGateIds = $gates->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $allGateIds = $gates->pluck('id_gates')->map(fn ($id) => (int) $id)->all();
 
         if (empty($allGateIds)) {
             return [];
@@ -29,7 +29,7 @@ class GateStatusService
         $laneGroupMap = []; // gateId => [gateIds in same lane group]
         $gateMeta = [];
         foreach ($gates as $gate) {
-            $gid = (int) $gate->id;
+            $gid = (int) $gate->id_gates;
             $wc = strtoupper(trim((string) ($gate->warehouse_code ?? '')));
             $gn = (string) ($gate->gate_number ?? '');
             $group = $this->slotService->buildLaneGroupFromMeta($wc, $gn, $gid);
@@ -61,7 +61,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderByDesc('s.actual_start')
-            ->select(['s.id', 's.po_number', 's.actual_start', 's.actual_gate_id', 's.vendor_name', 's.destination'])
+            ->select(['s.id_slots', 's.po_number', 's.actual_start', 's.actual_gate_id', 's.vendor_name', 's.destination'])
             ->get();
 
         // Batch-fetch ALL next-scheduled slots for today (1 query instead of N)
@@ -73,13 +73,13 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderBy('s.planned_start', 'asc')
-            ->select(['s.id', 's.po_number', 's.planned_start', 's.status', 's.planned_gate_id', 's.vendor_name', 's.destination'])
+            ->select(['s.id_slots', 's.po_number', 's.planned_start', 's.status', 's.planned_gate_id', 's.vendor_name', 's.destination'])
             ->get();
 
         // Build gate cards using in-memory matching
         $gateCards = [];
         foreach ($gates as $gate) {
-            $gateId = (int) ($gate->id ?? 0);
+            $gateId = (int) ($gate->id_gates ?? 0);
             $laneIds = $laneGroupMap[$gateId] ?? [$gateId];
 
             // Match current slot from batch (first in-progress slot for this lane group)
@@ -132,7 +132,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderByDesc('s.actual_start')
-            ->select(['s.id', 's.po_number', 's.actual_start', 's.vendor_name', 's.destination'])
+            ->select(['s.id_slots', 's.po_number', 's.actual_start', 's.vendor_name', 's.destination'])
             ->first();
     }
 
@@ -158,7 +158,7 @@ class GateStatusService
                 $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
             })
             ->orderBy('s.planned_start', 'asc')
-            ->select(['s.id', 's.po_number', 's.planned_start', 's.status', 's.vendor_name', 's.destination'])
+            ->select(['s.id_slots', 's.po_number', 's.planned_start', 's.status', 's.vendor_name', 's.destination'])
             ->first();
     }
 
@@ -244,10 +244,10 @@ class GateStatusService
     private function getActiveGates(): Collection
     {
         return DB::table('md_gates as g')
-            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->orderBy('w.wh_name')
             ->orderBy('g.gate_number')
-            ->select(['g.id', 'g.gate_number', 'g.is_backup', 'g.is_active', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code'])
+            ->select(['g.id_gates', 'g.gate_number', 'g.is_backup', 'g.is_active', 'w.wh_name as warehouse_name', 'w.wh_code as warehouse_code'])
             ->get();
     }
 
@@ -293,7 +293,7 @@ class GateStatusService
         $availability = [];
 
         foreach ($gates as $gate) {
-            $gateId = (int) ($gate->id ?? 0);
+            $gateId = (int) ($gate->id_gates ?? 0);
             $isAvailable = $this->isGateAvailableAtTime($gateId, $targetDate, $targetHour);
 
             $availability[] = [
@@ -355,7 +355,7 @@ class GateStatusService
         $performance = [];
 
         foreach ($gates as $gate) {
-            $gateId = (int) ($gate->id ?? 0);
+            $gateId = (int) ($gate->id_gates ?? 0);
             $metrics = $this->calculateGatePerformance($gateId, $date);
 
             $performance[] = [
@@ -393,10 +393,10 @@ class GateStatusService
             if (! empty($laneGateIds)) {
                 $stats = DB::table('slots as s')
                     ->join('md_gates as g', function ($join) {
-                        $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                        $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                             ->on('s.warehouse_id', '=', 'g.warehouse_id');
                     })
-                    ->whereIn('g.id', $laneGateIds)
+                    ->whereIn('g.id_gates', $laneGateIds)
                     ->whereDate(DB::raw('COALESCE(s.actual_start, s.planned_start)'), $date)
                     ->where(function ($q) {
                         $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
@@ -441,7 +441,7 @@ class GateStatusService
         ];
 
         foreach ($gates as $gate) {
-            $gateId = (int) ($gate->id ?? 0);
+            $gateId = (int) ($gate->id_gates ?? 0);
             $currentSlot = $this->getCurrentSlot($gateId);
             $nextSlot = $this->getNextSlot($gateId);
 

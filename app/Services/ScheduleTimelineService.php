@@ -237,9 +237,9 @@ class ScheduleTimelineService
 
         try {
             $scheduleStats = DB::table('slots as s')
-                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+                ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
                 ->leftJoin('md_gates as g', function ($join) {
-                    $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                    $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                         ->on('s.warehouse_id', '=', 'g.warehouse_id');
                 })
                 ->where(function ($q) use ($date) {
@@ -291,9 +291,9 @@ class ScheduleTimelineService
         }
 
         $upcoming = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->where(function ($q) use ($date) {
@@ -304,7 +304,7 @@ class ScheduleTimelineService
             ->whereRaw($timeExpr.' BETWEEN ? AND ?', [$currentTime, $endTime])
             ->orderByRaw('COALESCE(s.actual_start, s.planned_start) ASC')
             ->select([
-                's.id',
+                's.id_slots',
                 's.status',
                 's.planned_start',
                 's.planned_duration',
@@ -312,7 +312,6 @@ class ScheduleTimelineService
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
-                'v.bp_name as vendor_name',
             ])
             ->limit(20)
             ->get();
@@ -328,9 +327,9 @@ class ScheduleTimelineService
         $lateExpr = $this->slotService->getDateAddExpression('s.planned_start', 15);
 
         $delayed = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->where(function ($q) use ($date) {
@@ -340,7 +339,7 @@ class ScheduleTimelineService
             ->whereRaw("s.arrival_time > {$lateExpr}")
             ->orderBy('s.arrival_time', 'desc')
             ->select([
-                's.id',
+                's.id_slots',
                 's.status',
                 's.planned_start',
                 's.arrival_time',
@@ -349,7 +348,6 @@ class ScheduleTimelineService
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 'g.gate_number',
-                'v.bp_name as vendor_name',
             ])
             ->limit(10)
             ->get();
@@ -363,9 +361,9 @@ class ScheduleTimelineService
     private function buildScheduleQuery(string $date, ?string $vendorName = null, ?string $transporter = null)
     {
         return DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->where(function ($q) use ($date) {
@@ -373,8 +371,8 @@ class ScheduleTimelineService
                     ->orWhereDate('s.planned_start', $date);
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
-            ->whereNotNull('s.id')
-            ->where('s.id', '>', 0)
+            ->whereNotNull('s.id_slots')
+            ->where('s.id_slots', '>', 0)
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
@@ -384,7 +382,7 @@ class ScheduleTimelineService
                 }
             })
             ->select([
-                's.id',
+                's.id_slots',
                 's.status',
                 's.is_late',
                 's.planned_start',
@@ -405,9 +403,9 @@ class ScheduleTimelineService
     private function buildTimelineQuery(string $date, ?string $vendorName = null, ?string $transporter = null)
     {
         return DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('md_gates as g', function ($join) {
-                $join->on('g.id', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
+                $join->on('g.id_gates', '=', DB::raw('COALESCE(s.actual_gate_id, s.planned_gate_id)'))
                     ->on('s.warehouse_id', '=', 'g.warehouse_id');
             })
             ->where(function ($q) use ($date) {
@@ -415,8 +413,8 @@ class ScheduleTimelineService
                     ->orWhereDate('s.planned_start', $date);
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
-            ->whereNotNull('s.id')
-            ->where('s.id', '>', 0)
+            ->whereNotNull('s.id_slots')
+            ->where('s.id_slots', '>', 0)
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
             ->when($transporter, function ($q) use ($transporter) {
                 if ($transporter === 'internal') {
@@ -426,7 +424,7 @@ class ScheduleTimelineService
                 }
             })
             ->select([
-                's.id',
+                's.id_slots',
                 's.direction',
                 's.status',
                 's.is_late',
@@ -439,7 +437,7 @@ class ScheduleTimelineService
                 's.po_number',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
-                'g.id as gate_id',
+                'g.id_gates as gate_id',
                 'g.gate_number',
                 's.vendor_name as vendor_name',
                 's.vendor_type as vendor_type',
@@ -457,9 +455,9 @@ class ScheduleTimelineService
 
         foreach ($rows as $r) {
             // Debug: Log anomali data
-            if (empty($r->id) || $r->id <= 0) {
+            if (empty($r->id_slots) || $r->id_slots <= 0) {
                 Log::warning('Anomali slot data found', [
-                    'id' => $r->id,
+                    'id' => $r->id_slots,
                     'status' => $r->status,
                     'po_number' => $r->po_number,
                     'vendor_name' => $r->vendor_name,
@@ -497,7 +495,7 @@ class ScheduleTimelineService
             $performance = $this->getPerformanceStatus($r);
 
             $schedule[] = [
-                'id' => (int) $r->id,
+                'id_slots' => (int) $r->id_slots,
                 'po_number' => (string) ($r->po_number ?? ''),
                 'vendor_name' => (string) ($r->vendor_name ?? '-'),
                 'destination' => (string) ($r->destination ?? ''),
@@ -539,7 +537,7 @@ class ScheduleTimelineService
             $gateLabel = $this->slotService->getGateDisplayName((string) ($r->warehouse_code ?? ''), (string) ($r->gate_number ?? ''));
 
             $delayed[] = [
-                'id' => (int) ($r->id ?? 0),
+                'id_slots' => (int) ($r->id_slots ?? 0),
                 'po_number' => (string) ($r->po_number ?? ''),
                 'vendor_name' => (string) ($r->vendor_name ?? '-'),
                 'destination' => (string) ($r->destination ?? ''),
@@ -599,7 +597,7 @@ class ScheduleTimelineService
         }
 
         $base = [
-            'id' => (int) ($r->id ?? 0),
+            'id_slots' => (int) ($r->id_slots ?? 0),
             'po_number' => (string) ($r->po_number ?? ''),
             'vendor_name' => (string) ($r->vendor_name ?? '-'),
             'vendor_type' => (string) ($r->vendor_type ?? ''),

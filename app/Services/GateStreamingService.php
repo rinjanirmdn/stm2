@@ -19,9 +19,9 @@ class GateStreamingService
         $endExpr = $this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)');
 
         return DB::table('md_gates as g')
-            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('slots as s', function ($join) {
-                $join->on('g.id', '=', 's.planned_gate_id')
+                $join->on('g.id_gates', '=', 's.planned_gate_id')
                     ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
                     ->where(function ($q) {
                         $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
@@ -30,12 +30,13 @@ class GateStreamingService
                     ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)').' >= ?', [now()]);
             })
             ->select([
-                'g.id',
+                'g.id_gates',
                 'g.gate_number',
                 'g.is_active',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 's.po_number',
+                's.id_slots',
                 's.status as slot_status',
                 's.planned_start',
                 's.planned_duration',
@@ -45,12 +46,12 @@ class GateStreamingService
                 DB::raw("CASE
                     WHEN s.status = 'in_progress' THEN 'busy'
                     WHEN s.status = 'arrived' OR s.status = 'waiting' THEN 'occupied'
-                    WHEN COUNT(s.id) > 0 THEN 'reserved'
+                    WHEN COUNT(s.id_slots) > 0 THEN 'reserved'
                     ELSE 'available'
                 END as gate_status"),
             ])
-            ->groupBy('g.id', 'g.gate_number', 'g.is_active', 'w.wh_name', 'w.wh_code',
-                's.po_number', 's.status', 's.planned_start', 's.planned_duration',
+            ->groupBy('g.id_gates', 'g.gate_number', 'g.is_active', 'w.wh_name', 'w.wh_code',
+                's.po_number', 's.id_slots', 's.status', 's.planned_start', 's.planned_duration',
                 's.actual_start', 's.actual_finish')
             ->get();
     }
@@ -64,11 +65,13 @@ class GateStreamingService
 
         foreach ($gates as $gate) {
             $gateData = [
-                'id' => $gate->id,
+                'id_gates' => $gate->id_gates,
                 'gate_number' => $gate->gate_number,
                 'warehouse' => $gate->wh_code,
                 'status' => $gate->gate_status,
                 'current_slot' => $gate->po_number ? [
+                    'id_slots' => $gate->id_slots,
+                    'id' => $gate->id_slots,
                     'po_number' => $gate->po_number,
                     'status' => $gate->slot_status,
                     'planned_start' => $gate->planned_start,
@@ -140,9 +143,9 @@ class GateStreamingService
         $plannedFinishExpr = $this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 60)');
 
         $gate = DB::table('md_gates as g')
-            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id')
+            ->leftJoin('md_warehouse as w', 'g.warehouse_id', '=', 'w.id_wh')
             ->leftJoin('slots as s', function ($join) {
-                $join->on('g.id', '=', 's.planned_gate_id')
+                $join->on('g.id_gates', '=', 's.planned_gate_id')
                     ->whereIn('s.status', ['scheduled', 'arrived', 'waiting', 'in_progress'])
                     ->where(function ($q) {
                         $q->whereNull('s.slot_type')->orWhere('s.slot_type', 'planned');
@@ -150,14 +153,15 @@ class GateStreamingService
                     ->where('s.planned_start', '<=', now())
                     ->whereRaw($this->slotService->getDateAddExpression('s.planned_start', 'COALESCE(s.planned_duration, 0)').' >= ?', [now()]);
             })
-            ->where('g.id', $gateId)
+            ->where('g.id_gates', $gateId)
             ->select([
-                'g.id',
+                'g.id_gates',
                 'g.gate_number',
                 'g.is_active',
                 'w.wh_name as warehouse_name',
                 'w.wh_code as warehouse_code',
                 's.po_number',
+                's.id_slots',
                 's.status as slot_status',
                 's.planned_start',
                 's.planned_duration',
@@ -170,8 +174,8 @@ class GateStreamingService
                     ELSE 'available'
                 END as gate_status"),
             ])
-            ->groupBy('g.id', 'g.gate_number', 'g.is_active', 'w.wh_name', 'w.wh_code',
-                's.po_number', 's.status', 's.planned_start', 's.planned_duration',
+            ->groupBy('g.id_gates', 'g.gate_number', 'g.is_active', 'w.wh_name', 'w.wh_code',
+                's.po_number', 's.id_slots', 's.status', 's.planned_start', 's.planned_duration',
                 's.actual_start', 's.actual_finish')
             ->first();
 
@@ -227,7 +231,7 @@ class GateStreamingService
 
         $conflicts = DB::table('slots as s')
             ->where('s.planned_gate_id', $gateId)
-            ->where('s.id', '<>', $excludeSlotId)
+            ->where('s.id_slots', '<>', $excludeSlotId)
             ->where('s.status', '!=', 'cancelled')
             ->where(function ($query) use ($startTime, $endTime) {
                 $query->where(function ($sub) use ($startTime) {

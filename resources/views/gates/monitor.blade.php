@@ -38,7 +38,7 @@
     <!-- Gates Grid -->
     <div id="gate-status-container" class="st-grid st-grid--3">
         @foreach($gates as $gate)
-        <div class="st-card gate-card" data-gate-id="{{ $gate->id }}">
+        <div class="st-card gate-card" data-gate-id="{{ $gate->id_gates }}">
             <div class="st-card__header">
                 <div class="d-flex align-items-center">
                     <span class="gate-status-indicator status-{{ $gate->gate_status ?? 'available' }}"></span>

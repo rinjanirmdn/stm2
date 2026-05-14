@@ -461,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var activeFilters = [];
 
         // Text input filters
-        var textFilters = ['truck', 'mat_doc', 'vendor', 'po_number'];
+        var textFilters = ['truck', 'sj_no', 'vendor', 'po_number'];
         textFilters.forEach(function(filterName) {
             var input = filterForm.querySelector('input[name="' + filterName + '"]');
             if (input && input.value && input.value.trim() !== '') {
@@ -571,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setupDropdownFilter('whgate', 320);
     setupDropdownFilter('planned_start', 320);
     setupDropdownFilter('truck', 260);
-    setupDropdownFilter('mat_doc', 260);
+    setupDropdownFilter('sj_no', 260);
     setupDropdownFilter('vendor', 260);
     setupDropdownFilter('arrival_presence', 280);
     setupDropdownFilter('lead_time', 280);

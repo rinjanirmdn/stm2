@@ -58,8 +58,8 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
     public function collection(Collection $rows)
     {
-        $warehouses = DB::table('md_warehouse')->pluck('id', 'wh_code')->toArray();
-        $allGates = DB::table('md_gates')->select('id', 'gate_number', 'warehouse_id')->get();
+        $warehouses = DB::table('md_warehouse')->pluck('id_wh', 'wh_code')->toArray();
+        $allGates = DB::table('md_gates')->select('id_gates', 'gate_number', 'warehouse_id')->get();
 
         $truckTargets = DB::table('md_truck')
             ->whereNull('deleted_at')
@@ -178,7 +178,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             } elseif ($whId) {
                 foreach ($allGates as $g) {
                     if (strtoupper($g->gate_number) == strtoupper($gateNumber) && $g->warehouse_id == $whId) {
-                        $gateId = $g->id;
+                        $gateId = $g->id_gates;
                         break;
                     }
                 }
@@ -196,7 +196,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 } else {
                     $seenSjs[$sjNumber] = $excelRow;
                     // Check against DB
-                    $sjExists = DB::table('slots')->where('mat_doc', $sjNumber)->exists();
+                    $sjExists = DB::table('slots')->where('sj_no', $sjNumber)->exists();
                     if ($sjExists) {
                         $rowErrors[] = $this->formatError($excelRow, 'sj_number', $sjNumber, 'SJ Number already exists in the database.');
                     }
@@ -240,10 +240,10 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                             ->where('status', '!=', 'cancelled')
                             ->whereRaw('COALESCE(actual_start, planned_start) < ?', [$finishStr])
                             ->whereRaw("COALESCE(actual_finish, {$dateAddExpr}) > ?", [$startStr])
-                            ->first(['id', 'ticket_number']);
+                            ->first(['id_slots', 'ticket_number']);
 
                         if ($overlapDb) {
-                            $ticket = $overlapDb->ticket_number ?? ('Ref #'.$overlapDb->id);
+                            $ticket = $overlapDb->ticket_number ?? ('Ref #'.$overlapDb->id_slots);
                             $rowErrors[] = $this->formatError($excelRow, 'start_time', $startStr, "Time overlaps with existing transaction in database ({$ticket}) on the same gate/lane.");
                         }
                     }
@@ -294,7 +294,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 'po_number' => substr($poNumber, 0, 50),
                 'driver_name' => substr($row['driver_name'] ?? '', 0, 100) ?: null,
                 'driver_number' => substr($row['driver_number'] ?? '', 0, 50) ?: null,
-                'mat_doc' => substr($sjNumber, 0, 50) ?: null,
+                'sj_no' => substr($sjNumber, 0, 50) ?: null,
                 'truck_type' => $truckType ?: null,
                 'slot_type' => $slotType === 'planned' ? 'planned' : 'unplanned',
                 'direction' => $direction === 'outbound' ? 'outbound' : 'inbound',

@@ -73,7 +73,7 @@ class VendorBookingController extends Controller
             ->whereRaw('? > br.planned_start', [$end]);
 
         if ($excludeRequestId) {
-            $query->where('br.id', '<>', $excludeRequestId);
+            $query->where('br.id_booking_requests', '<>', $excludeRequestId);
         }
 
         return (int) $query->count();
@@ -129,7 +129,7 @@ class VendorBookingController extends Controller
 
             if ($admins->isEmpty()) {
                 Log::warning('No admin recipients found for booking request notification', [
-                    'booking_request_id' => $bookingRequest->id,
+                    'booking_request_id' => $bookingRequest->id_booking_requests,
                 ]);
             }
 
@@ -209,16 +209,16 @@ class VendorBookingController extends Controller
         }
 
         // BookingRequest stats (only valid BR statuses: pending, approved, rejected, cancelled)
-        $brBase = BookingRequest::where('requested_by', $user->id)
+        $brBase = BookingRequest::where('requested_by', $user->id_users)
             ->whereDate('planned_start', '>=', $rangeStart)
             ->whereDate('planned_start', '<=', $rangeEnd);
 
         // Slot stats (operational statuses live on slots table)
         // Ensure we only count slots that are actually tied to a BookingRequest visible to the vendor
-        $slotBase = Slot::whereIn('id', function ($q) use ($user) {
+        $slotBase = Slot::whereIn('id_slots', function ($q) use ($user) {
             $q->select('converted_slot_id')
                 ->from('booking_requests')
-                ->where('requested_by', $user->id)
+                ->where('requested_by', $user->id_users)
                 ->whereNotNull('converted_slot_id');
         })
             ->where(function ($q) {
@@ -252,7 +252,7 @@ class VendorBookingController extends Controller
         ];
 
         // Get recent bookings (show both pending BR and converted slots)
-        $recentBookingsQuery = BookingRequest::where('requested_by', $user->id)
+        $recentBookingsQuery = BookingRequest::where('requested_by', $user->id_users)
             ->with(['convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate'])
             ->when($rangeStart && $rangeEnd, function ($q) use ($rangeStart, $rangeEnd) {
                 $q->whereDate('planned_start', '>=', $rangeStart)
@@ -269,7 +269,7 @@ class VendorBookingController extends Controller
         $recentBookings = $recentBookings->take(20);
 
         // Performance metrics
-        $performance = $this->computeVendorPerformance($user->id, $rangeStart, $rangeEnd);
+        $performance = $this->computeVendorPerformance($user->id_users, $rangeStart, $rangeEnd);
 
         $isInternalVendor = $user->isInternalVendor();
 
@@ -277,7 +277,7 @@ class VendorBookingController extends Controller
         $vendorNames = [];
         $vendorFilter = '';
         if ($isInternalVendor) {
-            $vendorNames = BookingRequest::where('requested_by', $user->id)
+            $vendorNames = BookingRequest::where('requested_by', $user->id_users)
                 ->whereNotNull('supplier_name')
                 ->where('supplier_name', '!=', '')
                 ->distinct()
@@ -373,7 +373,7 @@ class VendorBookingController extends Controller
     {
         $user = Auth::user();
 
-        $baseQuery = BookingRequest::where('requested_by', $user->id);
+        $baseQuery = BookingRequest::where('requested_by', $user->id_users);
 
         // Filter by date range (align with Dashboard logic: prioritize Slot's date if converted)
         if ($request->filled('date_from')) {
@@ -566,7 +566,7 @@ class VendorBookingController extends Controller
 
         $request->validate([
             'po_number' => 'required|string',
-            'planned_gate_id' => 'nullable|integer|exists:md_gates,id',
+            'planned_gate_id' => 'nullable|integer|exists:md_gates,id_gates',
             'planned_date' => 'required|date_format:Y-m-d|after_or_equal:'.Carbon::today()->addDays(2)->format('Y-m-d'),
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'required|string|max:50',
@@ -590,7 +590,7 @@ class VendorBookingController extends Controller
             return back()->withInput()->with('error', 'No available gates at the selected time for the selected truck type. Please choose a different time or truck type.');
         }
 
-        $gate = Gate::where('id', $plannedGateId)
+        $gate = Gate::where('id_gates', $plannedGateId)
             ->where('is_active', true)
             ->with('warehouse')
             ->first();
@@ -690,7 +690,7 @@ class VendorBookingController extends Controller
 
             $bookingRequest = BookingRequest::create([
                 'request_number' => null,
-                'requested_by' => $user->id,
+                'requested_by' => $user->id_users,
                 'po_number' => $poNumber,
                 'supplier_code' => ! empty($poDetail['supplier_code']) ? $poDetail['supplier_code'] : ($poDetail['vendor_code'] ?? null),
                 'supplier_name' => ! empty($poDetail['supplier_name']) ? $poDetail['supplier_name'] : ($poDetail['vendor_name'] ?? null),
@@ -712,7 +712,7 @@ class VendorBookingController extends Controller
             $this->notifyAdminsBookingRequest($bookingRequest);
 
             return redirect()
-                ->route('vendor.bookings.show', $bookingRequest->id)
+                ->route('vendor.bookings.show', $bookingRequest->id_booking_requests)
                 ->with('success', 'Booking request submitted successfully. Please wait for admin approval.');
         } catch (\Throwable $e) {
             return back()
@@ -729,8 +729,8 @@ class VendorBookingController extends Controller
         $user = Auth::user();
 
         // Find booking
-        $booking = BookingRequest::where('id', $id)
-            ->where('requested_by', $user->id)
+        $booking = BookingRequest::where('id_booking_requests', $id)
+            ->where('requested_by', $user->id_users)
             ->with(['approver', 'convertedSlot', 'convertedSlot.warehouse', 'convertedSlot.plannedGate', 'convertedSlot.actualGate'])
             ->firstOrFail();
 
@@ -753,8 +753,8 @@ class VendorBookingController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $booking = BookingRequest::where('id', $id)
-            ->where('requested_by', $user->id)
+        $booking = BookingRequest::where('id_booking_requests', $id)
+            ->where('requested_by', $user->id_users)
             ->where('status', BookingRequest::STATUS_PENDING)
             ->firstOrFail();
 
@@ -796,13 +796,13 @@ class VendorBookingController extends Controller
                     $slotType = 'planned';
 
                     if ($slotId > 0) {
-                        $slot = DB::table('slots')->where('id', $slotId)->first();
+                        $slot = DB::table('slots')->where('id_slots', $slotId)->first();
                         $ticketNumber = $slot->ticket_number ?? '';
                         $slotType = $slot->slot_type ?? 'planned';
                     }
 
                     $notification = new SlotLifecycleNotification(
-                        slotId: $slotId > 0 ? $slotId : $booking->id, // fallback to booking ID if slot not yet created
+                        slotId: $slotId > 0 ? $slotId : $booking->id_booking_requests, // fallback to booking ID if slot not yet created
                         slotType: $slotType,
                         event: 'cancel',
                         poNumber: $booking->po_number ?? '',
@@ -1043,7 +1043,7 @@ class VendorBookingController extends Controller
                     foreach ($gates as $gate) {
                         $result = $this->bookingService->checkAvailability(
                             $gate->warehouse_id,
-                            $gate->id,
+                            $gate->id_gates,
                             $candidateStart,
                             $plannedDuration,
                             null
@@ -1099,7 +1099,7 @@ class VendorBookingController extends Controller
         $request->validate([
             'planned_start' => 'required|date',
             'planned_duration' => 'required|integer|min:0',
-            'exclude_slot_id' => 'nullable|exists:slots,id',
+            'exclude_slot_id' => 'nullable|exists:slots,id_slots',
         ]);
 
         // Check all gates for availability
@@ -1109,7 +1109,7 @@ class VendorBookingController extends Controller
         foreach ($gates as $gate) {
             $result = $this->bookingService->checkAvailability(
                 $gate->warehouse_id,
-                $gate->id,
+                $gate->id_gates,
                 $request->planned_start,
                 $request->planned_duration,
                 $request->exclude_slot_id
@@ -1117,7 +1117,8 @@ class VendorBookingController extends Controller
 
             if ($result['available']) {
                 $availableGates[] = [
-                    'gate_id' => $gate->id,
+                    'id_gates' => $gate->id_gates,
+                    'gate_id' => $gate->id_gates,
                     'gate_number' => $gate->gate_number,
                     'warehouse_id' => $gate->warehouse_id,
                 ];
@@ -1175,14 +1176,16 @@ class VendorBookingController extends Controller
 
         $calendarData = [];
         foreach ($gates as $gate) {
-            $gateSlots = $slots->get($gate->id, collect());
+            $gateSlots = $slots->get($gate->id_gates, collect());
             $calendarData[] = [
                 'gate' => [
-                    'id' => $gate->id,
+                    'id_gates' => $gate->id_gates,
+                    'id' => $gate->id_gates,
                     'name' => $gate->name ?? ($gate->warehouse->wh_code.'-'.$gate->gate_number),
                 ],
                 'slots' => $gateSlots->map(fn ($s) => [
-                    'id' => $s->id,
+                    'id_slots' => $s->id_slots,
+                    'id' => $s->id_slots,
                     'ticket_number' => $s->ticket_number,
                     'vendor_name' => $s->vendor_name ?? '-',
                     'start_time' => $s->planned_start->format('H:i'),
@@ -1213,13 +1216,13 @@ class VendorBookingController extends Controller
         $slotId = (int) $id;
 
         $slot = DB::table('slots as s')
-            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id')
-            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id')
-            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id')
-            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id')
-            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id')
+            ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
+            ->leftJoin('md_gates as pg', 's.planned_gate_id', '=', 'pg.id_gates')
+            ->leftJoin('md_gates as ag', 's.actual_gate_id', '=', 'ag.id_gates')
+            ->leftJoin('md_warehouse as wpg', 'pg.warehouse_id', '=', 'wpg.id_wh')
+            ->leftJoin('md_warehouse as wag', 'ag.warehouse_id', '=', 'wag.id_wh')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
-            ->where('s.id', $slotId)
+            ->where('s.id_slots', $slotId)
             ->select([
                 's.*',
                 's.po_number as po_number',
@@ -1241,7 +1244,7 @@ class VendorBookingController extends Controller
             return redirect()->route('vendor.bookings.index')->with('error', 'Booking not found');
         }
 
-        if ((int) ($slot->requested_by ?? 0) !== (int) $user->id) {
+        if ((int) ($slot->requested_by ?? 0) !== (int) $user->id_users) {
             abort(403);
         }
 
@@ -1357,14 +1360,14 @@ class VendorBookingController extends Controller
             // Check if gate is available at the planned time using bookingService
             $result = $this->bookingService->checkAvailability(
                 $gate->warehouse_id,
-                $gate->id,
+                $gate->id_gates,
                 $plannedStart,
                 $plannedDuration, // Use actual planned duration
                 null
             );
 
             if ($result['available']) {
-                return $gate->id;
+                return $gate->id_gates;
             }
         }
     }

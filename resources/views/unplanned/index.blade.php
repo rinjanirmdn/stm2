@@ -76,14 +76,14 @@
                                     <div class="st-colhead">
                                         <span class="st-colhead__label">SJ</span>
                                         <span class="st-colhead__icons">
-                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="mat_doc" title="Sort">⇅</button>
-                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="mat_doc" title="Filter">⏷</button>
+                                            <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="sj_no" title="Sort">⇅</button>
+                                            <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="sj_no" title="Filter">⏷</button>
                                         </span>
-                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="mat_doc">
-                                            <div class="st-font-semibold st-mb-6">SJ Filter</div>
-                                            <input type="text" name="mat_doc" form="unplanned-filter-form" class="st-input" placeholder="Search SJ..." value="{{ request('mat_doc') }}">
-                                            <div class="st-panel__actions">
-                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="mat_doc">Clear</button>
+                                        <div class="st-filter-panel st-top-full st-left-0 st-mt-4 st-minw-240" data-filter-panel="sj_no">
+                                            <label class="st-filter-label">SJ No</label>
+                                            <input type="text" name="sj_no" form="unplanned-filter-form" class="st-input" placeholder="Search SJ..." value="{{ request('sj_no') }}">
+                                            <div class="st-filter-actions">
+                                                <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="sj_no">Clear</button>
                                             </div>
                                         </div>
                                     </div>
@@ -226,10 +226,10 @@
                                 $stLabel = 'Waiting';
                             }
                         @endphp
-                        <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('unplanned.show', ['slotId' => $slot->id]) }}'; }">
+                        <tr class="st-table-row" style="cursor: pointer;" onclick="if (!event.target.closest('a') && !event.target.closest('button') && !event.target.closest('.st-action-dropdown') && !event.target.closest('input')) { window.location.href = '{{ route('unplanned.show', ['slotId' => $slot->id_slots]) }}'; }">
                             <td>{{ $idx + 1 }}</td>
                             <td>{{ !empty($slot->truck_number) ? $slot->truck_number : 'N/A' }}</td>
-                            <td>{{ !empty($slot->mat_doc) ? $slot->mat_doc : 'N/A' }}</td>
+                            <td>{{ !empty($slot->sj_no) ? $slot->sj_no : 'N/A' }}</td>
                             <td>{{ $slot->vendor_name ?? 'N/A' }}</td>
                             <td class="st-text-center">{{ $label !== '' ? $label : 'N/A' }}</td>
                             <td class="st-td-center">
@@ -266,22 +266,22 @@
                             <td class="st-td-center">
                                 <div class="tw-actionbar">
                                     @if (($slot->status ?? '') === 'waiting')
-                                        <a href="{{ route('unplanned.start', ['slotId' => $slot->id]) }}" class="tw-action tw-action--primary" data-tooltip="Start" aria-label="Start" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">
+                                        <a href="{{ route('unplanned.start', ['slotId' => $slot->id_slots]) }}" class="tw-action tw-action--primary" data-tooltip="Start" aria-label="Start" onclick="event.preventDefault(); openGlobalAjaxModal('Start Unplanned', this.href);">
                                             <i class="fa-solid fa-play"></i>
                                         </a>
                                     @elseif (($slot->status ?? '') === 'in_progress')
-                                        <a href="{{ route('unplanned.complete', ['slotId' => $slot->id]) }}" class="tw-action tw-action--primary" data-tooltip="Complete" aria-label="Complete" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">
+                                        <a href="{{ route('unplanned.complete', ['slotId' => $slot->id_slots]) }}" class="tw-action tw-action--primary" data-tooltip="Complete" aria-label="Complete" onclick="event.preventDefault(); openGlobalAjaxModal('Complete Unplanned', this.href);">
                                             <i class="fa-solid fa-check"></i>
                                         </a>
                                     @endif
 
                                     @can('unplanned.edit')
-                                        <a href="{{ route('unplanned.edit', ['slotId' => $slot->id]) }}" class="tw-action tw-action--warning" data-tooltip="Edit" aria-label="Edit">
+                                        <a href="{{ route('unplanned.edit', ['slotId' => $slot->id_slots]) }}" class="tw-action tw-action--warning" data-tooltip="Edit" aria-label="Edit">
                                             <i class="fa-solid fa-pen"></i>
                                         </a>
                                     @endcan
 
-                                    <a href="{{ route('unplanned.show', ['slotId' => $slot->id]) }}" class="tw-action" data-tooltip="View" aria-label="View">
+                                    <a href="{{ route('unplanned.show', ['slotId' => $slot->id_slots]) }}" class="tw-action" data-tooltip="View" aria-label="View">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
                                 </div>

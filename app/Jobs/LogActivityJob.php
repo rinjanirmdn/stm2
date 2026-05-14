@@ -18,7 +18,7 @@ class LogActivityJob implements ShouldQueue
 
     /**
      * @param  array<string, mixed>  $logData  Pre-built log data to insert
-     * @param  int|null  $slotId  Optional slot ID to resolve mat_doc/po_number
+     * @param  int|null  $slotId  Optional slot ID to resolve sj_no/po_number
      */
     public function __construct(
         private readonly array $logData,
@@ -30,17 +30,17 @@ class LogActivityJob implements ShouldQueue
         try {
             $insert = $this->logData;
 
-            // Resolve mat_doc/po_number from slot if needed
+            // Resolve sj_no/po_number from slot if needed
             if ($this->slotId !== null) {
                 $columns = Schema::getColumnListing('activity_logs');
                 $has = static fn (string $col): bool => in_array($col, $columns, true);
 
-                if (($has('mat_doc') || $has('po_number')) && ($insert['mat_doc'] ?? null) === null && ($insert['po_number'] ?? null) === null) {
+                if (($has('sj_no') || $has('po_number')) && ($insert['sj_no'] ?? null) === null && ($insert['po_number'] ?? null) === null) {
                     try {
-                        $slotRow = DB::table('slots')->where('id', $this->slotId)->select(['mat_doc', 'po_number'])->first();
+                        $slotRow = DB::table('slots')->where('id_slots', $this->slotId)->select(['sj_no', 'po_number'])->first();
                         if ($slotRow) {
-                            if ($has('mat_doc') && ($insert['mat_doc'] ?? null) === null) {
-                                $insert['mat_doc'] = $slotRow->mat_doc ?? null;
+                            if ($has('sj_no') && ($insert['sj_no'] ?? null) === null) {
+                                $insert['sj_no'] = $slotRow->sj_no ?? null;
                             }
                             if ($has('po_number') && ($insert['po_number'] ?? null) === null) {
                                 $insert['po_number'] = $slotRow->po_number ?? null;
