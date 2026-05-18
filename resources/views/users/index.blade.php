@@ -184,6 +184,11 @@
                                             </div>
                                         </div>
                                     </th>
+                                    <th class="st-table-col-140 st-th-center">
+                                        <div class="st-colhead">
+                                            <span class="st-colhead__label">Division</span>
+                                        </div>
+                                    </th>
                                     <th class="st-table-col-120">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Status</span>
@@ -265,6 +270,9 @@
                                             <span class="st-font-semibold">{{ $roleText }}</span>
                                         </td>
                                         <td class="st-td-center">
+                                            <span>{{ $u->is_internal_vendor ? $u->vendor_code : '-' }}</span>
+                                        </td>
+                                        <td class="st-td-center">
                                             @if (!$isCurrentUser)
                                                 @can('users.toggle')
                                                     <label class="st-switch" title="{{ $u->is_active ? 'Click to Deactivate' : 'Click to Activate' }}">
@@ -328,7 +336,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="st-table-empty st-text-center st-text--muted st-py-16">No users
+                                        <td colspan="9" class="st-table-empty st-text-center st-text--muted st-py-16">No users
                                             found</td>
                                     </tr>
                                 @endforelse
@@ -414,13 +422,28 @@
                     </div>
 
                     <div class="st-form-field st-form-field--mb st-form-field--hidden" id="modal-vendor-code-field">
-                        <label class="st-label" id="modal-vendor-code-label">Vendor Code (SAP)</label>
-                        <input type="text" name="vendor_code" id="modal-vendor-code-input" class="st-input" maxlength="50" placeholder="e.g. 1100000263">
-                        <div class="st-form-note st-mb-8" id="modal-vendor-code-hint">Will be validated against SAP to get company name.</div>
+                        <!-- Vendor Code Block -->
+                        <div id="modal-vendor-code-input-wrapper">
+                            <label class="st-label">Vendor Code (SAP)</label>
+                            <input type="text" name="vendor_code" id="modal-vendor-code-input" class="st-input" maxlength="50" placeholder="e.g. 1100000263">
+                            <div class="st-form-note st-mb-8">Will be validated against SAP to get company name.</div>
+                        </div>
+
+                        <!-- Division Dropdown Block -->
+                        <div id="modal-division-select-wrapper" style="display: none;">
+                            <label class="st-label">Division</label>
+                            <select name="vendor_code" id="modal-division-select" class="st-select">
+                                <option value="" selected>-- Select Division --</option>
+                                <option value="PPIC">PPIC</option>
+                                <option value="Purchasing">Purchasing</option>
+                                <option value="EXIM">EXIM</option>
+                            </select>
+                            <div class="st-form-note st-mb-8">Division name will be shown alongside the user name.</div>
+                        </div>
 
                         <label class="st-flex st-align-center st-gap-6 st-cursor-pointer st-mt-2">
                             <input type="checkbox" name="is_internal_vendor" value="1" class="st-checkbox--plain" id="modal-internal-vendor-cb">
-                            <span>Internal Vendor</span>
+                            <span>Requester</span>
                         </label>
                     </div>
 
@@ -549,17 +572,21 @@
             var cb = document.getElementById('modal-internal-vendor-cb');
             if (cb) {
                 function syncVendorLabels() {
-                    var label = document.getElementById('modal-vendor-code-label');
-                    var input = document.getElementById('modal-vendor-code-input');
-                    var hint = document.getElementById('modal-vendor-code-hint');
+                    var codeWrapper = document.getElementById('modal-vendor-code-input-wrapper');
+                    var codeInput = document.getElementById('modal-vendor-code-input');
+                    var divWrapper = document.getElementById('modal-division-select-wrapper');
+                    var divSelect = document.getElementById('modal-division-select');
+
                     if (cb.checked) {
-                        if (label) label.textContent = 'Division';
-                        if (input) input.placeholder = 'e.g. PPIC, EXIM, Purchasing';
-                        if (hint) hint.textContent = 'Division name will be shown alongside the user name.';
+                        if (codeWrapper) codeWrapper.style.display = 'none';
+                        if (codeInput) codeInput.disabled = true;
+                        if (divWrapper) divWrapper.style.display = 'block';
+                        if (divSelect) divSelect.disabled = false;
                     } else {
-                        if (label) label.textContent = 'Vendor Code (SAP)';
-                        if (input) input.placeholder = 'e.g. 1100000263';
-                        if (hint) hint.textContent = 'Will be validated against SAP to get company name.';
+                        if (codeWrapper) codeWrapper.style.display = 'block';
+                        if (codeInput) codeInput.disabled = false;
+                        if (divWrapper) divWrapper.style.display = 'none';
+                        if (divSelect) divSelect.disabled = true;
                     }
                 }
                 cb.addEventListener('change', syncVendorLabels);
