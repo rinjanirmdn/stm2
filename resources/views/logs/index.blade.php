@@ -66,23 +66,23 @@
                         <table class="st-table">
                             <thead>
                                 <tr>
-                                    <th class="st-table-col-190 st-th-center">
+                                    <th class="st-table-col-140 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Time</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" data-type="date" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="created_at" data-type="date" title="Sort">⇅</button>
                                             </span>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-180 st-th-center">
+                                    <th class="st-table-col-90 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Type</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="activity_type" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="activity_type" data-type="text" title="Sort">⇅</button>
                                             </span>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-160 st-th-center">
+                                    <th class="st-table-col-120 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Feature</span>
                                             <span class="st-colhead__icons">
@@ -94,15 +94,15 @@
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">Description</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="description" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="description" data-type="text" title="Sort">⇅</button>
                                             </span>
                                         </div>
                                     </th>
-                                    <th class="st-table-col-160 st-th-center">
+                                    <th class="st-table-col-150 st-th-center">
                                         <div class="st-colhead">
                                             <span class="st-colhead__label">User</span>
                                             <span class="st-colhead__icons">
-                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="user" data-type="text" title="Sort">â‡…</button>
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="user" data-type="text" title="Sort">⇅</button>
                                             </span>
                                         </div>
                                     </th>
@@ -166,7 +166,7 @@
                                 <td class="st-td-center">
                                     <span class="st-text--small">{{ $row->feature ?? '-' }}</span>
                                 </td>
-                                <td>
+                                <td style="word-break: break-word; min-width: 250px;">
                                     <div class="st-flex st-items-center st-justify-between">
                                         <span>{{ $formatDescription($row->description ?? '') }}</span>
                                         @if(!empty($row->old_value) || !empty($row->new_value))
