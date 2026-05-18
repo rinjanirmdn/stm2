@@ -371,6 +371,10 @@ class ScheduleTimelineService
                     ->orWhereDate('s.planned_start', $date);
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
+            ->where(function ($q) {
+                $q->whereNull('s.slot_type')
+                    ->orWhere('s.slot_type', 'planned');
+            })
             ->whereNotNull('s.id_slots')
             ->where('s.id_slots', '>', 0)
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
@@ -413,6 +417,10 @@ class ScheduleTimelineService
                     ->orWhereDate('s.planned_start', $date);
             })
             ->whereNotIn('s.status', ['pending_approval', 'cancelled'])
+            ->where(function ($q) {
+                $q->whereNull('s.slot_type')
+                    ->orWhere('s.slot_type', 'planned');
+            })
             ->whereNotNull('s.id_slots')
             ->where('s.id_slots', '>', 0)
             ->when($vendorName, fn ($q) => $q->where('s.vendor_name', $vendorName))
