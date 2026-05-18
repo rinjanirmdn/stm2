@@ -69,7 +69,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         ];
 
         foreach ($aliases as $from => $to) {
-            if (array_key_exists($from, $row) && !array_key_exists($to, $row)) {
+            if (array_key_exists($from, $row) && ! array_key_exists($to, $row)) {
                 $row[$to] = $row[$from];
             }
         }
@@ -115,7 +115,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                 continue;
             }
             $po = strtoupper(trim($row['po_number'] ?? ''));
-            if ($po !== '' && $po !== 'N/A' && !isset($uniquePos[$po])) {
+            if ($po !== '' && $po !== 'N/A' && ! isset($uniquePos[$po])) {
                 $uniquePos[$po] = true;
             }
         }
@@ -133,7 +133,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
         // Detect SAP connectivity issue: if ALL POs returned null, SAP is likely down
         $sapAvailable = true;
-        if (!empty($uniquePos) && !empty($sapCache)) {
+        if (! empty($uniquePos) && ! empty($sapCache)) {
             $allNull = true;
             foreach ($sapCache as $v) {
                 if ($v !== null) {
@@ -232,7 +232,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             $poUpper = strtoupper($poNumber);
             $sapVendorName = null; // will be set if SAP returns data
             if ($poNumber !== '' && $poUpper !== 'N/A') {
-                if (!$sapAvailable) {
+                if (! $sapAvailable) {
                     // SAP is down — show connectivity error
                     $rowErrors[] = $this->formatError(
                         $excelRow, 'po_number', $poNumber,
@@ -254,7 +254,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
                         if ($vendorName !== '' && $sapVendorName !== '') {
                             $vendorMatch = $this->isVendorMatch($vendorName, $sapVendorName);
 
-                            if (!$vendorMatch) {
+                            if (! $vendorMatch) {
                                 $rowErrors[] = $this->formatError(
                                     $excelRow, 'vendor_name', $vendorName,
                                     'Vendor name does not match SAP record for PO/SO '.$poNumber.'. SAP vendor: "'.$sapVendorName.'". Please correct the vendor name to match the SAP data.'
@@ -498,6 +498,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             $name = preg_replace('/^(pt\.?\s*|cv\.?\s*|ud\.?\s*|tb\.?\s*|fa\.?\s*|po\.?\s*)/i', '', $name);
             // Remove extra whitespace
             $name = preg_replace('/\s+/', ' ', trim($name));
+
             return $name;
         };
 

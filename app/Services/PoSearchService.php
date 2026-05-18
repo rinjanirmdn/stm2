@@ -212,13 +212,13 @@ class PoSearchService
 
             // Log HTTP errors (auth failure, server error, etc.)
             $httpErrors = [];
-            if ($poConfig !== null && isset($responses['po']) && !$responses['po']->successful()) {
+            if ($poConfig !== null && isset($responses['po']) && ! $responses['po']->successful()) {
                 $httpErrors[] = 'PO API HTTP '.$responses['po']->status();
             }
-            if ($soConfig !== null && isset($responses['so']) && !$responses['so']->successful()) {
+            if ($soConfig !== null && isset($responses['so']) && ! $responses['so']->successful()) {
                 $httpErrors[] = 'SO API HTTP '.$responses['so']->status();
             }
-            if (!empty($httpErrors)) {
+            if (! empty($httpErrors)) {
                 Log::error("SAP lookup HTTP errors for $poNumber: ".implode(', ', $httpErrors).'. Check SAP credentials and connectivity.');
             }
         } catch (\Throwable $e) {
