@@ -151,7 +151,7 @@ class BookingApprovalService
             $slot->update([
                 'ticket_number' => $ticketNumber,
                 'status' => Slot::STATUS_SCHEDULED,
-                'approved_by' => $admin->id,
+                'approved_by' => $admin->id_users,
                 'approval_action' => $action,
                 'approval_notes' => $notes,
                 'approved_at' => now(),
@@ -227,7 +227,7 @@ class BookingApprovalService
         $bestGateId = null;
         $bestRisk = null;
         foreach ($candidateGates as $g) {
-            $gid = (int) ($g->id ?? 0);
+            $gid = (int) ($g->id_gates ?? 0);
             if ($gid <= 0) {
                 continue;
             }
@@ -312,7 +312,7 @@ class BookingApprovalService
 
             $slot->update([
                 'status' => Slot::STATUS_CANCELLED,
-                'approved_by' => $admin->id,
+                'approved_by' => $admin->id_users,
                 'approval_action' => Slot::APPROVAL_REJECTED,
                 'approval_notes' => $reason,
                 'approved_at' => now(),
