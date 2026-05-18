@@ -45,7 +45,10 @@
                     <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Role</label>
                         <select name="role" class="st-select" required id="role">
-                            @php $currentRole = $editUser->role_slug ?? 'operator'; @endphp
+                            @php
+                                $roleName = \Illuminate\Support\Facades\DB::table('md_roles')->where('id_roles', $editUser->role_id)->value('roles_name') ?? 'operator';
+                                $currentRole = strtolower(str_replace(' ', '_', $roleName));
+                            @endphp
                             <option value="operator" {{ old('role', $currentRole) === 'operator' ? 'selected' : '' }}>Operator</option>
                             <option value="admin_wh" {{ old('role', $currentRole) === 'admin_wh' ? 'selected' : '' }}>Admin WH</option>
                             <option value="section_head" {{ old('role', $currentRole) === 'section_head' ? 'selected' : '' }}>Section Head</option>
@@ -58,13 +61,29 @@
                     </div>
 
                     <div class="st-form-field st-form-field--mb st-form-field--hidden" id="vendor_code_field">
-                        <label class="st-label" id="edit-vendor-code-label">Vendor Code (SAP)</label>
-                        <input type="text" name="vendor_code" id="edit-vendor-code-input" class="st-input" maxlength="50" value="{{ old('vendor_code', $editUser->vendor_code ?? '') }}" placeholder="e.g. 1100000263">
-                        <div class="st-form-note st-mb-8" id="edit-vendor-code-hint">Will be validated against SAP to get company name.</div>
+                        <!-- Vendor Code Block -->
+                        <div id="vendor-code-input-wrapper">
+                            <label class="st-label">Vendor Code (SAP)</label>
+                            <input type="text" name="vendor_code" id="edit-vendor-code-input" class="st-input" maxlength="50" value="{{ old('vendor_code', $editUser->is_internal_vendor ? '' : ($editUser->vendor_code ?? '')) }}" placeholder="e.g. 1100000263">
+                            <div class="st-form-note st-mb-8">Will be validated against SAP to get company name.</div>
+                        </div>
+
+                        <!-- Division Dropdown Block -->
+                        <div id="division-select-wrapper" style="display: none;">
+                            <label class="st-label">Division</label>
+                            <select name="vendor_code" id="edit-division-select" class="st-select">
+                                @php $selectedDiv = old('vendor_code', $editUser->is_internal_vendor ? ($editUser->vendor_code ?? '') : ''); @endphp
+                                <option value="" {{ $selectedDiv === '' ? 'selected' : '' }}>-- Select Division --</option>
+                                <option value="PPIC" {{ $selectedDiv === 'PPIC' ? 'selected' : '' }}>PPIC</option>
+                                <option value="Purchasing" {{ $selectedDiv === 'Purchasing' ? 'selected' : '' }}>Purchasing</option>
+                                <option value="EXIM" {{ $selectedDiv === 'EXIM' ? 'selected' : '' }}>EXIM</option>
+                            </select>
+                            <div class="st-form-note st-mb-8">Division name will be shown alongside the user name.</div>
+                        </div>
                         
                         <label class="st-flex st-align-center st-gap-6 st-cursor-pointer st-mt-2">
                             <input type="checkbox" name="is_internal_vendor" value="1" form="user_edit_form" id="edit-internal-vendor-cb" {{ old('is_internal_vendor', $editUser->is_internal_vendor) == '1' ? 'checked' : '' }} class="st-checkbox--plain">
-                            <span>Internal Vendor</span>
+                            <span>Requester</span>
                         </label>
 
                         <div id="edit_company_name_field" class="st-mt-8" style="display:none;">
@@ -188,19 +207,23 @@
         var cb = document.getElementById('edit-internal-vendor-cb');
         if (cb) {
             function syncEditVendorLabels() {
-                var label = document.getElementById('edit-vendor-code-label');
-                var input = document.getElementById('edit-vendor-code-input');
-                var hint = document.getElementById('edit-vendor-code-hint');
+                var codeWrapper = document.getElementById('vendor-code-input-wrapper');
+                var codeInput = document.getElementById('edit-vendor-code-input');
+                var divWrapper = document.getElementById('division-select-wrapper');
+                var divSelect = document.getElementById('edit-division-select');
                 var companyField = document.getElementById('edit_company_name_field');
+
                 if (cb.checked) {
-                    if (label) label.textContent = 'Division';
-                    if (input) input.placeholder = 'e.g. PPIC, EXIM, Purchasing';
-                    if (hint) hint.textContent = 'Division name will be shown alongside the user name.';
+                    if (codeWrapper) codeWrapper.style.display = 'none';
+                    if (codeInput) codeInput.disabled = true;
+                    if (divWrapper) divWrapper.style.display = 'block';
+                    if (divSelect) divSelect.disabled = false;
                     if (companyField) companyField.style.display = 'none';
                 } else {
-                    if (label) label.textContent = 'Vendor Code (SAP)';
-                    if (input) input.placeholder = 'e.g. 1100000263';
-                    if (hint) hint.textContent = 'Will be validated against SAP to get company name.';
+                    if (codeWrapper) codeWrapper.style.display = 'block';
+                    if (codeInput) codeInput.disabled = false;
+                    if (divWrapper) divWrapper.style.display = 'none';
+                    if (divSelect) divSelect.disabled = true;
                     if (companyField) companyField.style.display = 'block';
                 }
             }
