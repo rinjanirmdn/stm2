@@ -457,7 +457,7 @@
         if (method_exists($user, 'hasRole') && $user->hasRole(['Admin', 'Administrator', 'Section Head', 'Super Account'])) {
             $canToggleTimes = true;
         } else if ($user->role_id) {
-            $roleName = \Illuminate\Support\Facades\DB::table('md_roles')->where('id', $user->role_id)->value('roles_name');
+            $roleName = \Illuminate\Support\Facades\DB::table('md_roles')->where('id_roles', $user->role_id)->value('roles_name');
             if ($roleName && in_array(strtolower($roleName), ['admin', 'administrator', 'section head', 'super account'])) {
                 $canToggleTimes = true;
             }
