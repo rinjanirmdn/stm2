@@ -52,9 +52,9 @@ class OfflineImportController extends Controller
             $errors = $import->getErrors();
 
             if ($successCount > 0) {
-                $message = "Berhasil mengimpor {$successCount} data.";
+                $message = "Successfully imported {$successCount} record(s).";
                 if ($errorCount > 0) {
-                    $message .= " {$errorCount} data gagal diimpor.";
+                    $message .= " {$errorCount} record(s) failed to import.";
                 }
 
                 return response()->json([
