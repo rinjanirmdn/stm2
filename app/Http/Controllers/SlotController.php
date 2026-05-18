@@ -322,7 +322,7 @@ class SlotController extends Controller
                 'created_by' => Auth::id(),
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]);
+            ], 'id_slots');
 
             if ($slotId > 0) {
                 $vendorLabel = trim((string) ($poDetail['vendor_name'] ?? ''));

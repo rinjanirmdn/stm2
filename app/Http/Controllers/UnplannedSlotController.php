@@ -349,7 +349,7 @@ class UnplannedSlotController extends Controller
             $storedVendorName = $poDetail['customer_name'];
         }
 
-        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $poDetail, $transporterType, $vendorTransporterId, $storedVendorName) {
+        $slotId = DB::transaction(function () use ($poNumber, $direction, $warehouseId, $actualGateId, $arrivalTime, $truckType, $vehicleNumber, $driverName, $driverNumber, $destination, $notes, $status, $actualStart, $actualFinish, $poDetail, $transporterType, $vendorTransporterId, $storedVendorName, $sjNo) {
             $slotId = (int) DB::table('slots')->insertGetId([
                 'po_number' => $poNumber,
                 'direction' => $direction,
@@ -376,7 +376,7 @@ class UnplannedSlotController extends Controller
                 'created_by' => Auth::id(),
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ], 'id_slots');
 
             if ($slotId > 0) {
                 $this->slotService->logActivity($slotId, 'status_change', 'Unplanned Transaction Recorded as '.$status, feature: 'Unplanned');

@@ -5,7 +5,7 @@
 
 @section('content')
     <div class="st-card st-maxw-600">
-        <form method="POST" action="{{ route('master.transporters.update', $transporter->id) }}">
+        <form method="POST" action="{{ route('master.transporters.update', $transporter->id_vendor_transporters) }}">
             @csrf
 
             <div class="st-form-field">

@@ -51,32 +51,41 @@
                     <div class="st-form-field st-form-field--mb">
                         <label class="st-label">Role</label>
                         <select name="role" class="st-select" required id="role">
-                            <option value="operator" {{ old('role', 'operator') === 'operator' ? 'selected' : '' }}>Operator
-                            </option>
-                            <option value="admin_wh" {{ old('role', 'operator') === 'admin_wh' ? 'selected' : '' }}>Admin WH
-                            </option>
-                            <option value="section_head" {{ old('role', 'operator') === 'section_head' ? 'selected' : '' }}>
-                                Section Head</option>
-                            <option value="admin" {{ old('role', 'operator') === 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="security" {{ old('role', 'operator') === 'security' ? 'selected' : '' }}>Security
-                            </option>
-                            <option value="super_account" {{ old('role', 'operator') === 'super_account' ? 'selected' : '' }}>
-                                Super Account</option>
-                            <option value="vendor" {{ old('role', 'operator') === 'vendor' ? 'selected' : '' }}>Vendor
-                            </option>
-                            <option value="display_account" {{ old('role', 'operator') === 'display_account' ? 'selected' : '' }}>Display Account</option>
+                            <option value="operator" {{ old('role') === 'operator' || old('role') === null ? 'selected' : '' }}>Operator</option>
+                            <option value="admin_wh" {{ old('role') === 'admin_wh' ? 'selected' : '' }}>Admin WH</option>
+                            <option value="section_head" {{ old('role') === 'section_head' ? 'selected' : '' }}>Section Head</option>
+                            <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="security" {{ old('role') === 'security' ? 'selected' : '' }}>Security</option>
+                            <option value="super_account" {{ old('role') === 'super_account' ? 'selected' : '' }}>Super Account</option>
+                            <option value="vendor" {{ old('role') === 'vendor' ? 'selected' : '' }}>Vendor</option>
+                            <option value="display_account" {{ old('role') === 'display_account' ? 'selected' : '' }}>Display Account</option>
                         </select>
                     </div>
 
                     <div class="st-form-field st-form-field--mb st-form-field--hidden" id="vendor_code_field">
-                        <label class="st-label" id="create-vendor-code-label">Vendor Code (SAP)</label>
-                        <input type="text" name="vendor_code" id="create-vendor-code-input" class="st-input" maxlength="50"
-                            value="{{ old('vendor_code') }}" placeholder="e.g. 1100000263">
-                        <div class="st-form-note st-mb-8" id="create-vendor-code-hint">Will be validated against SAP to get company name.</div>
+                        <!-- Vendor Code Block -->
+                        <div id="vendor-code-input-wrapper">
+                            <label class="st-label">Vendor Code (SAP)</label>
+                            <input type="text" name="vendor_code" id="create-vendor-code-input" class="st-input" maxlength="50" value="{{ old('vendor_code') }}" placeholder="e.g. 1100000263">
+                            <div class="st-form-note st-mb-8">Will be validated against SAP to get company name.</div>
+                        </div>
+
+                        <!-- Division Dropdown Block -->
+                        <div id="division-select-wrapper" style="display: none;">
+                            <label class="st-label">Division</label>
+                            <select name="vendor_code" id="create-division-select" class="st-select">
+                                @php $selectedDiv = old('vendor_code'); @endphp
+                                <option value="" {{ $selectedDiv === '' ? 'selected' : '' }}>-- Select Division --</option>
+                                <option value="PPIC" {{ $selectedDiv === 'PPIC' ? 'selected' : '' }}>PPIC</option>
+                                <option value="Purchasing" {{ $selectedDiv === 'Purchasing' ? 'selected' : '' }}>Purchasing</option>
+                                <option value="EXIM" {{ $selectedDiv === 'EXIM' ? 'selected' : '' }}>EXIM</option>
+                            </select>
+                            <div class="st-form-note st-mb-8">Division name will be shown alongside the user name.</div>
+                        </div>
                         
                         <label class="st-flex st-align-center st-gap-6 st-cursor-pointer st-mt-2">
                             <input type="checkbox" name="is_internal_vendor" value="1" id="create-internal-vendor-cb" {{ old('is_internal_vendor') == '1' ? 'checked' : '' }} class="st-checkbox--plain">
-                            <span>Internal Vendor</span>
+                            <span>Requester</span>
                         </label>
 
                         <div id="company_name_field" class="st-mt-8" style="display:none;">
@@ -128,19 +137,23 @@
             var cb = document.getElementById('create-internal-vendor-cb');
             if (cb) {
                 function syncCreateVendorLabels() {
-                    var label = document.getElementById('create-vendor-code-label');
-                    var input = document.getElementById('create-vendor-code-input');
-                    var hint = document.getElementById('create-vendor-code-hint');
+                    var codeWrapper = document.getElementById('vendor-code-input-wrapper');
+                    var codeInput = document.getElementById('create-vendor-code-input');
+                    var divWrapper = document.getElementById('division-select-wrapper');
+                    var divSelect = document.getElementById('create-division-select');
                     var companyField = document.getElementById('company_name_field');
+
                     if (cb.checked) {
-                        if (label) label.textContent = 'Division';
-                        if (input) input.placeholder = 'e.g. PPIC, EXIM, Purchasing';
-                        if (hint) hint.textContent = 'Division name will be shown alongside the user name.';
+                        if (codeWrapper) codeWrapper.style.display = 'none';
+                        if (codeInput) codeInput.disabled = true;
+                        if (divWrapper) divWrapper.style.display = 'block';
+                        if (divSelect) divSelect.disabled = false;
                         if (companyField) companyField.style.display = 'none';
                     } else {
-                        if (label) label.textContent = 'Vendor Code (SAP)';
-                        if (input) input.placeholder = 'e.g. 1100000263';
-                        if (hint) hint.textContent = 'Will be validated against SAP to get company name.';
+                        if (codeWrapper) codeWrapper.style.display = 'block';
+                        if (codeInput) codeInput.disabled = false;
+                        if (divWrapper) divWrapper.style.display = 'none';
+                        if (divSelect) divSelect.disabled = true;
                         if (companyField) companyField.style.display = 'block';
                     }
                 }
