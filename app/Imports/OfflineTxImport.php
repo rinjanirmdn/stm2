@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Services\PoSearchService;
 use App\Services\SlotService;
 use DateTime;
 use Exception;
@@ -56,8 +57,30 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         return $this->errors;
     }
 
+    /**
+     * Normalize row keys to handle heading slug mismatches.
+     * e.g. 'PO/SO Number *' becomes 'poso_number' but code expects 'po_number'.
+     */
+    private function normalizeRow(array $row): array
+    {
+        $aliases = [
+            'poso_number' => 'po_number',
+            'po_so_number' => 'po_number',
+        ];
+
+        foreach ($aliases as $from => $to) {
+            if (array_key_exists($from, $row) && ! array_key_exists($to, $row)) {
+                $row[$to] = $row[$from];
+            }
+        }
+
+        return $row;
+    }
+
     public function collection(Collection $rows)
     {
+        // Normalize all row keys before processing
+        $rows = $rows->map(fn ($row) => collect($this->normalizeRow($row->toArray())));
         $warehouses = DB::table('md_warehouse')->pluck('id_wh', 'wh_code')->toArray();
         $allGates = DB::table('md_gates')->select('id_gates', 'gate_number', 'warehouse_id')->get();
 
@@ -81,11 +104,55 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         $slotService = app(SlotService::class);
         $dateAddExpr = $slotService->getDateAddExpression('planned_start', 'planned_duration');
 
+        // --- SAP Batch Validation: pre-collect unique PO numbers ---
+        $sapCache = []; // po_number => SAP result array or false (not found)
+        $poSearchService = app(PoSearchService::class);
+
+        $uniquePos = [];
+        foreach ($rows as $row) {
+            $row = $row->toArray();
+            if (str_starts_with(strtolower(trim($row['slot_type'] ?? '')), 'example:')) {
+                continue;
+            }
+            $po = strtoupper(trim($row['po_number'] ?? ''));
+            if ($po !== '' && $po !== 'N/A' && ! isset($uniquePos[$po])) {
+                $uniquePos[$po] = true;
+            }
+        }
+
+        // Lookup each unique PO against SAP (with caching)
+        foreach (array_keys($uniquePos) as $poNum) {
+            try {
+                $sapResult = $poSearchService->getPoDetail($poNum);
+                $sapCache[$poNum] = $sapResult; // null if not found
+            } catch (\Throwable $e) {
+                Log::warning('SAP lookup failed during import for PO: '.$poNum, ['error' => $e->getMessage()]);
+                $sapCache[$poNum] = null;
+            }
+        }
+
+        // Detect SAP connectivity issue: if ALL POs returned null, SAP is likely down
+        $sapAvailable = true;
+        if (! empty($uniquePos) && ! empty($sapCache)) {
+            $allNull = true;
+            foreach ($sapCache as $v) {
+                if ($v !== null) {
+                    $allNull = false;
+                    break;
+                }
+            }
+            if ($allNull) {
+                $sapAvailable = false;
+                Log::error('SAP appears unavailable: all '.count($sapCache).' PO lookups returned null. Check SAP credentials and connectivity.');
+            }
+        }
+
         $validRowsToInsert = [];
         $seenSjs = [];
         $seenSlots = [];
 
         foreach ($rows as $index => $row) {
+            $row = $row->toArray();
             $excelRow = $index + 2; // heading is row 1, data starts row 2
 
             // Check if row is empty
@@ -148,7 +215,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
 
             $poNumber = trim($row['po_number'] ?? '');
             if ($poNumber === '') {
-                $rowErrors[] = $this->formatError($excelRow, 'po_number', $poNumber, 'Required');
+                $rowErrors[] = $this->formatError($excelRow, 'po_number', $poNumber, 'PO/SO Number is required. Enter a valid PO/SO number, or use "N/A" if this is an ad-hoc transaction without a PO/SO.');
             }
 
             $vehicleNumber = trim($row['vehicle_number'] ?? '');
@@ -159,6 +226,43 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             $vendorName = trim($row['vendor_name'] ?? '');
             if ($vendorName === '') {
                 $rowErrors[] = $this->formatError($excelRow, 'vendor_name', $vendorName, 'Required');
+            }
+
+            // --- SAP PO/SO Validation ---
+            $poUpper = strtoupper($poNumber);
+            $sapVendorName = null; // will be set if SAP returns data
+            if ($poNumber !== '' && $poUpper !== 'N/A') {
+                if (! $sapAvailable) {
+                    // SAP is down — show connectivity error
+                    $rowErrors[] = $this->formatError(
+                        $excelRow, 'po_number', $poNumber,
+                        'SAP system is currently unavailable (authentication or connectivity issue). Please contact IT to fix SAP credentials, or use "N/A" to skip SAP validation.'
+                    );
+                } else {
+                    $sapData = $sapCache[$poUpper] ?? null;
+
+                    if ($sapData === null) {
+                        // PO not found in SAP
+                        $rowErrors[] = $this->formatError(
+                            $excelRow, 'po_number', $poNumber,
+                            'PO/SO number not found in SAP system. Please verify the number is correct, or use "N/A" if SAP validation is not needed.'
+                        );
+                    } else {
+                        // PO found — validate vendor name match
+                        $sapVendorName = trim((string) ($sapData['vendor_name'] ?? ''));
+
+                        if ($vendorName !== '' && $sapVendorName !== '') {
+                            $vendorMatch = $this->isVendorMatch($vendorName, $sapVendorName);
+
+                            if (! $vendorMatch) {
+                                $rowErrors[] = $this->formatError(
+                                    $excelRow, 'vendor_name', $vendorName,
+                                    'Vendor name does not match SAP record for PO/SO '.$poNumber.'. SAP vendor: "'.$sapVendorName.'". Please correct the vendor name to match the SAP data.'
+                                );
+                            }
+                        }
+                    }
+                }
             }
 
             $whCode = trim($row['warehouse_code'] ?? '');
@@ -313,7 +417,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             DB::transaction(function () use ($validRowsToInsert) {
                 foreach ($validRowsToInsert as $insertData) {
                     try {
-                        DB::table('slots')->insertGetId($insertData);
+                        DB::table('slots')->insertGetId($insertData, 'id_slots');
                         $this->successCount++;
                     } catch (Exception $e) {
                         Log::error('Offline Import Transaction Failed: '.$e->getMessage());
@@ -337,7 +441,7 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
             'row' => $row,
             'column' => $colLabel,
             'cell' => $colLetter.$row,
-            'value' => $value !== '' ? $value : '(kosong)',
+            'value' => $value !== '' ? $value : '(empty)',
             'message' => $message,
         ];
     }
@@ -379,5 +483,48 @@ class OfflineTxImport implements ToCollection, WithHeadingRow
         } catch (Exception $e) {
             return;
         }
+    }
+
+    /**
+     * Fuzzy vendor name matching.
+     * Strips common prefixes (PT, PT., CV, etc.) and compares core names.
+     * Returns true if names are considered a match.
+     */
+    private function isVendorMatch(string $excelVendor, string $sapVendor): bool
+    {
+        $normalize = function (string $name): string {
+            $name = strtolower(trim($name));
+            // Strip common Indonesian legal entity prefixes
+            $name = preg_replace('/^(pt\.?\s*|cv\.?\s*|ud\.?\s*|tb\.?\s*|fa\.?\s*|po\.?\s*)/i', '', $name);
+            // Remove extra whitespace
+            $name = preg_replace('/\s+/', ' ', trim($name));
+
+            return $name;
+        };
+
+        $a = $normalize($excelVendor);
+        $b = $normalize($sapVendor);
+
+        if ($a === '' || $b === '') {
+            return true; // skip check if either is empty
+        }
+
+        // Exact match after normalization
+        if ($a === $b) {
+            return true;
+        }
+
+        // Contains match (either direction)
+        if (str_contains($a, $b) || str_contains($b, $a)) {
+            return true;
+        }
+
+        // Similarity check (>=80% similar)
+        similar_text($a, $b, $percent);
+        if ($percent >= 80) {
+            return true;
+        }
+
+        return false;
     }
 }
