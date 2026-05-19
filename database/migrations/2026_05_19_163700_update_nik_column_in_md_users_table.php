@@ -40,11 +40,9 @@ return new class extends Migration
                 ]);
         }
 
-        // 2. Safely alter the NIK column to VARCHAR(8)
-        Schema::table('md_users', function (Blueprint $table) {
-            $table->string('nik', 8)->change();
-            $table->string('username', 8)->change();
-        });
+        // 2. Physically convert the column type to NUMERIC(8, 0) in PostgreSQL
+        DB::statement('ALTER TABLE md_users ALTER COLUMN nik TYPE numeric(8,0) USING nik::numeric');
+        DB::statement('ALTER TABLE md_users ALTER COLUMN username TYPE numeric(8,0) USING username::numeric');
     }
 
     /**
@@ -52,9 +50,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('md_users', function (Blueprint $table) {
-            $table->string('nik', 50)->change();
-            $table->string('username', 50)->change();
-        });
+        DB::statement('ALTER TABLE md_users ALTER COLUMN nik TYPE varchar(50) USING nik::varchar');
+        DB::statement('ALTER TABLE md_users ALTER COLUMN username TYPE varchar(50) USING username::varchar');
     }
 };
