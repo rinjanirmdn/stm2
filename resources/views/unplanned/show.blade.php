@@ -123,6 +123,14 @@
                             </div>
                         </div>
 
+                        @if (strtolower($status) === 'cancelled' && (!empty($slot->cancelled_reason) || !empty($slot->approval_notes)))
+                            <div class="st-detail-item st-detail-item--compact">
+                                <div class="st-detail-label">Cancel Reason</div>
+                                <div class="st-detail-colon">:</div>
+                                <div class="st-detail-value st-detail-value--prewrap st-text--danger">{{ $slot->cancelled_reason ?: $slot->approval_notes }}</div>
+                            </div>
+                        @endif
+
                         <div class="st-detail-item st-detail-item--compact">
                             <div class="st-detail-label">Blocking Risk</div>
                             <div class="st-detail-colon">:</div>

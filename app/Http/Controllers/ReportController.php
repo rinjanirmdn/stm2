@@ -108,7 +108,7 @@ class ReportController extends Controller
 
         $rows = DB::table('slots as s')
             ->join('md_warehouse as w', 's.warehouse_id', '=', 'w.id_wh')
-            ->where('s.status', 'completed')
+            ->whereIn('s.status', ['completed', 'cancelled'])
             ->where(function ($sub) use ($like) {
                 $sub->whereRaw('LOWER(s.po_number) like ?', [$like])
                     ->orWhereRaw('LOWER(COALESCE(s.ticket_number, \'\')) like ?', [$like])
