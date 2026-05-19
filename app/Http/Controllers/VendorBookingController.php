@@ -322,7 +322,7 @@ class VendorBookingController extends Controller
 
         // Apply date filter (Dashboard strictly uses planned_start for both BR and Slot counts)
         $query->whereDate(DB::raw('COALESCE(s.planned_start, br.planned_start)'), '>=', $dateFrom)
-              ->whereDate(DB::raw('COALESCE(s.planned_start, br.planned_start)'), '<=', $dateTo);
+            ->whereDate(DB::raw('COALESCE(s.planned_start, br.planned_start)'), '<=', $dateTo);
 
         switch ($status) {
             case 'pending':
@@ -331,10 +331,10 @@ class VendorBookingController extends Controller
             case 'scheduled':
                 $query->where(function ($q) {
                     $q->where('s.status', 'scheduled')
-                      ->orWhere(function ($q2) {
-                          $q2->where('br.status', 'approved')
-                             ->whereNull('br.converted_slot_id');
-                      });
+                        ->orWhere(function ($q2) {
+                            $q2->where('br.status', 'approved')
+                                ->whereNull('br.converted_slot_id');
+                        });
                 });
                 break;
             case 'waiting':
@@ -352,7 +352,7 @@ class VendorBookingController extends Controller
             case 'cancelled':
                 $query->where(function ($q) {
                     $q->where('br.status', 'cancelled')
-                      ->orWhere('s.status', 'cancelled');
+                        ->orWhere('s.status', 'cancelled');
                 });
                 break;
             case 'arrived':
@@ -371,11 +371,12 @@ class VendorBookingController extends Controller
             's.arrival_time',
             'w.wh_name as warehouse',
         ])
-        ->orderBy('br.id_booking_requests', 'desc')
-        ->limit(100);
+            ->orderBy('br.id_booking_requests', 'desc')
+            ->limit(100);
 
         $results = $query->get()->map(function ($row) {
             $dateToShow = $row->actual_start ?: ($row->planned_start ?: $row->arrival_time);
+
             return [
                 'id' => $row->id_booking_requests,
                 'po' => $row->po_number ?: '-',
