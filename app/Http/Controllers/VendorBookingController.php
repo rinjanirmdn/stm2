@@ -780,7 +780,7 @@ class VendorBookingController extends Controller
         $bypassSap = (bool) $request->input('bypass_sap', false);
         $poDetail = null;
         $direction = null;
-                if (! $bypassSap) {
+        if (! $bypassSap) {
             $firstPoDetail = null;
             $firstDirection = null;
             $firstVendorCode = null;
@@ -788,7 +788,7 @@ class VendorBookingController extends Controller
 
             // Check for duplicates
             if (count($poNumbersArray) !== count(array_unique($poNumbersArray))) {
-                return back()->withInput()->with('error', "Duplicate PO/SO numbers are not allowed.");
+                return back()->withInput()->with('error', 'Duplicate PO/SO numbers are not allowed.');
             }
 
             foreach ($poNumbersArray as $index => $singlePo) {
@@ -799,7 +799,7 @@ class VendorBookingController extends Controller
 
                 $poVendorCode = trim((string) ($detail['vendor_code'] ?? ''));
                 $poVendorName = trim((string) ($detail['vendor_name'] ?? ''));
-                
+
                 if (! $user->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
                     return back()->withInput()->with('error', "PO/SO '{$singlePo}' is not assigned to your vendor.");
                 }

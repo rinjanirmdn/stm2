@@ -582,7 +582,7 @@ class BookingApprovalService
     private function safeActivityLog(string $type, array $payload, array $context = []): void
     {
         try {
-            if (!isset($payload['created_at'])) {
+            if (! isset($payload['created_at'])) {
                 $payload['created_at'] = now();
             }
             ActivityLog::create($payload);
