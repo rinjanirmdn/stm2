@@ -253,11 +253,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 var isServerAvailable = String(row.getAttribute('data-server-available') || '0') === '1';
                 var timeAllowed = String(row.getAttribute('data-time-allowed') || '0') === '1';
 
-                // Detect if current date is Sunday or Holiday
+                // Detect if current date is Sunday or Holiday or Today or Tomorrow
                 var dateForCheck = new Date(String(paramDate));
                 var isSunday = dateForCheck.getDay() === 0;
                 var isHoliday = !!(holidayData[String(paramDate)]);
-                var isSundayOrHoliday = isSunday || isHoliday;
+                var today = new Date();
+                today.setHours(0, 0, 0, 0);
+                var minAllowedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+                var isTodayOrTomorrow = dateForCheck < minAllowedDate && dateForCheck >= today;
+                var isSundayOrHoliday = isSunday || isHoliday || isTodayOrTomorrow;
 
                 // OFF -> ON on default-not-available uses force_available
                 // ON -> OFF always writes disabled=true

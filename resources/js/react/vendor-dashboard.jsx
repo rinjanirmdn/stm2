@@ -117,19 +117,15 @@ function StatusOverviewChart() {
                 fill={d.color} 
                 style={{ cursor: 'pointer' }}
                 onClick={() => {
-                  const params = new URLSearchParams(window.location.search);
-                  // Send the operational status directly — backend handles the mapping
                   const statusFilter = d.key;
-                  
-                  params.set('status', statusFilter);
-                  
-                  // Forward the dashboard date filter to the list view
                   const elStart = document.getElementById('vd-range-start');
                   const elEnd = document.getElementById('vd-range-end');
-                  if (elStart && elStart.value) params.set('date_from', elStart.value);
-                  if (elEnd && elEnd.value) params.set('date_to', elEnd.value);
+                  const dateFrom = elStart && elStart.value ? elStart.value : '';
+                  const dateTo = elEnd && elEnd.value ? elEnd.value : '';
                   
-                  window.location.href = '/vendor/bookings?' + params.toString();
+                  if (typeof window.openChartModal === 'function') {
+                    window.openChartModal(statusFilter, d.label, dateFrom, dateTo);
+                  }
                 }}
               />
             ))}

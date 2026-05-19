@@ -291,6 +291,108 @@ class VendorBookingController extends Controller
     }
 
     /**
+     * AJAX: Get detailed booking list for dashboard chart click
+     */
+    public function ajaxChartDetails(Request $request)
+    {
+        $user = Auth::user();
+        if (! $user->vendor_code && ! $user->isInternalVendor()) {
+            return response()->json(['success' => false, 'message' => 'Account Configuration Error: Not linked to a Vendor.']);
+        }
+        $vendorCode = $this->getVendorCodeForUser();
+
+        $status = $request->query('status', '');
+        $dateFrom = $request->query('date_from', '');
+        $dateTo = $request->query('date_to', '');
+
+        if ($dateFrom === '' && $dateTo === '') {
+            $dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $dateTo = Carbon::now()->endOfMonth()->format('Y-m-d');
+        } elseif ($dateFrom !== '' && $dateTo === '') {
+            $dateTo = $dateFrom;
+        } elseif ($dateFrom === '' && $dateTo !== '') {
+            $dateFrom = $dateTo;
+        }
+
+        // Query based on BookingRequest to match Dashboard logic
+        $query = DB::table('booking_requests as br')
+            ->leftJoin('slots as s', 'br.converted_slot_id', '=', 's.id_slots')
+            ->leftJoin('md_warehouse as w', 'br.warehouse_id', '=', 'w.id_wh')
+            ->where('br.requested_by', $user->id_users);
+
+        // Apply date filter (Dashboard strictly uses planned_start for both BR and Slot counts)
+        $query->whereDate(DB::raw('COALESCE(s.planned_start, br.planned_start)'), '>=', $dateFrom)
+            ->whereDate(DB::raw('COALESCE(s.planned_start, br.planned_start)'), '<=', $dateTo);
+
+        switch ($status) {
+            case 'pending':
+                $query->where('br.status', 'pending');
+                break;
+            case 'scheduled':
+                $query->where(function ($q) {
+                    $q->where('s.status', 'scheduled')
+                        ->orWhere(function ($q2) {
+                            $q2->where('br.status', 'approved')
+                                ->whereNull('br.converted_slot_id');
+                        });
+                });
+                break;
+            case 'waiting':
+                $query->where('s.status', 'waiting');
+                break;
+            case 'in_progress':
+                $query->where('s.status', 'in_progress');
+                break;
+            case 'completed':
+                $query->where('s.status', 'completed');
+                break;
+            case 'rejected':
+                $query->where('br.status', 'rejected');
+                break;
+            case 'cancelled':
+                $query->where(function ($q) {
+                    $q->where('br.status', 'cancelled')
+                        ->orWhere('s.status', 'cancelled');
+                });
+                break;
+            case 'arrived':
+                $query->where('s.status', 'arrived');
+                break;
+            default:
+                $query->where('br.status', $status);
+        }
+
+        $query->select([
+            'br.id_booking_requests',
+            'br.po_number',
+            DB::raw('COALESCE(s.status::varchar, br.status) as display_status'),
+            'br.planned_start',
+            's.actual_start',
+            's.arrival_time',
+            'w.wh_name as warehouse',
+        ])
+            ->orderBy('br.id_booking_requests', 'desc')
+            ->limit(100);
+
+        $results = $query->get()->map(function ($row) {
+            $dateToShow = $row->actual_start ?: ($row->planned_start ?: $row->arrival_time);
+
+            return [
+                'id' => $row->id_booking_requests,
+                'po' => $row->po_number ?: '-',
+                'status' => $row->display_status,
+                'date' => $dateToShow ? Carbon::parse($dateToShow)->format('d M Y H:i') : '-',
+                'warehouse' => $row->warehouse,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $results,
+        ]);
+    }
+
+    /**
      * Compute vendor performance metrics from completed slots
      */
     private function computeVendorPerformance(int $userId, string $rangeStart, string $rangeEnd): array
@@ -567,7 +669,7 @@ class VendorBookingController extends Controller
         $request->validate([
             'po_number' => 'required|string',
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id_gates',
-            'planned_date' => 'required|date_format:Y-m-d|after_or_equal:'.Carbon::today()->addDays(2)->format('Y-m-d'),
+            'planned_date' => 'required|date_format:Y-m-d|after_or_equal:'.Carbon::today()->format('Y-m-d'),
             'planned_time' => 'required|date_format:H:i',
             'truck_type' => 'required|string|max:50',
             'vehicle_number' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$/'],
@@ -612,8 +714,11 @@ class VendorBookingController extends Controller
         $timeStr = date('H:i', strtotime($request->planned_time));
         $isForcedByAdmin = in_array($timeStr, $forcedTimes, true);
 
-        // On Sunday/Holiday: block unless the specific time is forced open by WH team
-        $isSundayOrHoliday = $plannedStartAt->isSunday() || HolidayHelper::isHoliday($plannedStartAt);
+        // On Sunday/Holiday/Today/Tomorrow: block unless the specific time is forced open by WH team
+        $today = Carbon::today();
+        $minAllowedDate = Carbon::today()->addDays(2);
+        $isTodayOrTomorrow = $plannedStartAt->greaterThanOrEqualTo($today) && $plannedStartAt->lessThan($minAllowedDate);
+        $isSundayOrHoliday = $plannedStartAt->isSunday() || HolidayHelper::isHoliday($plannedStartAt) || $isTodayOrTomorrow;
 
         if ($isSundayOrHoliday && ! $isForcedByAdmin) {
             $holidayName = HolidayHelper::getHolidayName($plannedStartAt);
@@ -864,7 +969,7 @@ class VendorBookingController extends Controller
             }
 
             $isToday = $date === now()->format('Y-m-d');
-            $minAllowed = now()->addDays(2)->startOfDay();
+            $minAllowed = now()->addHours(4);
             $disabledTimes = Cache::get('admin_gates_disabled_times_'.$date, []);
             $forcedTimes = Cache::get('admin_gates_forced_times_'.$date, []);
             if (! is_array($disabledTimes)) {
@@ -888,7 +993,10 @@ class VendorBookingController extends Controller
             $isSundayOrHoliday = false;
             try {
                 $dateObj = Carbon::parse($date);
-                $isSundayOrHoliday = $dateObj->isSunday() || HolidayHelper::isHoliday($dateObj);
+                $today = Carbon::today();
+                $minAllowedDate = Carbon::today()->addDays(2);
+                $isTodayOrTomorrow = $dateObj->greaterThanOrEqualTo($today) && $dateObj->lessThan($minAllowedDate);
+                $isSundayOrHoliday = $dateObj->isSunday() || HolidayHelper::isHoliday($dateObj) || $isTodayOrTomorrow;
             } catch (\Throwable $e) {
                 // ignore parse error
             }
@@ -1402,7 +1510,10 @@ class VendorBookingController extends Controller
 
         while ($current <= $end) {
             $dateStr = $current->format('Y-m-d');
-            $isSundayOrHoliday = $current->isSunday() || isset($holidays[$dateStr]);
+            $today = Carbon::today();
+            $minAllowedDate = Carbon::today()->addDays(2);
+            $isTodayOrTomorrow = $current->greaterThanOrEqualTo($today) && $current->lessThan($minAllowedDate);
+            $isSundayOrHoliday = $current->isSunday() || isset($holidays[$dateStr]) || $isTodayOrTomorrow;
 
             if ($isSundayOrHoliday) {
                 // Date is clickable only if admin has explicitly forced some times open

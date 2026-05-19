@@ -31,7 +31,7 @@
     ]
   },
   "resources/css/dashboard-react.css": {
-    "file": "assets/dashboard-react-BHUX8s29.css",
+    "file": "assets/dashboard-react-BBIpEGQA.css",
     "src": "resources/css/dashboard-react.css",
     "isEntry": true,
     "name": "dashboard-react",
@@ -49,7 +49,7 @@
     ]
   },
   "resources/css/style.css": {
-    "file": "assets/style-DYbzhWdO.css",
+    "file": "assets/style-B4I1y0Mm.css",
     "src": "resources/css/style.css",
     "isEntry": true,
     "name": "style",
@@ -103,7 +103,7 @@
     "isEntry": true
   },
   "resources/js/pages/gates-index.js": {
-    "file": "assets/gates-index-DxDgvNUg.js",
+    "file": "assets/gates-index-DdOUGEDe.js",
     "name": "gates-index",
     "src": "resources/js/pages/gates-index.js",
     "isEntry": true
@@ -256,7 +256,7 @@
     ]
   },
   "resources/js/pages/vendor.js": {
-    "file": "assets/vendor-Bm4hOYxC.js",
+    "file": "assets/vendor-3P_yuyOE.js",
     "name": "vendor",
     "src": "resources/js/pages/vendor.js",
     "isEntry": true
@@ -273,7 +273,7 @@
     ]
   },
   "resources/js/react/vendor-dashboard.jsx": {
-    "file": "assets/vendor-dashboard-Cp7Ycqh5.js",
+    "file": "assets/vendor-dashboard-CIQisMrW.js",
     "name": "vendor-dashboard",
     "src": "resources/js/react/vendor-dashboard.jsx",
     "isEntry": true,
