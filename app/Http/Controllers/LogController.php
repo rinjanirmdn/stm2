@@ -32,36 +32,7 @@ class LogController extends Controller
         $sorts = is_array($rawSort) ? $rawSort : [trim((string) $rawSort)];
         $dirs = is_array($rawDir) ? $rawDir : [trim((string) $rawDir)];
 
-        $allowedTypes = [
-            'insert',
-            'update',
-            'delete',
-            'auth',
-        ];
 
-        $allowedFeatures = [
-            'Planned',
-            'Unplanned',
-            'Booking Requests',
-            'User Management',
-            'Gate Management',
-            'Vendor Transporters',
-            'Truck Types',
-            'Truck Type',
-            'Auth',
-            'Profile',
-            'System',
-        ];
-
-        $allowedSorts = [
-            'created_at' => 'al.created_at',
-            'activity_type' => 'al.activity_type',
-            'feature' => 'al.feature',
-            'description' => 'al.description',
-            'sj_no' => 's.sj_no',
-            'po' => 's.po_number',
-            'user' => DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)'),
-        ];
 
         // Cache Schema introspection results per-process to avoid 6+ DB queries per request
         static $cachedSchema = null;
@@ -87,6 +58,27 @@ class LogController extends Controller
         $hasFullName = $cachedSchema['hasFullName'];
         $hasName = $cachedSchema['hasName'];
         $hasEmail = $cachedSchema['hasEmail'];
+
+        $allowedTypes = Cache::remember('logs:allowed_types', now()->addMinutes(60), function () use ($activityTypeCol) {
+            return DB::table('activity_logs')->distinct()->pluck($activityTypeCol)->filter()->map(fn($v) => strtolower(trim((string)$v)))->unique()->values()->all();
+        });
+
+        $allowedFeatures = Cache::remember('logs:allowed_features', now()->addMinutes(60), function () use ($cachedSchema) {
+            if (!$cachedSchema['hasFeature']) return [];
+            return DB::table('activity_logs')->distinct()->pluck('feature')->filter()->map(fn($v) => trim((string)$v))->unique()->values()->all();
+        });
+
+        $allowedSorts = [
+            'created_at' => 'al.created_at',
+            'activity_type' => 'al.activity_type',
+            'feature' => 'al.feature',
+            'description' => 'al.description',
+            'sj_no' => 's.sj_no',
+            'po' => 's.po_number',
+            'user' => DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)'),
+        ];
+
+        
 
         $nameColParts = [];
         if ($hasFullName) {
