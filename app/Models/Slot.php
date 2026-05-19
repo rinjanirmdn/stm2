@@ -71,6 +71,7 @@ class Slot extends Model
         'cancelled_at',
         'moved_gate',
         'blocking_risk',
+        'cancelled_by',
         'created_by',
         // New booking approval fields
         'requested_by',

@@ -317,6 +317,7 @@ class BookingApprovalService
                 'approval_notes' => $reason,
                 'approved_at' => now(),
                 'cancelled_reason' => $reason,
+                'cancelled_by' => $admin->id_users,
                 'cancelled_at' => now(),
             ]);
 
@@ -365,6 +366,7 @@ class BookingApprovalService
             $slot->update([
                 'status' => Slot::STATUS_CANCELLED,
                 'cancelled_reason' => $reason,
+                'cancelled_by' => $user->id_users,
                 'cancelled_at' => now(),
             ]);
 
