@@ -667,7 +667,8 @@ class VendorBookingController extends Controller
         }
 
         $request->validate([
-            'po_number' => 'required|string',
+            'po_number' => 'required|array|min:1',
+            'po_number.*' => 'required|string',
             'planned_gate_id' => 'nullable|integer|exists:md_gates,id_gates',
             'planned_date' => 'required|date_format:Y-m-d|after_or_equal:'.Carbon::today()->format('Y-m-d'),
             'planned_time' => 'required|date_format:H:i',
@@ -768,7 +769,11 @@ class VendorBookingController extends Controller
 
         // Resolve PO ID from PO Number
         // Since we validated 'required', we strictly process it.
-        $poNumber = trim($request->po_number);
+        $poNumbersArray = array_filter(array_map('trim', $request->po_number ?? []));
+        if (empty($poNumbersArray)) {
+            return back()->withInput()->with('error', 'Please provide a valid PO/SO number.');
+        }
+        $poNumber = implode(', ', $poNumbersArray);
 
         // Validate against SAP remaining quantities
         $vendorCode = $this->getVendorCodeForUser();
@@ -776,15 +781,47 @@ class VendorBookingController extends Controller
         $poDetail = null;
         $direction = null;
         if (! $bypassSap) {
-            $poDetail = $this->poSearchService->getPoDetail($poNumber);
-            if (! $poDetail) {
-                return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+            $firstPoDetail = null;
+            $firstDirection = null;
+            $firstVendorCode = null;
+            $firstVendorName = null;
+
+            // Check for duplicates
+            if (count($poNumbersArray) !== count(array_unique($poNumbersArray))) {
+                return back()->withInput()->with('error', 'Duplicate PO/SO numbers are not allowed.');
             }
-            $poVendorCode = trim((string) ($poDetail['vendor_code'] ?? ''));
-            if (! $user->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
-                return back()->withInput()->with('error', 'PO/SO is not assigned to your vendor.');
+
+            foreach ($poNumbersArray as $index => $singlePo) {
+                $detail = $this->poSearchService->getPoDetail($singlePo);
+                if (! $detail) {
+                    return back()->withInput()->with('error', "PO/SO '{$singlePo}' not found in SAP.");
+                }
+
+                $poVendorCode = trim((string) ($detail['vendor_code'] ?? ''));
+                $poVendorName = trim((string) ($detail['vendor_name'] ?? ''));
+
+                if (! $user->isInternalVendor() && ($poVendorCode === '' || ! $this->vendorCodesMatch($poVendorCode, $vendorCode))) {
+                    return back()->withInput()->with('error', "PO/SO '{$singlePo}' is not assigned to your vendor.");
+                }
+
+                $dir = $this->resolveDirection($detail);
+
+                if ($index === 0) {
+                    $firstPoDetail = $detail;
+                    $firstDirection = $dir;
+                    $firstVendorCode = $poVendorCode;
+                    $firstVendorName = $poVendorName;
+                } else {
+                    if ($dir !== $firstDirection) {
+                        return back()->withInput()->with('error', "Multiple PO/SO must be of the same type (Inbound/Outbound). '{$singlePo}' is {$dir}, but the first is {$firstDirection}.");
+                    }
+                    if ($poVendorCode !== $firstVendorCode && $poVendorName !== $firstVendorName) {
+                        return back()->withInput()->with('error', "Multiple PO/SO must be from the same vendor. '{$singlePo}' belongs to a different vendor.");
+                    }
+                }
             }
-            $direction = $this->resolveDirection($poDetail);
+            $poDetail = $firstPoDetail;
+            $direction = $firstDirection;
         } else {
             $direction = 'inbound'; // Default direction for bypass mode
         }

@@ -95,7 +95,7 @@ class DashboardStatsService
 
     public function getOnTimeGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         $arrivalLateExpr = $this->getArrivalLateExpression('s.planned_start', 's.arrival_time');
         $lateCaseExpr = "CASE WHEN s.slot_type = 'planned' AND s.arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (s.is_late = true) END";
@@ -176,7 +176,7 @@ class DashboardStatsService
     public function getTargetAchievementGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
@@ -257,7 +257,7 @@ class DashboardStatsService
 
     public function getCompletionGateStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_gates as g', function ($join) {
@@ -466,7 +466,7 @@ class DashboardStatsService
     public function getTargetAchievementStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         $achieveRange = (int) DB::table('slots as s')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
@@ -599,7 +599,7 @@ class DashboardStatsService
     public function getTargetSegmentStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         $segRows = DB::table('slots as s')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
@@ -781,7 +781,7 @@ class DashboardStatsService
         $avgLeadMinutes = null;
         $avgProcessMinutes = null;
 
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         try {
             $avgLeadMinutes = DB::table('slots as s')
@@ -825,7 +825,7 @@ class DashboardStatsService
 
     public function getOnTimeWarehouseStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         $arrivalLateExpr = $this->getArrivalLateExpression('s.planned_start', 's.arrival_time');
         $lateCaseExpr = "CASE WHEN s.slot_type = 'planned' AND s.arrival_time IS NOT NULL THEN {$arrivalLateExpr} ELSE (s.is_late = true) END";
@@ -876,7 +876,7 @@ class DashboardStatsService
     public function getTargetAchievementWarehouseStats(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
         $exprActual = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         $rows = DB::table('slots as s')
             ->leftJoin('md_truck as td', 's.truck_type', '=', 'td.truck_type')
@@ -980,7 +980,7 @@ class DashboardStatsService
      */
     public function getAverageTimesByTruckType(string $start, string $end, ?string $vendorName = null, ?string $transporter = null): array
     {
-        $rangeDate = DB::raw('DATE(s.planned_start)');
+        $rangeDate = DB::raw('DATE(COALESCE(s.arrival_time, s.actual_start, s.planned_start))');
 
         $leadTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('COALESCE(s.arrival_time, s.actual_start)', 's.actual_finish');
         $processTimeExpr = $this->slotService->getTimestampDiffMinutesExpression('s.actual_start', 's.actual_finish');

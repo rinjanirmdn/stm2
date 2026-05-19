@@ -473,10 +473,8 @@ function initVendorBookingCreate(config) {
     const availableSlotsUrl = config.availableSlotsUrl || '';
     const forcedHolidayDatesUrl = config.forcedHolidayDatesUrl || '';
 
-    const poSearch = document.getElementById('po-search');
-    const poHidden = document.getElementById('po-number-hidden');
-    const poStatus = document.getElementById('po-status');
-    const poMessage = document.getElementById('po-message');
+    const poEntriesContainer = document.getElementById('po_entries_container');
+    const btnAddPo = document.getElementById('btn_add_po');
 
     const plannedDate = document.getElementById('planned-date');
     const plannedTime = document.getElementById('planned-time');
@@ -536,25 +534,9 @@ function initVendorBookingCreate(config) {
         });
     })();
 
-    if (!poSearch || !plannedDate || !plannedTime) {
+    if (!poEntriesContainer || !plannedDate || !plannedTime) {
         return;
     }
-
-    // Autofill optional fields from localStorage (saved during previous booking submission)
-    try {
-        if (vehicleNumberInput && !vehicleNumberInput.value) {
-            const saved = localStorage.getItem('vendor_autofill_vehicle_number');
-            if (saved) vehicleNumberInput.value = saved;
-        }
-        if (driverNameInput && !driverNameInput.value) {
-            const saved = localStorage.getItem('vendor_autofill_driver_name');
-            if (saved) driverNameInput.value = saved;
-        }
-        if (driverNumberInput && !driverNumberInput.value) {
-            const saved = localStorage.getItem('vendor_autofill_driver_number');
-            if (saved) driverNumberInput.value = saved;
-        }
-    } catch (ex) { /* localStorage not available */ }
 
     // Helper: Validasi regex vehicle number
     function isValidVehicle(val) {
@@ -569,10 +551,14 @@ function initVendorBookingCreate(config) {
     let searchTimeout = null;
 
     // Function to show loading state
-    function showLoading() {
-        poStatus.classList.remove('show', 'valid', 'invalid');
-        poMessage.classList.remove('valid', 'invalid');
-        poMessage.textContent = 'Searching PO/SO number...';
+    function showLoading(container) {
+        const poStatus = container.querySelector('.po-status');
+        const poMessage = container.querySelector('.po-message');
+        if (poStatus) poStatus.classList.remove('show', 'valid', 'invalid');
+        if (poMessage) {
+            poMessage.classList.remove('valid', 'invalid');
+            poMessage.textContent = 'Searching PO/SO number...';
+        }
     }
 
     function getDocTypeLabel(docType) {
@@ -582,29 +568,46 @@ function initVendorBookingCreate(config) {
     }
 
     // Function to show valid state
-    function showValid(messageHtml) {
-        poStatus.classList.remove('show', 'invalid');
-        poStatus.classList.add('show', 'valid');
-        poMessage.classList.remove('invalid');
-        poMessage.classList.add('valid');
-        poMessage.innerHTML = messageHtml || 'Data valid';
+    function showValid(container, messageHtml) {
+        const poStatus = container.querySelector('.po-status');
+        const poMessage = container.querySelector('.po-message');
+        if (poStatus) {
+            poStatus.classList.remove('show', 'invalid');
+            poStatus.classList.add('show', 'valid');
+        }
+        if (poMessage) {
+            poMessage.classList.remove('invalid');
+            poMessage.classList.add('valid');
+            poMessage.innerHTML = messageHtml || 'Data valid';
+        }
     }
 
     // Function to show invalid state
-    function showInvalid(message) {
-        poStatus.classList.remove('show', 'valid');
-        poStatus.classList.add('show', 'invalid');
-        poMessage.classList.remove('valid');
-        poMessage.classList.add('invalid');
-        poMessage.textContent = message || 'PO/SO number not found in SAP';
+    function showInvalid(container, message) {
+        const poStatus = container.querySelector('.po-status');
+        const poMessage = container.querySelector('.po-message');
+        if (poStatus) {
+            poStatus.classList.remove('show', 'valid');
+            poStatus.classList.add('show', 'invalid');
+        }
+        if (poMessage) {
+            poMessage.classList.remove('valid');
+            poMessage.classList.add('invalid');
+            poMessage.textContent = message || 'PO/SO number not found in SAP';
+        }
     }
 
     // Function to clear validation
-    function clearValidation() {
-        poStatus.classList.remove('show', 'valid', 'invalid');
-        poMessage.classList.remove('valid', 'invalid');
-        poMessage.textContent = '';
-        poHidden.value = '';
+    function clearValidation(container) {
+        const poStatus = container.querySelector('.po-status');
+        const poMessage = container.querySelector('.po-message');
+        const poHidden = container.querySelector('.po-number-hidden');
+        if (poStatus) poStatus.classList.remove('show', 'valid', 'invalid');
+        if (poMessage) {
+            poMessage.classList.remove('valid', 'invalid');
+            poMessage.textContent = '';
+        }
+        if (poHidden) poHidden.value = '';
     }
 
     const poBypassSap = document.getElementById('po_bypass_sap');
@@ -615,78 +618,167 @@ function initVendorBookingCreate(config) {
     // When bypass is toggled, sync hidden field and clear validation
     if (poBypassSap) {
         poBypassSap.addEventListener('change', function() {
+            const entries = poEntriesContainer.querySelectorAll('.po-entry');
             if (isBypassSap()) {
-                clearValidation();
-                // Sync hidden value from visible input
-                poHidden.value = poSearch.value.trim();
+                entries.forEach(entry => {
+                    const searchInput = entry.querySelector('.po-search-input');
+                    const hiddenInput = entry.querySelector('.po-number-hidden');
+                    clearValidation(entry);
+                    if (searchInput && hiddenInput) hiddenInput.value = searchInput.value.trim();
+                });
             } else {
-                poHidden.value = '';
-                clearValidation();
+                entries.forEach(entry => {
+                    const hiddenInput = entry.querySelector('.po-number-hidden');
+                    if (hiddenInput) hiddenInput.value = '';
+                    clearValidation(entry);
+                });
             }
         });
     }
 
-    poSearch.addEventListener('input', function () {
-        const q = this.value.trim();
+    
+    let searchTimeouts = {};
 
-        if (isBypassSap()) {
-            // In bypass mode, sync hidden value directly
-            poHidden.value = q;
-            clearValidation();
-            return;
+    poEntriesContainer.addEventListener('input', function (e) {
+        if (e.target.classList.contains('po-search-input')) {
+            const inputEl = e.target;
+            const container = inputEl.closest('.po-entry');
+            const hiddenEl = container.querySelector('.po-number-hidden');
+            const q = inputEl.value.trim();
+            const index = container.dataset.poIndex;
+
+            if (isBypassSap()) {
+                hiddenEl.value = q;
+                clearValidation(container);
+                return;
+            }
+
+            if (q.length < 2) {
+                clearValidation(container);
+                return;
+            }
+
+            if (searchTimeouts[index]) clearTimeout(searchTimeouts[index]);
+            showLoading(container);
+
+            searchTimeouts[index] = setTimeout(function () {
+                fetch(poSearchUrl + '?q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(data => {
+                                                  if (data.success && data.data.length > 0) {
+                              const po = data.data[0];
+                              
+                              const entries = Array.from(poEntriesContainer.querySelectorAll('.po-entry'));
+                              const firstEntry = entries[0];
+                              let isValid = true;
+                              let invalidMsg = '';
+
+                              if (firstEntry && firstEntry !== container && firstEntry.dataset.poDirection) {
+                                  const firstDir = firstEntry.dataset.poDirection;
+                                  const firstVendorName = firstEntry.dataset.poVendorName || '';
+                                  
+                                  const currentDir = po.direction ? po.direction.toLowerCase() : (po.doc_type === 'so' ? 'outbound' : 'inbound');
+                                  const currentVendorName = (po.vendor_name || '').trim();
+
+                                  if (currentDir !== firstDir) {
+                                      isValid = false;
+                                      invalidMsg = 'Multiple PO/SO must be of the same type. First is ' + firstDir + '.';
+                                  } else if (currentVendorName !== firstVendorName) {
+                                      isValid = false;
+                                      invalidMsg = 'Multiple PO/SO must be from the same vendor.';
+                                  }
+                              }
+
+                              if (isValid) {
+                                  const hiddenInputs = poEntriesContainer.querySelectorAll('.po-number-hidden');
+                                  for (let i = 0; i < hiddenInputs.length; i++) {
+                                      if (hiddenInputs[i] !== hiddenEl && hiddenInputs[i].value === po.po_number) {
+                                          isValid = false;
+                                          invalidMsg = 'PO/SO number is already added.';
+                                          break;
+                                      }
+                                  }
+                              }
+
+                              if (isValid) {
+                                  inputEl.value = po.po_number;
+                                  hiddenEl.value = po.po_number;
+                                  
+                                  const poDir = po.direction ? po.direction.toLowerCase() : (po.doc_type === 'so' ? 'outbound' : 'inbound');
+                                  container.dataset.poDirection = poDir;
+                                  container.dataset.poVendorName = (po.vendor_name || '').trim();
+                                  
+                                  const docTypeLabel = getDocTypeLabel(po.doc_type || null);
+                                  const isInternal = config.isInternalVendor === true || config.isInternalVendor === 1;
+                                  
+                                  if (isInternal) {
+                                      let detailHtml = '<strong>Valid — ' + docTypeLabel + ' found.</strong>';
+                                      if (po.vendor_name) detailHtml += '<br>Vendor: ' + po.vendor_name;
+                                      if (po.plant) detailHtml += '<br>Site / Plant: ' + po.plant;
+                                      if (po.direction) detailHtml += '<br>Type: <span style="text-transform: capitalize;">' + po.direction + '</span>';
+                                      showValid(container, detailHtml);
+                                  } else {
+                                      showValid(container, 'Valid — ' + docTypeLabel + ' found.');
+                                  }
+                              } else {
+                                  hiddenEl.value = '';
+                                  showInvalid(container, invalidMsg);
+                              }
+                          } else {
+                              hiddenEl.value = '';
+                              showInvalid(container, 'PO/SO number not found in SAP. Please check and re-enter.');
+                          }
+                    })
+                    .catch(err => {
+                        console.error('Search error:', err);
+                        showInvalid(container, 'Error checking PO/SO number');
+                    });
+            }, 500);
         }
-
-        if (q.length < 2) {
-            clearValidation();
-            return;
-        }
-
-        clearTimeout(searchTimeout);
-        showLoading();
-
-        searchTimeout = setTimeout(function () {
-            fetch(poSearchUrl + '?q=' + encodeURIComponent(q))
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success && data.data.length > 0) {
-                        // PO/SO found - valid
-                        const po = data.data[0];
-                        poSearch.value = po.po_number;
-                        poHidden.value = po.po_number;
-                        
-                        const docTypeLabel = getDocTypeLabel(po.doc_type || null);
-                        const isInternal = config.isInternalVendor === true || config.isInternalVendor === 1;
-                        
-                        if (isInternal) {
-                            // Construct detail string for internal vendor reference
-                            let detailHtml = `<strong>Valid \u2014 ${docTypeLabel} found.</strong>`;
-                            if (po.vendor_name) detailHtml += `<br>Vendor: ${po.vendor_name}`;
-                            if (po.plant) detailHtml += `<br>Site / Plant: ${po.plant}`;
-                            if (po.direction) detailHtml += `<br>Type: <span style="text-transform: capitalize;">${po.direction}</span>`;
-                            
-                            showValid(detailHtml);
-                        } else {
-                            // For regular external vendors, show doc type in the message
-                            showValid(`Valid \u2014 ${docTypeLabel} found.`);
-                        }
-                    } else {
-                        // PO/SO not found - invalid
-                        showInvalid('PO/SO number not found in SAP. Please check and re-enter.');
-                    }
-                })
-                .catch(err => {
-                    console.error('Search error:', err);
-                    showInvalid('Error checking PO/SO number');
-                });
-        }, 500);
     });
 
-    // Clear validation when user clears the input
-    poSearch.addEventListener('blur', function () {
-        if (this.value.trim() === '') {
-            clearValidation();
+    poEntriesContainer.addEventListener('blur', function (e) {
+        if (e.target.classList.contains('po-search-input')) {
+            if (e.target.value.trim() === '') {
+                clearValidation(e.target.closest('.po-entry'));
+            }
+        }
+    }, true);
+
+    if (btnAddPo) {
+        let poIndex = poEntriesContainer.querySelectorAll('.po-entry').length || 1;
+        btnAddPo.addEventListener('click', function() {
+            const html = `<div class="po-entry cb-mb-8" data-po-index="${poIndex}" style="margin-bottom: 12px;">
+                <div style="display: flex; gap: 8px; align-items: center; position: relative;">
+                    <div class="cb-po-search" style="flex: 1; position: relative;">
+                        <input type="text"
+                               class="cb-input cb-input--pr-40 po-search-input"
+                               placeholder="Search PO/SO number..."
+                               autocomplete="off">
+                        <input type="hidden" name="po_number[]" class="po-number-hidden">
+                        <span class="cb-input-status po-status" aria-hidden="true"></span>
+                    </div>
+                    <button type="button" class="btn-remove-po" title="Delete" style="background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='transparent'; this.style.color='#6b7280'; this.style.borderColor='#d1d5db';">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="cb-po-message po-message" style="margin-top: 4px;"></div>
+            </div>`;
+            poEntriesContainer.insertAdjacentHTML('beforeend', html);
+            poIndex++;
+        });
+    }
+
+    poEntriesContainer.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.btn-remove-po');
+        if (removeBtn) {
+            const entry = removeBtn.closest('.po-entry');
+            if (entry && poEntriesContainer.querySelectorAll('.po-entry').length > 1) {
+                entry.remove();
+            }
         }
     });
+
 
     if (bookingForm) {
         bookingForm.addEventListener('submit', function (e) {
@@ -696,17 +788,37 @@ function initVendorBookingCreate(config) {
                 alertBox.textContent = '';
             }
 
-            const poNumber = isBypassSap() ? poSearch.value.trim() : poHidden.value.trim();
-            if (isBypassSap()) {
-                poHidden.value = poSearch.value.trim();
+                        const poInputs = poEntriesContainer.querySelectorAll('.po-search-input');
+            const poHiddens = poEntriesContainer.querySelectorAll('.po-number-hidden');
+            let allValid = true;
+            let hasAtLeastOne = false;
+
+            for (let i = 0; i < poInputs.length; i++) {
+                const searchInput = poInputs[i];
+                const hiddenInput = poHiddens[i];
+                const val = isBypassSap() ? searchInput.value.trim() : hiddenInput.value.trim();
+                
+                if (isBypassSap()) hiddenInput.value = searchInput.value.trim();
+                
+                if (val) {
+                    hasAtLeastOne = true;
+                } else if (i === 0 && poInputs.length === 1) {
+                    // if only one entry and it's empty
+                    allValid = false;
+                    searchInput.focus();
+                } else if (val === '' && searchInput.value.trim() !== '') {
+                    // they typed something but it's invalid (not in hidden)
+                    allValid = false;
+                    searchInput.focus();
+                }
             }
-            if (!poNumber) {
+
+            if (!hasAtLeastOne || !allValid) {
                 e.preventDefault();
                 if (alertBox) {
-                    alertBox.textContent = 'Please complete the required data: select a PO/SO number.';
+                    alertBox.textContent = 'Please provide valid PO/SO number(s).';
                     alertBox.hidden = false;
                 }
-                poSearch.focus();
                 return false;
             }
 
@@ -765,14 +877,6 @@ function initVendorBookingCreate(config) {
                 if (driverNumberInput) driverNumberInput.focus();
                 return false;
             }
-
-            // Save optional fields to localStorage for autofill on next booking
-            try {
-                if (vehicleVal) localStorage.setItem('vendor_autofill_vehicle_number', vehicleVal);
-                const driverNameVal = driverNameInput ? driverNameInput.value.trim() : '';
-                if (driverNameVal) localStorage.setItem('vendor_autofill_driver_name', driverNameVal);
-                if (driverPhoneVal) localStorage.setItem('vendor_autofill_driver_number', driverPhoneVal);
-            } catch (ex) { /* localStorage not available */ }
 
             // Check if selected time is available
             const selectedTime = plannedTime.value.trim();

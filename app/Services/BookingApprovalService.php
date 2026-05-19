@@ -582,6 +582,9 @@ class BookingApprovalService
     private function safeActivityLog(string $type, array $payload, array $context = []): void
     {
         try {
+            if (! isset($payload['created_at'])) {
+                $payload['created_at'] = now();
+            }
             ActivityLog::create($payload);
         } catch (\Throwable $e) {
             Log::error('Failed to log activity: '.$type.' - '.$e->getMessage(), $context);
