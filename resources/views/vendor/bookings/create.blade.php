@@ -74,7 +74,6 @@
                                            value="{{ old('planned_date') }}"
                                            placeholder="Select date"
                                            required>
-                                    <div class="cb-hint">Min H-2</div>
                                     @error('planned_date')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror

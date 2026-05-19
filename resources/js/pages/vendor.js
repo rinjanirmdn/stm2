@@ -1092,16 +1092,23 @@ function initVendorBookingCreate(config) {
             showDropdowns: true,
             autoApply: true,
             autoUpdateInput: false,
-            minDate: window.moment().add(2, 'days'),
+            minDate: window.moment(),
             locale: { format: 'DD-MM-YYYY' },
             minYear: parseInt(window.moment().format('YYYY'), 10),
             maxYear: parseInt(window.moment().format('YYYY'), 10) + 2,
-            startDate: startDate.isBefore(window.moment().add(2, 'days'), 'day') ? window.moment().add(2, 'days') : startDate,
+            startDate: startDate,
             isInvalidDate: function (date) {
                 var ds = date.format('YYYY-MM-DD');
                 var isSunday = date.day() === 0;
                 var isHoliday = !!(holidayData[ds]);
-                if ((isSunday || isHoliday) && !forcedHolidayDatesSet.has(ds)) {
+                
+                var today = window.moment().startOf('day');
+                var minAllowedDate = window.moment().add(2, 'days').startOf('day');
+                var isTodayOrTomorrow = date.isSameOrAfter(today) && date.isBefore(minAllowedDate);
+                
+                var isBlockedDefault = isSunday || isHoliday || isTodayOrTomorrow;
+                
+                if (isBlockedDefault && !forcedHolidayDatesSet.has(ds)) {
                     return true;
                 }
                 return false;
@@ -1336,9 +1343,7 @@ function initVendorAvailability(config) {
 
     let currentDate = selectedDate ? new Date(selectedDate) : new Date();
     const today = new Date();
-    const minDate = new Date(today);
-    minDate.setDate(today.getDate() + 2);
-    const minDateMidnight = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+    const minDateMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const holidayData = holidays;
 
     // Set of Sunday/Holiday dates that have admin-forced times (YYYY-MM-DD strings)
@@ -1470,7 +1475,9 @@ function initVendorAvailability(config) {
             const isPast = date < minDateMidnight;
             const isSunday = date.getDay() === 0;
             const isHoliday = holidayData[dateStr];
-            const isSundayOrHol = isSunday || !!isHoliday;
+            const minAllowedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+            const isTodayOrTomorrow = date < minAllowedDate && date >= minDateMidnight;
+            const isSundayOrHol = isSunday || !!isHoliday || isTodayOrTomorrow;
             const hasForced = forcedHolidayDatesSet.has(dateStr);
             // Block Sunday/Holiday unless there are admin-forced times
             const isBlocked = isPast || (isSundayOrHol && !hasForced);
