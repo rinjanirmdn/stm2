@@ -37,19 +37,37 @@
                             </h3>
                             <div class="cb-field">
                                 <label class="cb-label cb-label--required">PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} Number</label>
-                                <div class="cb-po-search">
-                                    <input type="text"
-                                           id="po-search"
-                                           class="cb-input cb-input--pr-40"
-                                           placeholder="Search PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} number..."
-                                           autocomplete="off"
-                                           value="{{ old('po_number') }}">
-                                    <input type="hidden" name="po_number" id="po-number-hidden" value="{{ old('po_number') }}">
-                                    <span class="cb-input-status" id="po-status" aria-hidden="true"></span>
+                                <div id="po_entries_container">
+                                    @php
+                                        $oldPoNumbers = old('po_number', ['']);
+                                        if (!is_array($oldPoNumbers)) $oldPoNumbers = explode(',', $oldPoNumbers);
+                                    @endphp
+                                    @foreach($oldPoNumbers as $index => $oldPo)
+                                    <div class="po-entry cb-mb-8" data-po-index="{{ $index }}" style="margin-bottom: 12px;">
+                                        <div style="display: flex; gap: 8px; align-items: center; position: relative;">
+                                            <div class="cb-po-search" style="flex: 1; position: relative;">
+                                                <input type="text"
+                                                       class="cb-input cb-input--pr-40 po-search-input"
+                                                       placeholder="Search PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} number..."
+                                                       autocomplete="off"
+                                                       value="{{ trim($oldPo) }}">
+                                                <input type="hidden" name="po_number[]" class="po-number-hidden" value="{{ trim($oldPo) }}">
+                                                <span class="cb-input-status po-status" aria-hidden="true"></span>
+                                            </div>
+                                            <button type="button" class="btn-remove-po" title="Delete" style="{{ $index === 0 ? 'visibility: hidden;' : '' }} background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='transparent'; this.style.color='#6b7280'; this.style.borderColor='#d1d5db';">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                        <div class="cb-po-message po-message" style="margin-top: 4px;"></div>
+                                    </div>
+                                    @endforeach
                                 </div>
-                                <div class="cb-hint" style="font-style: italic; color: #9ca3af;">Only displays released PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} numbers from SAP.</div>
+                                
+                                <button type="button" id="btn_add_po" class="cb-btn cb-btn--outline-primary cb-btn--sm" style="margin-top: 8px; width: 100%; border: 1px dashed #3b82f6; color: #3b82f6; background: #eff6ff; display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 6px; transition: all 0.2s; font-weight: 600;" onmouseover="this.style.background='#dbeafe';" onmouseout="this.style.background='#eff6ff';">
+                                    <i class="fas fa-plus" style="margin-right: 8px;"></i> Add Another PO/SO
+                                </button>
 
-                                <div class="cb-po-message" id="po-message"></div>
+                                <div class="cb-hint" style="font-style: italic; color: #9ca3af; margin-top: 8px;">Only displays released PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} numbers from SAP.</div>
                                 @error('po_number')
                                     <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                 @enderror
@@ -71,7 +89,7 @@
                                            id="planned-date"
                                            autocomplete="off"
                                            readonly
-                                           value="{{ old('planned_date') }}"
+                                           value="{{ old('planned_date', request()->query('date')) }}"
                                            placeholder="Select date"
                                            required>
                                     @error('planned_date')
@@ -86,7 +104,7 @@
                                            id="planned-time"
                                            inputmode="none"
                                            readonly
-                                           value="{{ old('planned_time') }}"
+                                           value="{{ old('planned_time', request()->query('time')) }}"
                                            placeholder="Select time"
                                            required>
                                     <div class="cb-hint">07:00 - 19:00</div>

@@ -877,6 +877,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             stBindDaterangepickerDecorators(reportRange);
 
+            // Force update inputs on apply, even if date didn't change (e.g. clicking 'Today' when it defaults to 'Today')
+            reportRange.on('apply.daterangepicker', function(ev, picker) {
+                updateRange(picker.startDate, picker.endDate);
+            });
+
             if (hasInitial) {
                 updateRange(start, end);
             } else {
