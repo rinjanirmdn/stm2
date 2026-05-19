@@ -913,6 +913,15 @@ class VendorBookingController extends Controller
                 'approval_notes' => $notes,
             ]);
 
+            if (!empty($booking->converted_slot_id)) {
+                DB::table('slots')->where('id_slots', $booking->converted_slot_id)->update([
+                    'status' => 'cancelled',
+                    'cancelled_reason' => $reason,
+                    'cancelled_by' => $user->id_users,
+                    'cancelled_at' => now(),
+                ]);
+            }
+
             if (! empty($booking->planned_start)) {
                 $cancelDate = $booking->planned_start instanceof \DateTimeInterface
                     ? $booking->planned_start->format('Y-m-d')

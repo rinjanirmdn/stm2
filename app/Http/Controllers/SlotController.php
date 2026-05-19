@@ -795,6 +795,7 @@ class SlotController extends Controller
             DB::table('slots')->where('id_slots', $slotId)->update([
                 'status' => 'cancelled',
                 'cancelled_reason' => $reason,
+                'cancelled_by' => $actor->id_users ?? null,
                 'cancelled_at' => $now,
             ]);
 

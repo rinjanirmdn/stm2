@@ -325,6 +325,26 @@
                                     </th>
                                     <th>
                                         <div class="st-colhead">
+                                            <span class="st-colhead__label">Status</span>
+                                            <span class="st-colhead__icons">
+                                                <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="status" data-type="text" title="Sort">⇅</button>
+                                                <button type="button" class="st-colhead__icon st-filter-trigger" data-filter="status" title="Filter">⏷</button>
+                                            </span>
+                                            <div class="st-filter-panel st-filter-panel--wide st-top-full st-left-0 st-mt-4 st-minw-200 st-maxh-220" data-st-position="fixed" data-filter-panel="status">
+                                                <div class="st-font-semibold st-mb-6">Status Filter</div>
+                                                <select name="status[]" class="st-select st-filter-status-select st-select--panel">
+                                                    <option value="">(All)</option>
+                                                    <option value="completed" {{ in_array('completed', $statusFilter ?? [], true) ? 'selected' : '' }}>Completed</option>
+                                                    <option value="cancelled" {{ in_array('cancelled', $statusFilter ?? [], true) ? 'selected' : '' }}>Cancelled</option>
+                                                </select>
+                                                <div class="st-panel__actions">
+                                                    <button type="button" class="st-btn st-btn--sm st-btn--outline-primary st-filter-clear" data-filter="status">Clear</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="st-colhead">
                                             <span class="st-colhead__label">User</span>
                                             <span class="st-colhead__icons">
                                                 <button type="button" class="st-colhead__icon st-sort-trigger" data-sort="user" data-type="text" title="Sort">⇅</button>
@@ -495,6 +515,19 @@
                                                 N/A
                                             @endif
                                         </td>
+                                        <td class="st-td-center">
+                                            @php $slotStatus = strtolower(trim($r->status ?? '')); @endphp
+                                            @if ($slotStatus === 'completed')
+                                                <span class="st-table__status-badge st-status-on-time">Completed</span>
+                                            @elseif ($slotStatus === 'cancelled')
+                                                <span class="st-table__status-badge st-status-late" @if(!empty($r->approval_notes)) title="{{ $r->approval_notes }}" @endif>Cancelled</span>
+                                                @if(!empty($r->approval_notes))
+                                                    <div class="st-text--xs-10 st-text--muted st-mt-1" style="max-width:120px; word-break:break-word;">{{ Str::limit($r->approval_notes, 40) }}</div>
+                                                @endif
+                                            @else
+                                                {{ ucfirst(str_replace('_', ' ', $slotStatus)) }}
+                                            @endif
+                                        </td>
                                         <td class="st-td-center">{{ $r->created_by_name ?? $r->created_by_email ?? 'N/A' }}</td>
                                         <td class="st-td-center">
                                             <div class="tw-actionbar">
@@ -506,7 +539,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="13" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Transactions Found</td>
+                                        <td colspan="14" class="st-table-empty st-text-center st-text--muted st-table-empty--roomy">No Transactions Found</td>
                                     </tr>
                                 @endforelse
                             </tbody>
