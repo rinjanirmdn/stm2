@@ -41,7 +41,8 @@ class UserUpdateRequest extends FormRequest
             'nik' => [
                 'required',
                 'string',
-                'max:50',
+                'numeric',
+                'digits_between:1,8',
                 Rule::unique('md_users', 'nik')->ignore($userId, 'id_users')->whereNull('deleted_at'),
             ],
             'email' => [
@@ -101,6 +102,10 @@ class UserUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'nik.required' => 'NIK is required.',
+            'nik.numeric' => 'NIK must contain only numbers.',
+            'nik.digits_between' => 'NIK must be numeric and between 1 and 8 digits.',
+            'nik.unique' => 'NIK already exists.',
             'name.required' => 'Full name is required.',
             'name.max' => 'Full name maximum 255 characters.',
             'email.required' => 'Email is required.',

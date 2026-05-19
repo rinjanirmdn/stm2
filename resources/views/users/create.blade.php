@@ -33,8 +33,11 @@
                     @csrf
 
                     <div class="st-form-field st-form-field--mb">
-                        <label class="st-label">NIK</label>
-                        <input type="text" name="nik" class="st-input" maxlength="50" value="{{ old('nik') }}" required>
+                        <label class="st-label">NIK <span class="st-text--danger-dark">*</span></label>
+                        <input type="text" name="nik" class="st-input{{ $errors->has('nik') ? ' st-input--invalid' : '' }}" maxlength="8" oninput="this.value = this.value.replace(/\D/g, '')" value="{{ old('nik') }}" required placeholder="e.g. 12345678">
+                        @error('nik')
+                            <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="st-form-field st-form-field--mb">
