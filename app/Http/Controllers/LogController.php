@@ -32,6 +32,7 @@ class LogController extends Controller
         $sorts = is_array($rawSort) ? $rawSort : [trim((string) $rawSort)];
         $dirs = is_array($rawDir) ? $rawDir : [trim((string) $rawDir)];
 
+
         // Cache Schema introspection results per-process to avoid 6+ DB queries per request
         static $cachedSchema = null;
         if ($cachedSchema === null) {

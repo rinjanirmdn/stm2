@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var durationUnitSelect = document.querySelector('select[name="duration_unit"]');
         var truckTypeSelect = document.getElementById('truck_type');
         var gateSelect = document.getElementById('planned_gate_id');
+        var directionSelect = document.getElementById('direction');
 
         var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
@@ -145,20 +146,43 @@ document.addEventListener('DOMContentLoaded', function() {
             if (plannedStartTimeInput) plannedStartTimeInput.value = (parts[1] || '').slice(0, 5);
         }
 
+        if (plannedStartDateInput) {
+            plannedStartDateInput.addEventListener('change', function () {
+                syncPlannedStart();
+            });
+            plannedStartDateInput.addEventListener('input', function () {
+                syncPlannedStart();
+            });
+        }
+
+        if (plannedStartTimeInput) {
+            plannedStartTimeInput.addEventListener('change', function () {
+                syncPlannedStart();
+            });
+            plannedStartTimeInput.addEventListener('input', function () {
+                syncPlannedStart();
+            });
+        }
+
+
         // Logic for Truck Type Durations
         var typeDurations = {};
         try {
             typeDurations = JSON.parse(document.getElementById('truck_type_durations_json').textContent);
         } catch(e) {}
 
+        function updateDurationFromTruckType() {
+            if (!truckTypeSelect || !plannedDurationInput) return;
+            var val = (truckTypeSelect.value || '').trim();
+            var minutes = val && typeDurations && typeDurations[val] ? parseInt(typeDurations[val], 10) : NaN;
+
+            if (val && isFinite(minutes) && minutes > 0) {
+                plannedDurationInput.value = String(minutes);
+            }
+        }
+
         if (truckTypeSelect && plannedDurationInput) {
-            truckTypeSelect.addEventListener('change', function() {
-                var val = truckTypeSelect.value;
-                if (val && typeDurations[val]) {
-                    plannedDurationInput.value = typeDurations[val];
-                    if (durationUnitSelect) durationUnitSelect.value = 'minutes';
-                }
-            });
+            truckTypeSelect.addEventListener('change', updateDurationFromTruckType);
         }
 
         // PO/SO Validation Feedback
@@ -298,20 +322,33 @@ document.addEventListener('DOMContentLoaded', function() {
             var vendorNameManual = document.getElementById('vendor_name_manual');
 
             function toggleVendorBypass() {
-                if (!vendorSearchEdit) return;
                 if (isBypassSap()) {
-                    vendorSearchEdit.removeAttribute('readonly');
-                    vendorSearchEdit.removeAttribute('disabled');
-                    vendorSearchEdit.placeholder = 'Type vendor name manually';
+                    if (vendorSearchEdit) {
+                        vendorSearchEdit.removeAttribute('readonly');
+                        vendorSearchEdit.removeAttribute('disabled');
+                        vendorSearchEdit.placeholder = 'Type vendor name manually';
+                    }
+                    if (directionSelect) {
+                        directionSelect.removeAttribute('disabled');
+                    }
                     clearPoFeedback();
                 } else {
-                    vendorSearchEdit.setAttribute('disabled', true);
-                    vendorSearchEdit.placeholder = 'Vendor will auto-fill from PO';
+                    if (vendorSearchEdit) {
+                        vendorSearchEdit.setAttribute('disabled', true);
+                        vendorSearchEdit.placeholder = 'Vendor will auto-fill from PO';
+                    }
+                    if (directionSelect) {
+                        directionSelect.setAttribute('disabled', 'disabled');
+                    }
                     var currentPo = poInput ? (poInput.value || '').trim() : '';
                     if (currentPo.length >= 10) {
                         fetchPoDetail(currentPo, function(data) {
                             if (data.success && data.data) {
                                 if (vendorSearchEdit && data.data.vendor_name) vendorSearchEdit.value = data.data.vendor_name;
+                                if (directionSelect && data.data.direction) {
+                                    directionSelect.value = data.data.direction;
+                                    directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
                                 poLastAutoFilledValue = currentPo;
                                 showPoValid(data.data.doc_type || null);
                             } else {
@@ -353,20 +390,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (poDebounceTimer) clearTimeout(poDebounceTimer);
                 poDebounceTimer = setTimeout(function() {
-                    if (q.length >= 10) {
-                        fetchPoDetail(q, function(data) {
-                            if (data.success && data.data) {
-                                if (vendorSearch && data.data.vendor_name) vendorSearch.value = data.data.vendor_name;
-                                poLastAutoFilledValue = q;
-                                closePoSuggestions();
-                                showPoValid(data.data.doc_type || null);
-                            } else {
-                                poLastAutoFilledValue = '';
-                                showPoInvalid();
-                            }
-                        });
-                        return;
-                    }
+                     if (q.length >= 10) {
+                         fetchPoDetail(q, function(data) {
+                             if (data.success && data.data) {
+                                 if (vendorSearch && data.data.vendor_name) vendorSearch.value = data.data.vendor_name;
+                                 if (directionSelect && data.data.direction) {
+                                     directionSelect.value = data.data.direction;
+                                     directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                 }
+                                 poLastAutoFilledValue = q;
+                                 closePoSuggestions();
+                                 showPoValid(data.data.doc_type || null);
+                             } else {
+                                 poLastAutoFilledValue = '';
+                                 showPoInvalid();
+                             }
+                         });
+                         return;
+                     }
                     getJson(String(urlPoSearch || '') + '?q=' + encodeURIComponent(q))
                         .then(function(data) {
                             if (!data || !data.success) { closePoSuggestions(); return; }
@@ -397,6 +438,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         fetchPoDetail(current, function(data) {
                             if (data.success && data.data) {
                                 if (vendorSearch && data.data.vendor_name) vendorSearch.value = data.data.vendor_name;
+                                if (directionSelect && data.data.direction) {
+                                    directionSelect.value = data.data.direction;
+                                    directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
                                 poLastAutoFilledValue = current;
                                 showPoValid(data.data.doc_type || null);
                             } else {
@@ -429,6 +474,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchPoDetail(poNumber, function(data) {
                     if (data.success && data.data) {
                         if (vendorSearch && data.data.vendor_name) vendorSearch.value = data.data.vendor_name;
+                        if (directionSelect && data.data.direction) {
+                            directionSelect.value = data.data.direction;
+                            directionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
                         showPoValid(data.data.doc_type || null);
                     } else {
                         showPoInvalid();
@@ -442,4 +491,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === poInput || poSuggestions.contains(e.target)) return;
             closePoSuggestions();
         });
+
+        var form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (directionSelect) directionSelect.removeAttribute('disabled');
+            });
+        }
     });
