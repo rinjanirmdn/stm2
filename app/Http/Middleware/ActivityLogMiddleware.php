@@ -426,9 +426,9 @@ class ActivityLogMiddleware
             'vendor.bookings.cancel' => ['update', 'Booking Requests'],
 
             // Truck types
-            'trucks.store' => ['insert', 'Truck Type'],
-            'trucks.update' => ['update', 'Truck Type'],
-            'trucks.delete' => ['delete', 'Truck Type'],
+            'trucks.store' => ['insert', 'Truck Types'],
+            'trucks.update' => ['update', 'Truck Types'],
+            'trucks.delete' => ['delete', 'Truck Types'],
         ];
 
         if (isset($routeMap[$routeName])) {

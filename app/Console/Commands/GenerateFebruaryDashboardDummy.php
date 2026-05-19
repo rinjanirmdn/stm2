@@ -237,8 +237,6 @@ class GenerateFebruaryDashboardDummy extends Command
                 $slot = [
                     'ticket_number' => $ticketNumber,
                     'sj_no' => null,
-                    'sj_start_number' => null,
-                    'sj_complete_number' => null,
                     'truck_type' => (string) ($truckType->truck_type ?? 'Cargo'),
                     'vehicle_number_snap' => sprintf('B %04d %s', mt_rand(1000, 9999), chr(mt_rand(65, 90))),
                     'driver_name' => 'Driver '.mt_rand(10, 99),
