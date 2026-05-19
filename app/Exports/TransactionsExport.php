@@ -49,7 +49,7 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
             // Return empty on error
         }
 
-        return '-';
+        return 'N/A';
     }
 
     private function getTargetStatus($transaction): string
@@ -58,10 +58,10 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
         $leadTimeMinutes = $this->getLeadTimeMinutes($transaction);
 
         if ($targetMinutes > 0 && $leadTimeMinutes > 0) {
-            return $leadTimeMinutes <= ($targetMinutes + 15) ? 'achieve' : 'not_achieve';
+            return $leadTimeMinutes <= ($targetMinutes + 15) ? 'Achieve' : 'Not Achieve';
         }
 
-        return '-';
+        return 'N/A';
     }
 
     private function getLeadTimeMinutes($transaction): int
@@ -86,7 +86,7 @@ class TransactionsExport implements FromView, WithColumnWidths, WithStyles
     private function formatDuration(?int $minutes): string
     {
         if ($minutes === null || $minutes === 0) {
-            return '-';
+            return 'N/A';
         }
 
         $m = $minutes;
