@@ -376,5 +376,71 @@
             // Apply initial filter (show first 5)
             applyRecentFilters();
         });
+
+        // Global function for React component to call
+        window.openChartModal = function(status, label, dateFrom, dateTo) {
+            $('#chartModalTitle').text(label + ' Bookings');
+            $('#chartModalBody').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-primary text-2xl"></i><p class="mt-2 text-gray-500">Loading data...</p></div>');
+            $('#chartModal').removeClass('hidden').addClass('flex');
+            
+            // Fetch data
+            $.ajax({
+                url: '{{ route('vendor.ajax.chart_details') }}',
+                data: {
+                    status: status,
+                    date_from: dateFrom,
+                    date_to: dateTo
+                },
+                success: function(res) {
+                    if (res.success && res.data.length > 0) {
+                        let html = '<div class="overflow-x-auto"><table class="w-full text-left border-collapse text-sm">';
+                        html += '<thead><tr class="border-b bg-gray-50 text-gray-600"><th class="p-2">Req No.</th><th class="p-2">PO/SO</th><th class="p-2">Date</th><th class="p-2">Status</th><th class="p-2">Warehouse</th></tr></thead><tbody>';
+                        res.data.forEach(function(item) {
+                            let statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">' + item.status + '</span>';
+                            if (item.status === 'scheduled') statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">Scheduled</span>';
+                            if (item.status === 'arrived') statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-700">Arrived</span>';
+                            if (item.status === 'completed') statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Completed</span>';
+                            if (item.status === 'cancelled' || item.status === 'rejected') statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">' + item.status + '</span>';
+                            
+                            let detailUrl = "{{ route('vendor.bookings.show', ':id') }}".replace(':id', item.id);
+                            html += '<tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="window.location.href=\'' + detailUrl + '\'">';
+                            html += '<td class="p-2 font-medium text-gray-900">REQ-' + item.id + '</td>';
+                            html += '<td class="p-2 text-gray-600">' + item.po + '</td>';
+                            html += '<td class="p-2 text-gray-600">' + item.date + '</td>';
+                            html += '<td class="p-2">' + statusBadge + '</td>';
+                            html += '<td class="p-2 text-gray-600">' + item.warehouse + '</td>';
+                            html += '</tr>';
+                        });
+                        html += '</tbody></table></div>';
+                        $('#chartModalBody').html(html);
+                    } else {
+                        $('#chartModalBody').html('<div class="text-center py-6 text-gray-500"><i class="fas fa-inbox text-3xl mb-2 text-gray-300"></i><p>No bookings found for this status.</p></div>');
+                    }
+                },
+                error: function() {
+                    $('#chartModalBody').html('<div class="text-center py-4 text-red-500"><p>Failed to load data. Please try again.</p></div>');
+                }
+            });
+        };
+
+        $(document).on('click', '#chartModalClose, #chartModalOverlay', function() {
+            $('#chartModal').removeClass('flex').addClass('hidden');
+        });
     </script>
+
+    <!-- Chart Details Modal -->
+    <div id="chartModal" class="fixed inset-0 hidden items-center justify-center" style="z-index: 99999;">
+        <div id="chartModalOverlay" class="absolute inset-0 transition-opacity" style="background-color: rgba(0, 0, 0, 0.5);"></div>
+        <div class="relative w-full max-w-3xl max-h-[80vh] bg-white rounded-lg shadow-xl flex flex-col m-4 animate-fadeIn" style="z-index: 100000;">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 id="chartModalTitle" class="text-lg font-semibold text-gray-900">Bookings</h3>
+                <button id="chartModalClose" type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="chartModalBody" class="p-4 overflow-y-auto flex-1">
+                <!-- Content injected via AJAX -->
+            </div>
+        </div>
+    </div>
 @endpush

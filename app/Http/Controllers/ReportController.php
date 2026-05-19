@@ -567,12 +567,15 @@ class ReportController extends Controller
         $disabledTimes = $this->getAdminDisabledTimes($date);
         $forcedTimes = $this->getAdminForcedTimes($date);
 
-        // On Sunday or National Holiday: auto-disable ALL times that are NOT forced.
-        // This ensures the internal Gates view matches the vendor view.
+        // On Sunday, National Holiday, or Today/Tomorrow (H+0/H+1): auto-disable ALL times that are NOT forced.
+        // This ensures the internal Gates view matches the vendor view's default closed behavior.
         $isSundayOrHoliday = false;
         try {
             $dateObj = Carbon::parse($date);
-            $isSundayOrHoliday = $dateObj->isSunday() || HolidayHelper::isHoliday($dateObj);
+            $today = Carbon::today();
+            $minAllowedDate = Carbon::today()->addDays(2);
+            $isTodayOrTomorrow = $dateObj->greaterThanOrEqualTo($today) && $dateObj->lessThan($minAllowedDate);
+            $isSundayOrHoliday = $dateObj->isSunday() || HolidayHelper::isHoliday($dateObj) || $isTodayOrTomorrow;
         } catch (\Throwable $e) {
             // ignore
         }

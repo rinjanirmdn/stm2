@@ -23,6 +23,7 @@ Route::middleware('vendor.portal')->prefix('vendor')->name('vendor.')->group(fun
 
     // AJAX endpoints
     Route::prefix('ajax')->name('ajax.')->group(function () {
+        Route::get('/chart-details', [VendorBookingController::class, 'ajaxChartDetails'])->name('chart_details')->middleware(['permission:vendor.dashboard', 'throttle:30,1']);
         Route::get('/available-slots', [VendorBookingController::class, 'getAvailableSlots'])->name('available_slots')->middleware(['permission:vendor.ajax.available_slots', 'throttle:30,1']);
         Route::get('/check-availability', [VendorBookingController::class, 'checkAvailability'])->name('check_availability')->middleware(['permission:vendor.ajax.check_availability', 'throttle:30,1']);
         Route::get('/truck-type-duration', [VendorBookingController::class, 'getTruckTypeDuration'])->name('truck_type_duration')->middleware(['permission:vendor.ajax.truck_type_duration', 'throttle:30,1']);
