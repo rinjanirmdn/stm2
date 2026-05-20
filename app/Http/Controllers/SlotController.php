@@ -248,7 +248,7 @@ class SlotController extends Controller
                 return back()->withInput()->with('error', 'All PO/SO numbers must belong to the same vendor.');
             }
 
-            $directions = array_filter(array_map(function($d) {
+            $directions = array_filter(array_map(function ($d) {
                 return $d['direction'] ?? ($d['doc_type'] === 'so' ? 'outbound' : 'inbound');
             }, $poDetails));
             $uniqueDirections = array_unique($directions);
