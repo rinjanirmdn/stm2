@@ -1161,17 +1161,12 @@ document.addEventListener('DOMContentLoaded', function () {
     updateRiskPreview();
     updateGateRecommendation();
     checkTimeOverlap();
-<<<<<<< feature/reports-and-po-fixes
-=======
-
     var form = document.querySelector('form');
     if (form) {
         form.addEventListener('submit', function() {
             if (directionSelect) directionSelect.removeAttribute('disabled');
         });
     }
-
->>>>>>> develop
     applySaveState();
 
     // Multiple PO Logic for Admin
