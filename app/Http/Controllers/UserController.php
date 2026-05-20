@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
@@ -328,7 +330,7 @@ class UserController extends Controller
                     $appName = 'e-Docking Control System';
                     $userEmail = $userModel->email;
 
-                    if (!empty($userEmail)) {
+                    if (! empty($userEmail)) {
                         try {
                             $html = view('emails.password-reset-user', [
                                 'appName' => $appName,
@@ -337,12 +339,12 @@ class UserController extends Controller
                                 'plainPassword' => $password,
                             ])->render();
 
-                            \Illuminate\Support\Facades\Mail::html($html, function ($message) use ($userEmail, $userModel, $appName) {
+                            Mail::html($html, function ($message) use ($userEmail, $userModel, $appName) {
                                 $message->to($userEmail, $userModel->full_name ?? 'User')
                                     ->subject('['.$appName.'] Your Password Has Been Reset');
                             });
                         } catch (\Throwable $mailEx) {
-                            \Illuminate\Support\Facades\Log::error('Failed to send password reset notification email to user: ' . $mailEx->getMessage());
+                            Log::error('Failed to send password reset notification email to user: '.$mailEx->getMessage());
                         }
                     }
                 }
