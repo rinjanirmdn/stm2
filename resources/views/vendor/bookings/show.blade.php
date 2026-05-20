@@ -288,7 +288,7 @@
         @endif
     </div>
 
-    @if($slot && (!empty($slot->start_photo_path) || !empty($slot->complete_photo_path)))
+    @if($slot && (!empty($slot->start_photos) || !empty($slot->complete_photos)))
     <div style="margin-top: 25px;">
         <h3 class="vb-section-title">
             <i class="fas fa-camera"></i>
@@ -296,38 +296,61 @@
         </h3>
         
         <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
-            @if(!empty($slot->start_photo_path) && is_array($slot->start_photo_path))
+            @if(!empty($slot->start_photos))
                 <div style="flex: 1; min-width: 250px;">
                     <h4 style="font-size: 0.95em; color: #475569; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
                         <span style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></span>
                         Start Photos
                     </h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
-                        @foreach($slot->start_photo_path as $photo)
-                            <a href="{{ asset('storage/' . $photo) }}" target="_blank" style="display: block; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                <img src="{{ asset('storage/' . $photo) }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Start Photo">
-                            </a>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px;">
+                        @foreach($slot->start_photos as $idx => $photo)
+                            @php
+                                $imgUrl = !empty($photo->id_slot_photos) ? route('slot-photos.show', $photo->id_slot_photos) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
+                                $dlUrl = !empty($photo->id_slot_photos) ? route('slot-photos.download', $photo->id_slot_photos) : $imgUrl;
+                            @endphp
+                            <div class="st-photo-preview" style="text-align: center;">
+                                <div style="display: block; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.2s; cursor: zoom-in;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="openPhotoModal('{{ $imgUrl }}')">
+                                    <img src="{{ $imgUrl }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Start Photo {{ $idx + 1 }}">
+                                </div>
+                                <a href="{{ $dlUrl }}" download="Start_Photo_{{ $slot->id_slots }}_{{ $idx + 1 }}.jpg" class="vendor-btn vendor-btn--secondary vendor-btn--sm" style="margin-top: 8px; width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 4px; padding: 4px 8px; font-size: 0.8em;">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
                         @endforeach
                     </div>
                 </div>
             @endif
 
-            @if(!empty($slot->complete_photo_path) && is_array($slot->complete_photo_path))
+            @if(!empty($slot->complete_photos))
                 <div style="flex: 1; min-width: 250px;">
                     <h4 style="font-size: 0.95em; color: #475569; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
                         <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
                         Complete Photos
                     </h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
-                        @foreach($slot->complete_photo_path as $photo)
-                            <a href="{{ asset('storage/' . $photo) }}" target="_blank" style="display: block; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                <img src="{{ asset('storage/' . $photo) }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Complete Photo">
-                            </a>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px;">
+                        @foreach($slot->complete_photos as $idx => $photo)
+                            @php
+                                $imgUrl = !empty($photo->id_slot_photos) ? route('slot-photos.show', $photo->id_slot_photos) : (!empty($photo->legacy_path) ? Storage::disk('public')->url($photo->legacy_path) : '');
+                                $dlUrl = !empty($photo->id_slot_photos) ? route('slot-photos.download', $photo->id_slot_photos) : $imgUrl;
+                            @endphp
+                            <div class="st-photo-preview" style="text-align: center;">
+                                <div style="display: block; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.2s; cursor: zoom-in;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="openPhotoModal('{{ $imgUrl }}')">
+                                    <img src="{{ $imgUrl }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Complete Photo {{ $idx + 1 }}">
+                                </div>
+                                <a href="{{ $dlUrl }}" download="Complete_Photo_{{ $slot->id_slots }}_{{ $idx + 1 }}.jpg" class="vendor-btn vendor-btn--secondary vendor-btn--sm" style="margin-top: 8px; width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 4px; padding: 4px 8px; font-size: 0.8em;">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
                         @endforeach
                     </div>
                 </div>
             @endif
         </div>
+    </div>
+
+    <!-- Photo Zoom Modal -->
+    <div id="photo-zoom-dialog" style="position:fixed;inset:0;z-index:9999;display:none;align-index:center;justify-content:center;align-items:center;background:rgba(0,0,0,0.85);padding:16px;" onclick="this.style.display='none'">
+        <img id="zoomed-photo" src="" alt="Zoomed Photo" style="max-width:95vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);object-fit:contain;">
     </div>
     @endif
 
@@ -363,6 +386,13 @@
 
 @push('scripts')
 <script>
+    window.openPhotoModal = function(src) {
+        var img = document.getElementById('zoomed-photo');
+        if (img) img.src = src;
+        var dialog = document.getElementById('photo-zoom-dialog');
+        if (dialog) dialog.style.display = 'flex';
+    };
+
     document.addEventListener('DOMContentLoaded', function () {
         window.ajaxReload = function(pushState) {
             if (window.__isLoadingAjax) return;

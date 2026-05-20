@@ -32,8 +32,6 @@ class LogController extends Controller
         $sorts = is_array($rawSort) ? $rawSort : [trim((string) $rawSort)];
         $dirs = is_array($rawDir) ? $rawDir : [trim((string) $rawDir)];
 
-
-
         // Cache Schema introspection results per-process to avoid 6+ DB queries per request
         static $cachedSchema = null;
         if ($cachedSchema === null) {
@@ -60,12 +58,15 @@ class LogController extends Controller
         $hasEmail = $cachedSchema['hasEmail'];
 
         $allowedTypes = Cache::remember('logs:allowed_types', now()->addMinutes(60), function () use ($activityTypeCol) {
-            return DB::table('activity_logs')->distinct()->pluck($activityTypeCol)->filter()->map(fn($v) => strtolower(trim((string)$v)))->unique()->values()->all();
+            return DB::table('activity_logs')->distinct()->pluck($activityTypeCol)->filter()->map(fn ($v) => strtolower(trim((string) $v)))->unique()->values()->all();
         });
 
         $allowedFeatures = Cache::remember('logs:allowed_features', now()->addMinutes(60), function () use ($cachedSchema) {
-            if (!$cachedSchema['hasFeature']) return [];
-            return DB::table('activity_logs')->distinct()->pluck('feature')->filter()->map(fn($v) => trim((string)$v))->unique()->values()->all();
+            if (! $cachedSchema['hasFeature']) {
+                return [];
+            }
+
+            return DB::table('activity_logs')->distinct()->pluck('feature')->filter()->map(fn ($v) => trim((string) $v))->unique()->values()->all();
         });
 
         $allowedSorts = [
@@ -77,8 +78,6 @@ class LogController extends Controller
             'po' => 's.po_number',
             'user' => DB::raw('COALESCE(u.full_name, u.name, u.nik, u.email)'),
         ];
-
-        
 
         $nameColParts = [];
         if ($hasFullName) {

@@ -71,6 +71,10 @@ class BookingRequest extends Model
     protected static function booted(): void
     {
         static::created(function ($model) {
+            if (empty($model->request_number)) {
+                $model->request_number = 'REQ-'.$model->id_booking_requests;
+                $model->saveQuietly();
+            }
             try {
                 broadcast(new SlotDataChanged('booking', 'created', $model->id_booking_requests));
             } catch (\Throwable $e) {
