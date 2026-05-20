@@ -628,7 +628,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var poHidden = container.querySelector('.po-number-hidden');
         if (poStatus) poStatus.classList.remove('show', 'valid', 'invalid');
         if (poFeedback) {
-            poFeedback.classList.remove('st-po-feedback--valid', 'st-po-feedback--invalid');
+            poFeedback.className = 'st-po-feedback po-feedback st-mt-4';
+            poFeedback.innerHTML = '';
             poFeedback.style.display = 'none';
         }
         if (poHidden) poHidden.value = '';
@@ -681,7 +682,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 var poFeedback = container.querySelector('.po-feedback');
                 if (poStatus) poStatus.classList.remove('show', 'valid', 'invalid');
                 if (poFeedback) {
-                    poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--searching';
+                    poFeedback.className = 'st-po-feedback po-feedback st-mt-4 st-po-feedback--searching';
                     poFeedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching PO/SO number...';
                     poFeedback.style.display = 'flex';
                 }
@@ -708,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     hiddenEl.value = '';
                                     if (poStatus) poStatus.classList.add('show', 'invalid');
                                     if (poFeedback) {
-                                        poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--invalid';
+                                        poFeedback.className = 'st-po-feedback po-feedback st-mt-4 st-po-feedback--invalid';
                                         poFeedback.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> PO/SO not found in SAP.';
                                         poFeedback.style.display = 'flex';
                                     }
@@ -748,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     
                                     if (poStatus) poStatus.classList.add('show', 'valid');
                                     if (poFeedback) {
-                                        poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--valid';
+                                        poFeedback.className = 'st-po-feedback po-feedback st-mt-4 st-po-feedback--valid';
                                         poFeedback.innerHTML = '<i class="fa-solid fa-circle-check"></i> Valid — ' + (po.doc_type === 'so' ? 'SO' : 'PO') + ' found.';
                                         if (po.vendor_name) poFeedback.innerHTML += '<br>Vendor: ' + po.vendor_name;
                                         poFeedback.style.display = 'flex';
@@ -767,7 +768,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     hiddenEl.value = '';
                                     if (poStatus) poStatus.classList.add('show', 'invalid');
                                     if (poFeedback) {
-                                        poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--invalid';
+                                        poFeedback.className = 'st-po-feedback po-feedback st-mt-4 st-po-feedback--invalid';
                                         poFeedback.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + invalidMsg;
                                         poFeedback.style.display = 'flex';
                                     }
@@ -777,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 hiddenEl.value = '';
                                 if (poStatus) poStatus.classList.add('show', 'invalid');
                                 if (poFeedback) {
-                                    poFeedback.className = 'st-po-feedback st-mt-4 st-po-feedback--invalid';
+                                    poFeedback.className = 'st-po-feedback po-feedback st-mt-4 st-po-feedback--invalid';
                                     poFeedback.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> PO/SO not found in SAP.';
                                     poFeedback.style.display = 'flex';
                                 }

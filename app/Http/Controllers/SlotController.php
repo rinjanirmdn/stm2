@@ -456,6 +456,12 @@ class SlotController extends Controller
             }
         }
 
+        if ($request->has('po_number') && is_array($request->input('po_number'))) {
+            $poNumbers = array_filter(array_map('trim', $request->input('po_number', [])));
+            $truckNumber = implode(', ', $poNumbers);
+            $request->merge(['po_number' => $truckNumber]);
+        }
+
         $request->validate([
             'po_number' => 'required|string|max:255',
             'direction' => 'required|in:inbound,outbound',
