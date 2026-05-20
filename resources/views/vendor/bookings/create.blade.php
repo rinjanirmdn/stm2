@@ -21,7 +21,7 @@
                 </h1>
             </div>
 
-            <form method="POST" action="{{ route('vendor.bookings.store') }}" enctype="multipart/form-data" id="booking-form">
+            <form method="POST" action="{{ route('vendor.bookings.store') }}" enctype="multipart/form-data" id="booking-form" novalidate>
                 @csrf
 
                 <div class="vendor-alert vendor-alert--warning" id="booking-form-alert" hidden></div>
@@ -54,18 +54,20 @@
                                                 <input type="hidden" name="po_number[]" class="po-number-hidden" value="{{ trim($oldPo) }}">
                                                 <span class="cb-input-status po-status" aria-hidden="true"></span>
                                             </div>
-                                            <button type="button" class="btn-remove-po" title="Delete" style="{{ $index === 0 ? 'visibility: hidden;' : '' }} background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='transparent'; this.style.color='#6b7280'; this.style.borderColor='#d1d5db';">
+                                            @if($index === 0)
+                                            <button type="button" id="btn_add_po" class="cb-btn cb-btn--primary" title="Add Another PO/SO" style="background: #3b82f6; color: white; border: 1px solid #3b82f6; border-radius: 6px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#2563eb'; this.style.borderColor='#2563eb';" onmouseout="this.style.background='#3b82f6'; this.style.borderColor='#3b82f6';">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                            @else
+                                            <button type="button" class="btn-remove-po" title="Delete" style="background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='transparent'; this.style.color='#6b7280'; this.style.borderColor='#d1d5db';">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
+                                            @endif
                                         </div>
                                         <div class="cb-po-message po-message" style="margin-top: 4px;"></div>
                                     </div>
                                     @endforeach
                                 </div>
-                                
-                                <button type="button" id="btn_add_po" class="cb-btn cb-btn--outline-primary cb-btn--sm" style="margin-top: 8px; width: 100%; border: 1px dashed #3b82f6; color: #3b82f6; background: #eff6ff; display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 6px; transition: all 0.2s; font-weight: 600;" onmouseover="this.style.background='#dbeafe';" onmouseout="this.style.background='#eff6ff';">
-                                    <i class="fas fa-plus" style="margin-right: 8px;"></i> Add Another PO/SO
-                                </button>
 
                                 <div class="cb-hint" style="font-style: italic; color: #9ca3af; margin-top: 8px;">Only displays released PO{{ auth()->user()->isInternalVendor() ? '/SO' : '' }} numbers from SAP.</div>
                                 @error('po_number')
@@ -92,6 +94,7 @@
                                            value="{{ old('planned_date', request()->query('date')) }}"
                                            placeholder="Select date"
                                            required>
+                                    <div class="cb-hint">H-2 Booking</div>
                                     @error('planned_date')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror
@@ -151,9 +154,12 @@
                                            placeholder="e.g., B 1234 ABC"
                                            value="{{ old('vehicle_number') }}"
                                            maxlength="20"
-                                           pattern="^[A-Za-z]{1,2}\s\d{1,4}\s[A-Za-z]{1,3}$"
-                                           oninput="this.value = this.value.toUpperCase()">
+                                           oninput="formatVehicleNumber(this); checkVehicleNumber(this);"
+                                           onblur="checkVehicleNumber(this)">
                                     <div class="cb-hint">Format: B 1234 ABC (with spaces)</div>
+                                    <div class="cb-hint cb-hint--warning" id="vehicle_number_warning" style="display:none; color: #d97706; margin-top: 4px;">
+                                        <i class="fas fa-exclamation-triangle"></i> Vehicle number format is invalid (e.g., B 1234 ABC)
+                                    </div>
                                     @error('vehicle_number')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror
@@ -178,8 +184,12 @@
                                            placeholder="e.g., 08123456789"
                                            value="{{ old('driver_number') }}"
                                            maxlength="15"
-                                           pattern="^08[0-9]{8,11}$">
+                                           oninput="checkDriverPhone(this)"
+                                           onblur="checkDriverPhone(this)">
                                     <div class="cb-hint">Format: 08xxxxxxxxxx (10-13 digits)</div>
+                                    <div class="cb-hint cb-hint--warning" id="driver_phone_warning" style="display:none; color: #d97706; margin-top: 4px;">
+                                        <i class="fas fa-exclamation-triangle"></i> Driver phone number must start with 08
+                                    </div>
                                     @error('driver_number')
                                         <div class="cb-hint cb-hint--error">{{ $message }}</div>
                                     @enderror
@@ -252,6 +262,66 @@
     'forcedHolidayDatesUrl' => auth()->user()->can('vendor.ajax.available_slots') ? route('vendor.ajax.forced_holiday_dates') : null,
     'isInternalVendor' => auth()->user()->isInternalVendor(),
 ]) !!}</script>
+
+<script>
+    function formatVehicleNumber(input) {
+        let val = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        let formatted = '';
+        let matchArea = val.match(/^[A-Z]{1,2}/);
+        if (matchArea) {
+            formatted += matchArea[0];
+            let rest = val.substring(matchArea[0].length);
+            let matchNumber = rest.match(/^[0-9]{1,4}/);
+            if (matchNumber) {
+                formatted += ' ' + matchNumber[0];
+                let rest2 = rest.substring(matchNumber[0].length);
+                let letters = rest2.replace(/[^A-Z]/g, '').substring(0, 3);
+                if (letters) {
+                    formatted += ' ' + letters;
+                }
+            } else if (rest.length > 0) {
+                // If there are letters right after the area code (invalid), keep just the area code
+            }
+        } else {
+            formatted = val.replace(/[^A-Z]/g, '').substring(0, 2);
+        }
+        if (val === '') formatted = '';
+        input.value = formatted;
+    }
+
+    function checkDriverPhone(input) {
+        let val = input.value;
+        let warning = document.getElementById('driver_phone_warning');
+        if (val.length > 0) {
+            if (!val.startsWith('08')) {
+                warning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Driver phone number must start with 08';
+                warning.style.display = 'block';
+            } else if (val.length < 10 || val.length > 13) {
+                warning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Phone number must be between 10-13 digits';
+                warning.style.display = 'block';
+            } else {
+                warning.style.display = 'none';
+            }
+        } else {
+            warning.style.display = 'none';
+        }
+    }
+
+    function checkVehicleNumber(input) {
+        let val = input.value.trim();
+        let warning = document.getElementById('vehicle_number_warning');
+        if (val.length > 0) {
+            let regex = /^[A-Z]{1,2}\s\d{1,4}\s[A-Z]{1,3}$/;
+            if (!regex.test(val)) {
+                warning.style.display = 'block';
+            } else {
+                warning.style.display = 'none';
+            }
+        } else {
+            warning.style.display = 'none';
+        }
+    }
+</script>
+
 @endpush
 @endsection
-

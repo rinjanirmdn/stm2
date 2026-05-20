@@ -9,7 +9,7 @@
         $urlPoDetailTemplate = route('slots.ajax.po_detail', ['poNumber' => '__PO__']);
     @endphp
     <div class="st-card st-text--sm">
-        <form method="POST" action="{{ route('unplanned.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('unplanned.store') }}" enctype="multipart/form-data" novalidate>
             @csrf
 
             @if ($errors->any())
@@ -33,20 +33,49 @@
             <div class="st-form-row st-form-field--mb-12">
                 <div class="st-form-field">
                     <label class="st-label">PO/SO Number <span class="st-text--danger-dark">*</span></label>
-                    <div class="st-relative">
-                        <input type="text" id="po_number" name="po_number" maxlength="12" autocomplete="off"
-                            class="st-input st-input--pr-40{{ $errors->has('po_number') ? ' st-input--invalid' : '' }}"
-                            required value="{{ old('po_number', old('truck_number')) }}">
-                        <span class="st-input-loader" id="po_loading" aria-hidden="true"></span>
-                        <span class="st-input-status" id="po_status" aria-hidden="true"></span>
-                        <div id="po_suggestions" class="st-suggestions st-suggestions--po st-hidden"></div>
+                    <div id="po_entries_container">
+                        @php
+                            $oldPoNumbers = old('po_number', [old('truck_number', '')]);
+                            if (!is_array($oldPoNumbers)) {
+                                $oldPoNumbers = explode(',', $oldPoNumbers);
+                            }
+                            if (empty(array_filter($oldPoNumbers, 'trim'))) {
+                                $oldPoNumbers = [''];
+                            }
+                        @endphp
+                        @foreach($oldPoNumbers as $index => $oldPo)
+                        <div class="po-entry st-mb-8" data-po-index="{{ $index }}" style="margin-bottom: 8px;">
+                            <div style="display: flex; gap: 8px; align-items: center; position: relative;">
+                                <div class="st-relative" style="flex: 1; position: relative; margin-bottom: 0;">
+                                    <input type="text"
+                                           class="st-input st-input--pr-40 po-search-input"
+                                           placeholder="Search PO/SO number..."
+                                           autocomplete="off" maxlength="12"
+                                           value="{{ trim($oldPo) }}" required>
+                                    <input type="hidden" name="po_number[]" class="po-number-hidden" value="{{ trim($oldPo) }}">
+                                    <span class="st-input-loader po-loading" aria-hidden="true"></span>
+                                    <span class="st-input-status po-status" aria-hidden="true"></span>
+                                    <div class="st-suggestions st-suggestions--po po-suggestions st-hidden"></div>
+                                </div>
+                                @if($index === 0)
+                                <button type="button" id="btn_add_po" class="st-btn st-btn--primary" title="Add Another PO/SO" style="background: #3b82f6; color: white; border: 1px solid #3b82f6; border-radius: 6px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#2563eb'; this.style.borderColor='#2563eb';" onmouseout="this.style.background='#3b82f6'; this.style.borderColor='#3b82f6';">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                @else
+                                <button type="button" class="btn-remove-po" title="Delete" style="background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='transparent'; this.style.color='#6b7280'; this.style.borderColor='#d1d5db';">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                @endif
+                            </div>
+                            <div class="st-po-feedback po-feedback st-mt-4" style="display:none;"></div>
+                        </div>
+                        @endforeach
                     </div>
                     <div class="st-po-hint">Only displays released PO/SO numbers from SAP.</div>
                     <div class="st-po-bypass-row">
                         <input type="checkbox" id="po_bypass_sap" name="bypass_sap" value="1" {{ old('bypass_sap') ? 'checked' : '' }}>
                         <label for="po_bypass_sap">Without SAP API Integration</label>
                     </div>
-                    <div id="po_feedback" class="st-po-feedback st-mt-4" style="display:none;"></div>
                     @error('po_number')
                         <div class="st-text--small st-text--danger st-mt-1">{{ $message }}</div>
                     @enderror
