@@ -28,10 +28,14 @@ class UserModelTest extends TestCase
             'username',
             'email',
             'vendor_code',
+            'company_name',
             'is_internal_vendor',
             'password',
             'is_active',
             'role_id',
+            'must_change_password',
+            'is_locked',
+            'password_changed_at',
         ];
 
         $this->assertEquals($expected, $user->getFillable());
