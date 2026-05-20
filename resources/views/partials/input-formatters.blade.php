@@ -18,8 +18,9 @@
             // Create validation message element
             var errMsg = document.createElement('div');
             errMsg.className = 'st-input-format-error';
-            errMsg.style.cssText = 'font-size:11px;color:#dc2626;margin-top:2px;display:none;';
+            errMsg.style.cssText = 'position: absolute; bottom: -15px; left: 0; font-size: 10px; color: #dc2626; margin-top: 0; display: none; white-space: nowrap; z-index: 10;';
             input.parentNode.insertBefore(errMsg, input.nextSibling);
+            input.parentNode.style.position = 'relative';
 
             // Set attributes
             input.setAttribute('placeholder', input.getAttribute('placeholder') || 'e.g., B 1234 ABC');
@@ -103,7 +104,7 @@
                 inputEl.classList.remove('st-input--invalid');
                 return true;
             } else {
-                errEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Format tidak valid. Contoh: B 1234 YKK, AB 12 C';
+                errEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Invalid format. Example: B 1234 YKK, AB 12 C';
                 errEl.style.display = 'block';
                 inputEl.classList.add('st-input--invalid');
                 return false;
@@ -123,8 +124,9 @@
             // Create validation message element
             var errMsg = document.createElement('div');
             errMsg.className = 'st-input-format-error';
-            errMsg.style.cssText = 'font-size:11px;color:#dc2626;margin-top:2px;display:none;';
+            errMsg.style.cssText = 'position: absolute; bottom: -15px; left: 0; font-size: 10px; color: #dc2626; margin-top: 0; display: none; white-space: nowrap; z-index: 10;';
             input.parentNode.insertBefore(errMsg, input.nextSibling);
+            input.parentNode.style.position = 'relative';
 
             // Set attributes
             input.setAttribute('placeholder', input.getAttribute('placeholder') || '08xxxxxxxxxx');
@@ -187,13 +189,13 @@
             } else {
                 var msg = '';
                 if (!value.startsWith('08')) {
-                    msg = 'Nomor telepon harus diawali dengan 08 (contoh: 0812xxxxxx).';
+                    msg = 'Phone number must start with 08 (example: 0812xxxxxx).';
                 } else if (value.length < 10) {
-                    msg = 'Nomor terlalu pendek. Minimal 10 angka.';
+                    msg = 'Number too short. Minimum 10 digits.';
                 } else if (value.length > 15) {
-                    msg = 'Nomor terlalu panjang. Maksimal 15 angka.';
+                    msg = 'Number too long. Maximum 15 digits.';
                 } else {
-                    msg = 'Format tidak valid. Contoh: 0812xxxxxx';
+                    msg = 'Invalid format. Example: 0812xxxxxx';
                 }
                 errEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + msg;
                 errEl.style.display = 'block';
@@ -213,8 +215,9 @@
 
             var errMsg = document.createElement('div');
             errMsg.className = 'st-input-format-error';
-            errMsg.style.cssText = 'font-size:11px;color:#dc2626;margin-top:2px;display:none;';
+            errMsg.style.cssText = 'position: absolute; bottom: -15px; left: 0; font-size: 10px; color: #dc2626; margin-top: 0; display: none; white-space: nowrap; z-index: 10;';
             input.parentNode.insertBefore(errMsg, input.nextSibling);
+            input.parentNode.style.position = 'relative';
 
             input.addEventListener('input', function() {
                 validateEmail(this.value, errMsg, input);
@@ -238,7 +241,7 @@
                 inputEl.classList.remove('st-input--invalid');
                 return true;
             } else {
-                errEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Format email tidak valid.';
+                errEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Invalid email format.';
                 errEl.style.display = 'block';
                 inputEl.classList.add('st-input--invalid');
                 return false;
@@ -256,12 +259,14 @@
 
             var errMsg = document.createElement('div');
             errMsg.className = 'st-input-format-error';
-            errMsg.style.cssText = 'font-size:11px;color:#dc2626;margin-top:2px;display:none;';
+            errMsg.style.cssText = 'position: absolute; bottom: -15px; left: 0; font-size: 10px; color: #dc2626; margin-top: 0; display: none; white-space: nowrap; z-index: 10;';
 
             if (input.parentNode.classList.contains('st-input-wrap')) {
                 input.parentNode.parentNode.insertBefore(errMsg, input.parentNode.nextSibling);
+                input.parentNode.parentNode.style.position = 'relative';
             } else {
                 input.parentNode.insertBefore(errMsg, input.nextSibling);
+                input.parentNode.style.position = 'relative';
             }
 
             input.addEventListener('input', function() {
@@ -315,7 +320,7 @@
 
                 // Validate vehicle numbers
                 form.querySelectorAll('input[name="vehicle_number"], input[name="vehicle_number_snap"]').forEach(function(inp) {
-                    if (inp.value.trim() && inp.hasAttribute('required')) {
+                    if (inp.value.trim()) {
                         var errEl = inp.parentNode.querySelector('.st-input-format-error');
                         if (errEl && !validateVehicleNumber(inp.value, errEl, inp)) {
                             valid = false;

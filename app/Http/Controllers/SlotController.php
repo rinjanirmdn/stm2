@@ -166,7 +166,8 @@ class SlotController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'po_number' => 'required|string|max:12',
+            'po_number' => 'required|array|min:1',
+            'po_number.*' => 'required|string|max:20',
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
             'planned_gate_id' => 'required|integer|exists:md_gates,id_gates',
@@ -181,7 +182,11 @@ class SlotController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $truckNumber = trim((string) ($request->input('po_number', $request->input('truck_number', ''))));
+        $poNumbers = array_filter(array_map('trim', $request->input('po_number', [])));
+        if (empty($poNumbers)) {
+            return back()->withInput()->withErrors(['po_number' => 'At least one PO/SO number is required']);
+        }
+        $truckNumber = implode(', ', $poNumbers);
         $direction = (string) $request->input('direction', '');
         $plannedGateId = $request->input('planned_gate_id') !== null && (string) $request->input('planned_gate_id') !== '' ? (int) $request->input('planned_gate_id') : null;
         $plannedStart = (string) $request->input('planned_start', '');
@@ -225,14 +230,33 @@ class SlotController extends Controller
         }
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
-        $poNumber = $truckNumber;
         $bypassSap = (bool) $request->input('bypass_sap', false);
         $poDetail = null;
         if (! $bypassSap) {
-            $poDetail = $this->poSearchService->getPoDetail($poNumber);
-            if (! $poDetail) {
-                return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+            $poDetails = [];
+            foreach ($poNumbers as $po) {
+                $detail = $this->poSearchService->getPoDetail($po);
+                if (! $detail) {
+                    return back()->withInput()->with('error', "PO/SO number {$po} not found in SAP.");
+                }
+                $poDetails[] = $detail;
             }
+
+            $vendorNames = array_filter(array_map('trim', array_column($poDetails, 'vendor_name')));
+            $uniqueVendorNames = array_unique($vendorNames);
+            if (count($uniqueVendorNames) > 1) {
+                return back()->withInput()->with('error', 'All PO/SO numbers must belong to the same vendor.');
+            }
+
+            $directions = array_filter(array_map(function($d) {
+                return $d['direction'] ?? ($d['doc_type'] === 'so' ? 'outbound' : 'inbound');
+            }, $poDetails));
+            $uniqueDirections = array_unique($directions);
+            if (count($uniqueDirections) > 1) {
+                return back()->withInput()->with('error', 'Multiple PO/SO must be of the same direction type.');
+            }
+
+            $poDetail = $poDetails[0];
         } else {
             // Use manually entered vendor name when bypassing SAP
             $manualVendorName = trim((string) $request->input('vendor_name_manual', ''));
@@ -241,8 +265,8 @@ class SlotController extends Controller
             }
         }
 
-        if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
+        if ($truckNumber !== '' && strlen($truckNumber) > 255) {
+            return back()->withInput()->withErrors(['po_number' => 'Combined PO/SO numbers must not exceed 255 characters.']);
         }
 
         if ($truckNumber === '' || $plannedStart === '' || $direction === '') {
@@ -433,7 +457,7 @@ class SlotController extends Controller
         }
 
         $request->validate([
-            'po_number' => 'required|string|max:12',
+            'po_number' => 'required|string|max:255',
             'direction' => 'required|in:inbound,outbound',
             'truck_type' => 'required|string|max:100',
             'vendor_id' => 'nullable|string|max:255',
@@ -475,8 +499,8 @@ class SlotController extends Controller
         }
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
-        if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
+        if ($truckNumber !== '' && strlen($truckNumber) > 255) {
+            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 255 characters']);
         }
 
         if ($plannedGateId !== null) {

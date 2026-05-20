@@ -666,7 +666,25 @@ function initVendorBookingCreate(config) {
                     .then(r => r.json())
                     .then(data => {
                                                   if (data.success && data.data.length > 0) {
-                              const po = data.data[0];
+                              let po = null;
+                              const qUpper = q.toUpperCase();
+                              const qClean = q.replace(/^0+/, '').toUpperCase();
+                              
+                              for (let i = 0; i < data.data.length; i++) {
+                                  const poNum = String(data.data[i].po_number || '').trim();
+                                  const poNumUpper = poNum.toUpperCase();
+                                  const poNumClean = poNum.replace(/^0+/, '').toUpperCase();
+                                  if (poNumUpper === qUpper || poNumClean === qClean) {
+                                      po = data.data[i];
+                                      break;
+                                  }
+                              }
+
+                              if (!po) {
+                                  hiddenEl.value = '';
+                                  showInvalid(container, 'PO/SO number not found in SAP. Please check and re-enter.');
+                                  return;
+                              }
                               
                               const entries = Array.from(poEntriesContainer.querySelectorAll('.po-entry'));
                               const firstEntry = entries[0];
@@ -758,7 +776,7 @@ function initVendorBookingCreate(config) {
                         <input type="hidden" name="po_number[]" class="po-number-hidden">
                         <span class="cb-input-status po-status" aria-hidden="true"></span>
                     </div>
-                    <button type="button" class="btn-remove-po" title="Delete" style="background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='transparent'; this.style.color='#6b7280'; this.style.borderColor='#d1d5db';">
+                    <button type="button" class="btn-remove-po" title="Delete" style="background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='transparent'; this.style.color='#6b7280'; this.style.borderColor='#d1d5db';">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
@@ -1325,11 +1343,11 @@ function initVendorBookingCreate(config) {
             var parts = val.split(':');
             var h = parseInt(parts[0], 10);
             if (h > 19 || (h === 19 && parseInt(parts[1], 10) > 0)) {
-                msg = 'Waktu booking maksimal jam 19:00';
+                msg = 'Booking time must be no later than 19:00';
             } else if (h < 7) {
-                msg = 'Waktu booking minimal jam 07:00';
+                msg = 'Booking time must be no earlier than 07:00';
             } else {
-                msg = 'Waktu booking tidak valid';
+                msg = 'Invalid booking time';
             }
             // Show inline error below input
             if (timeErrorEl) {
