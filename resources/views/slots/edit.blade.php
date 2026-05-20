@@ -280,8 +280,8 @@
         </form>
     </div>
 
-    <script type="application/json" id="truck_types_json">{{ json_encode(array_values($truckTypes)) }}</script>
-    <script type="application/json" id="truck_type_durations_json">{{ json_encode($truckTypeDurations) }}</script>
+    <script type="application/json" id="truck_types_json">{!! json_encode(array_values($truckTypes)) !!}</script>
+    <script type="application/json" id="truck_type_durations_json">{!! json_encode($truckTypeDurations) !!}</script>
     <script type="application/json" id="slot_routes_json">{!! json_encode([
         'check_risk' => route('slots.ajax.check_risk'),
         'check_slot_time' => route('slots.ajax.check_slot_time'),

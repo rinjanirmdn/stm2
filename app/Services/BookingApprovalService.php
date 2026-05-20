@@ -94,8 +94,8 @@ class BookingApprovalService
             );
 
             // Log activity
-            $this->safeActivityLog('booking_requested', [
-                'activity_type' => 'booking_requested',
+            $this->safeActivityLog('insert', [
+                'activity_type' => 'insert',
                 'description' => "New booking request submitted for PO: {$slot->po_number}",
                 'feature' => 'Booking Requests',
                 'slot_id' => $slot->id_slots,
@@ -186,8 +186,8 @@ class BookingApprovalService
                 $currentSlot = Slot::find($slotId);
                 $newValues = $currentSlot ? json_encode($currentSlot->only(['status', 'approved_by', 'approval_action', 'approval_notes', 'approved_at'])) : null;
 
-                $this->safeActivityLog('booking_approved', [
-                    'activity_type' => 'booking_approved',
+                $this->safeActivityLog('update', [
+                    'activity_type' => 'update',
                     'description' => "Approved booking request for PO: {$poNumber}",
                     'feature' => 'Booking Requests',
                     'slot_id' => $slotId,
@@ -332,8 +332,8 @@ class BookingApprovalService
             );
 
             // Log activity
-            $this->safeActivityLog('booking_rejected', [
-                'activity_type' => 'booking_rejected',
+            $this->safeActivityLog('update', [
+                'activity_type' => 'update',
                 'description' => "Rejected booking request for PO: {$slot->po_number} - Reason: {$reason}",
                 'feature' => 'Booking Requests',
                 'slot_id' => $slot->id_slots,

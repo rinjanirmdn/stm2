@@ -878,7 +878,106 @@ class VendorBookingController extends Controller
 
         $isInternalVendor = Auth::user()?->isInternalVendor() ?? false;
 
+        $slot = $booking->convertedSlot;
+        if ($slot) {
+            // Load photos from slot_photos table (new DB storage)
+            $dbPhotos = DB::table('slot_photos')
+                ->where('slot_id', $slot->id_slots)
+                ->select(['id_slot_photos', 'phase', 'filename'])
+                ->orderBy('id_slot_photos')
+                ->get();
+
+            $startPhotos = [];
+            $completePhotos = [];
+            foreach ($dbPhotos as $p) {
+                $photoObj = (object) ['id_slot_photos' => $p->id_slot_photos, 'filename' => $p->filename];
+                if ($p->phase === 'start') {
+                    $startPhotos[] = $photoObj;
+                } elseif ($p->phase === 'complete') {
+                    $completePhotos[] = $photoObj;
+                }
+            }
+
+            // Fallback: if no DB photos found, check legacy path columns
+            if (empty($startPhotos) && ! empty($slot->start_photo_path)) {
+                $startPhotos = $this->resolvePhotoPathColumn($slot->start_photo_path, $slot->id_slots, 'start');
+            }
+            if (empty($completePhotos) && ! empty($slot->complete_photo_path)) {
+                $completePhotos = $this->resolvePhotoPathColumn($slot->complete_photo_path, $slot->id_slots, 'complete');
+            }
+
+            $slot->start_photos = ! empty($startPhotos) ? $startPhotos : null;
+            $slot->complete_photos = ! empty($completePhotos) ? $completePhotos : null;
+        }
+
         return view('vendor.bookings.show', compact('booking', 'isInternalVendor'));
+    }
+
+    /**
+     * Resolve a photo_path column value into photo objects.
+     */
+    private function resolvePhotoPathColumn(mixed $value, int $slotId, string $phase): array
+    {
+        $items = $this->normalizePhotoPaths($value);
+        if (! $items) {
+            return [];
+        }
+
+        $photos = [];
+        foreach ($items as $item) {
+            $item = (string) $item;
+
+            // If it's purely numeric, it might be a DB photo ID
+            if (ctype_digit($item)) {
+                // Only accept if this photo belongs to this slot AND correct phase
+                $row = DB::table('slot_photos')
+                    ->where('id_slot_photos', (int) $item)
+                    ->where('slot_id', $slotId)
+                    ->where('phase', $phase)
+                    ->select(['id_slot_photos', 'filename'])
+                    ->first();
+                if ($row) {
+                    $photos[] = (object) ['id_slot_photos' => $row->id_slot_photos, 'filename' => $row->filename];
+                }
+
+                // Skip if ID doesn't match slot+phase
+                continue;
+            }
+
+            // Must look like a real file path (contains '/' or has a file extension)
+            if (str_contains($item, '/') || preg_match('/\.\w{2,4}$/', $item)) {
+                $photos[] = (object) ['id_slot_photos' => null, 'filename' => basename($item), 'legacy_path' => $item];
+            }
+        }
+
+        return $photos;
+    }
+
+    /**
+     * Normalize photo path values from DB into a proper PHP array.
+     */
+    private function normalizePhotoPaths(mixed $value): ?array
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        $value = (string) $value;
+
+        // Try JSON decode first (handles '["path1","path2"]' format)
+        if (str_starts_with($value, '[')) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded) && ! empty($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Plain string path (legacy single-photo format)
+        return [$value];
     }
 
     /**

@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var durationUnitSelect = document.querySelector('select[name="duration_unit"]');
         var truckTypeSelect = document.getElementById('truck_type');
         var gateSelect = document.getElementById('planned_gate_id');
+        var directionSelect = document.getElementById('direction');
 
         var holidayData = typeof window.getIndonesiaHolidays === 'function' ? window.getIndonesiaHolidays() : {};
 
@@ -145,20 +146,43 @@ document.addEventListener('DOMContentLoaded', function() {
             if (plannedStartTimeInput) plannedStartTimeInput.value = (parts[1] || '').slice(0, 5);
         }
 
+        if (plannedStartDateInput) {
+            plannedStartDateInput.addEventListener('change', function () {
+                syncPlannedStart();
+            });
+            plannedStartDateInput.addEventListener('input', function () {
+                syncPlannedStart();
+            });
+        }
+
+        if (plannedStartTimeInput) {
+            plannedStartTimeInput.addEventListener('change', function () {
+                syncPlannedStart();
+            });
+            plannedStartTimeInput.addEventListener('input', function () {
+                syncPlannedStart();
+            });
+        }
+
+
         // Logic for Truck Type Durations
         var typeDurations = {};
         try {
             typeDurations = JSON.parse(document.getElementById('truck_type_durations_json').textContent);
         } catch(e) {}
 
+        function updateDurationFromTruckType() {
+            if (!truckTypeSelect || !plannedDurationInput) return;
+            var val = (truckTypeSelect.value || '').trim();
+            var minutes = val && typeDurations && typeDurations[val] ? parseInt(typeDurations[val], 10) : NaN;
+
+            if (val && isFinite(minutes) && minutes > 0) {
+                plannedDurationInput.value = String(minutes);
+            }
+        }
+
         if (truckTypeSelect && plannedDurationInput) {
-            truckTypeSelect.addEventListener('change', function() {
-                var val = truckTypeSelect.value;
-                if (val && typeDurations[val]) {
-                    plannedDurationInput.value = typeDurations[val];
-                    if (durationUnitSelect) durationUnitSelect.value = 'minutes';
-                }
-            });
+            truckTypeSelect.addEventListener('change', updateDurationFromTruckType);
         }
 
         // PO/SO Validation Feedback

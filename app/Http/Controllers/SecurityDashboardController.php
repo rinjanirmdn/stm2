@@ -236,14 +236,14 @@ class SecurityDashboardController extends Controller
         try {
             DB::table('activity_logs')->insert([
                 'slot_id' => $slotId,
-                'activity_type' => 'status_change',
+                'activity_type' => 'update',
                 'description' => 'Status Changed to Waiting After Arrival (Security Scan)',
                 'created_by' => Auth::id(),
                 'created_at' => $now,
             ]);
             DB::table('activity_logs')->insert([
                 'slot_id' => $slotId,
-                'activity_type' => 'arrival_recorded',
+                'activity_type' => 'update',
                 'description' => 'Arrival Recorded with Ticket '.$ticketNumber.' via Security Dashboard',
                 'created_by' => Auth::id(),
                 'created_at' => $now,

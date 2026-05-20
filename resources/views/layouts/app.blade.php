@@ -83,7 +83,7 @@
             </a>
             @endcan
 
-            @if(auth()->user()->can('security.dashboard') && !auth()->user()->can('dashboard.view'))
+            @if(auth()->check() && auth()->user()->can('security.dashboard') && !auth()->user()->can('dashboard.view'))
             <a href="{{ route('security.dashboard') }}" title="Security Dashboard" class="st-sidebar__link{{ request()->routeIs('security.dashboard') ? ' st-sidebar__link--active' : '' }}">
                 <i class="fas fa-shield-halved"></i>
                 <span>Security</span>

@@ -189,13 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var tt = (truckTypeSelect.value || '').trim();
         var minutes = tt && truckTypeDurations && truckTypeDurations[tt] ? parseInt(truckTypeDurations[tt], 10) : NaN;
 
-        if (!tt || !isFinite(minutes) || minutes <= 0) {
-            // If truck type is not in the database, allow manual input
-            plannedDurationInput.removeAttribute('readonly');
-            plannedDurationInput.value = plannedDurationInput.value || '';
-        } else {
-            // If truck type is in the database, autofill and set to readonly
-            plannedDurationInput.setAttribute('readonly', 'readonly');
+        if (tt && isFinite(minutes) && minutes > 0) {
             plannedDurationInput.value = String(minutes);
         }
 
@@ -939,15 +933,24 @@ document.addEventListener('DOMContentLoaded', function () {
         var vendorNameManual = document.getElementById('vendor_name_manual');
 
         function toggleVendorBypass() {
-            if (!vendorSearch) return;
             if (isBypassSap()) {
-                vendorSearch.removeAttribute('readonly');
-                vendorSearch.removeAttribute('disabled');
-                vendorSearch.placeholder = 'Type vendor name manually';
+                if (vendorSearch) {
+                    vendorSearch.removeAttribute('readonly');
+                    vendorSearch.removeAttribute('disabled');
+                    vendorSearch.placeholder = 'Type vendor name manually';
+                }
+                if (directionSelect) {
+                    directionSelect.removeAttribute('disabled');
+                }
                 clearPoFeedback();
             } else {
-                vendorSearch.setAttribute('readonly', true);
-                vendorSearch.placeholder = 'Vendor will auto-fill from PO';
+                if (vendorSearch) {
+                    vendorSearch.setAttribute('readonly', true);
+                    vendorSearch.placeholder = 'Vendor will auto-fill from PO';
+                }
+                if (directionSelect) {
+                    directionSelect.setAttribute('disabled', 'disabled');
+                }
                 var currentPo = poInput ? (poInput.value || '').trim() : '';
                 if (currentPo.length >= 10) {
                     tryAutoFillFromTypedPo(currentPo);
@@ -1158,6 +1161,17 @@ document.addEventListener('DOMContentLoaded', function () {
     updateRiskPreview();
     updateGateRecommendation();
     checkTimeOverlap();
+<<<<<<< feature/reports-and-po-fixes
+=======
+
+    var form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            if (directionSelect) directionSelect.removeAttribute('disabled');
+        });
+    }
+
+>>>>>>> develop
     applySaveState();
 
     // Multiple PO Logic for Admin
