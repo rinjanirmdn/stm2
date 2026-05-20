@@ -264,12 +264,18 @@ class UnplannedSlotController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'po_number' => 'required|array|min:1',
+            'po_number.*' => 'required|string|max:20',
             'driver_name' => 'nullable|string|max:50',
             'actual_gate_id' => 'required|integer|exists:md_gates,id_gates',
             'destination' => 'nullable|string|max:255',
         ]);
 
-        $poNumber = trim((string) $request->input('po_number', ''));
+        $poNumbers = array_filter(array_map('trim', $request->input('po_number', [])));
+        if (empty($poNumbers)) {
+            return back()->withInput()->withErrors(['po_number' => 'At least one PO/SO number is required']);
+        }
+        $poNumber = implode(', ', $poNumbers);
         $direction = (string) $request->input('direction', '');
         $actualGateId = $request->input('actual_gate_id') !== null && (string) $request->input('actual_gate_id') !== '' ? (int) $request->input('actual_gate_id') : null;
         $arrivalInput = trim((string) $request->input('actual_arrival', ''));
@@ -292,8 +298,8 @@ class UnplannedSlotController extends Controller
             return back()->withInput()->with('error', 'PO/SO number, direction, gate, and arrival time are required');
         }
 
-        if (strlen($poNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
+        if (strlen($poNumber) > 255) {
+            return back()->withInput()->withErrors(['po_number' => 'Combined PO/SO numbers must not exceed 255 characters.']);
         }
 
         if (! in_array($direction, ['inbound', 'outbound'], true)) {
@@ -327,10 +333,30 @@ class UnplannedSlotController extends Controller
         $bypassSap = (bool) $request->input('bypass_sap', false);
         $poDetail = null;
         if (! $bypassSap) {
-            $poDetail = $this->poSearchService->getPoDetail($poNumber);
-            if (! $poDetail) {
-                return back()->withInput()->with('error', 'PO/SO not found in SAP.');
+            $poDetails = [];
+            foreach ($poNumbers as $po) {
+                $detail = $this->poSearchService->getPoDetail($po);
+                if (! $detail) {
+                    return back()->withInput()->with('error', "PO/SO number {$po} not found in SAP.");
+                }
+                $poDetails[] = $detail;
             }
+
+            $vendorNames = array_filter(array_map('trim', array_column($poDetails, 'vendor_name')));
+            $uniqueVendorNames = array_unique($vendorNames);
+            if (count($uniqueVendorNames) > 1) {
+                return back()->withInput()->with('error', 'All PO/SO numbers must belong to the same vendor.');
+            }
+
+            $directions = array_filter(array_map(function ($d) {
+                return $d['direction'] ?? ($d['doc_type'] === 'so' ? 'outbound' : 'inbound');
+            }, $poDetails));
+            $uniqueDirections = array_unique($directions);
+            if (count($uniqueDirections) > 1) {
+                return back()->withInput()->with('error', 'Multiple PO/SO must be of the same direction type.');
+            }
+
+            $poDetail = $poDetails[0];
         } else {
             $manualVendorName = trim((string) $request->input('vendor_name_manual', ''));
             if ($manualVendorName !== '') {
@@ -343,7 +369,6 @@ class UnplannedSlotController extends Controller
         $actualStart = $status === 'completed' ? $arrivalTime : null;
         $actualFinish = $status === 'completed' ? $arrivalTime : null;
 
-        // For outbound, prefer customer_name from SAP for the vendor_name DB field
         $storedVendorName = $poDetail['vendor_name'] ?? null;
         if ($direction === 'outbound' && ! empty($poDetail['customer_name'])) {
             $storedVendorName = $poDetail['customer_name'];
@@ -465,8 +490,14 @@ class UnplannedSlotController extends Controller
             }
         }
 
+        if ($request->has('po_number') && is_array($request->input('po_number'))) {
+            $poNumbers = array_filter(array_map('trim', $request->input('po_number', [])));
+            $truckNumber = implode(', ', $poNumbers);
+            $request->merge(['po_number' => $truckNumber]);
+        }
+
         $request->validate([
-            'po_number' => 'required|string|max:12',
+            'po_number' => 'required|string|max:255',
             'direction' => 'required|in:inbound,outbound',
             'vendor_id' => 'nullable|string|max:255',
             'actual_gate_id' => 'required|integer|exists:md_gates,id_gates',
@@ -494,8 +525,8 @@ class UnplannedSlotController extends Controller
         }
         $warehouseId = (int) ($gateRow->warehouse_id ?? 0);
 
-        if ($truckNumber !== '' && strlen($truckNumber) > 12) {
-            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 12 characters']);
+        if ($truckNumber !== '' && strlen($truckNumber) > 255) {
+            return back()->withInput()->withErrors(['po_number' => 'PO/SO number max 255 characters']);
         }
 
         $sjNo = trim((string) $request->input('mat_doc', ''));
