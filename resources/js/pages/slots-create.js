@@ -1188,20 +1188,54 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (poEntriesContainer) {
+        var vendorNameManual = document.getElementById('vendor_name_manual');
+        function isBypassSap() {
+            return poBypassSap && poBypassSap.checked;
+        }
+
+        function toggleVendorBypass() {
+            if (!vendorSearch) return;
+            var entries = poEntriesContainer.querySelectorAll('.po-entry');
+            if (isBypassSap()) {
+                vendorSearch.removeAttribute('readonly');
+                vendorSearch.removeAttribute('disabled');
+                vendorSearch.placeholder = 'Type vendor name manually';
+                if (directionSelect) {
+                    directionSelect.removeAttribute('disabled');
+                }
+                entries.forEach(function(entry) {
+                    var searchInput = entry.querySelector('.po-search-input');
+                    var hiddenInput = entry.querySelector('.po-number-hidden');
+                    clearPoEntryValidation(entry);
+                    if (searchInput && hiddenInput) hiddenInput.value = searchInput.value.trim();
+                });
+            } else {
+                vendorSearch.setAttribute('readonly', true);
+                vendorSearch.placeholder = 'Vendor will auto-fill from PO';
+                if (directionSelect) {
+                    directionSelect.setAttribute('disabled', 'disabled');
+                }
+                entries.forEach(function(entry) {
+                    clearPoEntryValidation(entry);
+                });
+                var existingInputs = poEntriesContainer.querySelectorAll('.po-search-input');
+                existingInputs.forEach(function(input) {
+                    if (input.value.trim() !== '') {
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                });
+            }
+        }
+
         if (poBypassSap) {
-            poBypassSap.addEventListener('change', function() {
-                var entries = poEntriesContainer.querySelectorAll('.po-entry');
-                if (poBypassSap.checked) {
-                    entries.forEach(function(entry) {
-                        var searchInput = entry.querySelector('.po-search-input');
-                        var hiddenInput = entry.querySelector('.po-number-hidden');
-                        clearPoEntryValidation(entry);
-                        if (searchInput && hiddenInput) hiddenInput.value = searchInput.value.trim();
-                    });
-                } else {
-                    entries.forEach(function(entry) {
-                        clearPoEntryValidation(entry);
-                    });
+            poBypassSap.addEventListener('change', toggleVendorBypass);
+            toggleVendorBypass();
+        }
+
+        if (vendorSearch && vendorNameManual) {
+            vendorSearch.addEventListener('input', function () {
+                if (isBypassSap()) {
+                    vendorNameManual.value = vendorSearch.value;
                 }
             });
         }
