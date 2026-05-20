@@ -322,6 +322,30 @@ class UserController extends Controller
                 $update['must_change_password'] = true;
                 $update['is_locked'] = false;
                 $update['password_changed_at'] = now();
+
+                // Send email to user if reset requested by admin
+                if ($request->query('from_reset_email') === '1' || $request->input('from_reset_email') === '1') {
+                    $appName = 'e-Docking Control System';
+                    $userEmail = $userModel->email;
+
+                    if (!empty($userEmail)) {
+                        try {
+                            $html = view('emails.password-reset-user', [
+                                'appName' => $appName,
+                                'userName' => $userModel->full_name ?? $userModel->username ?? 'User',
+                                'userEmail' => $userEmail,
+                                'plainPassword' => $password,
+                            ])->render();
+
+                            \Illuminate\Support\Facades\Mail::html($html, function ($message) use ($userEmail, $userModel, $appName) {
+                                $message->to($userEmail, $userModel->full_name ?? 'User')
+                                    ->subject('['.$appName.'] Your Password Has Been Reset');
+                            });
+                        } catch (\Throwable $mailEx) {
+                            \Illuminate\Support\Facades\Log::error('Failed to send password reset notification email to user: ' . $mailEx->getMessage());
+                        }
+                    }
+                }
             }
 
             $userModel->update($update);
@@ -343,10 +367,13 @@ class UserController extends Controller
                 }
             }
 
+            // Clear reset request flags and failed login attempts from cache
+            Cache::forget('password_reset_requested_user_'.(int) $userId);
             $loginIdentifiers = array_unique([strtolower($userModel->nik), strtolower($userModel->email), strtolower($userModel->username)]);
             foreach ($loginIdentifiers as $identifier) {
                 if ($identifier !== '') {
                     Cache::forget('login_attempts_'.$identifier);
+                    Cache::forget('password_reset_request_'.$identifier);
                 }
             }
 
